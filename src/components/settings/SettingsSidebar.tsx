@@ -523,10 +523,10 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
     if (!item.badge) return null;
 
     const badgeStyles = {
-      count: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
-      new: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-      beta: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-      warning: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
+      count: 'bg-[color-mix(in_srgb,var(--c-info)_12%,transparent)] text-[var(--c-info)]',
+      new: 'bg-[color-mix(in_srgb,var(--c-success)_12%,transparent)] text-[var(--c-success)]',
+      beta: 'bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)] text-[var(--c-warning)]',
+      warning: 'bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-[var(--c-danger)]',
     };
 
     return (
@@ -544,16 +544,16 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-col h-full w-[280px] bg-white dark:bg-navy-950 border-r border-slate-200 dark:border-navy-800',
+        'flex h-full w-[280px] flex-col border-r border-[var(--c-border-subtle)] bg-[var(--c-surface)]',
         className
       )}
     >
       {/* Header - Admin style (no icon, bold title) */}
-      <div className="px-5 pt-5 pb-4">
-        <h1 className="text-lg font-bold text-navy-900 dark:text-white tracking-wide">
+      <div className="px-5 pb-4 pt-5">
+        <h1 className="text-lg font-bold tracking-wide text-[var(--c-text)]">
           {t('settings.sidebar.title', 'SETTINGS')}
         </h1>
-        <p className="text-sm text-slate-600 dark:text-slate-500 mt-0.5">
+        <p className="mt-0.5 text-sm text-[var(--c-text-muted)]">
           {t('settings.sidebar.subtitle', 'Personal, tenant, and module settings')}
         </p>
       </div>
@@ -569,7 +569,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                 {/* Group Header - Clickable, no icon (Admin style) */}
                 <button
                   onClick={() => toggleGroup(group.id)}
-                  className="w-full flex items-center justify-between px-2 py-2.5 text-[11px] font-semibold tracking-wider text-slate-500 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
+                  className="flex w-full items-center justify-between px-2 py-2.5 text-[11px] font-semibold tracking-wider text-[var(--c-text-muted)] transition-colors hover:text-[var(--c-text-secondary)]"
                 >
                   <span>{group.label}</span>
                   <ChevronDown
@@ -597,18 +597,18 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                           key={item.id}
                           onClick={() => onSectionChange(item.id)}
                           className={cn(
-                            'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150',
+                            'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]',
                             isActive
-                              ? 'bg-slate-100 text-slate-900 font-medium dark:bg-white/[0.08] dark:text-white'
-                              : 'text-slate-600 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-navy-800/20 hover:text-navy-900 dark:hover:text-white'
+                              ? 'bg-[var(--c-accent-soft)] font-medium text-[var(--c-text)]'
+                              : 'text-[var(--c-text-secondary)] hover:bg-[var(--c-surface-raised)] hover:text-[var(--c-text)]'
                           )}
                         >
                           <Icon
                             className={cn(
-                              'w-4 h-4 flex-shrink-0',
+                              'h-4 w-4 flex-shrink-0',
                               isActive
                                 ? 'text-[var(--c-info)]'
-                                : 'text-slate-600 dark:text-slate-400'
+                                : 'text-[var(--c-text-muted)]'
                             )}
                           />
                           <span className="flex-1 text-left">{item.label}</span>
@@ -626,10 +626,10 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-slate-200 dark:border-white/5">
+      <div className="border-t border-[var(--c-border-subtle)] p-3">
         <button
           onClick={onBack || (() => window.history.back())}
-          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded-lg transition-colors"
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-[var(--c-text-secondary)] transition-colors hover:bg-[var(--c-surface-raised)] hover:text-[var(--c-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
         >
           <LogOut className="w-4 h-4 rotate-180" />
           {t('settings.sidebar.backToDashboard', 'Back to Dashboard')}

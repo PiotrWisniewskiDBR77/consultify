@@ -15,6 +15,22 @@ export function resolveArtifactOpenPath(params: {
   const id = String(params.originRecordId || '').trim();
   if (!id) return null;
 
+  // HOTFIX task#63 (UI-M5): a promoted assessment is NOT a report-builder doc — no
+  // report_builder_reports row exists for its originRecordId. Falling back to
+  // /reports/builder/{id} opens an empty "Add first block" builder that looks like
+  // data loss. Detect the assessment origin from governance and route back to the
+  // assessment run instead of the empty builder.
+  const authority = String(params.governance?.authority || '').trim();
+  const sourceType = String(
+    (params.governance?.originSummary as { sourceType?: unknown } | null | undefined)?.sourceType ||
+      ''
+  )
+    .trim()
+    .toUpperCase();
+  if (authority === 'assessment_workbench' || sourceType === 'ASSESSMENT') {
+    return `/assessment?assessmentId=${encodeURIComponent(id)}`;
+  }
+
   // Same primary URL as deep links / chat (getArtifactPath) — preview “Open” must not fork truth.
   if (params.kind === 'document') return getArtifactPath('report', id);
   if (params.kind === 'presentation') return getArtifactPath('presentation', id);

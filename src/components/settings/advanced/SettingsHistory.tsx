@@ -139,9 +139,9 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
       case 'deleted':
         return 'text-danger-600 bg-danger-100 dark:bg-danger-500/20';
       case 'restored':
-        return 'text-primary-600 bg-primary-100 dark:bg-primary-500/20';
+        return 'text-c-accent bg-c-accent-soft dark:bg-c-accent-soft';
       default:
-        return 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-500/20';
+        return 'text-c-text-secondary bg-c-surface-raised';
     }
   };
 
@@ -154,11 +154,11 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
       <InfoButton cardId="settings-history" position="top-right" />
 
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+        <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
           <History size={28} className="text-amber-500" />
           Settings History
         </h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+        <p className="text-c-text-muted text-sm mt-1">
           View and restore previous settings changes
         </p>
       </div>
@@ -174,21 +174,21 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
             <div className="flex-1 min-w-[200px] relative">
               <Search
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-secondary"
               />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search changes..."
-                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-amber-500"
+                className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-amber-500"
               />
             </div>
 
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
+              className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
             >
               <option value="all">All Categories</option>
               {categories.map((cat) => (
@@ -201,7 +201,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d' | 'all')}
-              className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
+              className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
             >
               <option value="7d">Last 7 days</option>
               <option value="30d">Last 30 days</option>
@@ -211,16 +211,16 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
           </div>
 
           {/* History List */}
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl overflow-hidden">
             {filteredEntries.length === 0 ? (
-              <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+              <div className="p-8 text-center text-c-text-muted">
                 <History size={48} className="mx-auto mb-3 opacity-50" />
                 <p>No settings changes found</p>
               </div>
             ) : (
-              <div className="divide-y divide-slate-200 dark:divide-white/10">
+              <div className="divide-y divide-c-border-subtle dark:divide-white/10">
                 {filteredEntries.map((entry) => (
-                  <div key={entry.id} className="hover:bg-slate-50 dark:hover:bg-navy-950">
+                  <div key={entry.id} className="hover:bg-c-surface-raised dark:hover:bg-navy-950">
                     <button
                       onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
                       className="w-full p-4 text-left"
@@ -228,8 +228,8 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <div className="flex flex-col items-center">
-                            <Clock size={14} className="text-slate-600 dark:text-slate-500" />
-                            <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            <Clock size={14} className="text-c-text-secondary" />
+                            <span className="text-xs text-c-text-muted mt-1">
                               {formatTime(entry.timestamp)}
                             </span>
                           </div>
@@ -240,28 +240,28 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
                               >
                                 {entry.action}
                               </span>
-                              <span className="px-2 py-0.5 bg-slate-100 dark:bg-navy-800 rounded-full text-xs text-slate-600 dark:text-slate-400">
+                              <span className="px-2 py-0.5 bg-c-surface-raised rounded-full text-xs text-c-text-secondary">
                                 {entry.category}
                               </span>
                             </div>
-                            <p className="font-medium text-slate-900 dark:text-white mt-1">
+                            <p className="font-medium text-c-text mt-1">
                               {entry.setting}
                             </p>
                           </div>
                         </div>
                         <ChevronDown
                           size={16}
-                          className={`text-slate-600 dark:text-slate-500 transition-transform ${expandedId === entry.id ? 'rotate-180' : ''}`}
+                          className={`text-c-text-secondary transition-transform ${expandedId === entry.id ? 'rotate-180' : ''}`}
                         />
                       </div>
                     </button>
 
                     {expandedId === entry.id && (
                       <div className="px-4 pb-4 pt-0">
-                        <div className="ml-[76px] p-4 bg-slate-50 dark:bg-navy-950 rounded-lg space-y-3">
+                        <div className="ml-[76px] p-4 bg-c-surface-raised rounded-lg space-y-3">
                           {entry.oldValue && (
                             <div className="flex gap-4">
-                              <span className="text-sm text-slate-500 dark:text-slate-400 w-20">
+                              <span className="text-sm text-c-text-muted w-20">
                                 Before:
                               </span>
                               <span className="text-sm text-danger-600 dark:text-danger-400 line-through">
@@ -271,7 +271,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
                           )}
                           {entry.newValue && (
                             <div className="flex gap-4">
-                              <span className="text-sm text-slate-500 dark:text-slate-400 w-20">
+                              <span className="text-sm text-c-text-muted w-20">
                                 After:
                               </span>
                               <span className="text-sm text-green-600 dark:text-green-400">
@@ -279,27 +279,27 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
                               </span>
                             </div>
                           )}
-                          <div className="flex gap-4 pt-2 border-t border-slate-200 dark:border-navy-700">
-                            <span className="text-sm text-slate-500 dark:text-slate-400 w-20">
+                          <div className="flex gap-4 pt-2 border-t border-c-border-subtle dark:border-navy-700">
+                            <span className="text-sm text-c-text-muted w-20">
                               Device:
                             </span>
-                            <span className="text-sm text-slate-700 dark:text-slate-300">
+                            <span className="text-sm text-c-text-secondary">
                               {entry.device}
                             </span>
                           </div>
                           <div className="flex gap-4">
-                            <span className="text-sm text-slate-500 dark:text-slate-400 w-20">
+                            <span className="text-sm text-c-text-muted w-20">
                               IP:
                             </span>
-                            <span className="text-sm text-slate-700 dark:text-slate-300">
+                            <span className="text-sm text-c-text-secondary">
                               {entry.ipAddress}
                             </span>
                           </div>
                           <div className="flex gap-4">
-                            <span className="text-sm text-slate-500 dark:text-slate-400 w-20">
+                            <span className="text-sm text-c-text-muted w-20">
                               Time:
                             </span>
-                            <span className="text-sm text-slate-700 dark:text-slate-300">
+                            <span className="text-sm text-c-text-secondary">
                               {formatTimestamp(entry.timestamp)}
                             </span>
                           </div>
@@ -324,24 +324,24 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{entries.length}</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Total Changes</p>
+            <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 text-center">
+              <p className="text-2xl font-bold text-c-text">{entries.length}</p>
+              <p className="text-sm text-c-text-muted">Total Changes</p>
             </div>
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+            <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 text-center">
+              <p className="text-2xl font-bold text-c-text">
                 {new Set(entries.map((e) => e.category)).size}
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Categories</p>
+              <p className="text-sm text-c-text-muted">Categories</p>
             </div>
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+            <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 text-center">
+              <p className="text-2xl font-bold text-c-text">
                 {
                   entries.filter((e) => new Date(e.timestamp) > new Date(Date.now() - 86400000))
                     .length
                 }
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Today</p>
+              <p className="text-sm text-c-text-muted">Today</p>
             </div>
           </div>
         </>

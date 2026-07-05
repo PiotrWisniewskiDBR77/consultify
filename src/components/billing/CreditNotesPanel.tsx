@@ -556,7 +556,7 @@ const ApplyCreditModal: React.FC<ApplyCreditModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/50 p-4">
       <div className="bg-white dark:bg-navy-800 rounded-xl shadow-xl max-w-md w-full p-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
           Apply Credit Note
@@ -699,7 +699,7 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({ onClose, 
   const totalAmount = formData.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/50 p-4">
       <div className="bg-white dark:bg-navy-800 rounded-xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
           Create Credit Note

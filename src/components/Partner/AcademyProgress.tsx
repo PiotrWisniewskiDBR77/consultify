@@ -273,7 +273,7 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
             {stats.requiredModules - stats.completedRequired !== 1 ? 's' : ''} to earn your
             certification
           </p>
-          <button className="mt-4 rounded-xl bg-primary-600 px-6 py-2 text-sm font-semibold text-white transition hover:bg-primary-700">
+          <button className="mt-4 rounded-xl bg-c-text px-6 py-2 text-sm font-semibold text-c-bg transition hover:bg-c-text-secondary">
             Continue Learning
           </button>
         </div>

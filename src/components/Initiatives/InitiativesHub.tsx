@@ -6,6 +6,7 @@
  */
 
 import {
+  Activity,
   AlertTriangle,
   Archive,
   BarChart3,
@@ -37,6 +38,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, shouldAllowDemoData } from '@/services/api';
+import { API_URL, getHeaders } from '@/services/api/baseClient';
 import {
   V8PlanningApi,
   type V8PlanningDecisionChain,
@@ -54,9 +56,14 @@ import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 import { ACTIVE_STATUSES, ALL_STATUSES } from '@/utils/initiativeHelpers';
 import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
+import { buildInitiativeDeepLink, readInitiativeDeepLinkId } from '@/utils/initiativeDeepLink';
+import { InitiativeObservabilityPanel } from './InitiativeObservabilityPanel';
+import { CandidatesPanel, type AcceptCandidatePayload } from './CandidatesPanel';
+import PortfolioHealthView from './PortfolioHealthView';
 
 import { usePortfolioStore } from '../../store/portfolioSlice';
 import { useAppStore } from '../../store/useAppStore';
+import { useInitiativeRefreshStore } from '../../store/useInitiativeRefreshStore';
 import { InitiativeStatus, PortfolioFilters, PortfolioInitiative } from '../../types';
 // Detail views
 import { DecisionDetailView } from '../MyWork/DecisionDetailView';
@@ -69,12 +76,15 @@ import { PortfolioListView } from '../Portfolio/PortfolioListView';
 // ModuleHub components
 import {
   FilterChip,
-  HubWorkAreaLoading,
   ModuleHub,
   ModuleTab,
   OpenDocument,
   ViewMode,
 } from '../shared/ModuleHub';
+import {
+  EmptyState as SharedEmptyState,
+  LoadingState as SharedLoadingState,
+} from '@/components/shared/states';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { Banner } from '../shared/Banner';
 import {
@@ -145,7 +155,7 @@ const ALLOWED_STATUSES: InitiativeStatus[] =
 
 // Subtle "coming soon" badge (task #11) for non-functional CTAs. Neutral, app-consistent.
 const COMING_SOON_BADGE =
-  'ml-1.5 inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-slate-500 dark:bg-white/[0.06] dark:text-slate-400';
+  'ml-1.5 inline-flex items-center rounded-full bg-c-surface-raised px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-c-text-muted';
 
 // D1.1: Initiative type/level — determines governance complexity
 // Downgrade blocked, upgrade possible
@@ -176,7 +186,7 @@ export const INITIATIVE_LEVELS: {
     id: 'strategic',
     label: 'Strategic Program',
     description: 'Cross-functional program. 3-12 months, multiple teams, executive sponsor.',
-    color: 'text-primary-500 bg-primary-500/10 border-primary-500/30',
+    color: 'text-violet-500 bg-violet-500/10 border-violet-500/30',
     icon: '🎯',
   },
   {
@@ -394,6 +404,22 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           });
           // Governed V8 Planning read succeeded — clear any degraded state.
           setV8PlanningDegraded(false);
+          // Base-data fix: a V8-enabled org with ZERO governed initiatives still
+          // returns an empty (non-throwing) portfolio — so an initiative created
+          // via the legacy endpoint would never appear. When the governed list is
+          // empty, cross-check the legacy endpoint and use it if it has rows.
+          // (No-op for V8 orgs that already have governed initiatives.)
+          if (!(response.initiatives || []).length) {
+            try {
+              const legacy = await Api.getInitiatives(currentProjectId || undefined);
+              const legacyList = Array.isArray(legacy)
+                ? legacy
+                : (legacy as any)?.initiatives || [];
+              if (legacyList.length) response = { initiatives: legacyList };
+            } catch {
+              /* keep the empty governed result */
+            }
+          }
         } catch {
           // L-05: governed V8 Planning is unavailable (env-off / org not
           // V8-enabled / 404). Surface a degraded banner instead of silently
@@ -480,6 +506,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     }
   }, [refreshTrigger, fetchData]);
 
+  // F4.1 — global signal from useInitiativeRefreshStore (bumped by every mutation from initiativeWriteTruth)
+  const sharedRefreshVersion = useInitiativeRefreshStore((s) => s.version);
+  useEffect(() => {
+    if (sharedRefreshVersion > 0) {
+      fetchData(true);
+    }
+  }, [sharedRefreshVersion, fetchData]);
+
   useEffect(() => {
     const loadUsers = async () => {
       try {
@@ -525,7 +559,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   // Available view modes — hide when Analysis tab is active
   const availableViewModes: ViewMode[] =
-    activeTab === 'analysis' ? [] : ['table', 'kanban', 'timeline', 'grid'];
+    activeTab === 'analysis' ||
+    activeTab === 'observability' ||
+    activeTab === 'candidates' ||
+    activeTab === 'portfolioHealth'
+      ? []
+      : ['table', 'kanban', 'timeline', 'grid'];
 
   // V3-F02: Portfolio Analysis tab + main portfolio tab
   const tabs = useMemo(
@@ -539,6 +578,24 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         id: 'analysis' as ModuleTab,
         label: t('initiatives.tabs.analysis', 'Analysis'),
         icon: <BarChart3 size={16} />,
+      },
+      {
+        // UNIFICATION E1/E2 — chain observability (lineage + funnel)
+        id: 'observability' as ModuleTab,
+        label: t('initiatives.tabs.observability', 'Observability'),
+        icon: <GitBranch size={16} />,
+      },
+      {
+        // F2 — candidates inbox (AI suggests initiatives from discovery)
+        id: 'candidates' as ModuleTab,
+        label: t('initiatives.tabs.candidates', 'Candidates'),
+        icon: <Sparkles size={16} />,
+      },
+      {
+        // F4 — portfolio health (MECE / gaps / balance / duplicates)
+        id: 'portfolioHealth' as ModuleTab,
+        label: t('initiatives.tabs.portfolioHealth', 'Portfolio Health'),
+        icon: <Activity size={16} />,
       },
     ],
     [t]
@@ -766,8 +823,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   // Deep link: open initiative preview via URL params
   // Supported: /initiatives?open=<initiativeId>&mode=drawer|doc
+  // USPOJNIENIE D1 — odczyt przez kanoniczny helper (jeden param `open`).
   useEffect(() => {
-    const openId = searchParams.get('open');
+    const openId = readInitiativeDeepLinkId(searchParams.toString());
     if (!openId) {
       handledDeepLinkOpenRef.current = null;
       return;
@@ -804,7 +862,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         );
 
         if (!initiative?.id) {
-          toast.error(t('initiatives.toast.notFound', 'Nie znaleziono inicjatywy'));
+          toast.error(t('initiatives.toast.notFound', 'Initiative not found'));
           return;
         }
 
@@ -827,7 +885,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         toast.error(
           e?.response?.data?.error ||
             e?.message ||
-            t('initiatives.toast.openFailed', 'Nie udało się otworzyć inicjatywy')
+            t('initiatives.toast.openFailed', 'Failed to open initiative')
         );
       } finally {
         // Clear only deep-link params (preserve others if any)
@@ -901,7 +959,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             document.id === initiativeId ? { ...document, status: newStatus as any } : document
           )
         );
-        toast.success(t('initiatives.toast.statusUpdated', 'Status zaktualizowany'));
+        toast.success(t('initiatives.toast.statusUpdated', 'Status updated'));
         return;
       }
       try {
@@ -913,7 +971,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           toast.error(
             t(
               'initiatives.toast.statusNotAllowed',
-              'Nie masz uprawnień lub bramka nie jest dostępna na tym etapie.'
+              'You do not have permission or the gate is not available at this stage.'
             ),
             { duration: 5000 }
           );
@@ -924,7 +982,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           toast.error(
             t(
               'initiatives.toast.gateBlockedHub',
-              'Nie można przejść dalej — brakuje elementów blokujących:\n• {{items}}',
+              'Cannot proceed — blocking items are missing:\n• {{items}}',
               { items: list || t('common.missing', 'Missing required items') }
             ),
             { duration: 6500 }
@@ -963,12 +1021,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               : document
           )
         );
-        toast.success(t('initiatives.toast.statusUpdated', 'Status zaktualizowany'));
+        toast.success(t('initiatives.toast.statusUpdated', 'Status updated'));
         fetchData(true);
       } catch (error: any) {
         toast.error(
           error?.response?.data?.error ||
-            t('initiatives.toast.statusUpdateFailed', 'Nie udało się zaktualizować statusu')
+            t('initiatives.toast.statusUpdateFailed', 'Failed to update status')
         );
       }
     },
@@ -998,7 +1056,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           toast.error(
             t(
               'initiatives.toast.downgradeBlocked',
-              'Obniżenie poziomu jest zablokowane. Można jedynie podwyższyć poziom inicjatywy.'
+              'Downgrading the level is blocked. You can only upgrade an initiative level.'
             )
           );
           return;
@@ -1049,7 +1107,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           )
         );
       } catch (error: any) {
-        toast.error(t('initiatives.toast.updateFailed', 'Nie udało się zaktualizować'));
+        toast.error(t('initiatives.toast.updateFailed', 'Failed to update'));
       }
     },
     [isPilotParticipant, setOpenDocuments, t]
@@ -1164,8 +1222,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       const name = String(initiative.name || initiative.title || '').trim();
       const shouldProceed = window.confirm(
         t('initiatives.confirmDelete', {
-          name: name || t('initiatives.thisInitiative', 'tę inicjatywę'),
-          defaultValue: 'Trwale usunąć „{{name}}"? Tej operacji nie można cofnąć.',
+          name: name || t('initiatives.thisInitiative', 'this initiative'),
+          defaultValue: 'Permanently delete "{{name}}"? This action cannot be undone.',
         })
       );
       if (!shouldProceed) return;
@@ -1250,11 +1308,149 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     if (showBulkModal) setShowBulkModal(false);
   }, [isPilotParticipant, showBulkModal, showInitiativeWizard, showNewModal]);
 
+  // F5 — portfolio-level "Make material": POST /initiatives/portfolio/materialize
+  // and download the returned blob (deck/report/table). Best-effort UX with toasts.
+  const [isMaterializing, setIsMaterializing] = useState(false);
+  const handleMaterializePortfolio = useCallback(
+    async (format: 'deck' | 'report' | 'table') => {
+      if (isMaterializing) return;
+      setIsMaterializing(true);
+      const toastId = toast.loading(
+        t('initiatives.materialize.working', 'Generating material from the portfolio…')
+      );
+      try {
+        const res = await fetch(`${API_URL}/initiatives/portfolio/materialize`, {
+          method: 'POST',
+          headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ format }),
+        });
+        if (!res.ok) {
+          let message = `HTTP ${res.status}`;
+          try {
+            const body = await res.json();
+            message = body?.message || body?.error || message;
+          } catch {
+            /* non-JSON error body */
+          }
+          throw new Error(message);
+        }
+        const blob = await res.blob();
+        const disposition = res.headers.get('Content-Disposition') || '';
+        const match = /filename="?([^"]+)"?/i.exec(disposition);
+        const filename = match?.[1] || `portfolio-${format}`;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast.success(t('initiatives.materialize.done', 'Material ready'), { id: toastId });
+      } catch (e: any) {
+        toast.error(
+          e?.message || t('initiatives.materialize.failed', 'Failed to generate material'),
+          { id: toastId }
+        );
+      } finally {
+        setIsMaterializing(false);
+      }
+    },
+    [isMaterializing, t]
+  );
+
+  // F2 — accept candidate: create a DRAFT initiative via the existing create flow
+  // (no dependency on a not-yet-built generator endpoint). The candidate's
+  // rationale/brief seeds the summary; source lineage is stamped when available.
+  const handleAcceptCandidate = useCallback(
+    async (payload: AcceptCandidatePayload) => {
+      if (isPilotParticipant) {
+        dispatchPilotAccessBlocked({ href: '/initiatives' });
+        return;
+      }
+      try {
+        // F2→F1 anti-duplicate: if accept created an initiative server-side (and filled it
+        // via the generator), do NOT create a second one — navigate to the returned initiativeId.
+        let createdId: string | null;
+        let truth: { initiative?: unknown } = {};
+        if (payload.initiativeId) {
+          createdId = payload.initiativeId;
+        } else {
+          const r = await createInitiativeWriteTruth({
+            projectId: currentProjectId || undefined,
+            title: payload.title.trim(),
+            axis: 'operational',
+            level: 'standard',
+            summary: (payload.brief || payload.rationale || '').trim() || undefined,
+            status: 'DRAFT',
+            sourceType: payload.sourceType || undefined,
+            sourceId: payload.sourceId || undefined,
+          });
+          createdId = r.createdId;
+          truth = r.truth;
+        }
+        toast.success(t('initiatives.form.initiativeCreated', 'Initiative created'));
+        if (createdId) {
+          try {
+            const full = truth.initiative || (await V8PlanningApi.getInitiative(createdId));
+            const normalized = normalizeInitiativeForPortfolio(
+              full as Record<string, any>,
+              createdId
+            );
+            if (normalized) {
+              setAllInitiatives((prev) => upsertPortfolioInitiative(prev, normalized));
+              setInitiatives((prev) => upsertPortfolioInitiative(prev, normalized));
+              const revealState = getCreatedInitiativeRevealState(
+                { scope, activeStatusFilter },
+                normalized.status
+              );
+              setScope(revealState.scope);
+              setActiveStatusFilter(revealState.activeStatusFilter);
+              setActiveTab('list');
+              handleInitiativeClick(normalized);
+              return;
+            }
+          } catch {
+            /* fall through to refetch */
+          }
+        }
+        await fetchData(true);
+      } catch (e: any) {
+        toast.error(
+          e?.response?.data?.error ||
+            e?.message ||
+            t('initiatives.form.createFailed', 'Failed to create initiative')
+        );
+      }
+    },
+    [
+      activeStatusFilter,
+      currentProjectId,
+      fetchData,
+      handleInitiativeClick,
+      isPilotParticipant,
+      scope,
+      t,
+    ]
+  );
+
   // ============================================
   // CONTENT RENDERING - Original Portfolio Components
   // ============================================
 
   const renderContent = () => {
+    // USPOJNIENIE E1/E2: Observability tab — lineage + funnel (read-only)
+    if (activeTab === 'observability') {
+      return <InitiativeObservabilityPanel initialInitiativeId={previewInitiativeId} />;
+    }
+    // F2: Candidates inbox — AI proposes initiatives from discovery (insights/assessments/audits).
+    if (activeTab === 'candidates') {
+      return <CandidatesPanel onAccept={handleAcceptCandidate} />;
+    }
+    // F4: Portfolio health — MECE coverage / gaps / balance / duplicate clusters (read-only).
+    if (activeTab === 'portfolioHealth') {
+      return <PortfolioHealthView />;
+    }
     // V3-F02: Analysis tab — portfolio quality gate
     if (activeTab === 'analysis') {
       return (
@@ -1343,7 +1539,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               </button>
               <button
                 onClick={() => setLoadError(null)}
-                className="h-9 rounded-lg border border-white/20 px-3 text-sm text-slate-200 hover:bg-white/10"
+                className="h-9 rounded-lg border border-c-border px-3 text-sm text-c-text-secondary hover:bg-c-surface-raised"
               >
                 {t('initiatives.hub.dismiss')}
               </button>
@@ -1354,29 +1550,30 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     }
 
     if (isLoading) {
-      return <HubWorkAreaLoading />;
+      return (
+        <div className="p-6">
+          <SharedLoadingState template="list" rows={6} />
+        </div>
+      );
     }
 
     if (initiatives.length === 0) {
       return (
-        <div className="flex items-center justify-center h-full text-slate-500">
-          <div className="text-center">
-            <Lightbulb className="w-12 h-12 mx-auto mb-4 text-primary-400/50" />
-            <p className="text-lg text-slate-900 dark:text-white">{t('initiatives.empty.title')}</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-              {t('initiatives.empty.description')}
-            </p>
-            {!isPilotParticipant && (
-              <button
-                onClick={() => setShowNewModal(true)}
-                className="mt-6 px-4 py-2 bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors duration-150"
-              >
-                <Plus size={14} className="inline mr-2" />
-                {t('initiatives.form.newInitiative')}
-              </button>
-            )}
-          </div>
-        </div>
+        <SharedEmptyState
+          variant="new"
+          icon={Lightbulb}
+          title={t('initiatives.empty.title')}
+          description={t('initiatives.empty.description')}
+          primaryAction={
+            isPilotParticipant
+              ? undefined
+              : {
+                  label: t('initiatives.form.newInitiative'),
+                  onClick: () => setShowNewModal(true),
+                  icon: Plus,
+                }
+          }
+        />
       );
     }
 
@@ -1469,8 +1666,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               : 'Summarize this initiative in 5 bullets and propose 3 next steps.'
           )
         }
-        // B1 (deliverables): intencja dokumentowa łapana przez intercept czatu;
-        // sourceRefs inicjatywy płyną z workspaceContext (openChatWithContext).
+        // B1 (deliverables): document intent captured by the chat intercept;
+        // the initiative's sourceRefs flow from workspaceContext (openChatWithContext).
         onMakeDocument={() =>
           openAiChat(
             item,
@@ -1486,10 +1683,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       <InitiativePreviewV3Footer
         initiative={mapToPreviewModel(item)}
         tasksCount={Array.isArray((item as any).tasks) ? (item as any).tasks.length : undefined}
-        // UWAGA #15 (TOP): ujawnij CTA „Otwórz" z board/preview — wcześniej
-        // onOpenFull nie był podawany, więc przycisku w ogóle nie było i pełny
-        // widok inicjatywy (InitiativeDocumentView) był nieosiągalny z board-preview.
-        // Wpinamy kanoniczną ścieżkę otwarcia dokumentu (ta sama, której używa
+        // NOTE #15 (TOP): expose the "Open" CTA from board/preview — previously
+        // onOpenFull was not passed, so the button did not exist at all and the full
+        // initiative view (InitiativeDocumentView) was unreachable from board-preview.
+        // We wire in the canonical document-open path (the same one used by
         // deep-link ?open=<id>&mode=doc).
         onOpenFull={() => handleOpenInitiativeDocument(item)}
         onOpenChat={(prompt) => openAiChat(item, prompt)}
@@ -1497,8 +1694,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         extraActionsAfterSlot={
           <button
             type="button"
-            onClick={() => navigate(`/economics?tab=models&initiativeId=${item.id}`)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition"
+            onClick={() => navigate(buildInitiativeDeepLink(item.id, { module: 'economics', tab: 'models' }))}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition"
           >
             {i18n.language?.startsWith('pl') ? 'Finanse' : 'Finance'}
           </button>
@@ -1573,9 +1770,21 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   ))}
                 </div>
                 {searchedInitiatives.length === 0 && (
-                  <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
-                    {t('initiatives.hub.noInitiativesFound', 'No initiatives found')}
-                  </div>
+                  <SharedEmptyState
+                    variant="filter"
+                    title={t('initiatives.hub.noInitiativesFound', 'No initiatives found')}
+                    description={t(
+                      'initiatives.hub.noInitiativesFoundDesc',
+                      'No initiatives match the current filters. Try widening the search or clearing filters.'
+                    )}
+                    primaryAction={{
+                      label: t('common.clearFilters', 'Clear filters'),
+                      onClick: () => {
+                        setSearchQuery('');
+                        setActiveStatusFilter(null);
+                      },
+                    }}
+                  />
                 )}
               </div>
             </TableWithPreviewLayout>
@@ -1634,7 +1843,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // Active / All scope toggle (matches agreed UI spec)
   const scopeToggle = (
     <div
-      className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+      className="inline-flex items-center rounded-full border border-c-border-subtle bg-c-surface-raised p-0.5"
       role="radiogroup"
       aria-label={t('initiatives.scope.label', 'Scope')}
     >
@@ -1649,10 +1858,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             setScope(opt.id);
             if (opt.id === 'active') setActiveStatusFilter(null);
           }}
-          className={`inline-flex items-center justify-center h-8 px-3 rounded-full text-[11px] font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+          className={`inline-flex items-center justify-center h-8 px-3 rounded-full text-[11px] font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-c-bg ${
             scope === opt.id
-              ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-              : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+              ? 'bg-c-surface text-c-text shadow-sm border border-c-border-subtle'
+              : 'text-c-text-secondary hover:bg-c-surface-raised'
           }`}
           title={
             opt.id === 'active'
@@ -1674,13 +1883,41 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     </div>
   );
 
+  // F5: show the portfolio-level "Make material" control only on portfolio-style
+  // tabs (not on candidates/health/observability where it would be out of context).
+  const showMaterializeControl =
+    activeTab !== 'candidates' &&
+    activeTab !== 'portfolioHealth' &&
+    activeTab !== 'observability' &&
+    !activeDocumentId;
+
   const rightControls = (
     <div className="flex items-center gap-2">
       {scopeToggle}
+      {showMaterializeControl && (
+        <button
+          type="button"
+          onClick={() => void handleMaterializePortfolio('deck')}
+          disabled={isMaterializing}
+          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          title={
+            i18n.language?.startsWith('pl')
+              ? 'Zrób materiał z portfela (prezentacja)'
+              : 'Make a deck from the portfolio'
+          }
+        >
+          {isMaterializing ? (
+            <RefreshCw size={13} className="animate-spin" />
+          ) : (
+            <Sparkles size={13} />
+          )}
+          {t('initiatives.materialize.cta', 'Make material')}
+        </button>
+      )}
       <button
         type="button"
         onClick={() => navigate(ROUTES.ROI)}
-        className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11px] font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
+        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors"
         title={i18n.language?.startsWith('pl') ? 'Widok ROI i realizacji wartości' : 'ROI & Value Realization'}
       >
         <TrendingUp size={13} />
@@ -1712,7 +1949,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     {
       id: 'resources',
       labelKey: 'initiatives.analysis.resources.title',
-      icon: <Users size={14} className="text-primary-400" />,
+      icon: <Users size={14} className="text-c-text-secondary" />,
     },
     {
       id: 'feasibility',
@@ -1786,7 +2023,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // Canon §15.3 Formula 2 — MULTI-SELECT bulk action bar.
   // When ≥1 row is selected in table view, Menu 3 becomes a bulk bar:
   // "N selected · Clear" + framed action buttons (real where wired, disabled
-  // "Wkrótce (backend)" where the endpoint doesn't exist yet — never omitted).
+  // "Coming soon (backend)" where the endpoint doesn't exist yet — never omitted).
   const isBulkMode =
     viewMode === 'table' &&
     !activeDocumentId &&
@@ -1805,7 +2042,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const bulkBarContent = (
     <div className="flex items-center justify-between gap-2">
       <div className="inline-flex items-center gap-2">
-        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+        <span className="text-xs font-semibold text-c-text-secondary">
           {t('initiatives.bulk.selected', {
             count: selectedIds.size,
             defaultValue: '{{count}} selected',
@@ -1814,7 +2051,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         <button
           type="button"
           onClick={handleClearSelection}
-          className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]"
+          className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
         >
           <X className="h-3.5 w-3.5" />
           {t('common.clear', 'Clear')}
@@ -1858,7 +2095,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               toast.error(
                 t(
                   'initiatives.bulk.archiveIneligible',
-                  'Tylko zakończone/anulowane można archiwizować'
+                  'Only done/cancelled initiatives can be archived'
                 )
               );
               return;
@@ -1874,15 +2111,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           <Archive className="h-3.5 w-3.5" />
           {t('common.archive', 'Archive')}
         </button>
-        {/* AI: Analizuj zaznaczenie — contextual, retained */}
+        {/* AI: Analyze selection — contextual, retained */}
         <button
           type="button"
           onClick={() => setShowBulkModal(true)}
           className={MENU_3_ACTION_NEUTRAL}
-          title={t('portfolio.ai.analyzeSelection', 'AI: Analizuj zaznaczenie')}
+          title={t('portfolio.ai.analyzeSelection', 'AI: Analyze selection')}
         >
           <Sparkles className="h-3.5 w-3.5" />
-          {t('portfolio.ai.analyzeSelection', 'AI: Analizuj zaznaczenie')}
+          {t('portfolio.ai.analyzeSelection', 'AI: Analyze selection')}
         </button>
         {/* Delete — danger, no backend endpoint (DP-5: hidden unless stub flag on) */}
         {showBulkStubActions && (
@@ -1925,7 +2162,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               onClick={() => setActiveStatusFilter(isActive ? null : s)}
               className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
             >
-              <span className={`w-2 h-2 rounded-full ${meta?.dotColor || 'bg-slate-400'}`} />
+              <span className={`w-2 h-2 rounded-full ${meta?.dotColor || 'bg-c-text-muted'}`} />
               <span>{meta?.label || s}</span>
               <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
                 {count}
@@ -1980,7 +2217,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             <button
               type="button"
               onClick={() => dispatchPilotAccessBlocked({ href: '/initiatives' })}
-              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-slate-200 dark:bg-white/10 text-slate-400 dark:text-white/30 cursor-not-allowed"
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-c-surface-raised text-c-text-muted cursor-not-allowed"
               title={t('initiatives.pilot.createLocked', 'Available in the next project phase')}
             >
               <span>{t('initiatives.form.newInitiative')}</span>
@@ -1989,7 +2226,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             <button
               type="button"
               onClick={() => setShowInitiativeWizard(true)}
-              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors duration-150"
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-c-accent text-white hover:opacity-90 transition-colors duration-150"
             >
               <span>{t('initiatives.form.newInitiative')}</span>
             </button>
@@ -2051,7 +2288,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             );
             setScope(revealState.scope);
             setActiveStatusFilter(revealState.activeStatusFilter);
-            setPreviewInitiativeId(first.id);
+            if (created.length === 1) {
+              // M13 flow redesign: a single freshly created initiative opens
+              // straight in its DOCUMENT (not just the list preview).
+              handleOpenInitiativeDocument(first);
+            } else {
+              setPreviewInitiativeId(first.id);
+            }
           }
         }}
       />
@@ -2069,20 +2312,20 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       {/* New Initiative Modal — D1.1: includes type/level selector */}
       {showNewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg font-semibold text-c-text mb-4">
               {t('initiatives.form.createNew')}
             </h2>
             <div className="space-y-4">
               {/* Title */}
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.form.titleRequired')}
                 </label>
                 <input
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
                   placeholder={t('initiatives.form.titlePlaceholder')}
                   autoFocus
                 />
@@ -2090,7 +2333,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
               {/* D1.1: Initiative Type/Level selector */}
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-2">
+                <label className="block text-xs text-c-text-muted mb-2">
                   Initiative Type / Level *
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -2100,11 +2343,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                       type="button"
                       onClick={() => setNewLevel(level.id)}
                       className={`
-                        relative p-3 rounded-lg border text-left transition-all
+                        relative p-3 rounded-lg border text-left transition-[background-color,border-color,box-shadow] duration-200
                         ${
                           newLevel === level.id
                             ? `${level.color} border-current ring-1 ring-current/30`
-                            : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-slate-500'
+                            : 'bg-c-bg border-c-border-subtle text-c-text-muted hover:border-c-border-strong'
                         }
                       `}
                     >
@@ -2123,13 +2366,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
               {/* Axis */}
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.form.axis')}
                 </label>
                 <select
                   value={newAxis}
                   onChange={(e) => setNewAxis(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
                 >
                   <option value="operational">{t('initiatives.axis.operational')}</option>
                   <option value="strategic">{t('initiatives.axis.strategic')}</option>
@@ -2140,13 +2383,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
               {/* Summary */}
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.form.summary')}
                 </label>
                 <textarea
                   value={newSummary}
                   onChange={(e) => setNewSummary(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white resize-none"
+                  className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text resize-none"
                   rows={3}
                   placeholder={t('initiatives.form.summaryPlaceholder')}
                 />
@@ -2154,13 +2397,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
               {/* D1.1: Level info callout */}
               {newLevel && (
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600">
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-c-surface-raised border border-c-border">
                   <Shield
                     size={14}
-                    className="text-slate-500 dark:text-slate-400 mt-0.5 flex-shrink-0"
+                    className="text-c-text-muted mt-0.5 flex-shrink-0"
                   />
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
-                    <span className="font-medium text-slate-700 dark:text-slate-300">
+                  <div className="text-xs text-c-text-muted">
+                    <span className="font-medium text-c-text-secondary">
                       {INITIATIVE_LEVELS.find((l) => l.id === newLevel)?.label}
                     </span>
                     {' — '}
@@ -2172,7 +2415,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                     {newLevel === 'transformation' &&
                       'Board-level governance. Full charter, steering committee, gate reviews.'}
                     <br />
-                    <span className="text-slate-500 italic">
+                    <span className="text-c-text-muted italic">
                       Level can be upgraded later but not downgraded.
                     </span>
                   </div>
@@ -2246,7 +2489,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                           fetchData(true);
                         }
 
-                        handleInitiativeClick(normalized);
+                        // M13 flow redesign: land in the initiative DOCUMENT
+                        // right after creation (draft with clear next steps).
+                        handleOpenInitiativeDocument(normalized);
                       } else {
                         fetchData(true);
                       }
@@ -2264,14 +2509,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   setIsCreating(false);
                 }
               }}
-              className="w-full mt-6 py-2 text-sm text-slate-900 dark:text-white bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors rounded-lg disabled:opacity-50"
+              className="w-full mt-6 py-2 text-sm text-white bg-c-accent hover:opacity-90 transition-colors rounded-lg disabled:opacity-50"
             >
               {isCreating ? t('initiatives.form.creating') : t('initiatives.form.create')}
             </button>
             <button
               disabled={isCreating}
               onClick={() => setShowNewModal(false)}
-              className="w-full mt-2 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-300 dark:border-navy-600 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 disabled:opacity-50"
+              className="w-full mt-2 py-2 text-sm text-c-text-muted hover:text-c-text transition-colors border border-c-border rounded-lg hover:bg-c-surface-raised disabled:opacity-50"
             >
               {t('initiatives.form.cancel')}
             </button>
@@ -2281,22 +2526,22 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
       {showBulkModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-lg">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 w-full max-w-lg">
+            <h2 className="text-lg font-semibold text-c-text mb-4">
               {t('initiatives.bulkEdit.title')}
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+            <p className="text-sm text-c-text-muted mb-4">
               {t('initiatives.bulkEdit.selectedCount', { count: selectedIds.size })}
             </p>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.bulkEdit.status')}
                 </label>
                 <select
                   value={bulkStatus}
                   onChange={(e) => setBulkStatus(e.target.value as InitiativeStatus)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
                 >
                   <option value="">{t('initiatives.bulkEdit.noChange')}</option>
                   {ALLOWED_STATUSES.map((s) => (
@@ -2307,13 +2552,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.bulkEdit.priority')}
                 </label>
                 <select
                   value={bulkPriority}
                   onChange={(e) => setBulkPriority(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
                 >
                   <option value="">{t('initiatives.bulkEdit.noChange')}</option>
                   <option value="CRITICAL">{t('initiatives.priority.critical')}</option>
@@ -2323,13 +2568,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.bulkEdit.businessOwner')}
                 </label>
                 <select
                   value={bulkOwnerBusinessId}
                   onChange={(e) => setBulkOwnerBusinessId(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
                 >
                   <option value="">{t('initiatives.bulkEdit.noChange')}</option>
                   {users.map((user) => (
@@ -2340,13 +2585,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.bulkEdit.executionOwner')}
                 </label>
                 <select
                   value={bulkOwnerExecutionId}
                   onChange={(e) => setBulkOwnerExecutionId(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
                 >
                   <option value="">{t('initiatives.bulkEdit.noChange')}</option>
                   {users.map((user) => (
@@ -2360,13 +2605,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setShowBulkModal(false)}
-                className="px-4 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                className="px-4 py-2 text-sm text-c-text-muted hover:text-c-text"
               >
                 {t('initiatives.form.cancel')}
               </button>
               <button
                 onClick={handleBulkApply}
-                className="px-4 py-2 text-sm text-slate-900 dark:text-white bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg"
+                className="px-4 py-2 text-sm text-white bg-c-accent hover:opacity-90 rounded-lg"
               >
                 {t('initiatives.bulkEdit.applyChanges')}
               </button>

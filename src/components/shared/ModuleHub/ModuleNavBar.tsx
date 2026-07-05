@@ -78,6 +78,8 @@ interface ModuleNavBarProps {
   // For Assessment: single "New Assessment" button
   onNewItem?: () => void;
   newItemLabel?: string;
+  // Optional stable test id for the primary "New item" CTA button.
+  newItemTestId?: string;
   // Optional: custom Primary CTA node (keeps canonical slot in topbar)
   primaryCta?: React.ReactNode;
   // For Discovery Tools: 4 category buttons
@@ -112,26 +114,33 @@ interface ModuleNavBarProps {
 }
 
 /**
- * VISUAL_STANDARD.md §5.5 — main tabs use the ONE app-wide underline pattern:
- * active = text-primary + 2px bottom bar in the text color (neutral, NOT
- * crimson — red budget §2.3); inactive = muted text, transparent underline,
- * hover only brightens the text. No pill background, no border, no tint.
+ * Menu 2 (ModuleTabs) — PILL pattern (decyzja Piotra 2026-07-02: „ramki
+ * półokrągłe jak w My Work, tak ma być"). Zastępuje wcześniejszy underline
+ * (VISUAL_STANDARD §5.5) — spójne z My Work MENU_2_TAB_* i ARTIFACT_ANATOMY §9.2③.
+ * active = wypełniony pill z ramką (neutral, NIE crimson); inactive = przezroczysty,
+ * hover rozjaśnia tło. Zgodne z red-budget (zero crimson).
  */
 const TAB_BASE = `
-  inline-flex items-center gap-2 h-9 px-3.5 text-sm font-medium
-  border-b-2 transition-colors duration-150
+  inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-sm font-medium
+  transition-colors duration-150
 `;
 
+// UI-T6/T9: inactive tabs carry a visible pill frame, matching the My Work
+// canon (MENU_2_TAB_INACTIVE in ModuleMenu3.tsx). Piotr Session 3: Tools /
+// Assessment / Initiatives / Materiały tabs looked like bare labels because
+// the inactive border was transparent — every tab now reads as a real pill.
 const TAB_INACTIVE = `
   ${TAB_BASE}
-  border-transparent
+  border border-slate-200/70 dark:border-white/[0.06]
+  bg-white/70 dark:bg-white/[0.04]
   text-c-text-muted
-  hover:text-c-text
+  hover:text-c-text hover:bg-slate-100/70 dark:hover:bg-white/[0.06]
 `;
 
 const TAB_ACTIVE = `
   ${TAB_BASE}
-  border-navy-900 dark:border-white/80
+  border border-c-border
+  bg-c-surface-raised
   text-c-text
 `;
 
@@ -140,14 +149,19 @@ const BUTTON_BASE = `
   transition-colors duration-150
 `;
 
+// UI-T6/T9: second-row buttons also read as bare labels — give them the same
+// visible pill frame as the tab row (My Work MENU_2_TAB_INACTIVE canon).
 const BUTTON_INACTIVE = `
   ${BUTTON_BASE}
+  border border-slate-200/70 dark:border-white/[0.06]
+  bg-white/70 dark:bg-white/[0.04]
   text-slate-700 dark:text-slate-300
-  hover:bg-slate-100/70 dark:hover:bg-white/[0.05]
+  hover:bg-slate-100/70 dark:hover:bg-white/[0.06]
 `;
 
 const BUTTON_ACTIVE = `
   ${BUTTON_BASE}
+  border border-c-border
   bg-slate-900/[0.07] text-slate-900 dark:bg-white/10 dark:text-slate-100
 `;
 
@@ -172,6 +186,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   commandRowRightContent,
   onNewItem,
   newItemLabel = 'New Item',
+  newItemTestId,
   primaryCta,
   categoryButtons,
   statusFilters,
@@ -494,6 +509,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
             <button
               type="button"
               onClick={onNewItem}
+              data-testid={newItemTestId}
               className="
                 inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium
                 bg-navy-900 text-white hover:bg-navy-800

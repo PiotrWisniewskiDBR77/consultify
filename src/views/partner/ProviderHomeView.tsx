@@ -110,12 +110,12 @@ const WelcomeHeroBanner: React.FC = () => {
     <div className="relative overflow-hidden rounded-xl bg-crimson-700 dark:bg-crimson-800 p-8 md:p-12">
       {/* Background decoration */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white dark:bg-navy-900 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-c-surface rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-crimson-300 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2" />
       </div>
 
       <div className="relative z-10 max-w-3xl">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white/90 text-sm font-medium mb-6">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-c-surface/20 text-white/90 text-sm font-medium mb-6">
           <Sparkles className="w-4 h-4" />
           {t('partner.hero.badge', 'Partner Program')}
         </div>
@@ -138,21 +138,21 @@ const WelcomeHeroBanner: React.FC = () => {
         <div className="flex flex-wrap gap-4">
           <button
             onClick={() => navigate(ROUTES.PARTNER.ONBOARDING)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-navy-900 text-crimson-700 dark:text-crimson-600 font-semibold rounded-lg hover:bg-crimson-50 dark:hover:bg-white/90 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-c-surface text-crimson-700 dark:text-crimson-600 font-semibold rounded-lg hover:bg-crimson-50 dark:hover:bg-c-surface/90 transition-colors"
           >
             {t('partner.hero.getStarted', 'Open onboarding')}
             <ArrowRight className="w-5 h-5" />
           </button>
           <button
             onClick={() => navigate(PARTNER_DOCS.overview.href)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-slate-50/50 dark:bg-navy-950/30 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors border border-white/20"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-c-bg/50 dark:bg-navy-950/30 text-white font-semibold rounded-lg hover:bg-c-surface/20 transition-colors border border-white/20"
           >
             <Play className="w-5 h-5" />
             {t('partner.hero.watchOverview', 'Open partner docs')}
           </button>
           <button
             onClick={() => navigate(ROUTES.LEGAL.CONTACT)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-transparent text-white font-semibold rounded-lg hover:bg-white/10 transition-colors border border-white/25"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-transparent text-white font-semibold rounded-lg hover:bg-c-surface/10 transition-colors border border-white/25"
           >
             <MessageCircle className="w-5 h-5" />
             {t('partner.hero.customTerms', 'Discuss custom terms')}
@@ -201,7 +201,7 @@ const ValueCardsSection: React.FC = () => {
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
           {t('partner.value.title', 'Why Partner with Consultify?')}
         </h2>
-        <p className="text-slate-600 dark:text-slate-400">
+        <p className="text-c-text-secondary">
           {t('partner.value.subtitle', 'Everything you need to grow your transformation practice')}
         </p>
       </div>
@@ -210,7 +210,7 @@ const ValueCardsSection: React.FC = () => {
         {valueCards.map((card, index) => (
           <div
             key={index}
-            className="group bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6 hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-600 transition-all duration-300"
+            className="group bg-c-surface rounded-xl border border-c-border-subtle p-6 hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-600 transition-all duration-300"
           >
             {/* Custom illustration */}
             <div className="w-24 h-24 mb-4 rounded-xl overflow-hidden group-hover:scale-105 transition-transform">
@@ -221,7 +221,7 @@ const ValueCardsSection: React.FC = () => {
               {card.title}
             </h3>
 
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">{card.description}</p>
+            <p className="text-sm text-c-text-secondary mb-3">{card.description}</p>
 
             <span className="inline-flex items-center gap-1 text-sm font-medium text-primary-600 dark:text-primary-400">
               <Star className="w-4 h-4" />
@@ -266,7 +266,7 @@ const BetaSuccessStories: React.FC = () => {
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
           {t('partner.beta.title', 'Early Adopters Already See Results')}
         </h2>
-        <p className="text-slate-600 dark:text-slate-400">
+        <p className="text-c-text-secondary">
           {t(
             'partner.beta.subtitle',
             'Our beta partners are transforming how they work with clients'
@@ -278,10 +278,10 @@ const BetaSuccessStories: React.FC = () => {
         {stories.map((story, index) => (
           <div
             key={index}
-            className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6"
+            className="bg-c-surface rounded-xl border border-c-border-subtle p-6"
           >
             <div className="flex items-start gap-4 mb-4">
-              <div className="w-16 h-16 rounded-lg overflow-hidden bg-white dark:bg-navy-700 shadow-sm flex-shrink-0">
+              <div className="w-16 h-16 rounded-lg overflow-hidden bg-c-surface shadow-sm flex-shrink-0">
                 <img
                   src={story.logo}
                   alt={story.company}
@@ -290,13 +290,13 @@ const BetaSuccessStories: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-navy-900 dark:text-white">{story.company}</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-c-text-muted">
                   {story.type} • {story.location}
                 </p>
               </div>
             </div>
 
-            <blockquote className="text-slate-600 dark:text-slate-300 italic mb-4 border-l-2 border-primary-400 pl-4">
+            <blockquote className="text-c-text-secondary italic mb-4 border-l-2 border-primary-400 pl-4">
               "{story.quote}"
             </blockquote>
 
@@ -309,7 +309,7 @@ const BetaSuccessStories: React.FC = () => {
                 {story.results.map((result, i) => (
                   <li
                     key={i}
-                    className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"
+                    className="flex items-center gap-2 text-sm text-c-text-secondary"
                   >
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                     {result}
@@ -318,7 +318,7 @@ const BetaSuccessStories: React.FC = () => {
               </ul>
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500">
+            <div className="flex items-center gap-2 text-xs text-c-text-secondary">
               <Clock className="w-3 h-3" />
               {t('partner.beta.partnerSince', 'Beta Partner since {{date}}', { date: story.since })}
             </div>
@@ -375,12 +375,12 @@ const TierProgressionSection: React.FC = () => {
   }));
 
   return (
-    <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+    <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
           {t('partner.tiers.title', 'Your Path to Partnership Success')}
         </h2>
-        <p className="text-slate-600 dark:text-slate-400">
+        <p className="text-c-text-secondary">
           {t(
             'partner.tiers.subtitle',
             'Progress through tiers as you grow. Higher tiers = higher rewards.'
@@ -394,7 +394,7 @@ const TierProgressionSection: React.FC = () => {
         <div className="relative flex justify-between">
           {tiers.map((tier) => (
             <div key={tier.name} className="flex flex-col items-center" style={{ width: '25%' }}>
-              <div className="w-12 h-12 rounded-full overflow-hidden z-10 bg-white dark:bg-navy-700 shadow-md">
+              <div className="w-12 h-12 rounded-full overflow-hidden z-10 bg-c-surface shadow-md">
                 <img
                   src={tier.badge}
                   alt={`${tier.name} tier badge`}
@@ -406,7 +406,7 @@ const TierProgressionSection: React.FC = () => {
                 <p className="text-lg font-bold text-primary-600 dark:text-primary-400">
                   {tier.commission}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-xs text-c-text-muted mt-1">
                   {tier.requirement}
                 </p>
               </div>
@@ -422,7 +422,7 @@ const TierProgressionSection: React.FC = () => {
             {tier.benefits.map((benefit, i) => (
               <div
                 key={i}
-                className="text-xs text-slate-500 dark:text-slate-400 py-1 px-2 bg-slate-50 dark:bg-navy-700/50 rounded"
+                className="text-xs text-c-text-muted py-1 px-2 bg-c-surface-raised/50 rounded"
               >
                 {benefit}
               </div>
@@ -573,13 +573,13 @@ const OnboardingChecklistSection: React.FC = () => {
   const progress = (completedCount / steps.length) * 100;
 
   return (
-    <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+    <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-1">
             {t('partner.onboarding.title', 'Get Started in 10 Minutes')}
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-c-text-secondary">
             {t(
               'partner.onboarding.subtitle',
               "We've made it simple. Complete these steps to unlock your partner benefits."
@@ -590,14 +590,14 @@ const OnboardingChecklistSection: React.FC = () => {
           <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
             {completedCount}/{steps.length}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-c-text-muted">
             {t('partner.onboarding.stepsCompleted', 'steps completed')}
           </p>
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="h-2 bg-slate-100 dark:bg-navy-700 rounded-full mb-6 overflow-hidden">
+      <div className="h-2 bg-c-surface-raised rounded-full mb-6 overflow-hidden">
         <div
           className="h-full bg-gradient-to-r from-primary-500 to-crimson-500 rounded-full transition-all duration-500"
           style={{ width: `${progress}%` }}
@@ -605,7 +605,7 @@ const OnboardingChecklistSection: React.FC = () => {
       </div>
 
       <div className="mb-6 rounded-xl border border-primary-200 dark:border-primary-800 bg-primary-50/80 dark:bg-primary-900/20 p-4">
-        <p className="text-sm text-slate-700 dark:text-slate-300">
+        <p className="text-sm text-c-text-secondary">
           {t(
             'partner.home.onboarding.sharedFlow',
             'To ten sam wspólny proces aplikacyjny używany ze strony publicznej i z wnętrza produktu. Przejrzyj przewodnik aplikacji, sprawdź case potwierdzający lub od razu przejdź do rozmowy o niestandardowych warunkach, gdy self-serve to za mało.'
@@ -614,21 +614,21 @@ const OnboardingChecklistSection: React.FC = () => {
         <div className="mt-4 flex flex-wrap gap-3">
           <button
             onClick={openApplicationGuide}
-            className="inline-flex items-center gap-2 rounded-lg border border-primary-300 dark:border-primary-700 px-4 py-2 text-sm font-medium text-primary-700 dark:text-primary-300 hover:bg-white/70 dark:hover:bg-navy-900/40"
+            className="inline-flex items-center gap-2 rounded-lg border border-primary-300 dark:border-primary-700 px-4 py-2 text-sm font-medium text-primary-700 dark:text-primary-300 hover:bg-c-surface/70 dark:hover:bg-navy-900/40"
           >
             <FileText className="w-4 h-4" />
             {t('partner.home.onboarding.openGuide', 'Otwórz przewodnik aplikacji')}
           </button>
           <button
             onClick={openCaseStudy}
-            className="inline-flex items-center gap-2 rounded-lg border border-primary-300 dark:border-primary-700 px-4 py-2 text-sm font-medium text-primary-700 dark:text-primary-300 hover:bg-white/70 dark:hover:bg-navy-900/40"
+            className="inline-flex items-center gap-2 rounded-lg border border-primary-300 dark:border-primary-700 px-4 py-2 text-sm font-medium text-primary-700 dark:text-primary-300 hover:bg-c-surface/70 dark:hover:bg-navy-900/40"
           >
             <BookOpen className="w-4 h-4" />
             {t('partner.home.onboarding.reviewCase', 'Zobacz case potwierdzający')}
           </button>
           <button
             onClick={openCustomTerms}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="inline-flex items-center gap-2 rounded-lg bg-c-text px-4 py-2 text-sm font-medium text-c-bg hover:bg-c-text-secondary"
           >
             <MessageCircle className="w-4 h-4" />
             {t('partner.home.onboarding.customTerms', 'Omów niestandardowe warunki')}
@@ -645,7 +645,7 @@ const OnboardingChecklistSection: React.FC = () => {
               'rounded-xl border p-4 transition-all',
               step.completed
                 ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800'
-                : 'bg-slate-50 dark:bg-navy-700/30 border-slate-200 dark:border-navy-600 hover:border-primary-300 dark:hover:border-primary-700'
+                : 'bg-c-surface-raised/30 border-c-border-subtle hover:border-primary-300 dark:hover:border-primary-700'
             )}
           >
             <div className="flex items-start gap-4">
@@ -654,7 +654,7 @@ const OnboardingChecklistSection: React.FC = () => {
                   'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
                   step.completed
                     ? 'bg-emerald-500 text-white'
-                    : 'bg-slate-200 dark:bg-navy-600 text-slate-500 dark:text-slate-400'
+                    : 'bg-slate-200 dark:bg-navy-600 text-c-text-muted'
                 )}
               >
                 {step.completed ? <Check className="w-5 h-5" /> : step.id}
@@ -673,17 +673,17 @@ const OnboardingChecklistSection: React.FC = () => {
                     {t('partner.home.onboarding.stepLabel', 'Krok {{n}}', { n: step.id })}:{' '}
                     {step.title}
                   </h3>
-                  <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                  <span className="flex items-center gap-1 text-xs text-c-text-muted">
                     <Clock className="w-3 h-3" />
                     {step.time}
                   </span>
                 </div>
 
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+                <p className="text-sm text-c-text-secondary mb-2">
                   {step.description}
                 </p>
 
-                <div className="flex items-start gap-1 text-sm text-slate-500 dark:text-slate-400 mb-3">
+                <div className="flex items-start gap-1 text-sm text-c-text-muted mb-3">
                   <HelpCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span>
                     <strong>{t('partner.home.onboarding.whyLabel', 'Dlaczego?')}</strong> {step.why}
@@ -758,7 +758,7 @@ const CommissionCalculatorSection: React.FC = () => {
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
           {t('partner.home.calculator.title', 'Oblicz swój potencjał zarobkowy')}
         </h2>
-        <p className="text-slate-600 dark:text-slate-400">
+        <p className="text-c-text-secondary">
           {t(
             'partner.home.calculator.subtitle',
             'Zobacz, ile możesz zarobić jako Partner Consultify'
@@ -781,7 +781,7 @@ const CommissionCalculatorSection: React.FC = () => {
                   'flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all',
                   clientsPerMonth === num
                     ? 'bg-navy-900 text-white'
-                    : 'bg-white dark:bg-navy-700 text-slate-600 dark:text-slate-300 hover:bg-primary-100 dark:hover:bg-primary-900/30'
+                    : 'bg-c-surface text-c-text-secondary hover:bg-primary-100 dark:hover:bg-primary-900/30'
                 )}
               >
                 {num}
@@ -804,7 +804,7 @@ const CommissionCalculatorSection: React.FC = () => {
             onChange={(e) => setAvgClientValue(Number(e.target.value))}
             className="w-full h-2 bg-slate-200 dark:bg-navy-700 rounded-lg appearance-none cursor-pointer accent-primary-600"
           />
-          <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <div className="flex justify-between text-xs text-c-text-muted mt-1">
             <span>€500</span>
             <span className="font-semibold text-primary-600 dark:text-primary-400">
               €{avgClientValue.toLocaleString()}
@@ -815,8 +815,8 @@ const CommissionCalculatorSection: React.FC = () => {
       </div>
 
       {/* Results */}
-      <div className="bg-white dark:bg-navy-800 rounded-xl p-6 text-center">
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
+      <div className="bg-c-surface rounded-xl p-6 text-center">
+        <p className="text-sm text-c-text-muted mb-1">
           {t('partner.home.calculator.yourTier', 'Twój poziom:')}{' '}
           <span className="font-semibold text-primary-600 dark:text-primary-400">{tier.name}</span>{' '}
           {t('partner.home.calculator.commissionSuffix', '({{rate}}% prowizji)', {
@@ -825,7 +825,7 @@ const CommissionCalculatorSection: React.FC = () => {
         </p>
 
         <div className="my-4">
-          <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">
+          <p className="text-sm text-c-text-secondary mb-1">
             {t('partner.home.calculator.estimatedAnnual', 'Szacowane roczne zarobki')}
           </p>
           <p className="text-4xl font-bold text-navy-900 dark:text-white">
@@ -835,7 +835,7 @@ const CommissionCalculatorSection: React.FC = () => {
               maximumFractionDigits: 0,
             })}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-c-text-muted mt-1">
             {t(
               'partner.home.calculator.basis',
               'Na podstawie {{count}} poleceń rocznie przy średniej wartości €{{value}}',
@@ -921,14 +921,14 @@ const AcademyPreviewSection: React.FC = () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Left: Courses list */}
-      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
         <div className="flex items-center gap-2 mb-4">
           <GraduationCap className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           <h2 className="text-xl font-bold text-navy-900 dark:text-white">
             {t('partner.home.academy.title', 'Rozwijaj umiejętności z Partner Academy')}
           </h2>
         </div>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+        <p className="text-sm text-c-text-secondary mb-6">
           {t(
             'partner.home.academy.subtitle',
             'Ustrukturyzowane wsparcie partnera wykraczające poza dokumentację: podstawy, ścieżki dla ról i gotowość do certyfikacji.'
@@ -938,34 +938,34 @@ const AcademyPreviewSection: React.FC = () => {
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 dark:text-primary-300">
             {t('partner.home.academy.boundaryLabel', 'Zakres Academy')}
           </div>
-          <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+          <p className="mt-2 text-sm text-c-text-secondary">
             {t(
               'partner.home.academy.boundaryText',
               'Pomoc i dokumentacja partnera wyjaśniają procesy podczas pracy. Partner Academy to oddzielna warstwa szkoleniowa do ustrukturyzowanego rozwoju, powtarzalnego enablementu i sygnałów certyfikacji.'
             )}
           </p>
-          <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-600 dark:text-slate-400">
-            <div className="rounded-lg bg-white/80 dark:bg-navy-900/50 px-3 py-2">
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-c-text-secondary">
+            <div className="rounded-lg bg-c-surface/80 dark:bg-navy-900/50 px-3 py-2">
               {t('partner.home.academy.pillarFoundations', 'Podstawy')}
             </div>
-            <div className="rounded-lg bg-white/80 dark:bg-navy-900/50 px-3 py-2">
+            <div className="rounded-lg bg-c-surface/80 dark:bg-navy-900/50 px-3 py-2">
               {t('partner.home.academy.pillarRolePath', 'Ścieżka roli')}
             </div>
-            <div className="rounded-lg bg-white/80 dark:bg-navy-900/50 px-3 py-2">
+            <div className="rounded-lg bg-c-surface/80 dark:bg-navy-900/50 px-3 py-2">
               {t('partner.home.academy.pillarCertification', 'Certyfikacja')}
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-3">
             <button
               onClick={() => navigate(`${ROUTES.PARTNER.LANDING}?tab=learning-path`)}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-c-text px-4 py-2 text-sm font-medium text-c-bg hover:bg-c-text-secondary"
             >
               {t('partner.home.academy.openLearningPath', 'Otwórz ścieżkę nauki')}
               <ArrowRight className="w-4 h-4" />
             </button>
             <button
               onClick={() => navigate(PARTNER_DOCS.certification.href)}
-              className="inline-flex items-center gap-2 rounded-lg border border-primary-300 dark:border-primary-700 px-4 py-2 text-sm font-medium text-primary-700 dark:text-primary-300 hover:bg-white/70 dark:hover:bg-navy-900/40"
+              className="inline-flex items-center gap-2 rounded-lg border border-primary-300 dark:border-primary-700 px-4 py-2 text-sm font-medium text-primary-700 dark:text-primary-300 hover:bg-c-surface/70 dark:hover:bg-navy-900/40"
             >
               {t('partner.home.academy.openCertGuide', 'Otwórz przewodnik certyfikacji')}
             </button>
@@ -980,7 +980,7 @@ const AcademyPreviewSection: React.FC = () => {
                 'rounded-lg border transition-all cursor-pointer',
                 expandedCourse === index
                   ? 'border-primary-300 dark:border-primary-700 bg-primary-50 dark:bg-primary-900/20'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-primary-200 dark:hover:border-primary-800'
+                  : 'border-c-border-subtle hover:border-primary-200 dark:hover:border-primary-800'
               )}
               onClick={() => setExpandedCourse(index)}
             >
@@ -998,7 +998,7 @@ const AcademyPreviewSection: React.FC = () => {
                         {course.title}
                       </h3>
                       {expandedCourse === index && (
-                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                        <p className="text-sm text-c-text-secondary mt-1">
                           {course.description}
                         </p>
                       )}
@@ -1020,7 +1020,7 @@ const AcademyPreviewSection: React.FC = () => {
 
                 {expandedCourse === index && (
                   <div className="mt-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-4 text-xs text-c-text-muted">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {course.duration}
@@ -1064,12 +1064,12 @@ const ContactPartnerManagerSection: React.FC = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+    <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
       <div className="text-center mb-6">
         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-1">
           {t('partner.home.contact.title', 'Masz pytania? Porozmawiajmy!')}
         </h2>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
+        <p className="text-sm text-c-text-secondary">
           {t(
             'partner.home.contact.subtitle',
             'Twój dedykowany Partner Manager pomoże Ci osiągnąć sukces'
@@ -1085,12 +1085,12 @@ const ContactPartnerManagerSection: React.FC = () => {
         <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
           {PARTNER_CONTACT.name}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           {t('partner.home.contact.role', PARTNER_CONTACT.role)}
         </p>
       </div>
 
-      <blockquote className="text-sm text-slate-600 dark:text-slate-400 italic text-center mb-6 px-4">
+      <blockquote className="text-sm text-c-text-secondary italic text-center mb-6 px-4">
         {t(
           'partner.home.contact.quote',
           'Jestem tu, aby pomóc Ci rozwijać biznes z Consultify. Niezależnie od tego, czy masz pytania o program, potrzebujesz wsparcia przy ofercie dla klienta, czy chcesz omówić możliwości co-marketingu — odezwij się!'
@@ -1112,7 +1112,7 @@ const ContactPartnerManagerSection: React.FC = () => {
             <p className="font-medium text-navy-900 dark:text-white">
               {t('partner.home.contact.bookCall', 'Umów rozmowę')}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-c-text-muted">
               {t('partner.home.contact.bookCallSub', 'Zaplanuj 15-min rozmowę wprowadzającą')}
             </p>
           </div>
@@ -1121,7 +1121,7 @@ const ContactPartnerManagerSection: React.FC = () => {
 
         <a
           href={`mailto:${PARTNER_CONTACT.email}`}
-          className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-navy-700/30 border border-slate-200 dark:border-navy-600 hover:bg-slate-100 dark:hover:bg-navy-700/50 transition-colors"
+          className="flex items-center gap-3 p-3 rounded-lg bg-c-surface-raised/30 border border-c-border-subtle hover:bg-c-surface-raised/50 transition-colors"
         >
           <div className="w-10 h-10 rounded-full bg-slate-600 flex items-center justify-center">
             <Mail className="w-5 h-5 text-white" />
@@ -1130,7 +1130,7 @@ const ContactPartnerManagerSection: React.FC = () => {
             <p className="font-medium text-navy-900 dark:text-white">
               {t('partner.home.contact.sendEmail', 'Wyślij e-mail')}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{PARTNER_CONTACT.email}</p>
+            <p className="text-xs text-c-text-muted">{PARTNER_CONTACT.email}</p>
           </div>
         </a>
 
@@ -1138,7 +1138,7 @@ const ContactPartnerManagerSection: React.FC = () => {
           href={PARTNER_CONTACT.linkedinUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-navy-700/30 border border-slate-200 dark:border-navy-600 hover:bg-slate-100 dark:hover:bg-navy-700/50 transition-colors group"
+          className="flex items-center gap-3 p-3 rounded-lg bg-c-surface-raised/30 border border-c-border-subtle hover:bg-c-surface-raised/50 transition-colors group"
         >
           <div className="w-10 h-10 rounded-full bg-[#0A66C2] flex items-center justify-center">
             <Linkedin className="w-5 h-5 text-white" />
@@ -1147,15 +1147,15 @@ const ContactPartnerManagerSection: React.FC = () => {
             <p className="font-medium text-navy-900 dark:text-white">
               {t('partner.home.contact.linkedin', 'Połącz się na LinkedIn')}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-c-text-muted">
               {PARTNER_CONTACT.linkedinHandle}
             </p>
           </div>
-          <ExternalLink className="w-4 h-4 text-slate-600 dark:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <ExternalLink className="w-4 h-4 text-c-text-secondary opacity-0 group-hover:opacity-100 transition-opacity" />
         </a>
       </div>
 
-      <p className="text-center text-xs text-slate-600 dark:text-slate-500 mt-4 flex items-center justify-center gap-1">
+      <p className="text-center text-xs text-c-text-secondary mt-4 flex items-center justify-center gap-1">
         <MessageCircle className="w-3 h-3" />
         {t('partner.home.contact.responseTime', 'Średni czas odpowiedzi: {{time}}', {
           time: PARTNER_PROGRAM_TERMS.averageResponseTime,
@@ -1232,7 +1232,7 @@ const FAQSection: React.FC = () => {
   ];
 
   return (
-    <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+    <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
       <div className="text-center mb-6">
         <div className="inline-flex items-center gap-2 text-primary-600 dark:text-primary-400 mb-2">
           <HelpCircle className="w-5 h-5" />
@@ -1251,7 +1251,7 @@ const FAQSection: React.FC = () => {
               'rounded-lg border transition-all',
               openFaq === index
                 ? 'border-primary-300 dark:border-primary-700 bg-primary-50 dark:bg-primary-900/10'
-                : 'border-slate-200 dark:border-navy-700'
+                : 'border-c-border-subtle'
             )}
           >
             <button
@@ -1269,7 +1269,7 @@ const FAQSection: React.FC = () => {
 
             {openFaq === index && (
               <div className="px-4 pb-4">
-                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                <p className="text-sm text-c-text-secondary leading-relaxed">
                   {faq.answer}
                 </p>
               </div>
@@ -1281,7 +1281,7 @@ const FAQSection: React.FC = () => {
       <div className="mt-6 flex justify-center">
         <button
           onClick={() => navigate(PARTNER_DOCS.faq.href)}
-          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 dark:border-navy-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:border-primary-300 hover:text-primary-600 dark:hover:text-primary-400"
+          className="inline-flex items-center gap-2 rounded-lg border border-c-border px-4 py-2 text-sm font-medium text-c-text-secondary hover:border-primary-300 hover:text-primary-600 dark:hover:text-primary-400"
         >
           {t('partner.home.faq.openFull', 'Otwórz pełne FAQ partnera')}
           <ArrowRight className="w-4 h-4" />
@@ -1336,7 +1336,7 @@ const FooterResourcesSection: React.FC = () => {
       {columns.map((column, index) => (
         <div
           key={index}
-          className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4"
+          className="bg-c-surface rounded-xl border border-c-border-subtle p-4"
         >
           <div className="flex items-center gap-2 mb-4">
             <column.icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
@@ -1349,7 +1349,7 @@ const FooterResourcesSection: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => navigate(link.href)}
-                  className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                  className="flex items-center gap-2 text-sm text-c-text-secondary hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                 >
                   {link.label}
                 </button>

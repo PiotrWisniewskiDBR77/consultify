@@ -378,12 +378,12 @@ export const HelpSidePanel: React.FC = () => {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40 transition-opacity"
+        className="fixed inset-0 bg-black/20 dark:bg-black/40 z-dropdown transition-opacity"
         onClick={() => setOpen(false)}
       />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 h-full w-[380px] max-w-[90vw] bg-slate-50 dark:bg-navy-950 shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-200 border-l border-slate-200 dark:border-navy-700">
+      <div className="fixed right-0 top-0 h-full w-[380px] max-w-[90vw] bg-slate-50 dark:bg-navy-950 shadow-2xl z-overlay flex flex-col animate-in slide-in-from-right duration-200 border-l border-slate-200 dark:border-navy-700">
         <div className="h-14 flex items-center justify-between px-4 border-b border-slate-200 dark:border-navy-700 shrink-0 bg-white dark:bg-navy-900">
           <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <HelpCircle size={18} className="text-primary-500" />

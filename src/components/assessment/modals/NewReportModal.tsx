@@ -190,25 +190,25 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-lg shadow-xl overflow-hidden">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay p-4">
+      <div className="bg-c-surface rounded-xl w-full max-w-lg shadow-xl overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700">
+        <div className="px-6 py-4 border-b border-c-border-subtle">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
-                <FileOutput className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              <div className="p-2 bg-c-accent-soft rounded-lg">
+                <FileOutput className="w-5 h-5 text-c-accent dark:text-c-accent" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Nowy Raport</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <h3 className="text-lg font-bold text-c-text">Nowy Raport</h3>
+                <p className="text-sm text-c-text-muted">
                   Utwórz raport z zatwierdzonego assessmentu
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-white/10 rounded-lg transition-colors"
             >
               <X size={20} />
             </button>
@@ -245,25 +245,25 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
 
           {success ? (
             <div className="flex flex-col items-center justify-center py-8">
-              <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center mb-4">
-                <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
+              <div className="w-16 h-16 rounded-full bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] flex items-center justify-center mb-4">
+                <CheckCircle2 className="w-8 h-8 text-c-success" />
               </div>
-              <p className="text-lg font-medium text-navy-900 dark:text-white">Raport utworzony!</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-lg font-medium text-c-text">Raport utworzony!</p>
+              <p className="text-sm text-c-text-muted mt-1">
                 Możesz teraz edytować treść raportu
               </p>
             </div>
           ) : loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-c-accent animate-spin" />
             </div>
           ) : assessments.length === 0 ? (
             <div className="text-center py-8">
-              <FileText className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-              <p className="text-slate-500 dark:text-slate-400 font-medium">
+              <FileText className="w-12 h-12 text-c-text-secondary dark:text-c-text-muted mx-auto mb-3" />
+              <p className="text-c-text-muted font-medium">
                 Brak zatwierdzonych assessmentów
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-sm text-c-text-muted mt-1">
                 Najpierw zatwierdź assessment w procesie recenzji
               </p>
             </div>
@@ -271,7 +271,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
             <>
               {/* Report Name Input */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   Nazwa raportu
                 </label>
                 <input
@@ -279,7 +279,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                   value={reportName}
                   onChange={(e) => setReportName(e.target.value)}
                   placeholder="np. Raport DRD Q1 2025"
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400"
+                  className="w-full px-4 py-2.5 rounded-lg border border-c-border-subtle bg-c-surface dark:bg-c-bg text-c-text placeholder:text-c-text-muted dark:placeholder:text-c-text-muted"
                 />
               </div>
 
@@ -287,7 +287,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
               {assessments.length > 3 && (
                 <div className="relative mb-4">
                   <Search
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-muted"
                     size={16}
                   />
                   <input
@@ -295,14 +295,14 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Szukaj assessmentu..."
-                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 text-sm"
+                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface dark:bg-c-bg text-c-text placeholder:text-c-text-muted dark:placeholder:text-c-text-muted text-sm"
                   />
                 </div>
               )}
 
               {/* Assessment Selection */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-c-text-secondary mb-2">
                   Wybierz assessment ({filteredAssessments.length})
                 </label>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -316,8 +316,8 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                                                     w-full text-left p-3 rounded-lg border-2 transition-all
                                                     ${
                                                       isSelected
-                                                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                                                        : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
+                                                        ? 'border-c-accent bg-c-accent-soft'
+                                                        : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
                                                     }
                                                 `}
                       >
@@ -328,28 +328,28 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                                                             w-5 h-5 rounded-full flex items-center justify-center border-2
                                                             ${
                                                               isSelected
-                                                                ? 'bg-primary-600 border-primary-600'
-                                                                : 'border-slate-300 dark:border-slate-600'
+                                                                ? 'bg-c-accent border-c-accent'
+                                                                : 'border-c-border'
                                                             }
                                                         `}
                             >
                               {isSelected && <CheckCircle2 size={12} className="text-white" />}
                             </div>
                             <div>
-                              <p className="font-medium text-navy-900 dark:text-white text-sm">
+                              <p className="font-medium text-c-text text-sm">
                                 {assessment.name}
                               </p>
-                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                              <p className="text-xs text-c-text-muted">
                                 {assessment.projectName}
                               </p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs font-medium">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] text-c-success rounded-full text-xs font-medium">
                               <CheckCircle2 size={10} />
                               Zatwierdzony
                             </span>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            <p className="text-xs text-c-text-muted mt-1">
                               {assessment.completedAt ? formatDate(assessment.completedAt) : ''}
                             </p>
                           </div>
@@ -373,11 +373,11 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
 
         {/* Footer */}
         {!success && !loading && assessments.length > 0 && (
-          <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
+          <div className="px-6 py-4 border-t border-c-border-subtle bg-c-surface-raised dark:bg-c-bg">
             <div className="flex items-center gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-2.5 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 rounded-lg font-medium hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                className="flex-1 px-4 py-2.5 border border-c-border-subtle text-c-text-secondary dark:text-c-text-muted rounded-lg font-medium hover:bg-c-surface-raised dark:hover:bg-white/5 transition-colors"
               >
                 Anuluj
               </button>
@@ -396,8 +396,8 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                                       reportName.trim() &&
                                       !creating &&
                                       (!projectId || canGenerateReport)
-                                        ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
-                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
+                                        ? 'bg-c-text text-c-surface hover:opacity-90'
+                                        : 'bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted cursor-not-allowed'
                                     }
                                 `}
                 title={

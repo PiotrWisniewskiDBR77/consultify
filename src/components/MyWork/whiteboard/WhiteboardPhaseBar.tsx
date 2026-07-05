@@ -47,7 +47,7 @@ export const WhiteboardPhaseBar: React.FC<WhiteboardPhaseBarProps> = ({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+      <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-c-text-muted">
         {t('myWork.whiteboard.phaseBar.title')}
       </div>
       <div
@@ -65,7 +65,7 @@ export const WhiteboardPhaseBar: React.FC<WhiteboardPhaseBarProps> = ({
               {idx > 0 && (
                 <ChevronRight
                   size={10}
-                  className={`shrink-0 ${idx <= currentIdx ? 'text-slate-700 dark:text-slate-300' : 'text-slate-600 dark:text-slate-400'}`}
+                  className={`shrink-0 ${idx <= currentIdx ? 'text-c-text-secondary' : 'text-c-text-secondary'}`}
                 />
               )}
               <button
@@ -85,10 +85,10 @@ export const WhiteboardPhaseBar: React.FC<WhiteboardPhaseBarProps> = ({
                 }}
                 className={`${TRANSITION_COLORS} inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold whitespace-nowrap disabled:opacity-40 ${
                   isCurrent
-                    ? 'bg-slate-200 dark:bg-navy-700 text-slate-900 dark:text-slate-100 ring-1 ring-slate-300 dark:ring-white/10'
+                    ? 'bg-c-surface-raised text-c-text ring-1 ring-c-border-strong'
                     : isCompleted
-                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
+                      ? 'bg-success-500/10 text-success-600 dark:text-success-400'
+                      : 'text-c-text-muted hover:bg-c-surface-raised'
                 }`}
               >
                 {isCompleted && <Check size={10} />}
@@ -98,7 +98,7 @@ export const WhiteboardPhaseBar: React.FC<WhiteboardPhaseBarProps> = ({
           );
         })}
       </div>
-      <div className="text-[9px] text-slate-600 dark:text-slate-500 italic">
+      <div className="text-[9px] text-c-text-secondary italic">
         {t(`myWork.whiteboard.phaseBar.hint_${currentPhase}`, {
           defaultValue: PHASE_HINTS[currentPhase].hintEn,
         })}

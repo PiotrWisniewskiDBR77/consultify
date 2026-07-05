@@ -98,16 +98,16 @@ export const BillingOverviewPanel: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-white">Billing Overview</h2>
+        <h2 className="text-xl font-semibold text-c-text">Billing Overview</h2>
         <div className="flex items-center gap-3">
-          <div className="flex bg-slate-800 rounded-lg p-1">
+          <div className="flex bg-c-surface-raised rounded-lg p-1">
             {(['7', '30', '90'] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
                 className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
                   period === p
-                    ? 'bg-navy-900 text-white'
+                    ? 'bg-c-text text-c-bg'
                     : 'text-slate-600 dark:text-slate-500 hover:text-white'
                 }`}
               >
@@ -117,7 +117,7 @@ export const BillingOverviewPanel: React.FC = () => {
           </div>
           <button
             onClick={fetchStats}
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+            className="p-2.5 bg-c-surface-raised hover:bg-c-surface-raised rounded-lg transition-colors"
           >
             <RefreshCw
               size={18}
@@ -135,18 +135,18 @@ export const BillingOverviewPanel: React.FC = () => {
             <DollarSign size={20} className="text-emerald-400" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-white">{formatCurrency(stats?.mrr || 0)}</span>
+            <span className="text-3xl font-bold text-c-text">{formatCurrency(stats?.mrr || 0)}</span>
           </div>
           <p className="text-sm text-emerald-400/70 mt-2">ARR: {formatCurrency(stats?.arr || 0)}</p>
         </div>
 
-        <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-slate-600 dark:text-slate-500">Revenue ({period}d)</span>
             <TrendingUp size={20} className="text-blue-400" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-white">
+            <span className="text-3xl font-bold text-c-text">
               {formatCurrency(stats?.revenue.total || 0)}
             </span>
           </div>
@@ -155,13 +155,13 @@ export const BillingOverviewPanel: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-slate-600 dark:text-slate-500">Active Subscriptions</span>
             <Users size={20} className="text-primary-400" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-white">
+            <span className="text-3xl font-bold text-c-text">
               {stats?.subscriptions.byPlan.reduce((sum, p) => sum + p.subscriber_count, 0) || 0}
             </span>
           </div>
@@ -175,7 +175,7 @@ export const BillingOverviewPanel: React.FC = () => {
           className={`rounded-xl p-4 border ${
             (stats?.unpaidInvoices.count || 0) > 0
               ? 'bg-amber-500/10 border-amber-500/20'
-              : 'bg-slate-800/50 border-white/[0.06]'
+              : 'bg-c-surface-raised/50 border-white/[0.06]'
           }`}
         >
           <div className="flex items-center justify-between mb-3">
@@ -194,7 +194,7 @@ export const BillingOverviewPanel: React.FC = () => {
             />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-white">
+            <span className="text-3xl font-bold text-c-text">
               {stats?.unpaidInvoices.count || 0}
             </span>
           </div>
@@ -208,13 +208,13 @@ export const BillingOverviewPanel: React.FC = () => {
 
       {/* Plan Distribution */}
       <div className="grid grid-cols-2 gap-6">
-        <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
+        <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-lg bg-primary-500/20 flex items-center justify-center">
               <PieChart size={20} className="text-primary-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-white">Plan Distribution</h3>
+              <h3 className="font-semibold text-c-text">Plan Distribution</h3>
               <p className="text-sm text-slate-600 dark:text-slate-500">Subscribers by plan</p>
             </div>
           </div>
@@ -227,7 +227,7 @@ export const BillingOverviewPanel: React.FC = () => {
               );
               const percentage = total > 0 ? (plan.subscriber_count / total) * 100 : 0;
               const colors = [
-                'bg-navy-900',
+                'bg-c-surface',
                 'bg-blue-500',
                 'bg-emerald-500',
                 'bg-amber-500',
@@ -237,12 +237,12 @@ export const BillingOverviewPanel: React.FC = () => {
               return (
                 <div key={plan.plan_name} className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-white">{plan.plan_name}</span>
+                    <span className="text-c-text">{plan.plan_name}</span>
                     <span className="text-slate-600 dark:text-slate-500">
                       {plan.subscriber_count} ({percentage.toFixed(1)}%)
                     </span>
                   </div>
-                  <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                  <div className="h-2 bg-c-surface-raised rounded-full overflow-hidden">
                     <div
                       className={`h-full ${colors[idx % colors.length]} transition-all duration-500`}
                       style={{ width: `${percentage}%` }}
@@ -260,13 +260,13 @@ export const BillingOverviewPanel: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
+        <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
               <BarChart3 size={20} className="text-blue-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-white">Subscription Trends</h3>
+              <h3 className="font-semibold text-c-text">Subscription Trends</h3>
               <p className="text-sm text-slate-600 dark:text-slate-500">
                 New vs churned ({period} days)
               </p>
@@ -309,21 +309,21 @@ export const BillingOverviewPanel: React.FC = () => {
       </div>
 
       {/* Plan Pricing */}
-      <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
+      <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
             <CreditCard size={20} className="text-emerald-400" />
           </div>
           <div>
-            <h3 className="font-semibold text-white">Plans Revenue Breakdown</h3>
+            <h3 className="font-semibold text-c-text">Plans Revenue Breakdown</h3>
             <p className="text-sm text-slate-600 dark:text-slate-500">Monthly revenue by plan</p>
           </div>
         </div>
 
         <div className="grid grid-cols-4 gap-4">
           {stats?.subscriptions.byPlan.map((plan) => (
-            <div key={plan.plan_name} className="bg-slate-900/50 rounded-lg p-4">
-              <h4 className="font-medium text-white mb-2">{plan.plan_name}</h4>
+            <div key={plan.plan_name} className="bg-c-surface/50 rounded-lg p-4">
+              <h4 className="font-medium text-c-text mb-2">{plan.plan_name}</h4>
               <p className="text-2xl font-bold text-emerald-400">
                 {formatCurrency(plan.price_monthly * plan.subscriber_count)}
               </p>

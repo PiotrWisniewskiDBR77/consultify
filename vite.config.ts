@@ -136,6 +136,14 @@ export default defineConfig(({ mode }) => {
         '@fullcalendar/daygrid': path.resolve(__dirname, './node_modules/@fullcalendar/daygrid'),
         '@fullcalendar/timegrid': path.resolve(__dirname, './node_modules/@fullcalendar/timegrid'),
         '@fullcalendar/list': path.resolve(__dirname, './node_modules/@fullcalendar/list'),
+        // The bare '@tiptap/react' alias below is a prefix-match that rewrites
+        // subpath imports (e.g. '@tiptap/react/menus') to <dir>/menus, bypassing
+        // the package's exports map → ENOENT at build. Map the subpath explicitly
+        // FIRST (vite matches aliases in order) so BubbleMenu/FloatingMenu resolve.
+        '@tiptap/react/menus': path.resolve(
+          __dirname,
+          './node_modules/@tiptap/react/dist/menus/index.js'
+        ),
         '@tiptap/react': path.resolve(__dirname, './node_modules/@tiptap/react'),
         // Force a complete lodash-es package (some nested deps ship an incomplete copy)
         'lodash-es': path.resolve(__dirname, './node_modules/lodash-es'),

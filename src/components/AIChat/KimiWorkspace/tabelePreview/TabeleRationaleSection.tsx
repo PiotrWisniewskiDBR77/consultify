@@ -16,7 +16,7 @@ const PROPOSAL_STYLES = {
     'border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100',
   rejected:
     'border-danger-300/80 bg-danger-50 text-danger-900 dark:border-danger-300/[0.25] dark:bg-danger-300/[0.12] dark:text-danger-100',
-  none: 'border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-100',
+  none: 'border-c-border bg-c-surface-raised text-c-text/[0.11]/[0.075]',
 } as const;
 
 export function TabeleRationaleSection({
@@ -39,13 +39,13 @@ export function TabeleRationaleSection({
           : t('kimi.tabele.rationale.proposalNone', { defaultValue: 'None' });
 
   return (
-    <div className="rounded-hig-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900">
+    <div className="rounded-hig-lg border border-c-border-subtle bg-c-surface p-5 shadow-sm">
       <div className="flex items-start gap-3">
         <div className="mt-0.5 rounded-hig-md bg-sky-50 p-2 text-sky-700 dark:bg-sky-300/[0.10] dark:text-sky-100">
           <Brain size={18} aria-hidden="true" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm leading-6 text-slate-700 dark:text-slate-300">
+          <p className="text-sm leading-6 text-c-text">
             {rationale.summary ||
               t('kimi.tabele.rationale.emptySummary', {
                 defaultValue: 'No rationale summary was provided for this preview.',
@@ -60,7 +60,7 @@ export function TabeleRationaleSection({
               {visibleBullets.map((bullet, index) => (
                 <li
                   key={`${bullet}-${index}`}
-                  className="flex gap-2 text-sm text-slate-700 dark:text-slate-300"
+                  className="flex gap-2 text-sm text-c-text"
                 >
                   <span
                     className="mt-2 h-1.5 w-1.5 rounded-hig-full bg-sky-500"
@@ -76,7 +76,7 @@ export function TabeleRationaleSection({
             <button
               type="button"
               onClick={() => setIsExpanded((value) => !value)}
-              className="mt-3 text-xs font-medium text-slate-600 underline decoration-slate-300 underline-offset-4 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/30 dark:text-slate-300 dark:decoration-slate-600 dark:hover:text-slate-100"
+              className="mt-3 text-xs font-medium text-c-text-secondary underline decoration-c-border underline-offset-4 hover:text-c-text focus:outline-none focus:ring-2 focus:ring-sky-500/30"
             >
               {isExpanded
                 ? t('kimi.tabele.rationale.showLess', { defaultValue: 'Show less' })
@@ -88,20 +88,20 @@ export function TabeleRationaleSection({
           )}
 
           <div className="mt-5 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-medium text-c-text-secondary">
               {t('kimi.tabele.rationale.citedSources', { defaultValue: 'Cited sources' })}
             </span>
             {rationale.citedSourceIds.length > 0 ? (
               rationale.citedSourceIds.map((sourceId) => (
                 <span
                   key={sourceId}
-                  className="rounded-hig-full border border-slate-300/80 bg-slate-100 px-2.5 py-1 font-mono text-xs text-slate-800 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200"
+                  className="rounded-hig-full border border-c-border bg-c-surface-raised px-2.5 py-1 font-mono text-xs text-c-text/[0.10]/[0.065]"
                 >
                   {sourceId}
                 </span>
               ))
             ) : (
-              <span className="text-xs text-slate-500 dark:text-slate-400">
+              <span className="text-xs text-c-text-secondary">
                 {t('kimi.tabele.rationale.noSources', { defaultValue: 'No cited sources' })}
               </span>
             )}
@@ -120,7 +120,7 @@ export function TabeleRationaleSection({
               <button
                 type="button"
                 onClick={onOpenProposalQueue}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 underline decoration-slate-300 underline-offset-4 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/30 dark:text-slate-300 dark:decoration-slate-600 dark:hover:text-slate-100"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-c-text-secondary underline decoration-c-border underline-offset-4 hover:text-c-text focus:outline-none focus:ring-2 focus:ring-sky-500/30"
               >
                 {t('kimi.tabele.rationale.reviewProposals', {
                   defaultValue: 'Review proposals',

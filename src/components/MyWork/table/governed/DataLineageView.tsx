@@ -58,10 +58,32 @@ const NODE_STYLES: Record<
     icon: React.FC<{ size?: number; className?: string }>;
   }
 > = {
-  source: { fill: '#eff6ff', stroke: '#93c5fd', textColor: '#1e40af', icon: FileSpreadsheet },
-  table: { fill: '#f0fdf4', stroke: '#86efac', textColor: '#166534', icon: Database },
-  model: { fill: '#faf5ff', stroke: '#c4b5fd', textColor: '#5b21b6', icon: Layers },
-  output: { fill: '#fef3c7', stroke: '#fcd34d', textColor: '#92400e', icon: Target },
+  // Categorical node types drawn from the identity palette (c-tag-*).
+  // fill = color-mix tint, stroke/text = solid token. Theme-aware CSS vars.
+  source: {
+    fill: 'color-mix(in srgb, var(--c-tag-1) 14%, transparent)',
+    stroke: 'var(--c-tag-1)',
+    textColor: 'var(--c-tag-1)',
+    icon: FileSpreadsheet,
+  },
+  table: {
+    fill: 'color-mix(in srgb, var(--c-tag-6) 14%, transparent)',
+    stroke: 'var(--c-tag-6)',
+    textColor: 'var(--c-tag-6)',
+    icon: Database,
+  },
+  model: {
+    fill: 'color-mix(in srgb, var(--c-tag-3) 14%, transparent)',
+    stroke: 'var(--c-tag-3)',
+    textColor: 'var(--c-tag-3)',
+    icon: Layers,
+  },
+  output: {
+    fill: 'color-mix(in srgb, var(--c-tag-9) 14%, transparent)',
+    stroke: 'var(--c-tag-9)',
+    textColor: 'var(--c-tag-9)',
+    icon: Target,
+  },
 };
 
 /* ------------------------------------------------------------------ */
@@ -91,7 +113,7 @@ function SvgNode({
         rx={10}
         ry={10}
         fill={style.fill}
-        stroke={selected ? '#6366f1' : style.stroke}
+        stroke={selected ? 'var(--c-focus-solid)' : style.stroke}
         strokeWidth={selected ? 2 : 1.5}
         className="transition-all"
       />
@@ -106,7 +128,7 @@ function SvgNode({
         {node.label.length > 22 ? node.label.slice(0, 20) + '…' : node.label}
       </text>
       {node.meta && (
-        <text x={x + 12} y={y + 35} fontSize={9} fill="#94a3b8" className="select-none">
+        <text x={x + 12} y={y + 35} fontSize={9} fill="var(--c-text-muted)" className="select-none">
           {node.meta}
         </text>
       )}
@@ -145,7 +167,7 @@ function SvgEdge({
       <path
         d={`M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`}
         fill="none"
-        stroke="#cbd5e1"
+        stroke="var(--c-border)"
         strokeWidth={1.5}
         markerEnd="url(#arrowhead)"
       />
@@ -154,7 +176,7 @@ function SvgEdge({
           x={midX}
           y={Math.min(y1, y2) - 4}
           fontSize={9}
-          fill="#94a3b8"
+          fill="var(--c-text-muted)"
           textAnchor="middle"
           className="select-none"
         >
@@ -316,10 +338,10 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-slate-800 dark:text-white">
+          <h2 className="text-base font-semibold text-c-text">
             {isPl ? 'Przepływ danych' : 'Data Lineage'}
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-xs text-c-text-muted mt-0.5">
             {isPl
               ? 'Wizualizacja przepływu danych od źródeł do modułów Consultify'
               : 'Visualize data flow from sources to Consultify modules'}
@@ -328,9 +350,9 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
         {onClose && (
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="p-1.5 rounded-lg hover:bg-c-surface-raised"
           >
-            <X size={16} className="text-slate-600" />
+            <X size={16} className="text-c-text-secondary" />
           </button>
         )}
       </div>
@@ -345,7 +367,7 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
         ].map((lbl, i) => (
           <div
             key={i}
-            className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider"
+            className="text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider"
             style={{ width: COL_WIDTH }}
           >
             {lbl}
@@ -354,7 +376,7 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
       </div>
 
       {/* SVG Canvas */}
-      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950">
+      <div className="overflow-x-auto rounded-xl border border-c-border bg-c-bg">
         <svg
           width={svgWidth}
           height={Math.max(svgHeight, 300)}
@@ -364,7 +386,7 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
         >
           <defs>
             <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-              <polygon points="0 0, 8 3, 0 6" fill="#cbd5e1" />
+              <polygon points="0 0, 8 3, 0 6" fill="var(--c-border)" />
             </marker>
           </defs>
 
@@ -387,25 +409,25 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
 
       {/* Detail panel for selected node */}
       {selectedNode && (
-        <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
+        <div className="rounded-xl border border-c-border bg-c-surface p-4">
           <div className="flex items-center justify-between mb-2">
-            <h4 className="text-sm font-semibold text-slate-800 dark:text-white">
+            <h4 className="text-sm font-semibold text-c-text">
               {selectedNode.label}
             </h4>
             <button
               onClick={() => setSelectedNode(null)}
-              className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+              className="p-1 rounded hover:bg-c-surface-raised"
             >
-              <X size={14} className="text-slate-600" />
+              <X size={14} className="text-c-text-secondary" />
             </button>
           </div>
-          <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-3 text-xs text-c-text-muted">
             <span className="capitalize">
               {isPl ? 'Typ' : 'Type'}: {selectedNode.type}
             </span>
             {selectedNode.meta && <span>{selectedNode.meta}</span>}
           </div>
-          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          <div className="mt-2 text-xs text-c-text-muted">
             <span className="font-medium">{isPl ? 'Połączenia' : 'Connections'}:</span>{' '}
             {edges.filter((e) => e.from === selectedNode.id || e.to === selectedNode.id).length}{' '}
             {isPl ? 'krawędzi' : 'edges'}

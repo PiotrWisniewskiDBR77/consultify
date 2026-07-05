@@ -10,6 +10,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet } from '../../utils/DbPromise.js';
+import { selectStockImageProvider } from '../deliverables/stockImageProvider.js';
 import logger from '../../utils/Logger.js';
 import type { SlideVisualSpec, UnifiedReportMeta } from '../report/pptx/types.js';
 
@@ -262,7 +263,7 @@ async function generateWithOpenAI(params: {
   throw new Error('OpenAI image generation returned no image data');
 }
 
-async function generateWithReplicate(params: {
+export async function generateWithReplicate(params: {
   apiToken: string;
   endpoint?: string | null;
   model: string;
@@ -278,18 +279,35 @@ async function generateWithReplicate(params: {
     'Content-Type': 'application/json',
   };
 
-  // Replicate accepts either `model` (owner/name) or `version` (UUID-ish).
+  // Replicate accepts either a `version` (UUID-ish) on /predictions, or an
+  // `owner/name` slug on the model-scoped /models/{owner}/{name}/predictions
+  // endpoint. The bare-slug `{model}` field on /predictions is NOT accepted for
+  // official models (422 "version is required") — so route owner/name slugs to
+  // the model-scoped endpoint instead.
   const modelId = String(params.model || '').trim();
   const looksLikeVersion = /^[a-f0-9]{8,}[-a-f0-9]{16,}$/i.test(modelId) || modelId.length >= 30;
+  const slugMatch = /^([\w.-]+)\/([\w.-]+?)(?::(.+))?$/.exec(modelId);
+
   const body: any = {
     input: {
       prompt: params.prompt,
     },
   };
-  if (looksLikeVersion) body.version = modelId;
-  else body.model = modelId;
 
-  const created = await fetch(`${base}/predictions`, {
+  let createUrl = `${base}/predictions`;
+  if (looksLikeVersion) {
+    body.version = modelId;
+  } else if (slugMatch && !slugMatch[3]) {
+    // owner/name (no pinned :version) → model-scoped predictions endpoint.
+    createUrl = `${base}/models/${slugMatch[1]}/${slugMatch[2]}/predictions`;
+  } else if (slugMatch && slugMatch[3]) {
+    // owner/name:version → pin the version on the generic endpoint.
+    body.version = slugMatch[3];
+  } else {
+    body.model = modelId;
+  }
+
+  const created = await fetch(createUrl, {
     method: 'POST',
     headers,
     body: JSON.stringify(body),
@@ -345,6 +363,223 @@ async function generateWithReplicate(params: {
   return Buffer.from(arr);
 }
 
+/**
+ * Gemini "nano-banana" (Gemini 2.5 Flash Image) image generation.
+ *
+ * POST :generateContent with responseModalities:["IMAGE"]; the image bytes come
+ * back as base64 inside candidates[0].content.parts[].inlineData.data.
+ * Default model `gemini-2.5-flash-image`; on 404 we retry the `-preview` slug.
+ * Throws on no image so the dispatcher can fail-open to the next provider/stock.
+ */
+export async function generateWithGemini(params: {
+  apiKey: string;
+  endpoint?: string | null;
+  model: string;
+  prompt: string;
+  timeoutMs?: number;
+}): Promise<Buffer> {
+  const apiKey = String(params.apiKey || '').trim();
+  if (!apiKey) throw new Error('Gemini API key missing (GEMINI_API_KEY)');
+
+  const base =
+    String(params.endpoint || '').trim().replace(/\/+$/, '') ||
+    'https://generativelanguage.googleapis.com/v1beta';
+  const timeoutMs = typeof params.timeoutMs === 'number' ? params.timeoutMs : 60_000;
+
+  const requestedModel = String(params.model || '').trim() || 'gemini-2.5-flash-image';
+  // Candidate models: requested first, then a preview fallback (nano-banana
+  // ships under both slugs depending on the API rollout state).
+  const candidates =
+    requestedModel === 'gemini-2.5-flash-image'
+      ? ['gemini-2.5-flash-image', 'gemini-2.5-flash-image-preview']
+      : [requestedModel, 'gemini-2.5-flash-image', 'gemini-2.5-flash-image-preview'];
+  const tried = new Set<string>();
+
+  const body = {
+    contents: [{ parts: [{ text: params.prompt }] }],
+    generationConfig: { responseModalities: ['IMAGE'] },
+  };
+
+  let lastErr = 'Gemini image generation returned no image data';
+  for (const model of candidates) {
+    if (tried.has(model)) continue;
+    tried.add(model);
+
+    const url = `${base}/models/${encodeURIComponent(model)}:generateContent`;
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'x-goog-api-key': apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+    } catch (err: any) {
+      lastErr = `Gemini request failed (${model}): ${err?.message || err}`;
+      continue;
+    }
+
+    if (res.status === 404) {
+      // Model slug not available — try next candidate.
+      lastErr = `Gemini model not found (${model}, 404)`;
+      continue;
+    }
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`Gemini image generation failed (${res.status}): ${text.slice(0, 300)}`);
+    }
+
+    const json: any = await res.json().catch(() => null);
+    const parts: any[] = json?.candidates?.[0]?.content?.parts || [];
+    for (const part of parts) {
+      const b64 = part?.inlineData?.data ?? part?.inline_data?.data;
+      if (b64 && typeof b64 === 'string') {
+        return Buffer.from(b64, 'base64');
+      }
+    }
+    lastErr = `Gemini returned no image data (${model})`;
+  }
+
+  throw new Error(lastErr);
+}
+
+type ImageProviderSelection = {
+  provider: ProviderRow;
+  apiKey: string;
+  modelId: string;
+};
+
+/**
+ * ENV-default image provider chooser — used when no DB purpose-assignment exists.
+ *
+ * Reads DELIVERABLE_IMAGE_PROVIDER (gemini | replicate | openai | off; default
+ * `gemini`) + optional DELIVERABLE_IMAGE_MODEL override. Returns a synthetic
+ * selection wired to the matching env API key, or null when the provider is
+ * `off` / no key is present (fail-open: callers fall through to stock).
+ */
+export function resolveDefaultImageProvider(): ImageProviderSelection | null {
+  const choice = String(process.env.DELIVERABLE_IMAGE_PROVIDER || 'gemini')
+    .trim()
+    .toLowerCase();
+  if (choice === 'off' || choice === 'none' || choice === 'disabled') return null;
+
+  const modelOverride = String(process.env.DELIVERABLE_IMAGE_MODEL || '').trim();
+
+  if (choice === 'gemini' || choice === 'google') {
+    const apiKey = String(process.env.GEMINI_API_KEY || '').trim();
+    if (!apiKey) return null;
+    return {
+      provider: { id: 'env-default', provider: 'gemini', endpoint: null, api_key: null },
+      apiKey,
+      modelId: modelOverride || 'gemini-2.5-flash-image',
+    };
+  }
+
+  if (choice === 'replicate') {
+    const apiKey = String(
+      process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_KEY || ''
+    ).trim();
+    if (!apiKey) return null;
+    return {
+      provider: { id: 'env-default', provider: 'replicate', endpoint: null, api_key: null },
+      apiKey,
+      modelId: modelOverride || 'qwen/qwen-image',
+    };
+  }
+
+  if (choice === 'openai') {
+    const apiKey = String(process.env.OPENAI_API_KEY || '').trim();
+    if (!apiKey) return null;
+    return {
+      provider: { id: 'env-default', provider: 'openai', endpoint: null, api_key: null },
+      apiKey,
+      modelId: modelOverride || 'dall-e-3',
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Stock-image fallback (Unsplash by default when UNSPLASH_ACCESS_KEY is set).
+ * Downloads the chosen photo to the deck assets dir so the PPTX renderer gets a
+ * local path. Returns null on any miss (fail-open).
+ */
+async function tryStockFallback(params: {
+  deckId: string;
+  prompt: string;
+  query: string;
+  slot: SlideVisualSpec['slot'];
+  purpose: SlideVisualSpec['purpose'];
+  label: string;
+  styleHint?: string;
+  brandColor?: string;
+  filenamePrefix: string;
+}): Promise<SlideVisualSpec | null> {
+  try {
+    // Default to Unsplash when its key exists and no explicit STOCK_IMAGE_PROVIDER set.
+    const explicit = String(process.env.STOCK_IMAGE_PROVIDER || '').trim();
+    const hasUnsplash = !!String(process.env.UNSPLASH_ACCESS_KEY || '').trim();
+    const providerCfg = explicit
+      ? {}
+      : hasUnsplash
+        ? { provider: 'unsplash' as const }
+        : {};
+    const provider = selectStockImageProvider(providerCfg);
+    if (provider.name === 'null') return null;
+
+    const result = await provider.fetchImage(params.query, { orientation: 'landscape' });
+    if (!result?.url) return null;
+
+    let assetPath: string | undefined;
+    try {
+      const imgRes = await fetch(result.url, { signal: AbortSignal.timeout(30_000) });
+      if (imgRes.ok) {
+        const arr = await imgRes.arrayBuffer();
+        const buf = Buffer.from(arr);
+        if (buf.length > 0) {
+          const fs = await import('fs');
+          const path = await import('path');
+          const assetsDir = path.default.join(
+            process.cwd(),
+            'exports',
+            'presentations',
+            'assets',
+            params.deckId
+          );
+          if (!fs.default.existsSync(assetsDir))
+            fs.default.mkdirSync(assetsDir, { recursive: true });
+          const filename = `${params.filenamePrefix}_stock_${uuidv4().slice(0, 8)}.jpg`;
+          assetPath = path.default.join(assetsDir, filename);
+          fs.default.writeFileSync(assetPath, buf);
+        }
+      }
+    } catch (err: any) {
+      logger.warn(`[DeckVisuals] Stock image download failed: ${err?.message || err}`);
+    }
+
+    const visual: SlideVisualSpec = {
+      slot: params.slot,
+      purpose: params.purpose,
+      label: `${params.label} (stock: ${result.provider})`,
+      prompt: params.prompt,
+      styleHint: params.styleHint,
+      palette: params.brandColor ? { primary: params.brandColor.replace('#', '') } : undefined,
+      aspect: '16:9',
+      asset: assetPath
+        ? { path: assetPath, provider: `stock:${result.provider}` }
+        : { url: result.url, provider: `stock:${result.provider}` },
+    };
+    return visual;
+  } catch (err: any) {
+    logger.warn(`[DeckVisuals] Stock fallback failed: ${err?.message || err}`);
+    return null;
+  }
+}
+
 async function generateImageVisual(params: {
   deckId: string;
   organizationId: string;
@@ -362,15 +597,40 @@ async function generateImageVisual(params: {
   const priority = params.priority || 'quality';
   const dataClass = params.dataClass || 'no_pii';
 
-  const selection = await selectProviderForPurpose({
+  // DB-driven purpose assignment first; else env-default chain (gemini→…).
+  const dbSelection = await selectProviderForPurpose({
     organizationId: params.organizationId,
     purpose: params.purpose,
     priority,
     dataClass,
   });
+  const selection: ImageProviderSelection | null =
+    dbSelection
+      ? {
+          provider: dbSelection.provider,
+          apiKey: dbSelection.apiKey,
+          modelId: dbSelection.modelId,
+        }
+      : resolveDefaultImageProvider();
+
+  const stockQuery = String(params.styleHint || params.label || params.prompt || '').slice(0, 200);
+
   if (!selection) {
+    // No AI provider configured/available — try stock before giving up.
+    const stock = await tryStockFallback({
+      deckId: params.deckId,
+      prompt: params.prompt,
+      query: stockQuery || params.prompt,
+      slot: params.slot,
+      purpose: params.purpose,
+      label: params.label,
+      styleHint: params.styleHint,
+      brandColor: params.brandColor,
+      filenamePrefix: params.filenamePrefix,
+    });
+    if (stock) return { visual: stock };
     return {
-      warning: `No configured image provider for purpose=${params.purpose} (or missing API key).`,
+      warning: `No configured image provider for purpose=${params.purpose} (DB + env default off, no stock).`,
     };
   }
 
@@ -387,11 +647,23 @@ async function generateImageVisual(params: {
         prompt: params.prompt,
         size,
       });
+    } else if (providerName === 'google' || providerName === 'gemini') {
+      const apiKey = selection.apiKey || process.env.GEMINI_API_KEY || '';
+      if (!apiKey.trim()) {
+        throw new Error('No Gemini API key configured (GEMINI_API_KEY).');
+      }
+      // Gemini returns square images; size hint is ignored (tolerant).
+      buf = await generateWithGemini({
+        apiKey,
+        endpoint: selection.provider.endpoint,
+        model: selection.modelId,
+        prompt: params.prompt,
+      });
     } else if (providerName === 'replicate') {
       const token =
         selection.apiKey || process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_KEY || '';
       if (!token.trim())
-        return { warning: 'No Replicate API token configured (REPLICATE_API_TOKEN).' };
+        throw new Error('No Replicate API token configured (REPLICATE_API_TOKEN).');
       buf = await generateWithReplicate({
         apiToken: token,
         endpoint: selection.provider.endpoint,
@@ -399,7 +671,7 @@ async function generateImageVisual(params: {
         prompt: params.prompt,
       });
     } else {
-      return { warning: `Unsupported image provider adapter: ${providerName}` };
+      throw new Error(`Unsupported image provider adapter: ${providerName}`);
     }
 
     const fs = await import('fs');
@@ -434,8 +706,21 @@ async function generateImageVisual(params: {
     return { visual };
   } catch (err: any) {
     logger.warn(
-      `[DeckVisuals] Image generation failed (${params.purpose}/${params.slot}): ${err.message}`
+      `[DeckVisuals] Image generation failed (${params.purpose}/${params.slot}): ${err.message} — trying stock fallback`
     );
+    // AI generation failed → fall back to stock (Unsplash) before warning.
+    const stock = await tryStockFallback({
+      deckId: params.deckId,
+      prompt: params.prompt,
+      query: stockQuery || params.prompt,
+      slot: params.slot,
+      purpose: params.purpose,
+      label: params.label,
+      styleHint: params.styleHint,
+      brandColor: params.brandColor,
+      filenamePrefix: params.filenamePrefix,
+    });
+    if (stock) return { visual: stock };
     return {
       warning: `Image generation failed (${params.purpose}/${params.slot}): ${err.message}`,
     };

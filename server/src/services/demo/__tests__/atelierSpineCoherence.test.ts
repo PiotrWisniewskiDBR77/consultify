@@ -216,6 +216,74 @@ describe('Atelier Toys demo spine coherence', () => {
     }
   });
 
+  it('stage 04 — seeds an APPROVED DRD baseline assessment with realistic scores', () => {
+    const assessments = rowsFor('assessments');
+    expect(assessments.length).toBeGreaterThanOrEqual(1);
+
+    const drd = assessments.find((a) => String(a.assessment_type) === 'DRD');
+    expect(drd).toBeTruthy();
+    expect(drd?.id).toBe(`${ORG_ID}--assessment--drd-atelier-forward-baseline`);
+    expect(drd?.organization_id).toBe(ORG_ID);
+    expect(String(drd?.status)).toBe('APPROVED');
+    // Baseline maturity is realistic: not perfect, with a visible gap to target.
+    expect(Number(drd?.overall_score)).toBeGreaterThan(0);
+    expect(Number(drd?.overall_score)).toBeLessThan(5);
+
+    // Score summary reconciles with the transformation thesis (3.3 -> 5.0, gap 1.7).
+    const summary = JSON.parse(String(drd?.score_summary)) as {
+      overall: { actual: number; target: number; gap: number };
+      topGaps: string[];
+    };
+    expect(summary.overall.actual).toBeCloseTo(3.3, 5);
+    expect(summary.overall.target).toBeCloseTo(5.0, 5);
+    expect(summary.overall.gap).toBeCloseTo(1.7, 5);
+    expect(summary.topGaps.length).toBeGreaterThanOrEqual(3);
+
+    // Answers carry the full DRD axis structure (7 axes seeded with achieved/target).
+    const answers = JSON.parse(String(drd?.answers_json)) as {
+      drd: { areas: Record<string, { achievedLevel: number; targetLevel: number }> };
+    };
+    const areas = answers.drd.areas;
+    expect(Object.keys(areas).length).toBeGreaterThanOrEqual(7);
+    for (const area of Object.values(areas)) {
+      expect(area.achievedLevel).toBeGreaterThanOrEqual(1);
+      expect(area.targetLevel).toBeGreaterThanOrEqual(area.achievedLevel);
+    }
+  });
+
+  it('stage 04 — DRD report + sections are APPROVED and linked to the assessment', () => {
+    const drd = rowsFor('assessments').find((a) => String(a.assessment_type) === 'DRD');
+    const reports = rowsFor('assessment_reports');
+    const report = reports.find(
+      (r) => r.assessment_id === `${ORG_ID}--assessment--drd-atelier-forward-baseline`
+    );
+    expect(report).toBeTruthy();
+    expect(report?.organization_id).toBe(ORG_ID);
+    expect(String(report?.status)).toBe('APPROVED');
+    // Report belongs to the assessment we seeded (real cross-link, not orphaned).
+    expect(report?.assessment_id).toBe(drd?.id);
+
+    const sections = rowsFor('assessment_report_sections').filter(
+      (s) => s.report_id === report?.id
+    );
+    expect(sections.length).toBeGreaterThanOrEqual(3);
+    const types = sections.map((s) => String(s.section_type));
+    expect(types).toContain('executive_summary');
+    expect(types).toContain('recommendations');
+    for (const section of sections) {
+      expect(String(section.content).length).toBeGreaterThan(0);
+    }
+  });
+
+  it('stage 04 — DRD assessment shares the project spine with initiatives + results', () => {
+    const drd = rowsFor('assessments').find((a) => String(a.assessment_type) === 'DRD');
+    const projectIds = new Set(rowsFor('projects').map((r) => r.id));
+    // The assessment hangs off a real seeded project (forward-pmo), so the
+    // diagnosis, portfolio, and results all live under the same tenant spine.
+    expect(projectIds.has(String(drd?.project_id))).toBe(true);
+    expect(drd?.project_id).toBe(`${ORG_ID}--project--forward-pmo`);
+  });
+
   it('stage 03 -> 05 — insight findings hand off to REAL initiatives', () => {
     const findings = rowsFor('interview_insight_findings');
     const handoffs = rowsFor('interview_insight_handoffs');

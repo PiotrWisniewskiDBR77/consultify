@@ -157,7 +157,7 @@ function CertificationCard({ cert }: { cert: Certification }) {
           ? 'bg-green-500/5 border-green-500/30 hover:border-green-500/50'
           : cert.status === 'in-progress'
             ? 'bg-yellow-500/5 border-yellow-500/30 hover:border-yellow-500/50'
-            : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
+            : 'bg-c-surface-raised border-c-border hover:border-c-border-strong'
       )}
     >
       <div className="flex items-start justify-between mb-4">
@@ -168,7 +168,7 @@ function CertificationCard({ cert }: { cert: Certification }) {
               ? 'bg-green-500/20'
               : cert.status === 'in-progress'
                 ? 'bg-yellow-500/20'
-                : 'bg-zinc-700'
+                : 'bg-c-surface-raised'
           )}
         >
           <Icon
@@ -178,7 +178,7 @@ function CertificationCard({ cert }: { cert: Certification }) {
                 ? 'text-green-400'
                 : cert.status === 'in-progress'
                   ? 'text-yellow-400'
-                  : 'text-zinc-600'
+                  : 'text-c-text-muted'
             )}
           />
         </div>
@@ -189,18 +189,18 @@ function CertificationCard({ cert }: { cert: Certification }) {
               ? 'bg-green-500/20 text-green-400'
               : cert.status === 'in-progress'
                 ? 'bg-yellow-500/20 text-yellow-400'
-                : 'bg-zinc-700 text-zinc-600'
+                : 'bg-c-surface-raised text-c-text-muted'
           )}
         >
           {cert.badge}
         </span>
       </div>
 
-      <h3 className="text-lg font-semibold text-white mb-2">{cert.name}</h3>
-      <p className="text-sm text-zinc-600 mb-4">{cert.description}</p>
+      <h3 className="text-lg font-semibold text-c-text mb-2">{cert.name}</h3>
+      <p className="text-sm text-c-text-secondary mb-4">{cert.description}</p>
 
       {cert.validUntil && (
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-c-text-muted">
           Valid until:{' '}
           {new Date(cert.validUntil).toLocaleDateString('en-US', {
             year: 'numeric',
@@ -217,13 +217,13 @@ function SecurityFeatureCard({ feature }: { feature: SecurityFeature }) {
   const Icon = feature.icon;
 
   return (
-    <div className="flex gap-4 p-4 rounded-lg bg-zinc-800/30 border border-zinc-700/50 hover:border-zinc-600 transition-colors">
+    <div className="flex gap-4 p-4 rounded-lg bg-c-surface-raised border border-c-border hover:border-c-border-strong transition-colors">
       <div className="flex-shrink-0 p-2 rounded-lg bg-blue-500/10">
         <Icon size={20} className="text-blue-400" />
       </div>
       <div>
-        <h4 className="text-sm font-semibold text-white mb-1">{feature.title}</h4>
-        <p className="text-xs text-zinc-600">{feature.description}</p>
+        <h4 className="text-sm font-semibold text-c-text mb-1">{feature.title}</h4>
+        <p className="text-xs text-c-text-muted">{feature.description}</p>
       </div>
     </div>
   );
@@ -235,9 +235,9 @@ function SecurityFeatureCard({ feature }: { feature: SecurityFeature }) {
 
 export function DocsSecurityView() {
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-c-bg">
       {/* Hero Section */}
-      <div className="bg-gradient-to-b from-green-900/20 to-zinc-950 border-b border-zinc-800">
+      <div className="bg-gradient-to-b from-c-success/10 to-c-bg border-b border-c-border">
         <div className="max-w-6xl mx-auto px-6 py-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -247,8 +247,8 @@ export function DocsSecurityView() {
             <div className="flex items-center justify-center gap-2 mb-4">
               <Shield className="text-green-400" size={32} />
             </div>
-            <h1 className="text-4xl font-bold text-white mb-4">Security & Compliance</h1>
-            <p className="text-xl text-zinc-600 max-w-2xl mx-auto mb-8">
+            <h1 className="text-4xl font-bold text-c-text mb-4">Security & Compliance</h1>
+            <p className="text-xl text-c-text-secondary max-w-2xl mx-auto mb-8">
               Enterprise-grade security built into every layer of the Consultify platform. Your data
               protection is our top priority.
             </p>
@@ -275,7 +275,7 @@ export function DocsSecurityView() {
           transition={{ delay: 0.1 }}
           className="mb-16"
         >
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-c-text mb-6 flex items-center gap-3">
             <Award className="text-green-400" />
             Certifications & Compliance
           </h2>
@@ -293,7 +293,7 @@ export function DocsSecurityView() {
           transition={{ delay: 0.2 }}
           className="mb-16"
         >
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-c-text mb-6 flex items-center gap-3">
             <Lock className="text-blue-400" />
             Security Features
           </h2>
@@ -311,12 +311,12 @@ export function DocsSecurityView() {
           transition={{ delay: 0.3 }}
           className="mb-16"
         >
-          <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-8">
-            <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
-              <Globe className="text-primary-400" />
+          <div className="bg-c-surface border border-c-border rounded-xl p-8">
+            <h2 className="text-2xl font-bold text-c-text mb-4 flex items-center gap-3">
+              <Globe className="text-c-accent" />
               GDPR Compliance
             </h2>
-            <p className="text-zinc-600 mb-6">
+            <p className="text-c-text-secondary mb-6">
               We are fully compliant with the EU General Data Protection Regulation (GDPR). Here's
               how we protect your rights:
             </p>
@@ -325,7 +325,7 @@ export function DocsSecurityView() {
               {GDPR_RIGHTS.map((right) => (
                 <div key={right} className="flex items-center gap-2">
                   <CheckCircle2 size={16} className="text-green-400 flex-shrink-0" />
-                  <span className="text-sm text-zinc-600">{right}</span>
+                  <span className="text-sm text-c-text-secondary">{right}</span>
                 </div>
               ))}
             </div>
@@ -354,7 +354,7 @@ export function DocsSecurityView() {
           transition={{ delay: 0.4 }}
           className="mb-16"
         >
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-c-text mb-6 flex items-center gap-3">
             <Server className="text-blue-400" />
             Infrastructure & Data Residency
           </h2>
@@ -366,11 +366,11 @@ export function DocsSecurityView() {
             ].map((dc) => (
               <div
                 key={dc.region}
-                className="p-6 bg-zinc-800/50 border border-zinc-700 rounded-xl text-center"
+                className="p-6 bg-c-surface-raised border border-c-border rounded-xl text-center"
               >
                 <span className="text-4xl mb-3 block">{dc.flag}</span>
-                <h4 className="text-lg font-semibold text-white mb-1">{dc.region}</h4>
-                <p className="text-sm text-zinc-500">{dc.provider}</p>
+                <h4 className="text-lg font-semibold text-c-text mb-1">{dc.region}</h4>
+                <p className="text-sm text-c-text-muted">{dc.provider}</p>
               </div>
             ))}
           </div>
@@ -383,16 +383,16 @@ export function DocsSecurityView() {
           transition={{ delay: 0.5 }}
           className="mb-12"
         >
-          <div className="bg-gradient-to-r from-blue-500/10 to-primary-500/10 border border-blue-500/30 rounded-xl p-8">
+          <div className="bg-gradient-to-r from-c-info/10 to-c-accent-soft border border-c-info/30 rounded-xl p-8">
             <div className="flex items-start gap-4">
               <div className="p-3 bg-blue-500/20 rounded-lg">
                 <Shield size={24} className="text-blue-400" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white mb-2">
+                <h3 className="text-xl font-bold text-c-text mb-2">
                   Responsible Disclosure Program
                 </h3>
-                <p className="text-zinc-600 mb-4">
+                <p className="text-c-text-secondary mb-4">
                   Found a security vulnerability? We appreciate your help in keeping Consultify
                   secure. Report issues responsibly and you may be eligible for our bug bounty
                   program.

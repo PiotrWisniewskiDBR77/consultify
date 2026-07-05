@@ -1446,7 +1446,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                         onClick={() => setSelectedLinkRelation(rel)}
                         className={`group relative px-2 py-2.5 rounded-xl text-center transition-all ${
                           selectedLinkRelation === rel
-                            ? 'bg-primary-500 text-white shadow-md shadow-primary-500/25 ring-1 ring-primary-400/50'
+                            ? 'bg-c-text text-c-bg shadow-md shadow-black/10 ring-1 ring-c-focus'
                             : 'bg-slate-50 dark:bg-navy-800 text-secondary-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 border border-slate-200/50 dark:border-navy-700/50'
                         }`}
                       >
@@ -1673,7 +1673,7 @@ Write a clear, professional comment explaining why this link exists and its sign
                   <button
                     onClick={() => void handleConfirmInternalLink()}
                     disabled={!stagedInternalItem}
-                    className="px-5 py-2 rounded-lg text-xs font-semibold bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm shadow-primary-500/20 transition-all hover:shadow-md hover:shadow-primary-500/25"
+                    className="px-5 py-2 rounded-lg text-xs font-semibold bg-c-text text-c-bg hover:bg-c-text-secondary disabled:opacity-40 disabled:cursor-not-allowed shadow-sm shadow-black/10 transition-all hover:shadow-md hover:shadow-black/10"
                   >
                     {isPolish ? 'Dodaj połączenie' : 'Add Link'}
                   </button>

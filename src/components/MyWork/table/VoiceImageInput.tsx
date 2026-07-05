@@ -231,18 +231,18 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[480px] max-w-[90vw] max-h-[80vh] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden flex flex-col"
+        className="w-[480px] max-w-[90vw] max-h-[80vh] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
         onPaste={handlePaste}
       >
         {/* Header */}
-        <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200/60 dark:border-navy-700/60">
+        <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle">
           {mode === 'voice' ? (
-            <Mic size={16} className="text-primary-500" />
+            <Mic size={16} className="text-c-accent" />
           ) : (
-            <Camera size={16} className="text-primary-500" />
+            <Camera size={16} className="text-c-accent" />
           )}
-          <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+          <span className="text-sm font-bold text-c-text">
             {mode === 'voice'
               ? isPl
                 ? 'Dyktowanie głosowe'
@@ -252,17 +252,17 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
                 : 'Image → Ideas'}
           </span>
           <div className="flex-1" />
-          <div className="flex items-center gap-0.5 rounded-lg border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
+          <div className="flex items-center gap-0.5 rounded-lg border border-c-border-subtle overflow-hidden">
             <button
               onClick={() => setMode('voice')}
-              className={`px-2 py-1 text-[10px] font-bold transition-colors ${mode === 'voice' ? 'bg-primary-500/10 text-primary-600' : 'text-slate-600'}`}
+              className={`px-2 py-1 text-[10px] font-bold transition-colors ${mode === 'voice' ? 'bg-c-accent-soft text-c-accent' : 'text-c-text-secondary'}`}
             >
               <Mic size={10} className="inline mr-0.5" />
               {isPl ? 'Głos' : 'Voice'}
             </button>
             <button
               onClick={() => setMode('image')}
-              className={`px-2 py-1 text-[10px] font-bold transition-colors ${mode === 'image' ? 'bg-primary-500/10 text-primary-600' : 'text-slate-600'}`}
+              className={`px-2 py-1 text-[10px] font-bold transition-colors ${mode === 'image' ? 'bg-c-accent-soft text-c-accent' : 'text-c-text-secondary'}`}
             >
               <ImageIcon size={10} className="inline mr-0.5" />
               {isPl ? 'Obraz' : 'Image'}
@@ -270,14 +270,14 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-c-surface-raised transition-colors"
           >
-            <X size={14} className="text-slate-600" />
+            <X size={14} className="text-c-text-secondary" />
           </button>
         </div>
 
         {/* Input area */}
-        <div className="px-5 py-4 border-b border-slate-200/30 dark:border-white/[0.04]">
+        <div className="px-5 py-4 border-b border-c-border-subtle">
           {mode === 'voice' ? (
             <div className="text-center">
               <button
@@ -285,12 +285,12 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
                 className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center transition-all ${
                   isRecording
                     ? 'bg-danger-500 text-white animate-pulse shadow-lg shadow-danger-500/30'
-                    : 'bg-primary-500/10 text-primary-600 hover:bg-primary-500/20'
+                    : 'bg-c-accent-soft text-c-accent hover:bg-c-accent-soft'
                 }`}
               >
                 {isRecording ? <Square size={20} /> : <Mic size={24} />}
               </button>
-              <p className="text-[10px] text-slate-600 mt-2">
+              <p className="text-[10px] text-c-text-secondary mt-2">
                 {isRecording
                   ? isPl
                     ? 'Nagrywam… kliknij aby zatrzymać'
@@ -300,8 +300,8 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
                     : 'Click to start dictating'}
               </p>
               {transcript && (
-                <div className="mt-3 p-3 rounded-xl bg-slate-50 dark:bg-navy-900/50 text-left">
-                  <p className="text-[11px] text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+                <div className="mt-3 p-3 rounded-xl bg-c-surface-raised text-left">
+                  <p className="text-[11px] text-c-text whitespace-pre-wrap">
                     {transcript}
                   </p>
                 </div>
@@ -311,8 +311,8 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
             <div
               className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
                 isDragOver
-                  ? 'border-primary-500 bg-primary-500/5'
-                  : 'border-slate-200 dark:border-navy-700'
+                  ? 'border-c-accent bg-c-accent-soft'
+                  : 'border-c-border-subtle'
               }`}
               onDragOver={(e) => {
                 e.preventDefault();
@@ -333,15 +333,15 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
                 </div>
               ) : (
                 <>
-                  <Upload size={24} className="text-slate-600 mx-auto mb-2" />
-                  <p className="text-[11px] text-slate-500">
+                  <Upload size={24} className="text-c-text-secondary mx-auto mb-2" />
+                  <p className="text-[11px] text-c-text-muted">
                     {isPl
                       ? 'Upuść obraz, wklej screenshot (Ctrl+V) lub'
                       : 'Drop image, paste screenshot (Ctrl+V) or'}
                   </p>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold text-primary-600 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
+                    className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors"
                   >
                     <ImageIcon size={10} />
                     {isPl ? 'Wybierz plik' : 'Choose file'}
@@ -362,11 +362,11 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
         </div>
 
         {/* Parse button */}
-        <div className="px-5 py-3 border-b border-slate-200/30 dark:border-white/[0.04] flex items-center gap-2">
+        <div className="px-5 py-3 border-b border-c-border-subtle flex items-center gap-2">
           <button
             onClick={handleParse}
             disabled={loading || (mode === 'voice' ? !transcript : !imagePreview)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-primary-500/10 to-crimson-500/10 text-primary-600 dark:text-primary-400 hover:from-primary-500/20 hover:to-crimson-500/20 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-c-accent-soft text-c-accent hover:bg-c-accent-soft transition-colors disabled:opacity-50"
           >
             {loading ? <Loader2 size={12} className="animate-spin" /> : <Mic size={12} />}
             {loading
@@ -382,40 +382,40 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
         {/* Parsed ideas */}
         <div className="flex-1 overflow-auto px-5 py-4">
           {parsedIdeas.length === 0 ? (
-            <p className="text-xs text-slate-600 text-center py-4">
+            <p className="text-xs text-c-text-secondary text-center py-4">
               {isPl
                 ? 'Nagraj głos lub wgraj obraz, potem kliknij "Rozpoznaj"'
                 : 'Record voice or upload image, then click "Parse"'}
             </p>
           ) : (
             <div className="space-y-1.5">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted mb-2">
                 {parsedIdeas.filter((p) => p.selected).length}/{parsedIdeas.length}{' '}
                 {isPl ? 'wybranych' : 'selected'}
               </p>
               {parsedIdeas.map((idea, idx) => (
                 <label
                   key={idx}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-navy-800/50 cursor-pointer transition-colors"
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-c-surface-raised cursor-pointer transition-colors"
                 >
                   <input
                     type="checkbox"
                     checked={idea.selected}
                     onChange={() => toggleIdea(idx)}
-                    className="w-3.5 h-3.5 rounded border-slate-300 text-primary-500 focus:ring-primary-500"
+                    className="w-3.5 h-3.5 rounded border-c-border text-c-accent focus:ring-c-focus"
                   />
                   <div className="flex-1 min-w-0">
-                    <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 block truncate">
+                    <span className="text-[11px] font-medium text-c-text block truncate">
                       {idea.label}
                     </span>
                     {idea.description && (
-                      <span className="text-[9px] text-slate-600 block truncate">
+                      <span className="text-[9px] text-c-text-secondary block truncate">
                         {idea.description}
                       </span>
                     )}
                   </div>
                   {idea.category && (
-                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-primary-500/10 text-primary-600 flex-shrink-0">
+                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-c-accent-soft text-c-accent flex-shrink-0">
                       {idea.category}
                     </span>
                   )}
@@ -427,10 +427,10 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
 
         {/* Footer */}
         {parsedIdeas.length > 0 && (
-          <div className="px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center gap-2">
+          <div className="px-5 py-3 border-t border-c-border-subtle flex items-center gap-2">
             <button
               onClick={onClose}
-              className="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+              className="px-3 py-1.5 rounded-xl text-xs font-medium text-c-text-muted hover:bg-c-surface-raised transition-colors"
             >
               {isPl ? 'Anuluj' : 'Cancel'}
             </button>
@@ -438,7 +438,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
             <button
               onClick={handleAddSelected}
               disabled={parsedIdeas.filter((p) => p.selected).length === 0}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-c-accent-soft text-c-accent hover:bg-c-accent-soft transition-colors disabled:opacity-50"
             >
               <Plus size={12} />
               {isPl

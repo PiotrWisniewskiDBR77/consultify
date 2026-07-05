@@ -55,9 +55,9 @@ describe('Sparkline (L2)', () => {
   it('uses red classes when isOnTarget=false', () => {
     const { container } = render(<Sparkline data={[1, 2]} isOnTarget={false} />);
     const paths = Array.from(container.querySelectorAll('path'));
-    expect(paths[0].className.baseVal).toContain('fill-rose-500/10');
-    expect(paths[1].className.baseVal).toContain('stroke-rose-500');
-    expect(container.querySelector('circle')?.className.baseVal).toContain('fill-rose-500');
+    expect(paths[0].className.baseVal).toContain('fill-danger-500/10');
+    expect(paths[1].className.baseVal).toContain('stroke-danger-500');
+    expect(container.querySelector('circle')?.className.baseVal).toContain('fill-danger-500');
   });
 
   it('handles single-point data without NaN coordinates', () => {

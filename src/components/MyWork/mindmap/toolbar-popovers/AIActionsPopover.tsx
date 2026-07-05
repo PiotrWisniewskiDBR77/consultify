@@ -21,7 +21,16 @@ interface AIActionsPopoverProps {
   onOpenChat: () => void;
   onClose: () => void;
   sidekickHint?: string;
+  /**
+   * DP-5: when false (default), heuristic AI actions (mm_ai_cluster) render
+   * disabled with a "Wkrótce / Coming soon" badge. Controlled by the
+   * mindmapHeuristicAiOverlays feature flag upstream.
+   */
+  heuristicAiEnabled?: boolean;
 }
+
+/** DP-5: actions whose displayed result is a client-side heuristic, not real LLM output. */
+const HEURISTIC_ACTIONS = new Set(['mm_ai_cluster']);
 
 const GENERAL_GENERATORS = [
   { action: 'mm_ai_expand', iconEl: Zap, labelPl: 'Rozwiń mapę (AI)', labelEn: 'Expand map (AI)' },
@@ -81,6 +90,7 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
   onOpenChat,
   onClose,
   sidekickHint: sidekickHintProp,
+  heuristicAiEnabled = false,
 }) => {
   const [eventCtx, setEventCtx] = useState<SidekickContext | null>(null);
 
@@ -104,10 +114,10 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
   };
 
   return (
-    <div className="w-60 max-h-[420px] overflow-y-auto rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl">
+    <div className="w-60 max-h-[420px] overflow-y-auto rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl">
       {resolvedHint && (
-        <div className="px-3 py-2 border-b border-slate-200/30 dark:border-white/[0.04]">
-          <div className="text-[10px] text-primary-600 dark:text-primary-400 font-medium flex items-center gap-1">
+        <div className="px-3 py-2 border-b border-c-border-subtle dark:border-c-border">
+          <div className="text-[10px] text-c-text-secondary dark:text-c-text-muted font-medium flex items-center gap-1">
             <Sparkles size={10} />
             {resolvedHint}
           </div>
@@ -119,7 +129,7 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
             onOpenChat();
             onClose();
           }}
-          className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/5 transition-colors"
+          className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-[11px] font-semibold text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
         >
           <MessageCircle size={14} className="shrink-0" />
           {hasNodeSelected
@@ -133,8 +143,8 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
       </div>
 
       {hasNodeSelected && (
-        <div className="border-t border-slate-200/30 dark:border-white/[0.04] px-1 py-1">
-          <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">
+        <div className="border-t border-c-border-subtle dark:border-c-border px-1 py-1">
+          <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
             {isPl ? 'Dla wybranego węzła' : 'For selected node'}
           </div>
           {NODE_SPECIFIC_GENERATORS.map((a) => {
@@ -143,9 +153,9 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
               <button
                 key={a.action}
                 onClick={() => dispatch(a.action)}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
               >
-                <Icon size={12} className="text-primary-400 shrink-0" />
+                <Icon size={12} className="text-c-text-secondary shrink-0" />
                 {isPl ? a.labelPl : a.labelEn}
               </button>
             );
@@ -153,21 +163,32 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
         </div>
       )}
 
-      <div className="border-t border-slate-200/30 dark:border-white/[0.04] px-1 py-1">
-        <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">
+      <div className="border-t border-c-border-subtle dark:border-c-border px-1 py-1">
+        <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
           <Sparkles size={10} className="inline mr-1" />
           {isPl ? 'Generatory AI' : 'AI generators'}
         </div>
         {GENERAL_GENERATORS.map((a) => {
           const Icon = a.iconEl;
+          const comingSoon = !heuristicAiEnabled && HEURISTIC_ACTIONS.has(a.action);
           return (
             <button
               key={a.action}
+              disabled={comingSoon}
               onClick={() => dispatch(a.action)}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] transition-colors ${
+                comingSoon
+                  ? 'text-c-text-secondary/60 dark:text-c-text-secondary/60 cursor-not-allowed'
+                  : 'text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
+              }`}
             >
-              <Icon size={12} className="text-slate-600 shrink-0" />
-              {isPl ? a.labelPl : a.labelEn}
+              <Icon size={12} className="text-c-text-secondary shrink-0" />
+              <span className="flex-1 text-left">{isPl ? a.labelPl : a.labelEn}</span>
+              {comingSoon && (
+                <span className="text-[9px] italic text-c-text-secondary dark:text-c-text-secondary shrink-0">
+                  {isPl ? 'Wkrótce' : 'Coming soon'}
+                </span>
+              )}
             </button>
           );
         })}

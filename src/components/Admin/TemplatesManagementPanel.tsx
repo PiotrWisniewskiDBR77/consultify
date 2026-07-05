@@ -696,7 +696,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
           </button>
           <button
             onClick={startCreating}
-            className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg flex items-center gap-2 transition-colors"
+            className="px-4 py-2 bg-c-text text-c-bg hover:bg-c-text-secondary rounded-lg flex items-center gap-2 transition-colors"
           >
             <Plus size={18} />
             {t('admin.templates.create', 'Create Template')}
@@ -787,7 +787,7 @@ export const TemplatesManagementPanel: React.FC<TemplatesManagementPanelProps> =
               <div className="flex items-center gap-3 pt-4 border-t border-slate-200 dark:border-navy-700">
                 <button
                   onClick={saveTemplate}
-                  className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg flex items-center gap-2 transition-colors"
+                  className="px-4 py-2 bg-c-text text-c-bg hover:bg-c-text-secondary rounded-lg flex items-center gap-2 transition-colors"
                 >
                   <Check size={16} />
                   {t('common.save', 'Save')}

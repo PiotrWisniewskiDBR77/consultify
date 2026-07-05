@@ -102,12 +102,12 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BarChart2 className="w-5 h-5 text-primary-400" />
-          <h3 className="font-semibold text-white">Analytics</h3>
+          <h3 className="font-semibold text-c-text">Analytics</h3>
         </div>
         <select
           value={dateRange}
           onChange={(e) => setDateRange(e.target.value)}
-          className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+          className="px-3 py-1.5 bg-c-surface-raised border border-c-border rounded-lg text-c-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
         >
           <option value="7d">Last 7 days</option>
           <option value="30d">Last 30 days</option>
@@ -119,17 +119,17 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
       {/* Key Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Total Runs */}
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <Play size={16} className="text-blue-400" />
             <span className="text-sm text-slate-600 dark:text-slate-500">Total Runs</span>
           </div>
-          <div className="text-2xl font-bold text-white">{totalRuns}</div>
+          <div className="text-2xl font-bold text-c-text">{totalRuns}</div>
           <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Playbook executions</div>
         </div>
 
         {/* Success Rate */}
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             {stats.successRate && stats.successRate >= 70 ? (
               <TrendingUp size={16} className="text-emerald-400" />
@@ -155,12 +155,12 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
         </div>
 
         {/* Avg Duration */}
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <Clock size={16} className="text-amber-400" />
             <span className="text-sm text-slate-600 dark:text-slate-500">Avg. Duration</span>
           </div>
-          <div className="text-2xl font-bold text-white">
+          <div className="text-2xl font-bold text-c-text">
             {stats.avgExecutionTimeMins ? `${stats.avgExecutionTimeMins}m` : 'N/A'}
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -169,19 +169,19 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
         </div>
 
         {/* Usage Count */}
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <Users size={16} className="text-primary-400" />
             <span className="text-sm text-slate-600 dark:text-slate-500">Usage Count</span>
           </div>
-          <div className="text-2xl font-bold text-white">{stats.usageCount}</div>
+          <div className="text-2xl font-bold text-c-text">{stats.usageCount}</div>
           <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Times template used</div>
         </div>
       </div>
 
       {/* Run Status Breakdown */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
-        <h4 className="font-medium text-white mb-4">Run Status Breakdown</h4>
+      <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+        <h4 className="font-medium text-c-text mb-4">Run Status Breakdown</h4>
 
         {totalRuns === 0 ? (
           <div className="text-center py-4 text-slate-600 dark:text-slate-500">
@@ -190,7 +190,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
         ) : (
           <>
             {/* Progress bar */}
-            <div className="flex h-4 rounded-full overflow-hidden bg-slate-900 mb-4">
+            <div className="flex h-4 rounded-full overflow-hidden bg-c-surface mb-4">
               {completedRuns > 0 && (
                 <div
                   className="bg-emerald-500"
@@ -245,8 +245,8 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
-        <h4 className="font-medium text-white mb-4">Recent Activity</h4>
+      <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+        <h4 className="font-medium text-c-text mb-4">Recent Activity</h4>
 
         {events.length === 0 ? (
           <div className="text-center py-4 text-slate-600 dark:text-slate-500">
@@ -257,14 +257,14 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
             {events.slice(0, 10).map((event) => (
               <div
                 key={event.id}
-                className="flex items-center justify-between py-2 border-b border-slate-700/30 last:border-0"
+                className="flex items-center justify-between py-2 border-b border-c-border/30 last:border-0"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-c-surface flex items-center justify-center">
                     {getEventIcon(event.eventType)}
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-white">
+                    <div className="text-sm font-medium text-c-text">
                       {String(event.eventType ?? 'Unknown').replaceAll('_', ' ')}
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -283,16 +283,16 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-3 gap-4 text-center">
-        <div className="bg-slate-800/30 rounded-lg p-3">
-          <div className="text-lg font-semibold text-white">{stats.version}</div>
+        <div className="bg-c-surface-raised/30 rounded-lg p-3">
+          <div className="text-lg font-semibold text-c-text">{stats.version}</div>
           <div className="text-xs text-slate-600 dark:text-slate-500">Current Version</div>
         </div>
-        <div className="bg-slate-800/30 rounded-lg p-3">
-          <div className="text-lg font-semibold text-white">{stats.status}</div>
+        <div className="bg-c-surface-raised/30 rounded-lg p-3">
+          <div className="text-lg font-semibold text-c-text">{stats.status}</div>
           <div className="text-xs text-slate-600 dark:text-slate-500">Status</div>
         </div>
-        <div className="bg-slate-800/30 rounded-lg p-3">
-          <div className="text-lg font-semibold text-white">{events.length}</div>
+        <div className="bg-c-surface-raised/30 rounded-lg p-3">
+          <div className="text-lg font-semibold text-c-text">{events.length}</div>
           <div className="text-xs text-slate-600 dark:text-slate-500">Total Events</div>
         </div>
       </div>

@@ -24,19 +24,20 @@ test.describe('M06 §20 — Tryby widoku', () => {
   test('20.1 Tryb prezentacji (PresentationMode)', async ({ page }) => {
     await freshMap(page, '20.1');
     await withChild(page);
-    const presentBtn = page
-      .getByRole('button', { name: /Present|Prezentacja|Slideshow/i })
-      .first();
+    // Present lives on the CanvasLeftToolbar as the "present" slot (CanvasLeftToolbar.tsx:115-121,
+    // aria-label "Present"/"Prezentacja", data-testid canvas-left-toolbar-present) → mm_presentation.
+    const presentBtn = page.getByTestId('canvas-left-toolbar-present');
     await shot(page, '20.1-presentation-mode-btn');
     if (!(await presentBtn.isVisible().catch(() => false))) {
       test.skip(
         true,
-        'PresentationMode button not surfaced headlessly. ' +
-          'Verify manually: click → fullscreen slideshow with nodes; arrow navigation; Esc → exit.'
+        'CanvasLeftToolbar "present" slot not rendered headlessly (toolbar portals to body). ' +
+          'Feature wired: mm_presentation → setShowPresentation(true) (useMindMapQuickActions.ts:234). ' +
+          'Verify manually: click Present → fullscreen slideshow; arrows navigate; Esc exits.'
       );
       return;
     }
-    await presentBtn.click();
+    await presentBtn.click({ force: true });
     await page.waitForTimeout(800);
     await shot(page, '20.1-presentation-mode-open');
     // In presentation mode something fullscreen-like should be visible.
@@ -60,10 +61,17 @@ test.describe('M06 §20 — Tryby widoku', () => {
       .first();
     await shot(page, '20.2-timeline-btn');
     if (!(await timelineBtn.isVisible().catch(() => false))) {
+      // REAL GAP: TimelineView component is built (mindmap/TimelineView.tsx) and wired —
+      // useMindMapQuickActions.ts:233 maps action 'mm_timeline' → setShowTimeline(true).
+      // But NO UI element dispatches 'mm_timeline' anywhere in src/ (verified: not in
+      // CanvasLeftToolbar, MoreToolsPanel, ImportExportPopover, nor MindmapCommandPalette —
+      // the palette only has 'mm_set_structure:timeline', a different action). The overlay
+      // is unreachable. Not a headless limitation.
       test.skip(
         true,
-        'TimelineView button not surfaced headlessly. ' +
-          'Verify manually: click → timeline overlay with date-positioned nodes; Esc/X → close.'
+        'REAL GAP: TimelineView unreachable — action mm_timeline ' +
+          '(useMindMapQuickActions.ts:233 → setShowTimeline) has no UI trigger in src/. ' +
+          'Needs an entry in MoreToolsPanel (Visual Modes) or the command palette.'
       );
       return;
     }
@@ -88,10 +96,14 @@ test.describe('M06 §20 — Tryby widoku', () => {
       .first();
     await shot(page, '20.3-3d-view-btn');
     if (!(await btn3d.isVisible().catch(() => false))) {
+      // REAL GAP: MindMap3DView is built (mindmap/MindMap3DView.tsx) and wired —
+      // useMindMapQuickActions.ts:292 maps action 'mm_3d_view' → setShowMindMap3D(true).
+      // But NO UI element dispatches 'mm_3d_view' in src/ (verified). Unreachable.
       test.skip(
         true,
-        '[KNOWN-MOCK] MindMap3DView button not surfaced headlessly. ' +
-          'Verify manually: click → CSS perspective pseudo-3D (not WebGL); no crash; Esc → close.'
+        'REAL GAP: MindMap3DView [KNOWN-MOCK CSS pseudo-3D] unreachable — action mm_3d_view ' +
+          '(useMindMapQuickActions.ts:292 → setShowMindMap3D) has no UI trigger in src/. ' +
+          'Needs an entry in MoreToolsPanel/command palette.'
       );
       return;
     }
@@ -112,10 +124,16 @@ test.describe('M06 §20 — Tryby widoku', () => {
       .first();
     await shot(page, '20.4-heatmap-btn');
     if (!(await heatmapBtn.isVisible().catch(() => false))) {
+      // REAL GAP: TimeHeatmap is built (mindmap/TimeHeatmap.tsx) and wired —
+      // useMindMapQuickActions.ts:272 maps action 'mm_time_heatmap' → setShowTimeHeatmap(true).
+      // But NO UI element dispatches 'mm_time_heatmap' in src/ (verified). Unreachable.
+      // (Note: a separate 'mm_toggle_heatmap' edge-heat exists and IS toggled elsewhere,
+      // but the TimeHeatmap *overlay* panel has no trigger.)
       test.skip(
         true,
-        'TimeHeatmap button not surfaced headlessly. ' +
-          'Verify manually: click → nodes colored by activity; close button dismisses.'
+        'REAL GAP: TimeHeatmap overlay unreachable — action mm_time_heatmap ' +
+          '(useMindMapQuickActions.ts:272 → setShowTimeHeatmap) has no UI trigger in src/. ' +
+          'Needs an entry in MoreToolsPanel/command palette.'
       );
       return;
     }
@@ -129,24 +147,24 @@ test.describe('M06 §20 — Tryby widoku', () => {
   test('20.5 Health Score (MapHealthScore)', async ({ page }) => {
     await freshMap(page, '20.5');
     await withChild(page);
-    const healthBtn = page
-      .getByRole('button', { name: /Health Score|Wynik zdrowia|Health/i })
-      .first();
-    await shot(page, '20.5-health-score-btn');
-    if (!(await healthBtn.isVisible().catch(() => false))) {
+    // MapHealthScore is a default-ON floating widget (IdeaRecommendationMap.tsx:5408-5410,
+    // showHealthScore initial state = true). It renders "Map Health"/"Zdrowie mapy" + an
+    // NN% overall score once the map has >=1 node (MapHealthScore.tsx:222 returns null only
+    // when metrics empty; withChild() guarantees a node). No button to click.
+    await page.waitForTimeout(600);
+    await shot(page, '20.5-health-score-open');
+    const healthLabel = page.getByText(/Map Health|Zdrowie mapy/i).first();
+    if (!(await healthLabel.isVisible().catch(() => false))) {
       test.skip(
         true,
-        'MapHealthScore button not surfaced headlessly. ' +
-          'Verify manually: click → score 0–100 displayed based on node structure; ' +
-          'different for empty map vs 10-node map.'
+        'MapHealthScore widget not visible (metrics empty? toggled off via mm_toggle_health?). ' +
+          'Wired default-on at IdeaRecommendationMap.tsx:3833/5408. Confirm manually.'
       );
       return;
     }
-    await healthBtn.click();
-    await page.waitForTimeout(600);
-    await shot(page, '20.5-health-score-open');
-    // Health score panel should display a numeric score.
-    const score = page.getByText(/\d{1,3}\/100|\d{1,3}%|score/i).first();
-    expect(await score.isVisible().catch(() => false), 'Health Score panel shows a score').toBe(true);
+    await expect(healthLabel, '§20.5: Map Health widget visible by default').toBeVisible();
+    // Widget shows an overall percentage score (MapHealthScore.tsx:267).
+    const score = page.getByText(/\d{1,3}%/).first();
+    expect(await score.isVisible().catch(() => false), 'Health widget shows a % score').toBe(true);
   });
 });

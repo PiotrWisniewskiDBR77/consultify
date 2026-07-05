@@ -218,7 +218,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 
       {/* Profile Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl z-overlay animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
           {/* Header with User Info */}
           <div className="px-4 py-4 border-b border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5">
             <div className="flex items-center gap-3">
@@ -249,7 +249,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                     {roleLabel}
                   </span>
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700 max-w-full">
-                    <Building2 size={11} />
+                    <Building2 size={14} />
                     <span className="truncate max-w-[150px]">{activeOrganizationName}</span>
                   </span>
                 </div>
@@ -323,7 +323,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                           >
                             <div className="w-4 shrink-0 flex items-center justify-center">
                               {isSwitching ? (
-                                <Loader2 size={13} className="animate-spin text-primary-500" />
+                                <Loader2 size={14} className="animate-spin text-primary-500" />
                               ) : isCurrent ? (
                                 <Check size={14} className="text-primary-500" />
                               ) : null}

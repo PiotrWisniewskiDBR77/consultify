@@ -378,6 +378,11 @@ function generateFallbackSuggestions(
   return suggestions;
 }
 
+// B4 WIRED (W4): when the premium deliverables tier is active, generateTableAction
+// calls generateTableSchema(intent, { orgId }) to produce a TYPED schema
+// (singleSelect+colors / number / currency / date) + seed-rows, and returns it as
+// a `schema_enrich` action. Gated behind ENABLE_DELIVERABLES_PREMIUM (B5 resolver).
+// FAIL-OPEN: any premium failure falls back to the standard LLM-operations path.
 export async function generateTableAction(
   ideaId: string,
   naturalLanguage: string,
@@ -388,6 +393,31 @@ export async function generateTableAction(
 ): Promise<{ type: string; [key: string]: any }> {
   const isPl = language.startsWith('pl');
 
+  // ── B4: Premium schema enrichment (flag-gated, fail-open) ──────────────────
+  try {
+    const { resolveDeliverableTier } = await import('./deliverableGenerationTier.js');
+    if (resolveDeliverableTier({ orgId }) === 'PREMIUM') {
+      const { generateTableSchema } = await import('./tableSchemaGeneratorService.js');
+      const schema = await generateTableSchema(naturalLanguage, { orgId, userId });
+      // Only use the premium schema if it produced meaningful output (quality gate
+      // is internal to generateTableSchema; fallbackUsed=true means STANDARD path).
+      if (!schema.fallbackUsed && schema.fields.length > 0) {
+        return {
+          type: 'schema_enrich',
+          fields: schema.fields,
+          seedRows: schema.seedRows,
+          conditionalFormatting: schema.conditionalFormatting ?? [],
+          hasFormulas: schema.hasFormulas ?? false,
+          sheets: schema.sheets,
+          tierUsed: schema.tierUsed,
+        };
+      }
+    }
+  } catch {
+    // FAIL-OPEN: premium path failed → fall through to standard LLM-operations path.
+  }
+
+  // ── STANDARD: LLM-operations path (sort / filter / add_column / …) ─────────
   const systemPrompt = `You are a table operations assistant. Given a natural language command and a table schema, return a JSON action object.
 Table schema: ${JSON.stringify(tableSchema)}
 

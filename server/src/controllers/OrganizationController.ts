@@ -319,7 +319,12 @@ export class OrganizationController {
         await import('../services/organizationService.js');
       const members = await getMembers(orgId);
       const actor = members.find((m) => m.user_id === userId);
-      const target = members.find((m) => m.user_id === memberId);
+      // Accept either the membership id or the user_id as the {memberId} path param.
+      // The Members & Roles FE surfaces both fields; historically only user_id
+      // matched here, so passing a membership id yielded a spurious 404
+      // (MEMBER_NOT_FOUND). Resolve against both without changing the FE contract.
+      const target = members.find((m) => m.user_id === memberId || m.id === memberId);
+      const targetUserId = target?.user_id;
       const actorRole = normalizeOrganizationRole(actor?.role || req.user?.role);
       const currentTargetRole = normalizeOrganizationRole(target?.role);
       const nextRole = normalizeOrganizationRole(role);
@@ -381,7 +386,7 @@ export class OrganizationController {
         return;
       }
 
-      if (memberId === userId && !['OWNER', 'ADMIN'].includes(nextRole)) {
+      if (targetUserId === userId && !['OWNER', 'ADMIN'].includes(nextRole)) {
         conflict(
           res,
           'Role change would remove your admin access',
@@ -393,7 +398,7 @@ export class OrganizationController {
 
       const result = await updateMemberRole({
         organizationId: orgId,
-        userId: memberId,
+        userId: targetUserId,
         role: nextRole,
       });
 
@@ -407,7 +412,7 @@ export class OrganizationController {
           details: {
             orgId,
             isSensitive: true,
-            targetUserId: memberId,
+            targetUserId,
             fromRole: currentTargetRole,
             toRole: nextRole,
           },
@@ -437,7 +442,10 @@ export class OrganizationController {
         await import('../services/organizationService.js');
       const members = await getMembers(orgId);
       const actor = members.find((m) => m.user_id === userId);
-      const target = members.find((m) => m.user_id === memberId);
+      // Accept either the membership id or the user_id as the {memberId} path param
+      // (see updateMemberRole) so the FE can pass whichever id it holds.
+      const target = members.find((m) => m.user_id === memberId || m.id === memberId);
+      const targetUserId = target?.user_id;
       const actorRole = normalizeOrganizationRole(actor?.role || req.user?.role);
       const targetRole = normalizeOrganizationRole(target?.role);
       const isSuperAdmin = req.user?.role === 'SUPERADMIN' || req.user?.role === 'SUPER_ADMIN';
@@ -494,7 +502,7 @@ export class OrganizationController {
         return;
       }
 
-      if (memberId === userId && ['OWNER', 'ADMIN'].includes(actorRole)) {
+      if (targetUserId === userId && ['OWNER', 'ADMIN'].includes(actorRole)) {
         conflict(
           res,
           'Removal would revoke your admin access',
@@ -506,7 +514,7 @@ export class OrganizationController {
 
       await removeMember({
         organizationId: orgId,
-        userId: memberId,
+        userId: targetUserId,
       });
 
       // Audit proof (ADM-RAW-P1-004): member removals are high-risk admin writes.
@@ -518,7 +526,7 @@ export class OrganizationController {
           details: {
             orgId,
             isSensitive: true,
-            targetUserId: memberId,
+            targetUserId,
             targetRole,
           },
         });

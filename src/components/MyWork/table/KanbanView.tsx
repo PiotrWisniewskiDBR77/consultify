@@ -101,12 +101,12 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
         return (
           <div
             key={laneKey}
-            className={`flex-shrink-0 w-[280px] flex flex-col rounded-2xl bg-slate-50/80 dark:bg-navy-900/80 border transition-colors ${
+            className={`flex-shrink-0 w-[280px] flex flex-col rounded-2xl bg-c-bg border transition-colors ${
               dropTarget === laneKey
-                ? 'border-primary-400 dark:border-primary-500 bg-primary-50/30 dark:bg-primary-500/5'
+                ? 'border-c-focus ring-2 ring-c-focus'
                 : isOverWip
                   ? 'border-amber-300/60 dark:border-amber-500/30'
-                  : 'border-slate-200/40 dark:border-navy-700/40'
+                  : 'border-c-border-subtle'
             }`}
             onDragOver={(e) => {
               e.preventDefault();
@@ -116,19 +116,19 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
             onDrop={() => handleDrop(laneKey)}
           >
             {/* Lane header */}
-            <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-200/40 dark:border-navy-700/40">
+            <div className="flex items-center gap-2 px-3 py-2.5 border-b border-c-border-subtle">
               <span
                 className="w-3 h-3 rounded-sm flex-shrink-0"
                 style={{ backgroundColor: bgColor }}
               />
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-200 flex-1 truncate">
+              <span className="text-xs font-bold text-c-text-secondary flex-1 truncate">
                 {laneKey}
               </span>
               <span
                 className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${
                   isOverWip
                     ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400'
-                    : 'text-slate-600 bg-slate-200/60 dark:bg-navy-700/60'
+                    : 'text-c-text-muted bg-c-surface-raised'
                 }`}
               >
                 {laneNodes.length}
@@ -147,10 +147,10 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                     draggable={!locked}
                     onDragStart={() => handleDragStart(node.id)}
                     onClick={() => onNodeClick?.(node.id)}
-                    className={`rounded-xl border bg-white dark:bg-navy-950 p-3 cursor-pointer hover:shadow-md transition-all ${
+                    className={`rounded-xl border bg-c-surface p-3 cursor-pointer hover:shadow-md transition-all ${
                       dragNodeId === node.id
-                        ? 'opacity-40 scale-95 border-primary-300'
-                        : 'border-slate-200/60 dark:border-navy-700/40'
+                        ? 'opacity-40 scale-95 border-c-focus'
+                        : 'border-c-border-subtle'
                     }`}
                     style={
                       node.data?.color
@@ -162,11 +162,11 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                       {!locked && (
                         <GripVertical
                           size={12}
-                          className="text-slate-600 dark:text-navy-600 mt-0.5 flex-shrink-0 cursor-grab"
+                          className="text-c-text-muted mt-0.5 flex-shrink-0 cursor-grab"
                         />
                       )}
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
+                        <div className="text-xs font-semibold text-c-text truncate">
                           {node.data?.label || node.id}
                         </div>
                         {displayColumns.map((col) => {
@@ -174,23 +174,23 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                           if (!val) return null;
                           return (
                             <div key={col.key} className="flex items-center gap-1 mt-1">
-                              <span className="text-[9px] text-slate-600">{col.header}:</span>
+                              <span className="text-[9px] text-c-text-muted">{col.header}:</span>
                               {col.type === 'rating' ? (
                                 <span className="text-[10px] text-amber-500">
                                   {'★'.repeat(Number(val) || 0)}
                                 </span>
                               ) : col.type === 'progress' ? (
                                 <div className="flex items-center gap-1">
-                                  <div className="w-12 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                                  <div className="w-12 h-1.5 rounded-full bg-c-border-subtle overflow-hidden">
                                     <div
                                       className="h-full rounded-full bg-emerald-500"
                                       style={{ width: `${Number(val) || 0}%` }}
                                     />
                                   </div>
-                                  <span className="text-[9px] text-slate-600">{val}%</span>
+                                  <span className="text-[9px] text-c-text-secondary">{val}%</span>
                                 </div>
                               ) : (
-                                <span className="text-[10px] text-slate-600 dark:text-slate-300 truncate">
+                                <span className="text-[10px] text-c-text-secondary truncate">
                                   {String(val)}
                                 </span>
                               )}
@@ -202,13 +202,13 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
 
                     {/* Card footer: person + priority */}
                     {(person || priorityCol) && (
-                      <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-200 dark:border-navy-800">
+                      <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-c-border-subtle">
                         {person ? (
                           <div className="flex items-center gap-1">
-                            <div className="w-4 h-4 rounded-full bg-gradient-to-br from-primary-400 to-crimson-500 flex items-center justify-center text-[7px] font-bold text-white">
+                            <div className="w-4 h-4 rounded-full bg-c-surface-raised border border-c-border flex items-center justify-center text-[7px] font-bold text-c-text-secondary">
                               {String(person).charAt(0).toUpperCase()}
                             </div>
-                            <span className="text-[9px] text-slate-500 truncate max-w-[80px]">
+                            <span className="text-[9px] text-c-text-muted truncate max-w-[80px]">
                               {String(person)}
                             </span>
                           </div>
@@ -216,7 +216,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                           <div />
                         )}
                         {priorityCol && node.data?.[priorityCol.key] && (
-                          <span className="text-[8px] font-bold text-slate-500 bg-slate-100 dark:bg-navy-800 px-1 py-0.5 rounded">
+                          <span className="text-[8px] font-bold text-c-text-secondary bg-c-surface-raised px-1 py-0.5 rounded">
                             {String(node.data[priorityCol.key])}
                           </span>
                         )}
@@ -229,7 +229,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
               {!locked && (
                 <button
                   onClick={onAddRow}
-                  className="w-full flex items-center justify-center gap-1 py-2 rounded-xl border border-dashed border-slate-300 dark:border-navy-600 text-[10px] text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:border-slate-400 dark:hover:border-navy-500 transition-colors"
+                  className="w-full flex items-center justify-center gap-1 py-2 rounded-xl border border-dashed border-c-border text-[10px] text-c-text-muted hover:text-c-text-secondary hover:border-c-border-strong transition-colors"
                 >
                   <Plus size={12} />
                   {isPl ? 'Dodaj' : 'Add'}

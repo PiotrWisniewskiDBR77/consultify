@@ -289,9 +289,9 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
   /* ---- Render helpers ---- */
 
   const inputCls =
-    'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-colors';
+    'w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus transition-colors';
 
-  const labelCls = 'block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1';
+  const labelCls = 'block text-xs font-medium text-c-text-muted mb-1';
 
   /* ================================================================ */
   /*  STEP 1 — Choose type                                            */
@@ -312,16 +312,16 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
               flex flex-col items-center gap-2 rounded-xl border-2 p-5 transition-all
               ${
                 selected
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10 shadow-sm'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600 bg-white dark:bg-navy-900'
+                  ? 'border-c-accent bg-c-accent-soft shadow-sm'
+                  : 'border-c-border hover:border-c-border bg-c-surface'
               }
             `}
           >
             <ConnectorIcon type={t} size={32} />
-            <span className="text-sm font-semibold text-slate-800 dark:text-white">
+            <span className="text-sm font-semibold text-c-text">
               {isPl ? meta.labelPl : meta.labelEn}
             </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 text-center leading-tight">
+            <span className="text-xs text-c-text-muted text-center leading-tight">
               {isPl ? meta.descPl : meta.descEn}
             </span>
           </button>
@@ -361,8 +361,8 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             onClick={() => fileInputRef.current?.click()}
             className={`${inputCls} flex items-center gap-2 cursor-pointer text-left`}
           >
-            <Upload size={14} className="text-slate-600" />
-            <span className={fileName ? 'text-slate-800 dark:text-slate-200' : 'text-slate-600'}>
+            <Upload size={14} className="text-c-text-secondary" />
+            <span className={fileName ? 'text-c-text' : 'text-c-text-secondary'}>
               {fileName || (isPl ? 'Wybierz plik...' : 'Choose file...')}
             </span>
           </button>
@@ -577,7 +577,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
               isPl ? 'Współdzielony sekret do walidacji' : 'Shared secret for validation'
             }
           />
-          <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">
+          <p className="mt-1 text-xs text-c-text-muted">
             {isPl
               ? 'Po utworzeniu konektora otrzymasz URL webhooka do wysyłania danych.'
               : 'After creating the connector you will receive a webhook URL to send data to.'}
@@ -590,7 +590,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
         <button
           onClick={handleTestConnection}
           disabled={testStatus === 'testing'}
-          className="inline-flex items-center gap-2 rounded-lg bg-slate-100 dark:bg-navy-800 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg bg-c-surface-raised px-4 py-2 text-sm font-medium text-c-text-muted hover:bg-c-surface-raised transition-colors disabled:opacity-50"
         >
           {testStatus === 'testing' ? (
             <Loader2 size={14} className="animate-spin" />
@@ -600,7 +600,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
           {isPl ? 'Testuj połączenie' : 'Test connection'}
         </button>
         {testStatus === 'success' && (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-c-success">
             <Check size={14} /> {isPl ? 'Połączono' : 'Connected'}
             {sourceFields.length > 0 && ` (${sourceFields.length} ${isPl ? 'pól' : 'fields'})`}
           </span>
@@ -621,13 +621,13 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
     <div className="space-y-4">
       {/* Auto-map button */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+        <span className="text-xs font-medium text-c-text-muted">
           {sourceFields.length} {isPl ? 'pól źródłowych' : 'source fields'}
         </span>
         <button
           onClick={handleAutoMap}
           disabled={isAutoMapping}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-primary-50 dark:bg-primary-500/10 px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-c-accent-soft px-3 py-1.5 text-xs font-medium text-c-accent hover:bg-c-accent-soft transition-colors disabled:opacity-50"
         >
           {isAutoMapping ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
           {isPl ? 'Auto-mapowanie' : 'Auto-map'}
@@ -635,9 +635,9 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       </div>
 
       {/* Mapping table */}
-      <div className="rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+      <div className="rounded-xl border border-c-border overflow-hidden">
         {/* Header */}
-        <div className="grid grid-cols-12 gap-2 bg-slate-50 dark:bg-navy-800/50 px-3 py-2 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+        <div className="grid grid-cols-12 gap-2 bg-c-surface-raised px-3 py-2 text-[11px] font-semibold text-c-text-muted uppercase tracking-wider">
           <div className="col-span-3">{isPl ? 'Źródło' : 'Source'}</div>
           <div className="col-span-1 text-center">{isPl ? 'Typ' : 'Type'}</div>
           <div className="col-span-1 text-center">→</div>
@@ -646,23 +646,23 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
         </div>
 
         {/* Rows */}
-        <div className="max-h-64 overflow-y-auto divide-y divide-slate-200 dark:divide-navy-800">
+        <div className="max-h-64 overflow-y-auto divide-y divide-c-border-subtle">
           {mappings.map((m, idx) => (
             <div
               key={m.sourceField}
               className="grid grid-cols-12 gap-2 items-center px-3 py-2 text-sm"
             >
-              <div className="col-span-3 font-mono text-xs text-slate-700 dark:text-slate-300 truncate">
+              <div className="col-span-3 font-mono text-xs text-c-text-muted truncate">
                 {m.sourceField}
               </div>
               <div className="col-span-1 text-center">
                 {m.inferredType && (
-                  <span className="inline-block rounded bg-slate-100 dark:bg-navy-800 px-1.5 py-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+                  <span className="inline-block rounded bg-c-surface-raised px-1.5 py-0.5 text-[10px] text-c-text-muted">
                     {m.inferredType}
                   </span>
                 )}
               </div>
-              <div className="col-span-1 text-center text-slate-600">→</div>
+              <div className="col-span-1 text-center text-c-text-secondary">→</div>
               <div className="col-span-4">
                 <select
                   className={`${inputCls} py-1.5 text-xs`}
@@ -710,7 +710,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       </div>
 
       {mappings.length === 0 && (
-        <p className="text-center text-sm text-slate-600 dark:text-slate-500 py-6">
+        <p className="text-center text-sm text-c-text-muted py-6">
           {isPl
             ? 'Przetestuj połączenie w poprzednim kroku, aby pobrać pola.'
             : 'Test the connection in the previous step to fetch fields.'}
@@ -733,10 +733,10 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       {/* Toggle */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-800 dark:text-white">
+          <p className="text-sm font-medium text-c-text">
             {isPl ? 'Automatyczna synchronizacja' : 'Automatic sync'}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-c-text-muted">
             {isPl
               ? 'Uruchamiaj import automatycznie wg harmonogramu'
               : 'Run imports automatically on a schedule'}
@@ -745,11 +745,11 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
         <button
           onClick={() => setScheduleEnabled((v) => !v)}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            scheduleEnabled ? 'bg-navy-900' : 'bg-slate-200 dark:bg-navy-700'
+            scheduleEnabled ? 'bg-c-surface' : 'bg-c-surface-raised'
           }`}
         >
           <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+            className={`inline-block h-4 w-4 transform rounded-full bg-c-surface shadow transition-transform ${
               scheduleEnabled ? 'translate-x-6' : 'translate-x-1'
             }`}
           />
@@ -774,14 +774,14 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
               </select>
               <ChevronDown
                 size={14}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-c-text-secondary pointer-events-none"
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-2 rounded-lg bg-primary-50 dark:bg-primary-500/10 px-3 py-2">
-            <Clock size={14} className="text-primary-500" />
-            <span className="text-xs text-primary-700 dark:text-primary-300">
+          <div className="flex items-center gap-2 rounded-lg bg-c-accent-soft px-3 py-2">
+            <Clock size={14} className="text-c-accent" />
+            <span className="text-xs text-c-accent">
               {isPl ? 'Następne uruchomienie: ' : 'Next run: '}
               {nextRunLabel}
             </span>
@@ -830,18 +830,18 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       </div>
 
       {/* Run now toggle */}
-      <label className="flex items-center gap-3 rounded-lg border border-slate-200 dark:border-navy-700 p-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors">
+      <label className="flex items-center gap-3 rounded-lg border border-c-border p-3 cursor-pointer hover:bg-c-surface-raised transition-colors">
         <input
           type="checkbox"
           checked={runNow}
           onChange={(e) => setRunNow(e.target.checked)}
-          className="h-4 w-4 rounded border-slate-300 text-primary-500 focus:ring-primary-500"
+          className="h-4 w-4 rounded border-c-border text-c-accent focus:ring-c-focus"
         />
         <div>
-          <p className="text-sm font-medium text-slate-800 dark:text-white">
+          <p className="text-sm font-medium text-c-text">
             {isPl ? 'Uruchom teraz' : 'Run now'}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-c-text-muted">
             {isPl
               ? 'Rozpocznij import natychmiast po utworzeniu'
               : 'Start importing immediately after creation'}
@@ -879,7 +879,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             {idx > 0 && (
               <div
                 className={`flex-1 h-px ${
-                  isDone ? 'bg-navy-900' : 'bg-slate-200 dark:bg-navy-700'
+                  isDone ? 'bg-c-surface' : 'bg-c-surface-raised'
                 }`}
               />
             )}
@@ -892,10 +892,10 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
                 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors
                 ${
                   isActive
-                    ? 'bg-navy-900 text-white'
+                    ? 'bg-c-surface text-c-text'
                     : isDone
-                      ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 cursor-pointer hover:bg-primary-100'
-                      : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-500'
+                      ? 'bg-c-accent-soft text-c-accent cursor-pointer hover:bg-c-accent'
+                      : 'bg-c-surface-raised text-c-text-muted'
                 }
               `}
             >
@@ -913,7 +913,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
     <div className="flex items-center justify-between w-full">
       <button
         onClick={step === 1 ? onClose : prevStep}
-        className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+        className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-c-text-muted hover:bg-c-surface-raised transition-colors"
       >
         {step === 1 ? (
           <>
@@ -930,7 +930,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
         <button
           onClick={nextStep}
           disabled={!canProceed}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-c-accent px-4 py-2 text-sm font-medium text-c-text hover:bg-c-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {isPl ? 'Dalej' : 'Next'} <ArrowRight size={14} />
         </button>
@@ -938,7 +938,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
         <button
           onClick={handleCreate}
           disabled={isCreating}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-600 transition-colors disabled:opacity-40"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-c-accent px-4 py-2 text-sm font-medium text-c-text hover:bg-c-accent transition-colors disabled:opacity-40"
         >
           {isCreating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
           {isPl ? 'Utwórz konektor' : 'Create connector'}
@@ -973,13 +973,13 @@ const SummaryCard: React.FC<{
   value: string;
   icon?: React.ReactNode;
 }> = ({ label, value, icon }) => (
-  <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50 p-3">
-    <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+  <div className="rounded-lg border border-c-border bg-c-surface-raised p-3">
+    <p className="text-[11px] font-medium text-c-text-muted uppercase tracking-wider mb-1">
       {label}
     </p>
     <div className="flex items-center gap-2">
       {icon}
-      <span className="text-sm font-semibold text-slate-800 dark:text-white">{value}</span>
+      <span className="text-sm font-semibold text-c-text">{value}</span>
     </div>
   </div>
 );

@@ -30,7 +30,10 @@ const isConnectionClosed = (req: AuthRequest, res: Response): boolean =>
     // NOTE: req.destroyed is intentionally excluded — the JSON body-parser marks
     // the IncomingMessage stream as destroyed after consuming the body for POST/PATCH
     // requests. The underlying socket is still open; checking req.destroyed here
-    // would cause all mutations to short-circuit without calling next().
+    // would cause all mutations to short-circuit without calling next() (and
+    // without sending a response) → every v8 POST/PATCH/DELETE hangs until the
+    // Cloudflare 524 timeout. Regression history: re-added in 46a1674000 to make a
+    // unit test pass, which silently broke every v8 mutation on demo. DO NOT re-add.
     // Use socket.destroyed (actual network state) and response state instead.
     safeRead(() => (req as any).socket?.destroyed, false) ||
     safeRead(() => (res as any).writableEnded, false) ||

@@ -5,6 +5,7 @@ import {
   type V8PlanningHistoryEvent,
   type V8PlanningStatusHistoryEntry,
 } from '@/services/api/v8/planning';
+import { bumpInitiativeRefresh } from '@/store/useInitiativeRefreshStore';
 
 export interface InitiativeWriteTruthBundle {
   initiative: any | null;
@@ -117,6 +118,7 @@ export async function getInitiativeStatusPreflightTruth(
 export async function createInitiativeWriteTruth(payload: Record<string, unknown>) {
   const created = await Api.post('/initiatives', payload);
   const createdId = created?.id || created?.initiative?.id;
+  bumpInitiativeRefresh();
 
   return {
     created,
@@ -133,8 +135,16 @@ export async function createInitiativeWriteTruth(payload: Record<string, unknown
   };
 }
 
-export async function updateInitiativeStatusWriteTruth(initiativeId: string, targetStatus: string) {
-  await Api.patch(`/initiatives/${initiativeId}/status`, { status: targetStatus });
+export async function updateInitiativeStatusWriteTruth(
+  initiativeId: string,
+  targetStatus: string,
+  overrideReason?: string
+) {
+  await Api.patch(`/initiatives/${initiativeId}/status`, {
+    status: targetStatus,
+    ...(overrideReason ? { overrideReason } : {}),
+  });
+  bumpInitiativeRefresh();
   return refreshInitiativeWriteTruth(initiativeId);
 }
 
@@ -143,6 +153,7 @@ export async function quickUpdateInitiativeWriteTruth(
   updates: Record<string, unknown>
 ) {
   await Api.patch(`/initiatives/${initiativeId}/quick-update`, updates);
+  bumpInitiativeRefresh();
   return refreshInitiativeWriteTruth(initiativeId);
 }
 
@@ -151,5 +162,6 @@ export async function saveInitiativeWriteTruth(
   updates: Record<string, unknown>
 ) {
   await Api.put(`/initiatives/${initiativeId}`, updates);
+  bumpInitiativeRefresh();
   return refreshInitiativeWriteTruth(initiativeId);
 }

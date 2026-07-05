@@ -190,14 +190,14 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <Paintbrush size={12} className="text-slate-600" />
-          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          <Paintbrush size={12} className="text-c-text-secondary" />
+          <span className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider">
             {isPl ? 'Formatowanie warunkowe' : 'Conditional formatting'}
           </span>
         </div>
         <button
           onClick={addRule}
-          className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
+          className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-c-accent hover:bg-c-accent-soft transition-colors"
         >
           <Plus size={10} />
           {isPl ? 'Dodaj regułę' : 'Add rule'}
@@ -205,7 +205,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
       </div>
 
       {rules.length === 0 && (
-        <div className="text-[10px] text-slate-600 dark:text-slate-500 text-center py-3">
+        <div className="text-[10px] text-c-text-secondary text-center py-3">
           {isPl ? 'Brak reguł formatowania' : 'No formatting rules'}
         </div>
       )}
@@ -217,14 +217,14 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
         return (
           <div
             key={rule.id}
-            className="p-2.5 rounded-xl border border-slate-200/60 dark:border-navy-700/40 space-y-2"
+            className="p-2.5 rounded-xl border border-c-border-subtle space-y-2"
           >
             {/* Row 1: field + operator */}
             <div className="flex items-center gap-2">
               <select
                 value={rule.fieldId}
                 onChange={(e) => updateRule(rule.id, { fieldId: e.target.value })}
-                className="flex-1 h-7 px-2 rounded-lg text-[10px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none"
+                className="flex-1 h-7 px-2 rounded-lg text-[10px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none"
               >
                 {fields.map((f) => (
                   <option key={f.key} value={f.key}>
@@ -238,7 +238,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                 onChange={(e) =>
                   updateRule(rule.id, { operator: e.target.value as FormatOperator })
                 }
-                className="w-28 h-7 px-2 rounded-lg text-[10px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none"
+                className="w-28 h-7 px-2 rounded-lg text-[10px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none"
               >
                 {(Object.keys(OPERATOR_LABELS) as FormatOperator[]).map((op) => (
                   <option key={op} value={op}>
@@ -249,7 +249,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
 
               <button
                 onClick={() => removeRule(rule.id)}
-                className="p-1 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-500/10 text-slate-600 hover:text-danger-500 transition-colors"
+                className="p-1 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-500/10 text-c-text-secondary hover:text-danger-500 transition-colors"
               >
                 <Trash2 size={12} />
               </button>
@@ -263,17 +263,17 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                   value={rule.value != null ? String(rule.value) : ''}
                   onChange={(e) => updateRule(rule.id, { value: e.target.value })}
                   placeholder={isPl ? 'Wartość...' : 'Value...'}
-                  className="flex-1 h-7 px-2 rounded-lg text-[10px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none"
+                  className="flex-1 h-7 px-2 rounded-lg text-[10px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none"
                 />
                 {isBetween && (
                   <>
-                    <span className="text-[9px] text-slate-600">&</span>
+                    <span className="text-[9px] text-c-text-secondary">&</span>
                     <input
                       type="text"
                       value={rule.value2 != null ? String(rule.value2) : ''}
                       onChange={(e) => updateRule(rule.id, { value2: e.target.value })}
                       placeholder={isPl ? 'Do...' : 'To...'}
-                      className="flex-1 h-7 px-2 rounded-lg text-[10px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none"
+                      className="flex-1 h-7 px-2 rounded-lg text-[10px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none"
                     />
                   </>
                 )}
@@ -284,7 +284,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
             <div className="flex items-center gap-3 flex-wrap">
               {/* Background color */}
               <div className="flex items-center gap-1">
-                <span className="text-[8px] text-slate-600 uppercase tracking-wider">
+                <span className="text-[8px] text-c-text-secondary uppercase tracking-wider">
                   {isPl ? 'Tło' : 'BG'}
                 </span>
                 {PRESET_BG_COLORS.slice(0, 5).map((c) => (
@@ -293,8 +293,8 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                     onClick={() => updateStyle(rule.id, { backgroundColor: c })}
                     className={`w-3.5 h-3.5 rounded-full border transition-transform hover:scale-125 ${
                       rule.style.backgroundColor === c
-                        ? 'border-primary-500 scale-110'
-                        : 'border-slate-200 dark:border-navy-700'
+                        ? 'border-c-accent scale-110'
+                        : 'border-c-border-subtle'
                     }`}
                     style={{ backgroundColor: c }}
                   />
@@ -309,7 +309,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
 
               {/* Text color */}
               <div className="flex items-center gap-1">
-                <span className="text-[8px] text-slate-600 uppercase tracking-wider">
+                <span className="text-[8px] text-c-text-secondary uppercase tracking-wider">
                   {isPl ? 'Tekst' : 'Text'}
                 </span>
                 {PRESET_TEXT_COLORS.slice(0, 4).map((c) => (
@@ -318,8 +318,8 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                     onClick={() => updateStyle(rule.id, { color: c })}
                     className={`w-3.5 h-3.5 rounded-full border transition-transform hover:scale-125 ${
                       rule.style.color === c
-                        ? 'border-primary-500 scale-110'
-                        : 'border-slate-200 dark:border-navy-700'
+                        ? 'border-c-accent scale-110'
+                        : 'border-c-border-subtle'
                     }`}
                     style={{ backgroundColor: c }}
                   />
@@ -335,8 +335,8 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                 }
                 className={`px-1.5 py-0.5 rounded text-[9px] font-bold transition-colors ${
                   rule.style.fontWeight === 'bold'
-                    ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300'
-                    : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800'
+                    ? 'bg-c-accent-soft text-c-accent'
+                    : 'text-c-text-secondary hover:bg-c-surface-raised'
                 }`}
               >
                 B
@@ -351,8 +351,8 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                 }
                 className={`px-1.5 py-0.5 rounded text-[9px] italic transition-colors ${
                   rule.style.fontStyle === 'italic'
-                    ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300'
-                    : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800'
+                    ? 'bg-c-accent-soft text-c-accent'
+                    : 'text-c-text-secondary hover:bg-c-surface-raised'
                 }`}
               >
                 I
@@ -361,7 +361,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
 
             {/* Preview */}
             <div
-              className="px-2 py-1 rounded-lg text-[10px] border border-slate-200 dark:border-navy-800"
+              className="px-2 py-1 rounded-lg text-[10px] border border-c-border-subtle"
               style={rule.style as React.CSSProperties}
             >
               {isPl ? 'Podgląd formatowania' : 'Formatting preview'}

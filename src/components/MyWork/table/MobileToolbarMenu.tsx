@@ -24,13 +24,13 @@ export const MobileToolbarMenu: React.FC<MobileToolbarMenuProps> = ({ children }
     <div className="md:hidden relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="p-2 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 transition-colors"
+        className="p-2 rounded-lg bg-c-surface-raised text-c-text-secondary transition-colors"
         aria-label={open ? 'Close menu' : 'More actions'}
       >
         {open ? <X size={16} /> : <MoreHorizontal size={16} />}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-navy-950 rounded-xl border border-slate-200 dark:border-navy-700 shadow-xl p-2 min-w-[200px] max-h-[70vh] overflow-y-auto">
+        <div className="absolute right-0 top-full mt-1 z-overlay bg-c-surface rounded-xl border border-c-border-subtle shadow-xl p-2 min-w-[200px] max-h-[70vh] overflow-y-auto">
           <div className="flex flex-col gap-1" onClick={() => setOpen(false)}>
             {children}
           </div>

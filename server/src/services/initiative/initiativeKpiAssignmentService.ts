@@ -422,6 +422,13 @@ export async function listInitiativeKpiAssignments(
   const mappingColumns = await getTableColumns('initiative_kpi_mappings');
   const hasMappingTable = mappingColumns.size > 0;
 
+  // Schema drift guard: `initiative_kpis` on older deployments (e.g. demo) lacks
+  // progress_percentage / status. A hardcoded `k.<col>` turns EVERY read (and the
+  // create read-back → 500) into a 42703. Select NULL where the column is absent.
+  const kpiColumns = await getTableColumns('initiative_kpis');
+  const kpiProgressExpr = kpiColumns.has('progress_percentage') ? 'k.progress_percentage' : 'NULL';
+  const kpiStatusExpr = kpiColumns.has('status') ? 'k.status' : 'NULL';
+
   const rows: AssignmentQueryRow[] = [];
 
   if (hasMappingTable) {
@@ -452,8 +459,8 @@ export async function listInitiativeKpiAssignments(
            ORDER BY ts.period_start DESC, ts.created_at DESC
            LIMIT 1
          ) AS latest_measurement_date,
-         k.progress_percentage,
-         k.status AS kpi_status,
+         ${kpiProgressExpr} AS progress_percentage,
+         ${kpiStatusExpr} AS kpi_status,
          k.measurement_frequency,
          k.direction,
          k.created_at,
@@ -533,8 +540,8 @@ export async function listInitiativeKpiAssignments(
          ORDER BY ts.period_start DESC, ts.created_at DESC
          LIMIT 1
        ) AS latest_measurement_date,
-       k.progress_percentage,
-       k.status AS kpi_status,
+       ${kpiProgressExpr} AS progress_percentage,
+       ${kpiStatusExpr} AS kpi_status,
        k.measurement_frequency,
        k.direction,
        k.created_at,

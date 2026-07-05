@@ -67,7 +67,30 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
       if (!response.ok) throw new Error('Failed to fetch audit log');
 
       const data = await response.json();
-      setEntries(data);
+      // The endpoint returns an array of entries, but tolerate the legacy
+      // { entries: [...] } / { rows: [...] } envelope too. Normalize snake_case
+      // DB columns into the camelCase shape the table renders.
+      const rawList: any[] = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.entries)
+          ? data.entries
+          : Array.isArray(data?.rows)
+            ? data.rows
+            : [];
+      const normalized: AISettingsAuditEntry[] = rawList.map((row: any) => ({
+        id: row.id,
+        timestamp: row.timestamp ?? row.created_at ?? '',
+        level: row.level,
+        actorId: row.actorId ?? row.actor_id ?? '',
+        actorRole: row.actorRole ?? row.actor_role ?? '',
+        targetId: row.targetId ?? row.target_id ?? '',
+        settingKey: row.settingKey ?? row.setting_key ?? '',
+        oldValue: row.oldValue ?? row.old_value ?? null,
+        newValue: row.newValue ?? row.new_value ?? null,
+        ipAddress: row.ipAddress ?? row.ip_address ?? null,
+        userAgent: row.userAgent ?? row.user_agent ?? null,
+      }));
+      setEntries(normalized);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
@@ -115,9 +138,9 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
       case 'admin':
         return 'text-amber-400 bg-amber-500/10';
       case 'user':
-        return 'text-primary-400 bg-primary-500/10';
+        return 'text-c-accent bg-c-accent-soft';
       default:
-        return 'text-slate-600 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/300/10';
+        return 'text-c-text-secondary bg-c-surface-raised';
     }
   };
 
@@ -147,9 +170,9 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <History className="w-5 h-5 text-primary-400" />
+          <History className="w-5 h-5 text-c-accent" />
           <h3 className="font-semibold text-white">Settings Audit Log</h3>
-          <span className="text-xs text-slate-500 dark:text-slate-400">
+          <span className="text-xs text-c-text-muted">
             ({filteredEntries.length} entries)
           </span>
         </div>
@@ -158,7 +181,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
           {showExport && (
             <button
               onClick={exportToCSV}
-              className="p-2 text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
+              className="p-2 text-c-text-secondary hover:text-white transition-colors"
               title="Export CSV"
             >
               <Download className="w-4 h-4" />
@@ -167,7 +190,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
           <button
             onClick={fetchAuditLog}
             disabled={loading}
-            className="p-2 text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
+            className="p-2 text-c-text-secondary hover:text-white transition-colors"
             title="Refresh"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -179,8 +202,8 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                                 p-2 rounded transition-colors
                                 ${
                                   showFilterPanel
-                                    ? 'bg-primary-500/20 text-primary-400'
-                                    : 'text-slate-600 dark:text-slate-500 hover:text-white'
+                                    ? 'bg-c-accent-soft text-c-accent'
+                                    : 'text-c-text-secondary hover:text-white'
                                 }
                             `}
             >
@@ -199,10 +222,10 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="flex items-center gap-4 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+            <div className="flex items-center gap-4 p-3 rounded-lg bg-c-surface border border-c-border-strong">
               {/* Search */}
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 dark:text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-c-text-muted" />
                 <input
                   type="text"
                   placeholder="Search settings..."
@@ -210,15 +233,15 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                   onChange={(e) => setFilterSearch(e.target.value)}
                   className="
                                         w-full pl-9 pr-4 py-2 rounded-lg
-                                        bg-slate-700/50 border border-slate-600/50
-                                        text-white placeholder-slate-500
-                                        focus:outline-none focus:border-primary-500/50
+                                        bg-c-surface border border-c-border-strong
+                                        text-white placeholder-c-text-muted
+                                        focus:outline-none focus:border-c-focus-solid
                                     "
                 />
                 {filterSearch && (
                   <button
                     onClick={() => setFilterSearch('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-white"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-c-text-muted hover:text-white"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -232,9 +255,9 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                   onChange={(e) => setFilterLevel(e.target.value)}
                   className="
                                         px-3 py-2 rounded-lg
-                                        bg-slate-700/50 border border-slate-600/50
+                                        bg-c-surface border border-c-border-strong
                                         text-white
-                                        focus:outline-none focus:border-primary-500/50
+                                        focus:outline-none focus:border-c-focus-solid
                                     "
                 >
                   <option value="">All levels</option>
@@ -259,7 +282,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
       {loading && !entries.length && (
         <div className="space-y-2">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-16 rounded-lg bg-slate-800/30 animate-pulse" />
+            <div key={i} className="h-16 rounded-lg bg-c-surface animate-pulse" />
           ))}
         </div>
       )}
@@ -267,8 +290,8 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
       {/* Empty State */}
       {!loading && !filteredEntries.length && (
         <div className="text-center py-8">
-          <History className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-          <p className="text-slate-600 dark:text-slate-500">No audit entries found</p>
+          <History className="w-12 h-12 text-c-text-secondary mx-auto mb-3" />
+          <p className="text-c-text-secondary">No audit entries found</p>
         </div>
       )}
 
@@ -282,8 +305,8 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             transition={{ delay: index * 0.02 }}
             className="
                             p-3 rounded-lg
-                            bg-slate-800/30 border border-slate-700/50
-                            hover:bg-slate-800/50 transition-colors
+                            bg-c-surface border border-c-border-strong
+                            hover:bg-c-surface transition-colors
                         "
           >
             <div className="flex items-start justify-between gap-4">
@@ -303,10 +326,10 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
 
                 {/* Value change */}
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-slate-500 dark:text-slate-400 truncate max-w-[150px]">
+                  <span className="text-c-text-muted truncate max-w-[150px]">
                     {formatValue(entry.oldValue)}
                   </span>
-                  <ArrowRight className="w-3 h-3 text-slate-600 dark:text-slate-400 flex-shrink-0" />
+                  <ArrowRight className="w-3 h-3 text-c-text-secondary flex-shrink-0" />
                   <span className="text-emerald-400 truncate max-w-[150px]">
                     {formatValue(entry.newValue)}
                   </span>
@@ -315,11 +338,11 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
 
               {/* Meta */}
               <div className="flex-shrink-0 text-right">
-                <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-1 text-xs text-c-text-muted">
                   <Clock className="w-3 h-3" />
                   {formatTimestamp(entry.timestamp)}
                 </div>
-                <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <div className="flex items-center gap-1 text-xs text-c-text-muted mt-0.5">
                   <User className="w-3 h-3" />
                   <span className="truncate max-w-[100px]">{entry.actorRole}</span>
                 </div>

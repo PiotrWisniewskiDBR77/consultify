@@ -56,11 +56,11 @@ export const WhiteboardSelectionBar: React.FC<WhiteboardSelectionBarProps> = ({
 
   return (
     <div
-      className={`absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-white/[0.08] shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-2 py-1.5 ${ENTER_ANIMATION.slideUp}`}
+      className={`absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-c-surface backdrop-blur-sm rounded-2xl border border-c-border-subtle shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-2 py-1.5 ${ENTER_ANIMATION.slideUp}`}
       role="toolbar"
       aria-label={t('myWork.whiteboard.selectionBar.ariaLabel')}
     >
-      <span className="px-2 text-[10px] font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+      <span className="px-2 text-[10px] font-semibold text-c-text-muted whitespace-nowrap">
         {t('myWork.whiteboard.selection.elementsSelected', { count: selectedCount })}
       </span>
       <ToolbarBtn
@@ -115,7 +115,7 @@ export const WhiteboardSelectionBar: React.FC<WhiteboardSelectionBarProps> = ({
         disabled={locked}
       />
 
-      <div className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5 shrink-0" />
+      <div className="w-px h-5 bg-c-surface-raised mx-0.5 shrink-0" />
 
       <ToolbarDropdown
         icon={AlignCenter}
@@ -182,7 +182,7 @@ export const WhiteboardSelectionBar: React.FC<WhiteboardSelectionBarProps> = ({
         onMainClick={() => onDistributeNodes('horizontal')}
       />
 
-      <div className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5 shrink-0" />
+      <div className="w-px h-5 bg-c-surface-raised mx-0.5 shrink-0" />
 
       <ToolbarBtn
         icon={Group}

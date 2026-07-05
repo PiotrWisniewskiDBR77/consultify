@@ -141,7 +141,7 @@ const StyledCheck: React.FC<{
     aria-hidden="true"
     className={`inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[6px] border transition ${
       checked
-        ? 'border-primary-500 bg-primary-600 text-white shadow-sm shadow-primary-500/30'
+        ? 'border-c-text bg-c-text text-c-bg shadow-sm shadow-black/10'
         : 'border-slate-300 bg-white text-transparent dark:border-white/[0.18] dark:bg-navy-900'
     } ${disabled ? 'opacity-50' : ''} ${className}`}
   >
@@ -1819,7 +1819,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 ? 'np. Analiza transformacji cyfrowej Q1 2024'
                 : 'e.g. Digital Transformation Analysis Q1 2024'
             }
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
           />
           {renderSimilarWarning()}
           {title.trim().length >= 4 &&
@@ -2014,7 +2014,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             <button
               type="button"
               onClick={() => startNewLensFromBasket(activeBasket.id)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white shadow-sm shadow-primary-500/30 transition-colors hover:bg-primary-500"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-c-text px-3 py-2 text-sm font-medium text-c-bg shadow-sm shadow-black/10 transition-colors hover:bg-c-text-secondary"
               title={
                 isPolish
                   ? 'Użyj tych źródeł i przejdź od razu do wyboru kąta analizy'
@@ -2052,13 +2052,13 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               value={basketNameDraft}
               onChange={(event) => setBasketNameDraft(event.target.value)}
               placeholder={isPolish ? 'Nazwa koszyka' : 'Basket name'}
-              className="min-w-[200px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder-slate-500 focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100"
+              className="min-w-[200px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder-slate-500 focus:border-c-focus-solid dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100"
             />
             <button
               type="button"
               onClick={handleSaveBasket}
               disabled={isSavingBasket}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-500 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-c-text px-3 py-1.5 text-sm font-medium text-c-bg transition-colors hover:bg-c-text-secondary disabled:opacity-50"
             >
               {isSavingBasket ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               {isPolish ? 'Zapisz' : 'Save'}
@@ -2499,7 +2499,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               ? 'np. Skup się na różnicach między działem IT a biznesem. Użyj języka polskiego.'
               : 'e.g. Focus on differences between IT and business departments. Use formal language.'
           }
-          className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
+          className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
         />
       </div>
 
@@ -2650,7 +2650,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               ? 'Wklej po jednym linku lub identyfikatorze artefaktu w linii.'
               : 'Paste one link or artifact identifier per line.'
           }
-          className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
+          className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
         />
       </div>
     </div>
@@ -2687,7 +2687,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               ? 'np. Gdzie najczęściej pękają odpowiedzialności między działami?'
               : 'e.g. Where do ownership handoffs most often break?'
           }
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-900 dark:text-slate-100 dark:placeholder-slate-500"
+          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-600 dark:bg-navy-900 dark:text-slate-100 dark:placeholder-slate-500"
         />
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
           {isPolish

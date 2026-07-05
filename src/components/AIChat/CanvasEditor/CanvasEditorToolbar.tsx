@@ -24,6 +24,7 @@ import {
   Undo,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface CanvasEditorToolbarProps {
   editor: Editor | null;
@@ -57,6 +58,7 @@ const Btn: React.FC<{
 const Divider: React.FC = () => <div className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-0.5" />;
 
 export const CanvasEditorToolbar: React.FC<CanvasEditorToolbarProps> = ({ editor }) => {
+  const { t } = useTranslation();
   if (!editor) return null;
 
   return (
@@ -64,14 +66,14 @@ export const CanvasEditorToolbar: React.FC<CanvasEditorToolbarProps> = ({ editor
       <Btn
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().undo()}
-        title="Undo (Ctrl+Z)"
+        title={t('canvas.toolbar.undo', 'Undo (Ctrl+Z)')}
       >
         <Undo size={16} />
       </Btn>
       <Btn
         onClick={() => editor.chain().focus().redo().run()}
         disabled={!editor.can().redo()}
-        title="Redo (Ctrl+Shift+Z)"
+        title={t('canvas.toolbar.redo', 'Redo (Ctrl+Shift+Z)')}
       >
         <Redo size={16} />
       </Btn>
@@ -81,42 +83,42 @@ export const CanvasEditorToolbar: React.FC<CanvasEditorToolbarProps> = ({ editor
       <Btn
         onClick={() => editor.chain().focus().toggleBold().run()}
         active={editor.isActive('bold')}
-        title="Bold (Ctrl+B)"
+        title={t('canvas.toolbar.bold', 'Bold (Ctrl+B)')}
       >
         <Bold size={16} />
       </Btn>
       <Btn
         onClick={() => editor.chain().focus().toggleItalic().run()}
         active={editor.isActive('italic')}
-        title="Italic (Ctrl+I)"
+        title={t('canvas.toolbar.italic', 'Italic (Ctrl+I)')}
       >
         <Italic size={16} />
       </Btn>
       <Btn
         onClick={() => editor.chain().focus().toggleUnderline().run()}
         active={editor.isActive('underline')}
-        title="Underline (Ctrl+U)"
+        title={t('canvas.toolbar.underline', 'Underline (Ctrl+U)')}
       >
         <Underline size={16} />
       </Btn>
       <Btn
         onClick={() => editor.chain().focus().toggleStrike().run()}
         active={editor.isActive('strike')}
-        title="Strikethrough"
+        title={t('canvas.toolbar.strikethrough', 'Strikethrough')}
       >
         <Strikethrough size={16} />
       </Btn>
       <Btn
         onClick={() => editor.chain().focus().toggleCode().run()}
         active={editor.isActive('code')}
-        title="Inline code"
+        title={t('canvas.toolbar.inlineCode', 'Inline code')}
       >
         <Code size={16} />
       </Btn>
       <Btn
         onClick={() => editor.chain().focus().toggleHighlight().run()}
         active={editor.isActive('highlight')}
-        title="Highlight"
+        title={t('canvas.toolbar.highlight', 'Highlight')}
       >
         <Highlighter size={16} />
       </Btn>
@@ -126,21 +128,21 @@ export const CanvasEditorToolbar: React.FC<CanvasEditorToolbarProps> = ({ editor
       <Btn
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         active={editor.isActive('heading', { level: 1 })}
-        title="Heading 1"
+        title={t('canvas.toolbar.heading1', 'Heading 1')}
       >
         <Heading1 size={16} />
       </Btn>
       <Btn
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         active={editor.isActive('heading', { level: 2 })}
-        title="Heading 2"
+        title={t('canvas.toolbar.heading2', 'Heading 2')}
       >
         <Heading2 size={16} />
       </Btn>
       <Btn
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
         active={editor.isActive('heading', { level: 3 })}
-        title="Heading 3"
+        title={t('canvas.toolbar.heading3', 'Heading 3')}
       >
         <Heading3 size={16} />
       </Btn>
@@ -150,28 +152,28 @@ export const CanvasEditorToolbar: React.FC<CanvasEditorToolbarProps> = ({ editor
       <Btn
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         active={editor.isActive('bulletList')}
-        title="Bullet list"
+        title={t('canvas.toolbar.bulletList', 'Bullet list')}
       >
         <List size={16} />
       </Btn>
       <Btn
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
         active={editor.isActive('orderedList')}
-        title="Numbered list"
+        title={t('canvas.toolbar.numberedList', 'Numbered list')}
       >
         <ListOrdered size={16} />
       </Btn>
       <Btn
         onClick={() => editor.chain().focus().toggleTaskList().run()}
         active={editor.isActive('taskList')}
-        title="Task list"
+        title={t('canvas.toolbar.taskList', 'Task list')}
       >
         <ListChecks size={16} />
       </Btn>
       <Btn
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
         active={editor.isActive('blockquote')}
-        title="Blockquote"
+        title={t('canvas.toolbar.blockquote', 'Blockquote')}
       >
         <Quote size={16} />
       </Btn>
@@ -182,17 +184,17 @@ export const CanvasEditorToolbar: React.FC<CanvasEditorToolbarProps> = ({ editor
         onClick={() =>
           editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
         }
-        title="Insert table"
+        title={t('canvas.toolbar.insertTable', 'Insert table')}
       >
         <Table size={16} />
       </Btn>
       <Btn
         onClick={() => {
-          const url = window.prompt('Link URL:');
+          const url = window.prompt(t('canvas.toolbar.linkPrompt', 'Link URL:'));
           if (url) editor.chain().focus().setLink({ href: url }).run();
         }}
         active={editor.isActive('link')}
-        title="Insert link"
+        title={t('canvas.toolbar.insertLink', 'Insert link')}
       >
         <Link size={16} />
       </Btn>

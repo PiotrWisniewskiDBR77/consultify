@@ -293,7 +293,7 @@ export const ForceStep: React.FC<ForceStepProps> = ({ forceId, session, isPolish
           <button
             onClick={handleAddDriver}
             disabled={!newDriver.trim()}
-            className="px-3 py-2 rounded-lg bg-primary-500 text-white hover:bg-primary-600 transition-colors disabled:opacity-50"
+            className="px-3 py-2 rounded-lg bg-c-text text-c-bg hover:bg-c-text-secondary transition-colors disabled:opacity-50"
           >
             <Plus className="w-4 h-4" />
           </button>

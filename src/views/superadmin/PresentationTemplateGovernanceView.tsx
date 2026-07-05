@@ -728,7 +728,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
   const reasonRequired = modal.action === 'deprecate';
   const overLimit = reason.length > REASON_MAX;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-c-surface/40 px-4">
       <div
         role="dialog"
         aria-modal="true"

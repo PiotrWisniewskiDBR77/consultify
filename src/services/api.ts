@@ -709,7 +709,19 @@ export const getMapVersionFromPayload = (payload: unknown): number | null => {
 };
 
 // Wrapper for fetch that handles 401 with automatic token refresh
-type FetchWithRetryOptions = RequestInit & { skipDefaultHeaders?: boolean };
+type FetchWithRetryOptions = RequestInit & {
+  skipDefaultHeaders?: boolean;
+  /**
+   * Override the default 20s hard timeout (ms). Heavy operations — AI
+   * generation, deck/report/model materialization, long exports — legitimately
+   * take longer than 20s; without this override they abort mid-flight as
+   * "Request timed out" (Cloudflare-style 524 from the client side). Only
+   * applies when the caller does NOT pass its own AbortSignal. See finding
+   * baseclient_20s_timeout — this mirrors the same override already present in
+   * services/api/baseClient.ts.
+   */
+  timeoutMs?: number;
+};
 
 /**
  * FIX-1 (429 self-storm): in-flight GET de-duplication.
@@ -774,7 +786,7 @@ const fetchWithRetryInner = async (
   const blockedResponse = maybeGetBlockedTransportResponse(transportPath);
   if (blockedResponse) return blockedResponse;
 
-  const { skipDefaultHeaders, ...fetchOptions } = options;
+  const { skipDefaultHeaders, timeoutMs: timeoutOverride, ...fetchOptions } = options;
   const baseHeaders = skipDefaultHeaders ? {} : getHeaders();
   const headers = {
     ...baseHeaders,
@@ -784,9 +796,12 @@ const fetchWithRetryInner = async (
   const isAiRefine = typeof url === 'string' && url.includes('/api/ai/refine-text');
   // Stabilization: every request that does not carry its own AbortSignal gets a
   // hard timeout so a stalled network call can never hang a list/table spinner
-  // forever. AI refine keeps its longer 25s budget; everything else uses 20s.
+  // forever. Callers may raise the ceiling via `timeoutMs` for heavy ops
+  // (generation/materialize/export); AI refine keeps its longer 25s default;
+  // everything else uses 20s.
   const shouldApplyTimeout = !hasExternalSignal;
-  const timeoutMs = shouldApplyTimeout ? (isAiRefine ? 25000 : 20000) : null;
+  const defaultTimeoutMs = isAiRefine ? 25000 : 20000;
+  const timeoutMs = shouldApplyTimeout ? (timeoutOverride ?? defaultTimeoutMs) : null;
   const controller = shouldApplyTimeout ? new AbortController() : null;
   const timer = controller
     ? window.setTimeout(() => {
@@ -3227,6 +3242,8 @@ export const Api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data || {}),
+      // Heavy: LLM turns a full transcript into structured notes; exceeds 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to generate meeting notes');
   },
@@ -3277,6 +3294,8 @@ export const Api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({}),
+      // Heavy: LLM regenerates a full operator plan; exceeds 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to regenerate AI operator plan');
   },
@@ -4286,7 +4305,11 @@ export const Api = {
 
   getPersonalTask: async (id: string): Promise<any> => {
     const res = await fetch(`${API_URL}/my-work/personal-tasks/${id}`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch personal task');
+    if (!res.ok) {
+      const err = new Error('Failed to fetch personal task') as Error & { status?: number };
+      err.status = res.status;
+      throw err;
+    }
     return res.json();
   },
 
@@ -4582,6 +4605,45 @@ export const Api = {
       }
     );
     return handleResponse(res, 'Failed to sync idea map');
+  },
+
+  /**
+   * M06 FALA3 3.4 — real .pptx export for the mind map (BCG-grade pipeline,
+   * see server/src/services/mindmap/mindMapToUnifiedReport.ts). Gated by
+   * `isMindmapPptxNativeEnabled()` on the caller side.
+   */
+  exportMyIdeaMapPptx: async (
+    ideaId: string,
+    payload: {
+      ideaTitle: string;
+      branches: Array<{
+        branchKey: string;
+        label: string;
+        nodes: Array<{ id: string; label: string; status?: string }>;
+      }>;
+      language?: 'en' | 'pl';
+      template?: 'corporate' | 'minimal' | 'modern';
+    }
+  ): Promise<Blob> => {
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/export/pptx`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    if (!res.ok) {
+      let message = 'Failed to export mind map PPTX';
+      try {
+        const errBody = await res.clone().json();
+        if (errBody?.error) message = errBody.error;
+      } catch {
+        /* ignore — keep default message */
+      }
+      throw new Error(message);
+    }
+    return res.blob();
   },
 
   expandMyIdeaMap: async (
@@ -6653,6 +6715,32 @@ export const Api = {
     return handleResponse(res, 'Failed to update tool session');
   },
 
+  /**
+   * CONCLUSION_LAYER push ingest: persist a client-side generated conclusion
+   * (SIRI/ADMA report W1 models, ...) as a Conclusion candidate. Idempotent
+   * per (sourceModule, sourceRefs) on the server.
+   */
+  createConclusion: async (payload: {
+    title: string;
+    statement: string;
+    sourceModule: string;
+    sourceRefs: Array<{ type: string; id: string; title?: string | null; url?: string | null }>;
+    confidenceLevel?: string;
+    limits?: string;
+    evidenceRefs?: Array<{ type: string; ref: string; excerpt?: string | null }>;
+    recommendedNextAction?: string | null;
+    status?: string;
+    projectId?: string | null;
+    contextSummary?: string;
+  }): Promise<{ ok: boolean }> => {
+    const res = await fetch(`${API_URL}/conclusions`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create conclusion');
+  },
+
   requestToolReview: async (
     toolId: string,
     payload?: { decisionOwnerId?: string; dueDate?: string; priority?: string }
@@ -7480,6 +7568,8 @@ export const Api = {
       headers: authHeader,
       body: formData,
       skipDefaultHeaders: true,
+      // Heavy: server parses/extracts (PDF/large docs) + embeds; exceeds 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to ingest attachment');
   },
@@ -7503,6 +7593,8 @@ export const Api = {
         url,
         title: options?.title,
       }),
+      // Heavy: server fetches remote URL, extracts and embeds; exceeds 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to ingest URL');
   },
@@ -7582,6 +7674,8 @@ export const Api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
+      // Heavy: LLM composes structured feedback; can exceed 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'AI compose failed');
   },
@@ -8518,6 +8612,37 @@ export const Api = {
     return handleResponse(res, 'Failed to save collaboration controls');
   },
 
+  // ── Health Panel (internal "dowody działania" proof-of-life probes) ──
+  getHealthPanelProbes: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/health-panel/probes`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load health probes');
+  },
+
+  runHealthPanelProbes: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/health-panel/run`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to run health probes');
+  },
+
+  runHealthPanelProbe: async (probeId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/health-panel/run/${encodeURIComponent(probeId)}`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to run health probe');
+  },
+
+  getHealthPanelSummary: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/health-panel/summary`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load health summary');
+  },
+
   getTenantAdminAuditLogs: async (filters?: any): Promise<any> => {
     const params = new URLSearchParams();
     if (filters?.actionType) params.set('actionType', String(filters.actionType));
@@ -8961,6 +9086,21 @@ export const Api = {
   },
 
   /**
+   * Generate the publishing-grade DRD client report HTML on the server (with the
+   * live LLM narrator). Returns the standalone HTML string ready to open + print.
+   */
+  getDrdReportHtml: async (
+    reportId: string,
+    opts?: { lang?: 'pl' | 'en' }
+  ): Promise<{ html: string; narrative: 'llm' | 'deterministic' }> => {
+    const qs = new URLSearchParams({ format: 'json', ...(opts?.lang ? { lang: opts.lang } : {}) });
+    const res = await fetch(`${API_URL}/assessment-reports/${reportId}/drd-report?${qs.toString()}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to generate DRD report');
+  },
+
+  /**
    * Generate full report with all sections from template
    */
   generateReport: async (
@@ -9256,6 +9396,8 @@ export const Api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(payload || {}),
+      // Heavy: LLM drafts a full initiative (multi-section); exceeds 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to generate initiatives');
   },
@@ -10451,6 +10593,8 @@ export const Api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ prompt, diagramType }),
+      // Heavy: LLM composes a full diagram from a prompt; can exceed 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to generate diagram');
   },
@@ -10472,6 +10616,8 @@ export const Api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ prompt, nodes, edges }),
+      // Heavy: LLM rewrites an existing diagram; can exceed 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to modify diagram');
   },
@@ -10498,6 +10644,8 @@ export const Api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ message, documentId, context }),
+      // Heavy: LLM chat over document context; can exceed 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to process chat message');
   },
@@ -10520,6 +10668,8 @@ export const Api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ nodes, edges, diagramType }),
+      // Heavy: LLM analyzes the diagram to propose changes; can exceed 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to get suggestions');
   },
@@ -14477,6 +14627,8 @@ export const Api = {
     const res = await fetchWithRetry(`${API_URL}/artifacts/wave5/fill-template`, {
       method: 'POST',
       body: JSON.stringify(payload),
+      // Heavy: LLM fills a full document template (multi-section); exceeds 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to fill Wave 5 document template');
   },
@@ -14496,6 +14648,8 @@ export const Api = {
     const res = await fetchWithRetry(`${API_URL}/artifacts/wave5/generate`, {
       method: 'POST',
       body: JSON.stringify(payload),
+      // Heavy: LLM generates a full structured artifact (report/deck/table); exceeds 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to generate Wave 5 structured artifact');
   },
@@ -14807,6 +14961,8 @@ export const Api = {
     const res = await fetchWithRetry(`${API_URL}/ai-outcomes/reports`, {
       method: 'POST',
       body: JSON.stringify(payload),
+      // Heavy: LLM builds a full Wave 9 outcome report; exceeds 20s.
+      timeoutMs: 120000,
     });
     return handleResponse(res, 'Failed to build Wave 9 report');
   },

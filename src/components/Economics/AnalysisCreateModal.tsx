@@ -55,7 +55,7 @@ export const AnalysisCreateModal: React.FC<AnalysisCreateModalProps> = ({ onClos
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div
         className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700
                 rounded-xl w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200"

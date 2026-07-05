@@ -489,35 +489,53 @@ export async function seedFactoryRoleTemplates(
 ): Promise<void> {
   await ensureProjectRoleTemplateSchema();
   const orgKey = organizationId || 'GLOBAL';
+
+  // N+1 fix (finding staging_db_perf): this seeding runs on every
+  // /api/access/effective capability-check. The previous per-template loop
+  // issued one UPSERT per FACTORY_ROLE_TEMPLATE (~12 round-trips), and at
+  // ~150ms/round-trip against a remote Railway DB that alone added ~1.8s to a
+  // check the front-end fires ~9× on a single Canvas mount. Collapse to a
+  // single multi-row INSERT ... ON CONFLICT (12 round-trips → 1). Behaviour is
+  // identical: same columns, same conflict target (organization_id, role_key),
+  // same upsert semantics for every template.
+  if (FACTORY_ROLE_TEMPLATES.length === 0) return;
+
+  const columns =
+    'id, organization_id, role_key, label, description, is_factory, is_required, is_enabled, ' +
+    'capabilities_json, created_at, updated_at';
+  const rowPlaceholder = '(?, ?, ?, ?, ?, 1, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)';
+  const placeholders = FACTORY_ROLE_TEMPLATES.map(() => rowPlaceholder).join(', ');
+  const values: unknown[] = [];
   for (const template of FACTORY_ROLE_TEMPLATES) {
     const id = `factory_${orgKey}_${template.roleKey}`.toLowerCase();
-    await queryHelpers
-      .queryRun(
-        `INSERT INTO project_role_templates (
-          id, organization_id, role_key, label, description, is_factory, is_required, is_enabled,
-          capabilities_json, created_at, updated_at
-        )
-        VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        ON CONFLICT(organization_id, role_key) DO UPDATE SET
-          label = excluded.label,
-          description = excluded.description,
-          is_factory = 1,
-          is_required = excluded.is_required,
-          capabilities_json = excluded.capabilities_json,
-          updated_at = CURRENT_TIMESTAMP`,
-        [
-          id,
-          organizationId,
-          template.roleKey,
-          template.label,
-          template.description,
-          template.isRequired ? 1 : 0,
-          template.isEnabled ? 1 : 0,
-          JSON.stringify(template.capabilities),
-        ]
-      )
-      .catch(() => undefined);
+    values.push(
+      id,
+      organizationId,
+      template.roleKey,
+      template.label,
+      template.description,
+      template.isRequired ? 1 : 0,
+      template.isEnabled ? 1 : 0,
+      JSON.stringify(template.capabilities)
+    );
   }
+
+  await queryHelpers
+    .queryRun(
+      `INSERT INTO project_role_templates (
+        ${columns}
+      )
+      VALUES ${placeholders}
+      ON CONFLICT(organization_id, role_key) DO UPDATE SET
+        label = excluded.label,
+        description = excluded.description,
+        is_factory = 1,
+        is_required = excluded.is_required,
+        capabilities_json = excluded.capabilities_json,
+        updated_at = CURRENT_TIMESTAMP`,
+      values
+    )
+    .catch(() => undefined);
 }
 
 async function readApplicationRole(userId: string, organizationId: string, fallback?: unknown) {

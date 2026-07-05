@@ -63,7 +63,7 @@ export const DateFilterSortControl: React.FC<DateFilterSortControlProps> = ({
           className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-slate-300/50 dark:border-navy-600/60 text-[10px] text-slate-500 dark:text-slate-400 hover:text-primary-500 hover:border-primary-400/40 transition-colors"
           title={filterTooltip}
         >
-          <Calendar size={11} />
+          <Calendar size={14} />
           {activeOption?.label || ''}
         </button>
         {hoveredControl === 'filter' && (
@@ -84,7 +84,7 @@ export const DateFilterSortControl: React.FC<DateFilterSortControlProps> = ({
           className="inline-flex items-center justify-center w-6 h-6 rounded-md border border-slate-300/50 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:text-primary-500 hover:border-primary-400/40 transition-colors"
           title={sortTooltip}
         >
-          <ArrowDownUp size={11} />
+          <ArrowDownUp size={14} />
         </button>
         {hoveredControl === 'sort' && (
           <div className="absolute right-0 -top-10 z-20 whitespace-nowrap rounded-md border border-slate-300/60 dark:border-navy-600/70 bg-white/95 dark:bg-navy-900/95 px-2 py-1 text-[10px] text-slate-600 dark:text-slate-300 shadow-lg">

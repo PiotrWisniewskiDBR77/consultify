@@ -193,9 +193,9 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
   if (!open) return null;
 
   return (
-    <div className="w-72 shrink-0 rounded-2xl border border-slate-200/70 dark:border-white/[0.06] overflow-hidden bg-white dark:bg-navy-950 flex flex-col">
-      <div className="flex items-center justify-between px-3 py-3 border-b border-slate-200/60 dark:border-white/[0.06]">
-        <div className="flex items-center gap-2 text-sm font-semibold text-primary-700 dark:text-primary-300">
+    <div className="w-72 shrink-0 rounded-2xl border border-c-border-subtle overflow-hidden bg-c-surface flex flex-col">
+      <div className="flex items-center justify-between px-3 py-3 border-b border-c-border-subtle">
+        <div className="flex items-center gap-2 text-sm font-semibold text-c-text-secondary">
           <Sparkles size={16} />
           <span>{isPl ? 'Tematy do analizy' : 'Topics to analyze'}</span>
         </div>
@@ -204,7 +204,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
             <button
               onClick={() => fetchTopics()}
               disabled={loading}
-              className="p-1.5 rounded-lg text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 disabled:opacity-50"
+              className="p-1.5 rounded-lg text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-50"
               title={isPl ? 'Generuj sugestie' : 'Generate suggestions'}
             >
               {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
@@ -212,7 +212,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
           )}
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+            className="p-1 rounded-lg text-c-text-muted hover:bg-c-surface-raised"
             aria-label={isPl ? 'Zamknij' : 'Close'}
           >
             <X size={14} />
@@ -220,8 +220,8 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
         </div>
       </div>
 
-      <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-800 bg-slate-50/60 dark:bg-white/[0.02]">
-        <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+      <div className="px-3 py-2 border-b border-c-border bg-c-surface-raised">
+        <p className="text-[11px] text-c-text-secondary leading-relaxed">
           {isPl
             ? 'To są sugestie AI: tematy, które warto rozważyć w kontekście tej notatki. Wybierz temat i zdecyduj co dalej: dodaj do notatki jako blok, doprecyzuj treść, usuń (AI podmieni na inny), albo wrzuć do czata, żeby pogłębić analizę.'
             : 'These are AI suggestions: topics worth thinking through in the context of this note. Pick a topic and decide: add it to the note as a block, refine the wording, remove it (AI will replace it), or send it to chat to deepen the analysis.'}
@@ -231,15 +231,15 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
       <div className="flex-1 overflow-y-auto p-2 space-y-2">
         {loading && topics.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-8 text-center">
-            <Loader2 size={20} className="animate-spin text-primary-500" />
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+            <Loader2 size={20} className="animate-spin text-c-text-muted" />
+            <span className="text-xs text-c-text-muted">
               {isPl ? 'AI analizuje notatkę...' : 'AI analyzing note...'}
             </span>
           </div>
         ) : topics.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-8 text-center px-3">
-            <Sparkles size={24} className="text-slate-600 dark:text-slate-400" />
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+            <Sparkles size={24} className="text-c-text-secondary" />
+            <span className="text-xs text-c-text-muted">
               {error
                 ? isPl
                   ? 'Nie udało się pobrać. Kliknij odśwież w nagłówku.'
@@ -251,7 +251,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
             <button
               onClick={() => fetchTopics()}
               disabled={loading}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-500/10 hover:bg-primary-500/20 text-primary-700 dark:text-primary-300 text-xs font-medium transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-c-surface-raised hover:bg-c-surface-raised text-c-text-secondary text-xs font-medium transition-colors disabled:opacity-50"
             >
               {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
               {isPl ? 'Generuj' : 'Generate'}
@@ -261,7 +261,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
           topics.map((topic) => (
             <div
               key={topic}
-              className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/60 px-3 py-2.5"
+              className="rounded-xl border border-c-border bg-c-surface-raised px-3 py-2.5"
             >
               <div className="flex items-start justify-between gap-2">
                 {editingTopic === topic ? (
@@ -270,26 +270,26 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
                       value={editingValue}
                       onChange={(e) => setEditingValue(e.target.value)}
                       rows={3}
-                      className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-800 dark:text-slate-200 text-sm p-2 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 resize-none"
+                      className="w-full rounded-lg border border-c-border bg-c-surface text-c-text text-sm p-2 outline-none focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)] resize-none"
                       placeholder={isPl ? 'Edytuj temat…' : 'Edit topic…'}
                     />
                     <div className="mt-2 flex items-center gap-2">
                       <button
                         onClick={handleSaveEdit}
-                        className="flex items-center justify-center gap-1 rounded-lg bg-primary-500/10 hover:bg-primary-500/20 text-primary-700 dark:text-primary-300 px-2.5 py-1 text-[11px] font-medium transition-colors"
+                        className="flex items-center justify-center gap-1 rounded-lg bg-c-surface-raised hover:bg-c-border-subtle text-c-text-secondary px-2.5 py-1 text-[11px] font-medium transition-colors"
                       >
                         {isPl ? 'Zapisz' : 'Save'}
                       </button>
                       <button
                         onClick={handleCancelEdit}
-                        className="flex items-center justify-center gap-1 rounded-lg bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 px-2.5 py-1 text-[11px] font-medium transition-colors hover:bg-slate-200 dark:hover:bg-white/[0.1]"
+                        className="flex items-center justify-center gap-1 rounded-lg bg-c-surface-raised text-c-text-secondary px-2.5 py-1 text-[11px] font-medium transition-colors hover:bg-c-border-subtle"
                       >
                         {isPl ? 'Anuluj' : 'Cancel'}
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-800 dark:text-slate-200 flex-1 min-w-0">
+                  <p className="text-sm text-c-text flex-1 min-w-0">
                     {topic}
                   </p>
                 )}
@@ -336,8 +336,8 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
         )}
       </div>
 
-      <div className="px-3 py-2 border-t border-slate-200 dark:border-navy-800">
-        <div className="text-[10px] text-slate-500 dark:text-slate-400 space-y-1">
+      <div className="px-3 py-2 border-t border-c-border-subtle">
+        <div className="text-[10px] text-c-text-muted space-y-1">
           <p>
             {isPl
               ? 'Cel: pomóc Ci pomyśleć szerzej o tej notatce — ryzyka, luki, dane do zebrania, decyzje, kolejne kroki.'

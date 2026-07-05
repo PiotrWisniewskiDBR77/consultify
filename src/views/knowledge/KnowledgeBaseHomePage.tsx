@@ -46,25 +46,25 @@ type AccentTheme = { gradient: string; border: string; glow: string; text: strin
 
 const ACCENT_THEMES: AccentTheme[] = [
   {
-    gradient: 'from-danger-400 to-danger-500',
-    border: 'border-danger-500/20 hover:border-danger-500/40',
-    glow: 'group-hover:shadow-[0_0_30px_-8px_rgba(244,63,94,0.35)]',
-    text: 'text-danger-400',
-    bg: 'bg-danger-500/10',
+    gradient: 'from-c-tag-4 to-c-tag-11',
+    border: 'border-c-tag-4 hover:border-c-tag-4',
+    glow: 'group-hover:shadow-lg',
+    text: 'text-c-tag-4',
+    bg: 'bg-[color-mix(in_srgb,var(--c-tag-4)_10%,transparent)]',
   },
   {
-    gradient: 'from-emerald-400 to-blue-500',
-    border: 'border-emerald-500/20 hover:border-emerald-500/40',
-    glow: 'group-hover:shadow-[0_0_30px_-8px_rgba(16,185,129,0.35)]',
-    text: 'text-emerald-400',
-    bg: 'bg-emerald-500/10',
+    gradient: 'from-c-tag-6 to-c-tag-1',
+    border: 'border-c-tag-6 hover:border-c-tag-6',
+    glow: 'group-hover:shadow-lg',
+    text: 'text-c-tag-6',
+    bg: 'bg-[color-mix(in_srgb,var(--c-tag-6)_10%,transparent)]',
   },
   {
-    gradient: 'from-amber-400 to-amber-500',
-    border: 'border-amber-500/20 hover:border-amber-500/40',
-    glow: 'group-hover:shadow-[0_0_30px_-8px_rgba(245,158,11,0.35)]',
-    text: 'text-amber-400',
-    bg: 'bg-amber-500/10',
+    gradient: 'from-c-tag-9 to-c-tag-5',
+    border: 'border-c-tag-9 hover:border-c-tag-9',
+    glow: 'group-hover:shadow-lg',
+    text: 'text-c-tag-9',
+    bg: 'bg-[color-mix(in_srgb,var(--c-tag-9)_10%,transparent)]',
   },
 ];
 
@@ -207,7 +207,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
       <div className="relative">
         {/* Ambient background */}
         <div className="fixed inset-0 pointer-events-none z-0">
-          <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#eef2ff_45%,#f8fafc_100%)] dark:bg-[linear-gradient(160deg,#0B1220_0%,#0F172A_45%,#0B1220_100%)]" />
+          <div className="absolute inset-0 bg-c-bg" />
           <div
             className="absolute inset-0 opacity-[0.03] dark:opacity-[0.04]"
             style={{
@@ -230,15 +230,15 @@ export const KnowledgeBaseHomePage: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full border border-primary-500/35 bg-primary-600/10 backdrop-blur-sm text-[11px] sm:text-xs font-bold text-primary-300 tracking-wide mb-6 sm:mb-8">
+              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full border border-c-accent bg-c-accent-soft backdrop-blur-sm text-[11px] sm:text-xs font-bold text-c-accent tracking-wide mb-6 sm:mb-8">
                 <span>{t('kb.hero.badge', KNOWLEDGE_BASE_SITE.heroBadge)}</span>
               </div>
 
-              <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-slate-900 tracking-tight leading-[1.05] dark:text-white">
+              <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-c-text tracking-tight leading-[1.05] dark:text-c-text">
                 {t('kb.hero.title', 'Knowledge Base')}
               </h1>
 
-              <p className="mt-4 sm:mt-6 text-base sm:text-lg text-slate-600 font-medium leading-relaxed max-w-2xl mx-auto px-2 dark:text-white/55">
+              <p className="mt-4 sm:mt-6 text-base sm:text-lg text-c-text-secondary font-medium leading-relaxed max-w-2xl mx-auto px-2 dark:text-c-text-muted">
                 {t('kb.hero.subtitle', KNOWLEDGE_BASE_SITE.heroSubtitle)}
               </p>
 
@@ -247,14 +247,14 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                 <div className="relative">
                   <Search
                     size={18}
-                    className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-white/40"
+                    className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-c-text-secondary dark:text-c-text-muted"
                   />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t('kb.hero.searchPlaceholder', 'Search articles...')}
-                    className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-3 sm:py-4 rounded-xl sm:rounded-2xl bg-white/90 backdrop-blur-sm border border-slate-200 text-slate-900 placeholder-slate-400 text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500/30 transition-all dark:bg-white/[0.05] dark:border-white/[0.10] dark:text-white dark:placeholder-white/40"
+                    className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-3 sm:py-4 rounded-xl sm:rounded-2xl bg-c-surface-raised backdrop-blur-sm border border-c-border-subtle text-c-text placeholder-c-text-muted text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-accent transition-all dark:bg-white/[0.05] dark:border-white/[0.10] dark:text-c-text dark:placeholder-white/40"
                   />
                   {searchQuery && (
                     <button
@@ -263,7 +263,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                         setSearchQuery('');
                         setActiveSearch('');
                       }}
-                      className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-700 transition-colors dark:text-white/40 dark:hover:text-white"
+                      className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-c-text-secondary hover:text-c-text-secondary transition-colors dark:text-c-text-muted dark:hover:text-c-text"
                     >
                       <X size={18} />
                     </button>
@@ -280,14 +280,14 @@ export const KnowledgeBaseHomePage: React.FC = () => {
             <div className="max-w-7xl mx-auto">
               <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-6">
                 <div>
-                  <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.24em] text-slate-500 dark:text-white/35">
+                  <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.24em] text-c-text-muted dark:text-c-text-muted">
                     {t('kb.sections.eyebrow', KNOWLEDGE_BASE_SITE.sectionsEyebrow)}
                   </p>
-                  <h2 className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                  <h2 className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-c-text">
                     {t('kb.sections.title', KNOWLEDGE_BASE_SITE.sectionsTitle)}
                   </h2>
                 </div>
-                <p className="hidden max-w-xl text-sm leading-relaxed text-slate-600 dark:text-white/50 md:block">
+                <p className="hidden max-w-xl text-sm leading-relaxed text-c-text-secondary dark:text-c-text-muted md:block">
                   {t('kb.sections.subtitle', KNOWLEDGE_BASE_SITE.sectionsSubtitle)}
                 </p>
               </div>
@@ -303,7 +303,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                       className={cn(
                         'group relative overflow-hidden rounded-2xl sm:rounded-[28px] border p-5 sm:p-6 text-left transition-all duration-300',
                         'min-h-[220px] sm:min-h-[260px] md:min-h-[290px]',
-                        `border-slate-200 bg-white/95 backdrop-blur-sm hover:bg-white ${accent.border} dark:border-white/[0.08] dark:bg-slate-950/65 dark:hover:bg-slate-950/78`,
+                        `border-c-border-subtle bg-c-surface-raised backdrop-blur-sm hover:bg-c-surface ${accent.border} dark:border-white/[0.08] dark:bg-c-bg dark:hover:bg-c-bg`,
                         accent.glow
                       )}
                     >
@@ -319,10 +319,10 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                       <div className="relative flex h-full flex-col">
                         <div className="flex items-start justify-between gap-4">
                           <div>
-                            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500 dark:text-white/45">
+                            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-c-text-muted dark:text-c-text-muted">
                               {eyebrow}
                             </p>
-                            <h3 className="mt-3 max-w-[15ch] text-2xl font-black leading-[1.02] tracking-tight text-slate-900 dark:text-white">
+                            <h3 className="mt-3 max-w-[15ch] text-2xl font-black leading-[1.02] tracking-tight text-c-text">
                               {coll.title}
                             </h3>
                           </div>
@@ -337,7 +337,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                         </div>
 
                         {coll.description && (
-                          <p className="mt-4 max-w-[34ch] text-sm leading-6 text-slate-600 dark:text-white/72">
+                          <p className="mt-4 max-w-[34ch] text-sm leading-6 text-c-text-secondary dark:text-c-text-secondary">
                             {coll.description}
                           </p>
                         )}
@@ -347,7 +347,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                             <span
                               className={cn(
                                 'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.16em]',
-                                'border-amber-400/30 bg-amber-500/10 text-amber-600 dark:border-amber-500/20 dark:text-amber-400'
+                                'border-c-warning bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)] text-c-warning'
                               )}
                             >
                               <Sparkles size={10} />
@@ -358,10 +358,10 @@ export const KnowledgeBaseHomePage: React.FC = () => {
 
                         <div className="mt-auto flex items-end justify-between gap-4 pt-8">
                           <div>
-                            <div className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                            <div className="text-3xl font-black tracking-tight text-c-text">
                               {coll.article_count}
                             </div>
-                            <div className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-white/42">
+                            <div className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-c-text-muted dark:text-c-text-muted">
                               {statLabel}
                             </div>
                           </div>
@@ -392,7 +392,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
           <section className="relative z-10 px-4 sm:px-6 pb-6 sm:pb-8">
             <div className="max-w-7xl mx-auto">
               <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
-                <Tag size={14} className="flex-shrink-0 text-slate-600 dark:text-white/30" />
+                <Tag size={14} className="flex-shrink-0 text-c-text-secondary dark:text-c-text-muted" />
                 {tags.slice(0, 18).map((tag: any) => (
                   <button
                     key={tag.id}
@@ -400,8 +400,8 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                     className={cn(
                       'flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200',
                       selectedTag === tag.slug
-                        ? 'bg-primary-600/20 border-primary-500/40 text-primary-300'
-                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-900 dark:bg-white/[0.03] dark:border-white/[0.08] dark:text-white/50 dark:hover:border-white/[0.15] dark:hover:text-white/70'
+                        ? 'bg-c-accent-soft border-c-accent text-c-accent'
+                        : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:border-c-border hover:text-c-text dark:bg-white/[0.03] dark:border-white/[0.08] dark:text-c-text-muted dark:hover:border-white/[0.15] dark:hover:text-c-text-secondary'
                     )}
                   >
                     {tag.label}
@@ -421,12 +421,12 @@ export const KnowledgeBaseHomePage: React.FC = () => {
               exit={{ opacity: 0, height: 0 }}
               className="relative z-10 px-6"
             >
-              <div className="max-w-7xl mx-auto py-3 flex items-center justify-between border-t border-slate-200 dark:border-white/[0.06]">
-                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-white/50">
+              <div className="max-w-7xl mx-auto py-3 flex items-center justify-between border-t border-c-border-subtle dark:border-white/[0.06]">
+                <div className="flex items-center gap-2 text-sm text-c-text-secondary dark:text-c-text-muted">
                   <Filter size={14} />
                   {activeSearch && <span>Search: &ldquo;{activeSearch}&rdquo;</span>}
                   {selectedCollection && (
-                    <span className="px-2.5 py-0.5 rounded-full bg-primary-600/15 border border-primary-500/25 text-primary-300 text-xs font-semibold">
+                    <span className="px-2.5 py-0.5 rounded-full bg-c-accent-soft border border-c-accent text-c-accent text-xs font-semibold">
                       {
                         siteCollections.find((c: KbCollection) => c.slug === selectedCollection)
                           ?.title
@@ -434,14 +434,14 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                     </span>
                   )}
                   {selectedTag && (
-                    <span className="px-2.5 py-0.5 rounded-full bg-white border border-slate-200 text-slate-700 text-xs font-semibold dark:bg-white/[0.06] dark:border-white/[0.12] dark:text-white/75">
+                    <span className="px-2.5 py-0.5 rounded-full bg-c-surface border border-c-border-subtle text-c-text-secondary text-xs font-semibold dark:bg-white/[0.06] dark:border-white/[0.12] dark:text-c-text-secondary">
                       #{tags?.find((tag: any) => tag.slug === selectedTag)?.label || selectedTag}
                     </span>
                   )}
                 </div>
                 <button
                   onClick={clearFilters}
-                  className="text-sm text-primary-400 hover:text-primary-300 font-semibold transition-colors"
+                  className="text-sm text-c-accent hover:text-c-accent font-semibold transition-colors"
                 >
                   {t('kb.filtering.clear', 'Clear filters')}
                 </button>
@@ -454,11 +454,11 @@ export const KnowledgeBaseHomePage: React.FC = () => {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
           {isResultView && displayArticles.length > 0 ? (
             <div>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mb-6 sm:mb-8 dark:text-white">
+              <h2 className="text-xl sm:text-2xl font-black text-c-text tracking-tight mb-6 sm:mb-8 dark:text-c-text">
                 {activeSearch
                   ? t('kb.results.searchTitle', 'Search results')
                   : t('kb.results.categoryTitle', 'Articles')}
-                <span className="ml-2 text-base sm:text-lg font-normal text-slate-500 dark:text-white/40">
+                <span className="ml-2 text-base sm:text-lg font-normal text-c-text-muted dark:text-c-text-muted">
                   ({displayArticles.length})
                 </span>
               </h2>
@@ -469,14 +469,14 @@ export const KnowledgeBaseHomePage: React.FC = () => {
               </div>
             </div>
           ) : isResultView ? (
-            <div className="rounded-2xl sm:rounded-[28px] border border-slate-200 bg-white/90 p-6 sm:p-8 text-center backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.03]">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-white/55">
+            <div className="rounded-2xl sm:rounded-[28px] border border-c-border-subtle bg-c-surface-raised p-6 sm:p-8 text-center backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.03]">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-c-surface-raised text-c-text-muted dark:bg-white/[0.06] dark:text-c-text-muted">
                 <Search size={22} />
               </div>
-              <h2 className="mt-5 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              <h2 className="mt-5 text-2xl font-black tracking-tight text-c-text">
                 {t('kb.results.emptyTitle', 'No matching articles yet')}
               </h2>
-              <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-white/55">
+              <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-c-text-secondary dark:text-c-text-muted">
                 {t(
                   'kb.results.emptyBody',
                   'Try a broader phrase, switch the tag filter, or clear search to browse the three main lanes.'
@@ -484,7 +484,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
               </p>
               <button
                 onClick={clearFilters}
-                className="mt-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-50 dark:border-white/[0.12] dark:bg-white/[0.05] dark:text-white/80 dark:hover:bg-white/[0.08]"
+                className="mt-6 inline-flex items-center gap-2 rounded-full border border-c-border-subtle bg-c-surface px-5 py-2.5 text-sm font-bold text-c-text-secondary transition-all hover:border-c-border hover:bg-c-bg dark:border-white/[0.12] dark:bg-white/[0.05] dark:text-c-text-secondary dark:hover:bg-white/[0.08]"
               >
                 {t('kb.filtering.clear', 'Clear filters')}
                 <ArrowRight size={14} />
@@ -497,10 +497,10 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                 <div>
                   <div className="flex items-center justify-between mb-6 sm:mb-10">
                     <div>
-                      <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight dark:text-white">
+                      <h2 className="text-2xl sm:text-3xl font-black text-c-text tracking-tight dark:text-c-text">
                         {t('kb.featured.title', 'Featured Articles')}
                       </h2>
-                      <p className="mt-1.5 sm:mt-2 text-sm sm:text-base text-slate-600 font-medium dark:text-white/45">
+                      <p className="mt-1.5 sm:mt-2 text-sm sm:text-base text-c-text-secondary font-medium dark:text-c-text-muted">
                         {t('kb.featured.subtitle', 'Start here for the most impactful insights')}
                       </p>
                     </div>
@@ -528,15 +528,15 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                 <div>
                   <div className="flex items-center justify-between mb-6 sm:mb-10">
                     <div className="flex items-center gap-3 sm:gap-4">
-                      <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center bg-gradient-to-br from-slate-400 to-slate-600 text-white">
+                      <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center bg-c-tag-8 text-white">
                         <GraduationCap size={18} className="sm:hidden" />
                         <GraduationCap size={22} className="hidden sm:block" />
                       </div>
                       <div>
-                        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight dark:text-white">
+                        <h2 className="text-xl sm:text-2xl font-black text-c-text tracking-tight dark:text-c-text">
                           {t('kb.browse.title', 'Browse All Articles')}
                         </h2>
-                        <p className="text-xs sm:text-sm text-slate-500 dark:text-white/40">
+                        <p className="text-xs sm:text-sm text-c-text-muted dark:text-c-text-muted">
                           {browseArticles.length} {t('kb.articles', 'articles')}{' '}
                           {t('kb.browse.subtitle', 'across all categories')}
                         </p>
@@ -552,7 +552,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                     <div className="mt-10 text-center">
                       <button
                         onClick={() => setBrowseLimit((prev) => prev + ARTICLES_PER_PAGE)}
-                        className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-bold text-slate-700 border border-slate-200 bg-white hover:bg-slate-50 hover:border-primary-500/30 transition-all duration-300 dark:text-white/80 dark:border-white/[0.12] dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
+                        className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-bold text-c-text-secondary border border-c-border-subtle bg-c-surface hover:bg-c-bg hover:border-c-accent transition-all duration-300 dark:text-c-text-secondary dark:border-white/[0.12] dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
                       >
                         {t('kb.browse.loadMore', 'Load more articles')}
                         <ArrowRight size={14} />
@@ -583,13 +583,13 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
       to={`/knowledge-base/${article.category_slug}/${article.slug}`}
       className={cn(
         'group flex flex-col rounded-2xl border transition-all duration-300 overflow-hidden',
-        'border-slate-200 bg-white backdrop-blur-sm dark:border-white/[0.06] dark:bg-white/[0.025]',
-        'hover:bg-slate-50 hover:border-slate-300 dark:hover:bg-white/[0.04] dark:hover:border-white/[0.12]',
+        'border-c-border-subtle bg-c-surface backdrop-blur-sm dark:border-white/[0.06] dark:bg-white/[0.025]',
+        'hover:bg-c-bg hover:border-c-border dark:hover:bg-white/[0.04] dark:hover:border-white/[0.12]',
         'hover:shadow-[0_0_40px_-12px_rgba(165,28,48,0.20)]'
       )}
     >
       {article.thumbnail_url ? (
-        <div className="relative aspect-[16/9] overflow-hidden bg-slate-100 dark:bg-[#0B1220]">
+        <div className="relative aspect-[16/9] overflow-hidden bg-c-surface-raised">
           <img
             src={kbImg(article.thumbnail_url)}
             alt={article.title}
@@ -600,32 +600,32 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
             loading="lazy"
             decoding="async"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/60 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-c-bg via-transparent to-transparent" />
           {featured && article.is_featured && (
-            <span className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-amber-500/90 text-white backdrop-blur-sm">
+            <span className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-c-warning text-white backdrop-blur-sm">
               {t('kb.card.featured', 'Featured')}
             </span>
           )}
         </div>
       ) : (
-        <div className="relative aspect-[16/9] bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center dark:from-[#0B1220] dark:to-[#0B1220]">
-          <BookOpen size={32} className="text-slate-600 dark:text-white/15" />
+        <div className="relative aspect-[16/9] bg-c-surface-raised flex items-center justify-center">
+          <BookOpen size={32} className="text-c-text-secondary dark:text-c-text-muted" />
         </div>
       )}
 
       <div className="p-4 sm:p-5 flex-1 flex flex-col">
         {article.category_name && (
-          <span className="self-start px-2.5 py-0.5 rounded-full border border-primary-500/20 bg-primary-600/10 text-primary-300 text-[10px] font-bold uppercase tracking-wider mb-3">
+          <span className="self-start px-2.5 py-0.5 rounded-full border border-c-accent bg-c-accent-soft text-c-accent text-[10px] font-bold uppercase tracking-wider mb-3">
             {article.category_name}
           </span>
         )}
 
-        <h3 className="text-[15px] font-bold text-slate-900 group-hover:text-primary-500 dark:text-white dark:group-hover:text-primary-300 transition-colors line-clamp-2 leading-snug">
+        <h3 className="text-[15px] font-bold text-c-text group-hover:text-c-accent dark:text-c-text dark:group-hover:text-c-accent transition-colors line-clamp-2 leading-snug">
           {article.title}
         </h3>
 
         {article.summary && (
-          <p className="mt-2 text-xs text-slate-600 line-clamp-2 leading-relaxed flex-1 dark:text-white/40">
+          <p className="mt-2 text-xs text-c-text-secondary line-clamp-2 leading-relaxed flex-1 dark:text-c-text-muted">
             {article.summary}
           </p>
         )}
@@ -635,7 +635,7 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
             {visibleTags.map((tag) => (
               <span
                 key={tag.id}
-                className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white/60"
+                className="inline-flex items-center rounded-full border border-c-border-subtle bg-c-bg px-2.5 py-1 text-[10px] font-semibold text-c-text-secondary dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-c-text-secondary"
               >
                 {tag.label}
               </span>
@@ -643,7 +643,7 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
           </div>
         )}
 
-        <div className="mt-4 flex items-center gap-4 text-[11px] text-slate-500 font-medium dark:text-white/30">
+        <div className="mt-4 flex items-center gap-4 text-[11px] text-c-text-muted font-medium dark:text-c-text-muted">
           <span className="flex items-center gap-1">
             <Clock size={11} />
             {article.reading_time_minutes} {t('kb.card.min', 'min')}
@@ -657,13 +657,13 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
         </div>
       </div>
 
-      <div className="px-4 sm:px-5 py-2.5 sm:py-3 border-t border-slate-200 dark:border-white/[0.04] flex items-center justify-between">
-        <span className="text-xs font-bold text-primary-500 dark:text-primary-400">
+      <div className="px-4 sm:px-5 py-2.5 sm:py-3 border-t border-c-border-subtle dark:border-white/[0.04] flex items-center justify-between">
+        <span className="text-xs font-bold text-c-accent dark:text-c-accent">
           {t('kb.card.read', 'Read article')}
         </span>
         <ArrowRight
           size={13}
-          className="text-primary-500 dark:text-primary-400 group-hover:translate-x-1 transition-transform"
+          className="text-c-accent dark:text-c-accent group-hover:translate-x-1 transition-transform"
         />
       </div>
     </Link>
@@ -680,18 +680,18 @@ const BrowseArticleCard: React.FC<{ article: KbArticleListItem }> = ({ article }
   return (
     <Link
       to={`/knowledge-base/${article.category_slug}/${article.slug}`}
-      className="group p-5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 backdrop-blur-sm transition-all duration-200 dark:border-white/[0.045] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] dark:hover:border-white/[0.10]"
+      className="group p-5 rounded-2xl border border-c-border-subtle bg-c-surface hover:bg-c-bg hover:border-c-border backdrop-blur-sm transition-all duration-200 dark:border-white/[0.045] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] dark:hover:border-white/[0.10]"
     >
       <div className="flex items-center gap-2 mb-3">
         <span className={cn('w-2 h-2 rounded-full', accent.bg)} />
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-white/30">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted dark:text-c-text-muted">
           {article.category_name}
         </span>
       </div>
-      <h4 className="font-bold text-sm text-slate-900 group-hover:text-primary-500 dark:text-white dark:group-hover:text-primary-300 transition-colors line-clamp-2 leading-snug">
+      <h4 className="font-bold text-sm text-c-text group-hover:text-c-accent dark:text-c-text dark:group-hover:text-c-accent transition-colors line-clamp-2 leading-snug">
         {article.title}
       </h4>
-      <p className="mt-2 text-[11px] text-slate-600 line-clamp-2 leading-relaxed dark:text-white/35">
+      <p className="mt-2 text-[11px] text-c-text-secondary line-clamp-2 leading-relaxed dark:text-c-text-muted">
         {article.summary}
       </p>
       {visibleTags.length > 0 && (
@@ -699,7 +699,7 @@ const BrowseArticleCard: React.FC<{ article: KbArticleListItem }> = ({ article }
           {visibleTags.map((tag) => (
             <span
               key={tag.id}
-              className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-semibold text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white/55"
+              className="inline-flex items-center rounded-full border border-c-border-subtle bg-c-bg px-2 py-1 text-[10px] font-semibold text-c-text-secondary dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-c-text-muted"
             >
               {tag.label}
             </span>
@@ -707,7 +707,7 @@ const BrowseArticleCard: React.FC<{ article: KbArticleListItem }> = ({ article }
         </div>
       )}
       <div className="mt-3 flex items-center justify-between">
-        <span className="text-[10px] text-slate-500 flex items-center gap-1 dark:text-white/25">
+        <span className="text-[10px] text-c-text-muted flex items-center gap-1 dark:text-c-text-muted">
           <Clock size={10} />
           {article.reading_time_minutes} {t('kb.card.min', 'min')}
         </span>
@@ -751,11 +751,11 @@ const SectionPreview: React.FC<{
             <FolderOpen size={20} />
           </div>
           <div className="min-w-0">
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight dark:text-white truncate">
+            <h2 className="text-lg sm:text-xl font-black text-c-text tracking-tight dark:text-c-text truncate">
               {collection.title}
             </h2>
             {collection.description && (
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-white/40 line-clamp-1">
+              <p className="text-xs sm:text-sm text-c-text-secondary dark:text-c-text-muted line-clamp-1">
                 {collection.description}
               </p>
             )}
@@ -778,10 +778,10 @@ const SectionPreview: React.FC<{
           <Link
             key={article.id}
             to={`/knowledge-base/${collection.slug}/${article.slug}`}
-            className="group p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 backdrop-blur-sm transition-all duration-200 dark:border-white/[0.045] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] dark:hover:border-white/[0.10]"
+            className="group p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-c-border-subtle bg-c-surface hover:bg-c-bg hover:border-c-border backdrop-blur-sm transition-all duration-200 dark:border-white/[0.045] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] dark:hover:border-white/[0.10]"
           >
             {article.thumbnail_url && (
-              <div className="aspect-[16/9] rounded-lg overflow-hidden mb-3 bg-slate-100 dark:bg-[#0B1220]">
+              <div className="aspect-[16/9] rounded-lg overflow-hidden mb-3 bg-c-surface-raised">
                 <img
                   src={kbThumb(article.thumbnail_url) || kbImg(article.thumbnail_url)}
                   alt={article.title}
@@ -794,10 +794,10 @@ const SectionPreview: React.FC<{
                 />
               </div>
             )}
-            <h4 className="font-bold text-sm text-slate-900 group-hover:text-primary-500 dark:text-white dark:group-hover:text-primary-300 transition-colors line-clamp-2 leading-snug">
+            <h4 className="font-bold text-sm text-c-text group-hover:text-c-accent dark:text-c-text dark:group-hover:text-c-accent transition-colors line-clamp-2 leading-snug">
               {article.title}
             </h4>
-            <p className="mt-2 text-[11px] text-slate-600 line-clamp-2 leading-relaxed dark:text-white/35">
+            <p className="mt-2 text-[11px] text-c-text-secondary line-clamp-2 leading-relaxed dark:text-c-text-muted">
               {article.summary}
             </p>
             <div className={cn('mt-3 flex items-center gap-1 text-xs font-bold', accent.text)}>

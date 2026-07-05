@@ -24,6 +24,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import ReactFlow, {
   addEdge,
+  applyNodeChanges,
   Background,
   type Connection,
   ConnectionMode,
@@ -42,6 +43,7 @@ import ReactFlow, {
 } from 'reactflow';
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { Api, getMapVersionFromPayload } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import {
@@ -53,9 +55,9 @@ import {
 } from '@/utils/artifactLinks';
 
 import TeresaMark from '../shared/TeresaMark';
-import { useConfirmDialog } from './shared/ConfirmDialog';
-import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import { getCanvasBg } from './canvas/canvasBackground';
+import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import { useIdeaCollab } from './canvas/useIdeaCollab';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
   IDEA_STAGE_COLORS,
@@ -73,7 +75,6 @@ import {
   type MindMapInteractionMode,
 } from './ideaSelectionTypes';
 import { knowledgeNodeTypes } from './knowledge/KnowledgeCardNodes';
-import { useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 import { ActivityFeed, pushActivity } from './mindmap/ActivityFeed';
 import { AddEvidenceModal } from './mindmap/AddEvidenceModal';
 import { AIAutoClustering, type Cluster } from './mindmap/AIAutoClustering';
@@ -150,6 +151,8 @@ import {
 import { useMindMapPersistence } from './mindmap/useMindMapPersistence';
 import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
 import { VoiceToNode } from './mindmap/VoiceToNode';
+import { useConfirmDialog } from './shared/ConfirmDialog';
+import { useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 type IdeaNodeData = NodeDetailData & {
   _depth?: number;
 };
@@ -691,6 +694,14 @@ const BRANCH_COLORS: Record<
 // V5-IDEA-43: Hierarchical color system — depth-based opacity modulation
 const DEPTH_OPACITY = [1, 0.85, 0.7, 0.55, 0.4] as const;
 
+/** Edge colors for AI-detected dependency types (AIDependencyDetector). */
+const DEP_EDGE_COLOR: Record<string, string> = {
+  depends_on: 'var(--c-danger)',
+  enables: 'var(--c-success)',
+  conflicts_with: 'var(--c-warning)',
+  related_to: 'var(--c-info)',
+};
+
 function getNodeDepth(data: IdeaNodeData) {
   return data._depth ?? 0;
 }
@@ -839,7 +850,7 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
         <button
           type="button"
           title={data._isPl ? 'Dodaj węzeł (Tab)' : 'Add node (Tab)'}
-          className="nodrag absolute -right-2 top-1/2 -translate-y-1/2 z-20 w-5 h-5 flex items-center justify-center rounded-full bg-primary-600 text-white shadow-lg hover:bg-primary-700 active:scale-[0.98] transition-all"
+          className="nodrag absolute -right-2 top-1/2 -translate-y-1/2 z-20 w-5 h-5 flex items-center justify-center rounded-full bg-slate-600 text-white shadow-lg hover:bg-slate-700 active:scale-[0.98] transition-all"
           onClick={(e) => {
             e.stopPropagation();
             window.dispatchEvent(
@@ -867,7 +878,7 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
         <div className="nodrag absolute -bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1">
           <button
             type="button"
-            className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-600 text-white text-[9px] font-medium shadow-lg hover:bg-primary-700 transition-colors"
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-600 text-white text-[9px] font-medium shadow-lg hover:bg-slate-700 transition-colors"
             onClick={(e) => {
               e.stopPropagation();
               window.dispatchEvent(
@@ -1102,11 +1113,19 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
 
   const labelRef = useRef(data.label);
   labelRef.current = data.label;
-  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditValue(String(labelRef.current || ''));
-    setEditing(true);
-  }, []);
+  // DP-3 (T7 Part B): a node locked by another collaborator cannot enter
+  // inline edit mode — the drawer/inline text editor stays read-only until
+  // the peer releases the lock.
+  const isRemoteLocked = !!data._remoteLocked;
+  const handleDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (isRemoteLocked) return;
+      setEditValue(String(labelRef.current || ''));
+      setEditing(true);
+    },
+    [isRemoteLocked]
+  );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -1199,15 +1218,22 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
       <div
         onDoubleClick={handleDoubleClick}
         style={nodeSurfaceStyle}
+        title={
+          isRemoteLocked
+            ? isPl
+              ? 'Ten węzeł jest edytowany przez inną osobę'
+              : 'This node is being edited by another collaborator'
+            : undefined
+        }
         className={`group px-3 py-2 ${shapeClass} border-2 ${!accentColor && tagColor ? tagColor.borderClass : colors.border} ${!accentColor && tagColor ? tagColor.bgClass : colors.bg} ${depthOpacity} ${
           data._dropTarget
-            ? 'ring-3 ring-primary-400 ring-offset-2 border-primary-500 shadow-lg shadow-primary-500/30'
+            ? 'ring-3 ring-slate-400 ring-offset-2 border-slate-500 shadow-lg shadow-slate-500/30'
             : data._justMoved
               ? 'ring-2 ring-emerald-400 animate-pulse'
               : selected
                 ? `ring-2 ${colors.ring}`
                 : ''
-        } cursor-pointer min-w-[120px] max-w-[210px] relative transition-colors duration-150`}
+        } ${isRemoteLocked ? 'opacity-50 grayscale cursor-not-allowed' : 'cursor-pointer'} min-w-[120px] max-w-[210px] relative transition-colors duration-150`}
       >
         <Handle type="target" position={Position.Left} id="target-left" className={handleTarget} />
         <Handle type="target" position={Position.Top} id="target-top" className={handleTarget} />
@@ -1249,7 +1275,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
             <button
               type="button"
               title={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
-              className="w-6 h-6 flex items-center justify-center rounded-full bg-primary-600 text-white hover:bg-primary-700 active:scale-[0.98] transition-all"
+              className="w-6 h-6 flex items-center justify-center rounded-full bg-slate-600 text-white hover:bg-slate-700 active:scale-[0.98] transition-all"
               onClick={(e) => {
                 e.stopPropagation();
                 window.dispatchEvent(
@@ -1293,7 +1319,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         {/* Artifact link badge */}
         {Array.isArray(data.artifactLinks) && data.artifactLinks.length > 0 && (
           <div
-            className="absolute -bottom-1 -right-1 flex items-center gap-0.5 rounded-full bg-primary-500 text-white px-1 py-0.5 shadow-sm cursor-pointer hover:bg-primary-600 transition-colors"
+            className="absolute -bottom-1 -right-1 flex items-center gap-0.5 rounded-full bg-slate-600 text-white px-1 py-0.5 shadow-sm cursor-pointer hover:bg-slate-700 transition-colors"
             title={data.artifactLinks
               .map((l: any) => l.label || l.title || `${l.artifactRef?.type || l.type}`)
               .join(', ')}
@@ -1367,7 +1393,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   {[72, 56, 64].map((w, i) => (
                     <span
                       key={i}
-                      className="inline-block h-[18px] rounded-full bg-primary-100 dark:bg-primary-900/30 animate-pulse"
+                      className="inline-block h-[18px] rounded-full bg-slate-200 dark:bg-navy-800 animate-pulse"
                       style={{ width: w }}
                     />
                   ))}
@@ -1379,7 +1405,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                     <button
                       key={i}
                       type="button"
-                      className="text-[9px] px-2 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-800/40 transition-colors"
+                      className="text-[9px] px-2 py-0.5 rounded-full bg-slate-900/[0.06] dark:bg-white/[0.10] text-slate-700 dark:text-slate-200 hover:bg-slate-900/[0.10] dark:hover:bg-white/[0.14] transition-colors"
                       onMouseDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -1498,7 +1524,10 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   <StickyNote size={9} className="text-amber-400 dark:text-amber-500 shrink-0" />
                 )}
                 {data.riskNote && (
-                  <AlertTriangle size={9} className="text-danger-400 dark:text-danger-500 shrink-0" />
+                  <AlertTriangle
+                    size={9}
+                    className="text-danger-400 dark:text-danger-500 shrink-0"
+                  />
                 )}
                 {Array.isArray(data.evidenceLinks) && data.evidenceLinks.length > 0 && (
                   <span
@@ -1948,10 +1977,10 @@ function MindMapInner({
     React.Dispatch<React.SetStateAction<Node[]>>,
     (changes: unknown) => void,
   ];
-  const [edges, setEdges, onEdgesChange] = useEdgesState([] as Edge[]) as [
+  const [edges, setEdges, baseOnEdgesChange] = useEdgesState([] as Edge[]) as [
     Edge[],
     React.Dispatch<React.SetStateAction<Edge[]>>,
-    (changes: unknown) => void,
+    (changes: import('reactflow').EdgeChange[]) => void,
   ];
 
   // Initial viewport: restore this idea's saved viewport, otherwise fit the whole
@@ -2000,8 +2029,7 @@ function MindMapInner({
     if (!locked) {
       const ae = document.activeElement as HTMLElement | null;
       const typingElsewhere =
-        ae &&
-        (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
+        ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
       if (!typingElsewhere) {
         try {
           containerRef.current?.focus({ preventScroll: true });
@@ -2013,25 +2041,44 @@ function MindMapInner({
   }, [nodesInitialized, nodes.length, ideaId, fitView, setViewport, locked]);
 
   // ── Graph CRUD collaboration ──────────────────────────────────────────────
-  const collabSendRef = useRef<((msg: any) => void) | null>(null);
-
-  const registerCollabSend = useCallback((sendFn: (msg: any) => void) => {
-    collabSendRef.current = sendFn;
-  }, []);
-
-  const broadcastGraphPatch = useCallback((operations: Array<{ op: string; data: any }>) => {
-    if (collabSendRef.current && operations.length > 0) {
-      collabSendRef.current({ type: 'graph_patch', operations });
-    }
-  }, []);
+  // DP-3 (T6): shared useIdeaCollab (same hook as the whiteboard) applies
+  // collaborators' graph_patch ops to the live canvas via functional
+  // setNodes/setEdges — remote-apply without re-hydration or canvas remount.
+  // DP-3 (T7 Part A): the mind map now also EMITS local mutations through the
+  // same hook (previously only the whiteboard called broadcast* — the map
+  // defined but never invoked these, so local edits never reached peers).
+  // `broadcast*` internally no-ops while `applyingRemoteRef` is held, so
+  // applying a remote patch never echoes back onto the wire.
+  const {
+    registerCollabSend,
+    broadcastGraphPatch,
+    broadcastNodeChanges,
+    broadcastEdgeChanges,
+    broadcastNodeUpdate,
+    broadcastEdgeAdd,
+  } = useIdeaCollab({
+    ideaId,
+    tool: 'mindmap',
+    currentUserId: currentUser?.id || 'anonymous',
+    setNodes,
+    setEdges,
+  });
 
   const updateNodeDataById = useCallback(
     (nodeId: string, updater: (data: any) => any) => {
+      let nextData: any = null;
       setNodes((prev: Node[]) =>
-        prev.map((n) => (n.id === nodeId ? { ...n, data: updater(n.data) } : n))
+        prev.map((n) => {
+          if (n.id !== nodeId) return n;
+          nextData = updater(n.data);
+          return { ...n, data: nextData };
+        })
       );
+      // DP-3 (T7 Part A): broadcast style/priority/assignee/image/artifact
+      // patches applied through the floating toolbar (shared setter).
+      if (nextData) broadcastNodeUpdate({ id: nodeId, data: nextData } as any);
     },
-    [setNodes]
+    [broadcastNodeUpdate, setNodes]
   );
 
   // ── Collapse/Expand ──────────────────────────────────────────────────────
@@ -2172,18 +2219,24 @@ function MindMapInner({
     return focusFilteredNodes.map((n) => {
       const extra: Record<string, unknown> = {};
       if (simplifiedMode) extra._simplified = true;
+      // DP-3 (T7 Part B): flag nodes locked by another collaborator so the
+      // node components can grey out + block inline editing. Functional-only
+      // (data flag), no layout/remount — matches the existing _dropTarget /
+      // _justMoved pattern.
+      const remoteLocked = remoteLockedNodeIds.has(n.id);
+      if (remoteLocked !== !!n.data?._remoteLocked) extra._remoteLocked = remoteLocked;
       if (n.type === 'branch') {
         const count = structuralChildCount.get(n.id) || 0;
-        if (count !== n.data?.count || simplifiedMode) {
+        if (count !== n.data?.count || simplifiedMode || Object.keys(extra).length > 0) {
           return { ...n, data: { ...n.data, count, ...extra } };
         }
       }
-      if (simplifiedMode) {
+      if (Object.keys(extra).length > 0) {
         return { ...n, data: { ...n.data, ...extra } };
       }
       return n;
     });
-  }, [edges, focusFilteredNodes, simplifiedMode]);
+  }, [edges, focusFilteredNodes, remoteLockedNodeIds, simplifiedMode]);
 
   const visibleIdeaNodeCount = useMemo(
     () => enrichedNodes.filter((n) => n.type === 'idea' && !n.hidden).length,
@@ -2341,9 +2394,11 @@ function MindMapInner({
         setNodes((prev: Node[]) =>
           prev.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...dataPatch } } : n))
         );
+        // DP-3 (T7 Part A): broadcast drawer field edits (status/notes/context/…).
+        broadcastNodeUpdate({ id: nodeId, data: dataPatch } as any);
       }
     },
-    [setNodes]
+    [broadcastNodeUpdate, setNodes]
   );
 
   const handleConvertNode = useCallback(
@@ -2468,6 +2523,13 @@ function MindMapInner({
             source: 'handler',
           });
         }
+        // DP-3 (T7 Part A): emit final drag/resize positions + removals to
+        // collaborators — mirrors the proven whiteboard wiring (L-02). Only
+        // dragging===false / resizing===false / remove changes are sent
+        // (see useIdeaCollab.broadcastNodeChanges); selection churn and
+        // in-flight frames are filtered out there, so this is safe to call
+        // unconditionally on every change batch.
+        broadcastNodeChanges(changes, applyNodeChanges(changes, nodes));
         baseOnNodesChange(changes);
       } catch (err: any) {
         debugLog(`ERROR in onNodesChange: ${err?.message || err}`, {
@@ -2477,7 +2539,17 @@ function MindMapInner({
         console.error('[MindMap Debug] onNodesChange error:', err);
       }
     },
-    [baseOnNodesChange, debugLog]
+    [baseOnNodesChange, broadcastNodeChanges, debugLog, nodes]
+  );
+
+  // DP-3 (T7 Part A): broadcast edge removals (e.g. Delete on a selected edge)
+  // to collaborators — mirrors broadcastNodeChanges above / whiteboard L-02.
+  const onEdgesChange = useCallback(
+    (changes: import('reactflow').EdgeChange[]) => {
+      broadcastEdgeChanges(changes);
+      baseOnEdgesChange(changes);
+    },
+    [baseOnEdgesChange, broadcastEdgeChanges]
   );
 
   // ── GAP-3: Map structure type ─────────────────────────────────────
@@ -2579,6 +2651,9 @@ function MindMapInner({
     remoteLockedNodeIds,
     autoLayout,
     partialLayoutSubtree,
+    // DP-3 (T7 Part A): broadcast graph CRUD (add/remove node+edge, reparent)
+    // performed inside this hook so collaborators see them live.
+    broadcastGraphPatch,
     confirmSubtreeDelete: (childCount: number) =>
       confirmSubtreeDelete({
         title: isPolish ? 'Usunąć węzły?' : 'Delete nodes?',
@@ -2608,10 +2683,10 @@ function MindMapInner({
   useEffect(() => {
     window.dispatchEvent(
       new CustomEvent('idea-mindmap-sidekick-context', {
-        detail: sidekickCtx,
+        detail: { ...sidekickCtx, ideaId, ideaTitle },
       })
     );
-  }, [sidekickCtx]);
+  }, [sidekickCtx, ideaId, ideaTitle]);
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -2852,41 +2927,8 @@ function MindMapInner({
   }, [contextMenu, drawerNodeId, remoteLockedNodeIds, setNodes]);
 
   // ── Apply incoming graph patches from collaborators ──────────────────────
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (!detail?.operations || detail.userId === currentUser?.id) return;
-
-      for (const op of detail.operations) {
-        switch (op.op) {
-          case 'add_node':
-            setNodes((prev: Node[]) => [...prev, op.data]);
-            break;
-          case 'remove_node':
-            setNodes((prev: Node[]) => prev.filter((n: Node) => n.id !== op.data.id));
-            break;
-          case 'update_node':
-            setNodes((prev: Node[]) =>
-              prev.map((n: Node) => (n.id === op.data.id ? { ...n, ...op.data } : n))
-            );
-            break;
-          case 'add_edge':
-            setEdges((prev: Edge[]) => [...prev, op.data]);
-            break;
-          case 'remove_edge':
-            setEdges((prev: Edge[]) => prev.filter((e: Edge) => e.id !== op.data.id));
-            break;
-          case 'update_edge':
-            setEdges((prev: Edge[]) =>
-              prev.map((e: Edge) => (e.id === op.data.id ? { ...e, ...op.data } : e))
-            );
-            break;
-        }
-      }
-    };
-    window.addEventListener('idea-collab-graph-patch', handler);
-    return () => window.removeEventListener('idea-collab-graph-patch', handler);
-  }, [currentUser?.id, setNodes, setEdges]);
+  // DP-3 (T6): handled by the shared useIdeaCollab hook above (guarded by
+  // applyingRemoteRef, idempotent adds, functional updates — no remount).
 
   // Node operations (findParentId, findChildrenIds, addChildNode, addSiblingNode,
   // deleteSelected, duplicateSelected, focusSelectedNode, reparentSelectedPromote,
@@ -2951,6 +2993,8 @@ function MindMapInner({
           n.id === nodeId ? { ...n, data: { ...n.data, label, _startEditing: undefined } } : n
         )
       );
+      // DP-3 (T7 Part A): broadcast the committed label to collaborators.
+      broadcastNodeUpdate({ id: nodeId, data: { label } } as any);
 
       if (label !== originalLabel) {
         toast.success(isPolish ? 'Zmieniono nazwę' : 'Renamed', {
@@ -2961,7 +3005,7 @@ function MindMapInner({
     };
     window.addEventListener('idea-mindmap-node-edit', handler);
     return () => window.removeEventListener('idea-mindmap-node-edit', handler);
-  }, [debugLog, isPolish, nodes, pushUndo, setEdges, setNodes]);
+  }, [broadcastNodeUpdate, debugLog, isPolish, nodes, pushUndo, setEdges, setNodes]);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -3575,9 +3619,10 @@ function MindMapInner({
         },
       };
       setEdges((prev: Edge[]) => addEdge(newEdge, prev));
+      broadcastEdgeAdd(newEdge);
       updateInteractionMode('select');
     },
-    [locked, pushUndo, setEdges, updateInteractionMode]
+    [broadcastEdgeAdd, locked, pushUndo, setEdges, updateInteractionMode]
   );
 
   const onEdgeClick = useCallback(
@@ -3787,6 +3832,14 @@ function MindMapInner({
     if (selected.type === 'idea') return String((selected as any).data?.branchKey || 'options');
     return 'options';
   }, [nodes]);
+
+  // ── Feature flags (DP-5: honest AI overlays) ─────────────────────────────
+  const { isEnabled: isFeatureEnabled } = useFeatureFlagsContext();
+  // Overlays whose displayed result is a client-side heuristic, not real LLM
+  // output (AIBranchBalancer, AISentimentOverlay, AIAutoClustering,
+  // AIDependencyDetector) — hidden until backed by real AI analysis.
+  // See DEFAULT_FLAGS in useFeatureFlags for the honesty audit details.
+  const heuristicAiOverlaysEnabled = isFeatureEnabled('mindmapHeuristicAiOverlays');
 
   // ── Visual modes ─────────────────────────────────────────────────────────
   const [showClusterBubbles, setShowClusterBubbles] = useState(false);
@@ -5058,6 +5111,7 @@ function MindMapInner({
           canPasteStyle={!!styleClipboard}
           canPasteNodes={hasMindMapClipboard()}
           hasChildren={findChildrenIds(contextMenu.nodeId).length > 0}
+          comingSoonIds={heuristicAiOverlaysEnabled ? [] : ['ctx_dependencies']}
           onClose={() => setContextMenu(null)}
           onAction={handleContextAction}
         />
@@ -5303,7 +5357,17 @@ function MindMapInner({
               }}
             >
               {/* P2: background via SSOT canvasBackground.ts */}
-              {(() => { const bg = getCanvasBg('mindmap', isDarkMindmap ? 'dark' : 'light'); return <Background color={bg.color} gap={bg.gap} size={bg.size} variant={bg.variant as any} />; })()}
+              {(() => {
+                const bg = getCanvasBg('mindmap', isDarkMindmap ? 'dark' : 'light');
+                return (
+                  <Background
+                    color={bg.color}
+                    gap={bg.gap}
+                    size={bg.size}
+                    variant={bg.variant as any}
+                  />
+                );
+              })()}
               {showMiniMap && (
                 <MiniMap
                   nodeStrokeWidth={3}
@@ -5399,7 +5463,7 @@ function MindMapInner({
               {sidekickCtx && nodes.length > 1 && (
                 <Panel position="top-center">
                   <div className="mt-2 px-3 py-1 rounded-full bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-white/10 text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 pointer-events-none select-none">
-                    <Sparkles size={10} className="text-primary-500 shrink-0" />
+                    <Sparkles size={10} className="text-slate-500 shrink-0" />
                     <span>{isPolish ? sidekickCtx.promptHintPl : sidekickCtx.promptHint}</span>
                   </div>
                 </Panel>
@@ -5412,29 +5476,31 @@ function MindMapInner({
         </MindMapIdeaIdContext.Provider>
       )}
 
-      {/* AI Branch Balancer */}
-      <AIBranchBalancer
-        nodes={nodes.map((n) => ({ id: n.id, data: n.data, type: n.type }))}
-        edges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
-        locked={locked}
-        onFocusBranch={(branchKey) => {
-          const branchNode = nodes.find(
-            (n) => n.data?.branchKey === branchKey && n.id.startsWith('branch-')
-          );
-          if (branchNode) {
-            setNodes((prev: Node[]) =>
-              prev.map((n) => ({ ...n, selected: n.id === branchNode.id }))
+      {/* AI Branch Balancer — DP-5: client-side heuristic (no LLM), flag OFF by default */}
+      {heuristicAiOverlaysEnabled && (
+        <AIBranchBalancer
+          nodes={nodes.map((n) => ({ id: n.id, data: n.data, type: n.type }))}
+          edges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
+          locked={locked}
+          onFocusBranch={(branchKey) => {
+            const branchNode = nodes.find(
+              (n) => n.data?.branchKey === branchKey && n.id.startsWith('branch-')
             );
-            setTimeout(() => {
-              try {
-                fitView({ nodes: [{ id: branchNode.id } as any], padding: 0.5, duration: 400 });
-              } catch {
-                /* ignore */
-              }
-            }, 100);
-          }
-        }}
-      />
+            if (branchNode) {
+              setNodes((prev: Node[]) =>
+                prev.map((n) => ({ ...n, selected: n.id === branchNode.id }))
+              );
+              setTimeout(() => {
+                try {
+                  fitView({ nodes: [{ id: branchNode.id } as any], padding: 0.5, duration: 400 });
+                } catch {
+                  /* ignore */
+                }
+              }, 100);
+            }
+          }}
+        />
+      )}
 
       {/* AI What-If Scenarios */}
       {showWhatIf &&
@@ -5710,7 +5776,10 @@ function MindMapInner({
           nodeData={drawerNodeData}
           ideaId={ideaId}
           ideaTitle={ideaTitle}
-          locked={locked}
+          // DP-3 (T7 Part B): read-only while another collaborator holds the
+          // lock on this node (defense-in-depth alongside the drawer-close
+          // effect above, in case a lock arrives mid-edit).
+          locked={locked || remoteLockedNodeIds.has(drawerNodeId)}
           allNodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
           allEdges={edges.map((e) => ({ id: e.id, source: e.source, target: e.target }))}
           onUpdateNode={handleUpdateNode}
@@ -5724,8 +5793,8 @@ function MindMapInner({
         />
       ) : null}
 
-      {/* R1.3: AI Dependency Detection */}
-      {showDependencyDetector ? (
+      {/* R1.3: AI Dependency Detection — DP-5: heuristic pair mapping, flag OFF by default */}
+      {heuristicAiOverlaysEnabled && showDependencyDetector ? (
         <AIDependencyDetector
           open={showDependencyDetector}
           onClose={() => setShowDependencyDetector(false)}
@@ -5738,12 +5807,6 @@ function MindMapInner({
             pushUndo();
             const edgeId = `dep-edge-${uid()}`;
             const depType = dep.type || 'related_to';
-            const DEP_EDGE_COLOR: Record<string, string> = {
-              depends_on: 'var(--c-danger)',
-              enables: 'var(--c-success)',
-              conflicts_with: 'var(--c-warning)',
-              related_to: 'var(--c-info)',
-            };
             const color = DEP_EDGE_COLOR[depType] ?? 'var(--c-info)';
             const newEdge: Edge = {
               id: edgeId,
@@ -5826,8 +5889,8 @@ function MindMapInner({
         />
       ) : null}
 
-      {/* R1.1: AI Auto-Clustering */}
-      {showAutoClustering ? (
+      {/* R1.1: AI Auto-Clustering — DP-5: substring-match membership, flag OFF by default */}
+      {heuristicAiOverlaysEnabled && showAutoClustering ? (
         <AIAutoClustering
           open={showAutoClustering}
           onClose={() => setShowAutoClustering(false)}
@@ -5856,8 +5919,8 @@ function MindMapInner({
         />
       ) : null}
 
-      {/* R1.4: AI Sentiment Analysis */}
-      {showSentimentOverlay ? (
+      {/* R1.4: AI Sentiment Analysis — DP-5: confidence-threshold heuristic, flag OFF by default */}
+      {heuristicAiOverlaysEnabled && showSentimentOverlay ? (
         <AISentimentOverlay
           open={showSentimentOverlay}
           onClose={() => setShowSentimentOverlay(false)}
@@ -5951,6 +6014,7 @@ function MindMapInner({
       <ExportPowerPoint
         open={showExportPPTX}
         onClose={() => setShowExportPPTX(false)}
+        ideaId={ideaId}
         ideaTitle={ideaTitle}
         branches={nodes
           .filter((n) => n.id.startsWith('branch-'))

@@ -188,7 +188,7 @@ Forma: pill 9999px, 11px/600, padding 3px 10px, tło = kolor @14%, tekst = kolor
 
 **Sidebar — aktywna pozycja:** tło `--bg-active` + tekst/ikona `--text-primary` + **2px lewa kreska `--brand`** (jedno z 5 dozwolonych miejsc czerwieni). Nieaktywne: `--text-secondary`, hover `--bg-hover`.
 
-**Taby (jeden wzorzec w całej aplikacji):** underline — aktywny: `--text-primary` + 2px dolna kreska `--text-primary`; nieaktywny: `--text-secondary`. Bez tła, bez koloru.
+**Taby (Menu 2, jeden wzorzec w całej aplikacji) — DECYZJA PIOTRA 2026-07-03: PILL (nie underline).** Wcześniejszy wzorzec underline został zastąpiony pigułką jak w My Work. Aktywny: NEUTRALNY wypełniony pill — `--c-surface-raised` + ramka `--c-border` + tekst `--c-text` (BEZ crimson; `primary`=crimson to pułapka). Nieaktywny: subtelna ramka `--c-border` + delikatne tło + `--text-muted`, hover rozjaśnia tło. SSOT klas: `MENU_2_TAB_ACTIVE`/`MENU_2_TAB_INACTIVE` (`src/components/shared/ModuleMenu3.tsx`) oraz `TAB_ACTIVE`/`TAB_INACTIVE` w `ModuleNavBar.tsx`.
 
 **Filter chips (≠ taby):** pill — aktywny: `--bg-active` + `--text-primary` + border `--border-strong`; nieaktywny: transparent + `--text-muted` + border `--border-subtle`.
 

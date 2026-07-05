@@ -200,7 +200,7 @@ export const InitiativeGeneratorModal: React.FC<InitiativeGeneratorModalProps> =
   // Board view — triage.
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 backdrop-blur-sm"
+      className="fixed inset-0 z-overlay flex items-center justify-center bg-slate-950/55 backdrop-blur-sm"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}

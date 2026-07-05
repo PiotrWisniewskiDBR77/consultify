@@ -136,7 +136,7 @@ export const KpiSignalSheetView: React.FC<KpiSignalSheetViewProps> = ({
               type="button"
               onClick={handleSave}
               disabled={submitting}
-              className="inline-flex items-center gap-2 rounded-full bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-400 transition-colors disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-full bg-c-text px-4 py-2 text-sm font-medium text-c-bg hover:bg-c-text-secondary transition-colors disabled:opacity-60"
             >
               <Save size={16} />
               {submitting ? t('common.saving', 'Saving...') : t('common.save', 'Save')}

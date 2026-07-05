@@ -8,6 +8,8 @@ import {
   type FinanceModelPreviewDetail,
   type FinanceModelRow,
 } from './financeTypes';
+import { isFinanceFlagEnabled } from './financeFeatureFlags';
+import { ModelVersionHistory } from './ModelVersionHistory';
 
 type ServerOutputLine = {
   lineCode: string;
@@ -24,7 +26,7 @@ type Props = {
 };
 
 export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [selectedVariant, setSelectedVariant] = useState<'base' | 'optimistic' | 'conservative'>(
     'base'
@@ -277,6 +279,14 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
           </table>
         </div>
       </div>
+      {isFinanceFlagEnabled('modelVersioning') && (
+        <div className="border-t border-slate-200/20 p-4">
+          <div className="mb-3 text-sm font-semibold text-slate-200">
+            {t('finance.versions.title', 'Version history')}
+          </div>
+          <ModelVersionHistory modelId={row.id} />
+        </div>
+      )}
     </div>
   );
 };

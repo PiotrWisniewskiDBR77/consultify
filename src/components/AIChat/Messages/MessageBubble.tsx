@@ -148,7 +148,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
       <div
         className={`
         flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center
-        ${isUser ? 'bg-brand/10 text-brand' : 'bg-gradient-to-br from-brand to-brand-dark text-white'}
+        ${isUser ? 'bg-c-surface-raised border border-c-border text-c-text-secondary' : 'bg-c-surface-raised border border-c-border text-c-text-secondary'}
       `}
       >
         {isUser ? <User size={16} /> : <TeresaMark size={16} />}
@@ -170,21 +170,21 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           relative rounded-xl px-4 py-3
           ${
             isUser
-              ? 'bg-brand text-white rounded-tr-sm'
-              : 'bg-slate-100 dark:bg-navy-800 text-slate-800 dark:text-slate-200 rounded-tl-sm'
+              ? 'bg-c-surface-raised border border-c-border text-c-text rounded-tr-sm'
+              : 'bg-c-surface-raised border border-c-border text-c-text rounded-tl-sm'
           }
           ${isStreaming ? 'animate-pulse' : ''}
         `}
         >
           {/* Header for AI messages */}
           {isAI && (
-            <div className="flex items-center gap-2 mb-2 text-xs text-slate-500 dark:text-slate-400">
-              <span className="font-medium text-brand dark:text-brand-light flex items-center gap-1">
+            <div className="flex items-center gap-2 mb-2 text-xs text-c-text-muted">
+              <span className="font-medium text-c-text-secondary flex items-center gap-1">
                 <Sparkles size={12} />
                 {t('chat.aiAssistant', 'AI Assistant')}
               </span>
               {message.focusMode && (
-                <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-navy-700 rounded text-xs">
+                <span className="px-1.5 py-0.5 bg-c-surface border border-c-border rounded text-xs">
                   {message.focusMode}
                 </span>
               )}
@@ -196,7 +196,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           <div
             className={`
             text-sm leading-relaxed
-            ${isUser ? 'text-white' : 'prose prose-sm dark:prose-invert max-w-none'}
+            ${isUser ? 'text-c-text' : 'prose prose-sm dark:prose-invert max-w-none'}
             ${isRtlChatLanguage ? 'text-right' : 'text-left'}
           `}
             dir={textDirection(i18n.language)}
@@ -209,13 +209,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   <span
                     key={`${a.docId || a.filename}-${idx}`}
                     title={a.docId ? `doc: ${a.docId}` : a.filename}
-                    className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs ${
-                      isUser
-                        ? 'bg-white/15 text-white'
-                        : 'bg-white/70 dark:bg-navy-700 text-slate-700 dark:text-slate-200 border border-slate-200/70 dark:border-navy-600'
-                    }`}
+                    className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs bg-c-surface border border-c-border text-c-text-secondary`}
                   >
-                    <FileCode size={12} className={isUser ? 'text-white/80' : ''} />
+                    <FileCode size={12} className="text-c-text-muted" />
                     <span className="max-w-[240px] truncate">{a.filename || 'Attachment'}</span>
                   </span>
                 ))}
@@ -232,7 +228,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     const isInline = !!inline;
                     if (isInline) {
                       return (
-                        <code className="px-1 py-0.5 bg-slate-200 dark:bg-navy-700 rounded text-brand dark:text-brand-light text-xs font-mono">
+                        <code className="px-1 py-0.5 bg-c-surface-raised border border-c-border rounded text-c-text text-xs font-mono">
                           {children}
                         </code>
                       );
@@ -248,7 +244,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                       href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-brand hover:text-brand-dark underline"
+                      className="text-c-accent hover:opacity-80 underline underline-offset-2"
                     >
                       {children}
                     </a>
@@ -271,7 +267,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           {isLongMessage && !isUser && (
             <button
               onClick={() => setShowFullContent(!showFullContent)}
-              className="flex items-center gap-1 mt-2 text-xs text-brand hover:text-brand-dark transition-colors"
+              className="flex items-center gap-1 mt-2 text-xs text-c-accent hover:opacity-80 transition-opacity"
             >
               {showFullContent ? (
                 <>
@@ -290,7 +286,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           {/* Streaming indicator — inline cursor */}
           {isStreaming && isAI && (
             <span className="inline-flex items-center gap-0.5 ml-1 align-baseline">
-              <span className="w-[3px] h-4 bg-brand rounded-sm animate-pulse" />
+              <span className="w-[3px] h-4 bg-current opacity-70 rounded-sm animate-pulse" />
             </span>
           )}
         </div>

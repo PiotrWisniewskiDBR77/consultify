@@ -263,7 +263,7 @@ export const AxisCommentsPanel: React.FC<Props> = ({
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder={`Add a comment about ${axisLabel}...`}
                 rows={2}
-                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                     handleSubmitComment();
@@ -399,7 +399,7 @@ const CommentThread: React.FC<CommentThreadProps> = ({
                   onChange={(e) => onReplyTextChange(e.target.value)}
                   placeholder="Write a reply..."
                   rows={2}
-                  className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-navy-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                       onSubmitReply();

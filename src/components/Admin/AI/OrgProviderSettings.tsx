@@ -191,7 +191,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white">LLM Provider Settings</h3>
+          <h3 className="text-lg font-semibold text-c-text">LLM Provider Settings</h3>
           <p className="text-sm text-slate-600 dark:text-slate-500">
             Enable or disable AI providers for your organization. Only enabled providers will be
             available to users.
@@ -222,7 +222,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
 
       {/* Enabled Providers */}
       <div className="bg-white/5 rounded-xl border border-white/10 p-6">
-        <h4 className="text-white font-medium mb-4 flex items-center gap-2">
+        <h4 className="text-c-text font-medium mb-4 flex items-center gap-2">
           <CheckCircle size={18} className="text-emerald-400" />
           Enabled Providers ({enabledProviders.length})
         </h4>
@@ -237,7 +237,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
                 <div className="flex items-center gap-3">
                   {getHealthIcon(provider.health_status)}
                   <div>
-                    <div className="text-white font-medium">{provider.name}</div>
+                    <div className="text-c-text font-medium">{provider.name}</div>
                     <div className="text-sm text-slate-600 dark:text-slate-500">
                       {provider.provider} • {provider.model_id}
                     </div>
@@ -271,7 +271,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
           onClick={() => setShowDisabled(!showDisabled)}
           className="w-full flex items-center justify-between text-left"
         >
-          <h4 className="text-white font-medium flex items-center gap-2">
+          <h4 className="text-c-text font-medium flex items-center gap-2">
             {showDisabled ? <Eye size={18} /> : <EyeOff size={18} />}
             Disabled Providers ({disabledProviders.length})
           </h4>
@@ -316,7 +316,7 @@ export const OrgProviderSettings: React.FC<OrgProviderSettingsProps> = ({ organi
 
       {/* Available Models Preview */}
       <div className="bg-white/5 rounded-xl border border-white/10 p-6">
-        <h4 className="text-white font-medium mb-4">Available Models per Tier</h4>
+        <h4 className="text-c-text font-medium mb-4">Available Models per Tier</h4>
         <p className="text-sm text-slate-600 dark:text-slate-500 mb-4">
           These are the models currently available to your users based on enabled providers.
         </p>

@@ -28,21 +28,21 @@ export const ImageUrlModal: React.FC<ImageUrlModalProps> = ({ open, onClose, onS
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30"
+      className="fixed inset-0 z-context-menu flex items-center justify-center bg-c-bg"
       onClick={onClose}
     >
       <div
-        className="w-80 rounded-lg border border-slate-200 bg-white p-4 shadow-xl dark:border-navy-700 dark:bg-navy-900"
+        className="w-80 rounded-lg border border-c-border-subtle bg-c-surface-raised p-4 shadow-xl dark:border-c-border dark:bg-c-surface"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+          <div className="flex items-center gap-2 text-sm font-medium text-c-text-secondary dark:text-c-text">
             <Image size={16} />
             {isPl ? 'Dodaj obraz' : 'Add image'}
           </div>
           <button
             onClick={onClose}
-            className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
+            className="text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text-muted"
           >
             <X size={16} />
           </button>
@@ -54,7 +54,7 @@ export const ImageUrlModal: React.FC<ImageUrlModalProps> = ({ open, onClose, onS
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
           placeholder={isPl ? 'URL obrazka...' : 'Image URL...'}
-          className="mb-3 w-full rounded border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-blue-500 dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+          className="mb-3 w-full rounded border border-c-border-subtle px-3 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border dark:bg-c-surface dark:text-c-text"
         />
 
         {url.trim() && (
@@ -62,7 +62,7 @@ export const ImageUrlModal: React.FC<ImageUrlModalProps> = ({ open, onClose, onS
             <img
               src={url}
               alt="preview"
-              className="max-h-24 max-w-full rounded border border-slate-200 object-contain dark:border-navy-700"
+              className="max-h-24 max-w-full rounded border border-c-border-subtle object-contain dark:border-c-border"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = 'none';
               }}
@@ -73,14 +73,14 @@ export const ImageUrlModal: React.FC<ImageUrlModalProps> = ({ open, onClose, onS
         <div className="flex justify-end gap-2">
           <button
             onClick={onClose}
-            className="rounded px-3 py-1 text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="rounded px-3 py-1 text-xs text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface"
           >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
           <button
             onClick={handleSubmit}
             disabled={!url.trim()}
-            className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700 disabled:opacity-40"
+            className="rounded bg-c-info px-3 py-1 text-xs text-c-text hover:bg-c-info disabled:opacity-40"
           >
             {isPl ? 'Dodaj' : 'Add'}
           </button>

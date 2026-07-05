@@ -94,7 +94,13 @@ export function useProcessFlowExport({
         if (format === 'png') {
           const { toPng } = await import('html-to-image');
           if (canvasRef.current) {
-            const dataUrl = await toPng(canvasRef.current, { backgroundColor: '#ffffff' });
+            // Rasterizer needs a concrete color; resolve the canonical app-bg
+            // token so the export matches the active (light/dark) theme.
+            const exportBg =
+              getComputedStyle(document.documentElement)
+                .getPropertyValue('--c-bg')
+                .trim() || '#ffffff';
+            const dataUrl = await toPng(canvasRef.current, { backgroundColor: exportBg });
             const link = document.createElement('a');
             link.download = `process-flow-${processId}.png`;
             link.href = dataUrl;

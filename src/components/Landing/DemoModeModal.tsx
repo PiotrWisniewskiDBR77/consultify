@@ -110,34 +110,34 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          className="fixed inset-0 z-toast flex items-center justify-center p-4"
           onClick={onClose}
         >
-          <div className="absolute inset-0 bg-navy-950/90 backdrop-blur-md" />
+          <div className="absolute inset-0 bg-c-bg/90 backdrop-blur-md" />
 
           <motion.div
             initial={{ opacity: 0, scale: 0.97, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 12 }}
             transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
-            className="relative w-full max-w-sm bg-navy-900 rounded-xl shadow-2xl shadow-black/40 overflow-hidden"
+            className="relative w-full max-w-sm bg-c-surface rounded-xl shadow-2xl shadow-black/40 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="relative px-5 pt-5 pb-3">
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 p-1 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/5 transition-colors"
+                className="absolute top-4 right-4 p-1 rounded-lg text-c-text-muted hover:text-c-text hover:bg-white/5 transition-colors"
               >
                 <X size={16} />
               </button>
 
-              <h2 className="text-lg font-semibold text-slate-100 mb-0.5">
+              <h2 className="text-lg font-semibold text-c-text mb-0.5">
                 {mode === 'demo'
                   ? t('demo.modal.title', 'Experience Consultify Demo')
                   : t('trial.modal.title', 'Start Your 7-Day Trial')}
               </h2>
-              <p className="text-slate-500 text-xs">
+              <p className="text-c-text-muted text-xs">
                 {mode === 'demo'
                   ? t('demo.modal.subtitle', 'Explore the Atelier Toys guided workspace')
                   : t('trial.modal.subtitle', 'Your own workspace, 7 days free')}
@@ -147,7 +147,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
             {/* Content */}
             <div className="px-5 pb-5">
               {/* Tabs */}
-              <div className="flex gap-1 p-1 rounded-lg bg-navy-800/60 mb-4">
+              <div className="flex gap-1 p-1 rounded-lg bg-c-surface-raised mb-4">
                 <button
                   type="button"
                   onClick={() => {
@@ -156,8 +156,8 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                   }}
                   className={`flex-1 flex items-center justify-center py-2 rounded-md text-xs font-medium transition-all duration-200 ${
                     tab === 'signup'
-                      ? 'bg-white/10 text-slate-100 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-300'
+                      ? 'bg-white/10 text-c-text shadow-sm'
+                      : 'text-c-text-muted hover:text-c-text-secondary'
                   }`}
                 >
                   {t('demo.modal.signUp', 'Sign up')}
@@ -170,8 +170,8 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                   }}
                   className={`flex-1 flex items-center justify-center py-2 rounded-md text-xs font-medium transition-all duration-200 ${
                     tab === 'login'
-                      ? 'bg-white/10 text-slate-100 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-300'
+                      ? 'bg-white/10 text-c-text shadow-sm'
+                      : 'text-c-text-muted hover:text-c-text-secondary'
                   }`}
                 >
                   {t('demo.modal.logIn', 'Log in')}
@@ -181,7 +181,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-3 mb-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-medium text-c-text-muted uppercase tracking-wider mb-1">
                     {t('auth.email', 'Email')}
                   </label>
                   <input
@@ -189,17 +189,17 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                     required
                     value={form.email}
                     onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm rounded-lg bg-navy-800/80 border border-white/5 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/30 transition-colors"
+                    className="w-full px-3 py-2 text-sm rounded-lg bg-c-surface-raised border border-white/5 text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-accent/30 transition-colors"
                     placeholder="you@company.com"
                   />
                 </div>
                 {tab === 'signup' && (
                   <>
                     <div>
-                      <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
+                      <label className="block text-xs font-medium text-c-text-muted uppercase tracking-wider mb-1">
                         {t('auth.firstName', 'First name')}
                         {mode === 'demo' && (
-                          <span className="normal-case text-slate-600">
+                          <span className="normal-case text-c-text-muted">
                             {' '}
                             ({t('common.optional', 'optional')})
                           </span>
@@ -209,7 +209,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                         type="text"
                         value={form.firstName}
                         onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
-                        className="w-full px-3 py-2 text-sm rounded-lg bg-navy-800/80 border border-white/5 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/30 transition-colors"
+                        className="w-full px-3 py-2 text-sm rounded-lg bg-c-surface-raised border border-white/5 text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-accent/30 transition-colors"
                         placeholder="Jan"
                         required={mode === 'trial'}
                       />
@@ -217,20 +217,20 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                     {mode === 'trial' && (
                       <>
                         <div>
-                          <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
+                          <label className="block text-xs font-medium text-c-text-muted uppercase tracking-wider mb-1">
                             {t('auth.lastName', 'Last name')}
                           </label>
                           <input
                             type="text"
                             value={form.lastName}
                             onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
-                            className="w-full px-3 py-2 text-sm rounded-lg bg-navy-800/80 border border-white/5 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/30 transition-colors"
+                            className="w-full px-3 py-2 text-sm rounded-lg bg-c-surface-raised border border-white/5 text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-accent/30 transition-colors"
                             placeholder="Kowalski"
                             required
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
+                          <label className="block text-xs font-medium text-c-text-muted uppercase tracking-wider mb-1">
                             {t('auth.companyName', 'Company name')}
                           </label>
                           <input
@@ -239,7 +239,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                             onChange={(e) =>
                               setForm((f) => ({ ...f, companyName: e.target.value }))
                             }
-                            className="w-full px-3 py-2 text-sm rounded-lg bg-navy-800/80 border border-white/5 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/30 transition-colors"
+                            className="w-full px-3 py-2 text-sm rounded-lg bg-c-surface-raised border border-white/5 text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-accent/30 transition-colors"
                             placeholder="My Company"
                           />
                         </div>
@@ -248,7 +248,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                   </>
                 )}
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-medium text-c-text-muted uppercase tracking-wider mb-1">
                     {t('auth.password', 'Password')}
                   </label>
                   <input
@@ -257,15 +257,15 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                     minLength={tab === 'signup' ? 8 : undefined}
                     value={form.password}
                     onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm rounded-lg bg-navy-800/80 border border-white/5 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/30 transition-colors"
+                    className="w-full px-3 py-2 text-sm rounded-lg bg-c-surface-raised border border-white/5 text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-accent/30 transition-colors"
                     placeholder={tab === 'signup' ? 'Min. 8 characters' : '••••••••'}
                   />
                 </div>
-                {error && <p className="text-xs text-danger-400 py-1">{error}</p>}
+                {error && <p className="text-xs text-c-danger py-1">{error}</p>}
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-2.5 px-4 text-sm bg-navy-800/80 border-2 border-primary-500 text-primary-400 hover:bg-primary-500/10 font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-2.5 px-4 text-sm bg-c-surface-raised border-2 border-c-accent text-c-accent hover:bg-c-accent-soft font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <>
@@ -288,13 +288,13 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
               </form>
 
               {/* Info section — minimal, no icons */}
-              <div className="rounded-lg bg-navy-800/40 p-4 mb-4">
+              <div className="rounded-lg bg-c-surface-raised p-4 mb-4">
                 {mode === 'demo' ? (
                   <div>
-                    <h3 className="text-sm font-medium text-slate-200 mb-0.5">
+                    <h3 className="text-sm font-medium text-c-text mb-0.5">
                       {t('demo.modal.demoMode', 'Demo Environment')}
                     </h3>
-                    <p className="text-xs text-slate-500 leading-relaxed">
+                    <p className="text-xs text-c-text-muted leading-relaxed">
                       {t(
                         'demo.modal.demoDescriptionSigned',
                         'Create an account or log in to enter the Atelier Toys demo automatically.'
@@ -303,10 +303,10 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                   </div>
                 ) : (
                   <div>
-                    <h3 className="text-sm font-medium text-slate-200 mb-0.5">
+                    <h3 className="text-sm font-medium text-c-text mb-0.5">
                       {t('trial.modal.ownWorkspace', 'Your Own Workspace')}
                     </h3>
-                    <p className="text-xs text-slate-500 leading-relaxed">
+                    <p className="text-xs text-c-text-muted leading-relaxed">
                       {t(
                         'trial.modal.ownWorkspaceDesc',
                         '7 days with your own organization, projects, and data. Full access to all features.'
@@ -314,7 +314,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                     </p>
                   </div>
                 )}
-                <p className="text-xs text-slate-600 mt-3 pt-3 border-t border-white/5">
+                <p className="text-xs text-c-text-muted mt-3 pt-3 border-t border-white/5">
                   {t(
                     'demo.modal.commercialDescription',
                     'This demo is based on the Atelier Toys story. If you have questions, talk to Anna or contact us directly.'
@@ -326,7 +326,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                 <button
                   type="button"
                   onClick={openAnna}
-                  className="block w-full py-2.5 px-4 text-sm bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition-colors text-center"
+                  className="block w-full py-2.5 px-4 text-sm bg-c-accent hover:bg-c-accent text-white font-medium rounded-lg transition-colors text-center"
                 >
                   {t('demo.modal.askAnna', 'Talk to Anna')}
                 </button>
@@ -334,7 +334,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                 <button
                   type="button"
                   onClick={openContactForm}
-                  className="block w-full py-2.5 px-4 text-sm bg-navy-800/80 border border-white/10 hover:bg-navy-800 text-slate-100 font-medium rounded-lg transition-colors text-center"
+                  className="block w-full py-2.5 px-4 text-sm bg-c-surface-raised border border-white/10 hover:bg-c-surface-raised text-c-text font-medium rounded-lg transition-colors text-center"
                 >
                   {t('demo.modal.contactUs', 'Contact Us')}
                 </button>
@@ -343,14 +343,14 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                   href="https://ateliertoys.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full py-2.5 px-4 text-sm bg-transparent border border-primary-500/40 hover:bg-primary-500/10 text-primary-300 font-medium rounded-lg transition-colors text-center"
+                  className="block w-full py-2.5 px-4 text-sm bg-transparent border border-c-accent hover:bg-c-accent-soft text-c-accent font-medium rounded-lg transition-colors text-center"
                 >
                   {t('demo.modal.atelierLink', 'See the Atelier Toys brand this demo is based on')}
                 </a>
               </div>
 
               {/* Footer Note */}
-              <p className="text-[11px] text-center text-slate-600 mt-3 leading-relaxed">
+              <p className="text-[11px] text-center text-c-text-muted mt-3 leading-relaxed">
                 {t(
                   'demo.modal.footerNote',
                   'By entering the demo, you agree to our Terms of Service and Privacy Policy.'

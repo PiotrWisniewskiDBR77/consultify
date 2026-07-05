@@ -573,11 +573,11 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]"
+      className="fixed inset-0 z-context-menu flex items-stretch justify-end bg-[color-mix(in_srgb,var(--c-text)_20%,transparent)] backdrop-blur-[2px]"
       onClick={onClose}
     >
       <div
-        className="w-[480px] max-w-[90vw] h-full bg-white dark:bg-navy-950 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-200"
+        className="w-[480px] max-w-[90vw] h-full bg-c-surface shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Color accent bar ── */}
@@ -587,7 +587,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
         />
 
         {/* ── Header ── */}
-        <div className="px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60 flex-shrink-0">
+        <div className="px-5 py-4 border-b border-c-border-subtle flex-shrink-0">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1.5">
@@ -595,16 +595,16 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 <div className="relative">
                   <button
                     onClick={() => !locked && setShowColorPicker(!showColorPicker)}
-                    className="w-4 h-4 rounded-full border-2 border-white dark:border-navy-900 shadow-sm flex-shrink-0 transition-transform hover:scale-110"
+                    className="w-4 h-4 rounded-full border-2 border-c-border-subtle shadow-sm flex-shrink-0 transition-transform hover:scale-110"
                     style={{ backgroundColor: accentColor }}
                   />
                   {showColorPicker && (
-                    <div className="absolute left-0 top-6 z-50 p-2 rounded-xl bg-white dark:bg-navy-900 shadow-xl border border-slate-200 dark:border-navy-700 flex flex-wrap gap-1 w-[140px]">
+                    <div className="absolute left-0 top-6 z-overlay p-2 rounded-xl bg-c-surface shadow-xl border border-c-border flex flex-wrap gap-1 w-[140px]">
                       {ROW_ACCENT_COLORS.map((c) => (
                         <button
                           key={c}
                           onClick={() => handleColorChange(c)}
-                          className="w-5 h-5 rounded-full border-2 border-white dark:border-navy-800 hover:scale-110 transition-transform"
+                          className="w-5 h-5 rounded-full border-2 border-c-border-subtle hover:scale-110 transition-transform"
                           style={{ backgroundColor: c }}
                         />
                       ))}
@@ -618,7 +618,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   {node.type || 'idea'}
                 </span>
                 {node.data?.status && (
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 dark:bg-navy-800 px-1.5 py-0.5 rounded">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-c-text-muted bg-c-surface-raised px-1.5 py-0.5 rounded">
                     {String(node.data.status)}
                   </span>
                 )}
@@ -628,7 +628,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 value={String(node.data?.label || '')}
                 onChange={(e) => onFieldChange(node.id, 'label', e.target.value)}
                 disabled={locked}
-                className="w-full text-base font-bold text-slate-800 dark:text-slate-100 bg-transparent border-0 outline-none focus:ring-0 p-0"
+                className="w-full text-base font-bold text-c-text bg-transparent border-0 outline-none focus:ring-0 p-0"
                 placeholder={isPl ? 'Tytuł...' : 'Title...'}
               />
               {/* Icon / emoji */}
@@ -642,8 +642,8 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   disabled={watchLoading}
                   className={`rounded-lg p-1.5 transition ${
                     isWatching
-                      ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
-                      : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
+                      ? 'text-c-accent bg-c-accent-soft'
+                      : 'text-c-text-muted hover:text-c-text-secondary'
                   }`}
                   title={
                     isWatching
@@ -661,17 +661,17 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               {mode === 'preview' && onExpand && (
                 <button
                   onClick={onExpand}
-                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-c-surface-raised transition-colors"
                   title={isPl ? 'Rozwiń' : 'Expand'}
                 >
-                  <Maximize2 size={14} className="text-slate-600" />
+                  <Maximize2 size={14} className="text-c-text-muted" />
                 </button>
               )}
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-c-surface-raised transition-colors"
               >
-                <X size={18} className="text-slate-600" />
+                <X size={18} className="text-c-text-muted" />
               </button>
             </div>
           </div>
@@ -679,7 +679,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
 
         {/* ── Rich body editor (full mode only) ── */}
         {mode === 'full' && (
-          <div className="px-5 py-3 border-b border-slate-200/30 dark:border-white/[0.04] flex-shrink-0">
+          <div className="px-5 py-3 border-b border-c-border-subtle flex-shrink-0">
             <div className="flex items-center gap-1 mb-2">
               {[
                 { Icon: Bold, before: '**', after: '**', titleKey: 'Bold' },
@@ -700,7 +700,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   type="button"
                   onClick={() => insertMarkdown(before, after, placeholder)}
                   disabled={locked}
-                  className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors disabled:opacity-40"
+                  className="p-1.5 rounded-md hover:bg-c-surface-raised text-c-text-muted hover:text-c-text-secondary transition-colors disabled:opacity-40"
                   title={titleKey}
                 >
                   <Icon size={12} />
@@ -710,7 +710,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               <button
                 type="button"
                 onClick={() => setBodyEditMode(bodyEditMode === 'edit' ? 'preview' : 'edit')}
-                className="text-[10px] font-semibold px-2 py-1 rounded-md bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+                className="text-[10px] font-semibold px-2 py-1 rounded-md bg-c-surface-raised text-c-text-muted hover:bg-c-surface-raised transition-colors"
               >
                 {bodyEditMode === 'edit'
                   ? isPl
@@ -734,14 +734,14 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 placeholder={
                   isPl ? 'Notatki, kontekst, szczegóły...' : 'Notes, context, details...'
                 }
-                className="w-full bg-transparent border-0 outline-none text-xs text-slate-700 dark:text-slate-300 placeholder-slate-400/60 resize-none leading-relaxed focus:ring-0"
+                className="w-full bg-transparent border-0 outline-none text-xs text-c-text-secondary placeholder-c-text-muted resize-none leading-relaxed focus:ring-0"
               />
             ) : (
-              <div className="min-h-[120px] max-h-[180px] overflow-auto rounded-lg bg-slate-50/80 dark:bg-navy-900/50 px-3 py-2">
+              <div className="min-h-[120px] max-h-[180px] overflow-auto rounded-lg bg-c-surface-raised px-3 py-2">
                 {React.createElement(ReactMarkdown as any, {
                   remarkPlugins: [remarkGfm],
                   className:
-                    'prose prose-sm dark:prose-invert max-w-none text-xs text-slate-700 dark:text-slate-300',
+                    'prose prose-sm dark:prose-invert max-w-none text-xs text-c-text-secondary',
                   children:
                     node.data?.bodyMarkdown ||
                     node.data?.description ||
@@ -754,7 +754,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
 
         {/* ── Notion-style property strip (hidden in platform full mode — fields live in the Fields tab) ── */}
         {!(isPlatform && mode === 'full') && (
-          <div className="px-5 py-2.5 border-b border-slate-200/30 dark:border-white/[0.04] flex-shrink-0">
+          <div className="px-5 py-2.5 border-b border-c-border-subtle flex-shrink-0">
             <div className="space-y-1.5">
               {columns
                 .filter((col) => col.key !== 'label' && col.key !== 'type' && col.visible)
@@ -762,10 +762,10 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 .map((col) => {
                   return (
                     <div key={col.key} className="flex items-center gap-2 min-h-[28px]">
-                      <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 w-24 flex-shrink-0 truncate">
+                      <span className="text-[10px] font-medium text-c-text-muted w-24 flex-shrink-0 truncate">
                         {col.header}
                       </span>
-                      <div className="flex-1 min-w-0 rounded-md hover:bg-slate-50 dark:hover:bg-white/[0.02] px-1.5 py-0.5 -mx-1.5 transition-colors">
+                      <div className="flex-1 min-w-0 rounded-md hover:bg-c-surface-raised px-1.5 py-0.5 -mx-1.5 transition-colors">
                         <CellRenderer
                           column={col}
                           value={node.data?.[col.key]}
@@ -784,10 +784,10 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
 
         {/* ── Sub-items (full mode only) ── */}
         {mode === 'full' && (childNodes.length > 0 || !locked) && (
-          <div className="px-5 py-2 border-b border-slate-200/30 dark:border-white/[0.04] flex-shrink-0">
+          <div className="px-5 py-2 border-b border-c-border-subtle flex-shrink-0">
             <button
               onClick={() => setSubItemsExpanded(!subItemsExpanded)}
-              className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1"
+              className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-c-text-muted mb-1"
             >
               {subItemsExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
               {isPl ? 'Podelementy' : 'Sub-items'} ({childNodes.length})
@@ -798,24 +798,24 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   <button
                     key={child.id}
                     onClick={() => onNodeClick?.(child.id)}
-                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left hover:bg-c-surface-raised transition-colors"
                   >
                     <div
                       className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                       style={{ backgroundColor: child.data?.color || accentColor }}
                     />
-                    <span className="text-[11px] text-slate-700 dark:text-slate-300 truncate flex-1">
+                    <span className="text-[11px] text-c-text-secondary truncate flex-1">
                       {child.data?.label || child.id}
                     </span>
                     {child.data?.status && (
-                      <span className="text-[9px] text-slate-600">{String(child.data.status)}</span>
+                      <span className="text-[9px] text-c-text-muted">{String(child.data.status)}</span>
                     )}
                   </button>
                 ))}
                 {!locked && (
                   <button
                     onClick={() => onAddSubItem?.(node.id)}
-                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[10px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
+                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[10px] font-semibold text-c-accent hover:bg-c-accent-soft transition-colors"
                   >
                     <Plus size={10} />
                     {isPl ? 'Dodaj podelement' : 'Add sub-item'}
@@ -844,7 +844,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 ? (rawStatus as ValidationStatus)
                 : 'unverified';
             return (
-              <div className="px-5 py-2 border-b border-slate-200/30 dark:border-white/[0.04] flex-shrink-0">
+              <div className="px-5 py-2 border-b border-c-border-subtle flex-shrink-0">
                 <ProvenanceCell
                   recordId={node.id}
                   confidenceScore={Number.isFinite(confidence) ? confidence : null}
@@ -859,7 +859,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
 
         {/* ── Tabs (full mode): platform = HIG pill strip ── */}
         {mode === 'full' && isPlatform && (
-          <div className="flex items-center gap-1.5 px-5 py-2 border-b border-slate-200/30 dark:border-white/[0.04] flex-shrink-0 overflow-x-auto">
+          <div className="flex items-center gap-1.5 px-5 py-2 border-b border-c-border-subtle flex-shrink-0 overflow-x-auto">
             {(
               [
                 { id: 'fields' as const, labelEn: 'Fields', labelPl: 'Pola', Icon: FileText },
@@ -895,8 +895,8 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   onClick={() => setPlatformSheetTab(tab.id)}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
                     isActive
-                      ? 'bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-navy-950'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
+                      ? 'bg-c-accent text-white shadow-sm'
+                      : 'text-c-text-muted hover:bg-c-surface-raised'
                   }`}
                 >
                   <Icon size={12} className="opacity-90" />
@@ -905,8 +905,8 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     <span
                       className={`min-w-[1.1rem] px-1 py-0 text-[9px] font-bold rounded-full tabular-nums ${
                         isActive
-                          ? 'bg-white/20 text-white dark:bg-navy-900/25 dark:text-navy-900'
-                          : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+                          ? 'bg-[color-mix(in_srgb,white_25%,transparent)] text-white'
+                          : 'bg-c-surface-raised text-c-text-muted'
                       }`}
                     >
                       {tab.count}
@@ -918,7 +918,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
           </div>
         )}
         {mode === 'full' && !isPlatform && (
-          <div className="flex items-center gap-0.5 px-5 py-1.5 border-b border-slate-200/30 dark:border-white/[0.04] flex-shrink-0 overflow-x-auto">
+          <div className="flex items-center gap-0.5 px-5 py-1.5 border-b border-c-border-subtle flex-shrink-0 overflow-x-auto">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -928,14 +928,14 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   onClick={() => setActiveTab(tab.id)}
                   className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold whitespace-nowrap transition-colors ${
                     isActive
-                      ? 'bg-slate-100 dark:bg-navy-800 text-slate-800 dark:text-slate-200'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                      ? 'bg-c-surface-raised text-c-text'
+                      : 'text-c-text-muted hover:text-c-text-secondary'
                   }`}
                 >
                   <Icon size={11} />
                   {isPl ? tab.labelPl : tab.labelEn}
                   {tab.count != null && tab.count > 0 && (
-                    <span className="ml-0.5 text-[8px] bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 px-1 py-0 rounded-full">
+                    <span className="ml-0.5 text-[8px] bg-c-surface-raised text-c-text-muted px-1 py-0 rounded-full">
                       {tab.count}
                     </span>
                   )}
@@ -954,10 +954,10 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               <div className="space-y-3">
                 {columns.map((col) => (
                   <div key={col.key}>
-                    <label className="block text-[10px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                    <label className="block text-[10px] font-semibold text-c-text-muted mb-1">
                       {col.header}
                     </label>
-                    <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.06] px-2.5 py-2">
+                    <div className="rounded-xl border border-c-border-subtle px-2.5 py-2">
                       <CellRenderer
                         column={col}
                         value={node.data?.[col.key]}
@@ -971,8 +971,8 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 ))}
 
                 {/* Connections */}
-                <div className="pt-3 border-t border-slate-200/30 dark:border-white/[0.04]">
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                <div className="pt-3 border-t border-c-border-subtle">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-c-text-muted mb-2">
                     <GitBranch size={10} className="inline mr-1" />
                     {isPl ? 'Powiązane elementy' : 'Related items'} ({relatedNodes.length})
                   </label>
@@ -981,16 +981,16 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                       <button
                         key={rn.id}
                         onClick={() => onNodeClick?.(rn.id)}
-                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl bg-slate-50/80 dark:bg-navy-900/50 hover:bg-slate-100 dark:hover:bg-navy-800 text-left transition-colors"
+                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl bg-c-surface-raised hover:bg-c-surface-raised text-left transition-colors"
                       >
                         <div
                           className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: rn.data?.color || '#6366f1' }}
+                          style={{ backgroundColor: rn.data?.color || 'var(--c-tag-2)' }}
                         />
-                        <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate flex-1">
+                        <span className="text-[11px] font-medium text-c-text-secondary truncate flex-1">
                           {rn.data?.label || rn.id}
                         </span>
-                        <ArrowRight size={10} className="text-slate-600" />
+                        <ArrowRight size={10} className="text-c-text-muted" />
                       </button>
                     ))}
                   </div>
@@ -998,21 +998,21 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     <div ref={relationDropdownRef} className="relative mt-2">
                       <button
                         onClick={() => setRelationDropdownOpen(!relationDropdownOpen)}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-c-accent bg-c-accent-soft hover:bg-[color-mix(in_srgb,var(--c-accent)_20%,transparent)] transition-colors"
                       >
                         <Plus size={12} />
                         {isPl ? 'Dodaj powiązanie' : 'Add relation'}
                       </button>
                       {relationDropdownOpen && (
-                        <div className="absolute left-0 top-full mt-1 z-50 w-64 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-xl overflow-hidden">
-                          <div className="p-2 border-b border-slate-200/60 dark:border-navy-700/60">
-                            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800">
-                              <Search size={12} className="text-slate-600 flex-shrink-0" />
+                        <div className="absolute left-0 top-full mt-1 z-overlay w-64 rounded-xl border border-c-border bg-c-surface shadow-xl overflow-hidden">
+                          <div className="p-2 border-b border-c-border-subtle">
+                            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-c-surface-raised">
+                              <Search size={12} className="text-c-text-muted flex-shrink-0" />
                               <input
                                 value={relationSearch}
                                 onChange={(e) => setRelationSearch(e.target.value)}
                                 placeholder={isPl ? 'Szukaj...' : 'Search...'}
-                                className="flex-1 bg-transparent text-xs text-slate-700 dark:text-slate-300 outline-none placeholder-slate-400"
+                                className="flex-1 bg-transparent text-xs text-c-text-secondary outline-none placeholder-c-text-muted"
                               />
                             </div>
                           </div>
@@ -1039,19 +1039,19 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                                   setRelationDropdownOpen(false);
                                   setRelationSearch('');
                                 }}
-                                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-[11px] transition-colors"
+                                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left hover:bg-c-surface-raised text-[11px] transition-colors"
                               >
                                 <div
                                   className="w-2 h-2 rounded-full flex-shrink-0"
-                                  style={{ backgroundColor: n.data?.color || '#6366f1' }}
+                                  style={{ backgroundColor: n.data?.color || 'var(--c-tag-2)' }}
                                 />
-                                <span className="text-slate-700 dark:text-slate-300 truncate flex-1">
+                                <span className="text-c-text-secondary truncate flex-1">
                                   {n.data?.label || n.id}
                                 </span>
                               </button>
                             ))}
                             {relationCandidates.length === 0 && (
-                              <p className="px-3 py-4 text-[11px] text-slate-600 text-center">
+                              <p className="px-3 py-4 text-[11px] text-c-text-muted text-center">
                                 {isPl ? 'Brak pasujących elementów' : 'No matching items'}
                               </p>
                             )}
@@ -1069,24 +1069,24 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               (!isPlatform && activeTab === 'comments')) && (
               <div className="space-y-3">
                 {comments.length === 0 && (
-                  <p className="text-[11px] text-slate-600 text-center py-6">
+                  <p className="text-[11px] text-c-text-muted text-center py-6">
                     {isPl ? 'Brak komentarzy' : 'No comments yet'}
                   </p>
                 )}
                 {comments.map((cmt) => (
-                  <div key={cmt.id} className="rounded-xl bg-slate-50/80 dark:bg-navy-900/50 p-3">
+                  <div key={cmt.id} className="rounded-xl bg-c-surface-raised p-3">
                     <div className="flex items-center gap-2 mb-1.5">
-                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary-400 to-crimson-500 flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
+                      <div className="w-5 h-5 rounded-full bg-c-accent flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
                         {cmt.author.charAt(0).toUpperCase()}
                       </div>
-                      <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                      <span className="text-[10px] font-bold text-c-text-secondary">
                         {cmt.author}
                       </span>
-                      <span className="text-[9px] text-slate-600 ml-auto">
+                      <span className="text-[9px] text-c-text-muted ml-auto">
                         {formatTime(cmt.createdAt)}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed pl-7">
+                    <p className="text-[11px] text-c-text-muted leading-relaxed pl-7">
                       {cmt.text}
                     </p>
                   </div>
@@ -1094,12 +1094,12 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 {!locked && (
                   <div ref={commentComposerRef} className="relative flex items-end gap-2 pt-2">
                     {mentionQuery !== null && mentionSuggestions.length > 0 && (
-                      <div className="absolute bottom-full left-0 mb-1 w-64 rounded-xl border border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900 shadow-lg max-h-40 overflow-y-auto z-50">
+                      <div className="absolute bottom-full left-0 mb-1 w-64 rounded-xl border border-c-border bg-c-surface shadow-lg max-h-40 overflow-y-auto z-overlay">
                         {mentionSuggestions.map((user) => (
                           <button
                             key={user.id}
                             type="button"
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-800 flex items-center gap-2"
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-c-surface-raised flex items-center gap-2"
                             onClick={() => {
                               const ta = commentTextareaRef.current;
                               const text = newComment || '';
@@ -1120,10 +1120,10 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                               });
                             }}
                           >
-                            <div className="h-6 w-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-medium text-primary-700 dark:text-primary-300">
+                            <div className="h-6 w-6 rounded-full bg-c-accent-soft flex items-center justify-center text-xs font-medium text-c-accent">
                               {user.name.charAt(0).toUpperCase()}
                             </div>
-                            <span className="text-slate-700 dark:text-slate-200">{user.name}</span>
+                            <span className="text-c-text-secondary">{user.name}</span>
                           </button>
                         ))}
                       </div>
@@ -1149,13 +1149,13 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                           ? 'Dodaj komentarz... (@ aby wspomnieć)'
                           : 'Add a comment... (@ to mention)'
                       }
-                      className="flex-1 min-h-[40px] rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500/30 resize-y"
+                      className="flex-1 min-h-[40px] rounded-xl border border-c-border bg-c-surface px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-c-focus resize-y"
                     />
                     <button
                       type="button"
                       onClick={() => void handleAddComment()}
                       disabled={!newComment.trim()}
-                      className="p-2 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 disabled:opacity-40 transition-colors flex-shrink-0"
+                      className="p-2 rounded-xl bg-c-accent-soft text-c-accent hover:bg-[color-mix(in_srgb,var(--c-accent)_20%,transparent)] disabled:opacity-40 transition-colors flex-shrink-0"
                     >
                       <Send size={14} />
                     </button>
@@ -1169,7 +1169,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               <div className="space-y-2">
                 {/* Linked Artifacts (from artifact linking API) */}
                 <div className="mb-3">
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-c-text-muted mb-2">
                     <Link2 size={10} className="inline mr-1" />
                     {isPl ? 'Powiązane artefakty' : 'Linked artifacts'} (
                     {Array.isArray(node.data?.artifactLinks) ? node.data.artifactLinks.length : 0})
@@ -1194,20 +1194,20 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                                   );
                                 }
                               }}
-                              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-blue-50/80 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-left"
+                              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--c-info)_16%,transparent)] transition-colors text-left"
                             >
-                              <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                                <Paperclip size={14} className="text-blue-500" />
+                              <div className="w-8 h-8 rounded-lg bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)] flex items-center justify-center flex-shrink-0">
+                                <Paperclip size={14} className="text-c-info" />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <span className="text-[11px] font-medium text-blue-600 dark:text-blue-400 truncate block">
+                                <span className="text-[11px] font-medium text-c-info truncate block">
                                   {artLabel}
                                 </span>
-                                <span className="text-[9px] text-slate-600 uppercase">
+                                <span className="text-[9px] text-c-text-muted uppercase">
                                   {artType}
                                 </span>
                               </div>
-                              <ArrowRight size={10} className="text-blue-400 flex-shrink-0" />
+                              <ArrowRight size={10} className="text-c-info flex-shrink-0" />
                             </button>
                           );
                         })}
@@ -1217,21 +1217,21 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     <div ref={artifactDropdownRef} className="relative mt-2">
                       <button
                         onClick={() => setArtifactDropdownOpen(!artifactDropdownOpen)}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-c-accent bg-c-accent-soft hover:bg-[color-mix(in_srgb,var(--c-accent)_20%,transparent)] transition-colors"
                       >
                         <Paperclip size={12} />
                         {isPl ? 'Dołącz artefakt' : 'Attach artifact'}
                       </button>
                       {artifactDropdownOpen && (
-                        <div className="absolute left-0 top-full mt-1 z-50 w-64 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-xl overflow-hidden">
-                          <div className="p-2 border-b border-slate-200/60 dark:border-navy-700/60">
-                            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800">
-                              <Search size={12} className="text-slate-600 flex-shrink-0" />
+                        <div className="absolute left-0 top-full mt-1 z-overlay w-64 rounded-xl border border-c-border bg-c-surface shadow-xl overflow-hidden">
+                          <div className="p-2 border-b border-c-border-subtle">
+                            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-c-surface-raised">
+                              <Search size={12} className="text-c-text-muted flex-shrink-0" />
                               <input
                                 value={artifactSearch}
                                 onChange={(e) => setArtifactSearch(e.target.value)}
                                 placeholder={isPl ? 'Szukaj artefaktów...' : 'Search artifacts...'}
-                                className="flex-1 bg-transparent text-xs text-slate-700 dark:text-slate-300 outline-none placeholder-slate-400"
+                                className="flex-1 bg-transparent text-xs text-c-text-secondary outline-none placeholder-c-text-muted"
                               />
                             </div>
                           </div>
@@ -1261,9 +1261,9 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                                     setArtifactDropdownOpen(false);
                                     setArtifactSearch('');
                                   }}
-                                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-[11px] text-slate-700 dark:text-slate-300 transition-colors"
+                                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left hover:bg-c-surface-raised text-[11px] text-c-text-secondary transition-colors"
                                 >
-                                  <StickyNote size={12} className="text-slate-600 flex-shrink-0" />
+                                  <StickyNote size={12} className="text-c-text-muted flex-shrink-0" />
                                   <span className="truncate">{n.data?.label || n.id}</span>
                                 </button>
                               ))}
@@ -1273,7 +1273,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                               if (!q) return true;
                               return (n.data?.label || n.id).toLowerCase().includes(q);
                             }).length === 0 && (
-                              <p className="text-center text-[10px] text-slate-600 py-3">
+                              <p className="text-center text-[10px] text-c-text-muted py-3">
                                 {isPl ? 'Brak wyników' : 'No results'}
                               </p>
                             )}
@@ -1288,22 +1288,22 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   !(
                     Array.isArray(node.data?.artifactLinks) && node.data.artifactLinks.length > 0
                   ) && (
-                    <p className="text-[11px] text-slate-600 text-center py-6">
+                    <p className="text-[11px] text-c-text-muted text-center py-6">
                       {isPl ? 'Brak załączników' : 'No attachments'}
                     </p>
                   )}
                 {attachments.map((att) => (
                   <div
                     key={att.id}
-                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-900/50"
+                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-c-surface-raised"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-slate-200/60 dark:bg-navy-800 flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-c-surface-raised flex items-center justify-center flex-shrink-0">
                       {att.type === 'image' ? (
-                        <Image size={14} className="text-slate-500" />
+                        <Image size={14} className="text-c-text-muted" />
                       ) : att.type === 'link' ? (
-                        <Link2 size={14} className="text-blue-500" />
+                        <Link2 size={14} className="text-c-info" />
                       ) : (
-                        <FileText size={14} className="text-slate-500" />
+                        <FileText size={14} className="text-c-text-muted" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -1312,21 +1312,21 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                           href={att.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:underline truncate block"
+                          className="text-[11px] font-medium text-c-info hover:underline truncate block"
                         >
                           {att.name}
                         </a>
                       ) : (
-                        <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate block">
+                        <span className="text-[11px] font-medium text-c-text-secondary truncate block">
                           {att.name}
                         </span>
                       )}
-                      <span className="text-[9px] text-slate-600">{formatTime(att.createdAt)}</span>
+                      <span className="text-[9px] text-c-text-muted">{formatTime(att.createdAt)}</span>
                     </div>
                     {!locked && (
                       <button
                         onClick={() => handleRemoveAttachment(att.id)}
-                        className="p-1 rounded text-slate-600 hover:text-danger-500 transition-colors"
+                        className="p-1 rounded text-c-text-muted hover:text-danger-500 transition-colors"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -1337,7 +1337,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   <div className="flex items-center gap-2 pt-2">
                     <button
                       onClick={handleAddAttachmentLink}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-c-accent bg-c-accent-soft hover:bg-[color-mix(in_srgb,var(--c-accent)_20%,transparent)] transition-colors"
                     >
                       <Link2 size={12} />
                       {isPl ? 'Dodaj link' : 'Add link'}
@@ -1352,15 +1352,15 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
               (!isPlatform && activeTab === 'activity')) && (
               <div className="space-y-2">
                 {activities.length === 0 && (
-                  <p className="text-[11px] text-slate-600 text-center py-6">
+                  <p className="text-[11px] text-c-text-muted text-center py-6">
                     {isPl ? 'Brak aktywności' : 'No activity'}
                   </p>
                 )}
                 {[...activities].reverse().map((act) => (
                   <div key={act.id} className="flex items-start gap-2.5 py-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 flex-shrink-0" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-c-border-strong mt-1.5 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <span className="text-[11px] text-slate-700 dark:text-slate-300">
+                      <span className="text-[11px] text-c-text-secondary">
                         <strong>{act.author}</strong>{' '}
                         {act.action === 'comment'
                           ? isPl
@@ -1387,11 +1387,11 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                                     : 'created'}
                       </span>
                       {act.newValue && act.action === 'comment' && (
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                        <p className="text-[10px] text-c-text-muted mt-0.5 truncate">
                           &ldquo;{act.newValue}&rdquo;
                         </p>
                       )}
-                      <span className="text-[9px] text-slate-600 block mt-0.5">
+                      <span className="text-[9px] text-c-text-muted block mt-0.5">
                         {formatTime(act.createdAt)}
                       </span>
                     </div>
@@ -1404,15 +1404,15 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
             {isPlatform && platformSheetTab === 'audit' && (
               <div className="space-y-2">
                 {auditActivities.length === 0 && (
-                  <p className="text-[11px] text-slate-600 text-center py-6">
+                  <p className="text-[11px] text-c-text-muted text-center py-6">
                     {isPl ? 'Brak wpisów audytu' : 'No audit entries'}
                   </p>
                 )}
                 {[...auditActivities].reverse().map((act) => (
                   <div key={act.id} className="flex items-start gap-2.5 py-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500/80 mt-1.5 flex-shrink-0" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-c-warning mt-1.5 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <span className="text-[11px] text-slate-700 dark:text-slate-300">
+                      <span className="text-[11px] text-c-text-secondary">
                         <strong>{act.author}</strong>{' '}
                         {act.action === 'edited'
                           ? isPl
@@ -1428,7 +1428,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                                 : 'created record'
                               : String(act.action)}
                       </span>
-                      <span className="text-[9px] text-slate-600 block mt-0.5">
+                      <span className="text-[9px] text-c-text-muted block mt-0.5">
                         {formatTime(act.createdAt)}
                       </span>
                     </div>
@@ -1443,7 +1443,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 <button
                   onClick={handleGenerateAI}
                   disabled={aiLoading}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-primary-500/10 to-crimson-500/10 text-primary-600 dark:text-primary-400 text-xs font-bold hover:from-primary-500/20 hover:to-crimson-500/20 transition-colors disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-c-accent-soft to-[color-mix(in_srgb,var(--c-accent)_10%,transparent)] text-c-accent text-xs font-bold hover:from-[color-mix(in_srgb,var(--c-accent)_20%,transparent)] hover:to-[color-mix(in_srgb,var(--c-accent)_20%,transparent)] transition-colors disabled:opacity-50"
                 >
                   {aiLoading ? (
                     <Loader2 size={14} className="animate-spin" />
@@ -1463,11 +1463,11 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     {aiInsights.map((insight, idx) => (
                       <div
                         key={idx}
-                        className="rounded-xl border border-primary-500/20 bg-primary-500/5 p-3"
+                        className="rounded-xl border border-c-accent bg-[color-mix(in_srgb,var(--c-accent)_5%,transparent)] p-3"
                       >
                         <div className="flex items-start gap-2">
-                          <Sparkles size={12} className="text-primary-500 mt-0.5 flex-shrink-0" />
-                          <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed">
+                          <Sparkles size={12} className="text-c-accent mt-0.5 flex-shrink-0" />
+                          <p className="text-[11px] text-c-text-secondary leading-relaxed">
                             {insight}
                           </p>
                         </div>
@@ -1476,7 +1476,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   </div>
                 )}
                 {aiInsights.length === 0 && !aiLoading && (
-                  <p className="text-[11px] text-slate-600 text-center py-4">
+                  <p className="text-[11px] text-c-text-muted text-center py-4">
                     {isPl
                       ? 'Kliknij aby wygenerować insights oparte na kontekście firmy'
                       : 'Click to generate insights based on company context'}
@@ -1495,7 +1495,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   width={460}
                   height={300}
                 />
-                <p className="text-[9px] text-slate-600 mt-2 text-center">
+                <p className="text-[9px] text-c-text-muted mt-2 text-center">
                   {isPl
                     ? 'Rysuj, dodawaj kształty i strzałki do tego pomysłu'
                     : 'Draw, add shapes and arrows to this idea'}
@@ -1505,13 +1505,13 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
 
             {/* Related Records — linkedRecord (platform) or relation columns */}
             {linkedColumnKeys.length > 0 && (
-              <div className="mt-6 pt-4 border-t border-slate-200/30 dark:border-white/[0.04]">
-                <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+              <div className="mt-6 pt-4 border-t border-c-border-subtle">
+                <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-c-text-muted mb-2">
                   <Link2 size={10} />
                   {isPl ? 'Powiązane rekordy' : 'Related Records'}
                 </label>
                 {relatedRecordChips.length === 0 ? (
-                  <p className="text-[11px] text-slate-600 py-1">
+                  <p className="text-[11px] text-c-text-muted py-1">
                     {isPl ? 'Brak powiązanych rekordów' : 'No linked records'}
                   </p>
                 ) : (
@@ -1521,7 +1521,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                         key={chip.id}
                         type="button"
                         onClick={() => onNodeClick?.(chip.id)}
-                        className="inline-flex items-center gap-1 max-w-full px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-navy-800/90 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-navy-600/60 hover:bg-primary-500/10 hover:border-primary-300/50 dark:hover:border-primary-500/30 hover:text-primary-800 dark:hover:text-primary-200 transition-colors truncate"
+                        className="inline-flex items-center gap-1 max-w-full px-2.5 py-1 rounded-full text-[11px] font-medium bg-c-surface-raised text-c-text-secondary border border-c-border-subtle hover:bg-c-accent-soft hover:border-c-accent hover:text-c-accent transition-colors truncate"
                       >
                         <span className="truncate">{chip.label}</span>
                       </button>
@@ -1538,7 +1538,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
           <div className="flex-1 flex items-center justify-center">
             <button
               onClick={onExpand}
-              className="text-[11px] text-slate-600 hover:text-primary-500 transition-colors"
+              className="text-[11px] text-c-text-muted hover:text-c-accent transition-colors"
             >
               {isPl
                 ? 'Kliknij dwukrotnie lub rozwiń, aby zobaczyć pełne szczegóły'
@@ -1549,28 +1549,28 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
 
         {/* ── Trust signals ── */}
         {node && (node.data?.sourceType || node.data?.convertedTo || node.data?.aiGenerated) && (
-          <div className="px-5 py-2 border-t border-slate-200/30 dark:border-white/[0.04] flex-shrink-0">
+          <div className="px-5 py-2 border-t border-c-border-subtle flex-shrink-0">
             <div className="flex flex-wrap gap-1.5">
               {node.data?.aiGenerated && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-bold bg-primary-100 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-bold bg-c-accent-soft text-c-accent">
                   <Sparkles size={8} />
                   {isPl ? 'Wygenerowane AI' : 'AI Generated'}
                 </span>
               )}
               {node.data?.sourceType && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-bold bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-bold bg-[color-mix(in_srgb,var(--c-info)_16%,transparent)] text-c-info">
                   <Link2 size={8} />
                   {isPl ? 'Źródło' : 'Source'}: {node.data.sourceType}
                 </span>
               )}
               {node.data?.convertedTo && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-bold bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-bold bg-[color-mix(in_srgb,var(--c-success)_16%,transparent)] text-c-success">
                   <ArrowRight size={8} />
                   {isPl ? 'Skonwertowano do' : 'Converted to'}: {node.data.convertedTo}
                 </span>
               )}
               {node.data?.needsReview && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-bold bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-bold bg-[color-mix(in_srgb,var(--c-warning)_16%,transparent)] text-c-warning">
                   {isPl ? 'Do przeglądu' : 'Pending review'}
                 </span>
               )}
@@ -1580,9 +1580,9 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
 
         {/* ── Footer ── */}
         {!locked && onConvert && (
-          <div className="px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60 flex-shrink-0">
+          <div className="px-5 py-3 border-t border-c-border-subtle flex-shrink-0">
             <div className="flex items-center gap-1.5">
-              <Rocket size={11} className="text-slate-600 mr-1" />
+              <Rocket size={11} className="text-c-text-muted mr-1" />
               {(['initiative', 'task', 'decision'] as const).map((target) => (
                 <button
                   key={target}
@@ -1590,7 +1590,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     onFieldChange(node.id, 'convertedTo', target);
                     onConvert(target);
                   }}
-                  className="flex-1 px-2 py-1.5 rounded-xl text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+                  className="flex-1 px-2 py-1.5 rounded-xl text-[10px] font-semibold text-c-text-muted bg-c-surface-raised hover:bg-c-surface-raised transition-colors"
                 >
                   {target === 'initiative'
                     ? isPl

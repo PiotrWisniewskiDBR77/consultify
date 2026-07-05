@@ -43,16 +43,16 @@ const AccountManagementSettings: React.FC<{ className?: string }> = ({ className
   return (
     <div className={`space-y-8 ${className}`}>
       {/* Export Data */}
-      <div className="p-6 border border-slate-200 dark:border-navy-700 rounded-xl">
+      <div className="p-6 border border-c-border-subtle dark:border-navy-700 rounded-xl">
         <div className="flex items-start gap-4">
           <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
             <Download className="text-blue-600 dark:text-blue-400" size={24} />
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-medium text-slate-900 dark:text-white">
+            <h3 className="text-lg font-medium text-c-text">
               {t('settings.account.exportTitle', 'Export Your Data')}
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-c-text-muted mt-1">
               {t(
                 'settings.account.exportDesc',
                 'Download a copy of all your data including projects, assessments, and settings.'
@@ -73,16 +73,16 @@ const AccountManagementSettings: React.FC<{ className?: string }> = ({ className
       </div>
 
       {/* Delete Account */}
-      <div className="p-6 border border-danger-200 dark:border-danger-900/50 bg-danger-50/50 dark:bg-danger-900/10 rounded-xl">
+      <div className="p-6 border border-rose-200 dark:border-rose-900/50 bg-rose-50/50 dark:bg-rose-900/10 rounded-xl">
         <div className="flex items-start gap-4">
-          <div className="p-3 bg-danger-100 dark:bg-danger-900/30 rounded-lg">
-            <Trash2 className="text-danger-600 dark:text-danger-400" size={24} />
+          <div className="p-3 bg-rose-100 dark:bg-rose-900/30 rounded-lg">
+            <Trash2 className="text-rose-600 dark:text-rose-400" size={24} />
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-medium text-danger-900 dark:text-danger-400">
+            <h3 className="text-lg font-medium text-rose-900 dark:text-rose-400">
               {t('settings.account.deleteTitle', 'Delete Account')}
             </h3>
-            <p className="text-sm text-danger-700 dark:text-danger-300/70 mt-1">
+            <p className="text-sm text-rose-700 dark:text-rose-300/70 mt-1">
               {t(
                 'settings.account.deleteDesc',
                 'Permanently delete your account and all associated data. This action cannot be undone.'
@@ -92,20 +92,20 @@ const AccountManagementSettings: React.FC<{ className?: string }> = ({ className
             {!showDeleteConfirm ? (
               <button
                 onClick={() => setShowDeleteConfirm(true)}
-                className="mt-4 flex items-center gap-2 px-4 py-2 bg-danger-600 text-white rounded-lg hover:bg-danger-700 transition-colors"
+                className="mt-4 flex items-center gap-2 px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors"
               >
                 <Trash2 size={16} />
                 {t('settings.account.delete', 'Delete Account')}
               </button>
             ) : (
-              <div className="mt-4 p-4 bg-white dark:bg-navy-800 rounded-lg border border-danger-200 dark:border-danger-800">
-                <div className="flex items-center gap-2 text-danger-600 mb-3">
+              <div className="mt-4 p-4 bg-c-surface rounded-lg border border-rose-200 dark:border-rose-800">
+                <div className="flex items-center gap-2 text-rose-600 mb-3">
                   <AlertTriangle size={18} />
                   <span className="font-medium">
                     {t('settings.account.confirmTitle', 'Are you sure?')}
                   </span>
                 </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                <p className="text-sm text-c-text-secondary mb-3">
                   {t('settings.account.confirmDesc', 'Type DELETE to confirm account deletion:')}
                 </p>
                 <input
@@ -113,13 +113,13 @@ const AccountManagementSettings: React.FC<{ className?: string }> = ({ className
                   value={deleteConfirmText}
                   onChange={(e) => setDeleteConfirmText(e.target.value)}
                   placeholder="DELETE"
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg mb-3"
+                  className="w-full px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg mb-3"
                 />
                 <div className="flex gap-2">
                   <button
                     onClick={handleDeleteAccount}
                     disabled={deleteConfirmText !== 'DELETE'}
-                    className="px-4 py-2 bg-danger-600 text-white rounded-lg hover:bg-danger-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {t('settings.account.confirmDelete', 'Confirm Delete')}
                   </button>
@@ -128,7 +128,7 @@ const AccountManagementSettings: React.FC<{ className?: string }> = ({ className
                       setShowDeleteConfirm(false);
                       setDeleteConfirmText('');
                     }}
-                    className="px-4 py-2 border border-slate-300 dark:border-navy-600 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700"
+                    className="px-4 py-2 border border-c-border dark:border-navy-600 rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700"
                   >
                     {t('common.cancel', 'Cancel')}
                   </button>

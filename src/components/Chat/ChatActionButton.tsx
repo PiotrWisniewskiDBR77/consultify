@@ -78,11 +78,11 @@ export const ChatActionButton: React.FC<ChatActionButtonProps> = ({
   if (error) {
     return (
       <div className="inline-flex flex-col gap-1">
-        <span className="text-xs text-danger-600 dark:text-danger-400">{error}</span>
+        <span className="text-xs text-c-danger">{error}</span>
         <button
           type="button"
           onClick={handleClick}
-          className="inline-flex h-9 items-center gap-2 rounded-lg border border-danger-200 dark:border-danger-800 bg-danger-50/50 dark:bg-danger-900/20 px-3 text-xs font-medium text-danger-700 dark:text-danger-300 hover:bg-danger-100 dark:hover:bg-danger-900/30 transition-colors"
+          className="inline-flex h-9 items-center gap-2 rounded-lg border border-c-danger/40 bg-c-danger/10 px-3 text-xs font-medium text-c-danger hover:bg-c-danger/15 transition-colors"
         >
           {t('chat.navigate.retry', 'Try again')}
         </button>

@@ -52,7 +52,7 @@ const StepIcon: React.FC<{ status: 'done' | 'active' | 'failed' | 'pending'; siz
     case 'done':
       return <CheckCircle2 size={size} className="text-emerald-400" />;
     case 'active':
-      return <Loader2 size={size} className="text-primary-400 animate-spin" />;
+      return <Loader2 size={size} className="text-c-info animate-spin" />;
     case 'failed':
       return <XCircle size={size} className="text-danger-400" />;
     case 'pending':
@@ -96,7 +96,7 @@ export const FinanceLaneStrip: React.FC<FinanceLaneStripProps> = ({
         return (
           <button
             key={step}
-            className="h-8 inline-flex items-center gap-1 rounded-full px-2 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06] hover:bg-white/80 dark:hover:bg-white/[0.04] transition-colors"
+            className="h-8 inline-flex items-center gap-1 rounded-full px-2 text-[11px] font-medium border whitespace-nowrap bg-c-surface text-c-text-secondary border-c-border hover:bg-c-surface-raised transition-colors"
             onClick={onOpenPanel}
             type="button"
           >
@@ -125,16 +125,16 @@ export const FinanceLaneStrip: React.FC<FinanceLaneStripProps> = ({
 
       <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
 
-      <div className="h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]">
+      <div className="h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border whitespace-nowrap bg-c-surface text-c-text-secondary border-c-border">
         <span
           className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${KPI_DOT_COLORS[activeLaneRun.kpiLinkageStatus]}`}
         />
         <span>{kpiLabels[activeLaneRun.kpiLinkageStatus]}</span>
       </div>
 
-      <div className="h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]">
+      <div className="h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border whitespace-nowrap bg-c-surface text-c-text-secondary border-c-border">
         <span
-          className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${activeLaneRun.versionType === 'actual' ? 'bg-primary-400' : 'bg-sky-400'}`}
+          className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${activeLaneRun.versionType === 'actual' ? 'bg-c-success' : 'bg-sky-400'}`}
         />
         <span>
           {activeLaneRun.versionType === 'actual'

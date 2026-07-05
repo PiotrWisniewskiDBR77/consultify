@@ -95,7 +95,7 @@ export const ToolActionBar: React.FC<ToolActionBarProps> = ({
               ${
                 !canAdvance
                   ? 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
-                  : 'bg-primary-500 text-white hover:bg-primary-600'
+                  : 'bg-c-text text-c-bg hover:bg-c-text-secondary'
               }
             `}
           >

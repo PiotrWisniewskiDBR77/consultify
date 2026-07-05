@@ -6,7 +6,10 @@ import type {
   ToolType,
 } from '@/store/useToolStore';
 
+import { buildAnsoffConclusionPrompt } from '@/config/ansoff';
+
 import type { ToolAiPendingAction } from './dynamicSwot';
+import { pickW2SummaryFields } from './w2SummaryFields';
 
 const QUADRANTS: GrowthQuadrantId[] = [
   'marketPenetration',
@@ -82,6 +85,13 @@ Return one JSON object with this exact structure:
 }
 
 export function buildGrowthPathsSynthesisPrompt(growthData: GrowthPathsData): string | null {
+  // Prefer the fact-grounded Ansoff engine (scoring + W2 move sequence) when
+  // there is at least one accepted option. Falls back to the generic prompt
+  // for empty sessions so behavior stays backward-compatible.
+  const isPolish = (growthData.context?.goal || '').match(/[ąćęłńóśźż]/i) !== null;
+  const grounded = buildAnsoffConclusionPrompt(growthData, isPolish);
+  if (grounded) return grounded;
+
   const options = QUADRANTS.map((quadrant) => {
     const items = growthData.quadrants[quadrant] || [];
     return `- ${quadrant}: ${items.map((item) => `${item.title} (${item.impact}/${item.effort}/${item.riskLevel || 'medium'})`).join('; ') || 'none'}`;
@@ -277,7 +287,13 @@ export function applyGrowthPathsPendingAction({
                 id: makeId('growth-move'),
                 title: move.title,
                 category: move.category || 'validate-first',
-                rationale: move.rationale || '',
+                // W2 contract: fold trade-off + rejected variant into the
+                // single rationale field the store carries, so the "move must
+                // justify itself" content is never lost.
+                rationale: [move.rationale, move.tradeOff, move.rejectedVariant]
+                  .filter((part) => typeof part === 'string' && part.trim())
+                  .join(' ')
+                  .trim(),
                 linkedOptionIds: Array.isArray(move.linkedOptionIds)
                   ? move.linkedOptionIds.filter(Boolean)
                   : [],
@@ -302,6 +318,7 @@ export function applyGrowthPathsPendingAction({
     actions.updateInputData({
       summary: {
         proposalId: 'growth-summary',
+        ...pickW2SummaryFields(summaryObj),
         executiveSummary:
           typeof summaryObj?.executiveSummary === 'string'
             ? summaryObj.executiveSummary

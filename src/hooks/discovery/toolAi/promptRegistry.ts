@@ -1,5 +1,46 @@
 import { CONSULTING_TOOL_STANDARD_OUTPUTS } from '@/config/consultingToolsStandard';
-import type { SWOTData, SWOTItem, ToolType } from '@/store/useToolStore';
+import {
+  A3_SECTIONS,
+  buildA3ConclusionPrompt,
+  buildA3DeepenPrompt,
+  type A3SectionId,
+} from '@/config/a3problemsolving';
+import { buildDmsConclusionPrompt, toDmsSession } from '@/config/dmsbuilder';
+import {
+  buildProcessAutomationConclusionPrompt,
+  toAutomationSession,
+} from '@/config/processautomation';
+import { buildInventoryConclusionPrompt, toInventorySession } from '@/config/inventoryautopilot';
+import { buildAiDiscoveryConclusionPrompt, toDiscoverySession } from '@/config/aidiscovery';
+import { buildSmedConclusionPrompt, toSmedSession } from '@/config/smedplanner';
+import { buildPainConclusionPrompt, toPainSession } from '@/config/painexplorer';
+import { buildRpaConclusionPrompt, toRpaSession } from '@/config/rpascanner';
+import {
+  SOP_SECTIONS,
+  buildSopConclusionPrompt,
+  buildSopDeepenPrompt,
+  type SopSectionId,
+} from '@/config/sopbuilder';
+import { buildStaircasePromptRules } from '@/config/swot/swotInsightStaircase';
+import { buildValueChainStaircasePromptRules } from '@/config/valuechain/valueChainInsightStaircase';
+import { buildPorterConclusionPrompt } from '@/config/porter/conclusionPrompts';
+import { buildValueChainConclusionPrompt } from '@/config/valuechain/conclusionPrompts';
+import { buildPortfolioConclusionPrompt } from '@/config/portfolio/conclusionPrompts';
+import { buildCapabilityMapperConclusionPrompt } from '@/config/capabilitymapper/conclusionPrompts';
+import { buildAmbitionDecomposerConclusionPrompt } from '@/config/ambitiondecomposer/conclusionPrompts';
+import { buildFocusConclusionPrompt } from '@/config/focustradeoffs';
+import { buildNarrativeConclusionPrompt } from '@/config/narrativeengine';
+import { buildRiskConclusionPrompt } from '@/config/riskuncertainty';
+import {
+  buildValueChainMovePromptRules,
+  deriveLeverCandidates,
+} from '@/config/valuechain/valueChainMarginEngine';
+import {
+  buildMoveConclusionPromptRules,
+  deriveTensionCandidates,
+} from '@/config/swot/swotTensionEngine';
+import { buildSwotFactsBlock } from '@/hooks/discovery/toolAi/dynamicSwot';
+import type { OperationalToolData, SWOTData, ToolType } from '@/store/useToolStore';
 
 const OPERATIONAL_TOOL_TYPES: ToolType[] = [
   'sop-builder',
@@ -25,11 +66,47 @@ const OPERATIONAL_TOOL_TYPES: ToolType[] = [
   'process-automation',
 ];
 
+const humanizeStepId = (stepId: string): string =>
+  stepId
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
+/**
+ * Best-effort language detection for the grounded conclusion prompts, mirroring
+ * the heuristic in the toolAi handlers (growthPaths etc.): Polish diacritics in
+ * the mission goal/scope mean the session — and thus the conclusion — is Polish.
+ */
+const detectIsPolish = (data: unknown): boolean => {
+  const ctx = (data as { context?: { goal?: string; scope?: string } } | undefined)?.context;
+  const text = `${ctx?.goal || ''} ${ctx?.scope || ''}`;
+  return /[ąćęłńóśźż]/i.test(text);
+};
+
 export function getToolSuggestionPrompt(
   toolType: ToolType,
   stepId: string,
   inputData: unknown
 ): string {
+  if (OPERATIONAL_TOOL_TYPES.includes(toolType)) {
+    // The shared OperationalToolData tools: each non-context/summary step is a
+    // section. Generate concrete operational items for the current section.
+    if (stepId === 'context' || stepId === 'summary') return '';
+    const opData = inputData as any;
+    const ctx = opData?.context || {};
+    const sectionName = humanizeStepId(stepId);
+    return `Act as a senior operations consultant. Generate 3-6 concrete, specific items for the "${sectionName}" section of this engagement.
+
+Context:
+- Goal: ${ctx.goal || 'not specified'}
+- Scope: ${ctx.scope || 'not specified'}
+- Success signal: ${ctx.successSignal || 'not specified'}
+
+Each item: clear title, actionable description, impact/effort ratings. Where relevant set category, owner, target, frequency, threshold, or durationMinutes. Ground items in the context; do not invent fake data.
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "category": "...", "owner": "...", "target": "...", "frequency": "...", "threshold": "...", "durationMinutes": 0}]}`;
+  }
+
   if (toolType === 'market-forces') {
     const porterData = inputData as any;
     if (stepId === 'rivalry') {
@@ -81,6 +158,227 @@ Rules:
 
 Return JSON:
 {"forces": {"rivalry": {"score": 3, "trend": "increasing|stable|decreasing", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}, "newEntrants": {"score": 3, "trend": "increasing|stable|decreasing", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}, "substitutes": {"score": 3, "trend": "increasing|stable|decreasing", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}, "buyerPower": {"score": 3, "trend": "increasing|stable|decreasing", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}, "supplierPower": {"score": 3, "trend": "increasing|stable|decreasing", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}}}`;
+    }
+    return '';
+  }
+
+  if (toolType === 'value-chain') {
+    const vcData = inputData as any;
+    if (stepId === 'mission') {
+      return `Act as an AI strategy mentor. Improve the brief for this Value Chain analysis.
+
+Current context:
+- Industry: ${vcData?.context?.industry || 'missing'}
+- Value chain scope: ${vcData?.context?.valueChainScope || 'missing'}
+- Positioning: ${vcData?.context?.position || 'undefined'}
+
+Return JSON:
+{"mission": {"industry": "...", "valueChainScope": "...", "position": "cost-leader|differentiator|hybrid|undefined", "goal": "...", "successSignal": "...", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
+    }
+    if (stepId === 'input') {
+      return `Act as an AI strategy mentor. Based on the brief and organization context, propose 4-6 high-value signals about cost structure, operations, and differentiation for a Value Chain analysis.
+
+Context:
+- Industry: ${vcData?.context?.industry || 'missing'}
+- Value chain scope: ${vcData?.context?.valueChainScope || 'missing'}
+- Positioning: ${vcData?.context?.position || 'undefined'}
+
+Return JSON:
+{"signals": [{"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["inboundLogistics|operations|outboundLogistics|marketingSales|service|infrastructure|hrManagement|technology|procurement"], "evidenceType": "fact|observation|hypothesis", "state": "proposed", "provenance": "..."}]}`;
+    }
+    if (stepId === 'activities') {
+      const signalsSummary = (vcData?.signals || [])
+        .slice(0, 20)
+        .map((signal: any) => `- [${signal.type}] ${signal.content}`)
+        .join('\n');
+      return `Act as an AI strategy mentor. Score the 9 value-chain activities (5 primary, 4 support) from these signals and the organization context.
+
+${signalsSummary || '- no explicit signals provided yet'}
+
+Rules:
+- costContribution = share of total cost the activity drives (high|medium|low)
+- valueContribution = contribution to differentiation / willingness-to-pay (high|medium|low)
+- marginRole = creator (builds margin) | neutral | drain (erodes margin)
+- separate drivers from evidence; make implications concrete for margin and positioning
+- also return a positioningVerdict (cost-advantage | differentiation | stuck-in-the-middle) with a one-line summary
+
+${buildValueChainStaircasePromptRules('en')}
+
+Return JSON (each activity carries the full "staircase" and an "evidenceStatus"):
+{"activities": {"inboundLogistics": {"costContribution": "high|medium|low", "valueContribution": "high|medium|low", "marginRole": "creator|neutral|drain", "maturity": "strong|adequate|weak", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5, "staircase": {"surface": "...", "costValueProof": "...", "proofRefs": ["signal-id"], "benchmark": "...", "potential": "..."}, "evidenceStatus": "confirmed|declared"}, "operations": {"...": "..."}, "outboundLogistics": {"...": "..."}, "marketingSales": {"...": "..."}, "service": {"...": "..."}, "infrastructure": {"...": "..."}, "hrManagement": {"...": "..."}, "technology": {"...": "..."}, "procurement": {"...": "..."}}, "positioningVerdict": {"positioning": "cost-advantage|differentiation|stuck-in-the-middle", "summary": "..."}}`;
+    }
+    return '';
+  }
+
+  if (toolType === 'capability-mapper') {
+    const capData = inputData as any;
+    if (stepId === 'mission') {
+      return `Act as an AI strategy mentor. Improve the brief for this Capability Mapper analysis.
+
+Current context:
+- Industry: ${capData?.context?.industry || 'missing'}
+- Capability domains: ${capData?.context?.capabilityDomains || 'missing'}
+- Strategic priorities: ${capData?.context?.strategicPriorities || 'missing'}
+
+Return JSON:
+{"mission": {"industry": "...", "capabilityDomains": "...", "strategicPriorities": "...", "goal": "...", "successSignal": "...", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
+    }
+    if (stepId === 'input') {
+      return `Act as an AI strategy mentor. Based on the brief and organization context, propose 4-6 high-value signals about organizational capabilities, skills, processes, and gaps.
+
+Context:
+- Industry: ${capData?.context?.industry || 'missing'}
+- Capability domains: ${capData?.context?.capabilityDomains || 'missing'}
+- Strategic priorities: ${capData?.context?.strategicPriorities || 'missing'}
+
+Return JSON:
+{"signals": [{"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["technology|talent|processes|data|partnerships"], "evidenceType": "fact|observation|hypothesis", "state": "proposed", "provenance": "..."}]}`;
+    }
+    if (stepId === 'capabilities') {
+      const signalsSummary = (capData?.signals || [])
+        .slice(0, 20)
+        .map((signal: any) => `- [${signal.type}] ${signal.content}`)
+        .join('\n');
+      return `Act as an AI strategy mentor. Turn these signals and the organization context into a scored capability map.
+
+${signalsSummary || '- no explicit signals provided yet'}
+
+Rules:
+- score each capability on currentMaturity and targetMaturity (1-5)
+- importance = strategic importance (high|medium|low)
+- gapSize = critical|moderate|minor (derived from the maturity gap weighted by importance)
+- sourcing = build|buy|partner|sustain
+- separate drivers from evidence; make implications concrete for the transformation roadmap
+
+Return JSON:
+{"capabilities": [{"name": "...", "domain": "...", "currentMaturity": 1-5, "targetMaturity": 1-5, "importance": "high|medium|low", "gapSize": "critical|moderate|minor", "sourcing": "build|buy|partner|sustain", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}]}`;
+    }
+    return '';
+  }
+
+  if (toolType === 'ambition-decomposer') {
+    const ambData = inputData as any;
+    if (stepId === 'mission') {
+      return `Act as an AI strategy mentor. Sharpen the ambition for this Ambition Decomposer session.
+
+Current context:
+- Ambition: ${ambData?.context?.ambitionStatement || 'missing'}
+- Scope: ${ambData?.context?.scope || 'missing'}
+
+Return JSON:
+{"mission": {"ambitionStatement": "...", "scope": "...", "goal": "...", "successSignal": "...", "timeframe": "short|medium|long", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
+    }
+    if (stepId === 'input') {
+      return `Act as an AI strategy mentor. Based on the ambition and organization context, propose 4-6 high-value signals about what the ambition requires (markets, capabilities, constraints, enablers).
+
+Ambition: ${ambData?.context?.ambitionStatement || 'missing'}
+Scope: ${ambData?.context?.scope || 'missing'}
+
+Return JSON:
+{"signals": [{"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["market|capability|constraint|enabler"], "evidenceType": "fact|observation|hypothesis", "state": "proposed", "provenance": "..."}]}`;
+    }
+    if (stepId === 'themes') {
+      const signalsSummary = (ambData?.signals || [])
+        .slice(0, 20)
+        .map((signal: any) => `- [${signal.type}] ${signal.content}`)
+        .join('\n');
+      return `Act as an AI strategy mentor. Decompose the ambition into 4-7 strategic themes with measurable targets.
+
+Ambition: ${ambData?.context?.ambitionStatement || 'missing'}
+${signalsSummary || '- no explicit signals provided yet'}
+
+Rules:
+- each theme = a coherent strand of work toward the ambition
+- targetMetric = what to measure; targetValue = the goal value
+- horizon = short|medium|long; importance = high|medium|low
+- separate drivers from evidence; make implications concrete
+
+Return JSON:
+{"themes": [{"title": "...", "description": "...", "targetMetric": "...", "targetValue": "...", "horizon": "short|medium|long", "importance": "high|medium|low", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}]}`;
+    }
+    return '';
+  }
+
+  if (toolType === 'focus-tradeoff') {
+    const focData = inputData as any;
+    if (stepId === 'mission') {
+      return `Act as an AI strategy mentor. Sharpen the focus question for this Focus & Trade-offs session.
+
+Current context:
+- Competing priorities: ${focData?.context?.competingPriorities || 'missing'}
+- Decision criteria: ${focData?.context?.decisionCriteria || 'missing'}
+
+Return JSON:
+{"mission": {"competingPriorities": "...", "decisionCriteria": "...", "goal": "...", "successSignal": "...", "timeframe": "short|medium|long", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
+    }
+    if (stepId === 'input') {
+      return `Act as an AI strategy mentor. Based on the focus question and organization context, propose 4-6 signals about the competing options and what truly matters for the decision.
+
+Competing priorities: ${focData?.context?.competingPriorities || 'missing'}
+Decision criteria: ${focData?.context?.decisionCriteria || 'missing'}
+
+Return JSON:
+{"signals": [{"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["value|effort|risk|fit"], "evidenceType": "fact|observation|hypothesis", "state": "proposed", "provenance": "..."}]}`;
+    }
+    if (stepId === 'priorities') {
+      const signalsSummary = (focData?.signals || [])
+        .slice(0, 20)
+        .map((signal: any) => `- [${signal.type}] ${signal.content}`)
+        .join('\n');
+      return `Act as an AI strategy mentor. Score the competing priorities for a focus decision.
+
+${signalsSummary || '- no explicit signals provided yet'}
+
+Rules:
+- valueScore = strategic value (1-5); effortScore = effort/cost (1-5); strategicFit = fit with strategy (1-5)
+- recommendation = pursue|defer|drop (high value + low effort + high fit → pursue)
+- separate drivers from evidence; make implications concrete
+
+Return JSON:
+{"priorities": [{"title": "...", "description": "...", "valueScore": 1-5, "effortScore": 1-5, "strategicFit": 1-5, "recommendation": "pursue|defer|drop", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}]}`;
+    }
+    return '';
+  }
+
+  if (toolType === 'narrative-engine') {
+    const narData = inputData as any;
+    if (stepId === 'mission') {
+      return `Act as an AI communications strategist. Sharpen the brief for this Narrative Engine session.
+
+Current context:
+- Audience: ${narData?.context?.audience || 'missing'}
+- Core message: ${narData?.context?.coreMessage || 'missing'}
+
+Return JSON:
+{"mission": {"audience": "...", "coreMessage": "...", "goal": "...", "successSignal": "...", "timeframe": "short|medium|long", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
+    }
+    if (stepId === 'input') {
+      return `Act as an AI communications strategist. Based on the audience, core message, and organization context, propose 4-6 signals: proof points, audience insights, objections to preempt.
+
+Audience: ${narData?.context?.audience || 'missing'}
+Core message: ${narData?.context?.coreMessage || 'missing'}
+
+Return JSON:
+{"signals": [{"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["proof|audience|objection|emotion"], "evidenceType": "fact|observation|hypothesis", "state": "proposed", "provenance": "..."}]}`;
+    }
+    if (stepId === 'pillars') {
+      const signalsSummary = (narData?.signals || [])
+        .slice(0, 20)
+        .map((signal: any) => `- [${signal.type}] ${signal.content}`)
+        .join('\n');
+      return `Act as an AI communications strategist. Build 3-5 narrative pillars that support the core message.
+
+Core message: ${narData?.context?.coreMessage || 'missing'}
+${signalsSummary || '- no explicit signals provided yet'}
+
+Rules:
+- each pillar = one claim that advances the core message
+- proofPoints = concrete evidence backing the claim
+- audienceResonance = high|medium|low (how strongly it lands with the audience)
+- separate drivers from evidence; make implications concrete
+
+Return JSON:
+{"pillars": [{"title": "...", "message": "...", "proofPoints": ["..."], "audienceResonance": "high|medium|low", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}]}`;
     }
     return '';
   }
@@ -210,14 +508,39 @@ Return JSON:
     return '';
   }
 
-  if (OPERATIONAL_TOOL_TYPES.includes(toolType)) {
-    if (stepId !== 'context' && stepId !== 'summary') {
-      return `Act as an AI operations mentor. Provide 3-5 concise items for ${stepId}.
+  // Grounded deepening overrides for A3 / SOP analytical sections (backward-compatible:
+  // falls through to the generic operational prompt above when no override applies).
+  if (toolType === 'a3-problem-solving' && A3_SECTIONS.includes(stepId as A3SectionId)) {
+    const deepen = buildA3DeepenPrompt(stepId as A3SectionId, 'evidence', false);
+    if (deepen) {
+      return `Act as an operational-excellence partner running an A3. Propose 3-5 concrete items for the "${stepId}" section, disciplined by the insight staircase (surface → evidence → quantification → risk/capability).
 
-Prefer items that can later support applied conclusions and concrete outputs.
+Staircase framing for this section:
+${deepen}
+
+Rules:
+- Every item traces down the staircase: a countermeasure names the root cause it removes; a root cause names the problem gap it explains.
+- Prefer measurable items (set target/threshold/durationMinutes where the fact exists); do not invent numbers.
 
 Return JSON:
-{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low"}]}`;
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "owner": "...", "target": "...", "threshold": "...", "durationMinutes": 0}]}`;
+    }
+  }
+
+  if (toolType === 'sop-builder' && SOP_SECTIONS.includes(stepId as SopSectionId)) {
+    const deepen = buildSopDeepenPrompt(stepId as SopSectionId, 'quantification', false);
+    if (deepen) {
+      return `Act as an operational-excellence partner building an SOP. Propose 3-5 concrete items for the "${stepId}" section, disciplined by the insight staircase (surface → evidence → quantification → risk/capability).
+
+Staircase framing for this section:
+${deepen}
+
+Rules:
+- Standards are pass/fail boundaries with a measurable threshold; checklist items are verifications (pass/fail), not actions.
+- Set threshold/target/durationMinutes where a measurable criterion exists; do not invent numbers.
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "owner": "...", "target": "...", "threshold": "...", "durationMinutes": 0}]}`;
     }
   }
 
@@ -236,33 +559,39 @@ Return JSON:
 {"mission": {"goal": "...", "scope": "...", "successSignal": "...", "timeframe": "short|medium|long", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
     }
     if (stepId === 'input') {
-      return `Act as an AI strategy mentor. Based on the mission and organization context, propose 4-6 high-value signals for the Input & Exploration phase.
+      return `You are a partner at a consulting firm (HBS, MBA, 10 years of practice) preparing the evidence base for a Dynamic SWOT. Based on the mission and organization context, propose 4-6 high-value signals for the Input & Exploration phase.
 
 Mission:
 - Strategic question: ${swotData?.context?.goal || 'missing'}
 - Scope: ${swotData?.context?.scope || 'missing'}
 - Success signal: ${swotData?.context?.successSignal || 'missing'}
 
+EVIDENCE DISCIPLINE:
+- Each signal is a FACT CANDIDATE — concrete, checkable, tied to a source. "The market is growing" is not a signal; "client X asked for Y in the Q2 tender" is.
+- Mark evidenceType honestly: "fact" only for verifiable statements; unverified beliefs are "observation" or "hypothesis".
+- Do not invent numbers. If a number would help, propose WHERE to get it as the signal content.
+- Respond in the user's language (Polish or English).
+
 Return JSON:
-{"signals": [{"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["..."], "evidenceType": "fact|observation|hypothesis", "state": "accepted|proposed|needs-evidence", "provenance": "..."}]}`;
+{"signals": [{"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["..."], "evidenceType": "fact|observation|hypothesis", "state": "proposed|needs-evidence", "provenance": "..."}]}`;
     }
     if (stepId === 'swot') {
-      const signalsSummary = (swotData?.signals || [])
-        .slice(0, 20)
-        .map((signal) => `- [${signal.type}] ${signal.content}`)
-        .join('\n');
-      return `Act as an AI strategy mentor. Turn the following signals into candidate SWOT items.
+      return `You are a partner at a consulting firm (HBS, MBA, 10 years of practice). Turn the session evidence below into candidate SWOT items your client's board would accept as findings, not opinions.
 
-${signalsSummary || '- no explicit signals provided yet'}
+${swotData ? buildSwotFactsBlock(swotData) : '- no session facts yet'}
 
-Rules:
-- keep items concrete
-- avoid duplicates
-- separate internal vs external
-- classify each item into strengths, weaknesses, opportunities, or threats
+RULES:
+- Items derive from the EVIDENCE block only — every item's staircase.factRefs must point at signal ids listed above. An item with no supporting signal gets factRefs=[] and evidenceStatus="declared" (explicitly "declared, unconfirmed").
+- Keep items concrete and falsifiable; no phrases that fit any company. Separate internal (S/W) from external (O/T).
+- Strengths: classify each — "core-competency" (externally validated + broad + durable), "niche-strength" (validated but segment-bound), "claimed-strength" (no external proof), "table-stakes" (real but every serious competitor has it).
+- Weaknesses: umbrella claims ("lack of agility", "poor communication", "culture") MUST include decomposition into process / tools / skills / incentives — each root demands a different move.
+- Respond in the user's language (Polish or English).
+
+${buildStaircasePromptRules('en')}
 
 Return JSON:
-{"items": [{"text": "...", "impact": "high|medium|low", "quadrant": "strengths|weaknesses|opportunities|threats", "confidence": 1-5, "status": "accepted|proposed"}]}`;
+{"items": [{"text": "...", "impact": "high|medium|low", "quadrant": "strengths|weaknesses|opportunities|threats", "confidence": 1-5, "status": "proposed", "staircase": {"fact": "...", "factRefs": ["signal-id"], "interpretation": "...", "implication": "..."}, "decomposition": [{"dimension": "process|tools|skills|incentives", "finding": "..."}], "evidenceStatus": "confirmed|declared", "classification": "core-competency|niche-strength|claimed-strength|table-stakes"}]}
+("decomposition" only for umbrella claims; "classification" only for strengths.)`;
     }
   }
 
@@ -270,43 +599,185 @@ Return JSON:
 }
 
 export function getToolSummaryPrompt(toolType: ToolType, inputData: unknown): string {
-  if (toolType === 'dynamic-swot') {
-    const swotData = inputData as SWOTData | undefined;
-    const itemsSummary = (swotData?.items || [])
-      .map((item: SWOTItem) => `- ${item.quadrant.toUpperCase()}: ${item.text}`)
+  const isPolish = detectIsPolish(inputData);
+
+  // SMED Planner and DMS Builder carry a grounded W2 conclusion layer
+  // (src/config/smedplanner, src/config/dmsbuilder). Prefer the fact-seeded
+  // prompt; fall through to the generic operational summary when the session is
+  // too empty to synthesize (builder returns null).
+  if (toolType === 'smed-planner') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildSmedConclusionPrompt(toSmedSession(op?.sections), isPolish);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'dms-builder') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildDmsConclusionPrompt(toDmsSession(op?.sections), isPolish);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'inventory-autopilot') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildInventoryConclusionPrompt(toInventorySession(op?.sections), isPolish);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'ai-discovery') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildAiDiscoveryConclusionPrompt(toDiscoverySession(op?.sections), isPolish);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'pain-explorer') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildPainConclusionPrompt(toPainSession(op?.sections), isPolish);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'rpa-scanner') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildRpaConclusionPrompt(toRpaSession(op?.sections), isPolish);
+    if (prompt) return prompt;
+  }
+
+  // Process Automation carries a grounded W2 conclusion layer
+  // (src/config/processautomation). It reads the operational `sections`
+  // (automation candidates) plus the quantitative `flow.processAutomation`
+  // baseline. Falls through to the generic operational summary when the session
+  // has no candidates yet (builder returns null).
+  if (toolType === 'process-automation') {
+    const op = inputData as (OperationalToolData & { flow?: { processAutomation?: unknown } }) | undefined;
+    const prompt = buildProcessAutomationConclusionPrompt(
+      toAutomationSession(op?.sections, (op?.flow?.processAutomation as any) ?? undefined),
+      isPolish
+    );
+    if (prompt) return prompt;
+  }
+
+  // A3 / SOP grounded W2 conclusions (CONCLUSION_LAYER variant W2). These MUST
+  // run BEFORE the generic OPERATIONAL_TOOL_TYPES summary below — both tool
+  // types are in that list, so a later check would be unreachable dead code
+  // (which is exactly what happened before OXFORD #102).
+  if (toolType === 'a3-problem-solving') {
+    const grounded = buildA3ConclusionPrompt(inputData as OperationalToolData, isPolish);
+    if (grounded) return grounded;
+  }
+  if (toolType === 'sop-builder') {
+    const grounded = buildSopConclusionPrompt(inputData as OperationalToolData, isPolish);
+    if (grounded) return grounded;
+  }
+
+  if (OPERATIONAL_TOOL_TYPES.includes(toolType)) {
+    const opData = inputData as any;
+    const sectionsSummary = Object.entries(opData?.sections || {})
+      .map(([key, items]: [string, any]) => {
+        const list = Array.isArray(items) ? items : [];
+        const titles = list
+          .slice(0, 8)
+          .map((item: any) => item?.title)
+          .filter(Boolean)
+          .join('; ');
+        return `- ${humanizeStepId(key)} (${list.length} item(s))${titles ? `: ${titles}` : ''}`;
+      })
       .join('\n');
 
-    return `Based on this completed SWOT analysis, produce a consulting-grade finish:
+    return `Act as an operational-excellence partner closing this engagement. You sign this summary with your own name in front of the client. Write the finishing block per CONCLUSION_LAYER_STANDARD variant W2 from the session work below.
 
-${itemsSummary}
+=== SESSION WORK (the only admissible source of facts) ===
+${sectionsSummary || '- (no sections populated yet)'}
 
-Provide:
-1. Executive Summary (3-4 sentences)
-2. Top 3 Key Insights
-3. Applied Conclusions: what this means, what to do, what not to do, what to validate next
-4. 3-5 Recommended Strategic Moves
-5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+W2 STRUCTURE (mandatory):
+1. "summary.verdict" — answer-first, 1-2 sentences: what this analysis means for the operation's DECISION. A thesis, not a topic.
+2. "summary.executiveSummary" — 3-4 sentences: restates the verdict, then the why, anchored in the section items above.
+3. "summary.tradeoffs" — >= 1 at recommendation level: what we choose AT THE COST of what. No trade-off = no decision, only a list.
+4. "initiatives" (3-5) — each a decision with a rationale that names the trade-off and the rejected variant; description carries the first step (verb + artifact + role).
+5. "summary.expectedEffect" — behaviorally observable, WITH a time horizon; no numbers absent from the session items.
 
-The executive summary should function as the final source summary for downstream outputs.
+QUALITY BARS:
+- Zero filler and zero AI meta-phrases ("As an AI", "Based on the provided data", "In conclusion") — write like a partner signing the work.
+- Every sentence falsifiable: with opposite items it would read differently.
+- Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
 
 Return as JSON:
 {
-  "summary": "executive summary text",
-  "insights": ["insight 1", "insight 2", "insight 3"],
-  "appliedConclusions": [
-    "practical implication 1",
-    "practical implication 2"
-  ],
+  "summary": {
+    "verdict": "answer-first, 1-2 sentences",
+    "executiveSummary": "3-4 sentences, opens by restating the verdict",
+    "keyInsights": ["insight 1", "insight 2", "insight 3"],
+    "appliedConclusions": ["what to do first", "what to standardize", "what NOT to do", "what to validate next"],
+    "tradeoffs": [{"chosen":"...","rejected":"...","why":"..."}],
+    "expectedEffect": {"text":"...","horizon":"..."}
+  },
+  "initiatives": [{"title": "...", "description": "...", "type": "operational|strategic|growth|defensive", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "..."}]
+}`;
+  }
+
+  if (toolType === 'dynamic-swot') {
+    const swotData = inputData as SWOTData | undefined;
+    const tensionCandidates = swotData
+      ? deriveTensionCandidates(
+          (swotData.items || []).filter(
+            (item) =>
+              item.proposalStatus !== 'rejected' && item.proposalStatus !== 'rethinking'
+          ),
+          2
+        )
+      : [];
+    const candidateLines =
+      tensionCandidates.length > 0
+        ? tensionCandidates
+            .map((c) => `- ${c.type} [${c.linkedItemIds[0]} x ${c.linkedItemIds[1]}] (weight ${c.weight})`)
+            .join('\n')
+        : '- (no accepted item pairs available)';
+
+    return `You are a partner at a consulting firm (HBS, MBA, 10 years of practice). You sign this conclusion with your own name in front of the client's board. Produce the finishing block of this Dynamic SWOT session per CONCLUSION_LAYER_STANDARD variant W2.
+
+=== SESSION FACTS (the ONLY admissible source of facts and numbers) ===
+${swotData ? buildSwotFactsBlock(swotData) : '- empty session'}
+=== END FACTS ===
+
+TENSION PAIRS COMPUTED FROM ACCEPTED ITEMS (link moves to these, not to invented pairs):
+${candidateLines}
+
+W2 STRUCTURE (mandatory):
+1. "verdict" — answer-first, 1-2 sentences: what this analysis means for the client's DECISION. A thesis, not a topic.
+2. "verdictRationale" — why, referencing concrete session elements via factRefs (ids from the facts block).
+3. "tradeoffs" — >= 1 at recommendation level: what we choose AT THE COST of what; which option was rejected and why. No trade-off = no decision, only a list.
+4. Moves (3-5) — each is a decision, not a bullet.
+5. "expectedEffect" — measurable or behaviorally observable, WITH a time horizon; no amounts absent from the facts.
+
+${buildMoveConclusionPromptRules('en')}
+
+QUALITY BARS:
+- Numbers exclusively from the facts block; evidence marked "declared" must be flagged "as declared, to be confirmed".
+- Zero filler phrases; every sentence falsifiable — with opposite data it would read differently.
+- Applied conclusions: what this means / what to do / what NOT to do / what to validate next.
+- Respond in the user's language (Polish or English), active voice, partner tone.
+- Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}.
+- After generating, run a self-check and return "selfCheck" per point: signature test, formula complete, numbers from facts, falsifiability, causality (factRefs), trade-off present, effect has horizon.
+
+Return as JSON:
+{
+  "summary": {
+    "verdict": "...",
+    "verdictRationale": {"text": "...", "factRefs": ["..."]},
+    "tradeoffs": [{"chosen": "...", "rejected": "...", "why": "..."}],
+    "expectedEffect": {"text": "...", "horizon": "..."},
+    "executiveSummary": "3-4 sentences, answer-first",
+    "keyInsights": ["insight 1", "insight 2", "insight 3"],
+    "appliedConclusions": ["practical implication 1", "practical implication 2"]
+  },
   "moves": [{
     "title": "Move name",
     "category": "quick-win|big-bet|defensive-move|capability-build",
-    "rationale": "Why this matters",
-    "linkedItemIds": ["item1"],
+    "rationale": "why — anchored in listed element ids",
+    "linkedItemIds": ["item-id"],
+    "linkedTensionIds": ["tension-id"],
+    "tradeoff": {"chosen": "...", "deferred": "...", "cost": "..."},
+    "rejectedAlternative": {"option": "...", "reason": "..."},
+    "whyFirst": "why this order (impact x effort, prerequisites)",
+    "ownerRole": "accountable role",
     "expectedImpact": "high|medium|low",
     "estimatedEffort": "high|medium|low",
     "riskLevel": "high|medium|low",
     "confidence": 4,
-    "firstStep": "first action"
+    "firstStep": "verb + artifact + role"
   }],
   "initiatives": [{
     "title": "Initiative Name",
@@ -315,21 +786,28 @@ Return as JSON:
     "estimatedImpact": "high|medium|low",
     "estimatedEffort": "high|medium|low",
     "rationale": "Why this matters",
-    "linkedItems": ["item1"]
+    "linkedItems": ["item-id"]
   }],
   "outputCandidates": [{
     "outputType": "initiative|report|presentation|idea",
     "title": "Output title",
     "description": "What should be created",
-    "linkedItemIds": ["item1"],
+    "linkedItemIds": ["item-id"],
     "rationale": "Why this output now",
     "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"
-  }]
+  }],
+  "selfCheck": {"signature": "pass|fail", "formulaComplete": "pass|fail", "numbersFromFacts": "pass|fail", "falsifiable": "pass|fail", "causality": "pass|fail", "tradeoffPresent": "pass|fail", "effectHasHorizon": "pass|fail"}
 }`;
   }
 
   if (toolType === 'market-forces') {
     const porterData = inputData as any;
+    // Grounded W2 conclusion (CONCLUSION_LAYER_STANDARD): seed the industry-
+    // profitability verdict + move rules from the synthesis engine. Falls through
+    // to the generic summary below when no force is scored yet (returns null).
+    const grounded = buildPorterConclusionPrompt(porterData, detectIsPolish(porterData));
+    if (grounded) return grounded;
+
     const forcesSummary = Object.entries(porterData?.forces || {})
       .map(([, force]: [string, any]) => `- ${force.name}: ${force.score}/5 (${force.trend})`)
       .join('\n');
@@ -356,6 +834,204 @@ Return as JSON:
 }`;
   }
 
+  if (toolType === 'value-chain') {
+    const vcData = inputData as any;
+    // Grounded W2 conclusion (CONCLUSION_LAYER_STANDARD): seed the margin map +
+    // lever candidates + move rules from the margin engine. Falls through to the
+    // generic summary below when no activity is scored yet (returns null).
+    const grounded = buildValueChainConclusionPrompt(vcData, detectIsPolish(vcData));
+    if (grounded) return grounded;
+
+    const activitiesSummary = Object.entries(vcData?.activities || {})
+      .map(
+        ([, a]: [string, any]) =>
+          `- ${a.name}: cost ${a.costContribution}, value ${a.valueContribution}, margin ${a.marginRole}`
+      )
+      .join('\n');
+
+    const leverCandidates = deriveLeverCandidates(vcData?.activities || {}, 3);
+    const candidateLines =
+      leverCandidates.length > 0
+        ? leverCandidates
+            .map(
+              (c) =>
+                `- [${c.activityId}] pole=${c.pole}, leverScore=${c.leverScore}, suggested=${c.suggestedLeverType} — ${c.rationaleEn}`
+            )
+            .join('\n')
+        : '- (no scored activities to pre-compute lever candidates)';
+
+    return `Based on this Value Chain analysis, create a consulting-grade final summary:
+
+${activitiesSummary}
+${vcData?.positioningVerdict ? `Positioning verdict: ${vcData.positioningVerdict.positioning} — ${vcData.positioningVerdict.summary}` : ''}
+
+PRE-COMPUTED LEVER CANDIDATES (high cost x low maturity x value impact — link moves to these):
+${candidateLines}
+
+Provide:
+1. Executive Summary (3-4 sentences)
+2. Top 3 Margin Levers (where cost can fall or value can rise) — anchored in the candidate activities above
+3. Applied Conclusions: where to cut cost, where to invest for differentiation, what to validate next
+4. 3-5 Recommended Strategic Moves, each a decision (improve/automate/outsource/integrate) with a trade-off
+5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+
+${buildValueChainMovePromptRules('en')}
+
+Return as JSON:
+{
+  "summary": "executive summary",
+  "insights": ["insight 1", "insight 2"],
+  "appliedConclusions": ["..."],
+  "moves": [{"title":"...","category":"cost-advantage|differentiation|linkage-optimization|capability-build|restructure","rationale":"...","linkedActivityIds":["operations"],"tradeoff":{"chosen":"...","deferred":"...","cost":"..."},"rejectedAlternative":{"option":"...","reason":"..."},"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["operations"]}],
+  "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedActivityIds": ["operations"], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
+}`;
+  }
+
+  if (toolType === 'capability-mapper') {
+    const capData = inputData as any;
+    // Grounded W2 conclusion (CONCLUSION_LAYER_STANDARD): seed the gap ranking +
+    // W2 sourcing sequence from the synthesis engine. Falls through to the generic
+    // summary below when no capability has a real gap yet (returns null).
+    const grounded = buildCapabilityMapperConclusionPrompt(capData, detectIsPolish(capData));
+    if (grounded) return grounded;
+
+    const capsSummary = (capData?.capabilities || [])
+      .map(
+        (c: any) =>
+          `- ${c.name} (${c.domain}): ${c.currentMaturity}→${c.targetMaturity}, importance ${c.importance}, ${c.sourcing || 'tbd'}`
+      )
+      .join('\n');
+
+    return `Based on this Capability Map, create a consulting-grade final summary:
+
+${capsSummary}
+
+Provide:
+1. Executive Summary (3-4 sentences)
+2. Top 3 Capability Gaps (where maturity is furthest below target on high-importance capabilities)
+3. Applied Conclusions: what to build, what to buy/partner, what to reskill, what to validate next
+4. 3-5 Recommended Strategic Moves
+5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+
+Return as JSON:
+{
+  "summary": "executive summary",
+  "insights": ["insight 1", "insight 2"],
+  "appliedConclusions": ["..."],
+  "moves": [{"title":"...","category":"build|buy|partner|reskill|restructure","rationale":"...","linkedCapabilityIds":["..."],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["..."]}],
+  "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedCapabilityIds": ["..."], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
+}`;
+  }
+
+  if (toolType === 'ambition-decomposer') {
+    const ambData = inputData as any;
+    // Grounded W2 conclusion (CONCLUSION_LAYER_STANDARD): seed the prerequisite-
+    // aware theme sequence + W2 moves from the synthesis engine. Falls through to
+    // the generic summary below when there are no themes yet (returns null).
+    const grounded = buildAmbitionDecomposerConclusionPrompt(ambData, detectIsPolish(ambData));
+    if (grounded) return grounded;
+
+    const themesSummary = (ambData?.themes || [])
+      .map((t: any) => `- ${t.title}: ${t.targetMetric} → ${t.targetValue} (${t.horizon}, ${t.importance})`)
+      .join('\n');
+
+    return `Based on this Ambition Decomposition, create a consulting-grade final summary:
+
+Ambition: ${ambData?.context?.ambitionStatement || 'n/a'}
+${themesSummary}
+
+Provide:
+1. Executive Summary (3-4 sentences)
+2. Top 3 Priorities (which themes to sequence first and why)
+3. Applied Conclusions: where to start, what to enable, what to validate next
+4. 3-5 Recommended Strategic Moves
+5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+
+Return as JSON:
+{
+  "summary": "executive summary",
+  "insights": ["insight 1", "insight 2"],
+  "appliedConclusions": ["..."],
+  "moves": [{"title":"...","category":"foundation|accelerator|bet|enabler|quick-win","rationale":"...","linkedThemeIds":["..."],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["..."]}],
+  "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedThemeIds": ["..."], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
+}`;
+  }
+
+  if (toolType === 'focus-tradeoff') {
+    const focData = inputData as any;
+    // Grounded W2 conclusion (CONCLUSION_LAYER_STANDARD): seed the priority
+    // ranking + commit/defer/cut sequence from the synthesis engine
+    // (src/config/focustradeoffs). Falls through to the generic summary below
+    // when no priority is scored yet (returns null).
+    const grounded = buildFocusConclusionPrompt(focData, detectIsPolish(focData));
+    if (grounded) return grounded;
+
+    const prioritiesSummary = (focData?.priorities || [])
+      .map((p: any) => `- ${p.title}: value ${p.valueScore}, effort ${p.effortScore}, fit ${p.strategicFit} → ${p.recommendation}`)
+      .join('\n');
+
+    return `Based on this Focus & Trade-offs analysis, create a consulting-grade final summary:
+
+${prioritiesSummary}
+
+Provide:
+1. Executive Summary (3-4 sentences)
+2. Top 3 Trade-offs (the hardest tensions between competing priorities)
+3. Applied Conclusions: what to commit to, what to sequence later, what to cut, what to validate next
+4. 3-5 Recommended Strategic Moves
+5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+
+Return as JSON:
+{
+  "summary": "executive summary",
+  "insights": ["insight 1", "insight 2"],
+  "appliedConclusions": ["..."],
+  "moves": [{"title":"...","category":"commit|sequence|cut|rebalance|experiment","rationale":"...","linkedPriorityIds":["..."],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["..."]}],
+  "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedPriorityIds": ["..."], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
+}`;
+  }
+
+  if (toolType === 'narrative-engine') {
+    const narData = inputData as any;
+    // Grounded W2 conclusion (CONCLUSION_LAYER_STANDARD): seed the pillar
+    // ranking + open/prove/reframe/cut delivery sequence from the synthesis
+    // engine (src/config/narrativeengine). Falls through to the generic summary
+    // below when no pillar is scored yet (returns null).
+    const grounded = buildNarrativeConclusionPrompt(narData, detectIsPolish(narData));
+    if (grounded) return grounded;
+
+    const pillarsSummary = (narData?.pillars || [])
+      .map((p: any) => `- ${p.title}: ${p.message} (${(p.proofPoints || []).length} proof, ${p.audienceResonance})`)
+      .join('\n');
+
+    return `Based on this Narrative, create a consulting-grade final summary:
+
+Core message: ${narData?.context?.coreMessage || 'n/a'}
+Audience: ${narData?.context?.audience || 'n/a'}
+${pillarsSummary}
+
+Provide:
+1. Executive Summary (3-4 sentences)
+2. Top 3 Storyline Threads (how the pillars connect into a persuasive arc)
+3. Applied Conclusions: how to open, what to prove, what call-to-action, what to validate next
+4. 3-5 Recommended Delivery Moves
+5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+
+Return as JSON:
+{
+  "summary": "executive summary",
+  "insights": ["insight 1", "insight 2"],
+  "appliedConclusions": ["..."],
+  "moves": [{"title":"...","category":"open|build|prove|cta|reframe","rationale":"...","linkedPillarIds":["..."],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["..."]}],
+  "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedPillarIds": ["..."], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
+}`;
+  }
+
   if (toolType === 'growth-paths') {
     const growthData = inputData as any;
     const optionsSummary = Object.entries(growthData?.quadrants || {})
@@ -365,23 +1041,35 @@ Return as JSON:
       )
       .join('\n');
 
-    return `Based on this Ansoff Growth Paths analysis, create a consulting-grade final summary:
+    return `Act as a growth strategy partner closing this Ansoff Growth Paths session. You sign this summary with your own name in front of the client. Write the finishing block per CONCLUSION_LAYER_STANDARD variant W2.
 
+=== GROWTH OPTIONS BY QUADRANT (the only admissible source of facts) ===
 ${optionsSummary}
 
-Provide:
-1. Executive Summary (3-4 sentences)
-2. Top 3 growth insights
-3. Applied Conclusions: what to scale, what to test, what to avoid, what to validate next
-4. 3-5 Recommended Growth Moves
-5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+W2 STRUCTURE (mandatory):
+1. "summary.verdict" — answer-first, 1-2 sentences: which growth path to bet on FIRST and why. A thesis, not a quadrant recap.
+2. "summary.executiveSummary" — 3-4 sentences: restates the verdict, then the why, anchored in the options above.
+3. "summary.tradeoffs" — >= 1 at recommendation level: which path we scale AT THE COST of which; the canonical rejected alternative is "pursue every quadrant at once -> diluted resources".
+4. "moves" (3-5) — each a growth DECISION (scale-core/enter-market/build-product/diversify/validate-first) with tradeOff (what it costs) and rejectedVariant (what you deliberately do NOT do and why), plus firstStep. If evidence is weak, keep a validate-first move before full scaling.
+5. "summary.expectedEffect" — growth outcome, behaviorally observable, WITH a time horizon; no numbers absent from the options.
+
+QUALITY BARS:
+- Zero filler and zero AI meta-phrases ("As an AI", "Based on the provided data", "In conclusion") — write like a partner signing the work.
+- Every sentence falsifiable: with different options it would read differently.
+- Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
+- Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}.
 
 Return JSON:
 {
-  "summary": "executive summary",
-  "insights": ["insight 1", "insight 2"],
-  "appliedConclusions": ["..."],
-  "moves": [{"title":"...","category":"scale-core|enter-market|build-product|diversify|validate-first","rationale":"...","linkedOptionIds":[],"linkedQuadrants":["marketPenetration"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  "summary": {
+    "verdict": "answer-first: which growth path first and why",
+    "executiveSummary": "3-4 sentences, opens by restating the verdict",
+    "keyInsights": ["insight 1", "insight 2", "insight 3"],
+    "appliedConclusions": ["what to scale", "what to test", "what to avoid", "what to validate next"],
+    "tradeoffs": [{"chosen":"...","rejected":"...","why":"..."}],
+    "expectedEffect": {"text":"...","horizon":"..."}
+  },
+  "moves": [{"title":"...","category":"scale-core|enter-market|build-product|diversify|validate-first","rationale":"...","tradeOff":"...","rejectedVariant":"...","linkedOptionIds":[],"linkedQuadrants":["marketPenetration"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
   "initiatives": [{"title": "...", "description": "...", "type": "growth|strategic|operational", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["marketPenetration"]}],
   "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedQuadrants": ["marketPenetration"], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;
@@ -389,6 +1077,13 @@ Return JSON:
 
   if (toolType === 'portfolio-priority') {
     const portfolio = inputData as any;
+    // Grounded W2 conclusion (CONCLUSION_LAYER_STANDARD): seed the 2x2
+    // classification + dependency/budget-aware funding sequence from the matrix
+    // engine. Falls through to the generic summary below when no accepted item is
+    // scored yet (returns null).
+    const grounded = buildPortfolioConclusionPrompt(portfolio, detectIsPolish(portfolio));
+    if (grounded) return grounded;
+
     const itemsSummary = (portfolio?.initiatives || [])
       .map(
         (item: any) =>
@@ -419,6 +1114,13 @@ Return JSON:
 
   if (toolType === 'risk-uncertainty') {
     const risk = inputData as any;
+    // Grounded W2 conclusion (CONCLUSION_LAYER_STANDARD): seed the risk exposure
+    // ranking + assumption fragility + W2 resilience move sequence from the
+    // synthesis engine. Falls through to the generic summary below when no risk
+    // or assumption is accepted yet (returns null).
+    const grounded = buildRiskConclusionPrompt(risk, detectIsPolish(risk));
+    if (grounded) return grounded;
+
     const riskSummary = (risk?.risks || [])
       .map(
         (item: any) => `- ${item.title || item.description}: P${item.probability}/I${item.impact}`
@@ -444,16 +1146,6 @@ Return JSON:
   "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": []}],
   "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedRiskIds": [], "linkedScenarioIds": [], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;
-  }
-
-  if (OPERATIONAL_TOOL_TYPES.includes(toolType)) {
-    return `Summarize the operational analysis:
-1. Executive Summary
-2. Top 3 insights
-3. 3-5 operational initiatives
-
-Return JSON:
-{"summary": "...", "insights": ["..."], "initiatives": [{"title": "...", "description": "...", "rationale": "..."}]}`;
   }
 
   return '';

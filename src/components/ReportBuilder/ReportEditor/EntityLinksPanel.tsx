@@ -45,9 +45,9 @@ interface EntityLinksPanelProps {
 // ==========================================
 
 const STATUS_BADGE_COLORS: Record<string, string> = {
-  DRAFT: 'bg-gray-500/20 text-gray-600',
-  draft: 'bg-gray-500/20 text-gray-600',
-  step3: 'bg-gray-500/20 text-gray-600',
+  DRAFT: 'bg-c-text-muted text-c-text-secondary',
+  draft: 'bg-c-text-muted text-c-text-secondary',
+  step3: 'bg-c-text-muted text-c-text-secondary',
   ACTIVE: 'bg-blue-500/20 text-blue-400',
   active: 'bg-blue-500/20 text-blue-400',
   IN_PROGRESS: 'bg-blue-500/20 text-blue-400',
@@ -62,7 +62,7 @@ const STATUS_BADGE_COLORS: Record<string, string> = {
 };
 
 function getStatusBadgeClass(status: string): string {
-  return STATUS_BADGE_COLORS[status] || 'bg-gray-500/20 text-gray-600';
+  return STATUS_BADGE_COLORS[status] || 'bg-c-text-muted text-c-text-secondary';
 }
 
 // ==========================================
@@ -109,7 +109,7 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8 text-gray-600">
+      <div className="flex items-center justify-center py-8 text-c-text-secondary">
         <Loader2 className="h-5 w-5 animate-spin mr-2" />
         <span className="text-sm">{isPl ? 'Ładowanie…' : 'Loading…'}</span>
       </div>
@@ -122,7 +122,7 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
         <p>{error}</p>
         <button
           onClick={fetchLinks}
-          className="mt-2 text-xs text-primary-400 hover:text-primary-300 underline"
+          className="mt-2 text-xs text-c-accent hover:text-c-accent underline"
         >
           {isPl ? 'Spróbuj ponownie' : 'Try again'}
         </button>
@@ -132,10 +132,10 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
 
   if (!data || totalCount === 0) {
     return (
-      <div className="px-4 py-8 text-center text-sm text-gray-500">
+      <div className="px-4 py-8 text-center text-sm text-c-text-secondary">
         <GitBranch className="h-8 w-8 mx-auto mb-2 opacity-40" />
         <p>{isPl ? 'Brak powiązanych elementów' : 'No linked entities'}</p>
-        <p className="mt-1 text-xs text-gray-600">
+        <p className="mt-1 text-xs text-c-text-secondary">
           {isPl
             ? 'Utwórz inicjatywę z sekcji raportu, aby zobaczyć powiązania'
             : 'Create an initiative from a report section to see links here'}
@@ -155,7 +155,7 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
       key: 'initiatives',
       label: isPl ? 'Inicjatywy' : 'Initiatives',
       icon: Target,
-      iconColor: 'text-primary-400',
+      iconColor: 'text-c-accent',
       items: data.initiatives,
     },
     {
@@ -185,29 +185,29 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
           <div key={section.key}>
             <button
               onClick={() => toggleSection(section.key)}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-white/5 rounded-lg transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-c-text-secondary hover:bg-c-surface rounded-lg transition-colors"
             >
               {isExpanded ? (
-                <ChevronDown className="h-3.5 w-3.5 text-gray-500 shrink-0" />
+                <ChevronDown className="h-3.5 w-3.5 text-c-text-secondary shrink-0" />
               ) : (
-                <ChevronRight className="h-3.5 w-3.5 text-gray-500 shrink-0" />
+                <ChevronRight className="h-3.5 w-3.5 text-c-text-secondary shrink-0" />
               )}
               <Icon className={`h-4 w-4 ${section.iconColor} shrink-0`} />
               <span className="flex-1 text-left">{section.label}</span>
               {count > 0 && (
-                <span className="text-xs px-1.5 py-0.5 rounded-full bg-white/10 text-gray-600">
+                <span className="text-xs px-1.5 py-0.5 rounded-full bg-c-surface text-c-text-secondary">
                   {count}
                 </span>
               )}
             </button>
 
             {isExpanded && count > 0 && (
-              <div className="ml-5 pl-3 border-l border-white/5 space-y-0.5 mb-1">
+              <div className="ml-5 pl-3 border-l border-c-border space-y-0.5 mb-1">
                 {section.items.map((item) => (
                   <button
                     key={item.id}
                     onClick={() => onNavigateToEntity?.(section.key, item.id)}
-                    className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-gray-600 hover:text-gray-200 hover:bg-white/5 rounded-md transition-colors group"
+                    className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-c-text-secondary hover:text-c-text hover:bg-c-surface rounded-md transition-colors group"
                   >
                     <span className="flex-1 text-left truncate">{item.title}</span>
                     <span
@@ -224,7 +224,7 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
             )}
 
             {isExpanded && count === 0 && (
-              <p className="ml-10 text-xs text-gray-600 py-1">{isPl ? 'Brak' : 'None'}</p>
+              <p className="ml-10 text-xs text-c-text-secondary py-1">{isPl ? 'Brak' : 'None'}</p>
             )}
           </div>
         );

@@ -107,28 +107,28 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-[480px] bg-white dark:bg-navy-900 rounded-2xl shadow-2xl overflow-hidden">
+      <div className="relative w-[480px] bg-c-surface rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{deckTitle}</h2>
-          <button onClick={onClose} className="text-slate-600 hover:text-slate-600">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
+          <h2 className="text-lg font-semibold text-c-text">{deckTitle}</h2>
+          <button onClick={onClose} className="text-c-text-secondary hover:text-c-text-secondary">
             <X size={20} />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-slate-200 dark:border-navy-700">
+        <div className="flex border-b border-c-border-subtle">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? 'text-primary-600 border-b-2 border-primary-500'
-                  : 'text-slate-500 hover:text-slate-700'
+                  ? 'text-c-accent border-b-2 border-c-accent'
+                  : 'text-c-text-secondary hover:text-c-text'
               }`}
             >
               {t(tab.labelKey, tab.id)}
@@ -141,36 +141,36 @@ export const ShareModal: React.FC<ShareModalProps> = ({
           {activeTab === 'collaborate' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text mb-1">
                   {t('presentations.builder.share.inviteByEmail', 'Invite by email')}
                 </label>
                 <div className="flex gap-2">
                   <input
                     type="email"
                     placeholder="email@example.com"
-                    className="flex-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-sm"
+                    className="flex-1 px-3 py-2 rounded-lg border border-c-border bg-c-surface text-sm"
                   />
-                  <button className="px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 text-sm hover:bg-navy-800">
+                  <button className="px-4 py-2 rounded-lg bg-c-surface text-c-text text-sm hover:bg-c-surface-raised">
                     <Mail size={14} />
                   </button>
                 </div>
               </div>
               <div className="space-y-2">
-                <p className="text-xs font-medium text-slate-500 uppercase">Permissions</p>
+                <p className="text-xs font-medium text-c-text-secondary uppercase">Permissions</p>
                 {[
                   { icon: Eye, label: 'View', desc: 'Can view the deck' },
                   { icon: MessageCircle, label: 'Comment', desc: 'Can view and comment' },
                 ].map((perm) => (
                   <button
                     key={perm.label}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-primary-400 text-left"
+                    className="w-full flex items-center gap-3 p-3 rounded-lg border border-c-border-subtle hover:border-c-accent text-left"
                   >
-                    <perm.icon size={16} className="text-slate-600" />
+                    <perm.icon size={16} className="text-c-text-secondary" />
                     <div>
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <p className="text-sm font-medium text-c-text">
                         {perm.label}
                       </p>
-                      <p className="text-[10px] text-slate-600">{perm.desc}</p>
+                      <p className="text-[10px] text-c-text-secondary">{perm.desc}</p>
                     </div>
                   </button>
                 ))}
@@ -180,10 +180,10 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
           {activeTab === 'share' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-navy-800">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-c-surface-raised">
                 <div className="flex items-center gap-2">
-                  <Link size={16} className="text-slate-600" />
-                  <span className="text-sm text-slate-700 dark:text-slate-300">
+                  <Link size={16} className="text-c-text-secondary" />
+                  <span className="text-sm text-c-text">
                     {t('presentations.builder.share.publicLink', 'Public link')}
                   </span>
                 </div>
@@ -193,7 +193,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   className={`px-3 py-1 rounded-full text-xs font-medium ${
                     publicLink
                       ? 'bg-green-500/20 text-green-600'
-                      : 'bg-slate-200 dark:bg-navy-700 text-slate-500'
+                      : 'bg-c-border-subtle text-c-text-secondary'
                   }`}
                 >
                   {generatingLink ? (
@@ -212,20 +212,20 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                     <input
                       readOnly
                       value={shareUrl}
-                      className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-xs text-slate-500 truncate"
+                      className="flex-1 px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface-raised text-xs text-c-text-secondary truncate"
                     />
                     <button
                       onClick={handleCopyLink}
-                      className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 text-sm hover:bg-slate-50 dark:hover:bg-navy-800 flex items-center gap-1"
+                      className="px-3 py-2 rounded-lg border border-c-border-subtle text-sm hover:bg-c-surface-raised flex items-center gap-1"
                     >
                       {linkCopied ? (
                         <Check size={14} className="text-green-500" />
                       ) : (
-                        <Copy size={14} className="text-slate-500" />
+                        <Copy size={14} className="text-c-text-secondary" />
                       )}
                     </button>
                   </div>
-                  <p className="text-xs text-slate-600">
+                  <p className="text-xs text-c-text-secondary">
                     {t(
                       'presentations.builder.share.anyoneCanView',
                       'Anyone with the link can view'
@@ -261,21 +261,21 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 <button
                   key={exp.format}
                   onClick={() => onExport?.(exp.format)}
-                  className="w-full flex items-center gap-3 p-4 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/5 text-left transition-colors"
+                  className="w-full flex items-center gap-3 p-4 rounded-lg border border-c-border-subtle hover:border-c-accent hover:bg-c-accent-soft text-left transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-primary-500/10 flex items-center justify-center">
-                    <exp.icon size={20} className="text-primary-500" />
+                  <div className="w-10 h-10 rounded-lg bg-c-accent-soft0 flex items-center justify-center">
+                    <exp.icon size={20} className="text-c-accent" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    <p className="text-sm font-semibold text-c-text">
                       {exp.label}
                     </p>
-                    <p className="text-[11px] text-slate-600">{exp.desc}</p>
+                    <p className="text-[11px] text-c-text-secondary">{exp.desc}</p>
                   </div>
-                  <Download size={16} className="ml-auto text-slate-600" />
+                  <Download size={16} className="ml-auto text-c-text-secondary" />
                 </button>
               ))}
-              <p className="text-[10px] text-slate-600 mt-2">
+              <p className="text-[10px] text-c-text-secondary mt-2">
                 {t(
                   'presentations.builder.export.staticNote',
                   'Animated elements will be static in PDF and PowerPoint'
@@ -288,7 +288,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             <div className="space-y-3">
               {!shareToken ? (
                 <div className="text-center py-6">
-                  <p className="text-sm text-slate-500 mb-3">
+                  <p className="text-sm text-c-text-secondary mb-3">
                     {t(
                       'presentations.builder.share.enablePublicFirst',
                       'Enable public link sharing first to get an embed code.'
@@ -297,7 +297,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   <button
                     onClick={generateShareLink}
                     disabled={generatingLink}
-                    className="px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 text-sm hover:bg-navy-800 disabled:opacity-50"
+                    className="px-4 py-2 rounded-lg bg-c-surface text-c-text text-sm hover:bg-c-surface-raised disabled:opacity-50"
                   >
                     {generatingLink ? (
                       <Loader2 size={14} className="animate-spin inline mr-1" />
@@ -307,7 +307,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 </div>
               ) : (
                 <>
-                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                  <p className="text-sm text-c-text-secondary">
                     Embed this deck on external websites:
                   </p>
                   <div className="relative">
@@ -315,7 +315,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                       readOnly
                       value={embedCode}
                       rows={3}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-xs text-slate-500 font-mono resize-none"
+                      className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface-raised text-xs text-c-text-secondary font-mono resize-none"
                     />
                   </div>
                   <button
@@ -323,7 +323,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                       navigator.clipboard.writeText(embedCode);
                       toast.success('Embed code copied');
                     }}
-                    className="flex items-center gap-1.5 text-xs text-primary-600 hover:text-primary-500"
+                    className="flex items-center gap-1.5 text-xs text-c-accent hover:text-c-accent"
                   >
                     <Copy size={12} /> Copy embed code
                   </button>

@@ -72,32 +72,32 @@ interface UptimeStats {
 const STATUS_CONFIG = {
   operational: {
     icon: CheckCircle,
-    color: 'text-green-500',
-    bg: 'bg-green-100 dark:bg-green-900/30',
+    color: 'text-c-success',
+    bg: 'bg-c-success/10',
     label: { en: 'Operational', pl: 'Operacyjny' },
   },
   degraded: {
     icon: AlertTriangle,
-    color: 'text-yellow-500',
-    bg: 'bg-yellow-100 dark:bg-yellow-900/30',
+    color: 'text-c-warning',
+    bg: 'bg-c-warning/10',
     label: { en: 'Degraded', pl: 'Obniżona wydajność' },
   },
   partial_outage: {
     icon: AlertTriangle,
-    color: 'text-amber-500',
-    bg: 'bg-amber-100 dark:bg-amber-900/30',
+    color: 'text-c-warning',
+    bg: 'bg-c-warning/10',
     label: { en: 'Partial Outage', pl: 'Częściowa awaria' },
   },
   major_outage: {
     icon: XCircle,
-    color: 'text-danger-500',
-    bg: 'bg-danger-100 dark:bg-danger-900/30',
+    color: 'text-c-danger',
+    bg: 'bg-c-danger/10',
     label: { en: 'Major Outage', pl: 'Poważna awaria' },
   },
   maintenance: {
     icon: Clock,
-    color: 'text-blue-500',
-    bg: 'bg-blue-100 dark:bg-blue-900/30',
+    color: 'text-c-info',
+    bg: 'bg-c-info/10',
     label: { en: 'Maintenance', pl: 'Konserwacja' },
   },
 };
@@ -198,8 +198,8 @@ export const StatusPageView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
-        <RefreshCw size={32} className="animate-spin text-primary-500" />
+      <div className="min-h-screen bg-c-surface-raised flex items-center justify-center">
+        <RefreshCw size={32} className="animate-spin text-c-accent" />
       </div>
     );
   }
@@ -210,12 +210,12 @@ export const StatusPageView: React.FC = () => {
   const OverallIcon = overallConfig.icon;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-c-surface-raised">
       {/* Header */}
-      <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+      <header className="bg-c-surface border-b border-c-border-subtle">
         <div className="max-w-4xl mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{t.title[lang]}</h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-1">{t.subtitle[lang]}</p>
+          <h1 className="text-3xl font-bold text-c-text">{t.title[lang]}</h1>
+          <p className="text-c-text-secondary mt-1">{t.subtitle[lang]}</p>
         </div>
       </header>
 
@@ -234,26 +234,26 @@ export const StatusPageView: React.FC = () => {
                   ? t.allOperational[lang]
                   : overallConfig.label[lang]}
               </h2>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-c-text-secondary">
                 {t.lastUpdated[lang]}: {status ? new Date(status.timestamp).toLocaleString() : '-'}
               </p>
             </div>
           </div>
           <button
             onClick={fetchData}
-            className="p-2 hover:bg-white/50 dark:hover:bg-slate-700/50 rounded-lg transition-colors"
+            className="p-2 hover:bg-c-surface/50 rounded-lg transition-colors"
             title={t.refresh[lang]}
           >
-            <RefreshCw size={20} className="text-slate-600 dark:text-slate-300" />
+            <RefreshCw size={20} className="text-c-text-secondary" />
           </button>
         </motion.div>
 
         {/* Services */}
         <section>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+          <h3 className="text-lg font-semibold text-c-text mb-4">
             {t.services[lang]}
           </h3>
-          <div className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-sm">
+          <div className="bg-c-surface rounded-xl overflow-hidden shadow-sm">
             {status &&
               Object.entries(status.services).map(([key, service], i) => {
                 const ServiceIcon = SERVICE_ICONS[key] || Server;
@@ -266,18 +266,18 @@ export const StatusPageView: React.FC = () => {
                   <div
                     key={key}
                     className={`flex items-center justify-between px-6 py-4 ${
-                      i > 0 ? 'border-t border-slate-200 dark:border-slate-700' : ''
+                      i > 0 ? 'border-t border-c-border-subtle' : ''
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <ServiceIcon size={20} className="text-slate-600 dark:text-slate-500" />
-                      <span className="font-medium text-slate-900 dark:text-white">
+                      <ServiceIcon size={20} className="text-c-text-muted" />
+                      <span className="font-medium text-c-text">
                         {SERVICE_NAMES[key]?.[lang] || key}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       {service.latency && (
-                        <span className="text-sm text-slate-500 dark:text-slate-400">
+                        <span className="text-sm text-c-text-muted">
                           {service.latency}ms
                         </span>
                       )}
@@ -295,23 +295,23 @@ export const StatusPageView: React.FC = () => {
         {/* Uptime */}
         {uptime && (
           <section>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+            <h3 className="text-lg font-semibold text-c-text mb-4">
               {t.uptime[lang]} ({uptime.period})
             </h3>
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
+            <div className="bg-c-surface rounded-xl p-6 shadow-sm">
               <div className="text-center mb-6">
-                <div className="text-5xl font-bold text-green-500">{uptime.overall}%</div>
-                <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <div className="text-5xl font-bold text-c-success">{uptime.overall}%</div>
+                <div className="text-sm text-c-text-muted mt-1">
                   {lang === 'pl' ? 'Ogólna dostępność' : 'Overall Uptime'}
                 </div>
               </div>
               <div className="grid grid-cols-5 gap-4">
                 {Object.entries(uptime.services).map(([key, value]) => (
                   <div key={key} className="text-center">
-                    <div className="text-lg font-semibold text-slate-900 dark:text-white">
+                    <div className="text-lg font-semibold text-c-text">
                       {value}%
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                    <div className="text-xs text-c-text-muted">
                       {SERVICE_NAMES[key]?.[lang] || key}
                     </div>
                   </div>
@@ -323,12 +323,12 @@ export const StatusPageView: React.FC = () => {
 
         {/* Scheduled Maintenance */}
         <section>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+          <h3 className="text-lg font-semibold text-c-text mb-4">
             {t.maintenance[lang]}
           </h3>
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-c-surface rounded-xl shadow-sm overflow-hidden">
             {maintenance.length === 0 ? (
-              <div className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+              <div className="px-6 py-8 text-center text-c-text-muted">
                 <Clock size={32} className="mx-auto mb-2 opacity-50" />
                 {t.noMaintenance[lang]}
               </div>
@@ -336,16 +336,16 @@ export const StatusPageView: React.FC = () => {
               maintenance.map((item) => (
                 <div
                   key={item.id}
-                  className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 last:border-0"
+                  className="px-6 py-4 border-b border-c-border-subtle last:border-0"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-medium text-slate-900 dark:text-white">{item.title}</h4>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                      <h4 className="font-medium text-c-text">{item.title}</h4>
+                      <p className="text-sm text-c-text-secondary">
                         {item.description}
                       </p>
                     </div>
-                    <div className="text-sm text-slate-500 dark:text-slate-400">
+                    <div className="text-sm text-c-text-muted">
                       {new Date(item.scheduledStart).toLocaleDateString()}
                     </div>
                   </div>
@@ -357,53 +357,53 @@ export const StatusPageView: React.FC = () => {
 
         {/* Recent Incidents */}
         <section>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+          <h3 className="text-lg font-semibold text-c-text mb-4">
             {t.incidents[lang]}
           </h3>
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-c-surface rounded-xl shadow-sm overflow-hidden">
             {incidents.length === 0 ? (
-              <div className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
-                <CheckCircle size={32} className="mx-auto mb-2 opacity-50 text-green-500" />
+              <div className="px-6 py-8 text-center text-c-text-muted">
+                <CheckCircle size={32} className="mx-auto mb-2 opacity-50 text-c-success" />
                 {t.noIncidents[lang]}
               </div>
             ) : (
               incidents.map((incident) => (
                 <div
                   key={incident.id}
-                  className="border-b border-slate-200 dark:border-slate-700 last:border-0"
+                  className="border-b border-c-border-subtle last:border-0"
                 >
                   <button
                     onClick={() =>
                       setExpandedIncident(expandedIncident === incident.id ? null : incident.id)
                     }
-                    className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                    className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-c-surface-raised"
                   >
                     <div>
-                      <h4 className="font-medium text-slate-900 dark:text-white">
+                      <h4 className="font-medium text-c-text">
                         {incident.title}
                       </h4>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                      <p className="text-sm text-c-text-secondary">
                         {new Date(incident.createdAt).toLocaleDateString()} • {incident.status}
                       </p>
                     </div>
                     {expandedIncident === incident.id ? (
-                      <ChevronUp size={20} className="text-slate-600 dark:text-slate-500" />
+                      <ChevronUp size={20} className="text-c-text-muted" />
                     ) : (
-                      <ChevronDown size={20} className="text-slate-600 dark:text-slate-500" />
+                      <ChevronDown size={20} className="text-c-text-muted" />
                     )}
                   </button>
                   {expandedIncident === incident.id && (
                     <div className="px-6 pb-4">
-                      <p className="text-slate-600 dark:text-slate-300 mb-4">
+                      <p className="text-c-text-secondary mb-4">
                         {incident.description}
                       </p>
                       <div className="space-y-2">
                         {incident.updates.map((update, i) => (
                           <div key={i} className="flex gap-3 text-sm">
-                            <span className="text-slate-600 dark:text-slate-500">
+                            <span className="text-c-text-muted">
                               {new Date(update.timestamp).toLocaleTimeString()}
                             </span>
-                            <span className="text-slate-600 dark:text-slate-300">
+                            <span className="text-c-text-secondary">
                               {update.message}
                             </span>
                           </div>
@@ -418,21 +418,21 @@ export const StatusPageView: React.FC = () => {
         </section>
 
         {/* Subscribe */}
-        <section className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
+        <section className="bg-c-surface rounded-xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
-            <Bell size={20} className="text-primary-500" />
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+            <Bell size={20} className="text-c-accent" />
+            <h3 className="text-lg font-semibold text-c-text">
               {t.subscribe[lang]}
             </h3>
           </div>
-          <p className="text-slate-600 dark:text-slate-400 mb-4">{t.subscribeDesc[lang]}</p>
+          <p className="text-c-text-secondary mb-4">{t.subscribeDesc[lang]}</p>
           <form onSubmit={handleSubscribe} className="flex gap-3">
             <input
               type="email"
               value={subscribeEmail}
               onChange={(e) => setSubscribeEmail(e.target.value)}
               placeholder="email@example.com"
-              className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+              className="flex-1 px-4 py-2 border border-c-border rounded-lg bg-c-surface text-c-text"
               required
             />
             <button

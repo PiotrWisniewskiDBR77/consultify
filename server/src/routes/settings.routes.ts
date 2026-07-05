@@ -4882,17 +4882,23 @@ router.get(
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
-    await ensureUserApiKeysTable();
+    // Fail-soft: lazy DDL must not surface as a bare 500 on a read.
+    try {
+      await ensureUserApiKeysTable();
 
-    const keys = await dbAll(
-      `SELECT id, name, key_prefix as keyPrefix, permissions, rate_limit as rateLimit,
-                    last_used_at as lastUsedAt, expires_at as expiresAt, is_active as isActive,
-                    created_at as createdAt
-             FROM user_api_keys WHERE user_id = ? ORDER BY created_at DESC`,
-      [userId]
-    );
+      const keys = await dbAll(
+        `SELECT id, name, key_prefix as keyPrefix, permissions, rate_limit as rateLimit,
+                      last_used_at as lastUsedAt, expires_at as expiresAt, is_active as isActive,
+                      created_at as createdAt
+               FROM user_api_keys WHERE user_id = ? ORDER BY created_at DESC`,
+        [userId]
+      );
 
-    return res.json({ keys });
+      return res.json({ keys });
+    } catch (err) {
+      console.error('[settings] GET /api-keys failed (fail-soft, returning empty):', err);
+      return res.json({ keys: [] });
+    }
   })
 );
 
@@ -5409,10 +5415,6 @@ router.get(
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
-    await ensureDeveloperSettingsTable();
-
-    const row = await dbGet<any>(`SELECT * FROM developer_settings WHERE user_id = ?`, [userId]);
-
     const defaultSettings = {
       developerMode: false,
       apiLogging: false,
@@ -5421,19 +5423,29 @@ router.get(
       betaFeatures: [],
     };
 
-    if (!row) {
+    // Fail-soft: lazy DDL must not surface as a bare 500 on a read.
+    try {
+      await ensureDeveloperSettingsTable();
+
+      const row = await dbGet<any>(`SELECT * FROM developer_settings WHERE user_id = ?`, [userId]);
+
+      if (!row) {
+        return res.json({ settings: defaultSettings });
+      }
+
+      return res.json({
+        settings: {
+          developerMode: !!row.developer_mode,
+          apiLogging: !!row.api_logging,
+          verboseErrors: !!row.verbose_errors,
+          showDebugInfo: !!row.show_debug_info,
+          betaFeatures: JSON.parse(row.beta_features || '[]'),
+        },
+      });
+    } catch (err) {
+      console.error('[settings] GET /developer failed (fail-soft, returning defaults):', err);
       return res.json({ settings: defaultSettings });
     }
-
-    return res.json({
-      settings: {
-        developerMode: !!row.developer_mode,
-        apiLogging: !!row.api_logging,
-        verboseErrors: !!row.verbose_errors,
-        showDebugInfo: !!row.show_debug_info,
-        betaFeatures: JSON.parse(row.beta_features || '[]'),
-      },
-    });
   })
 );
 

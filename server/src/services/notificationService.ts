@@ -3,6 +3,8 @@
  * FLOW-NOTIFICATION-001: Multi-channel notification system
  */
 
+import crypto from 'crypto';
+
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
@@ -11,7 +13,26 @@ import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
 import { send as sendEmail } from './emailService.js';
+import { enqueueProgressEvent } from './slack/progressFeed.js';
 import { SlackServiceClass } from './slackService.js';
+
+// ==========================================
+// PROGRESS FEED (Slack Command Center, Filar 4 / F3)
+// ==========================================
+//
+// Work notifications (task/initiative/decision/gate) additionally feed the
+// GLOBAL, batched #cf-progress feed. This is orthogonal to the existing
+// in_app/email/per-org-slack routing — it never replaces or gates those.
+
+/** Coarse bucket for a work-type notification, or null if not a work type. */
+function progressKindForType(type: string): 'TASK' | 'INITIATIVE' | 'DECISION' | 'GATE' | null {
+  const t = String(type || '').toUpperCase();
+  if (t.startsWith('TASK_') || t === 'TASK') return 'TASK';
+  if (t.startsWith('INITIATIVE_') || t === 'INITIATIVE') return 'INITIATIVE';
+  if (t.startsWith('DECISION_') || t === 'DECISION') return 'DECISION';
+  if (t.startsWith('GATE_') || t === 'GATE') return 'GATE';
+  return null;
+}
 
 // ==========================================
 // TYPES
@@ -87,15 +108,39 @@ export interface SendNotificationInput {
   recipientEmails?: string[];
   bypassPreferences?: boolean;
   bypassQuietHours?: boolean;
+  /**
+   * Idempotency controls. By default an identical notification
+   * (type + recipient + entity ref) fired within DEFAULT_DEDUPE_WINDOW_SECONDS
+   * is collapsed into a single send. Set `dedupe: false` to always send.
+   */
+  dedupe?: boolean;
+  /** Override the dedup window (seconds) for this send. */
+  dedupeWindowSeconds?: number;
+  /**
+   * Explicit idempotency key. When provided it fully determines the dedup
+   * identity (still scoped to the recipient); otherwise a key is derived from
+   * type + entity reference. Useful when the entity ref alone is ambiguous.
+   */
+  dedupeKey?: string;
 }
 
 // ==========================================
 // SERVICE
 // ==========================================
 
+/**
+ * Default idempotency window (seconds). Two logically-identical notifications
+ * (same type + recipient + entity reference) fired inside this window collapse
+ * into a single send. Callers can override per-send via `dedupeWindowSeconds`,
+ * or opt out entirely via `dedupe: false`.
+ */
+const DEFAULT_DEDUPE_WINDOW_SECONDS = 60;
+
 class NotificationService {
   private db: IDatabase | null = null;
   private notificationsCols: Set<string> | null = null;
+  /** Cached result of the lazy dedup-table DDL (null = not yet attempted). */
+  private dedupTableReady: boolean | null = null;
 
   private async getDb(): Promise<IDatabase> {
     if (!this.db) {
@@ -203,6 +248,20 @@ class NotificationService {
     const now = new Date().toISOString();
     const bypassPreferences = Boolean(input.bypassPreferences);
     const bypassQuietHours = Boolean(input.bypassQuietHours);
+
+    // Idempotency / dedup gate — BEFORE any DB write or multi-channel dispatch.
+    // Collapses logically-identical notifications (same type + recipient +
+    // entity reference) fired within the dedup window into a single send.
+    // Fail-open: any dedup error must never block a real notification.
+    if (input.dedupe !== false) {
+      const existingId = await this.claimDedupSlot(input, id, now);
+      if (existingId) {
+        logger.info(
+          `[NotificationService] Skipped duplicate notification type=${input.type} user=${input.userId} (idempotency hit → existing=${existingId})`
+        );
+        return existingId;
+      }
+    }
 
     // Get user preferences
     const prefs = await this.getPreferences(input.userId);
@@ -316,6 +375,28 @@ class NotificationService {
       bypassPreferences,
       bypassQuietHours,
     });
+
+    // Additionally feed the GLOBAL batched #cf-progress feed for work events
+    // (task/initiative/decision/gate). Fail-soft — never affects the send.
+    try {
+      const kind = progressKindForType(input.type);
+      if (kind) {
+        const t = String(input.type || '').toUpperCase();
+        const urgent = severity === 'CRITICAL' || t.includes('BLOCKED');
+        enqueueProgressEvent({
+          kind,
+          title: input.title || input.body || input.type,
+          detail:
+            input.body && input.body !== input.title
+              ? String(input.body).slice(0, 200)
+              : undefined,
+          orgId: input.organizationId,
+          urgent,
+        });
+      }
+    } catch (feedErr) {
+      logger.warn('[NotificationService] progress feed enqueue failed (non-fatal):', feedErr);
+    }
 
     logger.info(
       `[NotificationService] Sent notification ${id} type=${input.type} severity=${severity} to user=${input.userId}`
@@ -806,6 +887,7 @@ class NotificationService {
           email_digest_frequency: string;
           type_settings: string;
         }
+      | null
       | undefined;
     try {
       row = await db.get(`SELECT * FROM notification_preferences WHERE user_id = ?`, [userId]);
@@ -1106,6 +1188,143 @@ class NotificationService {
       );
     } catch (err) {
       logger.warn(`[NotificationService] Failed to add activity log: ${err}`);
+    }
+  }
+
+  // ==========================================
+  // IDEMPOTENCY / DEDUP
+  // ==========================================
+
+  /**
+   * Ensure the dedup table exists. Lazy DDL, guarded so an under-migrated env
+   * (or a read-only replica) can never 500 the notification path — see the
+   * settings_500 lazy-DDL finding. Returns false if the table is unavailable,
+   * in which case the caller treats dedup as a no-op (fail-open: always send).
+   */
+  private async ensureDedupTable(): Promise<boolean> {
+    if (this.dedupTableReady !== null) return this.dedupTableReady;
+    try {
+      const db = await this.getDb();
+      await db.run(
+        `CREATE TABLE IF NOT EXISTS notification_dedup (
+          dedupe_key TEXT NOT NULL,
+          user_id TEXT NOT NULL,
+          notification_id TEXT NOT NULL,
+          type TEXT,
+          organization_id TEXT,
+          created_at TEXT NOT NULL,
+          expires_at TEXT NOT NULL,
+          PRIMARY KEY (dedupe_key, user_id)
+        )`,
+        []
+      );
+      // Best-effort index for TTL sweeps; ignore if it fails.
+      try {
+        await db.run(
+          `CREATE INDEX IF NOT EXISTS idx_notification_dedup_expires ON notification_dedup (expires_at)`,
+          []
+        );
+      } catch {
+        // non-fatal
+      }
+      this.dedupTableReady = true;
+    } catch (err) {
+      logger.warn(
+        `[NotificationService] dedup table unavailable, dedup disabled (fail-open): ${err}`
+      );
+      this.dedupTableReady = false;
+    }
+    return this.dedupTableReady;
+  }
+
+  /**
+   * Derive the idempotency key for a send. Identity = type + entity reference
+   * (or an explicit caller-supplied key). The recipient (user_id) is a separate
+   * PK column, so the key is intentionally recipient-agnostic here. Falls back
+   * to a body/title hash when no entity reference is available so that
+   * entity-less notifications still dedup on identical content.
+   */
+  private computeDedupeKey(input: SendNotificationInput): string {
+    const type = String(input.type || '').toLowerCase();
+    const entityType = String(
+      input.relatedObjectType || input.entityType || ''
+    ).toLowerCase();
+    const entityId = String(input.relatedObjectId || input.entityId || '');
+    const explicit = String(input.dedupeKey || '').trim();
+
+    const identityParts = explicit
+      ? ['k', explicit]
+      : entityId
+        ? ['e', entityType, entityId]
+        : ['c', String(input.title || ''), String(input.body || input.message || '')];
+
+    const raw = [type, ...identityParts].join('|');
+    return crypto.createHash('sha256').update(raw).digest('hex').slice(0, 32);
+  }
+
+  /**
+   * Atomically claim a dedup slot for this send within the configured window.
+   *
+   * Returns the id of the PRE-EXISTING, still-live notification if this send is
+   * a duplicate (caller should skip sending and return that id); returns null if
+   * the slot was freshly claimed (caller should proceed with the send).
+   *
+   * Mechanism: a single-owner row keyed by (dedupe_key, user_id). We first
+   * reclaim any expired slot (TTL lapsed), then attempt an INSERT. A PK
+   * collision means a live slot already exists → duplicate. Fail-open on any
+   * error (returns null → send proceeds).
+   */
+  private async claimDedupSlot(
+    input: SendNotificationInput,
+    notificationId: string,
+    nowIso: string
+  ): Promise<string | null> {
+    const ready = await this.ensureDedupTable();
+    if (!ready) return null;
+
+    try {
+      const db = await this.getDb();
+      const key = this.computeDedupeKey(input);
+      const windowSeconds =
+        typeof input.dedupeWindowSeconds === 'number' && input.dedupeWindowSeconds > 0
+          ? input.dedupeWindowSeconds
+          : DEFAULT_DEDUPE_WINDOW_SECONDS;
+      const expiresAt = new Date(Date.parse(nowIso) + windowSeconds * 1000).toISOString();
+
+      // Reclaim an expired slot so a lapsed window frees the key for reuse.
+      await db.run(
+        `DELETE FROM notification_dedup WHERE dedupe_key = ? AND user_id = ? AND expires_at <= ?`,
+        [key, input.userId, nowIso]
+      );
+
+      try {
+        await db.run(
+          `INSERT INTO notification_dedup
+            (dedupe_key, user_id, notification_id, type, organization_id, created_at, expires_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            key,
+            input.userId,
+            notificationId,
+            input.type,
+            input.organizationId,
+            nowIso,
+            expiresAt,
+          ]
+        );
+        // Fresh claim — this is the first (and only) send for this window.
+        return null;
+      } catch {
+        // PK collision → a live slot exists. Return the owning notification id.
+        const existing = await db.get<{ notification_id: string }>(
+          `SELECT notification_id FROM notification_dedup WHERE dedupe_key = ? AND user_id = ?`,
+          [key, input.userId]
+        );
+        return existing?.notification_id || notificationId;
+      }
+    } catch (err) {
+      logger.warn(`[NotificationService] dedup claim failed (fail-open, sending): ${err}`);
+      return null;
     }
   }
 

@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../../database/Database.js';
 import { IDatabase } from '../../database/IDatabase.js';
+import { createInitiative as funnelCreateInitiative } from './createInitiativeService.js';
 
 export interface Initiative {
   id: string;
@@ -94,12 +95,42 @@ LIMIT ? OFFSET ? `,
   }
 
   async createInitiative(data: CreateInitiativeData): Promise<Initiative> {
-    const id = this.deps.uuidv4();
-    const now = new Date().toISOString();
     const orgId = data.organization_id || data.org_id;
-
     if (!orgId) throw new Error('Organization ID is required');
 
+    // Uspójnienie F1.9 — kanoniczny lejek tworzenia inicjatyw.
+    if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+      const ownerId = data.owner_business_id || data.owner_id || null;
+      const __r = await funnelCreateInitiative(
+        orgId,
+        {
+          title: data.title,
+          projectId: data.project_id || null,
+          axis: data.axis || null,
+          area: data.area || null,
+          summary: data.summary || null,
+          hypothesis: data.hypothesis || null,
+          status: data.status || null,
+          businessValue: data.business_value ? Number(data.business_value) : null,
+          costCapex: data.cost_capex || null,
+          costOpex: data.cost_opex || null,
+          expectedRoi: data.expected_roi || null,
+          plannedStartDate: data.start_date || null,
+          plannedEndDate: data.end_date || null,
+          ownerBusinessId: ownerId,
+          ownerExecutionId: data.owner_execution_id || null,
+          sourceType: 'manual',
+          sourceId: null,
+        },
+        { validate: false }
+      );
+      const created = await this.getInitiativeById(__r.id);
+      if (!created) throw new Error('Failed to create initiative');
+      return created;
+    }
+
+    const id = this.deps.uuidv4();
+    const now = new Date().toISOString();
     const ownerId = data.owner_business_id || data.owner_id || null;
 
     // Build the INSERT column-by-column and include the legacy alias columns
@@ -134,7 +165,7 @@ LIMIT ? OFFSET ? `,
     push('area', data.area || null);
     push('summary', data.summary || null);
     push('hypothesis', data.hypothesis || null);
-    push('status', data.status || 'step3');
+    push('status', data.status || 'DRAFT'); // Uspójnienie F1.11 — 'step3' (legacy, nieprawidłowy) → DRAFT
     push('current_stage', data.current_stage || null);
     push('business_value', data.business_value || null);
     push(

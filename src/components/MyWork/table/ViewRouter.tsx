@@ -28,6 +28,7 @@ import type { FieldType, LinkedRecordFieldOptions, TablePlatformView } from '@/t
 
 import { CalendarView } from './CalendarView';
 import { CellEditor } from './CellEditor';
+import { getConditionalStyle, type FormatRule } from './ConditionalFormatting';
 import { ChatToSchemaPanel } from './ChatToSchemaPanel';
 import { EmptyStateView } from './EmptyStateView';
 import { FieldManager } from './FieldManager';
@@ -96,6 +97,8 @@ interface PlatformGridViewProps {
   viewConfig?: { missing_fields?: string[]; missing_field_names?: Record<string, string> };
   onRemoveMissingField?: (fieldId: string) => void;
   isPl: boolean;
+  /** R5: conditional-formatting rules applied per-cell. */
+  formatRules: FormatRule[];
 }
 
 const PlatformGridView: React.FC<PlatformGridViewProps> = ({
@@ -113,12 +116,13 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
   viewConfig,
   onRemoveMissingField,
   isPl,
+  formatRules,
 }) => {
   const renderCell = (row: TableNode, col: ColumnDef) => {
     if (isMissingField(col.key, viewConfig)) {
       return (
         <div
-          className="px-1 py-1 text-xs text-amber-500 dark:text-amber-400 italic select-none"
+          className="px-1 py-1 text-xs text-c-warning italic select-none"
           aria-hidden
         >
           —
@@ -180,7 +184,7 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
       <div
         role="gridcell"
         tabIndex={0}
-        className="min-w-0 min-h-[36px] flex items-stretch outline-none focus-visible:ring-1 focus-visible:ring-primary-500/40 cursor-text"
+        className="min-w-0 min-h-[36px] flex items-stretch outline-none focus-visible:ring-1 focus-visible:ring-c-focus cursor-text"
         onDoubleClick={(e) => {
           e.stopPropagation();
           if (locked || pf?.isComputed) return;
@@ -200,11 +204,11 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
   };
 
   const renderRow = (row: TableNode) => (
-    <tr key={row.id} className="hover:bg-slate-50/80 dark:hover:bg-navy-900/40">
-      <td className="w-10 border-b border-r border-slate-200/80 dark:border-navy-700/80 px-1 py-1 align-middle text-center">
+    <tr key={row.id} className="hover:bg-c-surface-raised">
+      <td className="w-10 border-b border-r border-c-border-subtle px-1 py-1 align-middle text-center">
         <input
           type="checkbox"
-          className="rounded border-slate-300 dark:border-navy-600"
+          className="rounded border-c-border"
           checked={selectedRowIds.has(row.id)}
           disabled={locked}
           onChange={() => toggleRowSelection(row.id)}
@@ -213,13 +217,18 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
       </td>
       {visibleColumns.map((col) => {
         const missing = isMissingField(col.key, viewConfig);
+        // R5: conditional formatting — only on real (non-missing) cells.
+        const cfStyle = missing
+          ? undefined
+          : getConditionalStyle(formatRules, col.key, row.data?.[col.key]);
         return (
           <td
             key={col.key}
+            style={cfStyle}
             className={
               missing
-                ? 'border-b border-r border-amber-100 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/10 align-top min-w-[120px] max-w-[280px] px-3 py-2 text-xs text-amber-500 dark:text-amber-400 italic'
-                : 'border-b border-r border-slate-200/80 dark:border-navy-700/80 align-top min-w-[120px] max-w-[280px]'
+                ? 'border-b border-r border-[color-mix(in_srgb,var(--c-warning)_20%,transparent)] bg-[color-mix(in_srgb,var(--c-warning)_8%,transparent)] align-top min-w-[120px] max-w-[280px] px-3 py-2 text-xs text-c-warning italic'
+                : 'border-b border-r border-c-border-subtle align-top min-w-[120px] max-w-[280px]'
             }
           >
             {renderCell(row, col)}
@@ -233,10 +242,10 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
     groupedRows && Object.keys(groupedRows).length > 0
       ? Object.entries(groupedRows).map(([groupLabel, rows]) => (
           <React.Fragment key={groupLabel}>
-            <tr className="bg-slate-100/90 dark:bg-navy-900/80">
+            <tr className="bg-c-surface-raised">
               <td
                 colSpan={visibleColumns.length + 1}
-                className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200/80 dark:border-navy-700/80"
+                className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-c-text-muted border-b border-c-border-subtle"
               >
                 {groupLabel}
               </td>
@@ -247,11 +256,11 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
       : processedRows.map((row) => renderRow(row));
 
   return (
-    <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/90 dark:bg-navy-950/40">
+    <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-c-border-subtle bg-c-surface">
       <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full border-collapse text-left text-[11px]">
-        <thead className="sticky top-0 z-10 bg-slate-50/95 dark:bg-navy-900/95 backdrop-blur-sm">
+        <thead className="sticky top-0 z-10 bg-c-surface-raised backdrop-blur-sm">
           <tr>
-            <th className="w-10 border-b border-r border-slate-200/80 dark:border-navy-700/80" />
+            <th className="w-10 border-b border-r border-c-border-subtle" />
             {visibleColumns.map((col) => {
               const missing = isMissingField(col.key, viewConfig);
               const missingFieldName =
@@ -260,7 +269,7 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
                 return (
                   <th
                     key={col.key}
-                    className="border-b border-r border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs px-3 py-2 font-semibold text-left whitespace-nowrap"
+                    className="border-b border-r border-[color-mix(in_srgb,var(--c-warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)] text-c-warning text-xs px-3 py-2 font-semibold text-left whitespace-nowrap"
                   >
                     <div className="flex items-center gap-1.5">
                       <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -268,7 +277,7 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
                       <button
                         type="button"
                         onClick={() => onRemoveMissingField?.(col.key)}
-                        className="ml-auto shrink-0 text-amber-500 hover:text-amber-700 dark:hover:text-amber-300"
+                        className="ml-auto shrink-0 text-c-warning hover:brightness-110"
                         title={isPl ? 'Usuń z widoku' : 'Remove from view'}
                         aria-label={isPl ? 'Usuń z widoku' : 'Remove from view'}
                       >
@@ -281,7 +290,7 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
               return (
                 <th
                   key={col.key}
-                  className="border-b border-r border-slate-200/80 dark:border-navy-700/80 px-2 py-2 font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap"
+                  className="border-b border-r border-c-border-subtle px-2 py-2 font-semibold text-c-text-secondary whitespace-nowrap"
                 >
                   {col.header}
                 </th>
@@ -337,6 +346,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
     activeViewConfig,
     removeMissingFieldFromView,
     savedViews,
+    formatRules,
   } = useTableData();
 
   const activeViewName = useMemo(() => {
@@ -479,7 +489,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
       case 'kanban':
         if (!kanbanGroupColumn) {
           return (
-            <div className="flex flex-1 items-center justify-center text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex flex-1 items-center justify-center text-sm text-c-text-muted">
               {isPl ? 'Brak kolumny grupującej' : 'No grouping column'}
             </div>
           );
@@ -522,7 +532,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
       case 'matrix':
         if (!mxX || !mxY) {
           return (
-            <div className="flex flex-1 items-center justify-center text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex flex-1 items-center justify-center text-sm text-c-text-muted">
               {isPl ? 'Brak kolumn' : 'No columns'}
             </div>
           );
@@ -587,11 +597,11 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
     loading && !nodes.length ? (
       <div className="flex flex-1 items-center justify-center p-12">
         <div className="space-y-3 w-full max-w-2xl">
-          <div className="h-10 bg-slate-100 dark:bg-navy-800 rounded-xl animate-pulse" />
-          <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse" />
-          <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse w-3/4" />
-          <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse w-1/2" />
-          <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse w-5/6" />
+          <div className="h-10 bg-c-surface-raised rounded-xl animate-pulse" />
+          <div className="h-8 bg-c-surface-raised rounded-lg animate-pulse" />
+          <div className="h-8 bg-c-surface-raised rounded-lg animate-pulse w-3/4" />
+          <div className="h-8 bg-c-surface-raised rounded-lg animate-pulse w-1/2" />
+          <div className="h-8 bg-c-surface-raised rounded-lg animate-pulse w-5/6" />
         </div>
       </div>
     ) : processedRows.length === 0 ? (
@@ -620,6 +630,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
           viewConfig={activeViewConfig}
           onRemoveMissingField={handleRemoveMissingField}
           isPl={isPl}
+          formatRules={formatRules}
         />
       </ViewErrorBoundary>
     ) : (
@@ -642,16 +653,16 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
       />
 
       {base && table && (
-        <nav className="flex items-center gap-1.5 px-4 py-2 text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-navy-800/60 shrink-0">
+        <nav className="flex items-center gap-1.5 px-4 py-2 text-xs text-c-text-muted border-b border-c-border-subtle shrink-0">
           <span
-            className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[120px]"
+            className="font-medium text-c-text-secondary truncate max-w-[120px]"
             title={base.name}
           >
             {base.name}
           </span>
           <ChevronRight className="h-3 w-3 shrink-0" />
           <span
-            className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[160px]"
+            className="font-medium text-c-text-secondary truncate max-w-[160px]"
             title={table.name}
           >
             {table.name}
@@ -660,7 +671,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
             <>
               <ChevronRight className="h-3 w-3 shrink-0" />
               <span
-                className="text-primary-600 dark:text-primary-400 truncate max-w-[140px]"
+                className="text-c-accent truncate max-w-[140px]"
                 title={activeViewName}
               >
                 {activeViewName}
@@ -670,8 +681,8 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
         </nav>
       )}
 
-      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-200/60 pb-2 dark:border-navy-700/60">
-        <div className="inline-flex items-center gap-2 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-c-border-subtle pb-2">
+        <div className="inline-flex items-center gap-2 text-[11px] font-semibold text-c-text-muted">
           <Table2 className="h-3.5 w-3.5" />
           <span>{isPl ? 'Widok' : 'View'}</span>
         </div>
@@ -687,10 +698,10 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
 
       {mobileViewPickerOpen && (
         <div
-          className="md:hidden fixed inset-x-2 z-[45] rounded-xl border border-slate-200/80 bg-white/95 p-2 shadow-xl backdrop-blur-sm dark:border-navy-700/80 dark:bg-navy-900/95"
+          className="md:hidden fixed inset-x-2 z-[45] rounded-xl border border-c-border-subtle bg-c-surface p-2 shadow-xl backdrop-blur-sm"
           style={{ bottom: 'calc(3.75rem + env(safe-area-inset-bottom, 0px))' }}
         >
-          <div className="mb-1 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+          <div className="mb-1 text-center text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
             {isPl ? 'Układ widoku' : 'View layout'}
           </div>
           <div className="flex flex-wrap justify-center gap-1">
@@ -706,10 +717,10 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
                     setViewLayout(item.id);
                     setMobileViewPickerOpen(false);
                   }}
-                  className={`flex h-10 w-10 items-center justify-center rounded-lg border text-slate-500 transition-colors dark:text-slate-400 ${
+                  className={`flex h-10 w-10 items-center justify-center rounded-lg border text-c-text-muted transition-colors ${
                     active
-                      ? 'border-primary-500/40 bg-primary-500/10 text-primary-600 dark:text-primary-400'
-                      : 'border-slate-200/60 bg-white/80 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-800/80 dark:hover:bg-navy-800'
+                      ? 'border-c-accent bg-c-accent-soft text-c-accent'
+                      : 'border-c-border-subtle bg-c-surface hover:bg-c-surface-raised'
                   }`}
                 >
                   <Icon className="h-4 w-4" strokeWidth={1.75} />
@@ -725,7 +736,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
       </div>
 
       <div
-        className="md:hidden fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around gap-1 border-t border-slate-200/80 bg-white/95 px-2 pt-2 shadow-[0_-4px_24px_rgba(15,23,42,0.08)] backdrop-blur-md dark:border-navy-700/80 dark:bg-navy-900/95 dark:shadow-[0_-4px_24px_rgba(0,0,0,0.35)]"
+        className="md:hidden fixed inset-x-0 bottom-0 z-40 flex items-stretch justify-around gap-1 border-t border-c-border-subtle bg-c-surface px-2 pt-2 shadow-[0_-4px_24px_rgba(15,23,42,0.08)] backdrop-blur-md dark:shadow-[0_-4px_24px_rgba(0,0,0,0.35)]"
         style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))' }}
       >
         <button
@@ -734,9 +745,9 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
           onClick={() => {
             if (!locked) handleAddRow();
           }}
-          className="flex min-h-[48px] min-w-[56px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-[10px] font-medium text-slate-600 disabled:opacity-40 dark:text-slate-300"
+          className="flex min-h-[48px] min-w-[56px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-[10px] font-medium text-c-text-secondary disabled:opacity-40"
         >
-          <Plus className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+          <Plus className="h-5 w-5 text-c-accent" />
           {isPl ? 'Rekord' : 'Record'}
         </button>
         <button
@@ -745,9 +756,9 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
             uiDispatch({ type: 'SET_PANEL', panel: 'showFilters', value: true });
             setMobileViewPickerOpen(false);
           }}
-          className="flex min-h-[48px] min-w-[56px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-[10px] font-medium text-slate-600 dark:text-slate-300"
+          className="flex min-h-[48px] min-w-[56px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-[10px] font-medium text-c-text-secondary"
         >
-          <Filter className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+          <Filter className="h-5 w-5 text-c-text-muted" />
           {isPl ? 'Filtr' : 'Filter'}
         </button>
         <button
@@ -755,8 +766,8 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
           onClick={() => setMobileViewPickerOpen((o) => !o)}
           className={`flex min-h-[48px] min-w-[56px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-[10px] font-medium ${
             mobileViewPickerOpen
-              ? 'text-primary-600 dark:text-primary-400'
-              : 'text-slate-600 dark:text-slate-300'
+              ? 'text-c-accent'
+              : 'text-c-text-secondary'
           }`}
         >
           <Layout className="h-5 w-5" />

@@ -1948,7 +1948,7 @@ ${sourceText || '(none)'}`;
                         }
                         className={`inline-flex items-center justify-center h-9 rounded-full text-xs font-medium border transition-colors ${
                           isActive
-                            ? 'border-primary-500/40 bg-primary-600 text-white'
+                            ? 'border-c-text bg-c-text text-c-bg'
                             : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
                         } disabled:opacity-50 disabled:pointer-events-none`}
                       >

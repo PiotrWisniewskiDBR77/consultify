@@ -163,7 +163,7 @@ async function openTable(page: Page, label: string) {
   const idea = await createIdea(page, token, uniqueLabel(label));
   await gotoTable(page, idea.id);
   await dismissOnboarding(page);
-  await expect(page.getByRole('region', { name: 'Idea map workspace' })).toBeVisible({
+  await expect(page.getByRole('region', { name: /Idea map workspace|Obszar roboczy mapy idei/ })).toBeVisible({
     timeout: 30000,
   });
   return idea;
@@ -206,7 +206,7 @@ test.describe('M08 Ideas · Table — representative acceptance', () => {
     await suppressOnboarding(page, sharedUserId);
     await gotoTable(page, sharedIdeaId);
     await dismissOnboarding(page);
-    await expect(page.getByRole('region', { name: 'Idea map workspace' })).toBeVisible({
+    await expect(page.getByRole('region', { name: /Idea map workspace|Obszar roboczy mapy idei/ })).toBeVisible({
       timeout: 30000,
     });
   }
@@ -366,7 +366,7 @@ test.describe('M08 Ideas · Table — representative acceptance', () => {
     await page.waitForTimeout(2500);
     await gotoTable(page, idea.id);
     await dismissOnboarding(page);
-    await expect(page.getByRole('region', { name: 'Idea map workspace' })).toBeVisible({ timeout: 30000 });
+    await expect(page.getByRole('region', { name: /Idea map workspace|Obszar roboczy mapy idei/ })).toBeVisible({ timeout: 30000 });
     // Workspace reloaded cleanly — the toolbar is functional again.
     await expect(addBlankRow).toBeVisible({ timeout: 15000 });
     await expect(page.getByText(ERROR_BOUNDARY_RE)).toHaveCount(0);
@@ -406,7 +406,7 @@ test.describe('M08 Ideas · Table — representative acceptance', () => {
     await suppressOnboarding(page, sharedUserId);
     await gotoTable(page, sharedIdeaId);
     await dismissOnboarding(page);
-    await expect(page.getByRole('region', { name: 'Idea map workspace' })).toBeVisible({ timeout: 30000 });
+    await expect(page.getByRole('region', { name: /Idea map workspace|Obszar roboczy mapy idei/ })).toBeVisible({ timeout: 30000 });
     await page.waitForTimeout(1500);
     await expect(page.getByText(ERROR_BOUNDARY_RE)).toHaveCount(0);
     // We assert the UI did not crash; transient network 4xx logs are tolerated.

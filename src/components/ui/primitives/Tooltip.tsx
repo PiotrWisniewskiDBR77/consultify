@@ -231,7 +231,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
               <motion.div
                 ref={tooltipRef}
                 role="tooltip"
-                className="fixed z-[9999] pointer-events-none"
+                className="fixed z-dropdown pointer-events-none"
                 style={{
                   top: position.top,
                   left: position.left,

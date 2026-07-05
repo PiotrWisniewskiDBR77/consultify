@@ -223,18 +223,18 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
 
   const scoreColor =
     overallScore >= 70
-      ? 'text-emerald-500'
+      ? 'text-c-success'
       : overallScore >= 40
-        ? 'text-amber-500'
-        : 'text-danger-500';
+        ? 'text-c-warning'
+        : 'text-c-danger';
   const ringColor = overallScore >= 70 ? 'var(--c-success)' : overallScore >= 40 ? 'var(--c-warning)' : 'var(--c-danger)';
 
   return (
     <div className="absolute top-14 right-3 z-[89]">
-      <div className="rounded-2xl bg-white/90 dark:bg-navy-900/90 backdrop-blur-xl border border-slate-200/40 dark:border-navy-700/40 shadow-2xl overflow-hidden min-w-[180px]">
+      <div className="rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border shadow-2xl overflow-hidden min-w-[180px]">
         <button
           onClick={() => setExpanded(!expanded)}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors"
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
         >
           {/* Mini ring */}
           <svg width={28} height={28} className="transform -rotate-90 shrink-0">
@@ -245,7 +245,7 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
               fill="none"
               stroke="currentColor"
               strokeWidth={3}
-              className="text-slate-200 dark:text-navy-700"
+              className="text-c-text dark:text-c-text-secondary"
             />
             <circle
               cx={14}
@@ -261,15 +261,15 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
             />
           </svg>
           <div className="flex-1 text-left">
-            <div className="text-[10px] font-bold text-slate-600 dark:text-slate-300">
+            <div className="text-[10px] font-bold text-c-text-secondary dark:text-c-text-muted">
               {isPl ? 'Zdrowie mapy' : 'Map Health'}
             </div>
             <div className={`text-[13px] font-bold ${scoreColor}`}>{overallScore}%</div>
           </div>
           {expanded ? (
-            <ChevronUp size={12} className="text-slate-600" />
+            <ChevronUp size={12} className="text-c-text-secondary" />
           ) : (
-            <ChevronDown size={12} className="text-slate-600" />
+            <ChevronDown size={12} className="text-c-text-secondary" />
           )}
         </button>
 
@@ -277,24 +277,24 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
           <div className="px-3 pb-3 space-y-2">
             {metrics.map((m) => {
               const color =
-                m.score >= 70 ? 'bg-emerald-500' : m.score >= 40 ? 'bg-amber-500' : 'bg-danger-500';
+                m.score >= 70 ? 'bg-c-success' : m.score >= 40 ? 'bg-c-warning' : 'bg-c-danger';
               return (
                 <div key={m.key}>
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-[9px] font-medium text-slate-500 dark:text-slate-400">
+                    <span className="text-[9px] font-medium text-c-text-secondary dark:text-c-text-muted">
                       {isPl ? m.labelPl : m.labelEn}
                     </span>
-                    <span className="text-[9px] font-bold text-slate-600 dark:text-slate-300">
+                    <span className="text-[9px] font-bold text-c-text-secondary dark:text-c-text-muted">
                       {m.score}%
                     </span>
                   </div>
-                  <div className="h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                  <div className="h-1.5 rounded-full bg-c-surface-raised dark:bg-c-surface overflow-hidden">
                     <div
                       className={`h-full rounded-full ${color} transition-all duration-500`}
                       style={{ width: `${m.score}%` }}
                     />
                   </div>
-                  <div className="text-[8px] text-slate-600 mt-0.5">{m.detail}</div>
+                  <div className="text-[8px] text-c-text-secondary mt-0.5">{m.detail}</div>
                 </div>
               );
             })}

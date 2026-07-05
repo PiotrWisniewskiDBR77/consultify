@@ -127,7 +127,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
           />
           <button
             onClick={handleRethink}
-            className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-700"
+            className="rounded-lg bg-c-text px-3 py-1.5 text-xs font-medium text-c-bg transition-colors hover:bg-c-text-secondary"
           >
             {isPolish ? 'Przemyśl' : 'Rethink'}
           </button>

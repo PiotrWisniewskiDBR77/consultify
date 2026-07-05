@@ -33,15 +33,20 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
     priority >= 80
       ? 'border-2 border-danger-400/70'
       : priority >= 50
-        ? 'border-2 border-amber-400/60'
+        ? 'border-2 border-warning-400/60'
         : '';
 
   return (
     <div
-      className={`relative p-3 rounded-xl border shadow-lg transition-all ${color.bg} ${color.border} ${priorityBorder} ${selected ? 'ring-2 ring-slate-500/60 shadow-xl' : ''} ${data?.isAI ? 'ring-1 ring-slate-400/30' : ''} ${data?._isNew ? 'animate-[pulse_1s_ease-in-out_1]' : ''}`}
+      className={`relative p-3 rounded-xl border shadow-lg transition-all ${color.bg} ${color.border} ${priorityBorder} ${selected ? 'ring-2 ring-c-border-strong shadow-xl' : ''} ${data?.isAI ? 'ring-1 ring-c-border-strong' : ''} ${data?._isNew ? 'animate-[pulse_1s_ease-in-out_1]' : ''}`}
       style={{
         width: size.w,
         minHeight: size.h,
+        ...((color as { bgVar?: string }).bgVar
+          ? {
+              backgroundColor: `color-mix(in srgb, var(${(color as { bgVar?: string }).bgVar}) 16%, transparent)`,
+            }
+          : {}),
         ...(isDark
           ? { boxShadow: selected ? `${color.glow}, 0 0 24px rgba(168,85,247,0.2)` : color.glow }
           : {}),
@@ -53,10 +58,10 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
         }
       }}
     >
-      <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-slate-400 !-top-1" />
+      <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-c-border-strong !-top-1" />
       {commentCount > 0 && (
         <div
-          className="absolute -top-2 -right-2 z-10 flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white text-[8px] font-bold shadow-sm cursor-pointer hover:bg-blue-600 transition-colors"
+          className="absolute -top-2 -right-2 z-10 flex items-center justify-center w-5 h-5 rounded-full bg-c-info text-white text-[8px] font-bold shadow-sm cursor-pointer hover:brightness-110 transition-all"
           onClick={(e) => {
             e.stopPropagation();
             window.dispatchEvent(new CustomEvent('idea-node-open-detail', { detail: { nodeId } }));
@@ -79,18 +84,18 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
               commitEdit();
             }
           }}
-          className="w-full bg-transparent text-xs font-medium text-slate-800 dark:text-slate-200 outline-none resize-none border-b border-slate-400 dark:border-slate-500"
+          className="w-full bg-transparent text-xs font-medium text-c-text outline-none resize-none border-b border-c-border-strong"
           style={{ minHeight: size.h - 40 }}
           rows={size.textRows}
         />
       ) : (
         <div>
           {data?.semanticLabel && (
-            <div className="mb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+            <div className="mb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-c-text-muted">
               {String(data.semanticLabel)}
             </div>
           )}
-          <div className="text-xs font-medium text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-words">
+          <div className="text-xs font-medium text-c-text whitespace-pre-wrap break-words">
             {data?.label || ''}
           </div>
         </div>
@@ -98,7 +103,7 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
       {/* Artifact link indicator */}
       {Array.isArray(data?.artifactLinks) && data.artifactLinks.length > 0 && (
         <div
-          className="absolute -bottom-2 -left-2 z-10 flex items-center justify-center w-5 h-5 rounded-full bg-indigo-500 text-white text-[8px] font-bold shadow-sm cursor-pointer hover:bg-indigo-600 transition-colors"
+          className="absolute -bottom-2 -left-2 z-10 flex items-center justify-center w-5 h-5 rounded-full bg-c-tag-2 text-white text-[8px] font-bold shadow-sm cursor-pointer hover:bg-c-tag-2 transition-colors"
           onClick={(e) => {
             e.stopPropagation();
             window.dispatchEvent(
@@ -115,21 +120,21 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
       {/* Converted/promoted badge */}
       {data?._converted && (
         <div
-          className="absolute top-1 right-1 z-10 flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 text-white text-[8px] shadow-sm"
+          className="absolute top-1 right-1 z-10 flex items-center justify-center w-4 h-4 rounded-full bg-success-500 text-white text-[8px] shadow-sm"
           title="Converted"
         >
           ✓
         </div>
       )}
       {data?.author && (
-        <div className="absolute bottom-1.5 right-2 text-[8px] text-slate-500 dark:text-slate-400 truncate max-w-[70%] text-right">
+        <div className="absolute bottom-1.5 right-2 text-[8px] text-c-text-muted truncate max-w-[70%] text-right">
           {data.author}
         </div>
       )}
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!w-2 !h-2 !bg-slate-400 !-bottom-1"
+        className="!w-2 !h-2 !bg-c-border-strong !-bottom-1"
       />
     </div>
   );

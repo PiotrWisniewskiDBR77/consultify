@@ -140,7 +140,7 @@ export const AISLADashboard: React.FC = () => {
       case 'warning':
         return 'text-amber-500';
       case 'critical':
-        return 'text-danger-500';
+        return 'text-rose-500';
       default:
         return 'text-gray-500 dark:text-gray-400';
     }
@@ -153,7 +153,7 @@ export const AISLADashboard: React.FC = () => {
       case 'warning':
         return 'bg-amber-500/10 border-amber-500/30';
       case 'critical':
-        return 'bg-danger-500/10 border-danger-500/30';
+        return 'bg-rose-500/10 border-rose-500/30';
       default:
         return 'bg-gray-50 dark:bg-navy-8000/10 border-gray-500/30';
     }
@@ -211,7 +211,7 @@ export const AISLADashboard: React.FC = () => {
                       ? 'bg-green-500'
                       : status === 'warning'
                         ? 'bg-amber-500'
-                        : 'bg-danger-500'
+                        : 'bg-rose-500'
                   }`}
                   style={{ width: `${percentage}%` }}
                 />
@@ -306,14 +306,14 @@ export const AISLADashboard: React.FC = () => {
                 key={breach.id}
                 className={`p-3 rounded-lg border ${
                   breach.severity === 'critical'
-                    ? 'bg-danger-500/10 border-danger-500/30'
+                    ? 'bg-rose-500/10 border-rose-500/30'
                     : 'bg-amber-500/10 border-amber-500/30'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {breach.severity === 'critical' ? (
-                      <AlertTriangle className="h-4 w-4 text-danger-500" />
+                      <AlertTriangle className="h-4 w-4 text-rose-500" />
                     ) : (
                       <AlertCircle className="h-4 w-4 text-amber-500" />
                     )}
@@ -361,7 +361,7 @@ export const AISLADashboard: React.FC = () => {
                   title={`${new Date(point.timestamp).toLocaleTimeString()}\nP50: ${formatLatency(point.p50)}\nP95: ${formatLatency(point.p95)}\nP99: ${formatLatency(point.p99)}`}
                 >
                   <div
-                    className="w-full bg-danger-400/60 rounded-t"
+                    className="w-full bg-rose-400/60 rounded-t"
                     style={{ height: `${heightP99}%` }}
                   />
                   <div
@@ -385,7 +385,7 @@ export const AISLADashboard: React.FC = () => {
             <div className="w-3 h-3 rounded bg-amber-400/60" /> P95
           </span>
           <span className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded bg-danger-400/60" /> P99
+            <div className="w-3 h-3 rounded bg-rose-400/60" /> P99
           </span>
         </div>
       </CardContent>

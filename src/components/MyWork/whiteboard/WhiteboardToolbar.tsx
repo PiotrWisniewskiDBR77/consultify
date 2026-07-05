@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   Link2,
   Loader2,
+  MoreHorizontal,
   Pen,
   Plus,
   Redo2,
@@ -25,6 +26,7 @@ import {
   Workflow,
 } from 'lucide-react';
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import type { CanvasBgPattern } from '../ideaSelectionTypes';
@@ -63,6 +65,116 @@ export interface WhiteboardToolbarProps {
   onRedo: () => void;
 }
 
+interface OverflowItem {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ size?: number }>;
+  onClick: () => void;
+  active?: boolean;
+  disabled?: boolean;
+  danger?: boolean;
+}
+
+/**
+ * Editor Shell Canon §2 GÓRNA — the overflow "…" that collapses the whiteboard's
+ * secondary tools (session/collab + export/shortcuts/background) so the command
+ * row keeps a clear primary/secondary/overflow hierarchy instead of a flat row.
+ * Menu is portaled to `body` so the toolbar's `overflow-x-auto` can't clip it.
+ */
+const ToolbarOverflow: React.FC<{ label: string; items: OverflowItem[] }> = ({ label, items }) => {
+  const [open, setOpen] = React.useState(false);
+  const [coords, setCoords] = React.useState<{ top: number; left: number } | null>(null);
+  const btnRef = React.useRef<HTMLButtonElement>(null);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+
+  const position = React.useCallback(() => {
+    const r = btnRef.current?.getBoundingClientRect();
+    if (r) setCoords({ top: r.bottom + 4, left: Math.max(8, r.right - 200) });
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (btnRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    window.addEventListener('resize', position);
+    window.addEventListener('scroll', position, true);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      window.removeEventListener('resize', position);
+      window.removeEventListener('scroll', position, true);
+    };
+  }, [open, position]);
+
+  return (
+    <div className="relative shrink-0">
+      <button
+        ref={btnRef}
+        type="button"
+        data-testid="whiteboard-toolbar-overflow"
+        onClick={() => {
+          setOpen((p) => {
+            const next = !p;
+            if (next) position();
+            return next;
+          });
+        }}
+        aria-haspopup="true"
+        aria-expanded={open}
+        aria-label={label}
+        title={label}
+        className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors shrink-0 ${
+          open
+            ? 'bg-c-surface-raised text-c-text'
+            : 'text-c-text-secondary hover:bg-c-surface-raised'
+        }`}
+      >
+        <MoreHorizontal size={14} />
+      </button>
+      {open &&
+        coords &&
+        createPortal(
+          <div
+            ref={menuRef}
+            data-testid="whiteboard-toolbar-overflow-menu"
+            role="menu"
+            className="fixed z-[1000] w-[200px] bg-c-surface border border-c-border-subtle rounded-xl shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] py-1 max-h-[70vh] overflow-y-auto"
+            style={{ top: coords.top, left: coords.left }}
+          >
+            {items.map((it) => {
+              const Icon = it.icon;
+              return (
+                <button
+                  key={it.id}
+                  type="button"
+                  role="menuitem"
+                  disabled={it.disabled}
+                  onClick={() => {
+                    it.onClick();
+                    setOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-left transition-colors disabled:opacity-40 ${
+                    it.danger
+                      ? 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20'
+                      : it.active
+                        ? 'text-c-accent bg-c-accent-soft'
+                        : 'text-c-text-secondary hover:bg-c-surface-raised'
+                  }`}
+                >
+                  <Icon size={12} /> <span>{it.label}</span>
+                </button>
+              );
+            })}
+          </div>,
+          document.body
+        )}
+    </div>
+  );
+};
+
 export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
   isPl,
   locked,
@@ -93,11 +205,11 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
 
   return (
     <div
-      className="flex items-center gap-1 px-3 py-1.5 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 backdrop-blur-sm flex-shrink-0 overflow-x-auto"
+      className="flex items-center gap-1 px-3 py-1.5 border-b border-c-border-subtle bg-c-surface-raised backdrop-blur-sm flex-shrink-0 overflow-x-auto"
       role="toolbar"
       aria-label={t('myWork.whiteboard.toolbarExtra.ariaLabel')}
     >
-      <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mr-1.5 shrink-0">
+      <div className="text-xs font-semibold text-c-text-secondary mr-1.5 shrink-0">
         {t('myWork.whiteboard.toolbarExtra.title')}
       </div>
 
@@ -182,7 +294,7 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
         />
       )}
 
-      <div className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5 shrink-0" />
+      <div className="w-px h-5 bg-c-surface-raised mx-0.5 shrink-0" />
 
       <ToolbarBtn
         icon={Undo2}
@@ -199,85 +311,80 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
         ariaLabel={t('myWork.whiteboard.toolbar.redo')}
       />
 
-      <div className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5 shrink-0" />
+      <div className="w-px h-5 bg-c-surface-raised mx-0.5 shrink-0" />
 
-      <ToolbarBtn
-        icon={ThumbsUp}
-        label={t('myWork.whiteboard.toolbar.voting')}
-        onClick={onToggleVoting}
-        disabled={locked}
-        active={sessionState.votingOpen}
-        ariaPressed={sessionState.votingOpen}
-      />
-      <ToolbarBtn
-        icon={Workflow}
-        label={t('myWork.whiteboard.toolbarExtra.role')}
-        onClick={onCycleRole}
-        disabled={locked}
-      />
-      <ToolbarBtn
-        icon={TrendingUp}
-        label="Follow"
-        onClick={onToggleFollow}
-        disabled={locked}
-        active={sessionState.followMe}
-        ariaPressed={sessionState.followMe}
-      />
-
-      <div className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5 shrink-0" />
-
-      <ToolbarBtn
-        icon={ExternalLink}
-        label={t('myWork.whiteboard.toolbar.export')}
-        onClick={onExport}
-      />
-      <ToolbarBtn
-        icon={Keyboard}
-        label={t('myWork.whiteboard.toolbar.shortcuts')}
-        onClick={onToggleShortcuts}
-      />
-
-      <ToolbarDropdown
-        icon={Grid3X3}
-        label={t('myWork.whiteboard.toolbar.background')}
-        disabled={false}
+      {/*
+       * Editor Shell Canon §2 GÓRNA — secondary tools (session/collab, export,
+       * shortcuts, background) collapse under one overflow "…" so the row keeps a
+       * primary (Create/Draw/Save) → secondary (undo/redo) → overflow hierarchy.
+       */}
+      <ToolbarOverflow
+        label={t('myWork.whiteboard.toolbarExtra.more')}
         items={[
           {
-            id: 'dots',
-            label: t('myWork.whiteboard.toolbarExtra.bgDots'),
+            id: 'voting',
+            label: t('myWork.whiteboard.toolbar.voting'),
+            icon: ThumbsUp,
+            onClick: onToggleVoting,
+            disabled: locked,
+            active: sessionState.votingOpen,
+          },
+          {
+            id: 'role',
+            label: t('myWork.whiteboard.toolbarExtra.role'),
+            icon: Workflow,
+            onClick: onCycleRole,
+            disabled: locked,
+          },
+          {
+            id: 'follow',
+            label: t('myWork.whiteboard.toolbarExtra.follow'),
+            icon: TrendingUp,
+            onClick: onToggleFollow,
+            disabled: locked,
+            active: sessionState.followMe,
+          },
+          {
+            id: 'export',
+            label: t('myWork.whiteboard.toolbar.export'),
+            icon: ExternalLink,
+            onClick: onExport,
+          },
+          {
+            id: 'shortcuts',
+            label: t('myWork.whiteboard.toolbar.shortcuts'),
+            icon: Keyboard,
+            onClick: onToggleShortcuts,
+          },
+          {
+            id: 'bg-dots',
+            label: `${t('myWork.whiteboard.toolbar.background')}: ${t('myWork.whiteboard.toolbarExtra.bgDots')}`,
             icon: Circle,
             onClick: () => onSetBgPattern('dots'),
+            active: bgPattern === 'dots',
           },
           {
-            id: 'grid',
-            label: t('myWork.whiteboard.toolbarExtra.bgGrid'),
+            id: 'bg-grid',
+            label: `${t('myWork.whiteboard.toolbar.background')}: ${t('myWork.whiteboard.toolbarExtra.bgGrid')}`,
             icon: Grid3X3,
             onClick: () => onSetBgPattern('grid'),
+            active: bgPattern === 'grid',
           },
           {
-            id: 'lines',
-            label: t('myWork.whiteboard.toolbarExtra.bgLines'),
+            id: 'bg-lines',
+            label: `${t('myWork.whiteboard.toolbar.background')}: ${t('myWork.whiteboard.toolbarExtra.bgLines')}`,
             icon: LayoutGrid,
             onClick: () => onSetBgPattern('lines'),
+            active: bgPattern === 'lines',
           },
           {
-            id: 'blank',
-            label: t('myWork.whiteboard.toolbarExtra.bgBlank'),
+            id: 'bg-blank',
+            label: `${t('myWork.whiteboard.toolbar.background')}: ${t('myWork.whiteboard.toolbarExtra.bgBlank')}`,
             icon: Shapes,
             onClick: () => onSetBgPattern('blank'),
+            active: bgPattern === 'blank',
           },
         ]}
-        onMainClick={() =>
-          onSetBgPattern(
-            bgPattern === 'dots'
-              ? 'grid'
-              : bgPattern === 'grid'
-                ? 'lines'
-                : bgPattern === 'lines'
-                  ? 'blank'
-                  : 'dots'
-          )
-        }
       />
 
       <div className="flex-1" />
@@ -290,14 +397,14 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
         aria-busy={saving}
         className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors shrink-0 ${
           saving || loading || locked
-            ? 'bg-slate-200/60 text-slate-500 dark:bg-white/[0.06] dark:text-slate-400'
-            : 'bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100'
+            ? 'bg-c-surface-raised text-c-text-muted'
+            : 'bg-c-accent text-white hover:brightness-110'
         }`}
       >
         {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
         {saving ? t('myWork.whiteboard.toolbarExtra.saving') : t('myWork.whiteboard.toolbar.save')}
       </button>
-      <span className="text-[11px] text-slate-500 dark:text-slate-400">{saveStatusLabel}</span>
+      <span className="text-[11px] text-c-text-muted">{saveStatusLabel}</span>
     </div>
   );
 };

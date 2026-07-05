@@ -30,7 +30,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button, ErrorState, LoadingState } from '@/components/ui/primitives';
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
+import { Button, ErrorState } from '@/components/ui/primitives';
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
@@ -40,13 +41,18 @@ import {
   resolveTablePlatformWorkspaceIdForTable,
 } from '@/utils/sheetArtifactOpen';
 
+import { useConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
+
 import { API_URL, getHeaders } from '../../services/api';
 import {
+  type BulkAction,
+  BulkActionBar,
   FilterableTable,
   type FilterChip,
   type GridItem,
   GridView,
   type TableColumn,
+  useTableSelection,
   type ViewMode,
 } from '../shared/ModuleHub';
 import type { RowAction } from '../shared/RowActionsMenu';
@@ -324,6 +330,8 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
 
   const columns: TableColumn[] = useMemo(
     () => [
+      // canon §3.5 — leading selection column drives select-all + per-row checkboxes.
+      { id: 'select', label: '', type: 'select', width: '44px' },
       {
         id: 'title',
         label: t('rap.columns.title', 'Tytuł'),
@@ -333,13 +341,13 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             {/* L-07 (§27): neutral type icons — color is a signal owned by the
                 status chip, not ad-hoc icon tints (TABLE_AND_PREVIEW_CANON §4.1). */}
             {row.kind === 'document' ? (
-              <FileText size={16} className="shrink-0 text-slate-400 dark:text-slate-500" />
+              <FileText size={16} className="shrink-0 text-c-text-muted" />
             ) : row.kind === 'presentation' ? (
-              <Presentation size={16} className="shrink-0 text-slate-400 dark:text-slate-500" />
+              <Presentation size={16} className="shrink-0 text-c-text-muted" />
             ) : (
-              <FileSpreadsheet size={16} className="shrink-0 text-slate-400 dark:text-slate-500" />
+              <FileSpreadsheet size={16} className="shrink-0 text-c-text-muted" />
             )}
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+            <span className="text-sm font-medium text-c-text truncate">
               {row.title}
             </span>
           </div>
@@ -368,7 +376,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
           },
         ],
         render: (row: AggregateRow) => (
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-300 capitalize">
+          <span className="text-xs font-medium text-c-text-secondary capitalize">
             {row.kind === 'document'
               ? t('rap.outputs.kind.document', 'Document')
               : row.kind === 'presentation'
@@ -420,7 +428,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         label: t('rap.outputs.columns.visibility', 'Visibility'),
         width: '120px',
         render: (row: AggregateRow) => (
-          <span className="text-xs text-slate-600 dark:text-slate-300">
+          <span className="text-xs text-c-text-secondary">
             {formatLabel(row.governance?.visibilityScope)}
           </span>
         ),
@@ -430,7 +438,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         label: t('rap.outputs.columns.source', 'Source'),
         width: '150px',
         render: (row: AggregateRow) => (
-          <span className="text-xs text-slate-600 dark:text-slate-300">
+          <span className="text-xs text-c-text-secondary">
             {formatSourceSummary(row, translate)}
           </span>
         ),
@@ -440,7 +448,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         label: t('rap.outputs.columns.review', 'Review'),
         width: '130px',
         render: (row: AggregateRow) => (
-          <span className="text-xs text-slate-600 dark:text-slate-300">
+          <span className="text-xs text-c-text-secondary">
             {formatReviewSummary(row, translate)}
           </span>
         ),
@@ -450,7 +458,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         label: t('rap.outputs.columns.exports', 'Exports'),
         width: '120px',
         render: (row: AggregateRow) => (
-          <span className="text-xs text-slate-600 dark:text-slate-300">
+          <span className="text-xs text-c-text-secondary">
             {row.exportFormats.length ? row.exportFormats.join(', ').toUpperCase() : '—'}
           </span>
         ),
@@ -463,7 +471,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         render: (row: AggregateRow) => {
           const d = new Date(row.updatedAt);
           return (
-            <span className="text-sm text-slate-500 dark:text-slate-400">
+            <span className="text-sm text-c-text-muted">
               {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
                 day: 'numeric',
                 month: 'short',
@@ -717,8 +725,57 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
     : null;
   const itemIds = filteredData.map((i) => i.id);
 
+  // canon §3.5 — row selection + bulk archive (loops the existing per-row
+  // archiveReport/archiveDeck; no new backend endpoint).
+  const selection = useTableSelection(itemIds);
+  const { dialog: bulkConfirmDialog, confirm: confirmBulk } = useConfirmDialog();
+
+  const bulkActions = useMemo<BulkAction[]>(() => {
+    const rowById = new Map(filteredData.map((r) => [String(r.id), r]));
+    return [
+      {
+        id: 'archive',
+        // canon §14: bulk Archive = reversible soft-delete over selected outputs.
+        label: t('rap.actions.archive', 'Archiwizuj'),
+        icon: Archive,
+        variant: 'danger',
+        onRun: async (sel) => {
+          const ok = await confirmBulk({
+            title: t('rap.bulk.confirmArchiveTitle', 'Zarchiwizować zaznaczone outputy?'),
+            description: t(
+              'rap.bulk.confirmArchiveDesc',
+              'Zarchiwizujesz {{count}} pozycji. Operacja jest odwracalna.',
+              { count: sel.count }
+            ),
+            confirmLabel: t('rap.actions.archive', 'Archiwizuj'),
+            cancelLabel: t('common.cancel', 'Anuluj'),
+            variant: 'warning',
+          });
+          if (!ok) return;
+          await sel.runBulk(
+            async (id) => {
+              const row = rowById.get(id);
+              if (!row) throw new Error('missing row');
+              const done =
+                row.kind === 'presentation'
+                  ? await actions.archiveDeck(row)
+                  : await actions.archiveReport(row);
+              if (!done) throw new Error('archive failed');
+            },
+            { silent: true }
+          );
+          onRefresh();
+        },
+      },
+    ];
+  }, [filteredData, actions, confirmBulk, onRefresh, t]);
+
   if (loading) {
-    return <LoadingState variant="spinner" className="h-64" />;
+    return (
+      <div className="p-4">
+        <SharedLoadingState template="card" count={6} />
+      </div>
+    );
   }
 
   // L-08: ENABLE_V8_GLOBAL OFF → registry 404. Dedicated "module disabled"
@@ -727,11 +784,11 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   if (moduleDisabled) {
     return (
       <div className="flex items-center justify-center h-full p-6">
-        <div className="w-full max-w-xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-8 text-center">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+        <div className="w-full max-w-xl rounded-2xl border border-c-border-subtle bg-c-surface p-8 text-center">
+          <h2 className="text-lg font-semibold text-c-text">
             {t('rap.moduleDisabled.title', 'Outputs library is turned off')}
           </h2>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-c-text-secondary">
             {t(
               'rap.moduleDisabled.body',
               'This workspace does not have the outputs library enabled. Contact your administrator to turn it on.'
@@ -757,14 +814,14 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   if (!loading && !error && rows.length === 0 && !searchQuery && activeFilters.length === 0) {
     return (
       <div className="flex items-center justify-center h-full p-6">
-        <div className="w-full max-w-xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-8 text-center">
+        <div className="w-full max-w-xl rounded-2xl border border-c-border-subtle bg-c-surface p-8 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-crimson-50 text-crimson-600 dark:bg-crimson-950/40 dark:text-crimson-400">
             <Sparkles size={26} />
           </div>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+          <h2 className="text-lg font-semibold text-c-text">
             {t('rap.onboarding.title', 'Your outputs land here')}
           </h2>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-c-text-secondary">
             {t(
               'rap.onboarding.body',
               'Ask Teresa to generate a report or deck — it will appear here for review and export.'
@@ -825,9 +882,9 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             </DialogDescription>
           </DialogHeader>
 
-          <div className="mt-3 space-y-3 text-sm text-slate-700 dark:text-slate-200">
+          <div className="mt-3 space-y-3 text-sm text-c-text-secondary">
             {lineageLoading ? (
-              <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-2 text-c-text-muted">
                 <Loader2 size={16} className="animate-spin" />
                 {t('rap.outputs.preview.lineageLoading', 'Loading lineage…')}
               </div>
@@ -839,71 +896,71 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             ) : null}
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="rounded-lg border border-slate-200/70 bg-white/60 p-3 dark:border-slate-700/70 dark:bg-slate-900/30">
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3">
+                <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
                   {t('rap.outputs.preview.lineageRun', 'Run')}
                 </div>
-                <div className="mt-1 text-sm font-medium text-slate-900 dark:text-white">
+                <div className="mt-1 text-sm font-medium text-c-text">
                   {formatLabel(lineageRun?.state || lineageRun?.runState || lineageRun?.status)}
                 </div>
-                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                <div className="mt-1 text-xs text-c-text-muted">
                   {t('rap.outputs.preview.lineageCreatedAt', 'Created')}:{' '}
-                  <span className="font-medium text-slate-700 dark:text-slate-200">
+                  <span className="font-medium text-c-text-secondary">
                     {String(lineageRun?.createdAt || lineageRun?.created_at || '—')}
                   </span>
                 </div>
               </div>
 
-              <div className="rounded-lg border border-slate-200/70 bg-white/60 p-3 dark:border-slate-700/70 dark:bg-slate-900/30">
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3">
+                <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
                   {t('rap.outputs.preview.lineageToolCalls', 'Tool calls')}
                 </div>
-                <div className="mt-1 text-sm font-medium text-slate-900 dark:text-white">
+                <div className="mt-1 text-sm font-medium text-c-text">
                   {Array.isArray(lineageToolUsage?.invocations)
                     ? lineageToolUsage.invocations.length
                     : 0}
                 </div>
-                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                <div className="mt-1 text-xs text-c-text-muted">
                   {t('rap.outputs.preview.lineageTraces', 'Traces')}:{' '}
-                  <span className="font-medium text-slate-700 dark:text-slate-200">
+                  <span className="font-medium text-c-text-secondary">
                     {Array.isArray(lineageToolUsage?.traces) ? lineageToolUsage.traces.length : 0}
                   </span>
                 </div>
               </div>
 
-              <div className="rounded-lg border border-slate-200/70 bg-white/60 p-3 dark:border-slate-700/70 dark:bg-slate-900/30">
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3">
+                <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
                   {t('rap.outputs.preview.lineageOutputs', 'Outputs')}
                 </div>
-                <div className="mt-1 text-sm font-medium text-slate-900 dark:text-white">
+                <div className="mt-1 text-sm font-medium text-c-text">
                   {Array.isArray(lineageOutputs) ? lineageOutputs.length : 0}
                 </div>
-                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                <div className="mt-1 text-xs text-c-text-muted">
                   {t('rap.outputs.preview.lineageVisibility', 'Visibility enforced')}
                 </div>
               </div>
             </div>
 
             {Array.isArray(lineageToolUsage?.invocations) && lineageToolUsage.invocations.length ? (
-              <div className="rounded-lg border border-slate-200/70 p-3 dark:border-slate-700/70">
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <div className="rounded-lg border border-c-border-subtle p-3">
+                <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
                   {t('rap.outputs.preview.lineageToolCallsList', 'Tool calls')}
                 </div>
                 <div className="mt-2 space-y-2">
                   {lineageToolUsage.invocations.slice(0, 8).map((inv: any, idx: number) => (
                     <div
                       key={String(inv.invocationId || inv.id || idx)}
-                      className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-700 dark:bg-slate-900/40 dark:text-slate-200"
+                      className="flex items-center justify-between rounded-md bg-c-surface-raised px-3 py-2 text-xs text-c-text-secondary"
                     >
                       <div className="min-w-0">
                         <div className="truncate font-medium">
                           {String(inv.toolName || inv.tool || inv.name || 'tool')}
                         </div>
-                        <div className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+                        <div className="truncate text-[11px] text-c-text-muted">
                           {String(inv.createdAt || inv.created_at || inv.timestamp || '')}
                         </div>
                       </div>
-                      <div className="ml-3 shrink-0 text-[11px] text-slate-500 dark:text-slate-400">
+                      <div className="ml-3 shrink-0 text-[11px] text-c-text-muted">
                         {formatLabel(inv.status || inv.resultStatus || inv.state)}
                       </div>
                     </div>
@@ -913,8 +970,8 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             ) : null}
 
             {Array.isArray(lineageOutputs) && lineageOutputs.length ? (
-              <div className="rounded-lg border border-slate-200/70 p-3 dark:border-slate-700/70">
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <div className="rounded-lg border border-c-border-subtle p-3">
+                <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
                   {t('rap.outputs.preview.lineageOutputsList', 'Output pointers')}
                 </div>
                 <div className="mt-2 space-y-2">
@@ -927,15 +984,37 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
                         : outputType === 'sheet'
                           ? 'sheet'
                           : 'document';
+                    // HOTFIX task#63 (UI-M5): forward any origin hints on the lineage
+                    // pointer so a promoted-assessment output is not routed to an empty
+                    // report builder here either.
+                    const lineageGovernance: ArtifactGovernanceSummary | null =
+                      out.openPath || out.authority || out.originSummary || out.originRuntime
+                        ? {
+                            openPath: out.openPath || null,
+                            authority:
+                              out.authority ||
+                              (String(out.originRuntime || '') === 'assessment_report'
+                                ? 'assessment_workbench'
+                                : null),
+                            originSummary:
+                              out.originSummary && typeof out.originSummary === 'object'
+                                ? out.originSummary
+                                : null,
+                          }
+                        : null;
                     const openPath =
                       kind === 'sheet' || !originRecordId
                         ? null
-                        : resolveArtifactOpenPath({ kind, originRecordId, governance: null });
+                        : resolveArtifactOpenPath({
+                            kind,
+                            originRecordId,
+                            governance: lineageGovernance,
+                          });
 
                     return (
                       <div
                         key={String(out.artifactId || out.originRecordId || idx)}
-                        className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-700 dark:bg-slate-900/40 dark:text-slate-200"
+                        className="flex items-center justify-between rounded-md bg-c-surface-raised px-3 py-2 text-xs text-c-text-secondary"
                       >
                         <div className="min-w-0">
                           <div className="truncate font-medium">
@@ -943,7 +1022,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
                               out.resolvedTitle || out.titleSnapshot || out.originTitle || 'Output'
                             )}
                           </div>
-                          <div className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+                          <div className="truncate text-[11px] text-c-text-muted">
                             {String(
                               out.artifactFamily || out.outputType || out.originRuntime || '—'
                             )}{' '}
@@ -955,7 +1034,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
                             <button
                               type="button"
                               onClick={() => void openGovernedSheetRow(originRecordId)}
-                              className="rounded-md border border-slate-200/70 bg-white/60 px-2 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-white dark:border-slate-700/70 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900"
+                              className="rounded-md border border-c-border bg-c-surface px-2 py-0.5 text-[10px] font-medium text-c-text-secondary hover:bg-c-surface-raised"
                             >
                               {t('rap.outputs.preview.download', 'Download')}
                             </button>
@@ -963,7 +1042,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
                             <button
                               type="button"
                               onClick={() => navigate(openPath)}
-                              className="rounded-md border border-slate-200/70 bg-white/60 px-2 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-white dark:border-slate-700/70 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900"
+                              className="rounded-md border border-c-border bg-c-surface px-2 py-0.5 text-[10px] font-medium text-c-text-secondary hover:bg-c-surface-raised"
                             >
                               {t('rap.outputs.preview.open', 'Open')}
                             </button>
@@ -990,23 +1069,23 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         itemIds={itemIds}
         getItemById={(id) => filteredData.find((x) => x.id === id) ?? null}
         renderPreview={(item) => (
-          <div className="space-y-3 text-sm text-slate-700 dark:text-slate-200">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <div className="space-y-3 text-sm text-c-text-secondary">
+            <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
               {item.kind === 'document'
                 ? t('rap.outputs.kind.document', 'Document')
                 : item.kind === 'presentation'
                   ? t('rap.outputs.kind.presentation', 'Presentation')
                   : t('rap.outputs.kind.sheet', 'Sheet')}
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
+            <div className="text-xs text-c-text-muted">
               {t('rap.outputs.preview.status', 'Status')}:{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-200">
+              <span className="font-medium text-c-text-secondary">
                 {formatLabel(item.statusKey)}
               </span>
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
+            <div className="text-xs text-c-text-muted">
               {t('rap.columns.owner', 'Owner')}:{' '}
-              <span className="font-medium text-slate-700 dark:text-slate-200">{item.owner}</span>
+              <span className="font-medium text-c-text-secondary">{item.owner}</span>
             </div>
             <TrustStatePreviewSection
               governance={item.governance}
@@ -1015,7 +1094,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
               onTrace={openLineage}
             />
             {item.kind === 'sheet' ? (
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              <p className="text-xs text-c-text-muted leading-relaxed">
                 {t(
                   'rap.outputs.preview.sheetHint',
                   'Governed sheet artifacts use the same registry; authoring and export paths are rolling out in Wave 2.'
@@ -1030,7 +1109,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
               <button
                 type="button"
                 onClick={() => openRow(item)}
-                className="h-9 px-4 rounded-full text-sm font-medium bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 transition-colors"
+                className="h-9 px-4 rounded-full text-sm font-medium bg-c-text text-c-surface hover:opacity-90 transition-opacity"
               >
                 {isEnabled('tablePlatformMetadataFirst')
                   ? t('rap.actions.openInWorkspace', 'Open in workspace')
@@ -1052,7 +1131,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
                   const ok = await actions.startArtifactReview(aid);
                   if (ok) onRefresh();
                 }}
-                className="h-9 px-4 rounded-full text-sm font-medium border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-9 px-4 rounded-full text-sm font-medium border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {t('rap.actions.startReview', 'Start review')}
               </button>
@@ -1060,21 +1139,28 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
           </div>
         )}
       >
-        <FilterableTable
-          columns={columns}
-          data={filteredData}
-          selectedRowId={selectedId}
-          onRowClick={(row) => setSelectedId((row as AggregateRow).id)}
-          onRowDoubleClick={(row) => openRow(row as AggregateRow)}
-          getRowActions={(row) => getRowActions(row as AggregateRow)}
-          activeFilters={activeFilters}
-          onFilterChange={onFilterChange}
-          emptyMessage={t('rap.empty.outputs', 'Brak outputów')}
-          canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
-          // L-06 (§27): persist column widths/visibility/order across reload —
-          // canonical FilterableTable localStorage path, one key for this table.
-          persistKey="rap.outputs.aggregate"
-        />
+        <div className="flex h-full min-h-0 flex-col">
+          <BulkActionBar selection={selection} actions={bulkActions} />
+          {bulkConfirmDialog}
+          <div className="min-h-0 flex-1">
+            <FilterableTable
+              columns={columns}
+              data={filteredData}
+              selectedRowId={selectedId}
+              selection={selection.selectionProp}
+              onRowClick={(row) => setSelectedId((row as AggregateRow).id)}
+              onRowDoubleClick={(row) => openRow(row as AggregateRow)}
+              getRowActions={(row) => getRowActions(row as AggregateRow)}
+              activeFilters={activeFilters}
+              onFilterChange={onFilterChange}
+              emptyMessage={t('rap.empty.outputs', 'Brak outputów')}
+              canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+              // L-06 (§27): persist column widths/visibility/order across reload —
+              // canonical FilterableTable localStorage path, one key for this table.
+              persistKey="rap.outputs.aggregate"
+            />
+          </div>
+        </div>
       </TableWithPreviewLayout>
     </div>
   );

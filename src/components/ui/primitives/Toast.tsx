@@ -127,7 +127,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
       {typeof window !== 'undefined' &&
         createPortal(
           <div
-            className={`fixed z-[9999] flex flex-col gap-2 pointer-events-none ${positionClasses[position]}`}
+            className={`fixed z-toast flex flex-col gap-2 pointer-events-none ${positionClasses[position]}`}
             style={{ maxWidth: 'min(420px, calc(100vw - 2rem))' }}
           >
             <AnimatePresence initial={false}>
@@ -174,11 +174,13 @@ const toastVariants = {
   }),
 };
 
+// Severity icons on the canonical semantic palette. `error`/critical uses
+// c-danger (NOT crimson — crimson is brand-only).
 const iconMap: Record<ToastType, React.ReactNode> = {
-  success: <CheckCircle size={20} className="text-success-500" />,
-  error: <AlertCircle size={20} className="text-danger-500" />,
-  warning: <AlertTriangle size={20} className="text-amber-500" />,
-  info: <Info size={20} className="text-primary-500" />,
+  success: <CheckCircle size={20} className="text-c-success" />,
+  error: <AlertCircle size={20} className="text-c-danger" />,
+  warning: <AlertTriangle size={20} className="text-c-warning" />,
+  info: <Info size={20} className="text-c-info" />,
 };
 
 const ToastItem: React.FC<ToastItemProps> = ({ toast, onDismiss, isTop }) => {
@@ -195,11 +197,10 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onDismiss, isTop }) => {
         flex items-start gap-3
         w-full
         px-4 py-3
-        bg-white dark:bg-navy-900
+        bg-c-surface-raised
         rounded-xl
-        shadow-[0_10px_40px_rgba(0,0,0,0.12)]
-        dark:shadow-[0_10px_40px_rgba(0,0,0,0.4)]
-        border border-slate-200/50 dark:border-navy-700
+        shadow-[0_10px_40px_rgba(0,0,0,0.14)]
+        border border-c-border
       `}
     >
       {/* Icon */}
@@ -207,12 +208,8 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onDismiss, isTop }) => {
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        {toast.title && (
-          <p className="text-sm font-semibold text-navy-900 dark:text-white">{toast.title}</p>
-        )}
-        <p
-          className={`text-sm ${toast.title ? 'text-slate-500 dark:text-slate-400' : 'text-navy-900 dark:text-white'}`}
-        >
+        {toast.title && <p className="text-sm font-semibold text-c-text">{toast.title}</p>}
+        <p className={`text-sm ${toast.title ? 'text-c-text-secondary' : 'text-c-text'}`}>
           {toast.message}
         </p>
       </div>
@@ -221,7 +218,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onDismiss, isTop }) => {
       {toast.dismissible && (
         <button
           onClick={onDismiss}
-          className="flex-shrink-0 p-1 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-white/5"
+          className="flex-shrink-0 p-1 text-c-text-secondary hover:text-c-text transition-colors rounded-lg hover:bg-c-surface"
         >
           <X size={16} />
         </button>

@@ -26,7 +26,7 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
   label,
   description,
   icon: Icon,
-  iconColor = 'text-slate-600 dark:text-slate-500',
+  iconColor = 'text-c-text-secondary',
   checked,
   onChange,
   disabled = false,
@@ -56,18 +56,18 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span
-            className={`font-medium ${isDisabled ? 'text-slate-600 dark:text-slate-500' : 'text-navy-900 dark:text-slate-200'}`}
+            className={`font-medium ${isDisabled ? 'text-c-text-secondary' : 'text-navy-900'}`}
           >
             {label}
           </span>
           {locked && (
             <div className="relative group">
-              <Lock className="w-3.5 h-3.5 text-slate-600 dark:text-slate-500" />
+              <Lock className="w-3.5 h-3.5 text-c-text-secondary" />
               <div
                 className="
                                 absolute left-1/2 -translate-x-1/2 bottom-full mb-2
-                                px-2 py-1 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700
-                                text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap shadow-lg dark:shadow-none
+                                px-2 py-1 rounded bg-c-surface border border-c-border-subtle
+                                text-xs text-c-text-secondary whitespace-nowrap shadow-lg dark:shadow-none
                                 opacity-0 invisible group-hover:opacity-100 group-hover:visible
                                 transition-all duration-200 z-50
                             "
@@ -79,7 +79,7 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
         </div>
         {description && (
           <p
-            className={`text-sm mt-0.5 ${isDisabled ? 'text-slate-600 dark:text-slate-400' : 'text-slate-500 dark:text-slate-400'}`}
+            className={`text-sm mt-0.5 ${isDisabled ? 'text-c-text-secondary' : 'text-c-text-muted'}`}
           >
             {description}
           </p>
@@ -94,15 +94,15 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
         onClick={() => !isDisabled && onChange(!checked)}
         className={`
                     relative flex-shrink-0 rounded-full p-0.5
-                    transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500/50
+                    transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-c-focus
                     ${sizeConfig.toggle}
-                    ${checked ? 'bg-gradient-to-r from-primary-500 to-primary-600' : 'bg-slate-300 dark:bg-slate-700'}
+                    ${checked ? 'bg-gradient-to-r from-c-accent-soft to-c-accent-soft' : 'bg-c-surface-raised'}
                     ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                 `}
       >
         <motion.span
           className={`
-                        block rounded-full bg-white dark:bg-navy-900 shadow-lg
+                        block rounded-full bg-c-surface shadow-lg
                         ${sizeConfig.knob}
                     `}
           animate={{

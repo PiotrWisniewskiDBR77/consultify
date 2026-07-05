@@ -178,7 +178,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
     icon: React.ReactNode;
     color: string;
   }> = ({ title, value, change, icon, color }) => (
-    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
+    <div className="bg-c-surface rounded-xl p-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center`}>
           {icon}
@@ -192,8 +192,8 @@ export const HelpAnalyticsDashboard: React.FC = () => {
           </div>
         )}
       </div>
-      <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
-      <p className="text-sm text-slate-500 dark:text-slate-400">{title}</p>
+      <p className="text-2xl font-bold text-c-text">{value}</p>
+      <p className="text-sm text-c-text-muted">{title}</p>
     </div>
   );
 
@@ -206,10 +206,10 @@ export const HelpAnalyticsDashboard: React.FC = () => {
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-danger-500 mx-auto mb-4" />
-          <p className="text-slate-600 dark:text-slate-400">{error}</p>
+          <p className="text-c-text-secondary">{error}</p>
           <button
             onClick={fetchData}
-            className="mt-4 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
+            className="mt-4 px-4 py-2 bg-c-text text-c-bg rounded-lg hover:bg-c-text-secondary"
           >
             {t.refresh[lang]}
           </button>
@@ -221,7 +221,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
   if (!data) {
     return (
       <div className="flex items-center justify-center h-96">
-        <p className="text-slate-500 dark:text-slate-400">{t.noData[lang]}</p>
+        <p className="text-c-text-muted">{t.noData[lang]}</p>
       </div>
     );
   }
@@ -231,18 +231,18 @@ export const HelpAnalyticsDashboard: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-c-text flex items-center gap-3">
             <BarChart2 className="text-primary-500" />
             {t.title[lang]}
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">{t.subtitle[lang]}</p>
+          <p className="text-c-text-muted mt-1">{t.subtitle[lang]}</p>
         </div>
         <div className="flex items-center gap-4">
           {/* Period selector */}
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(Number(e.target.value))}
-            className="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm"
+            className="px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm"
           >
             <option value={7}>7 {t.days[lang]}</option>
             <option value={30}>30 {t.days[lang]}</option>
@@ -250,7 +250,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
           </select>
           <button
             onClick={fetchData}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
+            className="flex items-center gap-2 px-4 py-2 bg-c-text text-c-bg rounded-lg hover:bg-c-text-secondary"
           >
             <RefreshCw size={16} />
             {t.refresh[lang]}
@@ -263,25 +263,25 @@ export const HelpAnalyticsDashboard: React.FC = () => {
         <StatCard
           title={t.activeUsers[lang]}
           value={data.userEngagement?.activeUsers?.active_users || 0}
-          icon={<Users className="text-white" size={24} />}
+          icon={<Users className="text-c-text" size={24} />}
           color="bg-blue-500"
         />
         <StatCard
           title={t.totalEvents[lang]}
           value={(data.userEngagement?.activeUsers?.total_events || 0).toLocaleString()}
-          icon={<MousePointer className="text-white" size={24} />}
+          icon={<MousePointer className="text-c-text" size={24} />}
           color="bg-green-500"
         />
         <StatCard
           title={t.helpfulnessRate[lang]}
           value={`${data.feedbackSummary?.overall?.helpfulness_rate || 0}%`}
-          icon={<ThumbsUp className="text-white" size={24} />}
-          color="bg-navy-900"
+          icon={<ThumbsUp className="text-c-text" size={24} />}
+          color="bg-c-surface"
         />
         <StatCard
           title={t.avgRating[lang]}
           value={(data.feedbackSummary?.overall?.avg_rating || 0).toFixed(1)}
-          icon={<TrendingUp className="text-white" size={24} />}
+          icon={<TrendingUp className="text-c-text" size={24} />}
           color="bg-amber-500"
         />
       </div>
@@ -289,8 +289,8 @@ export const HelpAnalyticsDashboard: React.FC = () => {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Viewed Content */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+        <div className="bg-c-surface rounded-xl p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
             <Eye size={20} className="text-blue-500" />
             {t.topContent[lang]}
           </h3>
@@ -298,24 +298,24 @@ export const HelpAnalyticsDashboard: React.FC = () => {
             {data.contentPerformance?.viewsByContent?.slice(0, 10).map((item, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between py-2 border-b border-slate-200 dark:border-slate-700 last:border-0"
+                className="flex items-center justify-between py-2 border-b border-c-border-subtle last:border-0"
               >
                 <div className="flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xs font-medium">
+                  <span className="w-6 h-6 rounded-full bg-c-surface-raised flex items-center justify-center text-xs font-medium">
                     {i + 1}
                   </span>
                   <div>
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">
+                    <p className="text-sm font-medium text-c-text">
                       {item.content_id}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-c-text-muted">
                       {item.content_type}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">{item.views}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-sm font-medium text-c-text">{item.views}</p>
+                  <p className="text-xs text-c-text-muted">
                     {item.unique_viewers} {t.viewers[lang]}
                   </p>
                 </div>
@@ -323,7 +323,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
             ))}
             {(!data.contentPerformance?.viewsByContent ||
               data.contentPerformance.viewsByContent.length === 0) && (
-              <p className="text-center text-slate-600 dark:text-slate-500 py-4">
+              <p className="text-center text-c-text-secondary py-4">
                 {t.noData[lang]}
               </p>
             )}
@@ -331,8 +331,8 @@ export const HelpAnalyticsDashboard: React.FC = () => {
         </div>
 
         {/* Search Analytics */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+        <div className="bg-c-surface rounded-xl p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
             <Search size={20} className="text-green-500" />
             {t.topSearches[lang]}
           </h3>
@@ -340,14 +340,14 @@ export const HelpAnalyticsDashboard: React.FC = () => {
             {data.searchAnalytics?.topQueries?.slice(0, 10).map((item, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between py-2 border-b border-slate-200 dark:border-slate-700 last:border-0"
+                className="flex items-center justify-between py-2 border-b border-c-border-subtle last:border-0"
               >
-                <span className="text-sm text-slate-900 dark:text-white truncate mr-4">
+                <span className="text-sm text-c-text truncate mr-4">
                   {item.query}
                 </span>
                 <div className="text-right flex-shrink-0">
                   <span className="text-sm font-medium">{item.count}</span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">
+                  <span className="text-xs text-c-text-muted ml-1">
                     {t.searches[lang]}
                   </span>
                 </div>
@@ -355,7 +355,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
             ))}
             {(!data.searchAnalytics?.topQueries ||
               data.searchAnalytics.topQueries.length === 0) && (
-              <p className="text-center text-slate-600 dark:text-slate-500 py-4">
+              <p className="text-center text-c-text-secondary py-4">
                 {t.noData[lang]}
               </p>
             )}
@@ -363,9 +363,9 @@ export const HelpAnalyticsDashboard: React.FC = () => {
 
           {/* Search conversion rate */}
           {data.searchAnalytics?.searchConversion && (
-            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="mt-4 pt-4 border-t border-c-border-subtle">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="text-sm text-c-text-muted">
                   {t.conversionRate[lang]}
                 </span>
                 <span className="text-lg font-bold text-green-500">
@@ -377,12 +377,12 @@ export const HelpAnalyticsDashboard: React.FC = () => {
         </div>
 
         {/* Zero-Result Searches */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+        <div className="bg-c-surface rounded-xl p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
             <AlertCircle size={20} className="text-yellow-500" />
             {t.zeroResults[lang]}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+          <p className="text-sm text-c-text-muted mb-4">
             {lang === 'pl'
               ? 'Wyszukiwania, które nie zwróciły wyników - okazje do dodania treści'
               : 'Searches that returned no results - opportunities to add content'}
@@ -393,7 +393,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
                 key={i}
                 className="flex items-center justify-between py-2 px-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg"
               >
-                <span className="text-sm text-slate-700 dark:text-slate-300 truncate mr-4">
+                <span className="text-sm text-c-text-secondary truncate mr-4">
                   {item.query}
                 </span>
                 <span className="text-sm font-medium text-yellow-600">{item.count}x</span>
@@ -410,12 +410,12 @@ export const HelpAnalyticsDashboard: React.FC = () => {
         </div>
 
         {/* Needs Improvement */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+        <div className="bg-c-surface rounded-xl p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
             <ThumbsDown size={20} className="text-danger-500" />
             {t.needsImprovement[lang]}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+          <p className="text-sm text-c-text-muted mb-4">
             {lang === 'pl'
               ? 'Treści z niskim wskaźnikiem pomocności (<70%)'
               : 'Content with low helpfulness rate (<70%)'}
@@ -427,14 +427,14 @@ export const HelpAnalyticsDashboard: React.FC = () => {
                 className="flex items-center justify-between py-2 px-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg"
               >
                 <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <p className="text-sm font-medium text-c-text-secondary">
                     {item.content_id}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{item.content_type}</p>
+                  <p className="text-xs text-c-text-muted">{item.content_type}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-medium text-danger-600">{item.helpfulness_rate}%</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-c-text-muted">
                     {item.feedback_count} feedback
                   </p>
                 </div>
@@ -454,26 +454,26 @@ export const HelpAnalyticsDashboard: React.FC = () => {
       </div>
 
       {/* Video Completion Rates */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-c-surface rounded-xl p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Video size={20} className="text-primary-500" />
           {t.videoCompletion[lang]}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {data.contentPerformance?.videoCompletion?.slice(0, 8).map((video, i) => (
-            <div key={i} className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-              <p className="text-sm font-medium text-slate-900 dark:text-white truncate mb-2">
+            <div key={i} className="p-4 bg-c-surface-raised/50 rounded-lg">
+              <p className="text-sm font-medium text-c-text truncate mb-2">
                 {video.content_id}
               </p>
               <div className="flex items-end justify-between">
                 <div>
                   <p className="text-2xl font-bold text-primary-500">{video.completion_rate}%</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-c-text-muted">
                     {t.completionRate[lang]}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                  <p className="text-sm text-c-text-secondary">
                     {video.completions}/{video.starts}
                   </p>
                 </div>
@@ -481,7 +481,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
               {/* Progress bar */}
               <div className="mt-2 h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-navy-900 rounded-full"
+                  className="h-full bg-c-surface rounded-full"
                   style={{ width: `${video.completion_rate}%` }}
                 />
               </div>
@@ -489,7 +489,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
           ))}
           {(!data.contentPerformance?.videoCompletion ||
             data.contentPerformance.videoCompletion.length === 0) && (
-            <p className="col-span-full text-center text-slate-600 dark:text-slate-500 py-4">
+            <p className="col-span-full text-center text-c-text-secondary py-4">
               {t.noData[lang]}
             </p>
           )}
@@ -497,8 +497,8 @@ export const HelpAnalyticsDashboard: React.FC = () => {
       </div>
 
       {/* Recent Feedback */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-c-surface rounded-xl p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <MessageSquare size={20} className="text-blue-500" />
           {t.recentFeedback[lang]}
         </h3>
@@ -506,7 +506,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
           {data.feedbackSummary?.recentComments?.slice(0, 5).map((comment) => (
             <div
               key={comment.id}
-              className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg"
+              className="flex items-start gap-4 p-4 bg-c-surface-raised/50 rounded-lg"
             >
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -517,10 +517,10 @@ export const HelpAnalyticsDashboard: React.FC = () => {
               </div>
               <div className="flex-grow">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium text-slate-900 dark:text-white">
+                  <span className="text-sm font-medium text-c-text">
                     {comment.content_id}
                   </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                  <span className="text-xs text-c-text-muted">
                     {comment.content_type}
                   </span>
                   {comment.rating && (
@@ -529,8 +529,8 @@ export const HelpAnalyticsDashboard: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-slate-600 dark:text-slate-300">{comment.comment}</p>
-                <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
+                <p className="text-sm text-c-text-secondary">{comment.comment}</p>
+                <p className="text-xs text-c-text-secondary mt-1">
                   {new Date(comment.created_at).toLocaleDateString()}
                 </p>
               </div>
@@ -538,13 +538,13 @@ export const HelpAnalyticsDashboard: React.FC = () => {
           ))}
           {(!data.feedbackSummary?.recentComments ||
             data.feedbackSummary.recentComments.length === 0) && (
-            <p className="text-center text-slate-600 dark:text-slate-500 py-4">{t.noData[lang]}</p>
+            <p className="text-center text-c-text-secondary py-4">{t.noData[lang]}</p>
           )}
         </div>
       </div>
 
       {/* Footer */}
-      <div className="text-center text-sm text-slate-500 dark:text-slate-400">
+      <div className="text-center text-sm text-c-text-muted">
         <p>
           {t.lastUpdated[lang]}:{' '}
           {new Date(data.generatedAt).toLocaleString(lang === 'pl' ? 'pl-PL' : 'en-US')}

@@ -22,8 +22,8 @@ const EDGE_CONDITION_COLORS = {
   no: 'var(--c-danger)', // danger / rose — was #f43f5e
   exception: 'var(--c-warning)', // warning / amber — was #f59e0b
 } as const;
-// Neutral fallback stroke (slate-400 — structural neutral, NOT remapped).
-const EDGE_NEUTRAL_STROKE = 'rgb(148 163 184)'; // slate-400 #94a3b8
+// Neutral fallback stroke — theme-aware via canonical border token.
+const EDGE_NEUTRAL_STROKE = 'var(--c-border-strong)';
 
 function normalizeWaypoints(raw: unknown): RoutePoint[] {
   if (!Array.isArray(raw)) return [];
@@ -215,7 +215,7 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
                 if (e.key === 'Enter') commitEdit();
                 if (e.key === 'Escape') setEditing(false);
               }}
-              className="w-full text-[9px] font-medium text-center bg-white dark:bg-navy-800 border border-primary-400 rounded px-1 outline-none"
+              className="w-full text-[9px] font-medium text-center bg-c-surface border border-c-accent rounded px-1 outline-none"
             />
             <select
               value={conditionType}
@@ -223,7 +223,7 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
                 if (data?.onConditionChange) data.onConditionChange(id, e.target.value);
               }}
               disabled={edgeLocked}
-              className="text-[8px] bg-white dark:bg-navy-800 border border-slate-300 rounded"
+              className="text-[8px] bg-c-surface border border-c-border rounded"
             >
               {CONDITION_TYPES.map((ct) => (
                 <option key={ct} value={ct}>
@@ -234,7 +234,7 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
           </div>
         ) : (
           <div
-            className="text-[9px] font-medium text-slate-600 dark:text-slate-300 text-center cursor-pointer hover:text-primary-600 truncate"
+            className="text-[9px] font-medium text-c-text-secondary text-center cursor-pointer hover:text-c-accent truncate"
             onDoubleClick={(e) => {
               e.stopPropagation();
               if (edgeLocked) return;

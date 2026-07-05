@@ -116,15 +116,15 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
 
   // Styling classes
   const cardClass =
-    'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-6';
+    'bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg p-6';
   const sectionTitleClass =
-    'text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2';
+    'text-sm font-bold text-navy-900 mb-4 uppercase tracking-wider flex items-center gap-2';
   const toggleClass = (enabled: boolean) =>
     `relative w-12 h-6 rounded-full transition-colors ${
-      enabled ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
+      enabled ? 'bg-navy-900' : 'bg-c-surface-raised'
     }`;
   const toggleKnobClass = (enabled: boolean) =>
-    `absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;
+    `absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;
 
   const ToggleSwitch = ({
     enabled,
@@ -137,10 +137,10 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
     label: string;
     description: string;
   }) => (
-    <div className="flex items-center justify-between py-3 border-b border-slate-200 dark:border-navy-700 last:border-0">
+    <div className="flex items-center justify-between py-3 border-b border-c-border-subtle dark:border-navy-700 last:border-0">
       <div className="flex-1">
-        <p className="text-sm font-medium text-navy-900 dark:text-white">{label}</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>
+        <p className="text-sm font-medium text-navy-900">{label}</p>
+        <p className="text-xs text-c-text-muted mt-0.5">{description}</p>
       </div>
       <button onClick={() => onChange(!enabled)} className={toggleClass(enabled)}>
         <span className={toggleKnobClass(enabled)} />
@@ -153,10 +153,10 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-bold text-navy-900 dark:text-white">
+          <h3 className="text-lg font-bold text-navy-900">
             {t('settings.profile.visibility.title', 'Privacy & Visibility')}
           </h3>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t(
               'settings.profile.visibility.description',
               'Control who can see your profile and contact you'
@@ -166,7 +166,7 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary-500/20"
+          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-c-accent"
         >
           {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {isSaving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
@@ -176,7 +176,7 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
       {/* Profile Visibility Level */}
       <div className={cardClass}>
         <h4 className={sectionTitleClass}>
-          <Eye size={16} className="text-primary-500" />
+          <Eye size={16} className="text-c-accent" />
           {t('settings.profile.visibility.profileVisibility', 'Profile Visibility')}
         </h4>
 
@@ -187,16 +187,16 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
               onClick={() => setVisibility((prev: any) => ({ ...prev, profile: option.value }))}
               className={`p-4 rounded-lg border-2 text-left transition-all ${
                 visibility.profile === option.value
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
+                  ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+                  : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-white/20'
               }`}
             >
               <div className="flex items-center gap-3">
                 <div
                   className={`p-2 rounded-lg ${
                     visibility.profile === option.value
-                      ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400'
-                      : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
+                      ? 'bg-c-accent-soft dark:bg-c-accent-soft text-c-accent'
+                      : 'bg-c-surface-raised text-c-text-muted'
                   }`}
                 >
                   {option.icon}
@@ -205,13 +205,13 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                   <p
                     className={`font-medium ${
                       visibility.profile === option.value
-                        ? 'text-primary-700 dark:text-primary-300'
-                        : 'text-navy-900 dark:text-white'
+                        ? 'text-c-accent'
+                        : 'text-navy-900'
                     }`}
                   >
                     {option.label}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs text-c-text-muted mt-0.5">
                     {option.description}
                   </p>
                 </div>
@@ -224,7 +224,7 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
       {/* Contact Information Visibility */}
       <div className={cardClass}>
         <h4 className={sectionTitleClass}>
-          <Shield size={16} className="text-primary-500" />
+          <Shield size={16} className="text-c-accent" />
           {t('settings.profile.visibility.contactVisibility', 'Contact Information')}
         </h4>
 
@@ -262,7 +262,7 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
       {/* Activity Status */}
       <div className={cardClass}>
         <h4 className={sectionTitleClass}>
-          <Eye size={16} className="text-primary-500" />
+          <Eye size={16} className="text-c-accent" />
           {t('settings.profile.visibility.activityStatus', 'Activity Status')}
         </h4>
 
@@ -291,13 +291,13 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
       {/* Communication Settings */}
       <div className={cardClass}>
         <h4 className={sectionTitleClass}>
-          <MessageSquare size={16} className="text-primary-500" />
+          <MessageSquare size={16} className="text-c-accent" />
           {t('settings.profile.visibility.communication', 'Communication Settings')}
         </h4>
 
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-navy-900 dark:text-white flex items-center gap-2 mb-2">
+            <label className="text-sm font-medium text-navy-900 flex items-center gap-2 mb-2">
               <AtSign size={14} />
               {t('settings.profile.visibility.allowMentions', 'Allow @mentions from')}
             </label>
@@ -310,8 +310,8 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                   }
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     visibility.allowMentionsFrom === option.value
-                      ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 border-2 border-primary-500'
-                      : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 border-2 border-transparent hover:border-slate-300 dark:border-navy-700'
+                      ? 'bg-c-accent-soft dark:bg-c-accent-soft text-c-accent border-2 border-c-accent'
+                      : 'bg-c-surface-raised text-c-text-secondary border-2 border-transparent hover:border-c-border dark:border-navy-700'
                   }`}
                 >
                   {option.label}
@@ -321,7 +321,7 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
           </div>
 
           <div>
-            <label className="text-sm font-medium text-navy-900 dark:text-white flex items-center gap-2 mb-2">
+            <label className="text-sm font-medium text-navy-900 flex items-center gap-2 mb-2">
               <MessageSquare size={14} />
               {t('settings.profile.visibility.allowDMs', 'Allow direct messages from')}
             </label>
@@ -337,8 +337,8 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                   }
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     visibility.allowDirectMessagesFrom === option.value
-                      ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 border-2 border-primary-500'
-                      : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 border-2 border-transparent hover:border-slate-300 dark:border-navy-700'
+                      ? 'bg-c-accent-soft dark:bg-c-accent-soft text-c-accent border-2 border-c-accent'
+                      : 'bg-c-surface-raised text-c-text-secondary border-2 border-transparent hover:border-c-border dark:border-navy-700'
                   }`}
                 >
                   {option.label}

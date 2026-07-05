@@ -175,19 +175,19 @@ const BlockTab: React.FC<{
       className={`flex items-center gap-2 px-4 py-3 rounded-lg transition-all ${
         isActive
           ? `bg-${color}-100 dark:bg-${color}-900/30 border-2 border-${color}-500`
-          : 'bg-slate-50 dark:bg-navy-800 border-2 border-transparent hover:border-slate-200 dark:hover:border-navy-600'
+          : 'bg-c-surface-raised border-2 border-transparent hover:border-c-border dark:hover:border-c-border'
       }`}
     >
       <Icon
-        className={`w-5 h-5 ${isActive ? `text-${color}-600 dark:text-${color}-400` : 'text-slate-500 dark:text-slate-400'}`}
+        className={`w-5 h-5 ${isActive ? `text-${color}-600 dark:text-${color}-400` : 'text-c-text-muted'}`}
       />
       <div className="text-left">
         <div
-          className={`font-medium text-sm ${isActive ? `text-${color}-700 dark:text-${color}-300` : 'text-navy-900 dark:text-white'}`}
+          className={`font-medium text-sm ${isActive ? `text-${color}-700 dark:text-${color}-300` : 'text-c-text'}`}
         >
           {isPolish ? config.namePL : config.name}
         </div>
-        <div className="text-xs text-slate-500 dark:text-slate-400">
+        <div className="text-xs text-c-text-muted">
           {isPolish ? 'Wynik' : 'Score'}: {score.toFixed(1)}/5
         </div>
       </div>
@@ -214,24 +214,24 @@ const DimensionCard: React.FC<{
       className={`w-full p-4 rounded-xl text-left transition-all ${
         isActive
           ? `bg-${color}-50 dark:bg-${color}-900/20 border-2 border-${color}-500`
-          : 'bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
+          : 'bg-c-surface dark:bg-c-bg border border-c-border-subtle hover:border-c-border dark:hover:border-c-border'
       }`}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="font-medium text-navy-900 dark:text-white">{dimension.name}</span>
+        <span className="font-medium text-c-text">{dimension.name}</span>
         <span
-          className={`text-sm font-bold ${isActive ? `text-${color}-600 dark:text-${color}-400` : 'text-slate-600 dark:text-slate-400'}`}
+          className={`text-sm font-bold ${isActive ? `text-${color}-600 dark:text-${color}-400` : 'text-c-text-secondary dark:text-c-text-muted'}`}
         >
           {state.current.toFixed(1)}
         </span>
       </div>
-      <div className="w-full h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+      <div className="w-full h-2 bg-c-surface-raised rounded-full overflow-hidden">
         <div
           className={`h-full bg-${color}-500 transition-all duration-300`}
           style={{ width: `${progress}%` }}
         />
       </div>
-      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 line-clamp-2">
+      <p className="text-xs text-c-text-muted mt-2 line-clamp-2">
         {dimension.description}
       </p>
     </button>
@@ -253,7 +253,7 @@ const LevelSelector: React.FC<{
     <div className="space-y-4">
       {/* Current Level */}
       <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+        <label className="block text-sm font-medium text-c-text-secondary mb-2">
           {isPolish ? 'Aktualny poziom' : 'Current Level'}
         </label>
         <div className="flex gap-2">
@@ -264,10 +264,10 @@ const LevelSelector: React.FC<{
               disabled={readOnly}
               className={`flex-1 p-3 rounded-lg text-center transition-all ${
                 currentLevel === level.level
-                  ? 'bg-blue-500 text-white'
+                  ? 'bg-c-accent text-white'
                   : currentLevel > level.level
-                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                    ? 'bg-c-accent-soft text-c-accent'
+                    : 'bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
               } ${readOnly ? 'cursor-not-allowed opacity-60' : ''}`}
             >
               <div className="font-bold text-lg">{level.level}</div>
@@ -279,7 +279,7 @@ const LevelSelector: React.FC<{
 
       {/* Target Level */}
       <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+        <label className="block text-sm font-medium text-c-text-secondary mb-2">
           {isPolish ? 'Poziom docelowy' : 'Target Level'}
         </label>
         <div className="flex gap-2">
@@ -292,8 +292,8 @@ const LevelSelector: React.FC<{
               disabled={readOnly}
               className={`flex-1 p-2 rounded-lg text-center transition-all ${
                 targetLevel === level.level
-                  ? 'bg-green-500 text-white'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                  ? 'bg-c-success text-white'
+                  : 'bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
               } ${readOnly ? 'cursor-not-allowed opacity-60' : ''}`}
             >
               <div className="font-bold">{level.level}</div>
@@ -303,11 +303,11 @@ const LevelSelector: React.FC<{
       </div>
 
       {/* Level Description */}
-      <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-4">
-        <h4 className="font-medium text-navy-900 dark:text-white mb-2">
+      <div className="bg-c-surface-raised rounded-lg p-4">
+        <h4 className="font-medium text-c-text mb-2">
           {SIRI_MATURITY_LEVELS[currentLevel]?.title || 'Not Started'}
         </h4>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
+        <p className="text-sm text-c-text-secondary dark:text-c-text-muted">
           {SIRI_MATURITY_LEVELS[currentLevel]?.description || 'No level selected'}
         </p>
         {SIRI_MATURITY_LEVELS[currentLevel]?.indicators && (
@@ -315,9 +315,9 @@ const LevelSelector: React.FC<{
             {SIRI_MATURITY_LEVELS[currentLevel].indicators?.map((indicator, i) => (
               <li
                 key={i}
-                className="text-xs text-slate-500 dark:text-slate-400 flex items-start gap-2"
+                className="text-xs text-c-text-muted flex items-start gap-2"
               >
-                <CheckCircle2 size={12} className="text-green-500 mt-0.5 shrink-0" />
+                <CheckCircle2 size={12} className="text-c-success mt-0.5 shrink-0" />
                 {indicator}
               </li>
             ))}
@@ -339,15 +339,15 @@ const PrioritisationAreaCard: React.FC<{
   isPolish: boolean;
 }> = ({ area, state, onChange, readOnly, isPolish }) => {
   return (
-    <div className="bg-white dark:bg-navy-950/50 rounded-lg border border-slate-200 dark:border-navy-700 p-4">
+    <div className="bg-c-surface dark:bg-c-bg rounded-lg border border-c-border-subtle p-4">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h4 className="font-medium text-navy-900 dark:text-white">
+          <h4 className="font-medium text-c-text">
             {isPolish ? area.namePL : area.name}
           </h4>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{area.description}</p>
+          <p className="text-xs text-c-text-muted">{area.description}</p>
         </div>
-        <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{state.score}</div>
+        <div className="text-lg font-bold text-c-accent">{state.score}</div>
       </div>
       <div className="flex gap-1">
         {[0, 1, 2, 3, 4, 5].map((level) => (
@@ -357,10 +357,10 @@ const PrioritisationAreaCard: React.FC<{
             disabled={readOnly}
             className={`flex-1 h-8 rounded transition-all ${
               state.score === level
-                ? 'bg-blue-500 text-white'
+                ? 'bg-c-accent text-white'
                 : state.score > level
-                  ? 'bg-blue-200 dark:bg-blue-900/50'
-                  : 'bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700'
+                  ? 'bg-c-accent-soft'
+                  : 'bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
             } ${readOnly ? 'cursor-not-allowed' : ''}`}
           >
             <span className="text-xs font-medium">{level}</span>
@@ -393,12 +393,12 @@ const ScoreSummaryPanel: React.FC<{
   const overallScore = calculateOverallSIRIScore(dimensionScores);
 
   return (
-    <div className="bg-slate-50 dark:bg-navy-800 rounded-xl p-4 space-y-4">
+    <div className="bg-c-surface-raised rounded-xl p-4 space-y-4">
       <div className="text-center">
-        <div className="text-4xl font-bold text-navy-900 dark:text-white">
+        <div className="text-4xl font-bold text-c-text">
           {overallScore.toFixed(1)}
         </div>
-        <div className="text-sm text-slate-500 dark:text-slate-400">
+        <div className="text-sm text-c-text-muted">
           {isPolish ? 'Wynik ogólny' : 'Overall Score'} / 5
         </div>
       </div>
@@ -412,7 +412,7 @@ const ScoreSummaryPanel: React.FC<{
               <div className={`text-2xl font-bold text-${color}-600 dark:text-${color}-400`}>
                 {blockScores[block].toFixed(1)}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="text-xs text-c-text-muted">
                 {isPolish ? config.namePL : config.name}
               </div>
             </div>
@@ -556,21 +556,21 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
 
   // Manage panel support: allow parent to override the whole editor view.
   if (leftOverride) {
-    return <div className="h-full bg-white dark:bg-navy-900">{leftOverride}</div>;
+    return <div className="h-full bg-c-surface">{leftOverride}</div>;
   }
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-navy-900">
+    <div className="flex flex-col h-full bg-c-surface">
       {/* Header with Building Block Tabs */}
-      <div className="border-b border-slate-200 dark:border-navy-700 p-3">
+      <div className="border-b border-c-border-subtle p-3">
         <div className="flex items-center justify-end mb-3">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setViewMode('dimensions')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                 viewMode === 'dimensions'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                  ? 'bg-c-accent text-white'
+                  : 'bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
               }`}
             >
               <List size={16} className="inline mr-1" />
@@ -580,8 +580,8 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
               onClick={() => setViewMode('prioritisation')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                 viewMode === 'prioritisation'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                  ? 'bg-c-accent text-white'
+                  : 'bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
               }`}
             >
               <Target size={16} className="inline mr-1" />
@@ -591,8 +591,8 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
               onClick={() => setViewMode('matrix')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                 viewMode === 'matrix'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                  ? 'bg-c-accent text-white'
+                  : 'bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
               }`}
             >
               <Grid2X2 size={16} className="inline mr-1" />
@@ -619,10 +619,10 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Panel - Dimensions/Prioritisation List */}
-        <div className="w-80 border-r border-slate-200 dark:border-navy-700 overflow-y-auto p-4">
+        <div className="w-80 border-r border-c-border-subtle overflow-y-auto p-4">
           {viewMode === 'dimensions' && (
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <h3 className="text-sm font-medium text-c-text-muted uppercase tracking-wider">
                 {isPolish ? 'Wymiary' : 'Dimensions'}
               </h3>
               {blockDimensions.map((dim) => (
@@ -640,7 +640,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
 
           {viewMode === 'prioritisation' && (
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <h3 className="text-sm font-medium text-c-text-muted uppercase tracking-wider">
                 {isPolish ? 'Obszary priorytetyzacji' : 'Prioritisation Areas'}
               </h3>
               {SIRI_PRIORITISATION_AREAS.filter((a) => a.buildingBlock === activeBlock).map(
@@ -667,10 +667,10 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
             <div className="max-w-2xl mx-auto space-y-6">
               {/* Dimension Header */}
               <div>
-                <h3 className="text-2xl font-bold text-navy-900 dark:text-white">
+                <h3 className="text-2xl font-bold text-c-text">
                   {activeDimension.name}
                 </h3>
-                <p className="text-slate-600 dark:text-slate-400 mt-2">
+                <p className="text-c-text-secondary dark:text-c-text-muted mt-2">
                   {activeDimension.description}
                 </p>
               </div>
@@ -688,14 +688,14 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
               {/* Gap Analysis */}
               {currentDimensionState.target &&
                 currentDimensionState.target > currentDimensionState.current && (
-                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-lg p-4">
+                  <div className="bg-[color-mix(in_srgb,var(--c-warning)_10%,transparent)] border-l-2 border-c-warning rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <AlertTriangle className="w-5 h-5 text-amber-500" />
-                      <span className="font-medium text-amber-700 dark:text-amber-400">
+                      <AlertTriangle className="w-5 h-5 text-c-warning" />
+                      <span className="font-medium text-c-warning">
                         {isPolish ? 'Analiza luki' : 'Gap Analysis'}
                       </span>
                     </div>
-                    <p className="text-sm text-amber-600 dark:text-amber-500">
+                    <p className="text-sm text-c-warning">
                       {isPolish
                         ? `Luka: ${currentDimensionState.target - currentDimensionState.current} poziomów do osiągnięcia celu`
                         : `Gap: ${currentDimensionState.target - currentDimensionState.current} levels to reach target`}
@@ -707,7 +707,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
               <div>
                 <button
                   onClick={() => setShowNotes(!showNotes)}
-                  className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white"
+                  className="flex items-center gap-2 text-sm text-c-text-secondary dark:text-c-text-muted hover:text-c-text dark:hover:text-c-text"
                 >
                   <MessageSquare size={16} />
                   {isPolish ? 'Notatki i dowody' : 'Notes & Evidence'}
@@ -724,7 +724,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
                     placeholder={
                       isPolish ? 'Dodaj notatki lub dowody...' : 'Add notes or evidence...'
                     }
-                    className="mt-2 w-full h-32 p-3 border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-950 text-navy-900 dark:text-white resize-none disabled:opacity-60"
+                    className="mt-2 w-full h-32 p-3 border border-c-border-subtle rounded-lg bg-c-surface dark:bg-c-bg text-c-text resize-none disabled:opacity-60"
                   />
                 )}
               </div>
@@ -732,7 +732,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
               {/* Prioritisation Areas for this Dimension */}
               {dimensionPrioritisationAreas.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
+                  <h4 className="text-sm font-medium text-c-text-muted uppercase tracking-wider mb-3">
                     {isPolish
                       ? 'Powiązane obszary priorytetyzacji'
                       : 'Related Prioritisation Areas'}
@@ -756,7 +756,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
 
           {viewMode === 'matrix' && (
             <div className="space-y-6">
-              <h3 className="text-xl font-bold text-navy-900 dark:text-white">
+              <h3 className="text-xl font-bold text-c-text">
                 {isPolish ? 'Macierz dojrzałości SIRI' : 'SIRI Maturity Matrix'}
               </h3>
 
@@ -765,16 +765,16 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
                 <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full border-collapse">
                   <thead>
                     <tr>
-                      <th className="p-3 text-left bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
+                      <th className="p-3 text-left bg-c-surface-raised border border-c-border-subtle">
                         {isPolish ? 'Wymiar' : 'Dimension'}
                       </th>
                       {SIRI_MATURITY_LEVELS.map((level) => (
                         <th
                           key={level.level}
-                          className="p-3 text-center bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 min-w-[100px]"
+                          className="p-3 text-center bg-c-surface-raised border border-c-border-subtle min-w-[100px]"
                         >
                           <div className="font-bold">{level.level}</div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                          <div className="text-xs text-c-text-muted">
                             {level.title}
                           </div>
                         </th>
@@ -788,7 +788,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
 
                       return (
                         <tr key={dim.id}>
-                          <td className="p-3 border border-slate-200 dark:border-navy-700 font-medium text-navy-900 dark:text-white">
+                          <td className="p-3 border border-c-border-subtle font-medium text-c-text">
                             {dim.name}
                           </td>
                           {SIRI_MATURITY_LEVELS.map((level) => {
@@ -805,19 +805,19 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
                                     handleLevelChange(level.level);
                                   }
                                 }}
-                                className={`p-3 border border-slate-200 dark:border-navy-700 text-center cursor-pointer transition-all ${
+                                className={`p-3 border border-c-border-subtle text-center cursor-pointer transition-all ${
                                   isCurrent
                                     ? `bg-${color}-500 text-white`
                                     : isAchieved
                                       ? `bg-${color}-100 dark:bg-${color}-900/30`
                                       : isTarget
-                                        ? 'bg-green-100 dark:bg-green-900/30 border-green-500'
-                                        : 'hover:bg-slate-100 dark:hover:bg-navy-800'
+                                        ? 'bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] border-c-success'
+                                        : 'hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
                                 } ${readOnly ? 'cursor-default' : ''}`}
                               >
                                 {isCurrent && <CheckCircle2 size={16} className="mx-auto" />}
                                 {isTarget && !isCurrent && (
-                                  <Target size={16} className="mx-auto text-green-500" />
+                                  <Target size={16} className="mx-auto text-c-success" />
                                 )}
                               </td>
                             );

@@ -25,7 +25,7 @@ describe('demoGuard.middleware runtime safety', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
-  it('demoContextMiddleware continues when req.user accessor throws', () => {
+  it('demoContextMiddleware continues when req.user accessor throws', async () => {
     const req: any = {};
     Object.defineProperty(req, 'get', {
       configurable: true,
@@ -44,15 +44,19 @@ describe('demoGuard.middleware runtime safety', () => {
     const res = {} as Response;
     const next = vi.fn();
 
-    expect(() =>
-      demoContextMiddleware(req as Request, res, next as unknown as NextFunction)
-    ).not.toThrow();
-    expect((req as any).demo).toEqual({ enabled: true, organizationId: 'demo-session-org' });
-    expect((req as any).organizationId).toBe('demo-session-org');
+    // Secure contract: a session-org header that cannot be validated (no resolvable
+    // user → no DB lookup) is NOT trusted; org falls back to the base demo org.
+    await demoContextMiddleware(req as Request, res, next as unknown as NextFunction);
+    expect((req as any).demo).toEqual({
+      enabled: true,
+      organizationId: DEMO_ORG_ID,
+      sessionValidated: false,
+    });
+    expect((req as any).organizationId).toBe(DEMO_ORG_ID);
     expect(next).toHaveBeenCalledTimes(1);
   });
 
-  it('demoContextMiddleware does not attach partial demo context when user org assignment throws', () => {
+  it('demoContextMiddleware does not attach partial demo context when user org assignment throws', async () => {
     const req: any = { user: {} };
     Object.defineProperty(req.user, 'organizationId', {
       configurable: true,
@@ -71,15 +75,14 @@ describe('demoGuard.middleware runtime safety', () => {
     const res = {} as Response;
     const next = vi.fn();
 
-    expect(() =>
-      demoContextMiddleware(req as Request, res, next as unknown as NextFunction)
-    ).not.toThrow();
+    // A failed user-org write must roll back fully — no partial demo context leaks.
+    await demoContextMiddleware(req as Request, res, next as unknown as NextFunction);
     expect((req as any).demo).toBeUndefined();
     expect((req as any).organizationId).toBeUndefined();
     expect(next).toHaveBeenCalledTimes(1);
   });
 
-  it('demoContextMiddleware enables demo mode for whitespace-padded X-Demo-Mode header', () => {
+  it('demoContextMiddleware enables demo mode for whitespace-padded X-Demo-Mode header', async () => {
     const req: any = {};
     Object.defineProperty(req, 'get', {
       configurable: true,
@@ -92,13 +95,18 @@ describe('demoGuard.middleware runtime safety', () => {
     const res = {} as Response;
     const next = vi.fn();
 
-    demoContextMiddleware(req as Request, res, next as unknown as NextFunction);
+    // Trimmed/cased header still enables demo; unvalidated session org → base demo org.
+    await demoContextMiddleware(req as Request, res, next as unknown as NextFunction);
 
-    expect((req as any).demo).toEqual({ enabled: true, organizationId: 'demo-session-org' });
+    expect((req as any).demo).toEqual({
+      enabled: true,
+      organizationId: DEMO_ORG_ID,
+      sessionValidated: false,
+    });
     expect(next).toHaveBeenCalledTimes(1);
   });
 
-  it('demoContextMiddleware falls back to DEMO_ORG_ID for malformed session org header', () => {
+  it('demoContextMiddleware falls back to DEMO_ORG_ID for malformed session org header', async () => {
     const req: any = {};
     Object.defineProperty(req, 'get', {
       configurable: true,
@@ -111,9 +119,13 @@ describe('demoGuard.middleware runtime safety', () => {
     const res = {} as Response;
     const next = vi.fn();
 
-    demoContextMiddleware(req as Request, res, next as unknown as NextFunction);
+    await demoContextMiddleware(req as Request, res, next as unknown as NextFunction);
 
-    expect((req as any).demo).toEqual({ enabled: true, organizationId: DEMO_ORG_ID });
+    expect((req as any).demo).toEqual({
+      enabled: true,
+      organizationId: DEMO_ORG_ID,
+      sessionValidated: false,
+    });
     expect((req as any).organizationId).toBe(DEMO_ORG_ID);
     expect(next).toHaveBeenCalledTimes(1);
   });

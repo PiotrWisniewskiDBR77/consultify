@@ -11,9 +11,15 @@ import type { DesignTokens } from './types.js';
 // SHARED CONSTANTS
 // ============================================================
 
+// Premium type — aligned with the curated font library (themeRegistry / §1
+// DELIVERABLE_FORMATTING_SPEC). Inter is a confident, modern grotesque that
+// reads far less "Office template" than Calibri Light; it renders in .pptx /
+// .docx / web, and where unavailable PowerPoint substitutes to a clean sans
+// (still better than thin Calibri Light). Title uses a heavier presence via the
+// per-element `bold` flag rather than a Light weight.
 const FONTS = {
-  title: 'Calibri Light',
-  body: 'Calibri',
+  title: 'Inter',
+  body: 'Inter',
   mono: 'Courier New',
 };
 
@@ -54,20 +60,20 @@ const SPACING = {
 
 export const corporateTokens: DesignTokens = {
   colors: {
-    primary: '003A70', // Dark navy (BCG-like)
-    secondary: '2C5F8A', // Mid blue
-    accent: '00AA55', // Green for positive
+    primary: '0A2A4E', // Deep warm navy (richer, more premium than 003A70)
+    secondary: '35699B', // Mid blue — clearer support tone for the navy dominant
+    accent: '0E9F6E', // Refined emerald (stonowany vs jaskrawe 00AA55) — liczby/akcenty
     background: 'FFFFFF',
-    surface: 'F7F8FA',
-    textPrimary: '1A1A2E',
-    textSecondary: '5A6178',
+    surface: 'F6F8FB',
+    textPrimary: '17223B', // Slightly deeper, warmer ink
+    textSecondary: '54607A', // ~6.3:1 on white (WCAG AA)
     textInverse: 'FFFFFF',
-    success: '22C55E',
+    success: '16A34A',
     warning: 'F59E0B',
-    danger: 'EF4444',
+    danger: 'DC2626', // Slightly deeper red — less alarming, more editorial
     info: '3B82F6',
-    border: 'E2E5EB',
-    muted: 'A0A8B8',
+    border: 'E3E7EE',
+    muted: '9AA3B5',
   },
   fonts: FONTS,
   fontSizes: FONT_SIZES,
@@ -81,18 +87,18 @@ export const corporateTokens: DesignTokens = {
 
 export const minimalTokens: DesignTokens = {
   colors: {
-    primary: '111827', // Near black
-    secondary: '374151',
-    accent: '6366F1', // Indigo accent
+    primary: '111827', // Near black — strong monochrome dominant
+    secondary: '374151', // Graphite support
+    accent: '4F46E5', // Deeper indigo — single restrained accent on numbers
     background: 'FFFFFF',
     surface: 'F9FAFB',
     textPrimary: '111827',
-    textSecondary: '6B7280',
+    textSecondary: '5B6472', // ~5.6:1 on white (WCAG AA), warmer than 6B7280
     textInverse: 'FFFFFF',
-    success: '10B981',
-    warning: 'F59E0B',
-    danger: 'EF4444',
-    info: '6366F1',
+    success: '059669',
+    warning: 'D97706',
+    danger: 'DC2626',
+    info: '4F46E5',
     border: 'E5E7EB',
     muted: '9CA3AF',
   },
@@ -108,19 +114,19 @@ export const minimalTokens: DesignTokens = {
 
 export const modernTokens: DesignTokens = {
   colors: {
-    primary: '0066CC', // Bright blue
-    secondary: '1E3A5F',
-    accent: '7C3AED', // Purple accent
+    primary: '1D4ED8', // Confident royal blue (deeper than 0066CC, less web-link)
+    secondary: '1E3A5F', // Deep navy support
+    accent: '7C3AED', // Violet accent — reserved for numbers/highlights
     background: 'FFFFFF',
-    surface: 'F0F4FF',
+    surface: 'F2F6FE', // Soft, subtle blue tint
     textPrimary: '0F172A',
-    textSecondary: '475569',
+    textSecondary: '465069', // ~7.6:1 on white (WCAG AAA), warmer slate
     textInverse: 'FFFFFF',
-    success: '22C55E',
-    warning: 'FBBF24',
-    danger: 'F43F5E',
+    success: '16A34A',
+    warning: 'F59E0B', // Calmer amber than FBBF24
+    danger: 'E11D48', // Slightly deeper rose — less neon than F43F5E
     info: '0EA5E9',
-    border: 'CBD5E1',
+    border: 'D5DDE8', // Softer hairline
     muted: '94A3B8',
   },
   fonts: FONTS,

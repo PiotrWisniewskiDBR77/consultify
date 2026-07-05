@@ -224,8 +224,8 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
           cursor-pointer transition-all duration-200
           ${
             isDragging
-              ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 scale-[1.01]'
-              : 'border-slate-300 dark:border-navy-600 bg-slate-50 dark:bg-navy-800/50 hover:border-primary-400 dark:hover:border-primary-600 hover:bg-primary-50/50 dark:hover:bg-primary-900/10'
+              ? 'border-c-accent bg-c-accent-soft scale-[1.01]'
+              : 'border-c-border bg-c-surface-raised hover:border-c-accent hover:bg-c-accent-soft'
           }
         `}
       >
@@ -240,20 +240,20 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
 
         <div
           className={`p-4 rounded-xl mb-4 ${
-            isDragging ? 'bg-primary-100 dark:bg-primary-800/30' : 'bg-slate-100 dark:bg-navy-700'
+            isDragging ? 'bg-c-accent-soft' : 'bg-c-surface-raised'
           }`}
         >
           <Upload
             className={`w-8 h-8 ${
-              isDragging ? 'text-primary-500' : 'text-slate-600 dark:text-slate-500'
+              isDragging ? 'text-c-accent' : 'text-c-text-secondary'
             }`}
           />
         </div>
 
-        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+        <p className="text-sm font-semibold text-c-text">
           {isPl ? 'Przeciągnij pliki tutaj' : 'Drag & drop files here'}
         </p>
-        <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
+        <p className="text-xs text-c-text-secondary mt-1">
           {isPl
             ? 'lub kliknij, aby wybrać • PDF, DOCX, XLSX, CSV • do 20 MB'
             : 'or click to browse • PDF, DOCX, XLSX, CSV • up to 20 MB'}
@@ -274,21 +274,21 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
       {/* File list */}
       {files.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <h3 className="text-sm font-semibold text-c-text">
             {isPl ? 'Przesłane pliki' : 'Uploaded files'} ({files.length})
           </h3>
           <div className="space-y-1.5">
             {files.map((f, idx) => (
               <div
                 key={`${f.name}-${idx}`}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-c-surface border border-c-border-subtle"
               >
-                <FileText className="w-4 h-4 text-slate-600 dark:text-slate-500 flex-shrink-0" />
+                <FileText className="w-4 h-4 text-c-text-secondary flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+                  <p className="text-sm font-medium text-c-text truncate">
                     {f.name}
                   </p>
-                  <p className="text-xs text-slate-600 dark:text-slate-500">
+                  <p className="text-xs text-c-text-secondary">
                     {formatFileSize(f.size)}
                   </p>
                 </div>
@@ -312,7 +312,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
                       e.stopPropagation();
                       removeFile(idx);
                     }}
-                    className="text-slate-600 hover:text-slate-500 dark:text-slate-400 dark:hover:text-slate-400"
+                    className="text-c-text-secondary hover:text-c-text-secondary"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -326,8 +326,8 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
       {/* Building knowledge map spinner */}
       {isBuildingMap && (
         <div className="flex items-center justify-center gap-3 py-6">
-          <Loader2 className="w-5 h-5 text-primary-500 animate-spin" />
-          <span className="text-sm text-slate-600 dark:text-slate-300">
+          <Loader2 className="w-5 h-5 text-c-accent animate-spin" />
+          <span className="text-sm text-c-text-secondary">
             {isPl ? 'Budowanie mapy wiedzy...' : 'Building knowledge map...'}
           </span>
         </div>
@@ -335,45 +335,45 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
 
       {/* Knowledge Map Card */}
       {knowledgeMap && allDone && (
-        <div className="rounded-2xl border border-primary-200 dark:border-primary-800/50 bg-gradient-to-br from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20 p-6 space-y-4">
+        <div className="rounded-2xl border border-c-accent bg-c-accent p-6 space-y-4">
           <div className="flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-primary-500" />
-            <h3 className="text-base font-bold text-slate-800 dark:text-white">
+            <MapPin className="w-5 h-5 text-c-accent" />
+            <h3 className="text-base font-bold text-c-text">
               {isPl ? 'Mapa wiedzy' : 'Knowledge Map'}
             </h3>
           </div>
 
           {/* Stats row */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="px-3 py-2 rounded-lg bg-white/70 dark:bg-navy-800/70">
-              <div className="text-lg font-bold text-primary-600 dark:text-primary-400">
+            <div className="px-3 py-2 rounded-lg bg-c-surface">
+              <div className="text-lg font-bold text-c-accent">
                 {knowledgeMap.sourceCount}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="text-xs text-c-text-secondary">
                 {isPl ? 'Pliki' : 'Files'}
               </div>
             </div>
-            <div className="px-3 py-2 rounded-lg bg-white/70 dark:bg-navy-800/70">
-              <div className="text-lg font-bold text-primary-600 dark:text-primary-400">
+            <div className="px-3 py-2 rounded-lg bg-c-surface">
+              <div className="text-lg font-bold text-c-accent">
                 {knowledgeMap.keyTopics.length}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="text-xs text-c-text-secondary">
                 {isPl ? 'Tematy' : 'Topics'}
               </div>
             </div>
-            <div className="px-3 py-2 rounded-lg bg-white/70 dark:bg-navy-800/70">
-              <div className="text-lg font-bold text-primary-600 dark:text-primary-400">
+            <div className="px-3 py-2 rounded-lg bg-c-surface">
+              <div className="text-lg font-bold text-c-accent">
                 {knowledgeMap.extractedEntities.length}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="text-xs text-c-text-secondary">
                 {isPl ? 'Encje' : 'Entities'}
               </div>
             </div>
-            <div className="px-3 py-2 rounded-lg bg-white/70 dark:bg-navy-800/70">
-              <div className="text-xs font-semibold text-primary-600 dark:text-primary-400 truncate">
+            <div className="px-3 py-2 rounded-lg bg-c-surface">
+              <div className="text-xs font-semibold text-c-accent truncate">
                 {knowledgeMap.suggestedReportType.replace(/_/g, ' ')}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="text-xs text-c-text-secondary">
                 {isPl ? 'Typ raportu' : 'Report type'}
               </div>
             </div>
@@ -382,14 +382,14 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
           {/* Key topics */}
           {knowledgeMap.keyTopics.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">
+              <p className="text-xs font-semibold text-c-text-secondary mb-1.5">
                 {isPl ? 'Kluczowe tematy' : 'Key topics'}
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {knowledgeMap.keyTopics.map((topic) => (
                   <span
                     key={topic}
-                    className="px-2 py-0.5 text-xs rounded-full bg-primary-100 dark:bg-primary-800/40 text-primary-700 dark:text-primary-300"
+                    className="px-2 py-0.5 text-xs rounded-full bg-c-accent-soft text-c-accent"
                   >
                     {topic}
                   </span>
@@ -399,7 +399,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
           )}
 
           {/* Summary */}
-          <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          <p className="text-sm text-c-text-secondary leading-relaxed">
             {knowledgeMap.summary}
           </p>
 
@@ -409,23 +409,22 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
               onClick={() => onChoosePath('A')}
               disabled={isLoading}
               className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl
-                bg-white dark:bg-navy-800 border-2 border-primary-200 dark:border-primary-700
-                hover:border-primary-400 dark:hover:border-primary-500
-                text-slate-700 dark:text-slate-200 font-semibold text-sm
+                bg-c-surface border-2 border-c-accent
+                hover:border-c-accent
+                text-c-text font-semibold text-sm
                 transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <FileText className="w-4 h-4 text-primary-500" />
+              <FileText className="w-4 h-4 text-c-accent" />
               {isPl ? 'Użyj szablonu (Ścieżka A)' : 'Use Template (Path A)'}
-              <ArrowRight className="w-4 h-4 text-slate-600" />
+              <ArrowRight className="w-4 h-4 text-c-text-secondary" />
             </button>
 
             <button
               onClick={() => onChoosePath('B')}
               disabled={isLoading}
               className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl
-                bg-gradient-to-r from-primary-500 to-crimson-500
-                hover:from-primary-600 hover:to-crimson-600
-                text-white font-semibold text-sm
+                bg-c-accent
+                text-c-text font-semibold text-sm
                 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Sparkles className="w-4 h-4" />

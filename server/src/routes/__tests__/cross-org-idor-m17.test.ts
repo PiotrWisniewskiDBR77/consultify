@@ -1,4 +1,6 @@
 /**
+ * @vitest-environment node
+ *
  * M17 Outputs — cross-org IDOR contract tests (adversarial sweep, wave 5 cohort).
  *
  * Holes confirmed + fixed in this sweep:

@@ -308,9 +308,13 @@ type StreamOptions = {
   onDeliverable?: (payload: {
     draftId: string;
     generationId: string;
-    kind: 'doc' | 'sheet' | 'deck';
+    kind: 'doc' | 'sheet' | 'deck' | 'mindmap';
     format?: string;
     title?: string;
+    /** Only for kind:'mindmap' (M06 Fala 2 · 2.3): backend-built skeleton graph. */
+    graph?: { nodes?: unknown[]; edges?: unknown[] };
+    /** Only for kind:'mindmap': topic seed text for AI expansion in Ideas. */
+    seedText?: string;
   }) => void;
 };
 
@@ -843,8 +847,16 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         if (evt.type === 'deliverable') {
           const draftId = String((evt as any).draftId || (evt as any).generationId || '').trim();
           const kindRaw = String((evt as any).kind || 'doc');
-          const kind: 'doc' | 'sheet' | 'deck' =
-            kindRaw === 'sheet' ? 'sheet' : kindRaw === 'deck' ? 'deck' : 'doc';
+          // M06 Fala 2 · 2.3: mind map is a first-class deliverable kind. It
+          // carries a pre-built skeleton graph instead of a canvas draft id.
+          const kind: 'doc' | 'sheet' | 'deck' | 'mindmap' =
+            kindRaw === 'mindmap'
+              ? 'mindmap'
+              : kindRaw === 'sheet'
+                ? 'sheet'
+                : kindRaw === 'deck'
+                  ? 'deck'
+                  : 'doc';
           if (draftId) {
             options.onDeliverable?.({
               draftId,
@@ -852,6 +864,8 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
               kind,
               format: (evt as any).format,
               title: (evt as any).title,
+              graph: (evt as any).graph,
+              seedText: (evt as any).seedText,
             });
           }
           return;

@@ -154,6 +154,13 @@ export interface Task {
 // INITIATIVE
 // ==========================================
 
+/**
+ * @deprecated Stary 5-wartościowy enum — NIE jest żywym automatem statusów.
+ * Autorytatywne źródło to `constants/initiativeStatuses.ts` (13 statusów + bramki +
+ * RBAC). Nie używaj w nowym kodzie; importuj `InitiativeStatus`/`InitiativeStatusType`
+ * z `../constants/initiativeStatuses.js`. Pozostawione dla legacy interfejsu
+ * `Initiative` poniżej do pełnego usunięcia (F6, docs/initiatives/INITIATIVE_PROCESS_EFFECTIVENESS.md).
+ */
 export type InitiativeStatus = 'draft' | 'planning' | 'active' | 'completed' | 'cancelled';
 
 export interface Initiative {

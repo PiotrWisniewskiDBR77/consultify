@@ -60,7 +60,7 @@ export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({
   }, [title, periodStart, periodEnd, granularity, onCreated, t]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-overlay bg-black/40 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-navy-900 rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">
           {t('finance.prediction.createTitle', 'Nowy budżet / scenariusz')}
@@ -126,7 +126,7 @@ export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({
           <button
             onClick={handleCreate}
             disabled={!title.trim() || creating}
-            className="px-4 py-2 bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 text-sm rounded-lg hover:bg-navy-800 disabled:opacity-50"
+            className="px-4 py-2 bg-c-text text-c-bg text-sm rounded-lg hover:opacity-90 disabled:opacity-50"
           >
             {t('common.create', 'Create')}
           </button>

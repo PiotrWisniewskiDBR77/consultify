@@ -75,9 +75,9 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
       return <Check className="w-4 h-4 text-green-500" />;
     }
     if (isGenerating) {
-      return <Clock className="w-4 h-4 text-slate-600 animate-pulse" />;
+      return <Clock className="w-4 h-4 text-c-text-secondary animate-pulse" />;
     }
-    return <Clock className="w-4 h-4 text-slate-600" />;
+    return <Clock className="w-4 h-4 text-c-text-secondary" />;
   };
 
   // Already generated
@@ -110,7 +110,7 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="4"
-                  className="text-slate-200 dark:text-slate-700"
+                  className="text-c-text"
                 />
                 <circle
                   cx="72"
@@ -128,10 +128,10 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
             </div>
 
             <div>
-              <div className="text-xl font-semibold text-slate-900 dark:text-white">
+              <div className="text-xl font-semibold text-c-text">
                 {isPl ? 'Generowanie raportu...' : 'Generating report...'}
               </div>
-              <div className="text-sm text-slate-500 mt-1">
+              <div className="text-sm text-c-text-secondary mt-1">
                 {Math.round(progress)}% {isPl ? 'ukończone' : 'complete'}
               </div>
             </div>
@@ -142,10 +142,10 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
               <Check className="w-10 h-10 text-green-600" />
             </div>
             <div>
-              <div className="text-xl font-semibold text-slate-900 dark:text-white">
+              <div className="text-xl font-semibold text-c-text">
                 {isPl ? 'Raport wygenerowany!' : 'Report Generated!'}
               </div>
-              <div className="text-sm text-slate-500 mt-1">
+              <div className="text-sm text-c-text-secondary mt-1">
                 {isPl
                   ? 'Możesz teraz przejść do edycji i przeglądu treści'
                   : 'You can now proceed to review and edit the content'}
@@ -158,10 +158,10 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
               <Sparkles className="w-10 h-10 text-blue-600" />
             </div>
             <div>
-              <div className="text-xl font-semibold text-slate-900 dark:text-white">
+              <div className="text-xl font-semibold text-c-text">
                 {isPl ? 'Gotowy do generowania' : 'Ready to Generate'}
               </div>
-              <div className="text-sm text-slate-500 mt-1">
+              <div className="text-sm text-c-text-secondary mt-1">
                 {isPl
                   ? `AI wygeneruje treść dla ${stats.total} sekcji raportu`
                   : `AI will generate content for ${stats.total} report sections`}
@@ -170,7 +170,7 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
 
             <button
               onClick={onGenerate}
-              className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/25"
+              className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-c-text rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/25"
             >
               <Sparkles className="w-5 h-5" />
               {isPl ? 'Generuj Raport' : 'Generate Report'}
@@ -180,8 +180,8 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
       </div>
 
       {/* Sections Status List */}
-      <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
-        <h3 className="font-medium text-slate-900 dark:text-white mb-4">
+      <div className="border-t border-c-border-subtle pt-6">
+        <h3 className="font-medium text-c-text mb-4">
           {isPl ? 'Sekcje Raportu' : 'Report Sections'}
         </h3>
 
@@ -189,16 +189,16 @@ export const GenerateStep: React.FC<GenerateStepProps> = ({
           {enabledSections.map((section) => (
             <div
               key={section.sectionKey}
-              className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50"
+              className="flex items-center gap-3 p-3 rounded-lg bg-c-surface-raised"
             >
               {/* Status */}
               {getSectionStatus(section)}
 
               {/* Title */}
               <div className="flex-1">
-                <span className="text-sm text-slate-900 dark:text-white">{section.title}</span>
+                <span className="text-sm text-c-text">{section.title}</span>
                 {section.generatedAt && (
-                  <span className="ml-2 text-xs text-slate-600">
+                  <span className="ml-2 text-xs text-c-text-secondary">
                     {new Date(section.generatedAt).toLocaleTimeString()}
                   </span>
                 )}

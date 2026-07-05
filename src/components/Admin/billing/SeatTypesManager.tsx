@@ -278,7 +278,7 @@ export const SeatTypesManager: React.FC<SeatTypesManagerProps> = ({
                   `bg-gradient-to-br ${colors.gradient}`
                 )}
               >
-                <Icon size={24} className="text-white" />
+                <Icon size={24} className="text-c-text" />
               </div>
 
               {/* Info */}

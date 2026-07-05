@@ -50,9 +50,9 @@ export interface InterviewTemplatePreviewBodyProps {
 }
 
 const TEMPLATE_BADGE_CLASS =
-  'border border-slate-200/70 dark:border-white/[0.08] bg-blue-500/10 text-blue-600 dark:text-blue-300';
+  'border border-c-info/20 bg-c-info/10 text-[var(--c-info)]';
 const NEUTRAL_PILL_CLASS =
-  'border border-slate-200/70 dark:border-white/[0.08] bg-slate-100 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300';
+  'border border-[var(--c-border-subtle)] bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)]';
 
 export const InterviewTemplatePreviewBody: React.FC<InterviewTemplatePreviewBodyProps> = ({
   template,
@@ -136,17 +136,17 @@ export const InterviewTemplatePreviewBody: React.FC<InterviewTemplatePreviewBody
       <PreviewMetaCard
         pills={pills}
         trailing={
-          <span className="text-[11px] text-slate-500 dark:text-slate-400">
+          <span className="text-[11px] text-[var(--c-text-muted)]">
             {isPolish ? 'Utworzono' : 'Created'}:{' '}
             {template.createdAt ? new Date(template.createdAt).toLocaleDateString() : '—'}
           </span>
         }
       >
-        <div className="mt-2 text-xs text-slate-600 dark:text-slate-300 line-clamp-2">
+        <div className="mt-2 text-xs text-[var(--c-text-secondary)] line-clamp-2">
           {descriptionText}
         </div>
         {template.audience ? (
-          <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+          <div className="mt-1 text-[11px] text-[var(--c-text-muted)]">
             {isPolish ? 'Odbiorcy' : 'Audience'}: {template.audience}
           </div>
         ) : null}
@@ -159,12 +159,12 @@ export const InterviewTemplatePreviewBody: React.FC<InterviewTemplatePreviewBody
       />
 
       <div className="space-y-2">
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--c-text-muted)]">
           {isPolish ? 'Pytania' : 'Questions'}
         </div>
         <div className="space-y-1.5">
           {questionsLoading ? (
-            <div className="text-xs text-slate-600 dark:text-slate-500">
+            <div className="text-xs text-[var(--c-text-muted)]">
               {isPolish ? 'Ładowanie…' : 'Loading…'}
             </div>
           ) : questionItems.length > 0 ? (
@@ -175,15 +175,15 @@ export const InterviewTemplatePreviewBody: React.FC<InterviewTemplatePreviewBody
               return (
                 <div
                   key={`${template.id}:q:${idx}`}
-                  className="text-xs text-slate-700 dark:text-slate-200"
+                  className="text-xs text-[var(--c-text)]"
                 >
-                  <span className="text-slate-600 dark:text-slate-500 mr-2">{idx + 1}.</span>
+                  <span className="text-[var(--c-text-muted)] mr-2">{idx + 1}.</span>
                   <span className="line-clamp-2">{text}</span>
                 </div>
               );
             })
           ) : (
-            <div className="text-xs text-slate-600 dark:text-slate-500">
+            <div className="text-xs text-[var(--c-text-muted)]">
               {isPolish ? 'Brak pytań do podglądu.' : 'No questions to preview.'}
             </div>
           )}
@@ -281,7 +281,7 @@ export const InterviewTemplatePreviewFooter: React.FC<InterviewTemplatePreviewFo
   return (
     // canon §7.3: space-y-2.5, NO border-t dividers between footer cards
     <div className="space-y-2.5">
-      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+      <div className="rounded-token-md border border-[var(--c-border-subtle)] bg-[var(--c-surface-raised)] p-2.5">
         <PreviewAIHintStrip hints={aiHints} onRunHint={onRunAiHint} />
       </div>
 

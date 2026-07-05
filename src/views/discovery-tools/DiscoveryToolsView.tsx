@@ -140,19 +140,19 @@ export const DiscoveryToolsView: React.FC = () => {
   };
 
   return (
-    <div className="min-h-full bg-slate-50 dark:bg-navy-950">
+    <div className="min-h-full bg-c-bg">
       {/* Header */}
-      <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
+      <div className="bg-c-surface border-b border-c-border-subtle">
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl">
-              <Wrench className="w-8 h-8 text-white" />
+            <div className="p-3 bg-c-accent-soft rounded-xl">
+              <Wrench className="w-6 h-6 text-c-accent" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+              <h1 className="text-2xl font-bold text-c-text">
                 {t('discoveryTools.title', 'Discovery Tools')}
               </h1>
-              <p className="text-slate-600 dark:text-slate-400">
+              <p className="text-c-text-secondary">
                 {t(
                   'discoveryTools.subtitle',
                   '31 AI-powered tools for strategic, operational, and digital transformation'
@@ -164,20 +164,20 @@ export const DiscoveryToolsView: React.FC = () => {
           {/* Stats */}
           <div className="flex gap-6 mt-6">
             <div className="flex items-center gap-2">
-              <Brain className="w-5 h-5 text-primary-500" />
-              <span className="text-sm text-slate-600 dark:text-slate-400">
+              <Brain className="w-5 h-5 text-c-info" />
+              <span className="text-sm text-c-text-secondary">
                 {t('discoveryTools.stats.aiPowered', 'AI-powered analysis')}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <Lightbulb className="w-5 h-5 text-amber-500" />
-              <span className="text-sm text-slate-600 dark:text-slate-400">
+              <Lightbulb className="w-5 h-5 text-c-warning" />
+              <span className="text-sm text-c-text-secondary">
                 {t('discoveryTools.stats.initiatives', 'Generates initiatives')}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-emerald-500" />
-              <span className="text-sm text-slate-600 dark:text-slate-400">
+              <BarChart3 className="w-5 h-5 text-c-success" />
+              <span className="text-sm text-c-text-secondary">
                 {t('discoveryTools.stats.visualizations', 'Interactive visualizations')}
               </span>
             </div>
@@ -195,14 +195,14 @@ export const DiscoveryToolsView: React.FC = () => {
                 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 hover:border-emerald-400',
               blue: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 hover:border-blue-400',
               purple:
-                'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800 hover:border-primary-400',
+                'bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800 hover:border-violet-400',
               amber:
                 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 hover:border-amber-400',
             };
             const iconColorClasses = {
               emerald: 'text-emerald-600 dark:text-emerald-400',
               blue: 'text-blue-600 dark:text-blue-400',
-              purple: 'text-primary-600 dark:text-primary-400',
+              purple: 'text-violet-600 dark:text-violet-400',
               amber: 'text-amber-600 dark:text-amber-400',
             };
 
@@ -211,27 +211,27 @@ export const DiscoveryToolsView: React.FC = () => {
                 key={category.id}
                 onClick={() => handleCategoryClick(category.viewId)}
                 className={`
-                  p-6 rounded-xl border-2 text-left transition-all
+                  p-6 rounded-xl border-2 text-left transition-[box-shadow,border-color] duration-200
                   ${colorClasses[category.color as keyof typeof colorClasses]}
                   hover:shadow-lg group
                 `}
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className={`p-3 rounded-lg bg-white dark:bg-navy-800 shadow-sm`}>
+                  <div className={`p-3 rounded-lg bg-c-surface shadow-sm`}>
                     <Icon
                       className={`w-6 h-6 ${iconColorClasses[category.color as keyof typeof iconColorClasses]}`}
                     />
                   </div>
-                  <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                  <span className="text-sm font-medium text-c-text-muted">
                     {category.toolCount} {category.toolCount === 1 ? 'tool' : 'tools'}
                   </span>
                 </div>
 
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                <h3 className="text-lg font-semibold text-c-text mb-2">
                   {isPolish ? category.titlePl : category.title}
                 </h3>
 
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                <p className="text-sm text-c-text-secondary mb-4">
                   {isPolish ? category.descriptionPl : category.description}
                 </p>
 
@@ -240,21 +240,21 @@ export const DiscoveryToolsView: React.FC = () => {
                   {category.tools.slice(0, 4).map((tool) => (
                     <span
                       key={tool}
-                      className="px-2 py-1 text-xs rounded-full bg-white/50 dark:bg-navy-800/50 text-slate-700 dark:text-slate-300"
+                      className="px-2 py-1 text-xs rounded-full bg-c-surface/60 text-c-text-secondary"
                     >
                       {tool}
                     </span>
                   ))}
                   {category.tools.length > 4 && (
-                    <span className="px-2 py-1 text-xs rounded-full bg-white/50 dark:bg-navy-800/50 text-slate-500">
+                    <span className="px-2 py-1 text-xs rounded-full bg-c-surface/60 text-c-text-muted">
                       +{category.tools.length - 4} more
                     </span>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 text-sm font-medium text-primary-600 dark:text-primary-400 group-hover:gap-3 transition-all">
+                <div className="flex items-center gap-2 text-sm font-medium text-c-text group-hover:text-c-accent transition-colors duration-200">
                   {t('discoveryTools.explore', 'Explore tools')}
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" />
                 </div>
               </button>
             );
@@ -262,8 +262,8 @@ export const DiscoveryToolsView: React.FC = () => {
         </div>
 
         {/* How it works */}
-        <div className="mt-12 p-6 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+        <div className="mt-12 p-6 bg-c-surface rounded-xl border border-c-border-subtle">
+          <h2 className="text-lg font-semibold text-c-text mb-4">
             {t('discoveryTools.howItWorks.title', 'How Discovery Tools Work')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -298,16 +298,16 @@ export const DiscoveryToolsView: React.FC = () => {
               },
             ].map((item) => (
               <div key={item.step} className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                  <span className="text-sm font-bold text-primary-600 dark:text-primary-400">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-c-accent-soft flex items-center justify-center">
+                  <span className="text-sm font-bold text-c-accent">
                     {item.step}
                   </span>
                 </div>
                 <div>
-                  <h3 className="font-medium text-slate-900 dark:text-white">
+                  <h3 className="font-medium text-c-text">
                     {isPolish ? item.titlePl : item.title}
                   </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                  <p className="text-sm text-c-text-secondary">
                     {isPolish ? item.descPl : item.desc}
                   </p>
                 </div>

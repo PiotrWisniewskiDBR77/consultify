@@ -11,6 +11,7 @@
 
 import { Archive, CheckCircle2, Loader2, Plus, ShieldAlert } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   FilterableTable,
@@ -29,22 +30,47 @@ import {
 } from './api';
 import type { DocumentTemplate, DocumentTypeKey, TemplateDraftInput } from './types';
 
-const DOCUMENT_TYPE_OPTIONS: { value: DocumentTypeKey; label: string }[] = [
-  { value: 'executive_memo', label: 'Executive Memo' },
-  { value: 'project_status_report', label: 'Project Status Report' },
-  { value: 'steering_committee_report', label: 'Steering Committee Report' },
-  { value: 'ai_audit_report', label: 'AI Audit Report' },
-  { value: 'interview_summary_report', label: 'Interview Summary Report' },
-  { value: 'workshop_summary', label: 'Workshop Summary' },
-  { value: 'business_case', label: 'Business Case' },
-  { value: 'risk_register_report', label: 'Risk Register Report' },
-  { value: 'sop_document', label: 'SOP Document' },
-  { value: 'implementation_plan', label: 'Implementation Plan' },
-  { value: 'board_report', label: 'Board Report' },
-  { value: 'sales_proposal', label: 'Sales Proposal' },
-  { value: 'client_final_report', label: 'Client Final Report' },
-  { value: 'generic_document', label: 'Generic document' },
-];
+function useDocumentTypeOptions(
+  t: (key: string, def: string) => string
+): { value: DocumentTypeKey; label: string }[] {
+  return useMemo(
+    () => [
+      { value: 'executive_memo', label: t('documentStudio.docType.executiveMemo', 'Executive Memo') },
+      {
+        value: 'project_status_report',
+        label: t('documentStudio.docType.projectStatusReport', 'Project Status Report'),
+      },
+      {
+        value: 'steering_committee_report',
+        label: t('documentStudio.docType.steeringCommitteeReport', 'Steering Committee Report'),
+      },
+      { value: 'ai_audit_report', label: t('documentStudio.docType.aiAuditReport', 'AI Audit Report') },
+      {
+        value: 'interview_summary_report',
+        label: t('documentStudio.docType.interviewSummaryReport', 'Interview Summary Report'),
+      },
+      { value: 'workshop_summary', label: t('documentStudio.docType.workshopSummary', 'Workshop Summary') },
+      { value: 'business_case', label: t('documentStudio.docType.businessCase', 'Business Case') },
+      {
+        value: 'risk_register_report',
+        label: t('documentStudio.docType.riskRegisterReport', 'Risk Register Report'),
+      },
+      { value: 'sop_document', label: t('documentStudio.docType.sopDocument', 'SOP Document') },
+      {
+        value: 'implementation_plan',
+        label: t('documentStudio.docType.implementationPlan', 'Implementation Plan'),
+      },
+      { value: 'board_report', label: t('documentStudio.docType.boardReport', 'Board Report') },
+      { value: 'sales_proposal', label: t('documentStudio.docType.salesProposal', 'Sales Proposal') },
+      {
+        value: 'client_final_report',
+        label: t('documentStudio.docType.clientFinalReport', 'Client Final Report'),
+      },
+      { value: 'generic_document', label: t('documentStudio.docType.genericDocument', 'Generic document') },
+    ],
+    [t]
+  );
+}
 
 interface DocumentStudioTemplateArchitectViewProps {
   onTemplateApproved?: (template: DocumentTemplate) => void;
@@ -53,6 +79,8 @@ interface DocumentStudioTemplateArchitectViewProps {
 export const DocumentStudioTemplateArchitectView: React.FC<
   DocumentStudioTemplateArchitectViewProps
 > = ({ onTemplateApproved }) => {
+  const { t } = useTranslation();
+  const documentTypeOptions = useDocumentTypeOptions(t);
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [loadingList, setLoadingList] = useState(false);
   const [drafting, setDrafting] = useState(false);
@@ -70,7 +98,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
   const [lastDraftRefined, setLastDraftRefined] = useState<boolean | null>(null);
 
   const selectedTemplate = useMemo(
-    () => templates.find((t) => t.templateId === selectedTemplateId) ?? null,
+    () => templates.find((tpl) => tpl.templateId === selectedTemplateId) ?? null,
     [templates, selectedTemplateId]
   );
 
@@ -79,22 +107,30 @@ export const DocumentStudioTemplateArchitectView: React.FC<
   // live in the per-row actions menu via `getRowActions`.
   const tableColumns = useMemo<TableColumn[]>(
     () => [
-      { id: 'name', label: 'Template', width: '260px' },
-      { id: 'documentType', label: 'Type' },
-      { id: 'meta', label: 'Sections', align: 'right', width: '120px' },
+      { id: 'name', label: t('documentStudio.templateArchitect.colTemplate', 'Template'), width: '260px' },
+      { id: 'documentType', label: t('documentStudio.templateArchitect.colType', 'Type') },
+      {
+        id: 'meta',
+        label: t('documentStudio.templateArchitect.colSections', 'Sections'),
+        align: 'right',
+        width: '120px',
+      },
       {
         id: 'status',
-        label: 'Status',
+        label: t('documentStudio.templateArchitect.colStatus', 'Status'),
         width: '140px',
         filterable: true,
         filterOptions: [
-          { value: 'draft', label: 'Draft' },
-          { value: 'approved', label: 'Approved' },
-          { value: 'deprecated', label: 'Deprecated' },
+          { value: 'draft', label: t('documentStudio.templateArchitect.statusDraft', 'Draft') },
+          { value: 'approved', label: t('documentStudio.templateArchitect.statusApproved', 'Approved') },
+          {
+            value: 'deprecated',
+            label: t('documentStudio.templateArchitect.statusDeprecated', 'Deprecated'),
+          },
         ],
       },
     ],
-    []
+    [t]
   );
 
   const tableRows = useMemo<TableRow[]>(
@@ -110,14 +146,16 @@ export const DocumentStudioTemplateArchitectView: React.FC<
   );
 
   const getRowActions = (row: TableRow): RowAction[] => {
-    const template = templates.find((t) => t.templateId === row.id);
+    const template = templates.find((tpl) => tpl.templateId === row.id);
     if (!template) return [];
     const isBusy = busyTemplateId === template.templateId;
     const actions: RowAction[] = [];
     if (template.status === 'draft') {
       actions.push({
         id: 'approve',
-        label: isBusy ? 'Approving…' : 'Approve',
+        label: isBusy
+          ? t('documentStudio.templateArchitect.approving', 'Approving…')
+          : t('documentStudio.templateArchitect.approve', 'Approve'),
         icon: CheckCircle2,
         variant: 'primary',
         onClick: () => void handleApprove(template.templateId),
@@ -126,7 +164,9 @@ export const DocumentStudioTemplateArchitectView: React.FC<
     if (template.status !== 'deprecated') {
       actions.push({
         id: 'deprecate',
-        label: isBusy ? 'Working…' : 'Deprecate',
+        label: isBusy
+          ? t('documentStudio.templateArchitect.working', 'Working…')
+          : t('documentStudio.templateArchitect.deprecate', 'Deprecate'),
         icon: Archive,
         variant: 'danger',
         divider: actions.length > 0,
@@ -143,7 +183,11 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       const list = await listDocumentStudioTemplates();
       setTemplates(list);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load templates');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.templateArchitect.errLoadTemplates', 'Failed to load templates')
+      );
     } finally {
       setLoadingList(false);
     }
@@ -178,7 +222,11 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       setLastDraftRefined(useLlm ? result.llmRefined : null);
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to draft template');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.templateArchitect.errDraftTemplate', 'Failed to draft template')
+      );
     } finally {
       setDrafting(false);
     }
@@ -192,7 +240,11 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       onTemplateApproved?.(approved);
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to approve template');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.templateArchitect.errApproveTemplate', 'Failed to approve template')
+      );
     } finally {
       setBusyTemplateId(null);
     }
@@ -205,7 +257,11 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       await deprecateDocumentStudioTemplate(templateId);
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to deprecate template');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('documentStudio.templateArchitect.errDeprecateTemplate', 'Failed to deprecate template')
+      );
     } finally {
       setBusyTemplateId(null);
     }
@@ -214,38 +270,47 @@ export const DocumentStudioTemplateArchitectView: React.FC<
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto p-6">
       <header>
-        <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
-          Document Template Architect
+        <h2 className="text-lg font-semibold text-c-text">
+          {t('documentStudio.templateArchitect.heading', 'Document Template Architect')}
         </h2>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Design a reusable, governed Word/PDF template. Drafts must be approved before they can
-          drive Mode 3 generation.
+        <p className="mt-1 text-sm text-c-text-secondary">
+          {t(
+            'documentStudio.templateArchitect.subheading',
+            'Design a reusable, governed Word/PDF template. Drafts must be approved before they can drive Mode 3 generation.'
+          )}
         </p>
       </header>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
-        <h3 className="text-sm font-semibold text-navy-900 dark:text-white">
-          Draft a new template
+      <section className="rounded-xl border border-c-border-subtle bg-c-surface p-4 shadow-sm">
+        <h3 className="text-sm font-semibold text-c-text">
+          {t('documentStudio.templateArchitect.draftHeading', 'Draft a new template')}
         </h3>
         <form onSubmit={handleDraft} className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-200">Template name</span>
+            <span className="font-medium text-c-text">
+              {t('documentStudio.templateArchitect.templateName', 'Template name')}
+            </span>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Quarterly Board Memo template"
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950"
+              placeholder={t(
+                'documentStudio.templateArchitect.templateNamePlaceholder',
+                'e.g., Quarterly Board Memo template'
+              )}
+              className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-200">Document type</span>
+            <span className="font-medium text-c-text">
+              {t('documentStudio.templateArchitect.documentType', 'Document type')}
+            </span>
             <select
               value={documentType}
               onChange={(e) => setDocumentType(e.target.value as DocumentTypeKey)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950"
+              className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
             >
-              {DOCUMENT_TYPE_OPTIONS.map((opt) => (
+              {documentTypeOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
@@ -253,66 +318,79 @@ export const DocumentStudioTemplateArchitectView: React.FC<
             </select>
           </label>
           <label className="col-span-1 flex flex-col gap-1 text-sm sm:col-span-2">
-            <span className="font-medium text-slate-700 dark:text-slate-200">
-              Purpose <span className="text-danger-500">*</span>
+            <span className="font-medium text-c-text">
+              {t('documentStudio.templateArchitect.purpose', 'Purpose')}{' '}
+              <span className="text-danger-500">*</span>
             </span>
             <textarea
               value={purpose}
               onChange={(e) => setPurpose(e.target.value)}
               rows={3}
-              placeholder="What kind of documents will this template produce, and for whom?"
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950"
+              placeholder={t(
+                'documentStudio.templateArchitect.purposePlaceholder',
+                'What kind of documents will this template produce, and for whom?'
+              )}
+              className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
               minLength={8}
               required
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-200">
-              Audience (comma-separated)
+            <span className="font-medium text-c-text">
+              {t('documentStudio.templateArchitect.audience', 'Audience (comma-separated)')}
             </span>
             <input
               type="text"
               value={audience}
               onChange={(e) => setAudience(e.target.value)}
-              placeholder="e.g., Board, CEO, CFO"
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950"
+              placeholder={t('documentStudio.templateArchitect.audiencePlaceholder', 'e.g., Board, CEO, CFO')}
+              className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-200">Language</span>
+            <span className="font-medium text-c-text">
+              {t('documentStudio.templateArchitect.language', 'Language')}
+            </span>
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value as 'pl' | 'en')}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950"
+              className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
             >
-              <option value="pl">Polish</option>
-              <option value="en">English</option>
+              <option value="pl">{t('documentStudio.templateArchitect.langPolish', 'Polish')}</option>
+              <option value="en">{t('documentStudio.templateArchitect.langEnglish', 'English')}</option>
             </select>
           </label>
-          <label className="col-span-1 flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950 sm:col-span-2">
+          <label className="col-span-1 flex items-start gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm sm:col-span-2">
             <input
               type="checkbox"
               checked={useLlm}
               onChange={(e) => setUseLlm(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-c-focus-solid focus:ring-c-focus"
+              className="mt-0.5 h-4 w-4 rounded border-c-border text-c-focus-solid focus:ring-c-focus"
             />
             <span>
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                Refine with AI Template Architect (optional)
+              <span className="font-medium text-c-text">
+                {t(
+                  'documentStudio.templateArchitect.refineWithAi',
+                  'Refine with AI Template Architect (optional)'
+                )}
               </span>
-              <span className="block text-xs text-slate-500 dark:text-slate-400">
-                Allows AI to rewrite section purposes and propose a refined template name. Falls
-                back silently to the deterministic blueprint if AI is unavailable. New / removed /
-                renamed sections are rejected.
+              <span className="block text-xs text-c-text-secondary">
+                {t(
+                  'documentStudio.templateArchitect.refineWithAiHint',
+                  'Allows AI to rewrite section purposes and propose a refined template name. Falls back silently to the deterministic blueprint if AI is unavailable. New / removed / renamed sections are rejected.'
+                )}
               </span>
             </span>
           </label>
           <div className="col-span-1 flex items-center justify-between gap-3 sm:col-span-2">
-            <div className="text-xs text-slate-500 dark:text-slate-400">
+            <div className="text-xs text-c-text-secondary">
               {lastDraftRefined === true
-                ? 'Last draft was refined by AI.'
+                ? t('documentStudio.templateArchitect.refinedByAi', 'Last draft was refined by AI.')
                 : lastDraftRefined === false
-                  ? 'Last AI refinement returned no changes; deterministic draft used.'
+                  ? t(
+                      'documentStudio.templateArchitect.refinedNoChanges',
+                      'Last AI refinement returned no changes; deterministic draft used.'
+                    )
                   : null}
             </div>
             <Button
@@ -322,11 +400,13 @@ export const DocumentStudioTemplateArchitectView: React.FC<
             >
               {drafting ? (
                 <span className="inline-flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Drafting…
+                  <Loader2 className="h-4 w-4 animate-spin" />{' '}
+                  {t('documentStudio.templateArchitect.drafting', 'Drafting…')}
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-2">
-                  <Plus className="h-4 w-4" /> Draft template
+                  <Plus className="h-4 w-4" />{' '}
+                  {t('documentStudio.templateArchitect.draftTemplate', 'Draft template')}
                 </span>
               )}
             </Button>
@@ -344,16 +424,20 @@ export const DocumentStudioTemplateArchitectView: React.FC<
         </div>
       ) : null}
 
-      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
+      <section className="rounded-xl border border-c-border-subtle bg-c-surface p-4 shadow-sm">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-navy-900 dark:text-white">Template registry</h3>
+          <h3 className="text-sm font-semibold text-c-text">
+            {t('documentStudio.templateArchitect.registryHeading', 'Template registry')}
+          </h3>
           <Button
             type="button"
             variant="secondary"
             onClick={() => void refresh()}
             disabled={loadingList}
           >
-            {loadingList ? 'Refreshing…' : 'Refresh'}
+            {loadingList
+              ? t('documentStudio.templateArchitect.refreshing', 'Refreshing…')
+              : t('documentStudio.templateArchitect.refresh', 'Refresh')}
           </Button>
         </div>
         <FilterableTable
@@ -364,23 +448,28 @@ export const DocumentStudioTemplateArchitectView: React.FC<
           getRowActions={getRowActions}
           activeFilters={activeFilters}
           onFilterChange={setActiveFilters}
-          emptyMessage={loadingList ? 'Loading templates…' : 'No templates yet.'}
+          emptyMessage={
+            loadingList
+              ? t('documentStudio.templateArchitect.loadingTemplates', 'Loading templates…')
+              : t('documentStudio.templateArchitect.noTemplatesYet', 'No templates yet.')
+          }
           canvasClassName="mt-3"
           density="compact"
           persistKey="documentStudio.templates"
         />
 
         {selectedTemplate ? (
-          <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm dark:border-navy-700 dark:bg-navy-950">
-            <div className="font-semibold text-navy-900 dark:text-white">
-              Section blueprint — {selectedTemplate.name}
+          <div className="mt-4 rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
+            <div className="font-semibold text-c-text">
+              {t('documentStudio.templateArchitect.sectionBlueprint', 'Section blueprint')} —{' '}
+              {selectedTemplate.name}
             </div>
-            <ol className="mt-2 list-decimal space-y-1 pl-5 text-slate-700 dark:text-slate-300">
+            <ol className="mt-2 list-decimal space-y-1 pl-5 text-c-text">
               {selectedTemplate.sectionBlueprint.map((section, idx) => (
                 <li key={`${selectedTemplate.templateId}-section-${idx}`}>
                   <span className="font-medium">{section.title}</span>
                   {section.purpose ? (
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                    <span className="text-xs text-c-text-secondary">
                       {' '}
                       — {section.purpose}
                     </span>

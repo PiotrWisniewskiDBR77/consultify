@@ -14,69 +14,30 @@ interface ColorPickerPopoverProps {
   onClose: () => void;
 }
 
-// M06 L-06: de-duped — repeated hex values caused React duplicate-key warnings
-// (key={c}) and redundant swatches. Set keeps first occurrence, preserves order.
-export const RECOMMENDED_COLORS = Array.from(
-  new Set([
-    '#3b82f6',
-    '#10b981',
-    '#f59e0b',
-    '#f43f5e',
-    '#6366f1',
-    '#ec4899',
-    '#3b82f6',
-  ])
-);
+// Node colors = DATA (categorical). Sourced from the canonical 12-tag identity
+// palette (--c-tag-1..12, defined in src/index.css light+dark) so node fills stay
+// on-brand and theme-aware. CSS-var strings resolve in inline `backgroundColor`.
+const TAG_VARS = Array.from({ length: 12 }, (_, i) => `var(--c-tag-${i + 1})`);
 
-export const PALETTE = Array.from(
-  new Set([
-  '#1e293b',
-  '#334155',
-  '#475569',
-  '#64748b',
-  '#94a3b8',
-  '#f43f5e',
-  '#f59e0b',
-  '#f59e0b',
-  '#eab308',
-  '#84cc16',
-  '#22c55e',
-  '#10b981',
-  '#3b82f6',
-  '#3b82f6',
-  '#0ea5e9',
-  '#3b82f6',
-  '#6366f1',
-  '#6366f1',
-  '#a855f7',
-  '#d946ef',
-  '#ec4899',
-  '#f43f5e',
-  '#fb923c',
-  '#fbbf24',
-  '#a3e635',
-  '#34d399',
-  '#2dd4bf',
-  '#22d3ee',
-  '#38bdf8',
-  '#818cf8',
-  '#a78bfa',
-  '#c084fc',
-  '#e879f9',
-  '#f472b6',
-  '#fb7185',
-  '#fca5a5',
-  '#fdba74',
-  '#fde047',
-  '#bef264',
-  '#86efac',
-  '#6ee7b7',
-  '#5eead4',
-  '#67e8f9',
-  '#7dd3fc',
-  '#93c5fd',
-  ])
-);
+// A compact "recommended" subset (blue-first ordering per §15.1).
+export const RECOMMENDED_COLORS = [
+  'var(--c-tag-1)',
+  'var(--c-tag-12)',
+  'var(--c-tag-9)',
+  'var(--c-tag-4)',
+  'var(--c-tag-2)',
+  'var(--c-tag-11)',
+];
+
+// Full palette = status accents + the 12 identity tags (theme tokens, no raw hex).
+export const PALETTE = [
+  'var(--c-info)',
+  'var(--c-success)',
+  'var(--c-warning)',
+  'var(--c-danger)',
+  'var(--c-accent)',
+  ...TAG_VARS,
+];
 
 const LINE_STYLES: Array<{ id: 'solid' | 'dashed' | 'dotted'; label: string; dash: string }> = [
   { id: 'solid', label: '━━━', dash: '' },
@@ -116,10 +77,10 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
   );
 
   return (
-    <div className="w-60 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl p-2">
+    <div className="w-60 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl p-2">
       {/* Line style */}
       <div className="mb-2">
-        <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-1">
+        <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1">
           {isPl ? 'Styl linii' : 'Line style'}
         </div>
         <div className="flex gap-1">
@@ -129,8 +90,8 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
               onClick={() => onUpdate({ lineStyle: ls.id })}
               className={`flex-1 py-1 text-center rounded-lg text-[11px] transition-colors ${
                 currentLineStyle === ls.id
-                  ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 font-semibold'
-                  : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
+                  ? 'bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text font-semibold'
+                  : 'text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
               }`}
             >
               {ls.label}
@@ -141,9 +102,9 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
 
       {/* Opacity */}
       <div className="mb-2">
-        <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-1">
+        <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1">
           <span>{isPl ? 'Krycie' : 'Opacity'}</span>
-          <span className="text-slate-500">{opacity}%</span>
+          <span className="text-c-text-secondary">{opacity}%</span>
         </div>
         <input
           type="range"
@@ -152,19 +113,19 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
           step={5}
           value={opacity}
           onChange={handleOpacityChange}
-          className="w-full h-1 rounded-full accent-primary-500"
+          className="w-full h-1 rounded-full accent-c-accent"
         />
       </div>
 
       {/* Recommended */}
       <div className="mb-2">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">
+          <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
             {isPl ? 'Zalecane' : 'Recommended'}
           </span>
           <button
             onClick={handleRandomize}
-            className="flex items-center gap-1 text-[9px] text-slate-600 hover:text-primary-500 transition-colors"
+            className="flex items-center gap-1 text-[9px] text-c-text-secondary hover:text-c-text dark:hover:text-c-text transition-colors"
           >
             <Shuffle size={10} /> {isPl ? 'Losuj' : 'Random'}
           </button>
@@ -176,8 +137,8 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
               onClick={() => handleColorClick(c)}
               className={`w-6 h-6 rounded-lg border-2 transition-all ${
                 currentColor === c
-                  ? 'border-primary-500 scale-110'
-                  : 'border-transparent hover:border-slate-300 dark:hover:border-white/20'
+                  ? 'border-c-accent scale-110'
+                  : 'border-transparent hover:border-c-border-subtle dark:hover:border-c-border'
               }`}
               style={{ backgroundColor: c }}
             />
@@ -187,7 +148,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
 
       {/* Full palette */}
       <div>
-        <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-1">
+        <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1">
           {isPl ? 'Paleta' : 'Palette'}
         </div>
         <div className="grid grid-cols-10 gap-0.5">
@@ -197,8 +158,8 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
               onClick={() => handleColorClick(c)}
               className={`w-[18px] h-[18px] rounded border transition-all ${
                 currentColor === c
-                  ? 'border-primary-500 ring-1 ring-primary-500/40'
-                  : 'border-transparent hover:border-slate-300 dark:hover:border-white/20'
+                  ? 'border-c-accent ring-1 ring-c-accent'
+                  : 'border-transparent hover:border-c-border-subtle dark:hover:border-c-border'
               }`}
               style={{ backgroundColor: c }}
             />

@@ -18,10 +18,12 @@
 import { motion } from 'framer-motion';
 import {
   AlertTriangle,
+  CalendarDays,
   Check,
   CheckCircle2,
   ChevronRight,
   Clock,
+  GanttChartSquare,
   Info,
   Lock,
   Plus,
@@ -32,7 +34,10 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { buildScheduleItems, computeCriticalPath } from '@/services/initiativeSchedule';
 
+import { InitiativeCalendar } from '../calendar';
+import { InitiativeGantt } from '../gantt';
 import { useInitiativeContext } from './InitiativeContext';
 import type { TimelinePlannerHandle } from './TimelinePlanner';
 import { TimelinePlanner } from './TimelinePlanner';
@@ -504,6 +509,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
     targetDate,
     decisions,
     tasks,
+    setTasks,
     users,
     timelineMilestones,
     setTimelineMilestones,
@@ -517,6 +523,62 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
     timelineAiRequest,
     clearTimelineAiRequest,
   } = useInitiativeContext();
+
+  // M13 Depth · Seria R (M13c) — unified schedule for the calendar view.
+  // Single source (buildScheduleItems) shared with the future task Gantt (V1).
+  const scheduleItems = useMemo(
+    () =>
+      buildScheduleItems({
+        tasks: tasks || [],
+        milestones: timelineMilestones || [],
+        timeline: timelinePhases || [],
+      }),
+    [tasks, timelineMilestones, timelinePhases]
+  );
+
+  // V1 Gantt — dependency edges (mapped to ScheduleItem ids by sourceId) + the
+  // critical path (longest-duration chain), both fed to the Gantt connectors.
+  const ganttDependencies = useMemo(() => {
+    const idBySource = new Map(scheduleItems.map((it) => [String(it.sourceId), it.id]));
+    return (((dependencies as any[]) || [])
+      // The task-dependencies endpoint returns BOTH directions per edge
+      // ({direction:'predecessor'} and {direction:'successor'}). Keep one
+      // ('successor': sourceTaskId=predecessor, taskId=successor) so each edge
+      // is drawn once, in the predecessor→successor direction. Entries from
+      // other sources (no `direction`) pass through untouched.
+      .filter((d: any) => !d?.direction || d.direction === 'successor')
+      .map((d: any) => {
+        const fromSrc = d?.fromId ?? d?.sourceId ?? d?.sourceTaskId ?? d?.dependsOnId;
+        const toSrc = d?.toId ?? d?.targetId ?? d?.taskId;
+        const fromId = fromSrc != null ? idBySource.get(String(fromSrc)) : undefined;
+        const toId = toSrc != null ? idBySource.get(String(toSrc)) : undefined;
+        return fromId && toId && fromId !== toId ? { fromId, toId } : null;
+      })
+      .filter(Boolean) as Array<{ fromId: string; toId: string }>);
+  }, [scheduleItems, dependencies]);
+
+  const criticalPathIds = useMemo(
+    () => computeCriticalPath(scheduleItems, ganttDependencies),
+    [scheduleItems, ganttDependencies]
+  );
+
+  const [scheduleView, setScheduleView] = useState<'none' | 'calendar' | 'gantt'>('none');
+
+  // W5 — drag-reschedule (Gantt + Calendar share one callback): optimistically
+  // update tasks in context state after a successful task move. Milestones /
+  // phases fire this too but are no-ops here (no setter; persisted elsewhere).
+  const handleScheduleReschedule = useCallback(
+    (_itemId: string, sourceKind: string, sourceId: string, start: string, end: string) => {
+      if (sourceKind === 'task' && setTasks) {
+        setTasks((prev: any[]) =>
+          prev.map((t: any) =>
+            String(t.id) === sourceId ? { ...t, startedAt: start, dueDate: end } : t
+          )
+        );
+      }
+    },
+    [setTasks]
+  );
 
   // AI proposal state (Analyze with AI)
   const [aiBusy, setAiBusy] = useState(false);
@@ -1295,6 +1357,52 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* M13 Depth · Seria R (M13c) + V (V1) — Calendar / Gantt views over one
+          schedule source (buildScheduleItems): tasks + milestones + phases. */}
+      <div>
+        <div className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-navy-700 p-0.5">
+          {(
+            [
+              ['calendar', CalendarDays, t('initiatives.calendarView.calendar', 'Calendar')],
+              ['gantt', GanttChartSquare, t('initiatives.calendarView.gantt', 'Gantt')],
+            ] as const
+          ).map(([key, Icon, label]) => {
+            const active = scheduleView === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setScheduleView((v) => (v === key ? 'none' : key))}
+                aria-pressed={active}
+                className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+                  active
+                    ? 'bg-c-text text-c-bg'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                }`}
+              >
+                <Icon size={14} />
+                {label}
+              </button>
+            );
+          })}
+        </div>
+        {scheduleView === 'calendar' && (
+          <div className="mt-2">
+            <InitiativeCalendar items={scheduleItems} onReschedule={handleScheduleReschedule} />
+          </div>
+        )}
+        {scheduleView === 'gantt' && (
+          <div className="mt-2">
+            <InitiativeGantt
+              items={scheduleItems}
+              onReschedule={handleScheduleReschedule}
+              dependencies={ganttDependencies}
+              criticalPathIds={criticalPathIds}
+            />
+          </div>
+        )}
+      </div>
+
       {/* AI Proposal Modal — Timeline */}
       {showAIModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
@@ -1821,6 +1929,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
             editable={true}
             onUpdateStart={(d) => setStartDate(d)}
             onUpdateEnd={(d) => setEndDate(d)}
+            dependencies={dependencies as any}
             handleRef={plannerRef}
           />
         </>
@@ -1876,6 +1985,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
             editable={true}
             onUpdateStart={(d) => setStartDate(d)}
             onUpdateEnd={(d) => setEndDate(d)}
+            dependencies={dependencies as any}
             handleRef={plannerRef}
           />
         </>
@@ -2040,7 +2150,9 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                 {t('initiatives.timelineSection.baselineVsActual')}
               </span>
             </div>
-            <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full text-xs">
+            <table
+              /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */ className="w-full text-xs"
+            >
               <thead>
                 <tr className="border-t border-slate-200/40 dark:border-navy-700/40 bg-slate-50/40 dark:bg-navy-800/30">
                   <th className="text-left px-5 py-2 text-slate-500 font-medium"> </th>

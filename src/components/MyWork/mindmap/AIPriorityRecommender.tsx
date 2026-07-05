@@ -32,14 +32,14 @@ interface AIPriorityRecommenderProps {
 }
 
 const IMPACT_COLORS = {
-  high: 'text-emerald-600 bg-emerald-500/10',
-  medium: 'text-amber-600 bg-amber-500/10',
-  low: 'text-slate-500 bg-slate-500/10',
+  high: 'text-c-success bg-c-surface-raised',
+  medium: 'text-c-warning bg-c-surface-raised',
+  low: 'text-c-text-secondary bg-c-surface-raised',
 };
 const EFFORT_COLORS = {
-  high: 'text-danger-600 bg-danger-500/10',
-  medium: 'text-amber-600 bg-amber-500/10',
-  low: 'text-emerald-600 bg-emerald-500/10',
+  high: 'text-c-danger bg-c-surface-raised',
+  medium: 'text-c-warning bg-c-surface-raised',
+  low: 'text-c-success bg-c-surface-raised',
 };
 
 export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
@@ -131,17 +131,17 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-2xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
+      <div className="w-full max-w-2xl rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
           <div>
             <div className="flex items-center gap-2">
-              <Target size={16} className="text-amber-500" />
-              <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+              <Target size={16} className="text-c-warning" />
+              <h3 className="text-sm font-bold text-c-text dark:text-c-text">
                 {isPl ? 'AI: Priorytetyzacja' : 'AI: Priority Recommender'}
               </h3>
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mt-1">
               {isPl
                 ? 'Analiza impact/effort z kontekstem KPI firmy.'
                 : 'Impact/effort analysis with company KPI context.'}
@@ -149,7 +149,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             <X size={16} />
           </button>
@@ -158,8 +158,8 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {recommendations.length === 0 && !loading && (
             <div className="text-center py-8">
-              <ArrowUpDown size={36} className="text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
+              <ArrowUpDown size={36} className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3" />
+              <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mb-4">
                 {isPl
                   ? 'AI przeanalizuje priorytety Twoich pomysłów.'
                   : 'AI will analyze the priorities of your ideas.'}
@@ -167,7 +167,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
               <button
                 onClick={analyze}
                 disabled={loading || locked}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/15 to-amber-500/10 text-[11px] font-bold text-amber-700 dark:text-amber-300 hover:from-amber-500/25 hover:to-amber-500/15 transition-all disabled:opacity-40"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised text-[11px] font-bold text-c-warning dark:text-c-warning transition-all disabled:opacity-40"
               >
                 <Sparkles size={14} />
                 {isPl ? 'Analizuj priorytety' : 'Analyze priorities'}
@@ -177,8 +177,8 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
 
           {loading && (
             <div className="flex items-center justify-center gap-2 py-8">
-              <Loader2 size={16} className="animate-spin text-amber-500" />
-              <span className="text-[11px] text-slate-500">
+              <Loader2 size={16} className="animate-spin text-c-warning" />
+              <span className="text-[11px] text-c-text-secondary">
                 {isPl ? 'Analizuję...' : 'Analyzing...'}
               </span>
             </div>
@@ -188,14 +188,14 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
             <>
               {/* Sort controls */}
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">
+                <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
                   {isPl ? 'Sortuj:' : 'Sort:'}
                 </span>
                 {(['rank', 'impact', 'effort'] as const).map((s) => (
                   <button
                     key={s}
                     onClick={() => setSortBy(s)}
-                    className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition-colors ${sortBy === s ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : 'text-slate-600 hover:text-slate-600'}`}
+                    className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition-colors ${sortBy === s ? 'bg-c-surface-raised text-c-warning dark:text-c-warning' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
                   >
                     {s === 'rank'
                       ? isPl
@@ -213,16 +213,16 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
                 {sorted.map((rec) => (
                   <div
                     key={rec.nodeId}
-                    className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30"
+                    className="flex items-center gap-3 p-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border"
                   >
-                    <div className="w-6 h-6 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 flex items-center justify-center text-[10px] font-bold shrink-0">
+                    <div className="w-6 h-6 rounded-full bg-c-surface-raised text-c-warning dark:text-c-warning flex items-center justify-center text-[10px] font-bold shrink-0">
                       {rec.rank}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate">
+                      <div className="text-[11px] font-medium text-c-text-secondary dark:text-c-text truncate">
                         {rec.label}
                       </div>
-                      <div className="text-[9px] text-slate-600">{rec.branchKey}</div>
+                      <div className="text-[9px] text-c-text-secondary">{rec.branchKey}</div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <span
@@ -237,10 +237,10 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
                       </span>
                     </div>
                     <div className="w-10 text-right">
-                      <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                      <div className="text-[11px] font-bold text-c-warning dark:text-c-warning">
                         {rec.suggestedPriority}
                       </div>
-                      <div className="text-[8px] text-slate-600 line-through">
+                      <div className="text-[8px] text-c-text-secondary line-through">
                         {rec.currentPriority}
                       </div>
                     </div>
@@ -252,17 +252,17 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
         </div>
 
         {recommendations.length > 0 && (
-          <div className="px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center gap-2">
+          <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border flex items-center gap-2">
             <button
               onClick={onClose}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
             >
               {isPl ? 'Anuluj' : 'Cancel'}
             </button>
             <button
               onClick={handleApplyAll}
               disabled={locked}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-amber-500/15 to-amber-500/10 text-amber-700 dark:text-amber-300 hover:from-amber-500/25 hover:to-amber-500/15 border border-amber-500/10 transition-all disabled:opacity-40"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-c-surface-raised text-c-warning dark:text-c-warning border border-c-warning transition-all disabled:opacity-40"
             >
               <CheckCircle2 size={12} />
               {isPl ? 'Zastosuj priorytety' : 'Apply priorities'}

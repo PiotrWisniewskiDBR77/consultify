@@ -43,7 +43,13 @@ import {
 } from './documentDocxStructure.js';
 import {
   buildDocxStyleConfig,
+  clampHeadingText,
+  clampTableColumns,
+  DOCX_PALETTE,
   DOCX_STYLE_IDS,
+  DOCX_TITLE_MAX_CHARS,
+  DOCX_TONE_COLOR,
+  DOCX_TONE_FILL,
   resolveDocxFonts,
   resolveFormattingClass,
 } from './documentDocxStyles.js';
@@ -153,8 +159,27 @@ interface BlockTableContent {
   rows?: unknown[][];
 }
 
+/**
+ * Premium content-gen table shape (documentBlockContentGenerator
+ * `normalizeTableContent`): `{ rows: [{ cells: { colKey: { value, style?:
+ * { bgColor } } } }] }`. Distinct from the legacy `BlockTableContent`
+ * (`{ headers: [], rows: [][] }`). The renderer accepts BOTH so a table
+ * authored by either path renders with real `<w:tbl>` cells.
+ */
+interface KeyedTableRow {
+  cells?: Record<string, { value?: unknown; style?: { bgColor?: string } } | unknown>;
+}
+
+/** Premium content-gen KPI shape: `{ items: [{ label, value, delta }] }`. */
+interface KpiStripContent {
+  items?: Array<{ label?: unknown; value?: unknown; delta?: unknown }>;
+}
+
 interface BlockCalloutContent {
+  /** Legacy schema field. */
   variant?: string;
+  /** Premium content-gen field (info | warning | danger | success). */
+  tone?: string;
   text?: string;
 }
 
@@ -214,9 +239,15 @@ async function buildChartPngByBlockId(schema: DocumentSchema): Promise<Map<strin
   for (const section of schema.sections) {
     for (const block of section.blocks) {
       if (block.type !== 'chart') continue;
-      const png = await renderChartBlockToPng(block);
-      if (png && png.length > 0) {
-        out.set(block.blockId, png);
+      // Fail-soft per-blok: błąd rasteryzacji (np. brak natywnej binarki canvas)
+      // NIE może położyć całego renderu dokumentu — slajd spada na placeholder.
+      try {
+        const png = await renderChartBlockToPng(block);
+        if (png && png.length > 0) {
+          out.set(block.blockId, png);
+        }
+      } catch {
+        /* pomiń wykres — renderChartBlock użyje placeholdera */
       }
     }
   }
@@ -326,7 +357,7 @@ function buildAssumptionMarker(font: string): TextRun {
   return new TextRun({
     text: '  [Assumption — needs source]',
     italics: true,
-    color: 'B45309',
+    color: DOCX_PALETTE.amberInk,
     size: 18,
     font,
   });
@@ -344,7 +375,9 @@ function styleIdForHeadingLevel(level: 1 | 2 | 3): string {
 
 function renderHeadingBlock(block: DocumentBlock, ctx: RenderContext): Paragraph {
   const value = (block.content ?? {}) as { text?: string; level?: 1 | 2 | 3 };
-  const text = asString(value.text ?? '');
+  // Overflow guard — a runaway "heading" (mis-classified paragraph) is
+  // truncated at a word boundary so the outline / TOC entry stays one line.
+  const text = clampHeadingText(asString(value.text ?? ''));
   const level = value.level ?? 2;
   return new Paragraph({
     style: styleIdForHeadingLevel(level),
@@ -389,17 +422,134 @@ function renderListBlocks(block: DocumentBlock, ctx: RenderContext): Paragraph[]
   });
 }
 
+/** Normalize a CSS hex (`#RRGGBB` / `RRGGBB`) to bare 6-digit uppercase, or null. */
+function normalizeHex(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const clean = raw.trim().replace(/^#/, '');
+  return /^[0-9a-fA-F]{6}$/.test(clean) ? clean.toUpperCase() : null;
+}
+
+/** Perceived-luminance test so dark status fills get white text. */
+function isDarkFill(hex: string): boolean {
+  const r = Number.parseInt(hex.slice(0, 2), 16);
+  const g = Number.parseInt(hex.slice(2, 4), 16);
+  const b = Number.parseInt(hex.slice(4, 6), 16);
+  return 0.299 * r + 0.587 * g + 0.114 * b < 140;
+}
+
+/**
+ * Map a callout marker (premium `tone`, legacy `variant`) to a doctrine tone
+ * key. Legacy variants (`key_message`, `insight`, …) fall back to `info` (navy)
+ * so an untoned callout still reads as a deliberate navy device rather than the
+ * old off-palette indigo.
+ */
+function calloutToneKey(marker: string | undefined): keyof typeof DOCX_TONE_COLOR {
+  const m = String(marker ?? '').toLowerCase();
+  if (m === 'success' || m === 'positive') return 'success';
+  if (m === 'warning' || m === 'caution') return 'warning';
+  if (m === 'danger' || m === 'critical' || m === 'risk') return 'danger';
+  return 'info';
+}
+
 function renderCalloutBlock(block: DocumentBlock, ctx: RenderContext): Paragraph {
   const value = (block.content ?? {}) as BlockCalloutContent;
   const text = asString(value.text ?? '');
-  const label = value.variant ? `[${String(value.variant).toUpperCase()}] ` : '[Key message] ';
+  // Premium content-gen emits `tone`; legacy schema emits `variant`. Resolve to
+  // a doctrine tone so the accent spine + soft tint match DeckStyler/WorkbookStyler.
+  const toneKey = calloutToneKey(value.tone ?? value.variant);
+  const accent = DOCX_TONE_COLOR[toneKey];
+  const fill = DOCX_TONE_FILL[toneKey];
+  // Callout wyróżnia się STYLEM (akcentowy pasek + tło + kursywa), nie brzydkim
+  // tagiem „[INFO]" w środku prozy — tag był nieprofesjonalny w dokumencie
+  // konsultanta. Kolor paska/tła nadpisuje domyślny teal ze stylu nazwanego,
+  // więc np. callout „danger" dostaje malinowy pasek na różowym tle.
   return new Paragraph({
     style: DOCX_STYLE_IDS.CALLOUT,
+    shading: { type: 'clear', fill },
+    border: { left: { color: accent, space: 12, style: 'single', size: 24 } },
     children: [
-      new TextRun({ text: label, bold: true, color: '4338CA', font: ctx.bodyFont }),
-      new TextRun({ text, italics: true, font: ctx.bodyFont }),
+      new TextRun({ text, italics: true, bold: true, color: accent, font: ctx.bodyFont }),
     ],
   });
+}
+
+/**
+ * KPI strip → a single-row table of metric cells (label / value / delta),
+ * each cell lightly shaded so it reads as a metric card rather than plain
+ * text. Consumes the premium content-gen shape `{ items: [{label, value,
+ * delta}] }`. Empty / malformed items degrade to a caption placeholder.
+ */
+function renderKpiStripBlock(block: DocumentBlock, ctx: RenderContext): (Table | Paragraph)[] {
+  const value = (block.content ?? {}) as KpiStripContent;
+  const items = Array.isArray(value.items) ? value.items : [];
+  if (items.length === 0) {
+    // Legacy schema may have used the table shape for a "kpi_strip" — try that
+    // before giving up so older schemas keep rendering.
+    const legacy = (block.content ?? {}) as BlockTableContent;
+    if ((legacy.headers?.length ?? 0) > 0 || (legacy.rows?.length ?? 0) > 0) {
+      return renderTableBlock(block, ctx);
+    }
+    return [
+      new Paragraph({
+        style: DOCX_STYLE_IDS.CAPTION,
+        children: [
+          new TextRun({
+            text: '[KPI strip placeholder — no metrics provided.]',
+            font: ctx.bodyFont,
+          }),
+        ],
+      }),
+    ];
+  }
+  const cells = items.map((item) => {
+    const label = asString(item?.label ?? '');
+    const metricValue = asString(item?.value ?? '');
+    const delta = asString(item?.delta ?? '').trim();
+    // Colour the delta by direction marker (▲ up / ▼ down / + / −) so the
+    // strip reads at a glance. Falls back to neutral slate.
+    let deltaColor: string = DOCX_PALETTE.muted;
+    if (/[▲]|^\+|\bvs\b.*\+|up/i.test(delta)) deltaColor = DOCX_TONE_COLOR.success;
+    else if (/[▼]|^−|^-/.test(delta)) deltaColor = DOCX_TONE_COLOR.danger;
+    const cellChildren: DocxParagraph[] = [
+      new Paragraph({
+        style: DOCX_STYLE_IDS.CAPTION,
+        children: [
+          new TextRun({ text: label, font: ctx.bodyFont, size: 16, color: DOCX_PALETTE.muted }),
+        ],
+      }),
+      new Paragraph({
+        style: DOCX_STYLE_IDS.BODY_TEXT,
+        children: [
+          new TextRun({
+            text: metricValue,
+            bold: true,
+            font: ctx.headingFont,
+            size: 28,
+            color: DOCX_PALETTE.navy,
+          }),
+        ],
+      }),
+    ];
+    if (delta.length > 0 && delta !== '0') {
+      cellChildren.push(
+        new Paragraph({
+          style: DOCX_STYLE_IDS.CAPTION,
+          children: [new TextRun({ text: delta, font: ctx.bodyFont, size: 16, color: deltaColor })],
+        })
+      );
+    }
+    return new TableCell({
+      shading: { fill: DOCX_PALETTE.kpiFill },
+      margins: { top: 80, bottom: 80, left: 120, right: 120 },
+      children: cellChildren,
+    });
+  });
+  ctx.tableCounter.value += 1;
+  const table = new Table({
+    rows: [new TableRow({ children: cells })],
+    width: { size: 100, type: WidthType.PERCENTAGE },
+  });
+  return [table];
 }
 
 function renderQuoteBlock(block: DocumentBlock, ctx: RenderContext): Paragraph {
@@ -419,10 +569,77 @@ function renderQuoteBlock(block: DocumentBlock, ctx: RenderContext): Paragraph {
   });
 }
 
+/**
+ * Project a table block's content into a uniform `{ headers, rows }` where
+ * each cell carries optional shading. Accepts BOTH the legacy schema shape
+ * (`{ headers: [], rows: [][] }`) and the premium content-gen keyed shape
+ * (`{ rows: [{ cells: { colKey: { value, style?: { bgColor } } } }] }`).
+ */
+interface NormalizedCell {
+  text: string;
+  fill: string | null;
+}
+function normalizeTableContent(content: unknown): {
+  headers: string[];
+  rows: NormalizedCell[][];
+} {
+  const value = (content ?? {}) as BlockTableContent & { rows?: unknown };
+  const rawRows = Array.isArray(value.rows) ? (value.rows as unknown[]) : [];
+  // Keyed shape: rows are objects carrying a `cells` map (or a flat object).
+  const isKeyed = rawRows.some((r) => r != null && typeof r === 'object' && !Array.isArray(r));
+  if (isKeyed) {
+    // Derive a stable, ordered column key list from the union of all cell keys.
+    const columnKeys: string[] = [];
+    const seen = new Set<string>();
+    for (const row of rawRows) {
+      const keyed = row as KeyedTableRow;
+      const cells = (keyed?.cells && typeof keyed.cells === 'object' ? keyed.cells : row) as Record<
+        string,
+        unknown
+      >;
+      for (const k of Object.keys(cells ?? {})) {
+        if (!seen.has(k)) {
+          seen.add(k);
+          columnKeys.push(k);
+        }
+      }
+    }
+    const rows: NormalizedCell[][] = rawRows.map((row) => {
+      const keyed = row as KeyedTableRow;
+      const cells = (keyed?.cells && typeof keyed.cells === 'object' ? keyed.cells : row) as Record<
+        string,
+        unknown
+      >;
+      return columnKeys.map((key) => {
+        const cell = cells?.[key];
+        if (cell != null && typeof cell === 'object' && 'value' in (cell as object)) {
+          const c = cell as { value?: unknown; style?: { bgColor?: string } };
+          return { text: asString(c.value ?? ''), fill: normalizeHex(c.style?.bgColor) };
+        }
+        return { text: asString(cell ?? ''), fill: null };
+      });
+    });
+    // Humanize camelCase / snake_case column keys for the header row.
+    const headers = columnKeys.map((k) =>
+      k
+        .replace(/[_-]+/g, ' ')
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/^\w/, (m) => m.toUpperCase())
+    );
+    return { headers, rows };
+  }
+  // Legacy array-of-arrays shape.
+  const headers = Array.isArray(value.headers) ? value.headers.map((h) => asString(h)) : [];
+  const rows: NormalizedCell[][] = rawRows.map((row) =>
+    (Array.isArray(row) ? row : []).map((cell) => ({ text: asString(cell), fill: null }))
+  );
+  return { headers, rows };
+}
+
 function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Paragraph)[] {
-  const value = (block.content ?? {}) as BlockTableContent & { caption?: string };
-  const headers = Array.isArray(value.headers) ? value.headers : [];
-  const rows = Array.isArray(value.rows) ? value.rows : [];
+  const value = (block.content ?? {}) as { caption?: string };
+  const normalized = normalizeTableContent(block.content);
+  let { headers, rows } = normalized;
 
   if (headers.length === 0 && rows.length === 0) {
     return [
@@ -438,6 +655,28 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
     ];
   }
 
+  // Overflow guard — a table wider than A4 can legibly show collapses every
+  // cell to a sliver. Keep the leading columns and fold the remainder into a
+  // single "+N more" column (DeckStyler/WorkbookStyler width-clamp analogue).
+  const columnCount = Math.max(headers.length, ...rows.map((r) => r.length), 0);
+  const clamp = clampTableColumns(columnCount);
+  if (clamp.overflowed) {
+    const foldLabel = `+${clamp.folded.length} more`;
+    const pick = <T,>(arr: T[], fallback: T): T[] =>
+      clamp.keep.map((i) => arr[i] ?? fallback);
+    if (headers.length > 0) {
+      headers = [...pick(headers, ''), foldLabel];
+    }
+    rows = rows.map((row) => {
+      const kept = pick(row, { text: '', fill: null });
+      const foldedText = clamp.folded
+        .map((i) => row[i]?.text ?? '')
+        .filter((t) => t.length > 0)
+        .join(' · ');
+      return [...kept, { text: foldedText, fill: null }];
+    });
+  }
+
   const tableRows: unknown[] = [];
   if (headers.length > 0) {
     tableRows.push(
@@ -445,12 +684,21 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
         tableHeader: true,
         children: headers.map(
           (cell) =>
+            // Navy header band + white bold text — the DOCX analogue of
+            // WorkbookStyler's navy header fill and DeckStyler's dominant band.
             new TableCell({
+              shading: { fill: DOCX_PALETTE.navy },
               children: [
                 new Paragraph({
                   style: DOCX_STYLE_IDS.BODY_TEXT,
                   children: [
-                    new TextRun({ text: asString(cell), bold: true, font: ctx.bodyFont, size: 20 }),
+                    new TextRun({
+                      text: cell,
+                      bold: true,
+                      font: ctx.bodyFont,
+                      size: 20,
+                      color: DOCX_PALETTE.white,
+                    }),
                   ],
                 }),
               ],
@@ -459,24 +707,37 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
       })
     );
   }
-  for (const row of rows) {
-    const cells = Array.isArray(row) ? row : [];
+  rows.forEach((row, rowIndex) => {
+    // Subtle zebra striping on odd body rows (WorkbookStyler zebra analogue).
+    // An explicit per-cell fill (status semaphore etc.) always wins.
+    const zebra = rowIndex % 2 === 1;
     tableRows.push(
       new TableRow({
-        children: cells.map(
-          (cell) =>
-            new TableCell({
-              children: [
-                new Paragraph({
-                  style: DOCX_STYLE_IDS.BODY_TEXT,
-                  children: [new TextRun({ text: asString(cell), font: ctx.bodyFont, size: 20 })],
-                }),
-              ],
-            })
-        ),
+        children: row.map((cell) => {
+          const fill = cell.fill ?? (zebra ? DOCX_PALETTE.zebraFill : null);
+          return new TableCell({
+            ...(fill ? { shading: { fill } } : {}),
+            children: [
+              new Paragraph({
+                style: DOCX_STYLE_IDS.BODY_TEXT,
+                children: [
+                  new TextRun({
+                    text: cell.text,
+                    font: ctx.bodyFont,
+                    size: 20,
+                    // White text on dark status fills keeps it legible.
+                    ...(cell.fill && isDarkFill(cell.fill)
+                      ? { color: DOCX_PALETTE.white, bold: true }
+                      : {}),
+                  }),
+                ],
+              }),
+            ],
+          });
+        }),
       })
     );
-  }
+  });
 
   const table = new Table({
     rows: tableRows,
@@ -607,7 +868,7 @@ function renderFootnoteBlock(block: DocumentBlock, ctx: RenderContext): Paragrap
     new Paragraph({
       style: DOCX_STYLE_IDS.BODY_TEXT,
       children: [
-        new TextRun({ text: 'Note ', italics: true, font: ctx.bodyFont, color: '64748B' }),
+        new TextRun({ text: 'Note ', italics: true, font: ctx.bodyFont, color: DOCX_PALETTE.muted }),
         new FootnoteReferenceRun(id),
       ],
     }),
@@ -629,8 +890,9 @@ function renderBlock(block: DocumentBlock, ctx: RenderContext): (Paragraph | Tab
       return [renderQuoteBlock(block, ctx)];
     case 'table':
     case 'risk_table':
-    case 'kpi_strip':
       return renderTableBlock(block, ctx);
+    case 'kpi_strip':
+      return renderKpiStripBlock(block, ctx);
     case 'image':
       return renderImagePlaceholder(block, ctx);
     case 'chart':
@@ -724,10 +986,21 @@ function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {
         alignment: AlignmentType.CENTER,
         children: [
           new TextRun({
-            text: schema.title,
+            // Overflow guard — a pathologically long title is truncated at a
+            // word boundary so the cover stays a clean title block.
+            text: clampHeadingText(schema.title, DOCX_TITLE_MAX_CHARS),
             font: ctx.headingFont,
           }),
         ],
+      }),
+      // Teal accent rule under the title — the DOCX analogue of DeckStyler's
+      // cover accent rule. A short centred bottom-bordered paragraph reads as a
+      // deliberate rule rather than a line of text.
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 160 },
+        border: { bottom: { color: DOCX_PALETTE.teal, space: 1, style: 'single', size: 18 } },
+        children: [new TextRun({ text: '', font: ctx.bodyFont })],
       }),
       new Paragraph({
         style: DOCX_STYLE_IDS.SUBTITLE,
@@ -933,7 +1206,7 @@ export async function renderDocumentSchemaToDocxBuffer(
             new TextRun({
               text: headerText,
               size: 18,
-              color: '64748B',
+              color: DOCX_PALETTE.muted,
               font: ctx.bodyFont,
             }),
           ],
@@ -946,7 +1219,7 @@ export async function renderDocumentSchemaToDocxBuffer(
       new TextRun({
         text: schema.confidentiality.replace(/_/g, ' '),
         size: 16,
-        color: '94A3B8',
+        color: DOCX_PALETTE.faint,
         font: ctx.bodyFont,
       })
     );
@@ -961,7 +1234,7 @@ export async function renderDocumentSchemaToDocxBuffer(
     const formatTemplate = formatting.footers.pageNumberingFormat?.trim();
     if (formatTemplate && formatTemplate.length > 0) {
       footerRuns.push(
-        new TextRun({ text: '   |   ', size: 16, color: '94A3B8', font: ctx.bodyFont })
+        new TextRun({ text: '   |   ', size: 16, color: DOCX_PALETTE.faint, font: ctx.bodyFont })
       );
       // Split the template around the `{N}` and `{M}` placeholders so
       // the replacement runs become real Word `PageNumber` fields
@@ -975,7 +1248,7 @@ export async function renderDocumentSchemaToDocxBuffer(
             new TextRun({
               children: [PageNumber.CURRENT],
               size: 16,
-              color: '94A3B8',
+              color: DOCX_PALETTE.faint,
               font: ctx.bodyFont,
             })
           );
@@ -984,31 +1257,31 @@ export async function renderDocumentSchemaToDocxBuffer(
             new TextRun({
               children: [PageNumber.TOTAL_PAGES],
               size: 16,
-              color: '94A3B8',
+              color: DOCX_PALETTE.faint,
               font: ctx.bodyFont,
             })
           );
         } else if (piece.length > 0) {
           footerRuns.push(
-            new TextRun({ text: piece, size: 16, color: '94A3B8', font: ctx.bodyFont })
+            new TextRun({ text: piece, size: 16, color: DOCX_PALETTE.faint, font: ctx.bodyFont })
           );
         }
       }
     } else {
       footerRuns.push(
-        new TextRun({ text: '   |   ', size: 16, color: '94A3B8', font: ctx.bodyFont }),
-        new TextRun({ text: 'Page ', size: 16, color: '94A3B8', font: ctx.bodyFont }),
+        new TextRun({ text: '   |   ', size: 16, color: DOCX_PALETTE.faint, font: ctx.bodyFont }),
+        new TextRun({ text: 'Page ', size: 16, color: DOCX_PALETTE.faint, font: ctx.bodyFont }),
         new TextRun({
           children: [PageNumber.CURRENT],
           size: 16,
-          color: '94A3B8',
+          color: DOCX_PALETTE.faint,
           font: ctx.bodyFont,
         }),
-        new TextRun({ text: ' / ', size: 16, color: '94A3B8', font: ctx.bodyFont }),
+        new TextRun({ text: ' / ', size: 16, color: DOCX_PALETTE.faint, font: ctx.bodyFont }),
         new TextRun({
           children: [PageNumber.TOTAL_PAGES],
           size: 16,
-          color: '94A3B8',
+          color: DOCX_PALETTE.faint,
           font: ctx.bodyFont,
         })
       );

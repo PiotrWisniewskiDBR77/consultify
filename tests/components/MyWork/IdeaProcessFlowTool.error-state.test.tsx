@@ -24,9 +24,12 @@ vi.mock('react-hot-toast', () => ({
 
 vi.mock('reactflow', () => ({
   default: ({ children }: any) => <div data-testid="react-flow">{children}</div>,
+  ReactFlow: ({ children }: any) => <div data-testid="react-flow">{children}</div>,
   ReactFlowProvider: ({ children }: any) => <div>{children}</div>,
   Background: () => null,
   MiniMap: () => null,
+  Controls: () => null,
+  Panel: ({ children }: any) => <div>{children}</div>,
   Handle: () => null,
   Position: { Top: 'top', Bottom: 'bottom', Left: 'left', Right: 'right' },
   ConnectionMode: { Strict: 'strict', Loose: 'loose' },
@@ -34,6 +37,8 @@ vi.mock('reactflow', () => ({
   addEdge: vi.fn((edge, edges) => [...edges, edge]),
   applyEdgeChanges: vi.fn((_changes, edges) => edges),
   applyNodeChanges: vi.fn((_changes, nodes) => nodes),
+  useUpdateNodeInternals: () => vi.fn(),
+  useReactFlow: () => ({ fitView: vi.fn(), getNodes: () => [], getEdges: () => [], project: (p: any) => p }),
 }));
 
 vi.mock('@reactflow/core', () => ({
@@ -236,18 +241,26 @@ describe('IdeaProcessFlowTool error honesty', () => {
 
     render(<IdeaProcessFlowTool open ideaId="idea-1" />);
 
-    await waitFor(() => {
-      expect(screen.getByText('Process flow is temporarily unavailable.')).toBeInTheDocument();
-    });
+    // The hydrate now retries the GET a few times (M07 reload-race fix) before giving up,
+    // so the error banner appears after the bounded backoff rather than on the first throw.
+    await waitFor(
+      () => {
+        expect(screen.getByText('Process flow is temporarily unavailable.')).toBeInTheDocument();
+      },
+      { timeout: 4000 }
+    );
 
     expect(
       screen.getByText('This does not mean the process is empty. Retry loading the map and check again.')
     ).toBeInTheDocument();
     expect(toastErrorMock).toHaveBeenCalledWith('Map failed to load');
 
+    // Retry must trigger a fresh hydrate → additional GET attempts (exact count is the
+    // retry budget, so assert it strictly increases rather than hard-coding it).
+    const callsBeforeRetry = apiGetMyIdeaMapMock.mock.calls.length;
     fireEvent.click(screen.getByRole('button', { name: /\+ Retry/i }));
     await waitFor(() => {
-      expect(apiGetMyIdeaMapMock).toHaveBeenCalledTimes(2);
+      expect(apiGetMyIdeaMapMock.mock.calls.length).toBeGreaterThan(callsBeforeRetry);
     });
   });
 });

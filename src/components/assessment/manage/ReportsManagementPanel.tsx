@@ -334,7 +334,7 @@ const ReportRow: FC<{
               <button
                 onClick={handleFinalize}
                 disabled={busy}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-c-text hover:bg-c-text-secondary disabled:bg-c-border-strong text-c-bg rounded-lg transition-colors"
               >
                 {busy ? <Loader2 size={12} className="animate-spin" /> : <ArrowRight size={12} />}
                 Submit Review
@@ -351,7 +351,7 @@ const ReportRow: FC<{
           ) : report.status === 'IN_REVIEW' ? (
             <button
               onClick={() => onOpen(report.id, report.name, report.status)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-c-text hover:bg-c-text-secondary text-c-bg rounded-lg transition-colors"
             >
               <Eye size={12} />
               Review
@@ -396,8 +396,8 @@ const ReportRow: FC<{
 
             {showActions && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowActions(false)} />
-                <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
+                <div className="fixed inset-0 z-dropdown" onClick={() => setShowActions(false)} />
+                <div className="absolute right-0 top-full mt-1 z-overlay w-44 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
                   <button
                     onClick={() => {
                       onOpen(report.id, report.name, report.status);
@@ -725,7 +725,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
                   disabled={!onCreateReport}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
                     onCreateReport
-                      ? 'bg-primary-500 hover:bg-primary-600 text-white'
+                      ? 'bg-c-text hover:bg-c-text-secondary text-c-bg'
                       : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                   }`}
                   title={!onCreateReport ? 'Report creation not available' : undefined}
@@ -793,7 +793,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search reports..."
-              className="w-full h-10 pl-10 pr-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
+              className="w-full h-10 pl-10 pr-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-c-accent transition-colors"
             />
           </div>
         </div>
@@ -819,7 +819,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
                 <button
                   onClick={handleCreateReport}
                   disabled={creatingReport || !onCreateReport}
-                  className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors disabled:opacity-50"
+                  className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-c-text hover:bg-c-text-secondary text-c-bg text-sm font-semibold transition-colors disabled:opacity-50"
                 >
                   {creatingReport ? (
                     <Loader2 size={16} className="animate-spin" />

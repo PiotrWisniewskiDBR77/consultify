@@ -38,6 +38,10 @@ export function Highlight(props: HighlightProps, tokens: DesignTokens): Rendered
         bold: true,
         align: 'center',
         valign: 'middle',
+        // Długie wartości (np. zakres wyceny) muszą zmieścić się w pasku bez
+        // przelewania — kurcz do rozmiaru, jedna linia.
+        fit: 'shrink',
+        wrap: false,
       });
     },
   };

@@ -100,7 +100,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
   return (
     <div
       className={`
-        fixed inset-0 z-50
+        fixed inset-0 z-overlay
         flex flex-col items-center justify-center gap-4
         bg-white/80 dark:bg-navy-950/80
         ${blur ? 'backdrop-blur-sm' : ''}

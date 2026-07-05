@@ -86,7 +86,7 @@ export const DemoSignupModal: React.FC<DemoSignupModalProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] bg-navy-950/90 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-toast bg-navy-950/90 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={handleClose}
         >
           <motion.div

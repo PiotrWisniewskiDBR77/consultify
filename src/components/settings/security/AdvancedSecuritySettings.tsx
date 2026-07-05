@@ -365,18 +365,18 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
             <Shield size={28} className="text-danger-500" />
             {t('settings.security.advanced.title', 'Advanced Security')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t('settings.security.advanced.description', 'Enhanced security features and controls')}
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-navy-700 pb-4">
+      <div className="flex flex-wrap gap-2 border-b border-c-border-subtle dark:border-navy-700 pb-4">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
@@ -386,7 +386,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === tab.id
                   ? 'bg-danger-600 text-white'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                  : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-700'
               }`}
             >
               <Icon size={16} />
@@ -398,8 +398,8 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
       {/* Password Policy Tab */}
       {activeTab === 'password' && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+          <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Key size={20} className="text-amber-500" />
             {t('settings.security.passwordPolicy', 'Password Policy')}
           </h3>
@@ -407,58 +407,58 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
           {passwordPolicy && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">Minimum Length</span>
-                  <span className="font-medium text-slate-900 dark:text-white">
+                <div className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg">
+                  <span className="text-sm text-c-text-secondary">Minimum Length</span>
+                  <span className="font-medium text-c-text">
                     {passwordPolicy.policy?.min_length || 8} characters
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                <div className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg">
+                  <span className="text-sm text-c-text-secondary">
                     Password Expires
                   </span>
-                  <span className="font-medium text-slate-900 dark:text-white">
+                  <span className="font-medium text-c-text">
                     {passwordPolicy.policy?.max_age_days > 0
                       ? `${passwordPolicy.policy.max_age_days} days`
                       : 'Never'}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">History Count</span>
-                  <span className="font-medium text-slate-900 dark:text-white">
+                <div className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg">
+                  <span className="text-sm text-c-text-secondary">History Count</span>
+                  <span className="font-medium text-c-text">
                     {passwordPolicy.policy?.history_count || 5} passwords
                   </span>
                 </div>
               </div>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                <div className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg">
+                  <span className="text-sm text-c-text-secondary">
                     Require Uppercase
                   </span>
                   {passwordPolicy.policy?.require_uppercase ? (
                     <CheckCircle size={18} className="text-green-500" />
                   ) : (
-                    <X size={18} className="text-slate-600 dark:text-slate-500" />
+                    <X size={18} className="text-c-text-secondary" />
                   )}
                 </div>
-                <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                <div className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg">
+                  <span className="text-sm text-c-text-secondary">
                     Require Numbers
                   </span>
                   {passwordPolicy.policy?.require_numbers ? (
                     <CheckCircle size={18} className="text-green-500" />
                   ) : (
-                    <X size={18} className="text-slate-600 dark:text-slate-500" />
+                    <X size={18} className="text-c-text-secondary" />
                   )}
                 </div>
-                <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                <div className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg">
+                  <span className="text-sm text-c-text-secondary">
                     Require Special Chars
                   </span>
                   {passwordPolicy.policy?.require_special_chars ? (
                     <CheckCircle size={18} className="text-green-500" />
                   ) : (
-                    <X size={18} className="text-slate-600 dark:text-slate-500" />
+                    <X size={18} className="text-c-text-secondary" />
                   )}
                 </div>
               </div>
@@ -481,9 +481,9 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
       {/* IP Rules Tab */}
       {activeTab === 'ip' && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
               <Globe size={20} className="text-blue-500" />
               {t('settings.security.ipRules', 'IP Allowlist / Blocklist')}
             </h3>
@@ -504,12 +504,12 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   value={newIPRule.ipAddress}
                   onChange={(e) => setNewIPRule({ ...newIPRule, ipAddress: e.target.value })}
                   placeholder="IP Address or CIDR"
-                  className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                  className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
                 />
                 <select
                   value={newIPRule.ruleType}
                   onChange={(e) => setNewIPRule({ ...newIPRule, ruleType: e.target.value as any })}
-                  className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                  className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
                 >
                   <option value="allow">Allow</option>
                   <option value="block">Block</option>
@@ -519,7 +519,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   value={newIPRule.description}
                   onChange={(e) => setNewIPRule({ ...newIPRule, description: e.target.value })}
                   placeholder="Description (optional)"
-                  className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                  className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
                 />
               </div>
               <div className="flex gap-2">
@@ -532,7 +532,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 </button>
                 <button
                   onClick={() => setShowAddIP(false)}
-                  className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm"
+                  className="px-4 py-2 bg-c-surface-raised text-c-text-secondary rounded-lg text-sm"
                 >
                   Cancel
                 </button>
@@ -557,9 +557,9 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                     <Lock size={18} className="text-danger-600" />
                   )}
                   <div>
-                    <p className="font-medium text-slate-900 dark:text-white">{rule.ip_address}</p>
+                    <p className="font-medium text-c-text">{rule.ip_address}</p>
                     {rule.description && (
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                      <p className="text-sm text-c-text-muted">
                         {rule.description}
                       </p>
                     )}
@@ -567,14 +567,14 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 </div>
                 <button
                   onClick={() => handleDeleteIPRule(rule.id)}
-                  className="p-2 hover:bg-white/50 dark:hover:bg-white/10 rounded-lg text-danger-600"
+                  className="p-2 hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg text-danger-600"
                 >
                   <Trash2 size={16} />
                 </button>
               </div>
             ))}
             {ipRules.length === 0 && (
-              <p className="text-center text-slate-500 dark:text-slate-400 py-8">
+              <p className="text-center text-c-text-muted py-8">
                 No IP rules configured
               </p>
             )}
@@ -584,10 +584,10 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
       {/* Security Questions Tab */}
       {activeTab === 'questions' && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <HelpCircle size={20} className="text-primary-500" />
+            <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
+              <HelpCircle size={20} className="text-c-accent" />
               {t('settings.security.securityQuestions', 'Security Questions')}
             </h3>
             <button
@@ -600,7 +600,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
           </div>
 
           {showAddQuestion && (
-            <div className="p-4 border border-primary-200 dark:border-primary-500/30 rounded-lg bg-primary-50 dark:bg-primary-500/5 space-y-4">
+            <div className="p-4 border border-c-accent dark:border-c-accent rounded-lg bg-c-accent-soft dark:bg-c-accent-soft space-y-4">
               <select
                 value={newQuestion.questionId}
                 onChange={(e) =>
@@ -610,7 +610,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                     customQuestion: '',
                   })
                 }
-                className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
               >
                 <option value={0}>-- Select a question or create custom --</option>
                 {predefinedQuestions.map((q) => (
@@ -627,7 +627,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                     setNewQuestion({ ...newQuestion, customQuestion: e.target.value })
                   }
                   placeholder="Or enter custom question..."
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
                 />
               )}
               <input
@@ -635,7 +635,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 value={newQuestion.answer}
                 onChange={(e) => setNewQuestion({ ...newQuestion, answer: e.target.value })}
                 placeholder="Your answer"
-                className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
               />
               <div className="flex gap-2">
                 <button
@@ -647,7 +647,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 </button>
                 <button
                   onClick={() => setShowAddQuestion(false)}
-                  className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm"
+                  className="px-4 py-2 bg-c-surface-raised text-c-text-secondary rounded-lg text-sm"
                 >
                   Cancel
                 </button>
@@ -659,22 +659,22 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
             {securityQuestions.map((q) => (
               <div
                 key={q.id}
-                className="flex items-center justify-between p-4 rounded-lg bg-slate-50 dark:bg-navy-950"
+                className="flex items-center justify-between p-4 rounded-lg bg-c-surface-raised"
               >
                 <div>
-                  <p className="font-medium text-slate-900 dark:text-white">{q.question_text}</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Answer: ••••••••</p>
+                  <p className="font-medium text-c-text">{q.question_text}</p>
+                  <p className="text-sm text-c-text-muted">Answer: ••••••••</p>
                 </div>
                 <button
                   onClick={() => handleDeleteQuestion(q.id)}
-                  className="p-2 hover:bg-white dark:hover:bg-white/10 rounded-lg text-danger-600"
+                  className="p-2 hover:bg-c-surface dark:hover:bg-c-surface-raised rounded-lg text-danger-600"
                 >
                   <Trash2 size={16} />
                 </button>
               </div>
             ))}
             {securityQuestions.length === 0 && (
-              <p className="text-center text-slate-500 dark:text-slate-400 py-8">
+              <p className="text-center text-c-text-muted py-8">
                 No security questions set up
               </p>
             )}
@@ -684,9 +684,9 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
       {/* Recovery Tab */}
       {activeTab === 'recovery' && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
               <UserPlus size={20} className="text-green-500" />
               {t('settings.security.recovery', 'Recovery Options')}
             </h3>
@@ -707,7 +707,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   onChange={(e) =>
                     setNewRecovery({ ...newRecovery, contactType: e.target.value as any })
                   }
-                  className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                  className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
                 >
                   <option value="email">Email</option>
                   <option value="phone">Phone</option>
@@ -724,7 +724,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                         ? '+1234567890'
                         : 'Name'
                   }
-                  className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                  className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
                 />
               </div>
               <label className="flex items-center gap-2 text-sm">
@@ -746,7 +746,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 </button>
                 <button
                   onClick={() => setShowAddRecovery(false)}
-                  className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm"
+                  className="px-4 py-2 bg-c-surface-raised text-c-text-secondary rounded-lg text-sm"
                 >
                   Cancel
                 </button>
@@ -758,7 +758,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
             {recoveryContacts.map((contact) => (
               <div
                 key={contact.id}
-                className="flex items-center justify-between p-4 rounded-lg bg-slate-50 dark:bg-navy-950"
+                className="flex items-center justify-between p-4 rounded-lg bg-c-surface-raised"
               >
                 <div className="flex items-center gap-3">
                   {contact.contact_type === 'email' && <Mail size={18} className="text-blue-500" />}
@@ -766,10 +766,10 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                     <Phone size={18} className="text-green-500" />
                   )}
                   {contact.contact_type === 'trusted_person' && (
-                    <UserPlus size={18} className="text-primary-500" />
+                    <UserPlus size={18} className="text-c-accent" />
                   )}
                   <div>
-                    <p className="font-medium text-slate-900 dark:text-white flex items-center gap-2">
+                    <p className="font-medium text-c-text flex items-center gap-2">
                       {contact.contact_value}
                       {contact.is_primary && (
                         <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">
@@ -777,7 +777,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                         </span>
                       )}
                     </p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                    <p className="text-sm text-c-text-muted flex items-center gap-1">
                       {contact.is_verified ? (
                         <>
                           <CheckCircle size={12} className="text-green-500" /> Verified
@@ -792,14 +792,14 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 </div>
                 <button
                   onClick={() => handleDeleteRecovery(contact.id)}
-                  className="p-2 hover:bg-white dark:hover:bg-white/10 rounded-lg text-danger-600"
+                  className="p-2 hover:bg-c-surface dark:hover:bg-c-surface-raised rounded-lg text-danger-600"
                 >
                   <Trash2 size={16} />
                 </button>
               </div>
             ))}
             {recoveryContacts.length === 0 && (
-              <p className="text-center text-slate-500 dark:text-slate-400 py-8">
+              <p className="text-center text-c-text-muted py-8">
                 No recovery contacts configured
               </p>
             )}
@@ -809,8 +809,8 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
       {/* Login Locations Tab */}
       {activeTab === 'locations' && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+          <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <MapPin size={20} className="text-indigo-500" />
             {t('settings.security.loginLocations', 'Recent Login Locations')}
           </h3>
@@ -824,7 +824,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                     ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/30'
                     : location.risk_score > 50
                       ? 'bg-danger-50 dark:bg-danger-500/10 border-danger-200 dark:border-danger-500/30'
-                      : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-navy-700'
+                      : 'bg-c-surface-raised border-c-border-subtle dark:border-navy-700'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -835,14 +835,14 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                         ? 'text-green-600'
                         : location.risk_score > 50
                           ? 'text-danger-600'
-                          : 'text-slate-600 dark:text-slate-500'
+                          : 'text-c-text-secondary'
                     }
                   />
                   <div>
-                    <p className="font-medium text-slate-900 dark:text-white">
+                    <p className="font-medium text-c-text">
                       {location.city}, {location.region}, {location.country}
                     </p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-c-text-muted">
                       {location.ip_address} • {new Date(location.created_at).toLocaleString()}
                     </p>
                     <div className="flex gap-2 mt-1">
@@ -873,7 +873,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   onClick={() => handleTrustLocation(location.id, !location.is_trusted)}
                   className={`px-3 py-1.5 text-sm rounded-lg ${
                     location.is_trusted
-                      ? 'bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300'
+                      ? 'bg-c-surface-raised text-c-text-secondary'
                       : 'bg-green-600 text-white'
                   }`}
                 >
@@ -882,7 +882,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
               </div>
             ))}
             {loginLocations.length === 0 && (
-              <p className="text-center text-slate-500 dark:text-slate-400 py-8">
+              <p className="text-center text-c-text-muted py-8">
                 No login locations recorded
               </p>
             )}
@@ -892,8 +892,8 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
       {/* Suspicious Activity Tab */}
       {activeTab === 'activity' && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+          <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <AlertTriangle size={20} className="text-amber-500" />
             {t('settings.security.suspiciousActivity', 'Suspicious Activity')}
           </h3>
@@ -904,7 +904,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 key={activity.id}
                 className={`p-4 rounded-lg border ${
                   activity.is_acknowledged
-                    ? 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-navy-700 opacity-60'
+                    ? 'bg-c-surface-raised border-c-border-subtle dark:border-navy-700 opacity-60'
                     : activity.severity === 'critical'
                       ? 'bg-danger-50 dark:bg-danger-500/10 border-danger-200 dark:border-danger-500/30'
                       : activity.severity === 'high'
@@ -925,13 +925,13 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                       }
                     />
                     <div>
-                      <p className="font-medium text-slate-900 dark:text-white capitalize">
+                      <p className="font-medium text-c-text capitalize">
                         {activity.activity_type.replace(/_/g, ' ')}
                       </p>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                      <p className="text-sm text-c-text-secondary">
                         {activity.description}
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      <p className="text-xs text-c-text-muted mt-1">
                         {activity.ip_address} • {new Date(activity.created_at).toLocaleString()}
                       </p>
                     </div>
@@ -939,7 +939,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   {!activity.is_acknowledged && (
                     <button
                       onClick={() => handleAcknowledgeActivity(activity.id)}
-                      className="px-3 py-1.5 text-sm bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-300 rounded-lg"
+                      className="px-3 py-1.5 text-sm bg-c-surface-raised text-c-text-secondary rounded-lg"
                     >
                       Acknowledge
                     </button>
@@ -948,7 +948,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
               </div>
             ))}
             {suspiciousActivities.length === 0 && (
-              <p className="text-center text-slate-500 dark:text-slate-400 py-8">
+              <p className="text-center text-c-text-muted py-8">
                 No suspicious activities detected
               </p>
             )}
@@ -958,10 +958,10 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
       {/* Settings Tab */}
       {activeTab === 'settings' && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <Settings size={20} className="text-slate-500 dark:text-slate-400" />
+            <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
+              <Settings size={20} className="text-c-text-muted" />
               {t('settings.security.settings', 'Security Settings')}
             </h3>
             <button
@@ -975,12 +975,12 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
               <div>
-                <label className="font-medium text-slate-900 dark:text-white">
+                <label className="font-medium text-c-text">
                   Geolocation Alerts
                 </label>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-c-text-muted">
                   Alert on login from new locations
                 </p>
               </div>
@@ -994,23 +994,23 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 className={`relative w-12 h-6 rounded-full transition-colors ${
                   securitySettings.enable_geolocation_alerts
                     ? 'bg-danger-500'
-                    : 'bg-slate-300 dark:bg-slate-600'
+                    : 'bg-c-surface-raised'
                 }`}
               >
                 <span
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                     securitySettings.enable_geolocation_alerts ? 'left-7' : 'left-1'
                   }`}
                 />
               </button>
             </div>
 
-            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
               <div>
-                <label className="font-medium text-slate-900 dark:text-white">
+                <label className="font-medium text-c-text">
                   Single Session Only
                 </label>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-c-text-muted">
                   Only allow one active session at a time
                 </p>
               </div>
@@ -1024,19 +1024,19 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 className={`relative w-12 h-6 rounded-full transition-colors ${
                   securitySettings.single_session_only
                     ? 'bg-danger-500'
-                    : 'bg-slate-300 dark:bg-slate-600'
+                    : 'bg-c-surface-raised'
                 }`}
               >
                 <span
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                     securitySettings.single_session_only ? 'left-7' : 'left-1'
                   }`}
                 />
               </button>
             </div>
 
-            <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
-              <label className="block font-medium text-slate-900 dark:text-white mb-2">
+            <div className="p-4 bg-c-surface-raised rounded-lg">
+              <label className="block font-medium text-c-text mb-2">
                 Re-authentication Timeout
               </label>
               <select
@@ -1047,7 +1047,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                     require_reauth_minutes: parseInt(e.target.value),
                   })
                 }
-                className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
+                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
               >
                 <option value={15}>15 minutes</option>
                 <option value={30}>30 minutes</option>
@@ -1057,8 +1057,8 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
               </select>
             </div>
 
-            <div className="border-t border-slate-200 dark:border-navy-700 pt-4">
-              <h4 className="font-medium text-slate-900 dark:text-white mb-4">
+            <div className="border-t border-c-border-subtle dark:border-navy-700 pt-4">
+              <h4 className="font-medium text-c-text mb-4">
                 Notification Preferences
               </h4>
               <div className="space-y-3">
@@ -1080,7 +1080,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                       }
                       className="rounded"
                     />
-                    <span className="text-sm text-slate-700 dark:text-slate-300">{item.label}</span>
+                    <span className="text-sm text-c-text-secondary">{item.label}</span>
                   </label>
                 ))}
               </div>

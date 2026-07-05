@@ -17,7 +17,13 @@ import { Send, User } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { InitiativeSuggestionBadge } from '@/components/Initiatives/InitiativeSuggestionBadge';
 import { Api, api } from '@/services/api';
+import {
+  areaScoresFromAxisData,
+  openDrdReportForPrint,
+  openHtmlForPrint,
+} from '@/services/report/drdReportClient';
 
 import { ReportBuilder } from '../components/Reports/ReportBuilder';
 import TeresaMark from '../components/shared/TeresaMark';
@@ -250,7 +256,7 @@ interface DRDAuditReportViewProps {
 export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
   reportId: propReportId,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { addChatMessage, setIsBotTyping, currentReportId, setCurrentView, setCurrentReport } =
     useAppStore();
 
@@ -458,6 +464,37 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
     }
   };
 
+  // Generate the publishing-grade DRD client report (HTML → print → PDF).
+  // Numbers-from-engine: derived from the report's per-axis assessment data.
+  const handleGenerateClientReport = async () => {
+    if (!report || !reportId) return;
+    const lang = (i18n.language === 'en' ? 'en' : 'pl') as 'pl' | 'en';
+    // Prefer the server route: it wires the live LLM narrator (AI-authored
+    // executive summary + narratives) with a deterministic fallback. If it is
+    // unavailable, fall back to the fully client-side generator (deterministic).
+    try {
+      const { html } = await api.getDrdReportHtml(reportId, { lang });
+      openHtmlForPrint(html, { autoPrint: false });
+      return;
+    } catch (err) {
+      console.warn('DRD server report unavailable, falling back to client generator:', err);
+    }
+    try {
+      const areaScores = areaScoresFromAxisData(report.axisData || {});
+      await openDrdReportForPrint(
+        areaScores,
+        {
+          organizationName: report.organizationName || report.name || 'Organizacja',
+          language: lang,
+          assessmentName: report.assessmentName,
+        },
+        { autoPrint: false }
+      );
+    } catch (err) {
+      console.error('Failed to generate DRD client report:', err);
+    }
+  };
+
   // Finalize report
   const handleFinalize = async () => {
     if (!reportId || !report || report.status === 'FINAL') return;
@@ -636,6 +673,9 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
                   {t('reports.unsaved', 'Unsaved')}
                 </span>
               )}
+              {reportId && (
+                <InitiativeSuggestionBadge sourceType="audit" sourceId={reportId} />
+              )}
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {report?.organizationName} • {report?.sections.length}{' '}
@@ -685,6 +725,15 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
             title={t('reports.regenerate', 'Regenerate Report')}
           >
             <RefreshCw className={`w-5 h-5 ${generating ? 'animate-spin' : ''}`} />
+          </button>
+
+          <button
+            onClick={handleGenerateClientReport}
+            className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-lg transition-colors text-sm font-medium"
+            title={t('reports.generateClientReport', 'Generate DRD client report (print/PDF)')}
+          >
+            <FileText className="w-4 h-4" />
+            {t('reports.clientReport', 'Raport DRD')}
           </button>
 
           <button

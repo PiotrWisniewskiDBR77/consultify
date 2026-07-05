@@ -100,16 +100,32 @@ interface DashboardData {
   };
 }
 
-// Harvard categorical chart palette — crimson-anchored, HBS complementary.
-// was ['#6366f1','#10b981','#f59e0b','#f43f5e','#6366f1','#3b82f6'].
-const COLORS = [
-  '#A51C30', // Harvard Crimson
-  '#6578B4', // HBS Blue 2
-  '#52A52E', // HBS Green 2
-  '#E87D1E', // HBS Orange 2
-  '#00979D', // HBS Teal 2
-  '#80408D', // HBS Purple 2
+// Ordered chart-series ramp (VA1 data-palette tokens). Was crimson-anchored
+// (series-1 = Harvard Crimson #A51C30) — crimson-as-data leak. Now resolves the
+// semantic `--c-chart-1..8` tokens (blue-first, NEVER red-first) at read time,
+// with the sanctioned CSS fallbacks (Recharts needs concrete hex; var() does not
+// resolve in fills). Reference pattern for future N-series charts.
+/* eslint-disable no-restricted-syntax -- sanctioned --c-chart-* fallbacks */
+const CHART_SERIES_FALLBACK = [
+  '#2f6f95',
+  '#2f8f6b',
+  '#b5793a',
+  '#7a56c8',
+  '#2a97a8',
+  '#a8517f',
+  '#6e8a2f',
+  '#5f7488',
 ];
+/* eslint-enable no-restricted-syntax */
+function readChartSeries(): string[] {
+  if (typeof window === 'undefined' || typeof document === 'undefined')
+    return CHART_SERIES_FALLBACK;
+  const root = getComputedStyle(document.documentElement);
+  return CHART_SERIES_FALLBACK.map(
+    (fb, i) => root.getPropertyValue(`--c-chart-${i + 1}`).trim() || fb
+  );
+}
+const COLORS = readChartSeries();
 
 export const AIAnalyticsDashboard: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -491,7 +507,14 @@ export const AIAnalyticsDashboard: React.FC = () => {
                     className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:bg-navy-800 dark:hover:bg-gray-700"
                   >
                     <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white">
-                      {pb.name}
+                      <span className="inline-flex items-center gap-2">
+                        <span
+                          className="inline-block w-2.5 h-2.5 rounded-full"
+                          style={{ backgroundColor: COLORS[idx % COLORS.length] }}
+                          aria-hidden="true"
+                        />
+                        {pb.name}
+                      </span>
                     </td>
                     <td className="py-3 px-4 text-sm text-right text-green-600">{pb.completed}</td>
                     <td className="py-3 px-4 text-sm text-right text-danger-600">{pb.failed}</td>

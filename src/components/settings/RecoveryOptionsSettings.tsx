@@ -322,7 +322,7 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
             </div>
           ) : (
             <div className="flex items-center justify-between">
-              <span className="text-slate-600 dark:text-slate-400">
+              <span className="text-c-text-secondary">
                 {recoveryOptions.recoveryEmail
                   ? maskEmail(recoveryOptions.recoveryEmail)
                   : t('settings.recovery.notSet', 'Not configured')}
@@ -384,7 +384,7 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
             </div>
           ) : (
             <div className="flex items-center justify-between">
-              <span className="text-slate-600 dark:text-slate-400">
+              <span className="text-c-text-secondary">
                 {recoveryOptions.recoveryPhone
                   ? maskPhone(recoveryOptions.recoveryPhone)
                   : t('settings.recovery.notSet', 'Not configured')}
@@ -412,8 +412,8 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
-                <Key className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              <div className="p-2 bg-c-accent-soft rounded-lg">
+                <Key className="w-5 h-5 text-c-accent" />
               </div>
               <div>
                 <CardTitle className="text-base">
@@ -433,7 +433,7 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
         <CardContent>
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-slate-600 dark:text-slate-400">
+              <span className="text-c-text-secondary">
                 {recoveryOptions.backupCodesCount > 0
                   ? t('settings.recovery.codesRemaining', '{{count}} codes remaining', {
                       count: recoveryOptions.backupCodesCount,
@@ -441,7 +441,7 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
                   : t('settings.recovery.noCodes', 'No backup codes generated')}
               </span>
               {recoveryOptions.lastBackupCodesGenerated && (
-                <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
+                <p className="text-xs text-c-text-secondary mt-1">
                   {t('settings.recovery.lastGenerated', 'Last generated: {{date}}', {
                     date: new Date(recoveryOptions.lastBackupCodesGenerated).toLocaleDateString(),
                   })}
@@ -492,11 +492,11 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
                 )}
               </AlertDescription>
             </Alert>
-            <div className="grid grid-cols-2 gap-2 p-4 bg-slate-50 dark:bg-navy-800 rounded-lg font-mono text-sm">
+            <div className="grid grid-cols-2 gap-2 p-4 bg-c-surface-raised rounded-lg font-mono text-sm">
               {backupCodes.map((code, index) => (
                 <div
                   key={index}
-                  className="px-3 py-2 bg-white dark:bg-navy-700 rounded border border-slate-200 dark:border-navy-600"
+                  className="px-3 py-2 bg-c-surface rounded border border-c-border-subtle dark:border-navy-600"
                 >
                   {code}
                 </div>

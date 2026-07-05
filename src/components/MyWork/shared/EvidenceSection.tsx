@@ -491,7 +491,7 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
                 <button
                   onClick={handleAddEvidence}
                   disabled={!newEvidenceTitle.trim()}
-                  className="w-full px-4 py-2.5 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-2.5 rounded-lg bg-c-text text-c-bg font-medium hover:bg-c-text-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isPolish ? 'Dodaj' : 'Add'}
                 </button>

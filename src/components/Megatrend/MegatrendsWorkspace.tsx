@@ -114,16 +114,16 @@ export const MegatrendsWorkspace: React.FC<MegatrendsWorkspaceProps> = ({
           {onBack && (
             <button
               onClick={onBack}
-              className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 transition-colors"
+              className="p-2 rounded-xl hover:bg-c-surface-raised text-c-text-muted transition-colors"
             >
               <ArrowLeft size={18} />
             </button>
           )}
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+            <h2 className="text-lg font-bold text-c-text tracking-tight">
               {t('megatrends.title', 'Megatrend Analysis')}
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t(
                 'megatrends.subtitle',
                 'Explore industry megatrends, build a radar, and surface strategic insights'
@@ -132,12 +132,12 @@ export const MegatrendsWorkspace: React.FC<MegatrendsWorkspaceProps> = ({
           </div>
         </div>
       )}
-      <div className="flex border-b border-slate-200/60 dark:border-navy-700/60 space-x-6 overflow-x-auto">
+      <div className="flex border-b border-c-border-subtle space-x-6 overflow-x-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === tab.id ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white' : 'border-transparent text-slate-600 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            className={`flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === tab.id ? 'border-c-accent text-c-accent' : 'border-transparent text-c-text-muted hover:text-c-text'}`}
           >
             <tab.icon size={15} strokeWidth={1.5} />
             {tab.label}
@@ -169,8 +169,8 @@ export const MegatrendsWorkspace: React.FC<MegatrendsWorkspaceProps> = ({
             {selectedTrendId ? (
               <TrendDetailCard trendId={selectedTrendId} onClose={() => setActiveTab(lastTab)} />
             ) : (
-              <div className="text-center py-12 bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-dashed border-slate-200 dark:border-navy-700">
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+              <div className="text-center py-12 bg-c-surface-raised dark:bg-c-surface rounded-xl border border-dashed border-c-border-subtle">
+                <p className="text-sm text-c-text-muted">
                   {t(
                     'megatrends.selectTrend',
                     'Select a trend from the Baseline or Radar Map to see details.'
@@ -178,7 +178,7 @@ export const MegatrendsWorkspace: React.FC<MegatrendsWorkspaceProps> = ({
                 </p>
                 <button
                   onClick={() => setActiveTab('baseline')}
-                  className="mt-3 text-sm text-slate-700 dark:text-slate-300 hover:underline font-medium"
+                  className="mt-3 text-sm text-c-text-secondary hover:underline font-medium"
                 >
                   {t('megatrends.goToBaseline', 'Go to Baseline')}
                 </button>

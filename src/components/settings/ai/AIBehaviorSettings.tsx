@@ -156,33 +156,33 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
     <div
       className={`p-4 rounded-xl border-2 transition-all ${
         enabled
-          ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
-          : 'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950'
+          ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+          : 'border-c-border-subtle dark:border-navy-700 bg-c-surface-raised'
       }`}
     >
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3">
           <div
-            className={`p-2 rounded-lg ${enabled ? 'bg-primary-100 dark:bg-primary-500/20' : 'bg-white dark:bg-navy-900'}`}
+            className={`p-2 rounded-lg ${enabled ? 'bg-c-accent-soft dark:bg-c-accent-soft' : 'bg-c-surface'}`}
           >
             <Icon
               size={18}
-              className={enabled ? 'text-primary-600' : 'text-slate-600 dark:text-slate-500'}
+              className={enabled ? 'text-c-accent' : 'text-c-text-secondary'}
             />
           </div>
           <div>
-            <p className="font-medium text-slate-900 dark:text-white">{title}</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{description}</p>
+            <p className="font-medium text-c-text">{title}</p>
+            <p className="text-sm text-c-text-muted">{description}</p>
           </div>
         </div>
         <button
           onClick={() => onChange(!enabled)}
           className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${
-            enabled ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
+            enabled ? 'bg-navy-900' : 'bg-c-surface-raised'
           }`}
         >
           <span
-            className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+            className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
               enabled ? 'left-7' : 'left-1'
             }`}
           />
@@ -202,11 +202,11 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
             <Brain size={28} className="text-pink-500" />
             {t('settings.ai.behavior.title', 'AI Behavior')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t('settings.ai.behavior.description', 'Customize how AI assists you')}
           </p>
         </div>
@@ -221,8 +221,8 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
       </div>
 
       {/* AI Features Toggles */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Wand2 size={20} className="text-pink-500" />
           AI Features
         </h3>
@@ -274,12 +274,12 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
       </div>
 
       {/* AI Personality */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Smile size={20} className="text-amber-500" />
           AI Personality
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           Choose how AI communicates with you
         </p>
 
@@ -293,7 +293,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
                 className={`p-4 rounded-xl border-2 text-center transition-all ${
                   settings.personality === p.id
                     ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-amber-300'
+                    : 'border-c-border-subtle dark:border-navy-700 hover:border-amber-300'
                 }`}
               >
                 <Icon
@@ -301,17 +301,17 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
                   className={
                     settings.personality === p.id
                       ? 'text-amber-600'
-                      : 'text-slate-600 dark:text-slate-500'
+                      : 'text-c-text-secondary'
                   }
                 />
-                <p className="font-medium text-slate-900 dark:text-white mt-2 text-sm">{p.label}</p>
+                <p className="font-medium text-c-text mt-2 text-sm">{p.label}</p>
               </button>
             );
           })}
         </div>
 
-        <div className="p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+        <div className="p-3 bg-c-surface-raised rounded-lg">
+          <p className="text-sm text-c-text-secondary">
             <span className="font-medium">
               {personalities.find((p) => p.id === settings.personality)?.label}:
             </span>{' '}
@@ -321,12 +321,12 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
       </div>
 
       {/* Response Style */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Response Style</h3>
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <h3 className="text-lg font-semibold text-c-text">Response Style</h3>
 
         {/* Response Length */}
         <div className="space-y-3">
-          <label className="font-medium text-slate-900 dark:text-white">Response Length</label>
+          <label className="font-medium text-c-text">Response Length</label>
           <div className="flex gap-3">
             {(['brief', 'moderate', 'detailed'] as const).map((length) => (
               <button
@@ -335,7 +335,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
                 className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all capitalize ${
                   settings.responseLength === length
                     ? 'bg-pink-600 text-white'
-                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                    : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-700'
                 }`}
               >
                 {length}
@@ -347,7 +347,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
         {/* Formality Slider */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <label className="font-medium text-slate-900 dark:text-white">Formality Level</label>
+            <label className="font-medium text-c-text">Formality Level</label>
             <span className="text-sm text-pink-600">{settings.formality}%</span>
           </div>
           <input
@@ -356,9 +356,9 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
             max="100"
             value={settings.formality}
             onChange={(e) => setSettings({ ...settings, formality: parseInt(e.target.value) })}
-            className="w-full h-2 bg-slate-200 dark:bg-navy-800 rounded-lg appearance-none cursor-pointer accent-pink-600"
+            className="w-full h-2 bg-c-surface-raised rounded-lg appearance-none cursor-pointer accent-pink-600"
           />
-          <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex justify-between text-xs text-c-text-muted">
             <span>Casual</span>
             <span>Formal</span>
           </div>
@@ -367,7 +367,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
         {/* Technical Level Slider */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <label className="font-medium text-slate-900 dark:text-white">Technical Depth</label>
+            <label className="font-medium text-c-text">Technical Depth</label>
             <span className="text-sm text-pink-600">{settings.technicalLevel}%</span>
           </div>
           <input
@@ -376,9 +376,9 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
             max="100"
             value={settings.technicalLevel}
             onChange={(e) => setSettings({ ...settings, technicalLevel: parseInt(e.target.value) })}
-            className="w-full h-2 bg-slate-200 dark:bg-navy-800 rounded-lg appearance-none cursor-pointer accent-pink-600"
+            className="w-full h-2 bg-c-surface-raised rounded-lg appearance-none cursor-pointer accent-pink-600"
           />
-          <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex justify-between text-xs text-c-text-muted">
             <span>Simple</span>
             <span>Technical</span>
           </div>
@@ -386,12 +386,12 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
       </div>
 
       {/* Context Settings */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <BookOpen size={20} className="text-blue-500" />
           Context Sources
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           What information AI can use for better responses
         </p>
 

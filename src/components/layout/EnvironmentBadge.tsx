@@ -119,7 +119,7 @@ export const EnvironmentBadge: React.FC = () => {
   return (
     <button
       type="button"
-      className="fixed bottom-3 left-3 z-[9999] rounded-full border border-white/10 bg-navy-950/80 px-3 py-1.5 text-[11px] font-semibold tracking-wide text-slate-200 backdrop-blur hover:bg-navy-950/90"
+      className="fixed bottom-3 left-3 z-toast rounded-full border border-white/10 bg-navy-950/80 px-3 py-1.5 text-[11px] font-semibold tracking-wide text-slate-200 backdrop-blur hover:bg-navy-950/90"
       title={tooltip}
       onClick={async () => {
         const payload = {

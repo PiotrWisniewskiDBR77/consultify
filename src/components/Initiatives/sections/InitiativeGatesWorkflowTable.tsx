@@ -1007,7 +1007,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                                 requestGateDecision(gateKey, stage);
                               }}
                               disabled={requestBusyGate === gateKey || isMutating}
-                              className="flex-shrink-0 px-2 py-1 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:opacity-40 text-white text-[10px] font-semibold transition-colors"
+                              className="flex-shrink-0 px-2 py-1 rounded-lg bg-c-text hover:bg-c-text-secondary disabled:opacity-40 text-c-bg text-[10px] font-semibold transition-colors"
                             >
                               {requestBusyGate === gateKey ? (
                                 <Loader2 size={11} className="animate-spin" />
@@ -1353,7 +1353,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                                       [role]: e.target.value,
                                     }))
                                   }
-                                  className="w-full px-3 py-1.5 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/50 transition-all"
+                                  className="w-full px-3 py-1.5 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-c-accent transition-all"
                                 >
                                   <option value="">
                                     {t('initiatives.initiativeGatesWorkflowTable.notAssignedDash')}
@@ -1385,7 +1385,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                         onChange={(e) =>
                           setDueDateDraft((prev) => ({ ...prev, [editGateKey]: e.target.value }))
                         }
-                        className="w-full px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/50 transition-all"
+                        className="w-full px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-c-accent transition-all"
                       />
                     </div>
 
@@ -1401,7 +1401,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                         }
                         rows={3}
                         placeholder={t('initiatives.initiativeGatesWorkflowTable.addGateContext')}
-                        className="w-full px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/50 transition-all resize-none"
+                        className="w-full px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-c-accent transition-all resize-none"
                       />
                     </div>
 
@@ -1503,7 +1503,7 @@ export const InitiativeGatesWorkflowTable: FC = () => {
                           await fetchAll();
                         }}
                         disabled={savingEdit || savingRoles}
-                        className="px-5 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:opacity-40 text-white text-sm font-semibold transition-colors"
+                        className="px-5 py-2 rounded-xl bg-c-text hover:bg-c-text-secondary disabled:opacity-40 text-c-bg text-sm font-semibold transition-colors"
                       >
                         {savingEdit || savingRoles ? (
                           <Loader2 size={14} className="animate-spin" />

@@ -452,7 +452,7 @@ const AddMemberModal: FC<{
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -512,7 +512,7 @@ const AddMemberModal: FC<{
                 spellCheck={false}
                 data-lpignore="true"
                 data-form-type="other"
-                className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
+                className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-c-accent transition-colors"
               />
               {searching && (
                 <Loader2
@@ -648,7 +648,7 @@ const AddMemberModal: FC<{
           <button
             onClick={handleAdd}
             disabled={!selectedUser || adding}
-            className="px-5 py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold transition-colors flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl bg-c-text hover:bg-c-text-secondary disabled:bg-c-border-strong text-c-bg text-sm font-semibold transition-colors flex items-center gap-2"
           >
             {adding ? (
               <>
@@ -1008,7 +1008,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
               {canManageTeam && (
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-c-text hover:bg-c-text-secondary text-c-bg text-sm font-semibold transition-colors"
                 >
                   <Plus size={16} />
                   Add Member
@@ -1121,7 +1121,7 @@ export const TeamManagementPanel: FC<TeamManagementPanelProps> = ({
                           {canManageTeam && (
                             <button
                               onClick={() => setShowAddModal(true)}
-                              className="mt-2 flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors"
+                              className="mt-2 flex items-center gap-2 px-4 py-2 rounded-lg bg-c-text hover:bg-c-text-secondary text-c-bg text-sm font-semibold transition-colors"
                             >
                               <Plus size={16} />
                               Add First Member

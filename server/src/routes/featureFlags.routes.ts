@@ -13,49 +13,57 @@ let tableReady = false;
 async function ensureTable(): Promise<void> {
   if (tableReady) return;
 
-  await dbRun(
-    `CREATE TABLE IF NOT EXISTS feature_flags (
-      id TEXT PRIMARY KEY,
-      flag_key TEXT NOT NULL UNIQUE,
-      description TEXT,
-      enabled BOOLEAN DEFAULT false,
-      rules TEXT,
-      created_by TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
-    [],
-    { fallback: true }
-  );
+  // Fail-soft: lazy DDL must never propagate to route handlers as a bare 500.
+  // Every statement already uses { fallback: true }; this outer guard covers
+  // connection-level rejections so read handlers degrade to empty instead of
+  // white-screening the caller. tableReady is only latched on full success.
+  try {
+    await dbRun(
+      `CREATE TABLE IF NOT EXISTS feature_flags (
+        id TEXT PRIMARY KEY,
+        flag_key TEXT NOT NULL UNIQUE,
+        description TEXT,
+        enabled BOOLEAN DEFAULT false,
+        rules TEXT,
+        created_by TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`,
+      [],
+      { fallback: true }
+    );
 
-  const addCol = async (col: string, def: string) => {
-    await dbRun(`ALTER TABLE feature_flags ADD COLUMN IF NOT EXISTS ${col} ${def}`, [], {
-      fallback: true,
-    });
-  };
-  await addCol('name', "TEXT DEFAULT ''");
-  await addCol('flag_type', "TEXT DEFAULT 'boolean'");
-  await addCol('targeting_rules', "TEXT DEFAULT '[]'");
-  await addCol('rollout_percentage', 'REAL DEFAULT 0');
-  await addCol('environment', "TEXT DEFAULT 'production'");
-  await addCol('organization_id', 'TEXT');
-  await addCol('variants', "TEXT DEFAULT '[]'");
+    const addCol = async (col: string, def: string) => {
+      await dbRun(`ALTER TABLE feature_flags ADD COLUMN IF NOT EXISTS ${col} ${def}`, [], {
+        fallback: true,
+      });
+    };
+    await addCol('name', "TEXT DEFAULT ''");
+    await addCol('flag_type', "TEXT DEFAULT 'boolean'");
+    await addCol('targeting_rules', "TEXT DEFAULT '[]'");
+    await addCol('rollout_percentage', 'REAL DEFAULT 0');
+    await addCol('environment', "TEXT DEFAULT 'production'");
+    await addCol('organization_id', 'TEXT');
+    await addCol('variants', "TEXT DEFAULT '[]'");
 
-  await dbRun(
-    `CREATE TABLE IF NOT EXISTS feature_flag_history (
-      id TEXT PRIMARY KEY,
-      flag_id TEXT NOT NULL,
-      change_type TEXT NOT NULL,
-      old_value TEXT,
-      new_value TEXT,
-      changed_by TEXT NOT NULL,
-      changed_at TEXT NOT NULL
-    )`,
-    [],
-    { fallback: true }
-  );
+    await dbRun(
+      `CREATE TABLE IF NOT EXISTS feature_flag_history (
+        id TEXT PRIMARY KEY,
+        flag_id TEXT NOT NULL,
+        change_type TEXT NOT NULL,
+        old_value TEXT,
+        new_value TEXT,
+        changed_by TEXT NOT NULL,
+        changed_at TEXT NOT NULL
+      )`,
+      [],
+      { fallback: true }
+    );
 
-  tableReady = true;
+    tableReady = true;
+  } catch (err) {
+    console.error('[featureFlags] ensureTable lazy DDL failed (fail-soft):', err);
+  }
 }
 
 interface FlagRow {

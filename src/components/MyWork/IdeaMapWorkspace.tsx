@@ -23,8 +23,10 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { LoadingState } from '@/components/shared/states';
 import type { WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
-import { LoadingState } from '@/components/ui/primitives';
+import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api, getMapVersionFromPayload } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
@@ -47,6 +49,11 @@ import { type ShortcutHelp, useKeyboardShortcuts } from './hooks/useKeyboardShor
 import { IdeaAISuggestionsPanel } from './IdeaAISuggestionsPanel';
 import { IdeaContextPanel } from './IdeaContextPanel';
 import {
+  IDEA_CONVERT_TARGETS,
+  type IdeaConvertTarget,
+  isLiveConvertTarget,
+} from './ideaConvertTargets';
+import {
   composeIdeaBodyFromSeedIntent,
   deriveIdeaTitleFromSeedIntent,
   IDEA_STAGE_LABELS,
@@ -56,18 +63,13 @@ import {
   normalizePreferredSystem,
   normalizeStageToV5,
 } from './ideaEntryTypes';
-import { ideaMapToMarkdown } from './ideaMapToMarkdown';
 import { IdeaExportMenu } from './IdeaExportMenu';
 import { IdeaGhostCards } from './IdeaGhostCards';
+import { ideaMapToMarkdown } from './ideaMapToMarkdown';
 import { type ExtendedNodeData, IdeaNodeDetailDrawer } from './IdeaNodeDetailDrawer';
 import { IdeaProcessFlowTool } from './IdeaProcessFlowTool';
 import { IdeaProposalReview } from './IdeaProposalReview';
 import { IdeaRecommendationMap } from './IdeaRecommendationMap';
-import {
-  IDEA_CONVERT_TARGETS,
-  type IdeaConvertTarget,
-  isLiveConvertTarget,
-} from './ideaConvertTargets';
 import type { CanvasToolType, MindMapInteractionMode } from './ideaSelectionTypes';
 import {
   type AIProposal,
@@ -119,15 +121,15 @@ class CanvasToolErrorBoundary extends React.Component<
     if (this.state.hasError) {
       const isPl = typeof window !== 'undefined' && (navigator.language || '').startsWith('pl');
       return (
-        <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-navy-950 p-8">
-          <div className="p-3 rounded-2xl bg-danger-500/10">
-            <AlertTriangle size={32} className="text-danger-500" />
+        <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-c-surface-raised dark:bg-c-surface p-8">
+          <div className="p-3 rounded-2xl bg-c-surface border border-c-danger">
+            <AlertTriangle size={32} className="text-c-danger" />
           </div>
           <div className="text-center">
-            <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">
+            <div className="text-sm font-semibold text-c-text dark:text-c-text mb-1">
               {this.props.toolName} {isPl ? 'nie załadował się' : 'failed to load'}
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
+            <div className="text-xs text-c-text-secondary dark:text-c-text-muted max-w-sm">
               {this.state.error?.message ||
                 (isPl ? 'Wystąpił nieoczekiwany błąd' : 'An unexpected error occurred')}
             </div>
@@ -138,7 +140,7 @@ class CanvasToolErrorBoundary extends React.Component<
                 this.setState({ hasError: false, error: null });
                 this.props.onRetry?.();
               }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-c-surface dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text hover:bg-c-surface dark:hover:bg-c-surface-raised transition-colors"
             >
               <RefreshCw size={14} />
               {isPl ? 'Ponów' : 'Retry'}
@@ -244,11 +246,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const { i18n } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  // DP-5: heuristic AI overlays (see DEFAULT_FLAGS in useFeatureFlags)
+  const { isEnabled: isFeatureEnabled } = useFeatureFlagsContext();
+  const heuristicAiOverlaysEnabled = isFeatureEnabled('mindmapHeuristicAiOverlays');
   const deepLinkedTableId = searchParams.get('tpTable');
   const deepLinkedViewId = searchParams.get('tpView');
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
   const isNewInitial = useMemo(() => ideaId.startsWith('new-idea-'), [ideaId]);
   const { setChatKickoffMessage, isChatCollapsed, toggleChatCollapse } = useAppStore();
+  const { isEnabled } = useFeatureFlagsContext();
+  const mindmapTeresaBridgeEnabled = isEnabled('ENABLE_TERESA_MINDMAP');
+  const openChatWithContext = useOpenChatWithContext();
   const currentUser = useAppStore((state) => state.currentUser);
   const currentProjectId = useAppStore((state) => state.currentProjectId);
   const currentUserId = String(currentUser?.id || 'current-user');
@@ -288,7 +296,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       setMmCanRedo(Boolean(canRedo));
     };
     window.addEventListener('mm-undo-state', handler);
-    return () => window.removeEventListener('mm-undo-state', handler);
+    // Table tool reports its own undo/redo availability on a dedicated channel.
+    window.addEventListener('tbl-undo-state', handler);
+    return () => {
+      window.removeEventListener('mm-undo-state', handler);
+      window.removeEventListener('tbl-undo-state', handler);
+    };
   }, []);
   // discoveryPanel removed — replaced by CanvasLeftToolbar
   const [whiteboardFacilitation, setWhiteboardFacilitation] = useState<{
@@ -1475,9 +1488,22 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     setActiveTool,
   ]);
 
+  // Run the (re)load only when the idea or language actually changes — NOT every
+  // time `hydrate`'s identity changes. `hydrate` depends on parent-supplied props
+  // (onSaved, creationPayload, seedIntent…) that get a fresh identity on every
+  // MyWorkHub re-render; binding the effect to `hydrate` made it re-run after each
+  // graph mutation (mutation → sync → parent re-render → new hydrate), which calls
+  // setLoading(true) and REMOUNTS the whole workspace + canvas — wiping node
+  // selection, the lastActive anchor and the undo stack on every single edit.
+  // That remount cascade was the core "can't actually use it" bug. See M06 live
+  // 2026-06-20. We keep a ref to the latest hydrate and only trigger on ideaId /
+  // language so a normal edit never reloads.
+  const hydrateRef = useRef(hydrate);
+  hydrateRef.current = hydrate;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    hydrate();
-  }, [hydrate]);
+    hydrateRef.current();
+  }, [ideaId, i18n.language]);
 
   // ── URL deep link support ───────────────────────────────────────────────────
   useEffect(() => {
@@ -1761,8 +1787,34 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       tool: activeTool,
       nodeCount: liveNodes.length,
     });
+
+    // M06 Fala 2 §2.1 (flag ENABLE_TERESA_MINDMAP): route through the shared
+    // entity-context hook so the conversation carries pmoContext.ideaId — a
+    // second click on the same idea reuses the conversation (alreadyHasContext)
+    // instead of always creating a new one. OFF preserves today's exact
+    // behavior: local kickoff message with no entity-context.
+    if (mindmapTeresaBridgeEnabled && realId) {
+      openChatWithContext({
+        entityType: 'idea',
+        entityId: realId,
+        entityName: mapTitle,
+        contextData: { teresaPrompt: kickoff },
+      });
+      return;
+    }
     openChat(kickoff);
-  }, [activeTool, graphEdges, graphNodes, isPolish, openChat, realId, seedText, title]);
+  }, [
+    activeTool,
+    graphEdges,
+    graphNodes,
+    isPolish,
+    mindmapTeresaBridgeEnabled,
+    openChat,
+    openChatWithContext,
+    realId,
+    seedText,
+    title,
+  ]);
 
   // Subscribe to idea-workspace-chat-prompt so any tool can send text to the chat panel
   useEffect(() => {
@@ -2270,7 +2322,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const handleNodeDataChange = useCallback(
     async (nodeId: string, patch: Partial<ExtendedNodeData>) => {
       setNodeDetailData((prev) => ({ ...prev, ...patch }));
-      try {
+      // Save the node patch by writing the full map back through the SHARED
+      // document — but on the AUTHORITATIVE version we read here, NOT
+      // graphRuntime's internal counter. graphRuntime tracks its own
+      // server version, which drifts out of date in tools (e.g. the
+      // whiteboard) that own their node state and persist through a separate
+      // sync owner. Routing the drawer's save through graphRuntime therefore
+      // 409'd against the tool's newer version and the edit was silently lost.
+      // Read fresh → patch → sync with that exact baseVersion, retrying once on
+      // a 409 (the tool may have autosaved between our read and write).
+      const applyOnce = async () => {
         const mapRes = await Api.getMyIdeaMap(realId, { language: i18n.language });
         const map = mapRes?.map || {};
         const nodes: any[] = Array.isArray(map.nodes) ? [...map.nodes] : [];
@@ -2278,26 +2339,38 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         const updatedNodes = nodes.map((n: any) =>
           String(n?.id) === nodeId ? { ...n, data: { ...(n.data || {}), ...patch } } : n
         );
-        graphRuntime.captureToolGraph(
-          {
-            nodes: updatedNodes as any[],
-            edges: edges as any[],
-            extensions:
-              map?.extensions &&
-              typeof map.extensions === 'object' &&
-              !Array.isArray(map.extensions)
-                ? map.extensions
-                : {},
-          },
-          { reason: 'semantic', immediate: true }
-        );
-        await graphRuntime.flushGraph({ reason: 'manual' });
+        const extensions =
+          map?.extensions && typeof map.extensions === 'object' && !Array.isArray(map.extensions)
+            ? (map.extensions as Record<string, unknown>)
+            : {};
+        return Api.syncMyIdeaMap(realId, {
+          nodes: updatedNodes,
+          edges,
+          baseVersion: Number(map?.version || 1),
+          preferredTool: (map?.preferredTool as any) || activeTool,
+          extensions,
+          reason: 'semantic',
+        });
+      };
+      try {
+        try {
+          await applyOnce();
+        } catch (err: any) {
+          if (err?.status === 409) {
+            await applyOnce();
+          } else {
+            throw err;
+          }
+        }
+        // Pull the freshly persisted map back into graphRuntime + the active
+        // tool view so the edit is reflected without a manual reload.
+        void graphRuntime.refresh();
         setMapRefreshToken((v) => v + 1);
       } catch {
         /* best-effort save */
       }
     },
-    [graphRuntime, i18n.language, realId]
+    [activeTool, graphRuntime, i18n.language, realId]
   );
 
   // ── Drill-down (sub-idea navigation) ────────────────────────────────────────
@@ -2605,8 +2678,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   if (loading) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-white dark:bg-navy-950">
-        <LoadingState variant="spinner" />
+      <div className="h-full w-full bg-[var(--c-surface)] p-6">
+        <LoadingState template="panel" />
       </div>
     );
   }
@@ -2614,10 +2687,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   return (
     <div
       ref={workspaceRootRef}
-      className="w-full h-full flex overflow-hidden bg-white dark:bg-navy-950"
+      className="w-full h-full flex overflow-hidden bg-c-surface-raised dark:bg-c-surface"
       style={{ touchAction: 'none' }}
       role="region"
       aria-label={isPolish ? 'Obszar roboczy mapy idei' : 'Idea map workspace'}
+      // Signals the global command palette to yield Cmd+K to this scoped palette.
+      data-local-command-palette="idea-map"
     >
       {/* Canvas area */}
       <div
@@ -2628,22 +2703,22 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       >
         {/* Breadcrumb for drill-down navigation */}
         {drillDownStack.length > 0 && (
-          <div className="absolute top-2 left-4 z-[60] flex items-center gap-1 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm rounded-xl px-3 py-1.5 border border-slate-200/60 dark:border-navy-700/60 shadow-sm">
+          <div className="absolute top-2 left-4 z-[60] flex items-center gap-1 bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm rounded-xl px-3 py-1.5 border border-c-border-subtle dark:border-c-border shadow-sm">
             <button
               onClick={() => handleDrillUp(0)}
-              className="text-[10px] font-semibold text-primary-600 dark:text-primary-400 hover:underline"
+              className="text-[10px] font-semibold text-c-text-secondary dark:text-c-text-muted hover:underline"
             >
               {isPolish ? 'Główna mapa' : 'Root map'}
             </button>
             {drillDownStack.map((item, i) => (
               <React.Fragment key={item.nodeId}>
-                <span className="text-[10px] text-slate-600 mx-0.5">/</span>
+                <span className="text-[10px] text-c-text-secondary mx-0.5">/</span>
                 <button
                   onClick={() => handleDrillUp(i + 1)}
                   className={`text-[10px] font-medium truncate max-w-[120px] ${
                     i === drillDownStack.length - 1
-                      ? 'text-slate-700 dark:text-slate-200'
-                      : 'text-primary-600 dark:text-primary-400 hover:underline'
+                      ? 'text-c-text-secondary dark:text-c-text'
+                      : 'text-c-text-secondary dark:text-c-text-muted hover:underline'
                   }`}
                 >
                   {item.label}
@@ -2655,8 +2730,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
         {/* V5-IDEA-15: Focus mode indicator */}
         {focusMode !== 'full' && (
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[58] flex items-center gap-2 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm rounded-xl px-3 py-1.5 border border-slate-200/60 dark:border-navy-700/60 shadow-sm">
-            <span className="text-[10px] font-bold uppercase tracking-wide text-primary-600 dark:text-primary-400">
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[58] flex items-center gap-2 bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm rounded-xl px-3 py-1.5 border border-c-border-subtle dark:border-c-border shadow-sm">
+            <span className="text-[10px] font-bold uppercase tracking-wide text-c-text-secondary dark:text-c-text">
               {focusMode === 'system'
                 ? isPolish
                   ? `Tryb skupiony: ${activeToolLabel}`
@@ -2667,7 +2742,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             </span>
             <button
               onClick={handleExitFocus}
-              className="text-[10px] font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+              className="text-[10px] font-semibold text-c-text-secondary hover:text-c-text-secondary dark:text-c-text-muted dark:hover:text-c-text transition-colors"
             >
               {isPolish ? '← Pełny canvas' : '← Full canvas'}
             </button>
@@ -2675,32 +2750,32 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         )}
 
         <div
-          className={`absolute ${workspaceHeaderOffsetClass} left-20 z-[57] max-w-[28rem] rounded-2xl border border-slate-200/70 bg-white/92 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-navy-700/60 dark:bg-navy-900/92`}
+          className={`absolute ${workspaceHeaderOffsetClass} left-20 z-[57] max-w-[28rem] rounded-2xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 shadow-sm backdrop-blur-sm dark:border-c-border dark:bg-c-surface`}
         >
           <div className="flex flex-wrap items-center gap-1.5">
             {/* A4: breadcrumb — Ideas › {idea title} › {tool} */}
             <button
               type="button"
               onClick={() => navigate('/my-work')}
-              className="text-[11px] font-semibold text-primary-600 hover:underline dark:text-primary-400"
+              className="text-[11px] font-semibold text-c-text-secondary hover:underline dark:text-c-text-muted"
             >
               {isPolish ? 'Idee' : 'Ideas'}
             </button>
-            <span className="text-[10px] text-slate-600" aria-hidden="true">
+            <span className="text-[10px] text-c-text-secondary" aria-hidden="true">
               ›
             </span>
             <span
-              className="max-w-[14rem] truncate text-[11px] font-semibold text-slate-700 dark:text-slate-200"
+              className="max-w-[14rem] truncate text-[11px] font-semibold text-c-text-secondary dark:text-c-text"
               title={title || (isPolish ? 'Bez tytułu' : 'Untitled')}
             >
               {title ||
                 safeTitleFromSeed(seedText, isPolish) ||
                 (isPolish ? 'Bez tytułu' : 'Untitled')}
             </span>
-            <span className="text-[10px] text-slate-600" aria-hidden="true">
+            <span className="text-[10px] text-c-text-secondary" aria-hidden="true">
               ›
             </span>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
+            <span className="rounded-full bg-c-surface-raised px-2 py-0.5 text-[10px] font-medium text-c-text-secondary dark:bg-c-surface-raised dark:text-c-text-muted">
               {activeToolLabel}
             </span>
             {(() => {
@@ -2711,21 +2786,26 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               const ps = rootNode?.data?.pipelineStage;
               if (!ps || ps === 'draft') return null;
               return (
-                <span className="rounded-full bg-primary-100 dark:bg-primary-900/30 px-2 py-0.5 text-[10px] font-medium text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
+                <span className="rounded-full bg-c-surface dark:bg-c-surface-raised px-2 py-0.5 text-[10px] font-medium text-c-text-secondary dark:text-c-text border border-c-border-subtle dark:border-c-border">
                   {ps}
                 </span>
               );
             })()}
-            <span className="text-[10px] text-slate-600 dark:text-slate-500">
+            <span className="text-[10px] text-c-text-secondary dark:text-c-text-secondary">
               {draftSavedLabel}
             </span>
           </div>
-          <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
-            {title || safeTitleFromSeed(seedText, isPolish)}
-          </div>
-          <div className="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-300">
-            {workspaceNextStepLabel}
-          </div>
+          {/*
+           * UI-L14 (Editor Shell Canon §2 GÓRNA): the title already lives in the
+           * breadcrumb above, so we no longer repeat it as a heading. The next-step
+           * hint is an empty-state affordance — it only helps before there's a graph,
+           * so we hide it once the canvas has content instead of hovering over the work.
+           */}
+          {!mapHasNodes && (
+            <div className="mt-2 text-[11px] leading-5 text-c-text-secondary dark:text-c-text-muted">
+              {workspaceNextStepLabel}
+            </div>
+          )}
         </div>
 
         {/* V5-IDEA-13: Pinned card info now merged into IdeaRecommendationMap top-left header */}
@@ -2958,8 +3038,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           selection={selection}
           isAccepted={isAccepted}
           ideaId={realId}
+          canvasContainerRef={canvasContainerRef}
           canUndo={mmCanUndo}
           canRedo={mmCanRedo}
+          heuristicAiEnabled={heuristicAiOverlaysEnabled}
           onAction={(action) => handleQuickAction(action)}
           onOpenChat={() => {
             setChatKickoffMessage('');

@@ -209,7 +209,7 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
   return (
     <div ref={setNodeRef} style={style} className="flex items-center group">
       <button
-        className="p-0.5 text-slate-600 dark:text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing flex-shrink-0"
+        className="p-0.5 text-c-text-secondary opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing flex-shrink-0"
         {...attributes}
         {...listeners}
       >
@@ -226,7 +226,7 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
           ${
             isSelected
               ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+              : 'text-c-text-secondary hover:bg-c-surface-raised'
           }
           ${!block.enabled ? 'opacity-40' : ''}
         `}
@@ -252,7 +252,7 @@ const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
 // ==========================================
 
 const DragOverlayBlock: React.FC<{ block: BlockConfig }> = ({ block }) => (
-  <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 border border-blue-300 dark:border-blue-600 rounded-lg shadow-lg text-sm">
+  <div className="flex items-center gap-2 px-3 py-2 bg-c-surface border border-blue-300 dark:border-blue-600 rounded-lg shadow-lg text-sm">
     <span className="text-xs">{getBlockTypeIcon(block.type)}</span>
     <span className="text-xs font-medium truncate">{block.title}</span>
   </div>
@@ -374,15 +374,15 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
   if (!isVisible) {
     return (
       <div
-        className="w-10 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col items-center py-3 flex-shrink-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group"
+        className="w-10 bg-c-surface border-r border-c-border-subtle flex flex-col items-center py-3 flex-shrink-0 cursor-pointer hover:bg-c-surface-raised transition-colors group"
         onClick={onToggle}
         title={isPl ? 'Pokaż spis treści' : 'Show table of contents'}
       >
-        <BookOpen className="w-4 h-4 text-slate-600 group-hover:text-blue-500 transition-colors mb-2" />
-        <ChevronRight className="w-3 h-3 text-slate-600 group-hover:text-blue-400 mb-3" />
+        <BookOpen className="w-4 h-4 text-c-text-secondary group-hover:text-blue-500 transition-colors mb-2" />
+        <ChevronRight className="w-3 h-3 text-c-text-secondary group-hover:text-blue-400 mb-3" />
         {/* Vertical label */}
         <span
-          className="text-[9px] font-semibold text-slate-600 group-hover:text-blue-500 uppercase tracking-[0.15em] transition-colors"
+          className="text-[9px] font-semibold text-c-text-secondary group-hover:text-blue-500 uppercase tracking-[0.15em] transition-colors"
           style={{ writingMode: 'vertical-lr', textOrientation: 'mixed' }}
         >
           {isPl ? 'Spis treści' : 'Contents'}
@@ -396,24 +396,24 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
   // ==========================================
 
   return (
-    <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden flex-shrink-0">
+    <aside className="w-64 bg-c-surface border-r border-c-border-subtle flex flex-col overflow-hidden flex-shrink-0">
       {/* Header */}
-      <div className="p-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-        <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+      <div className="p-3 border-b border-c-border-subtle flex items-center justify-between">
+        <h3 className="text-xs font-semibold text-c-text-secondary uppercase tracking-wider flex items-center gap-1.5">
           <BookOpen className="w-3.5 h-3.5" />
           {isPl ? 'Spis Treści' : 'Table of Contents'}
         </h3>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setIsAddingChapter(true)}
-            className="p-1 text-slate-600 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+            className="p-1 text-c-text-secondary hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
             title={isPl ? 'Dodaj rozdział' : 'Add chapter'}
           >
             <FolderPlus className="w-4 h-4" />
           </button>
           <button
             onClick={onToggle}
-            className="p-1 text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
+            className="p-1 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised rounded"
             title={isPl ? 'Zwiń panel' : 'Collapse panel'}
           >
             <ChevronLeft className="w-4 h-4" />
@@ -424,7 +424,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-2">
         {/* Stats */}
-        <div className="flex items-center gap-3 px-2 py-1.5 mb-2 text-[10px] text-slate-600">
+        <div className="flex items-center gap-3 px-2 py-1.5 mb-2 text-[10px] text-c-text-secondary">
           <span className="flex items-center gap-1">
             <Layers className="w-3 h-3" />
             {blocks.length} {isPl ? 'bloków' : 'blocks'}
@@ -466,7 +466,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                         ${
                           hasSelectedBlock && !isUngrouped
                             ? 'bg-blue-50 dark:bg-blue-900/20'
-                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                            : 'hover:bg-c-surface-raised'
                         }
                         ${!isUngrouped ? 'cursor-pointer' : ''}
                       `}
@@ -475,15 +475,15 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                       {!isUngrouped && (
                         <>
                           {isCollapsed ? (
-                            <ChevronRight className="w-3.5 h-3.5 text-slate-600 flex-shrink-0" />
+                            <ChevronRight className="w-3.5 h-3.5 text-c-text-secondary flex-shrink-0" />
                           ) : (
-                            <ChevronDown className="w-3.5 h-3.5 text-slate-600 flex-shrink-0" />
+                            <ChevronDown className="w-3.5 h-3.5 text-c-text-secondary flex-shrink-0" />
                           )}
                         </>
                       )}
 
                       {!isUngrouped && (
-                        <span className="w-5 h-5 rounded bg-gradient-to-br from-crimson-500 to-primary-600 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                        <span className="w-5 h-5 rounded bg-c-accent flex items-center justify-center text-c-text text-[10px] font-bold flex-shrink-0">
                           {namedChapters.indexOf(chapter) + 1}
                         </span>
                       )}
@@ -502,15 +502,15 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                             }
                           }}
                           autoFocus
-                          className="flex-1 text-xs font-semibold bg-transparent border-b border-blue-500 outline-none text-slate-800 dark:text-white py-0.5 min-w-0"
+                          className="flex-1 text-xs font-semibold bg-transparent border-b border-blue-500 outline-none text-c-text py-0.5 min-w-0"
                           onClick={(e) => e.stopPropagation()}
                         />
                       ) : (
                         <span
                           className={`flex-1 text-xs font-semibold truncate ${
                             isUngrouped
-                              ? 'text-slate-600 italic'
-                              : 'text-slate-700 dark:text-slate-200'
+                              ? 'text-c-text-secondary italic'
+                              : 'text-c-text'
                           }`}
                           onDoubleClick={(e) => {
                             e.stopPropagation();
@@ -521,7 +521,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                         </span>
                       )}
 
-                      <span className="text-[10px] text-slate-600 flex-shrink-0">
+                      <span className="text-[10px] text-c-text-secondary flex-shrink-0">
                         {enabledCount}/{chapter.blocks.length}
                       </span>
 
@@ -533,7 +533,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                               e.stopPropagation();
                               startRename(chapter.key, chapter.title);
                             }}
-                            className="p-0.5 text-slate-600 hover:text-blue-500 rounded"
+                            className="p-0.5 text-c-text-secondary hover:text-blue-500 rounded"
                             title={isPl ? 'Zmień nazwę' : 'Rename'}
                           >
                             <Pencil className="w-3 h-3" />
@@ -552,7 +552,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                               </button>
                               <button
                                 onClick={() => setConfirmDeleteChapter(null)}
-                                className="p-0.5 text-slate-600 hover:text-slate-600 rounded"
+                                className="p-0.5 text-c-text-secondary hover:text-c-text-secondary rounded"
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -563,7 +563,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                                 e.stopPropagation();
                                 setConfirmDeleteChapter(chapter.key);
                               }}
-                              className="p-0.5 text-slate-600 hover:text-danger-500 rounded"
+                              className="p-0.5 text-c-text-secondary hover:text-danger-500 rounded"
                               title={isPl ? 'Usuń rozdział' : 'Delete chapter'}
                             >
                               <Trash2 className="w-3 h-3" />
@@ -577,7 +577,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                   {/* Block List */}
                   {(!isCollapsed || isUngrouped) && (
                     <div
-                      className={`${!isUngrouped && hasAnyChapters ? 'ml-3 border-l border-slate-200 dark:border-slate-800' : ''}`}
+                      className={`${!isUngrouped && hasAnyChapters ? 'ml-3 border-l border-c-border-subtle' : ''}`}
                     >
                       {chapter.blocks.map((block) => (
                         <SortableBlockItem
@@ -637,12 +637,12 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
               }}
               autoFocus
               placeholder={isPl ? 'Nazwa rozdziału...' : 'Chapter name...'}
-              className="w-full text-xs bg-white dark:bg-slate-800 border border-blue-300 dark:border-blue-700 rounded px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-400 text-slate-800 dark:text-white placeholder-slate-400"
+              className="w-full text-xs bg-c-surface border border-blue-300 dark:border-blue-700 rounded px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-400 text-c-text placeholder:text-c-text-muted"
             />
             <div className="flex items-center gap-2 mt-2">
               <button
                 onClick={handleAddChapterSubmit}
-                className="flex-1 text-[11px] font-medium bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
+                className="flex-1 text-[11px] font-medium bg-blue-600 text-c-text px-3 py-1 rounded hover:bg-blue-700 transition-colors"
               >
                 {isPl ? 'Dodaj' : 'Add'}
               </button>
@@ -651,7 +651,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
                   setIsAddingChapter(false);
                   setNewChapterName('');
                 }}
-                className="text-[11px] text-slate-500 hover:text-slate-700 px-2 py-1"
+                className="text-[11px] text-c-text-secondary hover:text-c-text px-2 py-1"
               >
                 {isPl ? 'Anuluj' : 'Cancel'}
               </button>
@@ -663,7 +663,7 @@ export const ChapterNavigation: React.FC<ChapterNavigationProps> = ({
         {hasAnyChapters && !isAddingChapter && (
           <button
             onClick={() => setIsAddingChapter(true)}
-            className="mt-2 w-full flex items-center justify-center gap-1.5 px-2 py-2 text-[11px] text-slate-600 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg border border-dashed border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
+            className="mt-2 w-full flex items-center justify-center gap-1.5 px-2 py-2 text-[11px] text-c-text-secondary hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg border border-dashed border-c-border-subtle hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
           >
             <Plus className="w-3 h-3" />
             {isPl ? 'Dodaj rozdział' : 'Add chapter'}

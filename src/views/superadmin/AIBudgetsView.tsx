@@ -580,7 +580,7 @@ const AIBudgetsView: React.FC = () => {
                       ? 'bg-danger-500'
                       : budget.percentUsed >= 80
                         ? 'bg-amber-500'
-                        : 'bg-navy-900'
+                        : 'bg-c-surface'
                   }`}
                   style={{ width: `${Math.min(100, budget.percentUsed)}%` }}
                 />
@@ -784,7 +784,7 @@ const AIBudgetsView: React.FC = () => {
                           ? 'bg-danger-500'
                           : percentUsed >= budget.warningThreshold * 100
                             ? 'bg-amber-500'
-                            : 'bg-navy-900'
+                            : 'bg-c-surface'
                       }`}
                       style={{ width: `${Math.min(100, percentUsed)}%` }}
                     />

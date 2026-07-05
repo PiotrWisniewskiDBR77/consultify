@@ -18,6 +18,17 @@ export function isTeresaRetrievalEnabled(): boolean {
   return process.env.ENABLE_TERESA_RETRIEVAL === 'true';
 }
 
+/**
+ * Feature flag ff_teresaMindmap (ENABLE_TERESA_MINDMAP). Gates the mind-map
+ * retrieval tool (search_org_mindmaps). Read per-call so env changes in tests
+ * apply without re-importing. Default off. The mind-map retrieval path is
+ * co-gated with ENABLE_TERESA_RETRIEVAL (both must be on) since it plugs into
+ * the same server-side org-retrieval block.
+ */
+export function isTeresaMindmapEnabled(): boolean {
+  return process.env.ENABLE_TERESA_MINDMAP === 'true';
+}
+
 /** Max serialized size (chars ≈ bytes for ASCII-heavy JSON) per tool result. */
 export const ORG_RETRIEVAL_MAX_PAYLOAD_CHARS = 4000;
 
@@ -73,4 +84,10 @@ export function capResultPayload<T>(
   return { results: out, truncated: truncated || out.length < results.length };
 }
 
-export default { isTeresaRetrievalEnabled, clampLimit, toSnippet, capResultPayload };
+export default {
+  isTeresaRetrievalEnabled,
+  isTeresaMindmapEnabled,
+  clampLimit,
+  toSnippet,
+  capResultPayload,
+};

@@ -37,8 +37,10 @@ export const LabeledEdge: React.FC<EdgeProps> = ({
     if (data?.onLabelChange && editValue !== data?.label) data.onLabelChange(editValue);
   };
 
-  const edgeColor = data?.color || (selected ? '#6366f1' : '#94a3b8');
-  const edgeColorEnd = data?.colorEnd || (selected ? '#6366f1' : '#cbd5e1');
+  // Selected edges use the periwinkle identity token; idle edges use neutral
+  // border tokens. CSS vars resolve inside SVG stroke/gradient, theme-aware.
+  const edgeColor = data?.color || (selected ? 'var(--c-tag-2)' : 'var(--c-border-strong)');
+  const edgeColorEnd = data?.colorEnd || (selected ? 'var(--c-tag-2)' : 'var(--c-border)');
   const gradientId = `edge-gradient-${id}`;
 
   return (
@@ -100,11 +102,11 @@ export const LabeledEdge: React.FC<EdgeProps> = ({
                 if (e.key === 'Enter') commitEdit();
                 if (e.key === 'Escape') setEditing(false);
               }}
-              className="w-full bg-white dark:bg-navy-800 text-[10px] text-center border border-slate-400 dark:border-slate-500 rounded px-1 py-0.5 outline-none"
+              className="w-full bg-c-surface text-[10px] text-center border border-c-border-strong rounded px-1 py-0.5 outline-none"
             />
           ) : (
             <div
-              className="text-[10px] text-center text-slate-500 dark:text-slate-400 bg-white/80 dark:bg-navy-900/80 rounded px-1.5 py-0.5 cursor-pointer hover:bg-white dark:hover:bg-navy-800 transition-colors"
+              className="text-[10px] text-center text-c-text-muted bg-c-surface rounded px-1.5 py-0.5 cursor-pointer hover:bg-c-surface transition-colors"
               onDoubleClick={() => {
                 setEditValue(String(data?.label || ''));
                 setEditing(true);

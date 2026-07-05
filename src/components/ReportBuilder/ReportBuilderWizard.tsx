@@ -401,10 +401,10 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
                   transition-all duration-300
                   ${
                     isActive
-                      ? 'bg-gradient-to-br from-primary-500 to-crimson-600 text-white ring-4 ring-primary-100 dark:ring-primary-900/30 shadow-lg shadow-primary-200 dark:shadow-primary-900/20'
+                      ? 'bg-c-accent text-c-text ring-4 ring-c-focus shadow-lg'
                       : isCompleted
-                        ? 'bg-green-500 text-white cursor-pointer hover:bg-green-600 shadow-sm'
-                        : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-500 cursor-not-allowed'
+                        ? 'bg-green-500 text-c-text cursor-pointer hover:bg-green-600 shadow-sm'
+                        : 'bg-c-border-subtle text-c-text-secondary cursor-not-allowed'
                   }
                 `}
               >
@@ -416,15 +416,15 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
                 <div
                   className={`text-xs font-semibold ${
                     isActive
-                      ? 'text-primary-600 dark:text-primary-400'
+                      ? 'text-c-accent'
                       : isCompleted
                         ? 'text-green-600 dark:text-green-400'
-                        : 'text-slate-600 dark:text-slate-500'
+                        : 'text-c-text-secondary'
                   }`}
                 >
                   {isPl ? step.titlePl : step.title}
                 </div>
-                <div className="hidden md:block text-[10px] text-slate-600 dark:text-slate-500 mt-0.5 max-w-[120px]">
+                <div className="hidden md:block text-[10px] text-c-text-secondary mt-0.5 max-w-[120px]">
                   {isPl ? step.descriptionPl : step.description}
                 </div>
               </div>
@@ -440,8 +440,8 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
                       currentStep > index
                         ? 'bg-gradient-to-r from-green-400 to-green-500'
                         : currentStep === index
-                          ? 'bg-gradient-to-r from-primary-300 to-slate-200 dark:from-primary-800 dark:to-navy-700'
-                          : 'bg-slate-200 dark:bg-navy-700'
+                          ? 'bg-gradient-to-r bg-c-accent '
+                          : 'bg-c-border-subtle'
                     }
                   `}
                 />
@@ -628,12 +628,12 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
     };
 
     return (
-      <div className="flex items-center justify-between pt-6 border-t border-slate-200 dark:border-navy-700">
+      <div className="flex items-center justify-between pt-6 border-t border-c-border-subtle">
         <div>
           {canGoBack && (
             <button
               onClick={prevStep}
-              className="flex items-center gap-2 px-4 py-2.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors border border-transparent hover:border-slate-200 dark:hover:border-navy-700"
+              className="flex items-center gap-2 px-4 py-2.5 text-c-text-secondary hover:opacity-90 rounded-lg transition-colors border border-transparent hover:border-c-border-subtle"
             >
               <ArrowLeft className="w-4 h-4" />
               {isPl ? 'Wstecz' : 'Back'}
@@ -644,7 +644,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
         <div className="flex items-center gap-3">
           <button
             onClick={handleCancel}
-            className="px-4 py-2.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors text-sm"
+            className="px-4 py-2.5 text-c-text-secondary hover:opacity-90 rounded-lg transition-colors text-sm"
           >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
@@ -657,9 +657,9 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
               ${
                 canGoNext && !isLoading && !isGenerating
                   ? activeStepId === 3
-                    ? 'bg-gradient-to-r from-primary-500 to-crimson-500 hover:from-primary-600 hover:to-crimson-600 text-white shadow-md hover:shadow-lg'
-                    : 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 shadow-sm'
-                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-500 cursor-not-allowed'
+                    ? 'bg-c-accent text-c-text shadow-md hover:shadow-lg'
+                    : 'bg-c-text text-c-bg hover:opacity-90 shadow-sm'
+                  : 'bg-c-border-subtle text-c-text-secondary cursor-not-allowed'
               }
             `}
           >
@@ -675,7 +675,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
 
           {/* Keyboard shortcut hint */}
           {canGoNext && !isLoading && !isGenerating && (
-            <span className="hidden md:inline text-[10px] text-slate-600 dark:text-slate-500">
+            <span className="hidden md:inline text-[10px] text-c-text-secondary">
               Ctrl+Enter
             </span>
           )}
@@ -693,13 +693,13 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-primary-500/10">
-              <Sparkles className="w-6 h-6 text-primary-500" />
+          <h1 className="text-2xl font-bold text-c-text flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-c-accent-soft0">
+              <Sparkles className="w-6 h-6 text-c-accent" />
             </div>
             {isPl ? 'Kreator Raportów' : 'Report Builder'}
           </h1>
-          <p className="mt-1 text-slate-500 dark:text-slate-400 ml-[52px]">
+          <p className="mt-1 text-c-text-secondary ml-[52px]">
             {report
               ? report.title
               : isPl
@@ -709,7 +709,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
         </div>
         {report?.id && (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-600">ID: {report.id.slice(0, 12)}...</span>
+            <span className="text-xs text-c-text-secondary">ID: {report.id.slice(0, 12)}...</span>
             <span
               className={`px-2 py-1 text-xs font-medium rounded-full ${
                 report.status === 'GENERATED'
@@ -718,7 +718,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
                     ? 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'
                     : report.status === 'APPROVED'
                       ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
-                      : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
+                      : 'bg-c-surface-raised text-c-text-secondary'
               }`}
             >
               {report.status}
@@ -747,19 +747,19 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
       <div className="relative mb-8">{renderStepIndicator()}</div>
 
       {/* Step Content */}
-      <div className="bg-white dark:bg-navy-900 rounded-2xl shadow-lg border border-slate-200 dark:border-navy-700 p-6 md:p-8">
+      <div className="bg-c-surface rounded-2xl shadow-lg border border-c-border-subtle p-6 md:p-8">
         {/* Step Title */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-              <span className="text-primary-500 mr-2">{currentStep + 1}.</span>
+            <h2 className="text-lg font-bold text-c-text">
+              <span className="text-c-accent mr-2">{currentStep + 1}.</span>
               {isPl ? STEPS[currentStep].titlePl : STEPS[currentStep].title}
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-sm text-c-text-secondary mt-0.5">
               {isPl ? STEPS[currentStep].descriptionPl : STEPS[currentStep].description}
             </p>
           </div>
-          <div className="text-xs text-slate-600 dark:text-slate-500">
+          <div className="text-xs text-c-text-secondary">
             {isPl ? 'Krok' : 'Step'} {currentStep + 1}/{STEPS.length}
           </div>
         </div>

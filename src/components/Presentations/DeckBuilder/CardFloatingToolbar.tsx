@@ -46,22 +46,22 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
 
   return (
     <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-30">
-      <div className="flex items-center gap-1 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-lg px-2 py-1">
+      <div className="flex items-center gap-1 bg-c-surface border border-c-border-subtle rounded-xl shadow-lg px-2 py-1">
         {/* Layout picker */}
         <div className="relative">
           <button
             onClick={() => togglePanel('layout')}
             className={`p-1.5 rounded-lg text-xs flex items-center gap-1 ${
               expandedPanel === 'layout'
-                ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-600'
-                : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-700'
+                ? 'bg-c-accent-soft text-c-accent'
+                : 'text-c-text-secondary hover:bg-c-surface-raised'
             }`}
             title="Layout"
           >
             <Layout size={14} />
           </button>
           {expandedPanel === 'layout' && (
-            <div className="absolute top-full mt-1 left-0 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-xl p-2 flex gap-1 z-40">
+            <div className="absolute top-full mt-1 left-0 bg-c-surface border border-c-border-subtle rounded-lg shadow-xl p-2 flex gap-1 z-40">
               {LAYOUTS.map((l) => (
                 <button
                   key={l.id}
@@ -71,8 +71,8 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
                   }}
                   className={`w-10 h-8 rounded border text-[10px] font-mono flex items-center justify-center ${
                     card.layout_id === l.id
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
-                      : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
+                      ? 'border-c-accent bg-c-accent-soft'
+                      : 'border-c-border-subtle hover:border-c-border'
                   }`}
                   title={l.label}
                 >
@@ -89,15 +89,15 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
             onClick={() => togglePanel('bg')}
             className={`p-1.5 rounded-lg ${
               expandedPanel === 'bg'
-                ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-600'
-                : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-700'
+                ? 'bg-c-accent-soft text-c-accent'
+                : 'text-c-text-secondary hover:bg-c-surface-raised'
             }`}
             title="Background"
           >
             <Palette size={14} />
           </button>
           {expandedPanel === 'bg' && (
-            <div className="absolute top-full mt-1 left-0 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-xl p-2 w-40 z-40">
+            <div className="absolute top-full mt-1 left-0 bg-c-surface border border-c-border-subtle rounded-lg shadow-xl p-2 w-40 z-40">
               {BG_TYPES.map((bg) => (
                 <button
                   key={bg.id}
@@ -109,8 +109,8 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
                   }}
                   className={`w-full text-left px-2 py-1.5 rounded text-[11px] ${
                     card.background.type === bg.id
-                      ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-600'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700'
+                      ? 'bg-c-accent-soft text-c-accent'
+                      : 'text-c-text-secondary hover:bg-c-surface-raised'
                   }`}
                 >
                   {bg.label}
@@ -120,11 +120,11 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
           )}
         </div>
 
-        <div className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5" />
+        <div className="w-px h-5 bg-c-border-subtle mx-0.5" />
 
         {/* Alignment */}
         <button
-          className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-700"
+          className="p-1.5 rounded-lg text-c-text-secondary hover:bg-c-surface-raised"
           title="Content alignment"
         >
           <AlignVerticalJustifyStart size={14} />
@@ -142,8 +142,8 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
           }
           className={`p-1.5 rounded-lg ${
             card.animations.block_stagger
-              ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-600'
-              : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-700'
+              ? 'bg-c-accent-soft text-c-accent'
+              : 'text-c-text-secondary hover:bg-c-surface-raised'
           }`}
           title="Animations"
         >

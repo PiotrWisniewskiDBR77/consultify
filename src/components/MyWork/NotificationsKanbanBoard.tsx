@@ -124,9 +124,9 @@ const KANBAN_COLUMNS: KanbanColumnDef[] = [
     id: 'read',
     label: 'Read',
     icon: <Eye size={14} />,
-    headerColor: 'text-slate-500 dark:text-slate-400',
-    dotColor: 'bg-slate-400',
-    dropHighlight: 'ring-slate-400/40 bg-slate-400/5',
+    headerColor: 'text-c-text-muted',
+    dotColor: 'bg-c-border-strong',
+    dropHighlight: 'ring-c-border-strong/40 bg-c-surface-raised',
   },
 ];
 
@@ -221,22 +221,22 @@ const KanbanCardContent: React.FC<{
       className={`
         rounded-lg p-3 select-none
         ${severityStyle.border} ${severityStyle.bg}
-        border border-slate-200/50 dark:border-navy-600/50
+        border border-c-border-subtle
         ${isDragging ? 'opacity-30 scale-[0.98]' : ''}
-        ${isOverlay ? 'shadow-2xl shadow-black/25 rotate-[3deg] scale-105 border-primary-500/50 ring-2 ring-primary-500/30' : ''}
+        ${isOverlay ? 'shadow-hig-lg rotate-[3deg] scale-105 ring-1 ring-c-border-strong' : ''}
         ${isRead ? 'opacity-70' : ''}
         transition-all duration-150
       `}
     >
       <div className="flex items-start gap-1.5">
-        <div className="mt-0.5 text-slate-700 dark:text-slate-400 group-hover:text-slate-500 dark:group-hover:text-slate-500 dark:text-slate-400 transition-colors cursor-grab active:cursor-grabbing flex-shrink-0">
+        <div className="mt-0.5 text-c-text-muted group-hover:text-c-text-secondary transition-colors cursor-grab active:cursor-grabbing flex-shrink-0">
           <GripVertical size={14} />
         </div>
         <h4
           className={`text-sm mb-1 line-clamp-2 leading-snug flex-1 ${
             isRead
-              ? 'text-slate-600 dark:text-slate-400'
-              : 'font-medium text-slate-900 dark:text-white'
+              ? 'text-c-text-secondary'
+              : 'font-medium text-c-text'
           }`}
         >
           {notification.title || 'Untitled notification'}
@@ -244,7 +244,7 @@ const KanbanCardContent: React.FC<{
       </div>
 
       {notification.message && (
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 line-clamp-2 leading-relaxed pl-5">
+        <p className="text-xs text-c-text-muted mb-2 line-clamp-2 leading-relaxed pl-5">
           {notification.message}
         </p>
       )}
@@ -256,12 +256,12 @@ const KanbanCardContent: React.FC<{
           <SeverityIcon size={10} />
           {severityStyle.label}
         </span>
-        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/10 text-slate-500 dark:text-slate-400 dark:text-slate-500 border border-slate-500/10">
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-surface-raised text-c-text-secondary border border-c-border-subtle">
           <TypeIcon size={10} />
           {typeConfig.label}
         </span>
         {notification.projectName && (
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/10 text-slate-500 dark:text-slate-400 dark:text-slate-500 border border-slate-500/10 truncate max-w-[120px]">
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-surface-raised text-c-text-secondary border border-c-border-subtle truncate max-w-[120px]">
             <FolderOpen size={10} />
             {notification.projectName}
           </span>
@@ -269,7 +269,7 @@ const KanbanCardContent: React.FC<{
       </div>
 
       <div className="flex items-center justify-between pl-5">
-        <span className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+        <span className="flex items-center gap-1 text-[11px] text-c-text-muted">
           <Clock size={11} />
           {formatRelativeTime(notification.createdAt)}
         </span>
@@ -339,15 +339,15 @@ const DroppableColumn: React.FC<{
       className={`w-80 flex-shrink-0 flex flex-col rounded-xl border transition-all duration-200 ${
         isOver
           ? `ring-2 ${column.dropHighlight} border-transparent scale-[1.01]`
-          : 'bg-slate-50/50 dark:bg-navy-900/30 border-slate-200/50 dark:border-navy-700/30'
+          : 'bg-c-surface border-c-border-subtle'
       }`}
     >
       {/* Column header */}
-      <div className="flex items-center justify-between px-3 py-3 border-b border-slate-200/50 dark:border-navy-700/30">
+      <div className="flex items-center justify-between px-3 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${column.dotColor}`} />
           <span className={`text-sm font-semibold ${column.headerColor}`}>{column.label}</span>
-          <span className="ml-1 text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-200/50 dark:bg-navy-700/50 rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+          <span className="ml-1 text-xs font-medium text-c-text-muted bg-c-surface-raised rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
             {itemIds.length}
           </span>
         </div>
@@ -374,7 +374,7 @@ const DroppableColumn: React.FC<{
         {itemIds.length === 0 && !isOver && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className={`mb-2 ${column.headerColor} opacity-30`}>{column.icon}</div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500">
+            <p className="text-xs text-c-text-muted">
               {t('myWork.notifications.emptyTitle', 'No notifications')}
             </p>
           </div>
@@ -732,18 +732,18 @@ export const NotificationsKanbanBoard: React.FC<NotificationsKanbanBoardProps> =
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg">
         <div className="flex-1 overflow-x-auto p-4">
           <div className="flex gap-4 min-w-max">
             {KANBAN_COLUMNS.map((col) => (
               <div
                 key={col.id}
-                className="w-80 flex-shrink-0 bg-slate-50 dark:bg-navy-900/50 rounded-xl p-3 animate-pulse"
+                className="w-80 flex-shrink-0 bg-c-surface rounded-xl p-3 animate-pulse"
               >
-                <div className="h-5 bg-slate-200 dark:bg-navy-700 rounded w-24 mb-4" />
+                <div className="h-5 bg-c-surface-raised rounded w-24 mb-4" />
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-24 bg-slate-200 dark:bg-navy-700 rounded-lg" />
+                    <div key={i} className="h-24 bg-c-surface-raised rounded-lg" />
                   ))}
                 </div>
               </div>
@@ -756,17 +756,17 @@ export const NotificationsKanbanBoard: React.FC<NotificationsKanbanBoardProps> =
 
   if (notifications.length === 0) {
     return (
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg">
         <div className="flex-1 p-4">
-          <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
+          <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-c-border-subtle rounded-xl">
             <Bell
               size={48}
-              className="text-slate-500 dark:text-slate-400 mb-4"
+              className="text-c-text-muted mb-4"
             />
-            <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">
+            <h3 className="text-lg font-medium text-c-text-secondary mb-2">
               {t('myWork.notifications.emptyTitle', 'No notifications')}
             </h3>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-c-text-muted">
               {t('myWork.notifications.emptySubtitle', "You're all caught up!")}
             </p>
           </div>
@@ -776,7 +776,7 @@ export const NotificationsKanbanBoard: React.FC<NotificationsKanbanBoardProps> =
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg">
       <div className="flex-1 overflow-x-auto p-4">
         <DndContext
           sensors={sensors}

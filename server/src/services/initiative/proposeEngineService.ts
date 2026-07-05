@@ -12,6 +12,8 @@
  *      deterministic fallback). This service NEVER throws.
  */
 
+import { CARD_CONTENT_FORMULA_A3_LITE } from './cardContentFormulaPrompt.js';
+
 export interface ProposeCandidate {
   title: string;
   description?: string;
@@ -164,7 +166,11 @@ export async function proposeCandidates(input: ProposeInput): Promise<ProposeCan
   const systemPrompt =
     'You are a precise strategy analyst. Extract distinct, actionable INITIATIVE candidates ' +
     'from the provided source text. An initiative is a concrete change effort (project/program), ' +
-    'not a vague aspiration. Respond ONLY with strict JSON, no prose, no markdown fences.';
+    'not a vague aspiration. Respond ONLY with strict JSON, no prose, no markdown fences.\n' +
+    // USPOJNIENIE C2 — lekka doktryna jakości tytułu/opisu (§A3 LITE), spójna ze
+    // schematem kandydata (title+description). Pełny §A3 (KPI/RAID) dotyczy
+    // enrichmentu pełnej karty, nie tej ekstrakcji.
+    CARD_CONTENT_FORMULA_A3_LITE;
 
   const userPrompt =
     `From the SOURCE below, extract at most ${max} distinct initiative candidates.\n` +

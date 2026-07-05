@@ -26,8 +26,11 @@ import {
   FileText,
   Flag,
   Flame,
+  Folder,
+  FolderPlus,
   GanttChart,
   GitBranch,
+  History,
   Home,
   Hourglass,
   Inbox,
@@ -37,13 +40,13 @@ import {
   LayoutList,
   Lightbulb,
   List,
-  Loader2,
   Lock,
   Rocket,
   Scale,
   Search,
   Sparkles,
   Sprout,
+  Star,
   Tag,
   Target,
   Trash2,
@@ -60,6 +63,8 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { presentationsTabQueryForHomeBridge } from '@/components/ReportsAndPresentations/outputsLibraryTabQuery';
+import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
+import { LoadingState } from '@/components/shared/states';
 import {
   MENU_2_TAB_ACTIVE,
   MENU_2_TAB_INACTIVE,
@@ -89,7 +94,6 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext, type WorkspaceType } from '@/types/workspace';
 import { buildMyWorkSheetTableOpenPath, getArtifactPath } from '@/utils/artifactLinks';
-import { resolveOpenItemRoute } from './openItemRouting';
 import {
   dispatchBetaAccessBlocked,
   isBetaLockedForRole,
@@ -129,10 +133,11 @@ import {
 import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import { type InboxBulkBarPayload, InboxContent, type InboxCounts } from './InboxContent';
 import { MyIdeasListContent } from './MyIdeasListContent';
-import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './myIdeasTypes';
+import type { IdeasBulkBarPayload, IdeasHomeShellPayload, IdeaStage, MyIdea } from './myIdeasTypes';
 import { MyTasksListContent } from './MyTasksListContent';
 import { NotebookContent } from './NotebookContent';
 import { NotebookLibraryContent } from './NotebookLibraryContent';
+import { resolveOpenItemRoute } from './openItemRouting';
 import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
 
 // Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
@@ -193,6 +198,10 @@ type ModuleTab =
 // other change required. While disabled, the home tab is removed from the nav and
 // HomeView is never mounted (so its scanning hooks never run).
 const RADAR_ENABLED = false;
+// N2 (Notebook redesign): the legacy 3-icon topbar strip (Tools / Context / AI
+// suggestions) is redundant — those panels now live inside the notebook window
+// (NotebookRightRail). Hidden by default; flip to `true` to restore the topbar strip.
+const SHOW_LEGACY_NOTEBOOK_TOOLS_STRIP = false;
 const MY_WORK_FALLBACK_TAB: ModuleTab = 'inbox';
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
 type TasksViewMode = 'table' | 'kanban' | 'calendar';
@@ -530,8 +539,17 @@ const BUTTON_ACTIVE = MENU_2_TAB_ACTIVE;
 
 // Topbar pills (filters / view tool) — keep consistent with BUTTON_* but smaller text.
 const TOPBAR_PILL_BASE =
-  'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-const TOPBAR_PILL_INACTIVE = `${TOPBAR_PILL_BASE} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
+  'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+const TOPBAR_PILL_INACTIVE = `${TOPBAR_PILL_BASE} bg-transparent border-c-border text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text`;
+
+// Segmented view-mode toggle (list/grid/kanban/calendar). Container + button
+// tones on the c.* token layer — active = accent-soft tint (§9.2 ③), never crimson text.
+const SEG_TOGGLE_CONTAINER =
+  'inline-flex items-center rounded-full border border-c-border bg-c-surface-raised p-0.5';
+const SEG_TOGGLE_BTN_BASE =
+  'inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-[var(--c-surface)]';
+const SEG_TOGGLE_BTN_ACTIVE = `${SEG_TOGGLE_BTN_BASE} bg-c-surface text-c-text shadow-sm border border-c-border`;
+const SEG_TOGGLE_BTN_INACTIVE = `${SEG_TOGGLE_BTN_BASE} text-c-text-secondary hover:bg-c-surface hover:text-c-text`;
 
 // Canon §15.2/§19.1: kontrolki Menu 2 = h-9 rounded-full (jeden family z pillami topbara).
 const CTA_BASE =
@@ -540,7 +558,7 @@ const CTA_TONE: Record<'violet' | 'emerald' | 'amber' | 'indigo' | 'neutral', st
   neutral:
     'border-navy-700/20 bg-navy-900 text-white hover:bg-navy-800 active:bg-navy-950 dark:border-white/20 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]',
   violet:
-    'border-primary-500/30 bg-primary-600 text-white hover:bg-primary-700 dark:border-primary-400/20 dark:bg-primary-500/80 dark:hover:bg-primary-500',
+    'border-c-text bg-c-text text-c-bg hover:bg-c-text-secondary dark:border-c-text dark:bg-c-text dark:hover:bg-c-text-secondary',
   emerald:
     'border-emerald-500/30 bg-emerald-600 text-white hover:bg-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/80 dark:hover:bg-emerald-500',
   amber:
@@ -604,11 +622,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   } = useAppStore();
 
   const lazyFallback = (
-    <div className="flex h-[60vh] items-center justify-center">
-      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <span>{isPolish ? 'Ładowanie…' : 'Loading…'}</span>
-      </div>
+    <div className="p-6">
+      <LoadingState template="panel" label={isPolish ? 'Ładowanie…' : 'Loading…'} />
     </div>
   );
 
@@ -965,7 +980,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           },
         });
         if (res.ok) setContextSummary(await res.json());
-
       } catch {
         /* ignore — partial enrichment is fine */
       }
@@ -1384,7 +1398,22 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     const nextDoc = intent.doc;
     if (!nextDoc) return;
     if (nextDoc.type === 'idea' && nextDoc.data?.initialTool) {
-      setIdeaActiveTool(nextDoc.data.initialTool as CanvasToolType);
+      const deepLinkTool = nextDoc.data.initialTool as CanvasToolType;
+      // A deep link (/whiteboard, /mind-map, /process-flow, /table) is
+      // AUTHORITATIVE about which tool opens. Setting only the `ideaActiveTool`
+      // fallback is not enough: the workspace renders
+      // `activeIdeaWorkspaceState?.activeTool || ideaActiveTool`, and
+      // `activeIdeaWorkspaceState` is derived from the PERSISTED
+      // `ideaWorkspaceStateById[id]`. If the idea was previously opened with a
+      // different tool (e.g. Process Flow), that stale saved tool wins over the
+      // deep link — the documented `forcedIdeaDeepLinkRef` fix never actually
+      // landed in code, so the race was still live (Harvard R4 #10 / #3).
+      // Patch the persisted state too so the deep-linked tool wins
+      // deterministically regardless of mount ordering.
+      setIdeaActiveTool(deepLinkTool);
+      setIdeaWorkspaceStateById((prev) =>
+        patchIdeaWorkspaceState(prev, nextDoc, { activeTool: deepLinkTool })
+      );
     }
     if (activeTab === intent.tab) {
       handleOpenDocument(nextDoc);
@@ -1915,6 +1944,25 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     };
   }, []);
 
+  // S1-U1: home-shell (folders + starred + recents) published by the Ideas
+  // list; rendered as dropdown chips inside the single Command Row.
+  const [ideasHomeShell, setIdeasHomeShell] = useState<IdeasHomeShellPayload | null>(null);
+  const handleIdeasHomeShellChange = useCallback((payload: IdeasHomeShellPayload | null) => {
+    setIdeasHomeShell(payload);
+  }, []);
+
+  // S1-U2b: single SSOT for leaving an open notebook — used by BOTH the
+  // Command-Row breadcrumb and NotebookContent's sidebar back button.
+  const handleNotebookBackToLibrary = useCallback(() => {
+    setNotebookOpenId(null);
+    setNotebookOpenTitle('');
+    setNotebookOpenPageId(null);
+    const next = new URLSearchParams(searchParams);
+    next.delete('notebook');
+    next.delete('note');
+    setSearchParams(next, { replace: false });
+  }, [searchParams, setSearchParams]);
+
   const handleNotebookCountsChange = useCallback((counts: { total: number }) => {
     setTabCounts((prev) => ({ ...prev, notebook: counts.total }));
   }, []);
@@ -1953,18 +2001,38 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   );
 
   const openTabAiContext = useCallback(
-    async (tab: 'inbox' | 'tasks') => {
+    async (tab: 'inbox' | 'tasks' | 'decisions') => {
       const isInbox = tab === 'inbox';
+      const isDecisions = tab === 'decisions';
+      const entityType = isInbox ? 'notification' : isDecisions ? 'decision' : 'task';
+      const entityId = isInbox
+        ? 'my-work-inbox'
+        : isDecisions
+          ? 'my-work-decisions'
+          : 'my-work-tasks';
+      const entityName = isInbox
+        ? isPolish
+          ? 'Skrzynka'
+          : 'Inbox'
+        : isDecisions
+          ? isPolish
+            ? 'Decyzje'
+            : 'Decisions'
+          : isPolish
+            ? 'Zadania'
+            : 'Tasks';
       await openChatWithContext({
-        entityType: isInbox ? 'notification' : 'task',
-        entityId: isInbox ? 'my-work-inbox' : 'my-work-tasks',
-        entityName: isInbox ? (isPolish ? 'Skrzynka' : 'Inbox') : isPolish ? 'Zadania' : 'Tasks',
+        entityType,
+        entityId,
+        entityName,
         contextData: {
           module: 'my_work',
           tab,
           inboxStatusTab: isInbox ? inboxStatusTab : undefined,
-          taskFilter: !isInbox ? taskFilter : undefined,
-          tasksViewMode: !isInbox ? tasksViewMode : undefined,
+          taskFilter: tab === 'tasks' ? taskFilter : undefined,
+          tasksViewMode: tab === 'tasks' ? tasksViewMode : undefined,
+          decisionFilter: isDecisions ? decisionFilter : undefined,
+          decisionPriorityFilter: isDecisions ? decisionPriorityFilter : undefined,
           source: 'menu3',
         },
       });
@@ -1973,15 +2041,21 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           ? isPolish
             ? 'Przeanalizuj moją skrzynkę i zaproponuj kolejną najlepszą akcję.'
             : 'Analyze my inbox and propose the next best action.'
-          : isPolish
-            ? 'Przeanalizuj moje zadania i zaproponuj priorytety na dziś.'
-            : 'Analyze my tasks and propose priorities for today.'
+          : isDecisions
+            ? isPolish
+              ? 'Przeanalizuj moje decyzje i zaproponuj, które podjąć w pierwszej kolejności.'
+              : 'Analyze my decisions and propose which to make first.'
+            : isPolish
+              ? 'Przeanalizuj moje zadania i zaproponuj priorytety na dziś.'
+              : 'Analyze my tasks and propose priorities for today.'
       );
       if (isChatCollapsed) {
         toggleChatCollapse();
       }
     },
     [
+      decisionFilter,
+      decisionPriorityFilter,
       inboxStatusTab,
       isChatCollapsed,
       isPolish,
@@ -2024,6 +2098,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       setIdeasBulkUi(null);
       ideasBulkActionsRef.current = null;
       setIdeaStageFilter('all');
+      setIdeasHomeShell(null);
     }
   }, [activeTab]);
 
@@ -2310,7 +2385,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     if (openDocuments.length === 0) return null;
 
     const isListActive = activeDocumentId === null;
-    const showIdeasDetailAiAction = activeTab === 'ideas' && !!activeDocumentId;
 
     return (
       <div className={MENU_3_ROW_CLASS}>
@@ -2373,20 +2447,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             })}
           </div>
 
-          {showIdeasDetailAiAction ? (
-            <div className={MENU_3_RIGHT_CLASS}>
-              <button
-                onClick={() => toggleChatCollapse()}
-                className={MENU_3_ACTION_NEUTRAL}
-                type="button"
-                aria-label={isPolish ? 'AI Kontekst' : 'AI Context'}
-                data-testid="mywork-area-ai-button"
-              >
-                <Sparkles size={14} />
-                {isPolish ? 'AI Kontekst' : 'AI Context'}
-              </button>
-            </div>
-          ) : null}
+          {/*
+           * UI-L12 (Editor Shell Canon §2 GÓRNA): removed the "AI Kontekst" button.
+           * It was a duplicate entry into Teresa — the canvas command-row already
+           * exposes "Omów z Teresą / Discuss with Teresa" (IdeaWorkspaceToolbar).
+           * One AI entry per shell; no double doors.
+           */}
         </div>
       </div>
     );
@@ -2409,7 +2475,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           <div className="relative">
             <Search
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-muted"
             />
             <input
               type="text"
@@ -2437,12 +2503,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                           : 'Search inbox...'
               }
               autoFocus
-              className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder:text-slate-500 dark:text-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+              className="w-full pl-10 pr-10 py-2 rounded-token-md bg-c-surface border border-c-border text-c-text placeholder:text-c-text-muted focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition-all"
             />
             {searchQuery && (
               <button
                 onClick={handleCloseSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-token-md text-c-text-muted hover:bg-c-surface-raised hover:text-c-text"
               >
                 <X size={16} />
               </button>
@@ -2506,8 +2572,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       );
     }
 
-    // Notebook L2 (open notebook, no open page): page-status filters.
+    // Notebook L2 (open notebook, no open page): breadcrumb back + page-status
+    // filters in ONE Command Row (S1-U2b/c — no drill-down trap, no extra rows).
     if (activeTab === 'notebook' && notebookOpenId && !notebookOpenPageId) {
+      // NOTE: the old "Today" preset was superseded on HEAD by the N5 view
+      // lenses (Pinned/Recent/To review/Fresh) inside the notebook column.
       const statusPresets: Array<{
         id: 'all' | 'inbox' | 'active';
         label: string;
@@ -2521,18 +2590,36 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         {
           id: 'inbox',
           label: isPolish ? 'Inbox' : 'Inbox',
-          icon: <Inbox size={12} />,
+          icon: <Inbox size={14} className="text-c-text-muted" />,
         },
         {
           id: 'active',
           label: isPolish ? 'Aktywne' : 'Active',
-          icon: <Sparkles size={12} />,
+          icon: <Sparkles size={14} className="text-c-text-muted" />,
         },
       ];
       return (
         <div className={MENU_3_ROW_CLASS}>
           <div className={MENU_3_INNER_CLASS}>
             <div className={MENU_3_LEFT_CLASS}>
+              {/* Breadcrumb — always-visible way OUT of the notebook (S1-U2b). */}
+              <button
+                type="button"
+                data-testid="notebook-breadcrumb-back"
+                onClick={handleNotebookBackToLibrary}
+                className={MENU_3_CHIP_INACTIVE}
+                title={isPolish ? 'Wróć do listy notatników' : 'Back to notebooks'}
+              >
+                <ChevronDown size={14} className="rotate-90 text-c-text-muted" />
+                {isPolish ? 'Notatniki' : 'Notebooks'}
+              </button>
+              <span className="px-0.5 text-[11px] text-c-text-muted" aria-hidden="true">
+                /
+              </span>
+              <span className="max-w-[180px] truncate text-[12px] font-semibold text-c-text">
+                {notebookOpenTitle || (isPolish ? 'Notatnik' : 'Notebook')}
+              </span>
+              <span className="mx-1.5 h-4 w-px shrink-0 bg-c-border-subtle" aria-hidden="true" />
               {statusPresets.map((p) => {
                 const isActive = notebookPageStatusFilter === p.id;
                 return (
@@ -2828,7 +2915,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       );
     }
 
-    // Decisions: filters live in Command Row (chips). Topbar keeps only ONE select (priority).
+    // Decisions: filters live in Command Row (chips). Priority filter lives in the
+    // SAME row as a Menu-3 dropdown chip (S1-U1: single dynamic line — no extra
+    // topbar select above the table).
     if (activeTab === 'decisions' && !activeDocumentId && !decisionsBulkUi?.selectedCount) {
       const chipBase = MENU_3_CHIP_BASE;
       const chipInactive = MENU_3_CHIP_INACTIVE;
@@ -2836,6 +2925,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       const badgeBase = MENU_3_BADGE_BASE;
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
+
+      const priorityOptions: Array<{ id: DecisionPriorityFilter; label: string }> = [
+        { id: 'all', label: isPolish ? 'Wszystkie' : 'All' },
+        { id: 'CRITICAL', label: isPolish ? 'Krytyczne' : 'Critical' },
+        { id: 'HIGH', label: isPolish ? 'Wysoki' : 'High' },
+        { id: 'MEDIUM', label: isPolish ? 'Średni' : 'Medium' },
+        { id: 'LOW', label: isPolish ? 'Niski' : 'Low' },
+      ];
+      const activePriority = priorityOptions.find((p) => p.id === decisionPriorityFilter);
+      const priorityActive = decisionPriorityFilter !== 'all';
 
       return (
         <div className={MENU_3_ROW_CLASS}>
@@ -2861,6 +2960,37 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   </button>
                 );
               })}
+            </div>
+            <div className={MENU_3_RIGHT_CLASS}>
+              <Menu3DropdownChip
+                data-testid="mywork-decisions-priority-chip"
+                icon={<Flag size={14} className="text-c-text-muted" />}
+                label={
+                  priorityActive && activePriority
+                    ? `${isPolish ? 'Priorytet' : 'Priority'}: ${activePriority.label}`
+                    : isPolish
+                      ? 'Priorytet'
+                      : 'Priority'
+                }
+                active={priorityActive}
+                ariaLabel={isPolish ? 'Filtr priorytetu' : 'Priority filter'}
+                align="right"
+                items={priorityOptions.map((p) => ({
+                  id: p.id,
+                  label: p.label,
+                  active: decisionPriorityFilter === p.id,
+                  trailing: decisionPriorityFilter === p.id ? '✓' : undefined,
+                  onSelect: () => setDecisionPriorityFilter(p.id),
+                }))}
+              />
+              <button
+                onClick={() => void openTabAiContext('decisions')}
+                className={MENU_3_ACTION_NEUTRAL}
+                type="button"
+              >
+                <Sparkles size={14} />
+                {isPolish ? 'AI Decyzje' : 'AI Decisions'}
+              </button>
             </div>
           </div>
         </div>
@@ -2956,7 +3086,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       if (ideasBulkUi?.selectedCount) {
         const bulk = ideasBulkActionsRef.current;
         const bulkGhostPill =
-          'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-navy-800 dark:ring-offset-navy-900';
+          'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-navy-800 dark:ring-offset-navy-900';
 
         return (
           <div className={menu3RowClass}>
@@ -3006,34 +3136,40 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         {
           id: 'spark',
           label: isPolish ? 'Iskra' : 'Spark',
-          icon: <Lightbulb size={14} className="text-amber-400" />,
+          icon: <Lightbulb size={14} className="text-amber-600 dark:text-amber-300" />,
           count: ideasStageCounts.spark,
         },
         {
           id: 'incubating',
           label: isPolish ? 'Rośnie' : 'Growing',
-          icon: <Sprout size={14} className="text-emerald-400" />,
+          icon: <Sprout size={14} className="text-emerald-600 dark:text-emerald-300" />,
           count: ideasStageCounts.incubating,
         },
         {
           id: 'shaping',
           label: isPolish ? 'Kształtuje' : 'Shaping',
-          icon: <TreePine size={14} className="text-blue-400" />,
+          icon: <TreePine size={14} className="text-blue-600 dark:text-blue-300" />,
           count: ideasStageCounts.shaping,
         },
         {
           id: 'ready',
           label: isPolish ? 'Gotowy' : 'Ready',
-          icon: <CheckCircle2 size={14} className="text-blue-400" />,
+          icon: <CheckCircle2 size={14} className="text-blue-600 dark:text-blue-300" />,
           count: ideasStageCounts.ready,
         },
         {
           id: 'promoted',
           label: isPolish ? 'Promowany' : 'Promoted',
-          icon: <Rocket size={14} className="text-fuchsia-400" />,
+          icon: <Rocket size={14} className="text-primary-600 dark:text-primary-300" />,
           count: ideasStageCounts.promoted,
         },
       ];
+
+      // S1-U1: folders + starred + recents live in THIS row as dropdown/toggle
+      // chips (right cluster) — never as extra rows above the table.
+      const shell = ideasHomeShell;
+      const activeFolder = shell?.folders.find((f) => f.id === shell.activeFolderId) || null;
+      const showStarChip = Boolean(shell && (shell.starredCount > 0 || shell.showStarredOnly));
 
       return (
         <div className={menu3RowClass}>
@@ -3055,6 +3191,91 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   </button>
                 );
               })}
+            </div>
+            <div className={MENU_3_RIGHT_CLASS}>
+              {shell?.foldersAvailable ? (
+                <Menu3DropdownChip
+                  data-testid="ideas-folder-chip"
+                  icon={<Folder size={14} className="text-c-text-muted" />}
+                  label={activeFolder ? activeFolder.name : isPolish ? 'Folder' : 'Folder'}
+                  active={Boolean(activeFolder)}
+                  ariaLabel={isPolish ? 'Filtruj wg folderu' : 'Filter by folder'}
+                  align="right"
+                  items={[
+                    {
+                      id: 'all',
+                      label: isPolish ? 'Wszystkie pomysły' : 'All ideas',
+                      icon: <Layers size={14} />,
+                      active: !activeFolder,
+                      onSelect: () => shell.selectFolder(null),
+                    },
+                    ...shell.folders.map((f) => ({
+                      id: f.id,
+                      label: f.name,
+                      icon: <Folder size={14} />,
+                      active: shell.activeFolderId === f.id,
+                      trailing: shell.activeFolderId === f.id ? '✓' : undefined,
+                      onSelect: () => shell.selectFolder(f.id),
+                    })),
+                    {
+                      id: 'new-folder',
+                      label: isPolish ? 'Nowy folder…' : 'New folder…',
+                      icon: <FolderPlus size={14} />,
+                      dividerBefore: true,
+                      onSelect: () => shell.createFolder(),
+                    },
+                    ...(activeFolder
+                      ? [
+                          {
+                            id: 'delete-folder',
+                            label: isPolish ? 'Usuń ten folder' : 'Delete this folder',
+                            icon: <Trash2 size={14} />,
+                            danger: true,
+                            onSelect: () => shell.deleteFolder(activeFolder.id),
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
+              ) : null}
+              {showStarChip && shell ? (
+                <button
+                  type="button"
+                  data-testid="ideas-starred-chip"
+                  onClick={() => shell.toggleStarredOnly()}
+                  aria-pressed={shell.showStarredOnly}
+                  title={isPolish ? 'Tylko oznaczone gwiazdką' : 'Starred only'}
+                  className={shell.showStarredOnly ? chipActive : chipInactive}
+                >
+                  <Star
+                    size={14}
+                    className={
+                      shell.showStarredOnly ? 'fill-amber-400 text-amber-400' : 'text-c-text-muted'
+                    }
+                  />
+                  <span>{isPolish ? 'Oznaczone' : 'Starred'}</span>
+                  <span
+                    className={`${badgeBase} ${shell.showStarredOnly ? badgeActive : badgeInactive}`}
+                  >
+                    {shell.starredCount}
+                  </span>
+                </button>
+              ) : null}
+              {shell && shell.recents.length > 0 ? (
+                <Menu3DropdownChip
+                  data-testid="ideas-recent-chip"
+                  icon={<History size={14} className="text-c-text-muted" />}
+                  label={isPolish ? 'Ostatnie' : 'Recent'}
+                  ariaLabel={isPolish ? 'Ostatnio otwierane' : 'Recently opened'}
+                  align="right"
+                  items={shell.recents.map((r) => ({
+                    id: r.id,
+                    label: r.title,
+                    icon: <Lightbulb size={14} />,
+                    onSelect: () => shell.openRecent(r.id),
+                  }))}
+                />
+              ) : null}
             </div>
           </div>
         </div>
@@ -3338,6 +3559,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             onCreateIdea={handleCreateIdea}
             onCountsChange={handleIdeaCountsChange}
             onBulkBarChange={handleIdeasBulkBarChange}
+            onHomeShellChange={handleIdeasHomeShellChange}
             refreshTrigger={refreshTrigger}
           />
         );
@@ -3371,15 +3593,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               projectId={null}
               notebookId={notebookOpenId}
               notebookTitle={notebookOpenTitle}
-              onBackToLibrary={() => {
-                setNotebookOpenId(null);
-                setNotebookOpenTitle('');
-                setNotebookOpenPageId(null);
-                const next = new URLSearchParams(searchParams);
-                next.delete('notebook');
-                next.delete('note');
-                setSearchParams(next, { replace: false });
-              }}
+              onBackToLibrary={handleNotebookBackToLibrary}
               searchQuery={searchQuery}
               openPageId={notebookOpenPageId}
               pageStatusFilter={notebookPageStatusFilter}
@@ -3484,9 +3698,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   }, [activeTab]);
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950">
+    <div className="flex flex-col h-full bg-c-bg">
       {/* Navigation Bar (Golden Standard - same as InterviewHub) */}
-      <div className="bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.05]">
+      <div className="bg-c-surface border-b border-c-border-subtle">
         {/* Main Navigation Row */}
         <div className="flex items-center justify-between gap-4 px-4 py-3">
           {/* Left: Search + Main Tabs */}
@@ -3494,10 +3708,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {/* Search Toggle */}
             <button
               onClick={() => setShowSearch(!showSearch)}
-              className={`h-9 w-9 inline-flex items-center justify-center rounded-full border transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+              className={`h-9 w-9 inline-flex items-center justify-center rounded-full border transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-[var(--c-surface)] ${
                 showSearch
-                  ? 'bg-primary-50 dark:bg-primary-500/10 border-primary-200 dark:border-primary-500/30 text-primary-700 dark:text-primary-200'
-                  : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                  ? 'bg-c-accent-soft border-c-border-strong text-c-text'
+                  : 'bg-transparent border-c-border text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text'
               }`}
               title={isPolish ? 'Szukaj' : 'Search'}
             >
@@ -3560,11 +3774,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     onChange={(e) => handleFilterChange(e.target.value)}
                     className="
                     appearance-none h-9 pl-3 pr-9 rounded-full text-xs font-medium
-                    bg-white/70 dark:bg-white/[0.04]
-                    border border-slate-200/70 dark:border-white/[0.06]
-                    text-slate-700 dark:text-slate-200
-                    hover:bg-slate-100/70 dark:hover:bg-white/[0.06]
-                    focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
+                    bg-transparent
+                    border border-c-border
+                    text-c-text-secondary
+                    hover:bg-c-surface-raised hover:text-c-text
+                    focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus
                     transition-colors duration-150
                     cursor-pointer min-w-[140px]
                   "
@@ -3578,58 +3792,19 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   </select>
                   <ChevronDown
                     size={16}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-c-text-muted pointer-events-none"
                   />
                 </div>
               )}
 
-              {/* Decisions: Priority filter */}
-              {activeTab === 'decisions' && !activeDocumentId && (
-                <div className="relative">
-                  <select
-                    value={decisionPriorityFilter}
-                    onChange={(e) =>
-                      setDecisionPriorityFilter(e.target.value as DecisionPriorityFilter)
-                    }
-                    className="
-                    appearance-none h-9 pl-3 pr-9 rounded-full text-xs font-medium
-                    bg-white/70 dark:bg-white/[0.04]
-                    border border-slate-200/70 dark:border-white/[0.06]
-                    text-slate-700 dark:text-slate-200
-                    hover:bg-slate-100/70 dark:hover:bg-white/[0.06]
-                    focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
-                    transition-colors duration-150
-                    cursor-pointer min-w-[170px]
-                  "
-                    aria-label={isPolish ? 'Priorytet' : 'Priority'}
-                    title={isPolish ? 'Filtr priorytetu' : 'Priority filter'}
-                  >
-                    <option value="all">
-                      {isPolish ? 'Priorytet: wszystkie' : 'Priority: all'}
-                    </option>
-                    <option value="CRITICAL">
-                      {isPolish ? 'Priorytet: krytyczne' : 'Priority: critical'}
-                    </option>
-                    <option value="HIGH">
-                      {isPolish ? 'Priorytet: wysoki' : 'Priority: high'}
-                    </option>
-                    <option value="MEDIUM">
-                      {isPolish ? 'Priorytet: średni' : 'Priority: medium'}
-                    </option>
-                    <option value="LOW">{isPolish ? 'Priorytet: niski' : 'Priority: low'}</option>
-                  </select>
-                  <ChevronDown
-                    size={16}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none"
-                  />
-                </div>
-              )}
+              {/* Decisions: priority filter moved INTO the Command Row (Menu-3
+                  dropdown chip) — S1-U1 single dynamic line, no topbar select. */}
 
               {/* View tools */}
               {/* Tasks View Mode Toggle (icons; no dropdown) */}
               {activeTab === 'tasks' && !activeDocumentId && (
                 <div
-                  className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+                  className="inline-flex items-center rounded-full border border-c-border bg-c-surface-raised p-0.5"
                   role="radiogroup"
                   aria-label={isPolish ? 'Tryb widoku zadań' : 'Tasks view mode'}
                 >
@@ -3660,10 +3835,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                       <button
                         key={id}
                         onClick={() => setTasksViewMode(id)}
-                        className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                        className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-[var(--c-surface)] ${
                           isActive
-                            ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                            : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                            ? 'bg-c-surface text-c-text shadow-sm border border-c-border'
+                            : 'text-c-text-secondary hover:bg-c-surface hover:text-c-text'
                         }`}
                         title={isPolish ? titlePl : titleEn}
                         role="radio"
@@ -3680,7 +3855,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               {/* Decisions View Mode Toggle (icons; no dropdown) */}
               {activeTab === 'decisions' && !activeDocumentId && (
                 <div
-                  className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+                  className="inline-flex items-center rounded-full border border-c-border bg-c-surface-raised p-0.5"
                   role="radiogroup"
                   aria-label={isPolish ? 'Tryb widoku decyzji' : 'Decisions view mode'}
                 >
@@ -3707,10 +3882,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                       <button
                         key={id}
                         onClick={() => setDecisionsViewMode(id)}
-                        className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                        className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-[var(--c-surface)] ${
                           isActive
-                            ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                            : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                            ? 'bg-c-surface text-c-text shadow-sm border border-c-border'
+                            : 'text-c-text-secondary hover:bg-c-surface hover:text-c-text'
                         }`}
                         title={isPolish ? titlePl : titleEn}
                         role="radio"
@@ -3727,16 +3902,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               {/* Inbox View Mode Toggle (list / cards) — match screenshot (pill container + dark bg) */}
               {activeTab === 'inbox' && !activeDocumentId && (
                 <div
-                  className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+                  className="inline-flex items-center rounded-full border border-c-border bg-c-surface-raised p-0.5"
                   role="radiogroup"
                   aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
                 >
                   <button
                     onClick={() => setInboxViewMode('flat')}
-                    className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                    className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-[var(--c-surface)] ${
                       inboxViewMode === 'flat'
-                        ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                        : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                        ? 'bg-c-surface text-c-text shadow-sm border border-c-border'
+                        : 'text-c-text-secondary hover:bg-c-surface hover:text-c-text'
                     }`}
                     title={isPolish ? 'Lista' : 'List'}
                     role="radio"
@@ -3746,10 +3921,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   </button>
                   <button
                     onClick={() => setInboxViewMode('sections')}
-                    className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                    className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-[var(--c-surface)] ${
                       inboxViewMode === 'sections'
-                        ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                        : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                        ? 'bg-c-surface text-c-text shadow-sm border border-c-border'
+                        : 'text-c-text-secondary hover:bg-c-surface hover:text-c-text'
                     }`}
                     title={isPolish ? 'Karty' : 'Cards'}
                     role="radio"
@@ -3773,7 +3948,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               {/* Ideas: canonical view mode switcher — table / grid */}
               {activeTab === 'ideas' && !activeDocumentId && (
                 <div
-                  className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+                  className="inline-flex items-center rounded-full border border-c-border bg-c-surface-raised p-0.5"
                   role="radiogroup"
                   aria-label={isPolish ? 'Tryb widoku pomyslow' : 'Ideas view mode'}
                 >
@@ -3796,10 +3971,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     <button
                       key={id}
                       onClick={() => setIdeasViewMode(id)}
-                      className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                      className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-[var(--c-surface)] ${
                         ideasViewMode === id
-                          ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                          : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                          ? 'bg-c-surface text-c-text shadow-sm border border-c-border'
+                          : 'text-c-text-secondary hover:bg-c-surface hover:text-c-text'
                       }`}
                       title={isPolish ? labelPl : label}
                       role="radio"
@@ -3812,8 +3987,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               )}
 
               {/* Workspace 3-tools strip — Notebook only (when the editor is shown,
-                  i.e. inside an open notebook or on a deep-linked page) */}
-              {activeTab === 'notebook' &&
+                  i.e. inside an open notebook or on a deep-linked page).
+                  N2 redesign: redundant — Tools/Context/AI panels now live inside the
+                  notebook window (NotebookRightRail). Hidden behind a reversible flag;
+                  flip SHOW_LEGACY_NOTEBOOK_TOOLS_STRIP back to `true` to restore. */}
+              {SHOW_LEGACY_NOTEBOOK_TOOLS_STRIP &&
+                activeTab === 'notebook' &&
                 !activeDocumentId &&
                 (notebookOpenId || notebookOpenPageId) && (
                   <WorkspacePanelStrip

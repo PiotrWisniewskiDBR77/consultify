@@ -36,14 +36,15 @@ export const BETA_ADMINS_EXEMPT = true;
  * Keep this list in sync with the `badge: 'beta'` entries in menuConfig.ts.
  */
 export const BETA_MENU_STATUS: Record<string, BetaStatus> = {
-  MODULE_BENEFITS: 'closed', // Results
-  MODULE_ECONOMICS: 'closed', // Finance
-  MODULE_AUDITS: 'closed', // Audits
+  MODULE_BENEFITS: 'open', // Results (M15 — GA per D-A)
+  MODULE_CONCLUSIONS: 'open', // Conclusions layer — surface open; admins always in (OXFORD #106)
+  MODULE_ECONOMICS: 'open', // Finance (M16 — GA per D-A)
+  MODULE_AUDITS: 'closed', // Audits (M12 — hidden pre-demo per DECYZJA-D3; empty module, no real content yet)
   MODULE_PRESENTATIONS: 'open', // Documents (Outputs library)
   MODULE_DOCUMENT_STUDIO: 'open', // Document Studio
   MODULE_PREZENTACJE_GEN: 'open', // Presentation Studio
   MODULE_TABELE: 'open', // Table Studio
-  MODULE_MEETING: 'open', // Meeting
+  MODULE_MEETING: 'closed', // Meeting (M21 — post-GA beta per _FINISZ_MASTER_PLAN)
   // Internal Tools (AI OS) is a footer item rendered outside the gated main menu
   // (not run through lockClosedBetaModules), and is already restricted to DBR77
   // via canUseInternalTools(). Tracked here as 'open' = beta badge only, no lock.

@@ -166,18 +166,18 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Settings size={28} className="text-slate-500 dark:text-slate-400" />
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
+            <Settings size={28} className="text-c-text-muted" />
             {t('settings.preferences.general.title', 'General Preferences')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             Configure application behavior
           </p>
         </div>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-c-surface hover:bg-c-surface text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           Save Changes
@@ -185,14 +185,14 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
       </div>
 
       {/* Startup View */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Home size={20} className="text-blue-500" />
           Startup Preferences
         </h3>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+          <label className="block text-sm font-medium text-c-text-secondary mb-3">
             Default Startup View
           </label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -203,20 +203,20 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
                 className={`p-3 rounded-lg border-2 text-left transition-all ${
                   settings.startupView === view.id
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-blue-300'
+                    : 'border-c-border-subtle dark:border-navy-700 hover:border-blue-300'
                 }`}
               >
-                <p className="font-medium text-slate-900 dark:text-white text-sm">{view.label}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{view.desc}</p>
+                <p className="font-medium text-c-text text-sm">{view.label}</p>
+                <p className="text-xs text-c-text-muted">{view.desc}</p>
               </button>
             ))}
           </div>
         </div>
 
-        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
+        <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
           <div>
-            <p className="font-medium text-slate-900 dark:text-white">Show Welcome Message</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="font-medium text-c-text">Show Welcome Message</p>
+            <p className="text-sm text-c-text-muted">
               Display welcome screen on startup
             </p>
           </div>
@@ -225,11 +225,11 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
               setSettings({ ...settings, showWelcomeOnStartup: !settings.showWelcomeOnStartup })
             }
             className={`relative w-12 h-6 rounded-full transition-colors ${
-              settings.showWelcomeOnStartup ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-600'
+              settings.showWelcomeOnStartup ? 'bg-blue-600' : 'bg-c-surface-raised'
             }`}
           >
             <span
-              className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+              className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                 settings.showWelcomeOnStartup ? 'left-7' : 'left-1'
               }`}
             />
@@ -238,27 +238,27 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
       </div>
 
       {/* Auto-Save */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <RefreshCw size={20} className="text-green-500" />
           Auto-Save
         </h3>
 
-        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
+        <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
           <div>
-            <p className="font-medium text-slate-900 dark:text-white">Enable Auto-Save</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="font-medium text-c-text">Enable Auto-Save</p>
+            <p className="text-sm text-c-text-muted">
               Automatically save changes periodically
             </p>
           </div>
           <button
             onClick={() => setSettings({ ...settings, autoSaveEnabled: !settings.autoSaveEnabled })}
             className={`relative w-12 h-6 rounded-full transition-colors ${
-              settings.autoSaveEnabled ? 'bg-green-600' : 'bg-slate-300 dark:bg-slate-600'
+              settings.autoSaveEnabled ? 'bg-green-600' : 'bg-c-surface-raised'
             }`}
           >
             <span
-              className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+              className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                 settings.autoSaveEnabled ? 'left-7' : 'left-1'
               }`}
             />
@@ -266,9 +266,9 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
         </div>
 
         {settings.autoSaveEnabled && (
-          <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
+          <div className="p-4 bg-c-surface-raised rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              <label className="text-sm font-medium text-c-text-secondary">
                 Save Interval
               </label>
               <span className="text-sm text-green-600">{settings.autoSaveInterval} seconds</span>
@@ -282,15 +282,15 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
               onChange={(e) =>
                 setSettings({ ...settings, autoSaveInterval: parseInt(e.target.value) })
               }
-              className="w-full h-2 bg-slate-200 dark:bg-navy-800 rounded-lg appearance-none cursor-pointer accent-green-600"
+              className="w-full h-2 bg-c-surface-raised rounded-lg appearance-none cursor-pointer accent-green-600"
             />
           </div>
         )}
       </div>
 
       {/* Confirmation Dialogs */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <MessageSquare size={20} className="text-amber-500" />
           Confirmation Dialogs
         </h3>
@@ -320,22 +320,22 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
           ].map((item) => (
             <div
               key={item.key}
-              className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg"
+              className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg"
             >
               <div>
-                <p className="font-medium text-slate-900 dark:text-white">{item.label}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{item.desc}</p>
+                <p className="font-medium text-c-text">{item.label}</p>
+                <p className="text-sm text-c-text-muted">{item.desc}</p>
               </div>
               <button
                 onClick={() =>
                   setSettings({ ...settings, [item.key]: !(settings as any)[item.key] })
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  (settings as any)[item.key] ? 'bg-amber-600' : 'bg-slate-300 dark:bg-slate-600'
+                  (settings as any)[item.key] ? 'bg-amber-600' : 'bg-c-surface-raised'
                 }`}
               >
                 <span
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                     (settings as any)[item.key] ? 'left-7' : 'left-1'
                   }`}
                 />
@@ -346,9 +346,9 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
       </div>
 
       {/* Tooltips & Hints */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-          <HelpCircle size={20} className="text-primary-500" />
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
+          <HelpCircle size={20} className="text-c-accent" />
           Tooltips & Hints
         </h3>
 
@@ -377,22 +377,22 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
           ].map((item) => (
             <div
               key={item.key}
-              className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg"
+              className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg"
             >
               <div>
-                <p className="font-medium text-slate-900 dark:text-white">{item.label}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{item.desc}</p>
+                <p className="font-medium text-c-text">{item.label}</p>
+                <p className="text-sm text-c-text-muted">{item.desc}</p>
               </div>
               <button
                 onClick={() =>
                   setSettings({ ...settings, [item.key]: !(settings as any)[item.key] })
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  (settings as any)[item.key] ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
+                  (settings as any)[item.key] ? 'bg-navy-900' : 'bg-c-surface-raised'
                 }`}
               >
                 <span
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                     (settings as any)[item.key] ? 'left-7' : 'left-1'
                   }`}
                 />
@@ -403,28 +403,28 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
 
         <button
           onClick={resetOnboarding}
-          className="w-full p-3 text-center text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors"
+          className="w-full p-3 text-center text-c-accent hover:bg-c-accent-soft dark:hover:bg-c-accent-soft rounded-lg transition-colors"
         >
           Reset Onboarding Tutorial
         </button>
       </div>
 
       {/* Regional Settings */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Globe size={20} className="text-indigo-500" />
           Regional Settings
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">
               Date Format
             </label>
             <select
               value={settings.dateFormat}
               onChange={(e) => setSettings({ ...settings, dateFormat: e.target.value })}
-              className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
             >
               {dateFormats.map((format) => (
                 <option key={format.value} value={format.value}>
@@ -435,7 +435,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">
               Time Format
             </label>
             <div className="flex gap-2">
@@ -446,7 +446,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
                   className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
                     settings.timeFormat === format
                       ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                      : 'bg-c-surface-raised text-c-text-secondary'
                   }`}
                 >
                   {format === '12h' ? '12-hour' : '24-hour'}
@@ -456,7 +456,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">
               Week Starts On
             </label>
             <div className="flex gap-2">
@@ -467,7 +467,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
                   className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium capitalize transition-all ${
                     settings.weekStartsOn === day
                       ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                      : 'bg-c-surface-raised text-c-text-secondary'
                   }`}
                 >
                   {day}

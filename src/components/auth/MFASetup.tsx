@@ -96,16 +96,16 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+      <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+        <div className="bg-c-accent px-6 py-4">
           <div className="flex items-center gap-3">
             <Shield className="w-8 h-8 text-white" />
             <div>
               <h2 className="text-xl font-semibold text-white">
                 {t('mfa.setup.title', 'Two-Factor Authentication')}
               </h2>
-              <p className="text-blue-100 text-sm">
+              <p className="text-white/80 text-sm">
                 {t('mfa.setup.subtitle', 'Add an extra layer of security')}
               </p>
             </div>
@@ -124,16 +124,16 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
           {/* Step: Introduction */}
           {step === 'intro' && (
             <div className="space-y-4">
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className="text-c-text-secondary">
                 {t(
                   'mfa.setup.intro',
                   "Two-factor authentication adds an extra layer of security to your account. You'll need your phone to sign in."
                 )}
               </p>
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 space-y-3">
+              <div className="bg-c-accent-soft rounded-lg p-4 space-y-3">
                 <div className="flex items-center gap-3">
-                  <Smartphone className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <Smartphone className="w-5 h-5 text-c-accent" />
+                  <span className="text-sm text-c-text-secondary">
                     {t(
                       'mfa.setup.step1',
                       '1. Download an authenticator app (Google Authenticator, Authy, etc.)'
@@ -141,14 +141,14 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Key className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <Key className="w-5 h-5 text-c-accent" />
+                  <span className="text-sm text-c-text-secondary">
                     {t('mfa.setup.step2', '2. Scan the QR code or enter the secret manually')}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <Shield className="w-5 h-5 text-c-accent" />
+                  <span className="text-sm text-c-text-secondary">
                     {t('mfa.setup.step3', '3. Enter the code from your app to verify')}
                   </span>
                 </div>
@@ -156,14 +156,14 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={onCancel}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:bg-navy-800 dark:hover:bg-gray-700 transition"
+                  className="flex-1 px-4 py-2 border border-c-border text-c-text-secondary rounded-lg hover:bg-c-surface-raised transition"
                 >
                   {t('common.cancel', 'Cancel')}
                 </button>
                 <button
                   onClick={initSetup}
                   disabled={loading}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-c-accent text-white rounded-lg hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   {t('mfa.setup.continue', 'Continue')}
@@ -175,7 +175,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
           {/* Step: Scan QR Code */}
           {step === 'scan' && setupData && (
             <div className="space-y-4">
-              <p className="text-gray-600 dark:text-gray-300 text-center">
+              <p className="text-c-text-secondary text-center">
                 {t('mfa.setup.scanQr', 'Scan this QR code with your authenticator app')}
               </p>
 
@@ -187,21 +187,21 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
               </div>
 
               {/* Manual Entry */}
-              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+              <div className="bg-c-surface-raised rounded-lg p-3">
+                <p className="text-xs text-c-text-muted mb-2">
                   {t('mfa.setup.manualEntry', 'Or enter this code manually:')}
                 </p>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border dark:border-gray-600 font-mono break-all">
+                  <code className="flex-1 text-sm bg-c-surface px-3 py-2 rounded border border-c-border font-mono break-all">
                     {setupData.manualEntry}
                   </code>
                   <button
                     onClick={copySecret}
-                    className="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 transition"
+                    className="p-2 text-c-text-muted hover:text-c-accent transition"
                     title="Copy"
                   >
                     {copied ? (
-                      <Check className="w-5 h-5 text-green-500" />
+                      <Check className="w-5 h-5 text-c-success" />
                     ) : (
                       <Copy className="w-5 h-5" />
                     )}
@@ -211,7 +211,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
 
               <button
                 onClick={() => setStep('verify')}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                className="w-full px-4 py-2 bg-c-accent text-white rounded-lg hover:opacity-90 transition"
               >
                 {t('mfa.setup.next', "I've scanned the code")}
               </button>
@@ -221,7 +221,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
           {/* Step: Verify Code */}
           {step === 'verify' && (
             <div className="space-y-4">
-              <p className="text-gray-600 dark:text-gray-300 text-center">
+              <p className="text-c-text-secondary text-center">
                 {t('mfa.setup.enterCode', 'Enter the 6-digit code from your authenticator app')}
               </p>
 
@@ -233,7 +233,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
                   value={verificationCode}
                   onChange={handleCodeChange}
                   placeholder="000000"
-                  className="text-center text-3xl font-mono tracking-[0.5em] w-48 px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:bg-gray-700 dark:text-white"
+                  className="text-center text-3xl font-mono tracking-[0.5em] w-48 px-4 py-3 border-2 border-c-border rounded-lg focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus bg-c-surface text-c-text"
                   autoFocus
                 />
               </div>
@@ -241,14 +241,14 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep('scan')}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:bg-navy-800 dark:hover:bg-gray-700 transition"
+                  className="flex-1 px-4 py-2 border border-c-border text-c-text-secondary rounded-lg hover:bg-c-surface-raised transition"
                 >
                   {t('common.back', 'Back')}
                 </button>
                 <button
                   onClick={verifyAndEnable}
                   disabled={loading || verificationCode.length !== 6}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-c-accent text-white rounded-lg hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   {t('mfa.setup.verify', 'Verify & Enable')}
@@ -261,22 +261,22 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
           {step === 'backup' && (
             <div className="space-y-4">
               <div className="text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full mb-3">
-                  <Check className="w-6 h-6 text-green-600" />
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-c-success/10 rounded-full mb-3">
+                  <Check className="w-6 h-6 text-c-success" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-lg font-semibold text-c-text">
                   {t('mfa.setup.enabled', 'Two-Factor Authentication Enabled!')}
                 </h3>
               </div>
 
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <div className="bg-c-warning/10 border border-c-warning/30 rounded-lg p-4">
                 <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <AlertTriangle className="w-5 h-5 text-c-warning flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                    <p className="text-sm font-medium text-c-warning">
                       {t('mfa.setup.saveBackupCodes', 'Save your backup codes!')}
                     </p>
-                    <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                    <p className="text-xs text-c-warning mt-1">
                       {t(
                         'mfa.setup.backupCodesWarning',
                         'These codes can be used to access your account if you lose your authenticator. Each code can only be used once.'
@@ -287,12 +287,12 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
               </div>
 
               {/* Backup Codes Grid */}
-              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+              <div className="bg-c-surface-raised rounded-lg p-4">
                 <div className="grid grid-cols-2 gap-2">
                   {backupCodes.map((code, index) => (
                     <code
                       key={index}
-                      className="text-sm bg-white dark:bg-gray-800 px-3 py-2 rounded border dark:border-gray-600 font-mono text-center"
+                      className="text-sm bg-c-surface px-3 py-2 rounded border border-c-border font-mono text-center"
                     >
                       {code}
                     </code>
@@ -300,7 +300,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
                 </div>
                 <button
                   onClick={copyBackupCodes}
-                  className="mt-3 w-full flex items-center justify-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition"
+                  className="mt-3 w-full flex items-center justify-center gap-2 text-sm text-c-accent hover:opacity-80 transition"
                 >
                   {backupCodesCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   {backupCodesCopied
@@ -311,7 +311,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
 
               <button
                 onClick={onComplete}
-                className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                className="w-full px-4 py-2 bg-c-success text-white rounded-lg hover:opacity-90 transition"
               >
                 {t('mfa.setup.done', "I've saved my backup codes")}
               </button>

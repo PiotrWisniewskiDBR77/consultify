@@ -12,6 +12,11 @@ export type IntegrationConnectionEventType =
   | 'error';
 
 async function ensureIntegrationConnectionEventsTable(): Promise<void> {
+  // Fail-soft: opportunistic idempotent DDL invoked first by the read path
+  // (listIntegrationConnectionEvents). Use fallback:true so a transient DDL
+  // failure can NEVER reject and bubble up as a bare HTTP 500 — the list read
+  // degrades to empty instead. Only the DDL is fail-soft; the event INSERT below
+  // keeps fallback:false so real write failures still surface.
   await dbRun(
     `
       CREATE TABLE IF NOT EXISTS integration_connection_events (
@@ -28,26 +33,26 @@ async function ensureIntegrationConnectionEventsTable(): Promise<void> {
       )
     `,
     [],
-    { fallback: false }
+    { fallback: true }
   );
 
   await dbRun(
     `CREATE INDEX IF NOT EXISTS idx_integration_connection_events_org_time
      ON integration_connection_events(organization_id, created_at DESC)`,
     [],
-    { fallback: false }
+    { fallback: true }
   );
   await dbRun(
     `CREATE INDEX IF NOT EXISTS idx_integration_connection_events_org_user
      ON integration_connection_events(organization_id, user_id)`,
     [],
-    { fallback: false }
+    { fallback: true }
   );
   await dbRun(
     `CREATE INDEX IF NOT EXISTS idx_integration_connection_events_org_connector
      ON integration_connection_events(organization_id, connector_id)`,
     [],
-    { fallback: false }
+    { fallback: true }
   );
 }
 
@@ -140,7 +145,7 @@ export async function listIntegrationConnectionEvents(params: {
     (await dbAll<{ count: number | string }>(
       `SELECT COUNT(*) as count FROM integration_connection_events ${whereSql}`,
       args,
-      { fallback: false }
+      { fallback: true }
     )) || [];
   const total = Number(totalRows[0]?.count || 0);
 
@@ -175,7 +180,7 @@ export async function listIntegrationConnectionEvents(params: {
         LIMIT ? OFFSET ?
       `,
       [...args, limit, offset],
-      { fallback: false }
+      { fallback: true }
     )) || [];
 
   return {

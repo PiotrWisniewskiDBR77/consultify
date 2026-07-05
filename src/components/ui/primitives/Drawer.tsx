@@ -184,7 +184,7 @@ export const Drawer: React.FC<DrawerProps> = ({
           {/* Overlay */}
           {showOverlay && (
             <motion.div
-              className="fixed inset-0 z-40 bg-black/30 dark:bg-black/50 backdrop-blur-sm"
+              className="fixed inset-0 z-overlay bg-black/30 dark:bg-black/50 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -200,7 +200,7 @@ export const Drawer: React.FC<DrawerProps> = ({
             aria-modal="true"
             tabIndex={-1}
             className={`
-              fixed z-[9999]
+              fixed z-modal
               ${positionStyles[position]}
               ${sizeStyles[position][size]}
               bg-white dark:bg-navy-900

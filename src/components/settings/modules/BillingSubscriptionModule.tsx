@@ -164,7 +164,7 @@ const STATUS_COLORS: Record<string, string> = {
   trialing: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
   past_due: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-400',
   canceling: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
-  cancelled: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-400',
+  cancelled: 'bg-c-surface-raised text-c-text-muted',
   renewal_due: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
   suspended: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-400',
 };
@@ -345,9 +345,9 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-600 dark:text-slate-400">{label}</span>
+          <span className="text-c-text-secondary">{label}</span>
           <div className="flex items-center gap-2">
-            <span className="font-medium text-slate-900 dark:text-white">
+            <span className="font-medium text-c-text">
               {used.toLocaleString()}
               {unit}{' '}
               {isUnlimited
@@ -363,7 +363,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
           </div>
         </div>
         {!isUnlimited && (
-          <div className="h-2 bg-slate-200 dark:bg-navy-800 rounded-full overflow-hidden">
+          <div className="h-2 bg-c-surface-raised rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${
                 isExceeded
@@ -472,11 +472,11 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
             <CreditCard size={28} className="text-emerald-500" />
             {t('settings.billing', 'Billing & Subscription')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t('access.upgrade.subtitle')}
           </p>
         </div>
@@ -497,7 +497,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-200 dark:border-navy-700 pb-4">
+      <div className="flex gap-2 border-b border-c-border-subtle dark:border-navy-700 pb-4">
         {(
           [
             { id: 'overview', label: 'Overview', icon: Crown },
@@ -514,7 +514,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === tab.id
                   ? 'bg-emerald-600 text-white'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                  : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-700'
               }`}
             >
               <Icon size={16} />
@@ -526,17 +526,17 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
 
       {/* Checkout Overlay */}
       {checkoutPlanId && (
-        <div className="bg-white dark:bg-navy-900 border-2 border-primary-500 rounded-xl p-6 space-y-4">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <ArrowUpCircle size={20} className="text-primary-500" />
+        <div className="bg-c-surface border-2 border-c-accent rounded-xl p-6 space-y-4">
+          <h3 className="text-lg font-bold text-c-text flex items-center gap-2">
+            <ArrowUpCircle size={20} className="text-c-accent" />
             {t('access.upgrade.checkout.title')}
           </h3>
-          <div className="p-4 bg-primary-50 dark:bg-primary-500/10 rounded-lg">
-            <p className="text-sm text-primary-700 dark:text-primary-300">
+          <div className="p-4 bg-c-accent-soft dark:bg-c-accent-soft rounded-lg">
+            <p className="text-sm text-c-accent">
               {t('access.upgrade.whatChanges')}:{' '}
               {availablePlans.find((p) => p.id === checkoutPlanId)?.name || checkoutPlanId}
             </p>
-            <p className="text-xs text-primary-600 dark:text-primary-400 mt-1">
+            <p className="text-xs text-c-accent mt-1">
               {t('access.upgrade.instantUnlock')}
             </p>
           </div>
@@ -550,7 +550,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
           <div className="flex gap-3 justify-end">
             <button
               onClick={() => setCheckoutPlanId(null)}
-              className="px-4 py-2 text-sm font-medium border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+              className="px-4 py-2 text-sm font-medium border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
             >
               {t('access.upgrade.checkout.cancel')}
             </button>
@@ -617,28 +617,28 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                   className={`p-4 rounded-xl border-2 relative ${
                     plan.id === subscription?.plan
                       ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
-                      : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
+                      : 'border-c-border-subtle dark:border-navy-700 bg-c-surface'
                   }`}
                 >
                   {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-navy-900 text-white text-xs font-bold rounded-full dark:bg-white dark:text-navy-950">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-navy-900 text-white text-xs font-bold rounded-full dark:bg-c-surface dark:text-navy-950">
                       {t('access.upgrade.popular')}
                     </div>
                   )}
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-semibold text-slate-900 dark:text-white">{plan.name}</h4>
+                    <h4 className="font-semibold text-c-text">{plan.name}</h4>
                     {plan.id === subscription?.plan && (
                       <span className="text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full">
                         {t('access.upgrade.currentPlan')}
                       </span>
                     )}
                   </div>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+                  <p className="text-2xl font-bold text-c-text mb-4">
                     {plan.price !== null
                       ? `$${plan.price}${t('access.upgrade.perMonth')}`
                       : 'Custom'}
                   </p>
-                  <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                  <ul className="space-y-2 text-sm text-c-text-secondary">
                     {plan.features.map((f, i) => (
                       <li key={i} className="flex items-center gap-2">
                         <Check size={14} className="text-emerald-500" />
@@ -658,7 +658,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                     </button>
                   )}
                   {plan.price === null && (
-                    <button className="w-full mt-4 py-2 px-4 border border-slate-300 dark:border-navy-600 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 text-sm font-medium transition-colors">
+                    <button className="w-full mt-4 py-2 px-4 border border-c-border dark:border-navy-600 text-c-text-secondary rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-800 text-sm font-medium transition-colors">
                       {t('access.cta.contactSales')}
                     </button>
                   )}
@@ -666,7 +666,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400">
+            <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6 text-sm text-c-text-muted dark:border-navy-700">
               Live pricing plans are currently unavailable. Refresh the page or retry after billing
               services recover.
             </div>
@@ -677,14 +677,14 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             <div className="text-center">
               <button
                 onClick={handleCancelSubscription}
-                className="text-sm text-slate-600 dark:text-slate-500 hover:text-danger-400 transition-colors"
+                className="text-sm text-c-text-secondary hover:text-danger-400 transition-colors"
               >
                 Cancel Subscription
               </button>
             </div>
           )}
           {isManualBilling && (
-            <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300">
+            <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4 text-sm text-c-text-secondary dark:border-navy-700">
               This subscription is managed manually outside Stripe. Contract renewals, invoice
               status, and access changes are handled by your account team.
             </div>
@@ -694,8 +694,8 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
 
       {/* Usage Tab */}
       {activeTab === 'usage' && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Current Usage</h3>
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+          <h3 className="text-lg font-semibold text-c-text">Current Usage</h3>
 
           <div className="space-y-6">
             {usage ? (
@@ -755,13 +755,13 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                 />
               </>
             ) : (
-              <p className="text-sm text-slate-500 dark:text-slate-400">No usage data available.</p>
+              <p className="text-sm text-c-text-muted">No usage data available.</p>
             )}
           </div>
 
           {snapshot?.isTrial && (
-            <div className="p-4 bg-primary-50 dark:bg-primary-500/10 rounded-lg border border-primary-200 dark:border-primary-500/20">
-              <p className="text-sm text-primary-700 dark:text-primary-300">
+            <div className="p-4 bg-c-accent-soft dark:bg-c-accent-soft rounded-lg border border-c-accent dark:border-c-accent">
+              <p className="text-sm text-c-accent">
                 {t('access.upgrade.instantUnlock')}{' '}
                 <button onClick={() => setActiveTab('overview')} className="underline font-medium">
                   {t('access.cta.upgradePlan')}
@@ -774,27 +774,27 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
 
       {/* Invoices Tab */}
       {activeTab === 'invoices' && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700">
-            <h3 className="font-semibold text-slate-900 dark:text-white">Billing History</h3>
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-c-border-subtle dark:border-navy-700">
+            <h3 className="font-semibold text-c-text">Billing History</h3>
           </div>
           {invoices.length === 0 ? (
             <EmptyState preset="noData" title="No invoices yet." />
           ) : (
-            <div className="divide-y divide-slate-200 dark:divide-white/5">
+            <div className="divide-y divide-c-border-subtle dark:divide-white/5">
               {invoices.map((invoice) => (
                 <div key={invoice.id} className="px-6 py-4 flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <FileText size={20} className="text-slate-600 dark:text-slate-500" />
+                    <FileText size={20} className="text-c-text-secondary" />
                     <div>
-                      <p className="font-medium text-slate-900 dark:text-white">
+                      <p className="font-medium text-c-text">
                         Invoice {invoice.id}
                       </p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                      <p className="text-sm text-c-text-muted">
                         {new Date(invoice.date).toLocaleDateString()}
                       </p>
                       {invoice.source && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide mt-1">
+                        <p className="text-xs text-c-text-muted uppercase tracking-wide mt-1">
                           {invoice.source === 'manual' || invoice.source === 'manual_invoice'
                             ? 'Manual invoice'
                             : 'Stripe invoice'}
@@ -803,7 +803,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-slate-900 dark:text-white font-medium">
+                    <span className="text-c-text font-medium">
                       {new Intl.NumberFormat('en-US', {
                         style: 'currency',
                         currency: invoice.currency || 'USD',
@@ -819,13 +819,13 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                       {invoice.status}
                     </span>
                     <button
-                      className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg disabled:opacity-40"
+                      className="p-2 hover:bg-c-surface-raised dark:hover:bg-navy-800 rounded-lg disabled:opacity-40"
                       disabled={!invoice.downloadUrl}
                       onClick={() =>
                         invoice.downloadUrl && window.open(invoice.downloadUrl, '_blank')
                       }
                     >
-                      <Download size={16} className="text-slate-500 dark:text-slate-400" />
+                      <Download size={16} className="text-c-text-muted" />
                     </button>
                   </div>
                 </div>
@@ -852,9 +852,9 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             </div>
           )}
 
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-slate-900 dark:text-white">Payment Methods</h3>
+              <h3 className="font-semibold text-c-text">Payment Methods</h3>
               <button className="flex items-center gap-2 px-3 py-1.5 text-sm bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg">
                 <Plus size={16} />
                 Add Method
@@ -862,7 +862,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             </div>
 
             {paymentMethods.length === 0 ? (
-              <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+              <div className="text-center py-8 text-c-text-muted">
                 <CreditCard size={32} className="mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No payment methods on file.</p>
                 <p className="text-xs mt-1">
@@ -879,17 +879,17 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                     className={`p-4 rounded-lg border-2 ${
                       method.isDefault
                         ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
-                        : 'border-slate-200 dark:border-navy-700'
+                        : 'border-c-border-subtle dark:border-navy-700'
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <CreditCard size={24} className="text-slate-600 dark:text-slate-500" />
+                        <CreditCard size={24} className="text-c-text-secondary" />
                         <div>
-                          <p className="font-medium text-slate-900 dark:text-white">
+                          <p className="font-medium text-c-text">
                             {method.brand} &bull;&bull;&bull;&bull; {method.last4}
                           </p>
-                          <p className="text-sm text-slate-500 dark:text-slate-400">
+                          <p className="text-sm text-c-text-muted">
                             Expires {method.expiryMonth}/{method.expiryYear}
                           </p>
                         </div>

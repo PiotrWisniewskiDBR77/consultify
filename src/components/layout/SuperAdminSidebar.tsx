@@ -182,7 +182,7 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
       {/* Header / Brand */}
       <div className="h-16 border-b border-slate-200 dark:border-navy-700 flex items-center px-4 gap-3 relative shrink-0">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-danger-600 to-danger-700 flex items-center justify-center shadow-lg shrink-0">
-          <Shield size={18} className="text-white" />
+          <Shield size={16} className="text-white" />
         </div>
 
         <div
@@ -259,7 +259,7 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-danger-50 dark:hover:bg-danger-500/10 hover:text-danger-600 dark:hover:text-danger-400 transition-all group ${!showFull ? 'justify-center' : ''}`}
           title="Sign Out"
         >
-          <LogOut size={18} className="shrink-0" />
+          <LogOut size={16} className="shrink-0" />
           <span
             className={`text-sm whitespace-nowrap transition-all duration-300 ${showFull ? 'w-auto opacity-100' : 'w-0 opacity-0 hidden'}`}
           >

@@ -70,14 +70,14 @@ export const BulkPriorityPicker: React.FC<BulkPriorityPickerProps> = ({
     <AnimatePresence>
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-40" onClick={onClose} />
+          <div className="fixed inset-0 z-dropdown" onClick={onClose} />
           <motion.div
             ref={ref}
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 4 }}
             transition={{ duration: 0.15 }}
-            className="absolute bottom-full left-0 mb-2 z-50 w-56 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-xl shadow-xl overflow-hidden"
+            className="absolute bottom-full left-0 mb-2 z-overlay w-56 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-xl shadow-xl overflow-hidden"
           >
             <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-700">
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -202,14 +202,14 @@ export const BulkDatePicker: React.FC<BulkDatePickerProps> = ({
     <AnimatePresence>
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-40" onClick={onClose} />
+          <div className="fixed inset-0 z-dropdown" onClick={onClose} />
           <motion.div
             ref={ref}
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 4 }}
             transition={{ duration: 0.15 }}
-            className="absolute bottom-full left-0 mb-2 z-50 w-64 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-xl shadow-xl overflow-hidden"
+            className="absolute bottom-full left-0 mb-2 z-overlay w-64 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-xl shadow-xl overflow-hidden"
           >
             <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-700">
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -254,7 +254,7 @@ export const BulkDatePicker: React.FC<BulkDatePickerProps> = ({
                 <button
                   onClick={handleCustomSubmit}
                   disabled={!customDate || !/^\d{4}-\d{2}-\d{2}$/.test(customDate)}
-                  className="h-8 px-2.5 rounded-lg text-xs font-medium bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="h-8 px-2.5 rounded-lg text-xs font-medium bg-c-text text-c-bg hover:bg-c-text-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   OK
                 </button>

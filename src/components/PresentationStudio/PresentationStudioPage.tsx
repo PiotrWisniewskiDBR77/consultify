@@ -205,7 +205,7 @@ interface StatusBadgeProps {
 
 function StatusBadge({ tone, label, icon }: StatusBadgeProps): React.ReactElement {
   const TONE_CLASS: Record<StatusTone, string> = {
-    slate: 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300',
+    slate: 'bg-c-surface-raised text-c-text-secondary',
     blue: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
     amber: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
     emerald: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
@@ -243,13 +243,13 @@ function SectionCard({
 }: SectionCardProps): React.ReactElement {
   return (
     <section
-      className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
+      className="rounded-xl border border-c-border bg-c-surface shadow-sm"
       data-testid={testId}
     >
-      <header className="flex flex-wrap items-start justify-between gap-2 border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+      <header className="flex flex-wrap items-start justify-between gap-2 border-b border-c-border px-5 py-4">
         <div>
-          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{description}</p>
+          <h2 className="text-base font-semibold text-c-text">{title}</h2>
+          <p className="mt-1 text-sm text-c-text-secondary">{description}</p>
         </div>
         {badge ? <div className="flex shrink-0 items-center">{badge}</div> : null}
       </header>
@@ -520,22 +520,26 @@ export const PresentationStudioPage: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen bg-slate-50 dark:bg-slate-950"
+      className="min-h-screen bg-c-bg"
       data-testid="presentation-studio-page"
     >
       {/* Local Menu 3 / command row. Per the AI-actions-menu3 rule, the
           contextual AI action ("Run preview") MUST live on the right side of
-          the local command row, not inside the canvas. */}
+          the local command row, not inside the canvas. Command-row hierarchy
+          (editor-shell-canon § 2 STREFA GÓRNA): secondary actions (Run
+          preview · Request approval) sit left of the primary accent action
+          (Confirm generate). Uses the canonical `z-sticky` token, not raw
+          z-index (canon § 3 z-index scale). */}
       <header
-        className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/90"
+        className="sticky top-0 z-sticky border-b border-c-border bg-c-surface/90 backdrop-blur-sm"
         data-testid="presentation-studio-command-row"
       >
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-3">
           <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <p className="text-xs font-medium uppercase tracking-wider text-c-text-muted">
               Presentation Studio
             </p>
-            <h1 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
+            <h1 className="truncate text-base font-semibold text-c-text">
               Studio preview surface
             </h1>
           </div>
@@ -547,7 +551,7 @@ export const PresentationStudioPage: React.FC = () => {
               type="button"
               onClick={runPreview}
               disabled={state.loading}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="inline-flex items-center gap-2 rounded-full border border-c-border bg-c-surface px-3.5 py-1.5 text-sm font-medium text-c-text-secondary shadow-sm transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-70"
               data-testid="presentation-studio-run-preview"
             >
               {state.loading ? (
@@ -578,11 +582,18 @@ export const PresentationStudioPage: React.FC = () => {
             ) : null}
 
             {approval.ticket ? (
+              <span
+                aria-hidden="true"
+                className="mx-1 h-5 w-px self-center bg-c-border"
+              />
+            ) : null}
+
+            {approval.ticket ? (
               <button
                 type="button"
                 onClick={confirmGenerate}
                 disabled={!canConfirmGenerate}
-                className="inline-flex items-center gap-2 rounded-full bg-navy-900 px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex items-center gap-2 rounded-full bg-c-accent px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-c-accent disabled:cursor-not-allowed disabled:opacity-70"
                 data-testid="presentation-studio-confirm-generate"
               >
                 {approval.pending === 'executing' ? (
@@ -727,11 +738,11 @@ export const PresentationStudioPage: React.FC = () => {
 
         {isEmpty && !state.loading && !state.error ? (
           <div
-            className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-10 text-center text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+            className="rounded-xl border border-dashed border-c-border bg-c-surface px-5 py-10 text-center text-sm text-c-text-secondary"
             data-testid="presentation-studio-empty"
           >
             Click{' '}
-            <strong className="font-semibold text-slate-900 dark:text-slate-100">
+            <strong className="font-semibold text-c-text">
               Run preview
             </strong>{' '}
             to fetch source pack, narrative plan, template plan, and generate previews. This page
@@ -756,28 +767,28 @@ export const PresentationStudioPage: React.FC = () => {
           {state.sourcePack ? (
             <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
               <div>
-                <dt className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <dt className="text-xs font-medium uppercase tracking-wider text-c-text-muted">
                   Sources
                 </dt>
-                <dd className="mt-1 font-medium text-slate-900 dark:text-slate-100">
+                <dd className="mt-1 font-medium text-c-text">
                   {state.sourcePack.sourcePack.sources.length}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <dt className="text-xs font-medium uppercase tracking-wider text-c-text-muted">
                   Missing inputs
                 </dt>
-                <dd className="mt-1 font-medium text-slate-900 dark:text-slate-100">
+                <dd className="mt-1 font-medium text-c-text">
                   {state.sourcePack.missingInputs.length}
                 </dd>
               </div>
               {state.sourcePack.warnings.length > 0 ? (
                 <div className="sm:col-span-2">
-                  <dt className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <dt className="text-xs font-medium uppercase tracking-wider text-c-text-muted">
                     Warnings
                   </dt>
                   <ul
-                    className="mt-1 list-disc space-y-0.5 pl-5 text-slate-700 dark:text-slate-300"
+                    className="mt-1 list-disc space-y-0.5 pl-5 text-c-text-secondary"
                     data-testid="source-pack-warnings"
                   >
                     {state.sourcePack.warnings.map((warning, idx) => (
@@ -788,7 +799,7 @@ export const PresentationStudioPage: React.FC = () => {
               ) : null}
             </dl>
           ) : (
-            <p className="text-sm text-slate-500 dark:text-slate-400">No data yet.</p>
+            <p className="text-sm text-c-text-muted">No data yet.</p>
           )}
         </SectionCard>
 
@@ -809,17 +820,17 @@ export const PresentationStudioPage: React.FC = () => {
           {state.narrativePlan ? (
             <div className="space-y-3 text-sm">
               {state.narrativePlan.narrativePlan.thesis ? (
-                <p className="text-slate-800 dark:text-slate-200">
+                <p className="text-c-text">
                   <span className="font-medium">Thesis:</span>{' '}
                   {state.narrativePlan.narrativePlan.thesis}
                 </p>
               ) : null}
-              <p className="text-slate-600 dark:text-slate-400">
+              <p className="text-c-text-secondary">
                 {state.narrativePlan.narrativePlan.slidePlan.length} slide narrative roles planned.
               </p>
               {state.narrativePlan.warnings.length > 0 ? (
                 <ul
-                  className="list-disc space-y-0.5 pl-5 text-slate-700 dark:text-slate-300"
+                  className="list-disc space-y-0.5 pl-5 text-c-text-secondary"
                   data-testid="narrative-warnings"
                 >
                   {state.narrativePlan.warnings.map((warning, idx) => (
@@ -829,7 +840,7 @@ export const PresentationStudioPage: React.FC = () => {
               ) : null}
             </div>
           ) : (
-            <p className="text-sm text-slate-500 dark:text-slate-400">No data yet.</p>
+            <p className="text-sm text-c-text-muted">No data yet.</p>
           )}
         </SectionCard>
 
@@ -850,14 +861,14 @@ export const PresentationStudioPage: React.FC = () => {
         >
           {state.templatePlan ? (
             <div className="space-y-3 text-sm">
-              <p className="text-slate-800 dark:text-slate-200">
+              <p className="text-c-text">
                 <span className="font-medium">Template:</span>{' '}
                 {state.templatePlan.templatePlan.templateName}{' '}
-                <span className="text-slate-500 dark:text-slate-400">
+                <span className="text-c-text-muted">
                   ({state.templatePlan.templatePlan.templateFamily})
                 </span>
               </p>
-              <p className="text-slate-600 dark:text-slate-400">
+              <p className="text-c-text-secondary">
                 {state.templatePlan.templatePlan.sections.length} sections,{' '}
                 {state.templatePlan.templatePlan.requiredInputs.length} required inputs,{' '}
                 {state.templatePlan.templatePlan.optionalInputs.length} optional.
@@ -870,7 +881,7 @@ export const PresentationStudioPage: React.FC = () => {
               </div>
             </div>
           ) : (
-            <p className="text-sm text-slate-500 dark:text-slate-400">No data yet.</p>
+            <p className="text-sm text-c-text-muted">No data yet.</p>
           )}
         </SectionCard>
 
@@ -897,13 +908,13 @@ export const PresentationStudioPage: React.FC = () => {
         >
           {state.generate ? (
             <div className="space-y-3 text-sm">
-              <p className="text-slate-800 dark:text-slate-200">
+              <p className="text-c-text">
                 <span className="font-medium">Outline:</span> {state.generate.outlinePreview.length}{' '}
                 items, {state.generate.estimatedSlideCount} estimated slides.
               </p>
-              <p className="text-slate-600 dark:text-slate-400">
+              <p className="text-c-text-secondary">
                 Template family:{' '}
-                <span className="font-medium text-slate-800 dark:text-slate-200">
+                <span className="font-medium text-c-text">
                   {state.generate.usedTemplate.family ?? '—'}
                 </span>
                 {'  ·  '}
@@ -921,7 +932,7 @@ export const PresentationStudioPage: React.FC = () => {
               ) : null}
             </div>
           ) : (
-            <p className="text-sm text-slate-500 dark:text-slate-400">No data yet.</p>
+            <p className="text-sm text-c-text-muted">No data yet.</p>
           )}
         </SectionCard>
 

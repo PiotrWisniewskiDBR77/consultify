@@ -500,7 +500,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
             />
             <button
               onClick={() => void addPaymentMethod()}
-              className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800"
+              className="rounded-lg bg-c-text text-c-bg px-4 py-2 text-sm font-medium hover:bg-c-text-secondary"
             >
               Add method
             </button>
@@ -587,7 +587,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
             ))}
             <button
               onClick={() => void saveAlerts()}
-              className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800"
+              className="rounded-lg bg-c-text text-c-bg px-4 py-2 text-sm font-medium hover:bg-c-text-secondary"
             >
               Save alerts
             </button>
@@ -623,7 +623,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
             />
             <button
               onClick={() => void saveTaxSettings()}
-              className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800"
+              className="rounded-lg bg-c-text text-c-bg px-4 py-2 text-sm font-medium hover:bg-c-text-secondary"
             >
               Save tax settings
             </button>
@@ -717,7 +717,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
               className={cn(
                 'rounded-xl px-4 py-2 text-sm font-medium transition',
                 activeTab === tab.id
-                  ? 'bg-navy-900 text-white'
+                  ? 'bg-c-text text-c-bg'
                   : 'bg-transparent text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/5'
               )}
             >

@@ -31,10 +31,10 @@ export const ForWhomSection: React.FC = () => {
             initial={{ opacity: 0, y: 8 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 mb-5"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-c-success/30 bg-c-success/10 mb-5"
           >
-            <BarChart3 size={12} className="text-emerald-600 dark:text-emerald-400" />
-            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+            <BarChart3 size={12} className="text-c-success" />
+            <span className="text-xs font-bold text-c-success uppercase tracking-wider">
               {t('landing.forWhom.badge', 'For whom')}
             </span>
           </motion.div>
@@ -44,7 +44,7 @@ export const ForWhomSection: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
             viewport={{ once: true }}
-            className="text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-4"
+            className="text-4xl lg:text-5xl font-black text-c-text tracking-tight mb-4"
           >
             {t('landing.forWhom.heading', 'Built for the ambitious.')}
           </motion.h2>
@@ -53,7 +53,7 @@ export const ForWhomSection: React.FC = () => {
             whileInView={{ opacity: 1 }}
             transition={{ delay: 0.16 }}
             viewport={{ once: true }}
-            className="text-base text-slate-500 dark:text-white/50 max-w-xl mx-auto"
+            className="text-base text-c-text-muted max-w-xl mx-auto"
           >
             {t(
               'landing.forWhom.sub',
@@ -77,7 +77,7 @@ export const ForWhomSection: React.FC = () => {
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.08 }}
                 className="group relative p-7 rounded-2xl transition-all duration-300 hover:scale-[1.01]
-                  bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08]
+                  bg-c-surface border border-c-border
                   shadow-sm dark:shadow-none"
                 onMouseEnter={(e) => {
                   const el = e.currentTarget as HTMLDivElement;
@@ -119,10 +119,10 @@ export const ForWhomSection: React.FC = () => {
                     </span>
                   </div>
 
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3 leading-tight">
+                  <h3 className="text-xl font-black text-c-text mb-3 leading-tight">
                     {t(`${prefix}.headline`)}
                   </h3>
-                  <p className="text-sm text-slate-500 dark:text-white/50 leading-relaxed mb-5">
+                  <p className="text-sm text-c-text-muted leading-relaxed mb-5">
                     {t(`${prefix}.description`)}
                   </p>
 
@@ -133,7 +133,7 @@ export const ForWhomSection: React.FC = () => {
                           className="w-1.5 h-1.5 rounded-full shrink-0"
                           style={{ background: visual.color }}
                         />
-                        <span className="text-xs text-slate-500 dark:text-white/55 font-medium">
+                        <span className="text-xs text-c-text-muted font-medium">
                           {point}
                         </span>
                       </div>

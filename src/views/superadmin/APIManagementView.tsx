@@ -617,7 +617,7 @@ export const APIManagementView: React.FC = () => {
         <div className="bg-emerald-50 dark:bg-emerald-500/10 rounded-xl p-6 border border-emerald-200 dark:border-emerald-500/20">
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 rounded-lg bg-emerald-500 flex items-center justify-center">
-              <CheckCircle2 className="text-white" size={20} />
+              <CheckCircle2 className="text-c-text" size={20} />
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-emerald-900 dark:text-emerald-300">
@@ -973,7 +973,7 @@ export const APIManagementView: React.FC = () => {
           <button
             disabled
             title={webhookWorkflowUnavailableReason}
-            className="px-4 py-2 bg-navy-900 text-white rounded-lg font-medium flex items-center gap-2 opacity-50 cursor-not-allowed"
+            className="px-4 py-2 bg-c-text text-c-bg rounded-lg font-medium flex items-center gap-2 opacity-50 cursor-not-allowed"
           >
             <Plus size={16} />
             Add Webhook

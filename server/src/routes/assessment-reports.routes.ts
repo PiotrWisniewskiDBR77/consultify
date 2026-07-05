@@ -956,6 +956,114 @@ router.get('/:reportId/full', async (req: AuthRequest, res: Response) => {
 });
 
 // =============================================================================
+// PUBLISHING-GRADE DRD CLIENT REPORT (HTML → print → PDF), AI narration live
+// =============================================================================
+/**
+ * GET /api/assessment-reports/:reportId/drd-report
+ * Generate the standalone, print-CSS DRD client report as HTML. The executive
+ * summary + chapter/gap narratives are authored by the fail-safe LLM narrator
+ * (`llmService` injected server-side); numbers stay engine-exact. On any LLM
+ * failure the narrator falls back to the deterministic stub — the report always
+ * renders. Returns `text/html` by default (open in a window and print → PDF);
+ * pass `?format=json` to get `{ html, narrative }`.
+ */
+router.get('/:reportId/drd-report', async (req: AuthRequest, res: Response) => {
+  try {
+    await ensureAssessmentReportsSchema();
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
+    const { reportId } = req.params;
+    const format = String((req.query.format as string) || 'html').toLowerCase();
+
+    const reportRow = await get<any>(
+      `SELECT r.*, a.name as assessmentName, a.assessment_type as assessmentType
+       FROM assessment_reports r
+       LEFT JOIN assessments a ON a.id = r.assessment_id
+       WHERE r.id = ? AND r.organization_id = ?`,
+      [reportId, organizationId]
+    );
+    if (!reportRow) return res.status(404).json({ error: 'Report not found' });
+
+    const axisData = safeJsonParse<Record<string, { actual?: number; target?: number }>>(
+      reportRow.axis_data,
+      {}
+    );
+
+    // Resolve the client/organization name for the report cover.
+    let organizationName = 'Organizacja';
+    try {
+      const orgRow = await get<any>(`SELECT name FROM organizations WHERE id = ?`, [organizationId]);
+      if (orgRow?.name) organizationName = orgRow.name;
+    } catch {
+      /* non-fatal — fall back to default label */
+    }
+
+    const language: 'pl' | 'en' =
+      String((req.query.lang as string) || reportRow.language || 'pl').toLowerCase() === 'en'
+        ? 'en'
+        : 'pl';
+
+    // Wire the real LLM narrator (fail-safe). If the service is unavailable the
+    // narrator is simply omitted and the deterministic stub authors the prose.
+    let llm: any = null;
+    try {
+      const mod = await import('../services/ai/llmService.js');
+      llm = mod.llmService || mod.default || null;
+    } catch {
+      logger.warn('[AssessmentReports] LLM service unavailable for DRD report — using deterministic narrator');
+    }
+
+    const { buildDrdReportHtmlServer } = await import('../services/report/drdReportService.js');
+    const { html, narrative, model } = await buildDrdReportHtmlServer({
+      axisData,
+      meta: {
+        organizationName,
+        language,
+        assessmentName: reportRow.assessmentName || undefined,
+        reportDate: reportRow.created_at || undefined,
+      },
+      llm: llm || undefined,
+      logger: {
+        warn: (msg: string, meta?: unknown) => logger.warn(`[DRDReport] ${msg}`, meta),
+      },
+    });
+
+    // CONCLUSION_LAYER bridge: persist the report's executive conclusion as a
+    // Conclusion candidate. Fire-and-forget + fail-safe — a Conclusions-layer
+    // failure must never break report generation.
+    try {
+      const { safePersistDrdReportConclusion } = await import(
+        '../services/conclusions/reportConclusionBridge.js'
+      );
+      void safePersistDrdReportConclusion(
+        {
+          organizationId,
+          actorUserId: String(req.user?.id || 'system'),
+          model,
+          source: {
+            reportId: String(reportId),
+            reportTitle: reportRow.name || reportRow.assessmentName || null,
+            projectId: reportRow.project_id || null,
+          },
+        },
+        { logger: { warn: (msg: string, meta?: unknown) => logger.warn(msg, meta) } }
+      );
+    } catch {
+      /* bridge module unavailable — report generation continues */
+    }
+
+    if (format === 'json') {
+      return res.json({ html, narrative });
+    }
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.send(html);
+  } catch (err: any) {
+    logger.error('[AssessmentReports] Error generating DRD report:', err);
+    return res.status(500).json({ error: 'Failed to generate DRD report', message: err?.message });
+  }
+});
+
+// =============================================================================
 // GENERATE / REGENERATE REPORT SECTIONS FROM TEMPLATE
 // =============================================================================
 router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {
@@ -1645,7 +1753,7 @@ router.get('/:reportId', async (req: AuthRequest, res: Response) => {
 
     const report = await new Promise<any>((resolve, reject) => {
       db.get(
-        `SELECT r.*, a.name as assessmentName
+        `SELECT r.*, a.name as assessmentName, a.assessment_type as assessmentType
          FROM assessment_reports r
          LEFT JOIN assessments a ON r.assessment_id = a.id
          WHERE r.id = ? AND r.organization_id = ?`,
@@ -1663,6 +1771,13 @@ router.get('/:reportId', async (req: AuthRequest, res: Response) => {
 
     const detailed = safeJsonParse<DetailedAnalysis>(report.detailed_analysis, {});
     const recommendations = safeJsonParse<string[]>(report.recommendations, []);
+    // axis_data is stored at report-creation time by computeAxisDataFromAssessment:
+    //  - DRD:  { "1": {actual,target}, … } (numeric axis ids)
+    //  - SIRI: { _framework:'SIRI', block_*, dim_*, area_* }
+    //  - ADMA: { _framework:'ADMA', pillar_*, dim_* }
+    // Returning it (instead of {}) is what lets the report view mount the
+    // per-framework template (OXFORD #103/#104). Fail-soft: parse errors → {}.
+    const axisData = safeJsonParse<Record<string, any>>(report.axis_data, {});
 
     res.json({
       id: report.id,
@@ -1670,13 +1785,15 @@ router.get('/:reportId', async (req: AuthRequest, res: Response) => {
       status: (report.status || 'DRAFT').toUpperCase(),
       assessmentId: report.assessment_id,
       assessmentName: report.assessmentName || 'Assessment',
+      assessmentType: report.assessmentType || null,
+      projectId: report.project_id || null,
       content: {
         executiveSummary: report.executive_summary || '',
         keyFindings: detailed.keyFindings || [],
         recommendations,
         notes: detailed.notes || '',
       },
-      axisData: {},
+      axisData: axisData && typeof axisData === 'object' ? axisData : {},
       progress: 0,
       isComplete: false,
       createdAt: report.created_at,

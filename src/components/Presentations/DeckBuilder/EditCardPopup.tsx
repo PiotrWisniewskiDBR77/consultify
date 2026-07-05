@@ -140,22 +140,22 @@ export const EditCardPopup: React.FC<EditCardPopupProps> = ({
   const filteredActions = QUICK_ACTIONS.filter((a) => a.category === activeCategory);
 
   return (
-    <div className="absolute bottom-4 left-4 w-72 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl z-40 overflow-hidden">
+    <div className="absolute bottom-4 left-4 w-72 bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl z-40 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-navy-700">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
         <div className="flex items-center gap-1.5">
-          <Sparkles size={14} className="text-primary-500" />
-          <span className="text-xs font-semibold text-slate-700 dark:text-white">
+          <Sparkles size={14} className="text-c-accent" />
+          <span className="text-xs font-semibold text-c-text">
             {t('presentations.builder.editCard.title', 'Edit this card')}
           </span>
         </div>
-        <button onClick={onClose} className="text-slate-600 hover:text-slate-600 text-xs">
+        <button onClick={onClose} className="text-c-text-secondary hover:text-c-text-secondary text-xs">
           ESC
         </button>
       </div>
 
       {/* Prompt field */}
-      <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-700">
+      <div className="px-3 py-2 border-b border-c-border-subtle">
         <div className="flex gap-2">
           <input
             value={prompt}
@@ -165,12 +165,12 @@ export const EditCardPopup: React.FC<EditCardPopupProps> = ({
               'presentations.builder.editCard.prompt',
               'How would you like to edit this card?'
             )}
-            className="flex-1 text-xs bg-transparent border-none outline-none focus:ring-2 focus:ring-primary-500/30 text-slate-700 dark:text-slate-300"
+            className="flex-1 text-xs bg-transparent border-none outline-none focus:ring-2 focus:ring-c-focus text-c-text"
           />
           <button
             onClick={handleSend}
             disabled={!prompt.trim()}
-            className="p-1 text-primary-500 disabled:opacity-30"
+            className="p-1 text-c-accent disabled:opacity-30"
           >
             <Send size={12} />
           </button>
@@ -178,15 +178,15 @@ export const EditCardPopup: React.FC<EditCardPopupProps> = ({
       </div>
 
       {/* Category tabs */}
-      <div className="flex border-b border-slate-200 dark:border-navy-700">
+      <div className="flex border-b border-c-border-subtle">
         {CATEGORIES.map((cat) => (
           <button
             key={cat.id}
             onClick={() => setActiveCategory(cat.id)}
             className={`flex-1 px-2 py-1.5 text-[10px] font-medium transition-colors ${
               activeCategory === cat.id
-                ? 'text-primary-600 border-b-2 border-primary-500'
-                : 'text-slate-600 hover:text-slate-600'
+                ? 'text-c-accent border-b-2 border-c-accent'
+                : 'text-c-text-secondary hover:text-c-text-secondary'
             }`}
           >
             {cat.label}
@@ -202,7 +202,7 @@ export const EditCardPopup: React.FC<EditCardPopupProps> = ({
             <button
               key={action.id}
               onClick={() => onQuickAction(action.id)}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-primary-50 dark:hover:bg-primary-500/10 hover:text-primary-600 transition-colors"
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-c-text-secondary hover:bg-c-accent-soft hover:text-c-accent transition-colors"
             >
               <Icon size={12} className="flex-shrink-0" />
               {t(action.labelKey, action.id.replace(/_/g, ' '))}

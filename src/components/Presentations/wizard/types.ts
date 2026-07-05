@@ -516,6 +516,8 @@ export interface SourceArtifact {
     recordId?: string;
     family?: string;
   };
+  /** Draft/throwaway flag (M17 junk filter). Hidden from the default picker. */
+  isDraft?: boolean;
   data?: unknown;
 }
 
@@ -644,12 +646,33 @@ export interface CardBlock {
   ai_editable: boolean;
 }
 
+/**
+ * STEP 1b — Per-slide composition plan carried from B1
+ * (presentationLayoutDirectorService.SlideComposition). Additive +
+ * back-compatible: when absent, the renderer keeps its pure heuristic
+ * (today's behaviour). When present, `layoutVariantId` is an archetype id
+ * the renderer maps to a LAYOUT_TEMPLATES entry, and `regions` carries the
+ * AI's area assignment so assignBlocksToRegions can prefer it.
+ */
+export interface CardComposition {
+  layoutVariantId?: string;
+  regions?: { area: string; blockTypes?: string[] }[];
+  emphasis?: string;
+}
+
 export interface DeckCard {
   card_id: string;
   deck_id: string;
   order_index: number;
   intent: CardIntent;
+  /**
+   * Heuristic sentinel ('auto') OR an AI/archetype-chosen layout id. When set
+   * to a known LAYOUT_TEMPLATES id (or a mappable archetype via `composition`),
+   * the renderer honours it and skips the heuristic. 'auto'/'' → heuristic.
+   */
   layout_id: string;
+  /** STEP 1b — optional B1 composition plan; absent → pure heuristic. */
+  composition?: CardComposition | null;
   title: string;
   blocks: CardBlock[];
   source_refs: { artifact_id: string; artifact_type: string; artifact_name: string }[];

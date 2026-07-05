@@ -37,7 +37,7 @@ export const PMOStatusBar: React.FC = () => {
   // Don't render if loading or still initializing
   if (isLoading) {
     return (
-      <div className="bg-navy-950 border-b border-white/5 text-white h-10 px-4 flex items-center">
+      <div className="bg-c-surface border-b border-c-border-subtle text-c-text h-10 px-4 flex items-center">
         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-500">
           <div className="w-2 h-2 rounded-full bg-slate-50 dark:bg-navy-800/300 animate-pulse" />
           <span className="text-xs">Loading PMO context...</span>
@@ -49,7 +49,7 @@ export const PMOStatusBar: React.FC = () => {
   // Show minimal bar when no phase data (no project selected)
   if (!currentPhase) {
     return (
-      <div className="bg-navy-950 border-b border-white/5 text-white h-10 px-4 flex items-center">
+      <div className="bg-c-surface border-b border-c-border-subtle text-c-text h-10 px-4 flex items-center">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-slate-50 dark:bg-navy-800/300" />
           <span className="text-xs text-slate-600 dark:text-slate-500">
@@ -117,7 +117,7 @@ export const PMOStatusBar: React.FC = () => {
   };
 
   return (
-    <div className="bg-navy-950 border-b border-white/5 text-white">
+    <div className="bg-c-surface border-b border-c-border-subtle text-c-text">
       {/* Main Bar */}
       <div
         className="h-10 px-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
@@ -130,11 +130,11 @@ export const PMOStatusBar: React.FC = () => {
             <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-500">
               Phase {phaseNumber}/{totalPhases}
             </span>
-            <span className="text-sm font-semibold text-white">{currentPhase || 'Loading...'}</span>
+            <span className="text-sm font-semibold text-c-text">{currentPhase || 'Loading...'}</span>
           </div>
 
           {/* Separator */}
-          <div className="w-px h-4 bg-white/10" />
+          <div className="w-px h-4 bg-c-border" />
 
           {/* Gate Status */}
           <GateIndicator />
@@ -142,7 +142,7 @@ export const PMOStatusBar: React.FC = () => {
           {/* Issues Count */}
           {hasIssues && (
             <>
-              <div className="w-px h-4 bg-white/10" />
+              <div className="w-px h-4 bg-c-border" />
               <span className="flex items-center gap-1 text-xs text-amber-400">
                 <AlertTriangle size={14} />
                 {blockingIssues.length + criticalMessages.length} Issues
@@ -162,7 +162,7 @@ export const PMOStatusBar: React.FC = () => {
 
       {/* Expanded Details */}
       {isExpanded && (
-        <div className="px-4 pb-4 space-y-3 border-t border-white/5 bg-navy-900/50">
+        <div className="px-4 pb-4 space-y-3 border-t border-c-border-subtle bg-c-surface-raised">
           {/* System Messages */}
           {(criticalMessages.length > 0 || warningMessages.length > 0) && (
             <div className="pt-3 space-y-2">
@@ -206,11 +206,11 @@ export const PMOStatusBar: React.FC = () => {
                 {blockingIssues.map((issue) => (
                   <div
                     key={issue.id}
-                    className="flex items-start gap-2 p-2 bg-slate-50/30 dark:bg-navy-950/20 rounded border border-white/10 hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors cursor-pointer"
+                    className="flex items-start gap-2 p-2 bg-slate-50/30 dark:bg-navy-950/20 rounded border border-c-border hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors cursor-pointer"
                   >
                     {getIssueIcon(issue.type)}
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-white truncate">{issue.title}</p>
+                      <p className="text-xs font-medium text-c-text truncate">{issue.title}</p>
                       <p className="text-[10px] text-slate-600 dark:text-slate-500">
                         {issue.reason}
                       </p>

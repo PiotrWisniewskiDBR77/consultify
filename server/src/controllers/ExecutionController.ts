@@ -11,6 +11,13 @@
 import type { Response } from 'express';
 
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
+import { getActualCostByInitiative } from '../services/executionBudgetService.js';
+import { derivePortfolioEvm, evmScheduleHealth } from '../services/evmService.js';
+import {
+  calculateRiskScore,
+  categorizeScore,
+  DEFAULT_THRESHOLDS,
+} from '../services/raidScoringService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
@@ -38,6 +45,52 @@ interface InitiativeHealthItem {
   whyRed?: WhyRedChain;
 }
 
+/**
+ * M14/F3 — Cost-of-Delay ranking for the action queue (WSJF numerator).
+ * CoD ≈ severity weight × urgency (days late) × blast radius (linked to an
+ * initiative ⇒ affects more). No per-item job-size signal yet, so this is the
+ * CoD numerator; the WSJF ÷ effort divisor lands when effort is captured.
+ * Exported for unit testing the ranking.
+ */
+export function actionQueueCodScore(item: {
+  type?: string;
+  priority?: string;
+  score?: number;
+  severity?: string;
+  dueDate?: string | null;
+  periodStart?: string | null;
+  initiativeId?: string | null;
+}): number {
+  const dayMs = 86_400_000;
+  const daysLate = (ts?: string | null): number =>
+    ts ? Math.max(0, (Date.now() - new Date(ts).getTime()) / dayMs) : 0;
+  const weight = (): number => {
+    switch (item.type) {
+      case 'decision_overdue':
+        return String(item.priority || '').toUpperCase() === 'CRITICAL' ? 10 : 6;
+      case 'risk_high':
+        return typeof item.score === 'number'
+          ? item.score >= 10
+            ? 9
+            : item.score >= 8
+              ? 7
+              : 5
+          : 6;
+      case 'kpi_deviation_no_plan':
+        return String(item.severity || '').toUpperCase() === 'RED' ? 6 : 4;
+      case 'task_overdue':
+        return 4;
+      case 'comm_overdue':
+        return 3;
+      default:
+        return 2;
+    }
+  };
+  const urgency = 1 + daysLate(item.dueDate ?? item.periodStart);
+  const blast = item.initiativeId ? 1.25 : 1;
+  return weight() * urgency * blast;
+}
+
 interface PortfolioHealthMetrics {
   healthScore: number;
   onTrackCount: number;
@@ -54,6 +107,11 @@ interface PortfolioHealthMetrics {
     risk: number;
   };
   initiativeHealth?: InitiativeHealthItem[];
+  // F2 — additive EVM roll-up (SPI/CPI/EAC…). Drives healthScore only when the
+  // M14/2.4 flag (EXECUTION_EVM_HEALTH_ENABLED) is on and SPI coverage exists.
+  evm?: ReturnType<typeof derivePortfolioEvm>;
+  // M14/2.4 — true when the execution dimension + healthScore are SPI-driven.
+  evmHealthApplied?: boolean;
 }
 
 export class ExecutionController {
@@ -306,7 +364,7 @@ export class ExecutionController {
 
       // Get initiatives in execution phase
       const initiativesSql = `
-        SELECT id, name, status, progress, cost_capex, cost_opex
+        SELECT id, name, status, progress, cost_capex, cost_opex, planned_start_date, planned_end_date
         FROM initiatives
         WHERE project_id = ? AND organization_id = ?
           AND status IN ('EXECUTING', 'BLOCKED', 'DONE', 'CANCELLED', 'ARCHIVED')
@@ -379,10 +437,12 @@ export class ExecutionController {
 
       const healthScore = Math.round((avgProgress + decisionHealth + taskHealth + riskHealth) / 4);
 
-      // Budget health (simplified - percentage of initiatives with budget data)
-      const budgetValues = initiatives.filter((i: any) => i.cost_capex || i.cost_opex).length;
-      const budgetHealth =
-        initiatives.length > 0 ? Math.round((budgetValues / initiatives.length) * 100) : null;
+      // Budget health: NULL when there is no actual-spend signal here. The old
+      // value returned budget-DATA COVERAGE (% of initiatives with a budget set)
+      // mislabelled as "health" — a number that looked like a score but measured
+      // completeness. Honest null > misleading number; real budget health
+      // (CPI/overrun) is computed where actual spend exists (executionBudgetService, F2).
+      const budgetHealth = null;
 
       // V4-EXEC-01: Per-initiative health + whyRed chain
       const initiativeHealth: InitiativeHealthItem[] = [];
@@ -481,8 +541,39 @@ export class ExecutionController {
         });
       }
 
+      // F2 — additive portfolio EVM roll-up. PV from schedule, EV from progress,
+      // AC from actual budget entries (CPI now real). Honest coverage shows how
+      // many initiatives had a cost baseline. Does not alter healthScore yet.
+      const actualByIni = await getActualCostByInitiative(
+        orgId,
+        (initiatives as any[]).map((i) => String(i.id))
+      ).catch(() => new Map<string, number>());
+      const portfolioEvm = derivePortfolioEvm(
+        (initiatives as any[]).map((i) => ({
+          bac: (Number(i.cost_capex) || 0) + (Number(i.cost_opex) || 0),
+          plannedStart: i.planned_start_date,
+          plannedEnd: i.planned_end_date,
+          progressPct: Number(i.progress) || 0,
+          actualCost: actualByIni.get(String(i.id)) ?? null,
+        })),
+        Date.now()
+      );
+
+      // M14/2.4 — EVM drives healthScore (flag-gated, default OFF for live safety).
+      // When on AND we have SPI coverage, the execution dimension becomes the PMBOK
+      // schedule-performance read (SPI×100) instead of naive avg-progress, and the
+      // composite healthScore is recomputed. Falls back to avg-progress when SPI is
+      // unknown (no baselines) so the number never goes blank.
+      const evmHealthOn = process.env.EXECUTION_EVM_HEALTH_ENABLED === 'true';
+      const schedHealth = evmScheduleHealth(portfolioEvm?.spi);
+      const evmHealthApplied = evmHealthOn && schedHealth != null;
+      const executionDim = evmHealthApplied ? (schedHealth as number) : avgProgress;
+      const effectiveHealthScore = evmHealthApplied
+        ? Math.round((executionDim + decisionHealth + taskHealth + riskHealth) / 4)
+        : healthScore;
+
       const metrics: PortfolioHealthMetrics = {
-        healthScore,
+        healthScore: effectiveHealthScore,
         onTrackCount,
         atRiskCount,
         blockedCount,
@@ -491,12 +582,14 @@ export class ExecutionController {
         totalDecisions,
         budgetHealth,
         breakdown: {
-          execution: avgProgress,
+          execution: executionDim,
           decisions: decisionHealth,
           capacity: taskHealth,
           risk: riskHealth,
         },
         initiativeHealth,
+        evm: portfolioEvm,
+        evmHealthApplied,
       };
 
       res.json(metrics);
@@ -817,12 +910,23 @@ export class ExecutionController {
         WHERE r.organization_id = ?
           AND UPPER(r.type) = 'RISK'
           AND UPPER(COALESCE(r.status, 'OPEN')) IN ('OPEN', 'IN_PROGRESS')
-          AND (UPPER(r.impact) IN ('CRITICAL', 'HIGH') OR UPPER(COALESCE(r.probability, '')) = 'HIGH')
           ${projectFilterR}
-        ORDER BY CASE UPPER(r.impact) WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 ELSE 3 END
-        LIMIT 30
+        LIMIT 200
       `;
-      const highRisks = await safeQueryAll(risksSql, paramsRisk);
+      const highRisksRaw = await safeQueryAll(risksSql, paramsRisk);
+      // F1 — single canonical risk classifier (raidScoringService). Replaces the
+      // ad-hoc `impact IN (CRITICAL,HIGH) OR probability=HIGH` SQL filter so the
+      // action queue's "high risk" matches the heatmap and signals: surface
+      // AMBER+RED (categorizeScore !== GREEN), ranked by the P×I score. One
+      // definition of "high risk" across the module (was 3 divergent ones).
+      const highRisks = (highRisksRaw as any[])
+        .map((r) => ({
+          ...r,
+          _score: calculateRiskScore(String(r.probability || ''), String(r.impact || '')),
+        }))
+        .filter((r) => categorizeScore(r._score, DEFAULT_THRESHOLDS) !== 'GREEN')
+        .sort((a, b) => b._score - a._score)
+        .slice(0, 30);
 
       // Overdue tasks (not DONE, past due)
       const tasksSql = `
@@ -901,6 +1005,7 @@ export class ExecutionController {
           title: r.title,
           impact: r.impact,
           probability: r.probability,
+          score: r._score,
           initiativeId: r.initiative_id,
           initiativeName: r.initiative_name,
         })),
@@ -935,30 +1040,7 @@ export class ExecutionController {
           initiativeName: k.initiative_name,
           ownerName: k.owner_name,
         })),
-      ].sort((a: any, b: any) => {
-        const severityRank = (item: any) => {
-          if (item.type === 'kpi_deviation_no_plan') {
-            return String(item.severity || '').toUpperCase() === 'RED' ? 0 : 1;
-          }
-          if (item.type === 'risk_high') {
-            return String(item.impact || '').toUpperCase() === 'CRITICAL' ? 0 : 1;
-          }
-          return 2;
-        };
-        const rankDiff = severityRank(a) - severityRank(b);
-        if (rankDiff !== 0) return rankDiff;
-        const aTs = a.dueDate
-          ? new Date(a.dueDate).getTime()
-          : a.periodStart
-            ? new Date(a.periodStart).getTime()
-            : Number.POSITIVE_INFINITY;
-        const bTs = b.dueDate
-          ? new Date(b.dueDate).getTime()
-          : b.periodStart
-            ? new Date(b.periodStart).getTime()
-            : Number.POSITIVE_INFINITY;
-        return aTs - bTs;
-      });
+      ].sort((a: any, b: any) => actionQueueCodScore(b) - actionQueueCodScore(a));
 
       res.json({
         items,

@@ -1515,7 +1515,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
           >
             <div className="flex items-start justify-between gap-3 border-b border-white/8 bg-white/[0.03] px-4 py-3">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-white">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-c-accent text-white">
                   <TeresaMark size={18} />
                 </div>
                 <div>
@@ -1551,7 +1551,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                     <div
                       className={`max-w-[88%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                         message.role === 'user'
-                          ? 'bg-navy-900 text-white'
+                          ? 'bg-c-accent text-white'
                           : 'bg-white/[0.06] text-white/85'
                       }`}
                     >
@@ -1622,7 +1622,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                     <button
                       type="button"
                       onClick={() => triggerHandoff('trial')}
-                      className="rounded-full border border-primary-300/20 bg-primary-500/10 px-3 py-1.5 text-xs font-medium text-primary-100 transition-colors hover:bg-primary-500/20"
+                      className="rounded-full border border-c-accent/20 bg-c-accent-soft px-3 py-1.5 text-xs font-medium text-c-accent transition-colors hover:bg-c-accent/20"
                     >
                       {copy.trialCta}
                     </button>
@@ -1666,7 +1666,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                   }}
                   rows={1}
                   placeholder={copy.placeholder}
-                  className="min-h-[44px] flex-1 resize-none rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-primary-400/40"
+                  className="min-h-[44px] flex-1 resize-none rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-c-accent/40"
                 />
                 <button
                   type="button"
@@ -1691,7 +1691,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                       ? 'bg-danger-500 shadow-[0_0_28px_rgba(244,63,94,0.45)] hover:bg-danger-400'
                       : actionMode === 'mic'
                         ? 'bg-blue-500 shadow-[0_0_28px_rgba(6,182,212,0.45)] hover:bg-blue-400'
-                        : 'bg-primary-600 hover:bg-primary-500'
+                        : 'bg-c-accent hover:opacity-90'
                   }`}
                   aria-label={
                     actionMode === 'send'
@@ -1733,13 +1733,13 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
         aria-label={copy.open}
         className="group inline-flex items-center gap-3 rounded-full border border-white/10 bg-[#140D31]/95 px-4 py-3 text-white shadow-[0_16px_32px_rgba(0,0,0,0.35)] backdrop-blur-xl transition-all hover:bg-[#19123A]"
       >
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-[0_0_30px_rgba(165,28,48,0.35)]">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-c-accent text-white shadow-[0_0_30px_rgba(165,28,48,0.35)]">
           {isOpen ? <X size={18} /> : <MessageCircle size={18} />}
         </div>
         <div className="hidden text-left sm:block">
           <p className="flex items-center gap-1 text-sm font-semibold text-white">
             <span>{copy.open}</span>
-            <Sparkles size={13} className="text-primary-300" />
+            <Sparkles size={13} className="text-c-accent" />
           </p>
           <p className="text-[11px] text-white/45">{copy.privacyBadge}</p>
         </div>

@@ -65,11 +65,11 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
   return (
     <div className={`space-y-6 ${className}`}>
       <div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+        <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
           <Key size={20} />
           {t('settings.password.title', 'Change Password')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-sm text-c-text-muted mt-1">
           {t('settings.password.description', 'Update your password to keep your account secure')}
         </p>
       </div>
@@ -78,7 +78,7 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
         <div>
           <label
             htmlFor="current-password"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+            className="block text-sm font-medium text-c-text-secondary mb-1"
           >
             {t('settings.password.current', 'Current Password')}
           </label>
@@ -88,7 +88,7 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
               type={showPasswords ? 'text' : 'password'}
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand focus:border-transparent"
+              className="w-full px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
             />
           </div>
         </div>
@@ -96,7 +96,7 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
         <div>
           <label
             htmlFor="new-password"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+            className="block text-sm font-medium text-c-text-secondary mb-1"
           >
             {t('settings.password.new', 'New Password')}
           </label>
@@ -106,12 +106,12 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
               type={showPasswords ? 'text' : 'password'}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand focus:border-transparent"
+              className="w-full px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
             />
             <button
               type="button"
               onClick={() => setShowPasswords(!showPasswords)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600 dark:text-slate-400"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-c-text-secondary hover:text-c-text-secondary"
             >
               {showPasswords ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -123,7 +123,7 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
             {requirements.map((req, i) => (
               <div
                 key={i}
-                className={`flex items-center gap-2 text-sm ${req.met ? 'text-green-600' : 'text-slate-600 dark:text-slate-500'}`}
+                className={`flex items-center gap-2 text-sm ${req.met ? 'text-green-600' : 'text-c-text-secondary'}`}
               >
                 {req.met ? <Check size={14} /> : <X size={14} />}
                 {req.text}
@@ -135,7 +135,7 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
         <div>
           <label
             htmlFor="confirm-password"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+            className="block text-sm font-medium text-c-text-secondary mb-1"
           >
             {t('settings.password.confirm', 'Confirm New Password')}
           </label>
@@ -144,10 +144,10 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
             type={showPasswords ? 'text' : 'password'}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand focus:border-transparent"
+            className="w-full px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
           />
           {confirmPassword && !passwordsMatch && (
-            <p className="text-sm text-danger-500 mt-1">
+            <p className="text-sm text-rose-500 mt-1">
               {t('settings.password.mismatch', 'Passwords do not match')}
             </p>
           )}
@@ -156,7 +156,7 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
         <button
           type="submit"
           disabled={!allRequirementsMet || !passwordsMatch || loading}
-          className="px-4 py-2 bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 rounded-lg hover:bg-navy-800 dark:hover:bg-[#DDE5EF] dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loading
             ? t('common.saving', 'Saving...')

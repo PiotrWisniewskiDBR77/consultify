@@ -132,8 +132,8 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
       {/* Header */}
       <div className="flex items-center gap-2">
         <History className="w-5 h-5 text-primary-400" />
-        <h3 className="font-semibold text-white">Version History</h3>
-        <span className="px-2 py-0.5 bg-slate-700 text-slate-600 text-xs rounded-full">
+        <h3 className="font-semibold text-c-text">Version History</h3>
+        <span className="px-2 py-0.5 bg-c-surface-raised text-slate-600 text-xs rounded-full">
           {versions.length} versions
         </span>
       </div>
@@ -147,7 +147,7 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
       ) : (
         <div className="relative">
           {/* Timeline line */}
-          <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-700/50" />
+          <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-c-surface-raised/50" />
 
           <div className="space-y-4">
             {versions.map((version, index) => {
@@ -160,26 +160,26 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
                   <div
                     className={`absolute left-2.5 w-3 h-3 rounded-full border-2 ${
                       isCurrent
-                        ? 'bg-navy-900 border-navy-800'
-                        : 'bg-slate-800 border-slate-600'
+                        ? 'bg-c-surface border-c-border'
+                        : 'bg-c-surface-raised border-slate-600'
                     }`}
                   />
 
                   <div
                     className={`bg-slate-800/50 border rounded-lg overflow-hidden ${
-                      isCurrent ? 'border-primary-500/30' : 'border-slate-700/50'
+                      isCurrent ? 'border-primary-500/30' : 'border-c-border/50'
                     }`}
                   >
                     {/* Header */}
                     <button
                       onClick={() => setExpandedVersion(isExpanded ? null : version.version)}
-                      className="w-full flex items-center justify-between p-4 hover:bg-slate-700/30 transition-colors"
+                      className="w-full flex items-center justify-between p-4 hover:bg-c-surface-raised/30 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2">
                           <span
                             className={`font-mono font-semibold ${
-                              isCurrent ? 'text-primary-400' : 'text-white'
+                              isCurrent ? 'text-primary-400' : 'text-c-text'
                             }`}
                           >
                             v{version.version}
@@ -212,7 +212,7 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
 
                     {/* Expanded content */}
                     {isExpanded && (
-                      <div className="px-4 pb-4 border-t border-slate-700/50">
+                      <div className="px-4 pb-4 border-t border-c-border/50">
                         <div className="pt-4 space-y-4">
                           {/* Change notes */}
                           {version.changeNotes && (
@@ -230,13 +230,13 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
                               <div className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                                 Title
                               </div>
-                              <p className="text-sm text-white truncate">{version.title}</p>
+                              <p className="text-sm text-c-text truncate">{version.title}</p>
                             </div>
                             <div>
                               <div className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                                 Status at Version
                               </div>
-                              <p className="text-sm text-white">
+                              <p className="text-sm text-c-text">
                                 {version.statusAtVersion || 'N/A'}
                               </p>
                             </div>
@@ -244,13 +244,13 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
                               <div className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                                 Changed By
                               </div>
-                              <p className="text-sm text-white">{version.changedBy || 'System'}</p>
+                              <p className="text-sm text-c-text">{version.changedBy || 'System'}</p>
                             </div>
                             <div>
                               <div className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                                 Est. Duration
                               </div>
-                              <p className="text-sm text-white">
+                              <p className="text-sm text-c-text">
                                 {version.estimatedDurationMins
                                   ? `${version.estimatedDurationMins} mins`
                                   : 'N/A'}
@@ -272,7 +272,7 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
 
                           {/* Actions */}
                           {!isCurrent && (
-                            <div className="pt-2 border-t border-slate-700/50 flex gap-2">
+                            <div className="pt-2 border-t border-c-border/50 flex gap-2">
                               <button
                                 onClick={() => handleRestore(version.version)}
                                 disabled={restoring === version.version}

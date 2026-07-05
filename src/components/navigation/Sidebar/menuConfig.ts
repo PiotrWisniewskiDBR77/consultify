@@ -22,6 +22,7 @@ import {
   Factory,
   FileText,
   FolderOutput,
+  Gavel,
   GitBranch,
   LayoutDashboard,
   Lightbulb,
@@ -66,26 +67,21 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
       icon: React.createElement(ClipboardList, { size: 20 }),
       viewId: AppView.DISCOVERY_CONSULTANT,
     },
-    // 3. Narzędzia (v3): jeden obszar Tools (Discovery + Assessments)
+    // 3. Narzędzia (DECYZJA-D2): Tools i Assessment jako DWA równorzędne
+    // top-level wpisy sidebara (nie flyout submenu pod „Tools"). Routing
+    // /assessment (ASSESSMENT_OVERVIEW) istnieje niezależnie od /discovery-tools —
+    // to zmiana struktury nav, nie nowy routing.
     {
       id: 'TOOLS',
       label: t('sidebar.tools', 'Tools'),
       icon: React.createElement(Wrench, { size: 20 }),
       viewId: AppView.DISCOVERY_TOOLS,
-      subItems: [
-        {
-          id: 'TOOLS_LIBRARY',
-          label: t('sidebar.toolsLibrary', 'Library'),
-          icon: React.createElement(BookOpen, { size: 16 }),
-          viewId: AppView.DISCOVERY_TOOLS,
-        },
-        {
-          id: 'TOOLS_ASSESSMENT',
-          label: t('sidebar.assessment', 'Assessment'),
-          icon: React.createElement(CheckCircle2, { size: 16 }),
-          viewId: AppView.ASSESSMENT_OVERVIEW,
-        },
-      ],
+    },
+    {
+      id: 'TOOLS_ASSESSMENT',
+      label: t('sidebar.assessment', 'Assessment'),
+      icon: React.createElement(CheckCircle2, { size: 20 }),
+      viewId: AppView.ASSESSMENT_OVERVIEW,
     },
     // 5. Inicjatywy - zarządzanie inicjatywami
     {
@@ -112,6 +108,16 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
       viewId: AppView.BENEFITS_REALIZATION,
       badge: 'beta',
     },
+    // 7.5 Wnioski (Conclusions) — governed conclusions layer. Sits after Results
+    // because conclusions are the answer-first verdicts (verdict/rationale/evidence)
+    // distilled from tools + assessments that feed readouts and downstream results.
+    {
+      id: 'MODULE_CONCLUSIONS',
+      label: t('sidebar.conclusions', 'Conclusions'),
+      icon: React.createElement(Gavel, { size: 20 }),
+      viewId: AppView.CONCLUSIONS,
+      badge: 'beta',
+    },
     // 8. Finanse - Financial Analysis v3
     {
       id: 'MODULE_ECONOMICS',
@@ -130,37 +136,18 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
       viewId: AppView.ASSESSMENT_AUDITS,
       badge: 'beta',
     },
-    // 9. Outputs Library (route /presentations; unified documents, decks, templates)
+    // 9. Materiały — ONE unified module: library (table) of all created materials
+    // (decks, reports, tables, templates) + "Nowy" creation. Consolidates the former
+    // four sidebar entries (Outputs / Document Studio / Presentation Studio / Table
+    // Studio) into one. The studio routes (/document-studio, /prezentacje, /tabele)
+    // still exist and are reached via "Nowy" + format choice — they are simply no
+    // longer separate sidebar items. id kept as MODULE_PRESENTATIONS so beta-access
+    // / route gates stay intact.
     {
       id: 'MODULE_PRESENTATIONS',
-      label: t('sidebar.outputsLibrary', 'Outputs'),
+      label: t('sidebar.materialy', 'Materials'),
       icon: React.createElement(FolderOutput, { size: 20 }),
       viewId: AppView.PRESENTATIONS,
-      badge: 'beta',
-    },
-    // 10. Documents — canonical Document Studio (Module 10). The legacy
-    // WORDY view now resolves to /document-studio (see routeConfig).
-    {
-      id: 'MODULE_DOCUMENT_STUDIO',
-      label: t('sidebar.documentStudio', 'Documents'),
-      icon: React.createElement(FileText, { size: 20 }),
-      viewId: AppView.WORDY,
-      badge: 'beta',
-    },
-    // 11. Prezentacje — Gamma-style presentation generation (P20) — self-serve
-    {
-      id: 'MODULE_PREZENTACJE_GEN',
-      label: t('sidebar.prezentacje', 'Presentation Studio'),
-      icon: React.createElement(Presentation, { size: 20 }),
-      viewId: AppView.PREZENTACJE_GEN,
-      badge: 'beta',
-    },
-    // 12. Tabele Studio — operational tables (single canonical tables module)
-    {
-      id: 'MODULE_TABELE',
-      label: t('sidebar.tabele', 'Table Studio'),
-      icon: React.createElement(Table, { size: 20 }),
-      viewId: AppView.TABELE,
       badge: 'beta',
     },
     {
@@ -298,7 +285,8 @@ export function getViewName(view: AppView, t: TranslationFn): string {
     [AppView.MY_WORK]: t('myWork.title', 'My Work'),
     [AppView.MCP_IRIS_COMING_SOON]: t('sidebar.mcpIris', 'MCP IRIS'),
     [AppView.MCP_MARKETPLACE_COMING_SOON]: t('sidebar.mcpMarketplace', 'MCP Marketplace'),
-    [AppView.PRESENTATIONS]: t('sidebar.outputsLibrary', 'Outputs'),
+    [AppView.CONCLUSIONS]: t('sidebar.conclusions', 'Conclusions'),
+    [AppView.PRESENTATIONS]: t('sidebar.materialy', 'Materials'),
     [AppView.PREZENTACJE_GEN]: t('sidebar.prezentacje', 'Presentation Studio'),
     [AppView.WORDY]: t('sidebar.wordy', 'Documents'),
     [AppView.EXCELE]: t('sidebar.tabele', 'Table Studio'),

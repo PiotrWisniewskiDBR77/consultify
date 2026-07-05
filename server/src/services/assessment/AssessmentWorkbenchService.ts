@@ -958,7 +958,12 @@ export class AssessmentWorkbenchService {
           organizationId,
           outputType: 'report',
           artifactFamily: 'document',
-          originRuntime: 'report',
+          // HOTFIX task#63 (UI-M5): a promoted assessment does NOT materialize a
+          // report_builder_reports row, so it must NOT claim originRuntime 'report'
+          // (that routes /reports/builder/{assessmentId} → empty "Add first block"
+          // builder = looks like data loss). Use a distinct runtime that routes back
+          // to the assessment run instead. See artifacts.routes.ts buildActionTargetPayload.
+          originRuntime: 'assessment_report',
           originRecordId: assessmentId,
           titleSnapshot: `Assessment ${state.assessmentDefinitionRef.methodologyId} — ${assessmentId}`,
           ownerUserId: userId,

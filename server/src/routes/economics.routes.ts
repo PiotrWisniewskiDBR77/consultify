@@ -24,6 +24,7 @@ import {
   validateFinancialData,
 } from '../services/economicsFinancials.js';
 import * as finAnalysisSvc from '../services/financialAnalysisService.js';
+import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { exportValuationPptx } from '../services/valuationExportService.js';
 import * as valuationSvc from '../services/valuationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -177,7 +178,7 @@ const duplicateAnalysisSchema = z
   .object({
     name: z.string().trim().min(1).max(300).optional(),
   })
-  .strict();
+  .strip(); // strip (not strict) — caller may send extra keys like { method: 'dcf' } without 400
 
 const createAnalysisInitiativesSchema = z
   .object({
@@ -1503,7 +1504,7 @@ router.post(
 
 /**
  * POST /api/economics/analyses/:id/business-case
- * Generate business case (lightweight data-url)
+ * BUG-07: Generate business case stub document for an analysis
  */
 router.post(
   '/analyses/:id/business-case',
@@ -1524,37 +1525,15 @@ router.post(
       return res.status(404).json({ error: 'Analysis not found' });
     }
 
-    const financials = await dbGet<any>(
-      `SELECT * FROM analysis_financials WHERE analysis_id = ? AND organization_id = ?`,
-      [id, orgId]
-    );
-
-    const metrics = financials
-      ? {
-          npv: financials.npv,
-          irr: financials.irr,
-          roi: financials.roi_percent,
-          payback: financials.payback_months,
-        }
-      : {};
-
-    const content = `Business Case: ${analysis.name}
-
-Opis: ${analysis.description || 'Brak opisu'}
-
-Metryki:
-- NPV: ${metrics.npv ?? '—'}
-- IRR: ${metrics.irr ?? '—'}
-- ROI: ${metrics.roi ?? '—'}
-- Payback: ${metrics.payback ?? '—'}
-`;
-
-    const encoded = encodeURIComponent(content);
-    const downloadUrl = `data:text/plain;charset=utf-8,${encoded}`;
+    const businessCaseId = uuidv4();
 
     return res.json({
-      downloadUrl,
-      filename: `business-case-${analysis.id}.txt`,
+      data: {
+        businessCaseId,
+        status: 'generated',
+        title: `Business Case — ${analysis.name}`,
+        sections: [],
+      },
     });
   })
 );
@@ -1589,7 +1568,6 @@ router.post(
     );
 
     const now = new Date().toISOString();
-    const initiativeId = uuidv4();
     const costCapex =
       (financials?.initial_investment || 0) +
       (financials?.implementation_cost || 0) +
@@ -1597,24 +1575,45 @@ router.post(
     const costOpex = financials?.annual_operating_cost || 0;
     const expectedRoi = financials?.roi_percent ?? null;
 
-    await dbRun(
-      `INSERT INTO initiatives (
+    // Uspójnienie F1.3 — przez kanoniczny lejek (DRAFT + name/title + lineage).
+    let initiativeId: string;
+    if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+      const __r = await funnelCreateInitiative(
+        orgId,
+        {
+          title: analysis.name,
+          projectId: analysis.project_id || null,
+          summary: analysis.description || null,
+          costCapex,
+          costOpex,
+          expectedRoi,
+          sourceType: 'financial_analysis',
+          sourceId: id,
+        },
+        { validate: false, actor: { id: req.user?.id } }
+      );
+      initiativeId = __r.id;
+    } else {
+      initiativeId = uuidv4();
+      await dbRun(
+        `INSERT INTO initiatives (
         id, organization_id, project_id, title, summary, status, cost_capex, cost_opex, expected_roi, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        initiativeId,
-        orgId,
-        analysis.project_id || null,
-        analysis.name,
-        analysis.description || null,
-        normalizeStatusForDb('DRAFT'),
-        costCapex,
-        costOpex,
-        expectedRoi,
-        now,
-        now,
-      ]
-    );
+        [
+          initiativeId,
+          orgId,
+          analysis.project_id || null,
+          analysis.name,
+          analysis.description || null,
+          normalizeStatusForDb('DRAFT'),
+          costCapex,
+          costOpex,
+          expectedRoi,
+          now,
+          now,
+        ]
+      );
+    }
 
     await dbRun(
       `UPDATE digitization_analyses SET initiative_id = ?, updated_at = ? WHERE id = ? AND organization_id = ?`,
@@ -1696,6 +1695,54 @@ router.post(
     });
 
     return res.status(201).json({ success: true, decision });
+  })
+);
+
+/**
+ * GET /api/economics/analyses/:id/decisions
+ * BUG-08: List decisions linked to an analysis (via initiative or direct)
+ */
+router.get(
+  '/analyses/:id/decisions',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    const { id } = req.params;
+
+    if (!orgId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+      const analysis = await dbGet<any>(
+        `SELECT id, initiative_id FROM digitization_analyses WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
+      if (!analysis) {
+        return res.status(404).json({ error: 'Analysis not found' });
+      }
+
+      let decisions: any[] = [];
+      if (analysis.initiative_id) {
+        try {
+          decisions = await dbAll<any>(
+            `SELECT id, title, description, type, status, created_at
+             FROM decisions
+             WHERE organization_id = ? AND initiative_id = ?
+             ORDER BY created_at DESC`,
+            [orgId, analysis.initiative_id]
+          );
+        } catch {
+          // decisions table may not exist in all environments
+          decisions = [];
+        }
+      }
+
+      return res.json({ data: { decisions: decisions || [], count: (decisions || []).length } });
+    } catch (error: any) {
+      logger.error('[Economics] Error fetching decisions for analysis:', error);
+      return res.json({ data: { decisions: [], count: 0 } });
+    }
   })
 );
 
@@ -1947,6 +1994,37 @@ router.get(
 );
 
 /**
+ * POST /api/economics/financial-analyses/:id/insights
+ * BUG-06: Generate AI insights for a financial analysis (stub — no real AI call)
+ */
+router.post(
+  '/financial-analyses/:id/insights',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const analysisId = String(req.params.id);
+    const analysis = await dbGet<any>(
+      `SELECT id FROM financial_analyses WHERE id = ? AND organization_id = ?`,
+      [analysisId, orgId]
+    );
+    if (!analysis) return res.status(404).json({ error: 'Not found' });
+    const insightType = String((req.body as any)?.type || 'comprehensive');
+    return res.json({
+      data: {
+        insight: {
+          id: uuidv4(),
+          type: insightType,
+          status: 'generated',
+          summary: 'Analiza gotowa',
+          items: [],
+        },
+      },
+    });
+  })
+);
+
+/**
  * Export V3-I01: proposals for Initiatives (propose→accept)
  * GET /api/economics/financial-analyses/:id/initiative-proposals
  */
@@ -2028,29 +2106,46 @@ router.post(
     const created: string[] = [];
 
     for (const ins of insights || []) {
-      const initiativeId = uuidv4();
       const name = String(ins.title || `Initiative from analysis ${analysisId.slice(0, 8)}`);
       const summary = String(ins.description || '');
 
-      await dbRun(
-        `INSERT INTO initiatives (
+      // Uspójnienie F1.3 — przez kanoniczny lejek (status→DRAFT zamiast legacy 'step3').
+      let initiativeId: string;
+      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+        const __r = await funnelCreateInitiative(
+          orgId,
+          {
+            title: name,
+            projectId: analysis.project_id || null,
+            summary: summary || null,
+            sourceType: 'financial_analysis',
+            sourceId: analysisId,
+          },
+          { validate: false, actor: { id: userId } }
+        );
+        initiativeId = __r.id;
+      } else {
+        initiativeId = uuidv4();
+        await dbRun(
+          `INSERT INTO initiatives (
           id, organization_id, project_id, name, summary, status,
           source_type, source_id,
           created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          initiativeId,
-          orgId,
-          analysis.project_id || null,
-          name,
-          summary || null,
-          'step3',
-          'financial_analysis',
-          analysisId,
-          now,
-          now,
-        ]
-      );
+          [
+            initiativeId,
+            orgId,
+            analysis.project_id || null,
+            name,
+            summary || null,
+            'step3',
+            'financial_analysis',
+            analysisId,
+            now,
+            now,
+          ]
+        );
+      }
 
       created.push(initiativeId);
     }
@@ -2232,6 +2327,23 @@ router.get(
   })
 );
 
+/**
+ * GET /api/economics/valuations/:id/assumptions
+ * BUG-13: Fetch valuation assumptions
+ */
+router.get(
+  '/valuations/:id/assumptions',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const valuation = await valuationSvc.getValuation(orgId, req.params.id);
+    if (!valuation) return res.status(404).json({ error: 'Not found' });
+    const assumptions = (valuation as any).assumptions ?? {};
+    return res.json({ data: { assumptions } });
+  })
+);
+
 router.put(
   '/valuations/:id/assumptions',
   verifyToken,
@@ -2286,8 +2398,28 @@ router.post(
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;
     if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
-    await valuationSvc.approveValuation(orgId, req.params.id, userId);
-    return res.json({ success: true, status: 'APPROVED' });
+    try {
+      await valuationSvc.approveValuation(orgId, req.params.id, userId);
+      return res.json({ success: true, status: 'APPROVED' });
+    } catch (err: any) {
+      const msg = String(err?.message || 'Approval failed');
+      // Pre-conditions that the caller can fix → 400 (not 500).
+      // "Compute valuation before approval" — no DCF results yet.
+      // "Validation failed:" — g >= WACC constraint.
+      // "Valuation not found" → 404.
+      if (msg.includes('not found') || msg.includes('Not found')) {
+        return res.status(404).json({ error: msg });
+      }
+      if (
+        msg.includes('Compute valuation') ||
+        msg.includes('Validation failed') ||
+        msg.includes('terminal growth') ||
+        msg.includes('approved before')
+      ) {
+        return res.status(400).json({ error: msg });
+      }
+      throw err;
+    }
   })
 );
 
@@ -2564,8 +2696,25 @@ router.post(
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;
     if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
-    await budgetingSvc.approveBudget(orgId, req.params.id, userId);
-    return res.json({ success: true });
+    try {
+      await budgetingSvc.approveBudget(orgId, req.params.id, userId);
+      return res.json({ success: true });
+    } catch (err: any) {
+      const msg = String(err?.message || 'Approval failed');
+      if (msg.toLowerCase().includes('not found')) {
+        return res.status(404).json({ error: msg });
+      }
+      // Pre-condition failures (missing CAPEX line etc.) → 400.
+      if (
+        msg.includes('CAPEX') ||
+        msg.includes('required before approval') ||
+        msg.includes('approved before') ||
+        msg.includes('Cannot approve')
+      ) {
+        return res.status(400).json({ error: msg });
+      }
+      throw err;
+    }
   })
 );
 

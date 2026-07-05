@@ -13,7 +13,30 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
+
+// F3.3 — CARD_CONTENT_FORMULA §A3: injected into every assessment initiative-generation
+// prompt so the AI targets the McKinsey-grade card standard from the first call
+// (SSOT: docs/standards/CARD_CONTENT_FORMULA.md §A3).
+const CARD_CONTENT_FORMULA_A3 = `
+CARD_CONTENT_FORMULA §A3 — Każda wygenerowana inicjatywa musi spełniać:
+- Tytuł: action-title ≤14 słów, konkretna zmiana (nie "Poprawa X" lecz "Zwiększenie X o Y% do Z")
+- Problem (problem_statement): 120–250 słów, przyczyny ŹRÓDŁOWE, ugruntowane w danych
+- Hipoteza: format "Jeśli [działanie] to [wynik mierzalny] bo [przesłanka]"
+- Streszczenie (summary): 40–90 słów, czym jest + jaki efekt
+- KPI: ≥2 (≥1 primary) — każdy z baseline→target + kierunek + jednostka; brak baseline → "do ustalenia" + powód
+- Scope-in: min 3 konkretnych elementów
+- Scope-out: min 3 pozycji MECE (co NIE jest objęte, odwołania do innych inicjatyw)
+- Rezultaty (deliverables): min 4 konkretnych, rzeczownikowych
+- Kryteria sukcesu (success_criteria): min 4, mierzalne/obserwowalne
+- Kryteria zatrzymania (kill_criteria): min 2, konkretny warunek stop
+- Kamienie milowe (milestones): min 3, fazowane 0–3/3–6/6–12 mies.
+- RAID: ≥2 RISK + ≥1 ASSUMPTION + ≥1 DEPENDENCY; każdy z probability+impact+mitigation_plan
+- Sizing/ROI: rząd wielkości + ROI + jawne założenia (kwota/%/dni + logika)
+- Właściciel (owner): przypisany owner_business_id lub rola
+- Język: WYŁĄCZNIE polski (poza akronimami §A5: KPI, RAID, RACI, ROI, MECE, itp.)
+`;
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 
 // Types
 type AssessmentType = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
@@ -409,6 +432,9 @@ Categories to consider: ${categories.join(', ')}
       prompt += `\nInterview findings (evidence-bounded, from a governed stakeholder interview — base the initiatives on these):\n${findingsText}\n`;
     }
 
+    // F3.3 — inject CARD_CONTENT_FORMULA §A3 so the model produces formula-grade cards.
+    prompt += `\n${CARD_CONTENT_FORMULA_A3}\n`;
+
     prompt += `
 Return a JSON array with exactly ${count} initiatives in this format:
 [
@@ -431,18 +457,17 @@ Return a JSON array with exactly ${count} initiatives in this format:
    * Call AI service
    */
   private static async callAI(prompt: string, count: number): Promise<GeneratedInitiative[]> {
-    try {
-      const { generateChatResponse } = await import('./aiService.js');
+    const { generateChatResponse } = await import('./aiService.js');
 
+    // Jedna próba na danym tierze; rzuca przy timeout/błędzie/pustym payloadzie.
+    const tryTier = async (model: string): Promise<GeneratedInitiative[]> => {
       const response = await generateChatResponse({
         messages: [{ role: 'user', content: prompt }],
         systemPrompt: 'You are an expert consultant. Return only valid JSON arrays.',
-        model: 'gpt-4o-mini',
+        model,
         maxTokens: 2000,
       });
-
       if (response?.content) {
-        // Extract JSON from response
         const jsonMatch = response.content.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);
@@ -452,11 +477,27 @@ Return a JSON array with exactly ${count} initiatives in this format:
         }
       }
       throw new AppError('AI returned invalid initiatives payload', 503, 'FEATURE_UNAVAILABLE');
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      throw new AppError('Initiative generation is not available', 503, 'FEATURE_UNAVAILABLE', {
-        message: msg,
-      });
+    };
+
+    try {
+      return await tryTier('premium');
+    } catch (primaryErr: unknown) {
+      // USPOJNIENIE C4 — graceful degradation: przy timeout/awarii tieru premium
+      // ponawiamy RAZ na tańszym tierze ('budget') zanim oddamy 503. Wcześniej
+      // assessment robił wyłącznie fail-fast (premium timeout → twarde 503),
+      // mimo że plan obiecywał „timeout + fallback".
+      const pMsg = primaryErr instanceof Error ? primaryErr.message : String(primaryErr);
+      logger.warn(
+        `[assessmentInitiativeService] premium tier failed (${pMsg}) — fallback to budget tier`
+      );
+      try {
+        return await tryTier('budget');
+      } catch (fallbackErr: unknown) {
+        const fMsg = fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr);
+        throw new AppError('Initiative generation is not available', 503, 'FEATURE_UNAVAILABLE', {
+          message: `premium: ${pMsg}; budget: ${fMsg}`,
+        });
+      }
     }
   }
 
@@ -644,47 +685,101 @@ Return a JSON array with exactly ${count} initiatives in this format:
       'updated_at',
     ]);
 
+    const funnelEnabled = process.env.INITIATIVE_FUNNEL_ENABLED === 'true';
+    const sourceType = reportId ? 'assessment_report' : 'assessment';
+    const sourceId = reportId ? String(reportId) : String(assessment.id);
+
     for (const initiative of initiatives) {
-      const id = uuidv4();
+      let id: string;
 
-      // Insert into initiatives table (schema-variant safe)
-      const cols: string[] = [];
-      const values: unknown[] = [];
-      const push = (col: string, value: unknown) => {
-        if (columns === null && !baseAllowedWhenUnknown.has(col)) return;
-        if (columns && !columns.has(col)) return;
-        cols.push(col);
-        values.push(value);
-      };
+      if (funnelEnabled) {
+        // Uspójnienie F1.7 — każdy rekord pętli przez kanoniczny lejek (DRAFT pominięty
+        // → normalizowany w lejku; name/title + lineage). id↔źródło zachowane per-rekord.
+        const __r = await funnelCreateInitiative(
+          String(assessment.organization_id),
+          {
+            title: initiative.title,
+            projectId: assessment.project_id || null,
+            description: initiative.description ?? null,
+            // status 'DRAFT' POMINIĘTY — lejek normalizuje
+            priority: initiative.priority ?? null,
+            category: initiative.category ?? null,
+            sourceType,
+            sourceId,
+          },
+          { validate: false, actor: { id: userId } }
+        );
+        id = __r.id;
 
-      push('id', id);
-      push('organization_id', assessment.organization_id);
-      push('project_id', assessment.project_id || null);
-      push('name', initiative.title);
-      push('title', initiative.title);
-      push('description', initiative.description);
-      push('status', 'DRAFT');
-      push('priority', initiative.priority);
-      push('risk_level', initiative.risk);
-      push('category', initiative.category);
-      // Prefer linking to the report (source), but keep assessment linkage via assessment_initiative_links.
-      push('source_type', reportId ? 'assessment_report' : 'assessment');
-      push('source_id', reportId ? String(reportId) : assessment.id);
-      // If initiatives.report_id exists, set it.
-      if (columns?.has('report_id')) {
-        push('report_id', reportId ? String(reportId) : null);
+        // Extra-kolumny, których lejek nie zna (risk_level, report_id, created_by) →
+        // post-create UPDATE, tylko dla kolumn istniejących w tym schemacie.
+        const upCols: string[] = [];
+        const upVals: unknown[] = [];
+        const setIf = (col: string, value: unknown) => {
+          if (columns === null) return; // unknown schema: pomiń opcjonalne kolumny
+          if (columns && !columns.has(col)) return;
+          upCols.push(`${col} = ?`);
+          upVals.push(value);
+        };
+        setIf('risk_level', initiative.risk);
+        if (columns?.has('report_id')) setIf('report_id', reportId ? String(reportId) : null);
+        setIf('created_by', userId);
+        if (upCols.length > 0) {
+          try {
+            await queryHelpers.queryRun(
+              `UPDATE initiatives SET ${upCols.join(', ')} WHERE id = ? AND organization_id = ?`,
+              [...upVals, id, String(assessment.organization_id)]
+            );
+          } catch (updErr) {
+            logger.warn(
+              `[AssessmentInitiativeService] post-create UPDATE failed: ${
+                (updErr as Error)?.message || updErr
+              }`
+            );
+          }
+        }
+      } else {
+        id = uuidv4();
+
+        // Insert into initiatives table (schema-variant safe)
+        const cols: string[] = [];
+        const values: unknown[] = [];
+        const push = (col: string, value: unknown) => {
+          if (columns === null && !baseAllowedWhenUnknown.has(col)) return;
+          if (columns && !columns.has(col)) return;
+          cols.push(col);
+          values.push(value);
+        };
+
+        push('id', id);
+        push('organization_id', assessment.organization_id);
+        push('project_id', assessment.project_id || null);
+        push('name', initiative.title);
+        push('title', initiative.title);
+        push('description', initiative.description);
+        push('status', 'DRAFT');
+        push('priority', initiative.priority);
+        push('risk_level', initiative.risk);
+        push('category', initiative.category);
+        // Prefer linking to the report (source), but keep assessment linkage via assessment_initiative_links.
+        push('source_type', sourceType);
+        push('source_id', sourceId);
+        // If initiatives.report_id exists, set it.
+        if (columns?.has('report_id')) {
+          push('report_id', reportId ? String(reportId) : null);
+        }
+        push('created_by', userId);
+        push('created_at', now);
+        push('updated_at', now);
+
+        const placeholders = cols.map(() => '?').join(', ');
+        await queryHelpers.queryRun(
+          `INSERT INTO initiatives (${cols.join(', ')}) VALUES (${placeholders})`,
+          values
+        );
       }
-      push('created_by', userId);
-      push('created_at', now);
-      push('updated_at', now);
 
-      const placeholders = cols.map(() => '?').join(', ');
-      await queryHelpers.queryRun(
-        `INSERT INTO initiatives (${cols.join(', ')}) VALUES (${placeholders})`,
-        values
-      );
-
-      // Create link
+      // Create link — id zwrócone z lejka/insertu (krytyczne: link nie sierota).
       await queryHelpers.queryRun(
         `INSERT INTO assessment_initiative_links (id, assessment_id, batch_id, initiative_id, created_at)
          VALUES (?, ?, ?, ?, ?)`,

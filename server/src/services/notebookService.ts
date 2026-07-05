@@ -13,6 +13,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
+import PDFParserService from './pdfParserService.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
@@ -693,11 +694,7 @@ class NotebookService {
   ): Promise<string> {
     const ext = path.extname(originalname || '').toLowerCase();
     if (ext === '.pdf' || mimetype === 'application/pdf') {
-      const pdfParse = (await import('pdf-parse')).default as (
-        buf: Buffer
-      ) => Promise<{ text: string }>;
-      const data = await pdfParse(buffer);
-      return String(data?.text || '');
+      return await PDFParserService.extractTextFromBuffer(buffer);
     }
     if (ext === '.xlsx' || ext === '.xls' || mimetype?.includes('spreadsheet')) {
       const XLSX = await import('xlsx');

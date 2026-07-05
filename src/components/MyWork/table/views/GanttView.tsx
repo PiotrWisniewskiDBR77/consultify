@@ -251,10 +251,10 @@ export const GanttView: React.FC<GanttViewProps> = ({
 
   if (!startDateCol || !endDateCol) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-slate-600 dark:text-slate-500 gap-2 p-8">
+      <div className="flex-1 flex flex-col items-center justify-center text-c-text-muted gap-2 p-8">
         <Calendar size={32} />
         <span className="text-sm font-medium">{isPl ? 'Wykres Gantta' : 'Gantt Chart'}</span>
-        <span className="text-xs text-slate-600/70">
+        <span className="text-xs text-c-text-muted/70">
           {isPl
             ? 'Skonfiguruj pola daty początkowej i końcowej w ustawieniach widoku'
             : 'Configure start and end date fields in view settings'}
@@ -266,21 +266,21 @@ export const GanttView: React.FC<GanttViewProps> = ({
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-200/60 dark:border-navy-700/60">
-        <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-c-border-subtle">
+        <span className="text-xs font-bold text-c-text-secondary">
           {isPl ? 'Wykres Gantta' : 'Gantt Chart'}
-          <span className="ml-2 text-[10px] font-normal text-slate-600">
+          <span className="ml-2 text-[10px] font-normal text-c-text-muted">
             {ganttRecords.length} {isPl ? 'zadań' : 'tasks'}
           </span>
         </span>
         <div className="flex items-center gap-1">
           <button
             onClick={() => cycleZoom('in')}
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-c-surface-raised transition-colors"
           >
-            <ZoomIn size={14} className="text-slate-500" />
+            <ZoomIn size={14} className="text-c-text-muted" />
           </button>
-          <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 min-w-[50px] text-center capitalize">
+          <span className="text-[10px] font-medium text-c-text-muted min-w-[50px] text-center capitalize">
             {zoom === 'day'
               ? isPl
                 ? 'Dzień'
@@ -295,9 +295,9 @@ export const GanttView: React.FC<GanttViewProps> = ({
           </span>
           <button
             onClick={() => cycleZoom('out')}
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-c-surface-raised transition-colors"
           >
-            <ZoomOut size={14} className="text-slate-500" />
+            <ZoomOut size={14} className="text-c-text-muted" />
           </button>
         </div>
       </div>
@@ -307,18 +307,18 @@ export const GanttView: React.FC<GanttViewProps> = ({
         {/* Left panel: record list */}
         <div
           ref={labelScrollRef}
-          className="flex-shrink-0 border-r border-slate-200/60 dark:border-navy-700/60 overflow-hidden"
+          className="flex-shrink-0 border-r border-c-border-subtle overflow-hidden"
           style={{ width: LABEL_WIDTH }}
         >
           <div
-            className="sticky top-0 z-10 bg-slate-50 dark:bg-navy-900 border-b border-slate-200/60 dark:border-navy-700/60 px-3 flex items-center"
+            className="sticky top-0 z-10 bg-c-surface-raised border-b border-c-border-subtle px-3 flex items-center"
             style={{ height: HEADER_HEIGHT }}
           >
-            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex-1">
+            <span className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider flex-1">
               {isPl ? 'Zadanie' : 'Task'}
             </span>
             {config.progressFieldId && (
-              <span className="text-[9px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider w-12 text-right">
+              <span className="text-[9px] font-bold text-c-text-muted uppercase tracking-wider w-12 text-right">
                 %
               </span>
             )}
@@ -326,15 +326,15 @@ export const GanttView: React.FC<GanttViewProps> = ({
           {ganttRecords.map((gr) => (
             <div
               key={gr.record.id}
-              className="flex items-center px-3 gap-2 border-b border-slate-200/60 dark:border-navy-800/40 cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+              className="flex items-center px-3 gap-2 border-b border-c-border-subtle cursor-pointer hover:bg-c-surface-raised transition-colors"
               style={{ height: ROW_HEIGHT }}
               onClick={() => onRecordClick?.(gr.record.id)}
             >
-              <span className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate flex-1">
+              <span className="text-[11px] font-medium text-c-text truncate flex-1">
                 {gr.title}
               </span>
               {config.progressFieldId && (
-                <span className="text-[9px] font-medium text-slate-600 w-12 text-right">
+                <span className="text-[9px] font-medium text-c-text-secondary w-12 text-right">
                   {gr.progress}%
                 </span>
               )}
@@ -346,16 +346,16 @@ export const GanttView: React.FC<GanttViewProps> = ({
         <div ref={scrollRef} className="flex-1 overflow-auto relative" onScroll={handleScroll}>
           {/* Header */}
           <div
-            className="sticky top-0 z-10 flex bg-slate-50 dark:bg-navy-900 border-b border-slate-200/60 dark:border-navy-700/60"
+            className="sticky top-0 z-10 flex bg-c-surface-raised border-b border-c-border-subtle"
             style={{ width: totalWidth, height: HEADER_HEIGHT }}
           >
             {slots.map((slot, i) => (
               <div
                 key={i}
-                className={`flex-shrink-0 flex items-center justify-center border-r border-slate-200/60 dark:border-navy-800/40 text-[9px] font-medium ${
+                className={`flex-shrink-0 flex items-center justify-center border-r border-c-border-subtle text-[9px] font-medium ${
                   slot.isToday
-                    ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-500/5'
-                    : 'text-slate-600 dark:text-slate-500'
+                    ? 'text-c-info bg-c-info/10'
+                    : 'text-c-text-muted'
                 }`}
                 style={{ width: colWidth }}
               >
@@ -370,7 +370,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
             {slots.map((_, i) => (
               <div
                 key={i}
-                className="absolute top-0 bottom-0 border-r border-slate-200/40 dark:border-navy-800/30"
+                className="absolute top-0 bottom-0 border-r border-c-border-subtle"
                 style={{ left: i * colWidth }}
               />
             ))}
@@ -379,7 +379,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
             {ganttRecords.map((_, i) => (
               <div
                 key={i}
-                className={`absolute left-0 right-0 ${i % 2 === 1 ? 'bg-slate-50/30 dark:bg-navy-900/20' : ''}`}
+                className={`absolute left-0 right-0 ${i % 2 === 1 ? 'bg-c-surface-raised/40' : ''}`}
                 style={{ top: i * ROW_HEIGHT, height: ROW_HEIGHT }}
               />
             ))}
@@ -387,7 +387,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
             {/* Today marker */}
             {todayPx >= 0 && todayPx <= totalWidth && (
               <div
-                className="absolute top-0 bottom-0 w-0.5 bg-primary-400/60 z-20"
+                className="absolute top-0 bottom-0 w-0.5 bg-c-info/70 z-20"
                 style={{ left: todayPx }}
               />
             )}
@@ -407,7 +407,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
                   refY="3"
                   orient="auto"
                 >
-                  <path d="M0,0 L8,3 L0,6 Z" fill="#94a3b8" />
+                  <path d="M0,0 L8,3 L0,6 Z" fill="var(--c-border-strong)" />
                 </marker>
               </defs>
               {depArrows.map((a) => {
@@ -417,7 +417,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
                     key={a.key}
                     d={`M${a.fromX},${a.fromY} C${midX},${a.fromY} ${midX},${a.toY} ${a.toX},${a.toY}`}
                     fill="none"
-                    stroke="#94a3b8"
+                    stroke="var(--c-border-strong)"
                     strokeWidth="1.5"
                     strokeDasharray="4 2"
                     markerEnd="url(#gantt-arrow)"
@@ -444,15 +444,22 @@ export const GanttView: React.FC<GanttViewProps> = ({
                   }}
                   onClick={() => onRecordClick?.(gr.record.id)}
                 >
-                  {/* Background bar */}
-                  <div className="absolute inset-0 rounded-md bg-blue-400/20 dark:bg-blue-500/15 border border-blue-300/40 dark:border-blue-500/30 group-hover:border-blue-400 transition-colors" />
+                  {/* Background bar — categorical tag hue (distinct, non-crimson) */}
+                  <div
+                    className="absolute inset-0 rounded-md border transition-colors group-hover:brightness-110"
+                    style={{
+                      backgroundColor: 'color-mix(in srgb, var(--c-tag-2) 20%, transparent)',
+                      borderColor: 'color-mix(in srgb, var(--c-tag-2) 40%, transparent)',
+                    }}
+                  />
 
                   {/* Progress fill */}
                   {gr.progress > 0 && (
                     <div
-                      className="absolute top-0 left-0 bottom-0 rounded-l-md bg-blue-500/40 dark:bg-blue-400/30"
+                      className="absolute top-0 left-0 bottom-0 rounded-l-md"
                       style={{
                         width: `${gr.progress}%`,
+                        backgroundColor: 'color-mix(in srgb, var(--c-tag-2) 45%, transparent)',
                         borderRadius: gr.progress >= 100 ? '0.375rem' : '0.375rem 0 0 0.375rem',
                       }}
                     />
@@ -460,7 +467,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
 
                   {/* Label */}
                   <div className="relative h-full flex items-center px-1.5 overflow-hidden">
-                    <span className="text-[8px] font-bold text-slate-700 dark:text-slate-200 truncate">
+                    <span className="text-[8px] font-bold text-c-text truncate">
                       {gr.title}
                     </span>
                   </div>

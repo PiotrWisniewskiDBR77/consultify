@@ -124,10 +124,10 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+        <h3 className="text-lg font-semibold text-c-text mb-2">
           {t('settings.password.title', 'Change Password')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           {t(
             'settings.password.subtitle',
             'Update your password regularly to keep your account secure'
@@ -138,7 +138,7 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
       <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
         {/* Current Password */}
         <div className="space-y-1.5">
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label className="block text-sm font-medium text-c-text-secondary">
             {t('settings.password.current', 'Current Password')}
           </label>
           <div className="relative">
@@ -146,12 +146,12 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
               type={showCurrentPassword ? 'text' : 'password'}
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full px-3 py-2 pr-10 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+              className="w-full px-3 py-2 pr-10 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-c-focus outline-none"
             />
             <button
               type="button"
               onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-400"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-c-text-muted hover:text-c-text-secondary"
             >
               {showCurrentPassword ? 'Hide' : 'Show'}
             </button>
@@ -160,7 +160,7 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
 
         {/* New Password */}
         <div className="space-y-1.5">
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label className="block text-sm font-medium text-c-text-secondary">
             {t('settings.password.new', 'New Password')}
           </label>
           <div className="relative">
@@ -168,12 +168,12 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
               type={showNewPassword ? 'text' : 'password'}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full px-3 py-2 pr-10 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+              className="w-full px-3 py-2 pr-10 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-c-focus outline-none"
             />
             <button
               type="button"
               onClick={() => setShowNewPassword(!showNewPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-400"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-c-text-muted hover:text-c-text-secondary"
             >
               {showNewPassword ? 'Hide' : 'Show'}
             </button>
@@ -182,7 +182,7 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
           {newPassword && (
             <div className="mt-2">
               <div className="flex items-center gap-2">
-                <div className="flex-1 h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                <div className="flex-1 h-1.5 bg-c-surface-raised rounded-full overflow-hidden">
                   <div
                     className={`h-full ${passwordStrength.color} transition-all`}
                     style={{ width: `${passwordStrength.strength}%` }}
@@ -206,14 +206,14 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
 
         {/* Confirm Password */}
         <div className="space-y-1.5">
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label className="block text-sm font-medium text-c-text-secondary">
             {t('settings.password.confirm', 'Confirm New Password')}
           </label>
           <input
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+            className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-c-focus outline-none"
           />
           {confirmPassword && newPassword !== confirmPassword && (
             <p className="text-xs text-danger-500 mt-1">Passwords do not match</p>
@@ -230,11 +230,11 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
       </form>
 
       {/* Password Requirements */}
-      <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg mt-6">
-        <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+      <div className="p-4 bg-c-surface-raised rounded-lg mt-6">
+        <h4 className="text-sm font-medium text-c-text-secondary mb-2">
           Password Requirements
         </h4>
-        <ul className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
+        <ul className="text-xs text-c-text-muted space-y-1">
           <li className={newPassword.length >= 8 ? 'text-green-500' : ''}>
             • At least 8 characters
           </li>
@@ -292,23 +292,23 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+        <h3 className="text-lg font-semibold text-c-text mb-2">
           {t('settings.account.title', 'Account Management')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           {t('settings.account.subtitle', 'Manage your account settings and data')}
         </p>
       </div>
 
       <div className="space-y-4">
         {/* Account Status */}
-        <div className="p-4 bg-white dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700">
+        <div className="p-4 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-slate-900 dark:text-white">
+              <p className="font-medium text-c-text">
                 {t('settings.account.status', 'Account Status')}
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-sm text-c-text-muted mt-0.5">
                 Member since{' '}
                 {currentUser.lastLogin ? new Date(currentUser.lastLogin).getFullYear() : 'N/A'}
               </p>
@@ -320,26 +320,26 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
         </div>
 
         {/* Account Info */}
-        <div className="p-4 bg-white dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700">
+        <div className="p-4 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-slate-500 dark:text-slate-400">Email</p>
-              <p className="font-medium text-slate-900 dark:text-white">{currentUser.email}</p>
+              <p className="text-c-text-muted">Email</p>
+              <p className="font-medium text-c-text">{currentUser.email}</p>
             </div>
             <div>
-              <p className="text-slate-500 dark:text-slate-400">Role</p>
-              <p className="font-medium text-slate-900 dark:text-white">
+              <p className="text-c-text-muted">Role</p>
+              <p className="font-medium text-c-text">
                 {currentUser.role || 'USER'}
               </p>
             </div>
             <div>
-              <p className="text-slate-500 dark:text-slate-400">Organization</p>
-              <p className="font-medium text-slate-900 dark:text-white">
+              <p className="text-c-text-muted">Organization</p>
+              <p className="font-medium text-c-text">
                 {currentUser.companyName || 'N/A'}
               </p>
             </div>
             <div>
-              <p className="text-slate-500 dark:text-slate-400">2FA Status</p>
+              <p className="text-c-text-muted">2FA Status</p>
               <p
                 className={`font-medium ${currentUser.mfaEnabled ? 'text-green-600' : 'text-amber-500'}`}
               >
@@ -350,13 +350,13 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
         </div>
 
         {/* Export Data */}
-        <div className="p-4 bg-white dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700">
+        <div className="p-4 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-slate-900 dark:text-white">
+              <p className="font-medium text-c-text">
                 {t('settings.account.exportData', 'Export Your Data')}
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.account.exportDesc',
                   'Download a copy of all your data in JSON format'
@@ -366,7 +366,7 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
             <button
               onClick={handleExportData}
               disabled={exporting}
-              className="px-4 py-2 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-white rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-c-surface-raised text-c-text-secondary rounded-lg transition-colors disabled:opacity-50"
             >
               {exporting ? 'Exporting...' : t('settings.account.export', 'Export')}
             </button>
@@ -397,7 +397,7 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
 
           {/* Delete Confirmation */}
           {showDeleteConfirm && (
-            <div className="mt-4 p-4 bg-white dark:bg-navy-900 rounded-lg border border-danger-300 dark:border-danger-500/30">
+            <div className="mt-4 p-4 bg-c-surface rounded-lg border border-danger-300 dark:border-danger-500/30">
               <p className="text-sm text-danger-700 dark:text-danger-300 mb-3">
                 This action cannot be undone. Type <strong>DELETE</strong> to confirm:
               </p>
@@ -414,7 +414,7 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
                     setShowDeleteConfirm(false);
                     setDeleteConfirmText('');
                   }}
-                  className="px-4 py-2 bg-slate-200 dark:bg-white/10 rounded-lg"
+                  className="px-4 py-2 bg-c-surface-raised rounded-lg"
                 >
                   Cancel
                 </button>

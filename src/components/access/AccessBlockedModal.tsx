@@ -146,7 +146,7 @@ export const AccessBlockedModal: React.FC = () => {
   // Beta gating — polished, brand-coloured "access restricted" plate.
   if (resolved.code === BETA_LOCKED_CODE) {
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-toast flex items-center justify-center p-4">
         <div
           className="absolute inset-0 bg-navy-950/60 backdrop-blur-sm"
           onClick={() => setOpen(false)}
@@ -174,7 +174,7 @@ export const AccessBlockedModal: React.FC = () => {
 
             <button
               onClick={() => setOpen(false)}
-              className="mt-6 w-full rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700"
+              className="mt-6 w-full rounded-xl bg-c-text px-4 py-2.5 text-sm font-semibold text-c-bg shadow-sm transition-colors hover:bg-c-text-secondary"
             >
               {t('access.beta.cta')}
             </button>
@@ -185,7 +185,7 @@ export const AccessBlockedModal: React.FC = () => {
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
+    <div className="fixed inset-0 z-toast flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
 
       <div className="relative w-[92vw] max-w-lg rounded-2xl bg-white dark:bg-navy-900 shadow-2xl border border-slate-200 dark:border-navy-700 p-6">

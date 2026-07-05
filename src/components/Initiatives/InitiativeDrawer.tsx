@@ -289,7 +289,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
       } catch (error: any) {
         toast.error(
           error?.response?.data?.error ||
-            t('initiatives.toast.statusChangeError', 'Nie udało się zmienić statusu')
+            t('initiatives.toast.statusChangeError', 'Could not change status')
         );
       } finally {
         setIsLoading(false);
@@ -883,7 +883,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-dropdown transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}
@@ -891,7 +891,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
 
       {/* Drawer Panel - 50% width */}
       <div
-        className={`fixed top-0 right-0 h-full w-1/2 max-w-3xl min-w-[480px] bg-slate-50 dark:bg-navy-950 shadow-2xl z-50 transform transition-transform duration-300 ease-out border-l border-slate-200 dark:border-navy-700 ${
+        className={`fixed top-0 right-0 h-full w-1/2 max-w-3xl min-w-[480px] bg-slate-50 dark:bg-navy-950 shadow-2xl z-overlay transform transition-transform duration-300 ease-out border-l border-slate-200 dark:border-navy-700 ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >

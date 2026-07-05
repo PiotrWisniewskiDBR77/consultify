@@ -79,10 +79,10 @@ const Bubble: React.FC<BubbleProps> = ({ initiative, x, y, size, onClick }) => {
       {/* Shadow */}
       <circle r={radius} fill="rgba(0,0,0,0.1)" transform="translate(2, 2)" />
 
-      {/* Main bubble */}
+      {/* Main bubble — neutral fill (priority encoded on ring; crimson never = data) */}
       <circle
         r={radius}
-        className={`${isHovered ? 'fill-primary-400' : 'fill-primary-500'} stroke-white stroke-2 transition-all`}
+        className={`${isHovered ? 'fill-c-info' : 'fill-c-focus-solid'} stroke-white stroke-2 transition-all`}
         style={{ opacity: 0.8 }}
       />
 
@@ -120,15 +120,15 @@ const Bubble: React.FC<BubbleProps> = ({ initiative, x, y, size, onClick }) => {
             width={180}
             height={60}
             rx={8}
-            className="fill-navy-900 dark:fill-white"
+            className="fill-c-surface stroke-c-border"
           />
-          <text x={10} y={-10} className="fill-white dark:fill-navy-900 text-xs font-medium">
+          <text x={10} y={-10} className="fill-c-text text-xs font-medium">
             {initiative.name.length > 22 ? initiative.name.slice(0, 22) + '...' : initiative.name}
           </text>
-          <text x={10} y={8} className="fill-slate-300 dark:fill-slate-600 text-[10px]">
+          <text x={10} y={8} className="fill-c-text-secondary text-[10px]">
             Value: {initiative.valueScore} | Risk: {initiative.riskScore}
           </text>
-          <text x={10} y={22} className="fill-slate-400 dark:fill-slate-500 text-[10px]">
+          <text x={10} y={22} className="fill-c-text-muted text-[10px]">
             Budget: ${(initiative.budget / 1000).toFixed(0)}K
           </text>
         </g>
@@ -205,8 +205,8 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
           onClick={() => setSelectedQuadrant(null)}
           className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
             !selectedQuadrant
-              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'
+              ? 'bg-c-surface-raised text-c-text'
+              : 'text-c-text-muted hover:bg-c-surface-raised'
           }`}
         >
           All ({initiatives.length})
@@ -219,7 +219,7 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
             className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
               selectedQuadrant === key
                 ? `${MATRIX_QUADRANT_COLORS[key as keyof typeof MATRIX_QUADRANT_COLORS].bg} ${MATRIX_QUADRANT_COLORS[key as keyof typeof MATRIX_QUADRANT_COLORS].label}`
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'
+                : 'text-c-text-muted hover:bg-c-surface-raised'
             }`}
           >
             <q.icon size={14} />
@@ -229,7 +229,7 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
       </div>
 
       {/* Matrix Chart */}
-      <div className="flex-1 relative bg-slate-50 dark:bg-navy-950 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+      <div className="flex-1 relative bg-c-bg rounded-xl border border-c-border overflow-hidden">
         {/* Quadrant backgrounds */}
         <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
           {/* Top Left - Quick Wins */}
@@ -286,19 +286,19 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
         </div>
 
         {/* Axis labels */}
-        <div className="absolute left-1/2 bottom-2 -translate-x-1/2 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+        <div className="absolute left-1/2 bottom-2 -translate-x-1/2 flex items-center gap-1 text-xs text-c-text-muted">
           <span>Low Risk</span>
-          <div className="w-20 h-px bg-slate-300 dark:bg-slate-600" />
+          <div className="w-20 h-px bg-c-border-strong" />
           <AlertTriangle size={12} />
-          <div className="w-20 h-px bg-slate-300 dark:bg-slate-600" />
+          <div className="w-20 h-px bg-c-border-strong" />
           <span>High Risk</span>
         </div>
 
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 -rotate-90 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 origin-center">
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 -rotate-90 flex items-center gap-1 text-xs text-c-text-muted origin-center">
           <span>Low Value</span>
-          <div className="w-20 h-px bg-slate-300 dark:bg-slate-600" />
+          <div className="w-20 h-px bg-c-border-strong" />
           <TrendingUp size={12} />
-          <div className="w-20 h-px bg-slate-300 dark:bg-slate-600" />
+          <div className="w-20 h-px bg-c-border-strong" />
           <span>High Value</span>
         </div>
 
@@ -323,7 +323,7 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
         {/* Empty state */}
         {filteredBubbles.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center text-slate-600 dark:text-slate-500">
+            <div className="text-center text-c-text-muted">
               <Info className="w-10 h-10 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No initiatives in this quadrant</p>
             </div>
@@ -332,25 +332,25 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
       </div>
 
       {/* Legend */}
-      <div className="shrink-0 flex items-center justify-center gap-6 pt-4 text-xs text-slate-500 dark:text-slate-400">
+      <div className="shrink-0 flex items-center justify-center gap-6 pt-4 text-xs text-c-text-muted">
         <div className="flex items-center gap-1.5">
-          <div className="w-4 h-4 rounded-full bg-navy-900 dark:bg-white" />
+          <div className="w-4 h-4 rounded-full bg-c-focus-solid" />
           <span>Initiative (size = budget)</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-danger-500" />
+          <div className="w-3 h-3 rounded-full bg-c-danger" />
           <span>Critical</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-amber-500" />
+          <div className="w-3 h-3 rounded-full bg-c-warning" />
           <span>High</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-blue-500" />
+          <div className="w-3 h-3 rounded-full bg-c-info" />
           <span>Medium</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-green-500" />
+          <div className="w-3 h-3 rounded-full bg-c-success" />
           <span>Low</span>
         </div>
       </div>

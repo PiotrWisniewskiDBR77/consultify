@@ -57,12 +57,56 @@ class AdminAuditServiceClass {
     const riskScore = this.calculateRiskScore(actionType, details);
     const riskLevel = this.getRiskLevel(riskScore);
 
-    await this.db.run(
-      'INSERT INTO admin_audit_logs (id, admin_id, action_type, metadata_json, risk_score, status) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, adminId, actionType, JSON.stringify(details), riskScore, 'unresolved']
+    // Derive the organization from the explicit field or the details payload so
+    // the indexed `organization_id` column is populated. Historically callers
+    // only embedded orgId inside metadata_json, which forced org-scoped reads to
+    // over-fetch and JS-filter — unreliable once global audit volume grows past
+    // the fetch window. We now persist orgId to its real column AND keep it in
+    // metadata for backward compatibility with legacy rows/readers.
+    const organizationId = String(
+      data.organizationId ||
+        data.orgId ||
+        details.orgId ||
+        details.organizationId ||
+        ''
+    ).trim();
+    // `resource_type` is NOT NULL in the strict (migration 236) schema, so a
+    // missing value throws and silently drops the audit row. Default it.
+    const resourceType = String(
+      data.resourceType || details.resourceType || actionType || 'admin_action'
     );
 
-    return { id, adminId, actionType, riskScore, riskLevel };
+    // Fail-safe: an audit-write failure must NEVER block the underlying admin
+    // action. Callers await this, so we swallow persistence errors here and log
+    // a warning rather than propagating. `persisted` tells callers/tests whether
+    // the row landed.
+    let persisted = false;
+    try {
+      await this.db.run(
+        `INSERT INTO admin_audit_logs
+           (id, organization_id, admin_id, action_type, resource_type, metadata_json, risk_score, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          organizationId || null,
+          adminId,
+          actionType,
+          resourceType,
+          JSON.stringify(details),
+          riskScore,
+          'logged',
+        ]
+      );
+      persisted = true;
+    } catch (err) {
+      this.logger?.warn?.(
+        `[adminAudit] failed to persist audit entry action=${actionType} org=${organizationId || 'n/a'}: ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
+    }
+
+    return { id, adminId, actionType, organizationId, riskScore, riskLevel, persisted };
   }
 
   private extractOrgIdFromMetadata(log: any): string {
@@ -82,32 +126,46 @@ class AdminAuditServiceClass {
 
   async getLogs(filters: any = {}): Promise<any> {
     const { limit = 10, offset = 0, organizationId } = filters;
-    // Fetch a wide window so org-scoped callers get enough rows after filtering.
-    // When an orgId is requested we over-fetch then slice; without orgId we
-    // honour limit/offset directly (superadmin / backward-compat path).
-    const fetchLimit = organizationId ? Math.max(limit * 20, 1000) : limit;
-    const fetchOffset = organizationId ? 0 : offset;
-
-    const logs = await this.db.all(
-      'SELECT * FROM admin_audit_logs ORDER BY created_at DESC LIMIT ? OFFSET ?',
-      [fetchLimit, fetchOffset]
-    );
 
     if (!organizationId) {
-      return logs;
+      // Superadmin / backward-compat path: honour limit/offset directly.
+      return await this.db.all(
+        'SELECT * FROM admin_audit_logs ORDER BY created_at DESC LIMIT ? OFFSET ?',
+        [limit, offset]
+      );
     }
 
-    // Org-scope: filter by orgId embedded in metadata_json, then apply pagination.
     const orgStr = String(organizationId).trim();
     if (!orgStr) {
       // Empty orgId — return nothing rather than leaking all-tenant data.
       return [];
     }
 
-    const scoped = (logs || []).filter(
-      (log: any) => this.extractOrgIdFromMetadata(log) === orgStr
+    // Org-scope: prefer the indexed `organization_id` column. Rows written before
+    // this column was populated only carry orgId inside metadata_json, so we OR in
+    // a metadata match to stay backward compatible. This is a SQL-level filter, so
+    // it never truncates on global audit volume the way the old top-N over-fetch did.
+    const rows = await this.db.all(
+      `SELECT * FROM admin_audit_logs
+        WHERE organization_id = ?
+           OR (organization_id IS NULL AND metadata_json LIKE ?)
+        ORDER BY created_at DESC
+        LIMIT ? OFFSET ?`,
+      [orgStr, `%"${orgStr}"%`, limit, offset]
     );
-    return scoped.slice(offset, offset + limit);
+
+    // Legacy rows can carry a different orgId in metadata (the LIKE is a coarse
+    // prefilter), so re-check metadata for NULL-column rows to avoid cross-tenant leaks.
+    return (rows || []).filter((log: any) => {
+      if (
+        log.organization_id !== null &&
+        log.organization_id !== undefined &&
+        String(log.organization_id).trim() !== ''
+      ) {
+        return String(log.organization_id).trim() === orgStr;
+      }
+      return this.extractOrgIdFromMetadata(log) === orgStr;
+    });
   }
 
   async resolveLog(id: string, resolvedBy: string): Promise<boolean> {
@@ -130,7 +188,7 @@ class AdminAuditServiceClass {
     return await this.db.get(`
             SELECT
                 COUNT(*) as total_logs,
-                SUM(CASE WHEN status = 'unresolved' THEN 1 ELSE 0 END) as unresolved_count
+                SUM(CASE WHEN status <> 'resolved' THEN 1 ELSE 0 END) as unresolved_count
             FROM admin_audit_logs
         `);
   }

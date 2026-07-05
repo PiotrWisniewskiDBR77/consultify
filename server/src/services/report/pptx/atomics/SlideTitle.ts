@@ -10,11 +10,16 @@ export interface SlideTitleProps {
 }
 
 export function SlideTitle(props: SlideTitleProps, tokens: DesignTokens): RenderedElement {
+  // Action-titles (the slide thesis) are frequently 2 lines. The box is sized to
+  // hold two lines centred inside the header band, and `fit: 'shrink'` guarantees
+  // a long title auto-scales down instead of overflowing/clipping at the slide
+  // top edge (the bug long action-titles exposed). Single-line titles render at
+  // full size.
   const pos: ElementPosition = {
     x: props.position?.x ?? tokens.grid.contentX,
-    y: props.position?.y ?? 0.15,
+    y: props.position?.y ?? 0.1,
     w: props.position?.w ?? tokens.grid.contentW,
-    h: props.position?.h ?? 0.5,
+    h: props.position?.h ?? 0.72,
   };
 
   return {
@@ -29,6 +34,10 @@ export function SlideTitle(props: SlideTitleProps, tokens: DesignTokens): Render
         fontFace: tokens.fonts.title,
         color: tokens.colors.textInverse,
         bold: true,
+        valign: 'middle',
+        wrap: true,
+        fit: 'shrink',
+        lineSpacingMultiple: 0.9,
       });
     },
   };

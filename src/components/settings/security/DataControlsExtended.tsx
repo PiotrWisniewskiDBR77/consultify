@@ -292,11 +292,11 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
             <Database size={28} className="text-emerald-500" />
             {t('settings.dataControls.title', 'Data Controls')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t(
               'settings.dataControls.description',
               'Manage your data retention, export, and deletion'
@@ -306,9 +306,9 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
       </div>
 
       {/* Data Retention Settings */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-6">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Clock size={20} className="text-blue-500" />
             Data Retention
           </h3>
@@ -324,14 +324,14 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Object.entries(retention).map(([key, value]) => (
-            <div key={key} className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
-              <label className="block text-sm font-medium text-slate-900 dark:text-white mb-2 capitalize">
+            <div key={key} className="p-4 bg-c-surface-raised rounded-lg">
+              <label className="block text-sm font-medium text-c-text mb-2 capitalize">
                 {key.replace(/([A-Z])/g, ' $1').trim()}
               </label>
               <select
                 value={value}
                 onChange={(e) => setRetention({ ...retention, [key]: parseInt(e.target.value) })}
-                className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
+                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
               >
                 {retentionOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -344,24 +344,24 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
         </div>
 
         {/* Anonymization Settings */}
-        <div className="border-t border-slate-200 dark:border-navy-700 pt-6">
+        <div className="border-t border-c-border-subtle dark:border-navy-700 pt-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <label className="font-medium text-slate-900 dark:text-white">
+              <label className="font-medium text-c-text">
                 Automatic Data Anonymization
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 Automatically anonymize old data on schedule
               </p>
             </div>
             <button
               onClick={() => setAnonymizationEnabled(!anonymizationEnabled)}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                anonymizationEnabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'
+                anonymizationEnabled ? 'bg-emerald-600' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+                className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                   anonymizationEnabled ? 'left-7' : 'left-1'
                 }`}
               />
@@ -369,14 +369,14 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
           </div>
 
           {anonymizationEnabled && (
-            <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
-              <label className="block text-sm font-medium text-slate-900 dark:text-white mb-2">
+            <div className="p-4 bg-c-surface-raised rounded-lg">
+              <label className="block text-sm font-medium text-c-text mb-2">
                 Anonymization Schedule
               </label>
               <select
                 value={anonymizationSchedule}
                 onChange={(e) => setAnonymizationSchedule(e.target.value)}
-                className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
+                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
               >
                 <option value="weekly">Weekly</option>
                 <option value="monthly">Monthly</option>
@@ -388,9 +388,9 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
       </div>
 
       {/* Export Format Selection */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-          <Download size={20} className="text-primary-500" />
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
+          <Download size={20} className="text-c-accent" />
           Export Format
         </h3>
 
@@ -417,20 +417,20 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                 onClick={() => setExportFormat(format.value as any)}
                 className={`flex-1 p-4 rounded-lg border-2 transition-all ${
                   exportFormat === format.value
-                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
+                    ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+                    : 'border-c-border-subtle dark:border-navy-700 hover:border-c-accent'
                 }`}
               >
                 <Icon
                   size={24}
                   className={
                     exportFormat === format.value
-                      ? 'text-primary-600'
-                      : 'text-slate-600 dark:text-slate-500'
+                      ? 'text-c-accent'
+                      : 'text-c-text-secondary'
                   }
                 />
-                <p className="font-medium text-slate-900 dark:text-white mt-2">{format.label}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{format.description}</p>
+                <p className="font-medium text-c-text mt-2">{format.label}</p>
+                <p className="text-xs text-c-text-muted">{format.description}</p>
               </button>
             );
           })}
@@ -451,8 +451,8 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
       </div>
 
       {/* Data Categories */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Archive size={20} className="text-amber-500" />
           Data Categories
         </h3>
@@ -468,20 +468,20 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                 className={`p-4 rounded-lg border transition-all ${
                   isConfirming
                     ? 'border-danger-300 dark:border-danger-500/30 bg-danger-50 dark:bg-danger-500/5'
-                    : 'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950'
+                    : 'border-c-border-subtle dark:border-navy-700 bg-c-surface-raised'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white dark:bg-navy-900 rounded-lg">
-                      <Icon size={18} className="text-slate-600 dark:text-slate-400" />
+                    <div className="p-2 bg-c-surface rounded-lg">
+                      <Icon size={18} className="text-c-text-secondary" />
                     </div>
                     <div>
-                      <p className="font-medium text-slate-900 dark:text-white">{category.name}</p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                      <p className="font-medium text-c-text">{category.name}</p>
+                      <p className="text-sm text-c-text-muted">
                         {category.description}
                       </p>
-                      <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
+                      <p className="text-xs text-c-text-secondary mt-1">
                         {category.count} items • {category.size}
                       </p>
                     </div>
@@ -491,7 +491,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                       <button
                         onClick={() => handleExport(category.id)}
                         disabled={exporting === category.id}
-                        className="p-2 hover:bg-white dark:hover:bg-white/10 rounded-lg text-primary-600 disabled:opacity-50"
+                        className="p-2 hover:bg-c-surface dark:hover:bg-c-surface-raised rounded-lg text-c-accent disabled:opacity-50"
                         title="Export"
                       >
                         {exporting === category.id ? (
@@ -508,7 +508,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
                         className={`p-2 rounded-lg transition-colors ${
                           isConfirming
                             ? 'bg-danger-600 text-white'
-                            : 'hover:bg-white dark:hover:bg-white/10 text-danger-600'
+                            : 'hover:bg-c-surface dark:hover:bg-c-surface-raised text-danger-600'
                         }`}
                         title={isConfirming ? 'Click again to confirm' : 'Delete'}
                       >
@@ -543,38 +543,38 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
       </div>
 
       {/* Data Portability */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Upload size={20} className="text-indigo-500" />
           Data Portability
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           Transfer your data to other platforms or import data from elsewhere.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <button
-            className="flex items-center gap-3 p-4 border border-slate-200 dark:border-navy-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-950 transition-colors"
+            className="flex items-center gap-3 p-4 border border-c-border-subtle dark:border-navy-700 rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-950 transition-colors"
             onClick={() => toast.success('Data portability export initiated')}
           >
             <Download size={24} className="text-indigo-600" />
             <div className="text-left">
-              <p className="font-medium text-slate-900 dark:text-white">Export for Transfer</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="font-medium text-c-text">Export for Transfer</p>
+              <p className="text-sm text-c-text-muted">
                 GDPR-compliant data package
               </p>
             </div>
           </button>
           <button
-            className="flex items-center gap-3 p-4 border border-slate-200 dark:border-navy-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-950 transition-colors"
+            className="flex items-center gap-3 p-4 border border-c-border-subtle dark:border-navy-700 rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-950 transition-colors"
             onClick={() =>
               toast('Import wizard is in beta — contact support to get started', { icon: 'ℹ️' })
             }
           >
             <Upload size={24} className="text-emerald-600" />
             <div className="text-left">
-              <p className="font-medium text-slate-900 dark:text-white">Import Data</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="font-medium text-c-text">Import Data</p>
+              <p className="text-sm text-c-text-muted">
                 From ClickUp, Monday, Asana
               </p>
             </div>

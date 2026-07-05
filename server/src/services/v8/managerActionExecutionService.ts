@@ -1,4 +1,5 @@
 import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
+import { send as notifySend } from '../notificationService.js';
 import { getManagerProblems } from './managerProblemsService.js';
 
 type ManagerProblemRow = Awaited<ReturnType<typeof getManagerProblems>>[number];
@@ -314,10 +315,14 @@ async function executeProblemActionInternal(
         return { message: 'Initiative escalation created.', changedEntities };
       }
       case 'scope_reduction': {
+        // Baseline integrity (P03 §2.4.5): an intervention adjusts the FORECAST,
+        // never the approved baseline. Previously this wrote planned_end_date
+        // (+21d), silently rebaselining the initiative. Write forecast_end_date
+        // so variance vs baseline stays visible in the control tower.
         await dbRun(
           `UPDATE initiatives
            SET status = 'IN_PROGRESS',
-               planned_end_date = ?,
+               forecast_end_date = ?,
                updated_at = NOW()
            WHERE id = ? AND organization_id = ?`,
           [isoDay(21), row.sourceEntityId, organizationId]
@@ -383,14 +388,60 @@ async function executeProblemActionInternal(
         addChange('DECISION', row.sourceEntityId);
         return { message: 'Decision deferred pending additional information.', changedEntities };
       }
-      case 'send_nudge':
-      case 'escalate': {
+      case 'send_nudge': {
         await dbRun(
           `UPDATE decisions SET status = 'escalated', updated_at = NOW() WHERE id = ? AND organization_id = ?`,
           [row.sourceEntityId, organizationId]
         );
         addChange('DECISION', row.sourceEntityId);
         return { message: 'Decision escalated for faster resolution.', changedEntities };
+      }
+      case 'escalate': {
+        // F3 — real escalation: route the decision to the initiative sponsor and
+        // notify them (CRITICAL), instead of a flat status='escalated' with no
+        // target. Sets `escalated_to`; notification is fail-safe (escalation must
+        // succeed even if the notification does not).
+        const ctx = (await dbAll(
+          `SELECT d.initiative_id, i.sponsor_id, i.name AS initiative_name, d.title AS decision_title
+           FROM decisions d
+           LEFT JOIN initiatives i ON i.id = d.initiative_id
+           WHERE d.id = ? AND d.organization_id = ?`,
+          [row.sourceEntityId, organizationId]
+        )) as Array<Record<string, any>>;
+        const sponsorId = ctx[0]?.sponsor_id ? String(ctx[0].sponsor_id) : null;
+        const decisionTitle = ctx[0]?.decision_title || ctx[0]?.decisiontitle || 'decision';
+        const initiativeName = ctx[0]?.initiative_name || ctx[0]?.initiativename || null;
+        await dbRun(
+          `UPDATE decisions
+           SET status = 'escalated', escalated_to = COALESCE(?, escalated_to), updated_at = NOW()
+           WHERE id = ? AND organization_id = ?`,
+          [sponsorId, row.sourceEntityId, organizationId]
+        );
+        addChange('DECISION', row.sourceEntityId);
+        if (sponsorId && sponsorId !== userId) {
+          try {
+            await notifySend({
+              userId: sponsorId,
+              organizationId,
+              type: 'decision.escalated',
+              severity: 'CRITICAL',
+              title: `Decision escalated to you: ${decisionTitle}`,
+              body: `An overdue/blocked decision${initiativeName ? ` on "${initiativeName}"` : ''} was escalated to you as sponsor for resolution.`,
+              entityType: 'DECISION',
+              entityId: String(row.sourceEntityId),
+              actorId: userId,
+              isActionable: true,
+            });
+          } catch {
+            /* fail-safe — escalation stands even if notification fails */
+          }
+        }
+        return {
+          message: sponsorId
+            ? 'Decision escalated to the sponsor (notified).'
+            : 'Decision escalated for faster resolution.',
+          changedEntities,
+        };
       }
       default:
         break;

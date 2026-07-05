@@ -59,7 +59,7 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
   return (
     <div
       data-tour="demo-banner"
-      className="bg-navy-900/95 dark:bg-navy-950 border-b border-white/5 text-slate-100 relative z-50"
+      className="bg-navy-900/95 dark:bg-navy-950 border-b border-white/5 text-slate-100 relative z-overlay"
     >
       {/* Main Banner — DBR77 */}
       <div className="px-4 py-2 flex items-center justify-between">
@@ -103,10 +103,10 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
           <button
             data-tour="demo-exit"
             onClick={onStartTrialClick || handleContactSales}
-            className="bg-primary-500 hover:bg-primary-600 text-white text-xs px-3 py-1.5 rounded-lg transition-colors font-semibold flex items-center gap-1.5"
+            className="bg-c-text hover:bg-c-text-secondary text-c-bg text-xs px-3 py-1.5 rounded-lg transition-colors font-semibold flex items-center gap-1.5"
           >
             {t('demo.banner.startTrial', 'Start Trial')}
-            <ExternalLink size={12} />
+            <ExternalLink size={14} />
           </button>
         </div>
       </div>

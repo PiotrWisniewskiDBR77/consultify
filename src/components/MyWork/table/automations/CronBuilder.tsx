@@ -163,8 +163,8 @@ export const CronBuilder: React.FC<CronBuilderProps> = ({
               onClick={() => handlePresetClick(preset.cron)}
               className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
                 isActive
-                  ? 'border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-400 dark:bg-primary-900/20 dark:text-primary-300'
-                  : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500'
+                  ? 'border-c-accent bg-c-accent-soft text-c-accent'
+                  : 'border-c-border-subtle bg-c-surface hover:border-c-border'
               }`}
             >
               {isActive && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
@@ -177,7 +177,7 @@ export const CronBuilder: React.FC<CronBuilderProps> = ({
 
       {/* Custom input */}
       <div className="space-y-1.5">
-        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400">
+        <label className="block text-xs font-medium text-c-text-muted">
           {isPl ? 'Wyrażenie cron (lub wybierz preset)' : 'Cron expression (or pick a preset)'}
         </label>
         <input
@@ -188,18 +188,18 @@ export const CronBuilder: React.FC<CronBuilderProps> = ({
           placeholder="*/15 * * * *"
           className={`w-full rounded-lg border px-3 py-2 font-mono text-sm ${
             customInput && !validation.valid
-              ? 'border-danger-300 bg-danger-50 dark:border-danger-600 dark:bg-danger-900/20'
-              : 'border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-800'
+              ? 'border-c-danger bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] border-c-danger bg-[color-mix(in_srgb,var(--c-danger)_18%,transparent)]'
+              : 'border-c-border-subtle bg-c-surface border-c-border bg-c-surface-raised'
           }`}
         />
         {customInput && validation.valid && validation.description && (
-          <p className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+          <p className="flex items-center gap-1 text-xs text-c-success">
             <Check className="h-3 w-3" />
             {validation.description}
           </p>
         )}
         {customInput && !validation.valid && validation.error && (
-          <p className="flex items-center gap-1 text-xs text-danger-500">
+          <p className="flex items-center gap-1 text-xs text-c-danger">
             <AlertCircle className="h-3 w-3" />
             {validation.error}
           </p>
@@ -209,13 +209,13 @@ export const CronBuilder: React.FC<CronBuilderProps> = ({
       {/* Timezone selector */}
       {onTimezoneChange && (
         <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400">
+          <label className="block text-xs font-medium text-c-text-muted">
             {isPl ? 'Strefa czasowa' : 'Timezone'}
           </label>
           <select
             value={timezone || 'UTC'}
             onChange={(e) => onTimezoneChange(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800"
+            className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border bg-c-surface-raised"
           >
             {COMMON_TIMEZONES.map((tz) => (
               <option key={tz} value={tz}>

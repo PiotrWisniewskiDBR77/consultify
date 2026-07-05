@@ -2,6 +2,7 @@ import type Stripe from 'stripe';
 import type { Stripe as StripeTypes } from 'stripe';
 
 import logger from '../../utils/Logger.js';
+import { templateExists as emailTemplateExists } from '../email/emailTemplateRenderer.js';
 import { BillingEventService } from './BillingEventService.js';
 import { BillingQueryService } from './BillingQueryService.js';
 import { assertSandboxAllowed } from './billingSandboxGuard.js';
@@ -203,10 +204,10 @@ export class BillingCommandService {
              notes = COALESCE(excluded.notes, organization_billing.notes),
              managed_by_user_id = COALESCE(excluded.managed_by_user_id, organization_billing.managed_by_user_id),
              is_manual_override = COALESCE(excluded.is_manual_override, organization_billing.is_manual_override),
-             stripe_customer_id = COALESCE(excluded.stripe_customer_id, stripe_customer_id),
-             stripe_subscription_id = COALESCE(excluded.stripe_subscription_id, stripe_subscription_id),
-             billing_email = COALESCE(excluded.billing_email, billing_email),
-             status = COALESCE(excluded.status, status),
+             stripe_customer_id = COALESCE(excluded.stripe_customer_id, organization_billing.stripe_customer_id),
+             stripe_subscription_id = COALESCE(excluded.stripe_subscription_id, organization_billing.stripe_subscription_id),
+             billing_email = COALESCE(excluded.billing_email, organization_billing.billing_email),
+             status = COALESCE(excluded.status, organization_billing.status),
              current_period_start = COALESCE(excluded.current_period_start, organization_billing.current_period_start),
              current_period_end = COALESCE(excluded.current_period_end, organization_billing.current_period_end),
              updated_at = CURRENT_TIMESTAMP`,
@@ -704,21 +705,45 @@ export class BillingCommandService {
 
       const EmailService = (await import('../emailService.js')).default;
       const daysRemaining = Math.ceil((accessUntil.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      const accessUntilDate = accessUntil.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+
+      // Prefer the branded billing/subscription_canceled.hbs template (Task
+      // #84). When present, emailService renders the .hbs from `template`+`data`.
+      // When absent, we still pass the inline generateCancellationEmailHtml()
+      // as the fallback so the send is never blocked or degraded.
+      const hasTemplate = emailTemplateExists('billing/subscription_canceled');
 
       for (const admin of admins) {
         await EmailService.send({
           to: admin.email,
           subject: 'Your Consultify subscription has been canceled',
-          html: this.generateCancellationEmailHtml({
+          ...(hasTemplate
+            ? { template: 'subscription_canceled' as const }
+            : {
+                html: this.generateCancellationEmailHtml({
+                  firstName: admin.first_name,
+                  orgName: org?.name || 'Your organization',
+                  accessUntil: accessUntilDate,
+                  daysRemaining,
+                }),
+              }),
+          data: {
+            recipientName: admin.first_name,
             firstName: admin.first_name,
             orgName: org?.name || 'Your organization',
-            accessUntil: accessUntil.toLocaleDateString('en-US', {
+            cancellationDate: new Date().toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'long',
               day: 'numeric',
             }),
+            accessUntilDate,
+            accessUntil: accessUntilDate,
             daysRemaining,
-          }),
+          },
         });
       }
 

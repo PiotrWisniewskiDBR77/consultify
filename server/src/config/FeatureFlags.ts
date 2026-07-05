@@ -32,7 +32,10 @@ const FeatureFlagsSchema = z.object({
   ENABLE_V8_SHADOW_MODE: z.boolean().default(false),
   ENABLE_DELIVERABLES_LIGHT: z.boolean().default(false),
   ENABLE_TERESA_RETRIEVAL: z.boolean().default(false),
+  ENABLE_TERESA_MINDMAP: z.boolean().default(false),
   ENABLE_DELIVERABLES_DOC_STREAMING: z.boolean().default(false),
+  ENABLE_DELIVERABLES_PREMIUM: z.boolean().default(false),
+  ENABLE_SHARED_IDEA_MAPS: z.boolean().default(false),
 });
 
 export type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
@@ -122,11 +125,32 @@ export function loadFeatureFlags(): FeatureFlags {
     // Opt-in; when off the chat stream and persona prompt are untouched.
     ENABLE_TERESA_RETRIEVAL: process.env.ENABLE_TERESA_RETRIEVAL === 'true',
 
+    // Teresa mind-map integration (ff_teresaMindmap / M06 Fala 2): chat-side
+    // READ tool `search_org_mindmaps` that lets Teresa locate an org idea-map
+    // by topic and inject its serialized outline. Co-gated with
+    // ENABLE_TERESA_RETRIEVAL for retrieval (S2). Opt-in; when off the tool
+    // returns an empty envelope and the retrieval regex block stays inert.
+    ENABLE_TERESA_MINDMAP: process.env.ENABLE_TERESA_MINDMAP === 'true',
+
     // Deliverables A3: per-section streaming for documents. Generates section
     // by section (each call sees prior sections for coherence) and writes the
     // draft progressively, so the first section paints in ~3-4s instead of
     // waiting ~19s for the one-shot. Opt-in; OFF ⇒ proven one-shot path.
     ENABLE_DELIVERABLES_DOC_STREAMING: process.env.ENABLE_DELIVERABLES_DOC_STREAMING === 'true',
+
+    // Deliverables W4 (series B — premium generative brain): when on, the
+    // deliverable GENERATION step (deck layout director / doc structure / table
+    // schema) routes to the PREMIUM model tier instead of STANDARD, and cost is
+    // tagged with purpose='deliverable_generation' for telemetry. Opt-in,
+    // default OFF (live clients stay on STANDARD until quality is proven).
+    // Fail-open: any resolution error falls back to STANDARD, never blocks.
+    ENABLE_DELIVERABLES_PREMIUM: process.env.ENABLE_DELIVERABLES_PREMIUM === 'true',
+
+    // DP-3 (M06/M07/M09 Ideas): shared/canonical idea maps — one my_idea_maps
+    // row per idea_id instead of one per user_id, with membership-gated
+    // read/write and server-persisted WS graph_patch. OFF = full rollback to
+    // today's per-user reads/writes (Harvard/wdrozenie-100/_M06_DP3_MULTIPLAYER_PLAN_2026-07-04.md).
+    ENABLE_SHARED_IDEA_MAPS: process.env.ENABLE_SHARED_IDEA_MAPS === 'true',
   };
 
   // Validate configuration

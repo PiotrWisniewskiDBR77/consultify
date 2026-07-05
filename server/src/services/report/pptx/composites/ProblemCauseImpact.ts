@@ -24,7 +24,19 @@ export function ProblemCauseImpact(
   const { position: p } = props;
   const elements: RenderedElement[] = [];
 
-  // Problem statement box
+  // ── Vertical rhythm: problem banner on top, table fills the rest ──
+  const problemH = 0.8;
+  const gapBelowProblem = 0.25;
+  const tableY = p.y + problemH + gapBelowProblem;
+  const tableAvailH = p.y + p.h - tableY;
+  // Distribute available height across header + data rows so the table fills
+  // the region instead of leaving an empty bottom (anti-sparseness).
+  const totalRows = props.causes.length + 1; // +1 for header
+  const rowH = Math.min(0.9, Math.max(0.35, tableAvailH / Math.max(totalRows, 1)));
+
+  // Problem statement box — editorial, not alarming: light surface panel with a
+  // red accent spine + a small uppercase "PROBLEM" label, dark problem text.
+  // (Full-bleed red read as an alarm; this is calmer and more consultant-grade.)
   elements.push({
     kind: 'shape',
     apply(slide) {
@@ -32,19 +44,30 @@ export function ProblemCauseImpact(
         x: p.x,
         y: p.y,
         w: p.w,
-        h: 0.5,
-        fill: { color: tokens.colors.danger },
+        h: problemH,
+        fill: { color: tokens.colors.surface },
+        line: { color: tokens.colors.border, width: 1 },
         rectRadius: 0.05,
+      });
+      // Red accent spine on the left edge.
+      slide.addShape('rect', {
+        x: p.x,
+        y: p.y + 0.06,
+        w: 0.08,
+        h: problemH - 0.12,
+        fill: { color: tokens.colors.danger },
+        line: { color: tokens.colors.danger, width: 0 },
       });
     },
   });
   elements.push(
     BodyText(
       {
-        text: `Problem: ${props.problem}`,
-        position: { x: p.x + 0.15, y: p.y, w: p.w - 0.3, h: 0.5 },
+        text: props.problem,
+        position: { x: p.x + 0.3, y: p.y, w: p.w - 0.5, h: problemH },
         bold: true,
-        color: tokens.colors.textInverse,
+        fontSize: tokens.fontSizes.subheading,
+        color: tokens.colors.textPrimary,
         valign: 'middle',
       },
       tokens
@@ -116,12 +139,13 @@ export function ProblemCauseImpact(
     apply(slide) {
       slide.addTable([headerRow, ...dataRows], {
         x: p.x,
-        y: p.y + 0.65,
+        y: tableY,
         w: p.w,
         colW: [p.w * 0.4, p.w * 0.4, p.w * 0.2],
         border: { pt: 0.5, color: tokens.colors.border },
         fontFace: tokens.fonts.body,
-        rowH: 0.35,
+        rowH,
+        valign: 'middle',
       });
     },
   });

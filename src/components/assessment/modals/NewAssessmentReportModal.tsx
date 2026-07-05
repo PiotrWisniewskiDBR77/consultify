@@ -50,19 +50,19 @@ export function NewAssessmentReportModal(props: {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={() => !busy && onClose()} />
-      <div className="relative w-full max-w-xl rounded-2xl overflow-hidden border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl">
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
+      <div className="relative w-full max-w-xl rounded-2xl overflow-hidden border border-c-border-subtle bg-c-surface shadow-2xl">
+        <div className="px-6 py-4 border-b border-c-border-subtle flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-300">
+            <div className="p-2 rounded-lg bg-c-accent-soft text-c-accent dark:text-c-accent">
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-base font-semibold text-navy-900 dark:text-white">
+              <div className="text-base font-semibold text-c-text">
                 New assessment report
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="text-xs text-c-text-muted">
                 Choose assessment + template. A draft will be generated.
               </div>
             </div>
@@ -70,7 +70,7 @@ export function NewAssessmentReportModal(props: {
           <button
             type="button"
             onClick={() => !busy && onClose()}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400"
+            className="p-2 rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised text-c-text-muted"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
@@ -79,13 +79,13 @@ export function NewAssessmentReportModal(props: {
 
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
+            <label className="block text-xs font-semibold text-c-text-secondary mb-2">
               Assessment
             </label>
             <select
               value={assessmentId}
               onChange={(e) => setAssessmentId(e.target.value)}
-              className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
+              className="w-full h-10 px-3 rounded-lg border border-c-border-subtle bg-c-surface dark:bg-c-bg text-sm text-c-text"
               disabled={busy}
             >
               <option value="">
@@ -100,24 +100,24 @@ export function NewAssessmentReportModal(props: {
               ))}
             </select>
             {approvedAssessments.length === 0 && (
-              <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+              <p className="mt-2 text-xs text-c-warning">
                 Only approved assessments can be used to create reports. Approve an assessment
                 first.
               </p>
             )}
           </div>
 
-          <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/60 dark:bg-navy-950/40 p-4">
+          <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised dark:bg-c-bg p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                <div className="text-xs font-semibold text-c-text-secondary uppercase tracking-wider">
                   Template
                 </div>
-                <div className="mt-1 text-sm font-semibold text-navy-900 dark:text-white truncate">
+                <div className="mt-1 text-sm font-semibold text-c-text truncate">
                   {template?.name || 'Not selected'}
                 </div>
                 {template?.description ? (
-                  <div className="mt-1 text-xs text-slate-600 dark:text-slate-300 line-clamp-2">
+                  <div className="mt-1 text-xs text-c-text-secondary line-clamp-2">
                     {template.description}
                   </div>
                 ) : null}
@@ -126,7 +126,7 @@ export function NewAssessmentReportModal(props: {
                 type="button"
                 onClick={() => setTemplatePickerOpen(true)}
                 disabled={busy}
-                className="shrink-0 h-9 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
+                className="shrink-0 h-9 px-3 rounded-lg border border-c-border-subtle bg-c-surface text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised"
               >
                 Choose
               </button>
@@ -137,7 +137,7 @@ export function NewAssessmentReportModal(props: {
             <button
               type="button"
               onClick={() => !busy && onClose()}
-              className="h-10 px-4 rounded-lg border border-slate-200 dark:border-navy-700 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
+              className="h-10 px-4 rounded-lg border border-c-border-subtle text-sm font-semibold text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised"
               disabled={busy}
             >
               Cancel
@@ -186,7 +186,7 @@ export function NewAssessmentReportModal(props: {
                   setBusy(false);
                 }
               }}
-              className="h-10 px-4 rounded-lg bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold"
+              className="h-10 px-4 rounded-lg bg-c-accent hover:opacity-90 disabled:opacity-50 text-white text-sm font-semibold"
             >
               {busy ? (
                 <span className="inline-flex items-center gap-2">

@@ -35,11 +35,11 @@ export const EmailNotificationsSettings: React.FC<EmailNotificationsSettingsProp
   return (
     <div className={`space-y-6 ${className}`}>
       <div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+        <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
           <Mail size={20} />
           {t('settings.notifications.emailTitle', 'Email Notifications')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-sm text-c-text-muted mt-1">
           {t('settings.notifications.emailDesc', 'Choose which emails you want to receive.')}
         </p>
       </div>
@@ -48,13 +48,13 @@ export const EmailNotificationsSettings: React.FC<EmailNotificationsSettingsProp
         {EMAIL_CATEGORIES.map(({ key, label, desc }) => (
           <div
             key={key}
-            className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-800/50 rounded-lg"
+            className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg"
           >
             <div>
-              <p className="font-medium text-slate-900 dark:text-white">
+              <p className="font-medium text-c-text">
                 {t(`settings.notifications.${key}`, label)}
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(`settings.notifications.${key}Desc`, desc)}
               </p>
             </div>
@@ -62,8 +62,8 @@ export const EmailNotificationsSettings: React.FC<EmailNotificationsSettingsProp
               onClick={() => toggleSetting(key)}
               className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
                 settings[key]
-                  ? 'bg-navy-900 border-brand text-white'
-                  : 'border-slate-300 dark:border-navy-600'
+                  ? 'bg-brand border-brand text-white'
+                  : 'border-c-border dark:border-navy-600'
               }`}
             >
               {settings[key] && <Check size={14} />}

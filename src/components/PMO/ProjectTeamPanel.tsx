@@ -688,7 +688,7 @@ const SteeringBoardPanel: React.FC<{ projectId: string; canManage: boolean }> = 
       )}
 
       {showAdd && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -819,7 +819,7 @@ const AddMemberModal: React.FC<AddMemberModalProps> = ({ projectId, onClose, onA
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">

@@ -25,6 +25,7 @@ import React, { useMemo, useState } from 'react';
 
 import { DIGITIZATION_AXES, getLevelColor } from '../../data/digitizationEvaluationData';
 import { RadarChart, RadarDataPoint } from '../Charts';
+import { useFinanceChartColors } from './financeChartTokens';
 import { DigitizationAnalysis } from './types';
 
 interface AnalysisResultsPanelProps {
@@ -41,6 +42,7 @@ const AXIS_ICONS: Record<string, any> = {
 };
 
 export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ analysis }) => {
+  const chart = useFinanceChartColors();
   const axisData = useMemo(() => {
     return DIGITIZATION_AXES.map((axis) => {
       const score = analysis.axisScores?.[axis.id];
@@ -172,8 +174,8 @@ export const AnalysisResultsPanel: React.FC<AnalysisResultsPanelProps> = ({ anal
           height={350}
           showLegend={true}
           showTarget={true}
-          currentColor="#3b82f6"
-          targetColor="#10b981"
+          currentColor={chart.net}
+          targetColor={chart.actual}
         />
       </div>
 
@@ -314,7 +316,7 @@ const StatCard: React.FC<{
 }> = ({ label, value, icon: Icon, color }) => {
   const colors: Record<string, { bg: string; text: string }> = {
     blue: { bg: 'bg-blue-500/10', text: 'text-blue-500' },
-    purple: { bg: 'bg-primary-500/10', text: 'text-primary-500' },
+    purple: { bg: 'bg-violet-500/10', text: 'text-violet-500' },
     green: { bg: 'bg-green-500/10', text: 'text-green-500' },
     orange: { bg: 'bg-amber-500/10', text: 'text-amber-500' },
   };

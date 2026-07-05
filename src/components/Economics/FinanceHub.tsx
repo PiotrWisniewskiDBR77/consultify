@@ -42,6 +42,7 @@ import { usePolicySnapshot } from '@/contexts/AccessPolicyContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
 import { ROUTES } from '@/routes/routeConfig';
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 import {
   shouldFallbackToLegacyFinance,
@@ -107,6 +108,13 @@ import { CreateAnalysisModal } from './modals/CreateAnalysisModal';
 import { CreateBudgetModal } from './modals/CreateBudgetModal';
 import { CreateModelModal } from './modals/CreateModelModal';
 import { CreateValuationModal } from './modals/CreateValuationModal';
+import { LinkInitiativeModal } from './modals/LinkInitiativeModal';
+import { isFinanceFlagEnabled } from './financeFeatureFlags';
+import { DriverPlannerPanel } from './panels/DriverPlannerPanel';
+import { InvestmentAppraisalPanel } from './panels/InvestmentAppraisalPanel';
+import { ValuationVisualsPanel } from './panels/ValuationVisualsPanel';
+import { ValueOfficePanel } from './panels/ValueOfficePanel';
+import { VarianceBridgePanel } from './panels/VarianceBridgePanel';
 
 function isInvestmentAnalysisType(value: unknown): boolean {
   const normalized = String(value || '')
@@ -151,6 +159,7 @@ export const FinanceHub: React.FC = () => {
   // ---- Modal visibility ----
   const [showCreateModelModal, setShowCreateModelModal] = useState(false);
   const [showImportWizard, setShowImportWizard] = useState(false);
+  const [showLinkInitiativeModal, setShowLinkInitiativeModal] = useState(false);
   const [showAnalysisCreateModal, setShowAnalysisCreateModal] = useState(false);
   const [showPredictionCreateModal, setShowPredictionCreateModal] = useState(false);
   const [showValuationCreateModal, setShowValuationCreateModal] = useState(false);
@@ -816,7 +825,7 @@ export const FinanceHub: React.FC = () => {
       render: (row: FinanceRow) => (
         <div className="flex items-center gap-2">
           {KIND_ICONS[row.kind]}
-          <span className="font-mono text-xs font-bold text-slate-500 dark:text-slate-300">
+          <span className="font-mono text-xs font-bold text-c-text-muted">
             {getTypeCode(row.kind)}
           </span>
         </div>
@@ -830,7 +839,7 @@ export const FinanceHub: React.FC = () => {
       id: 'title',
       label: t('common.name', 'Name'),
       render: (row: FinanceRow) => (
-        <span className="block text-sm text-slate-900 dark:text-white font-medium truncate">
+        <span className="block text-sm text-c-text font-medium truncate">
           {row.title}
         </span>
       ),
@@ -870,11 +879,11 @@ export const FinanceHub: React.FC = () => {
           width: '170px',
           render: (row: FinanceRow) =>
             row.kind === 'statements' ? (
-              <span className="text-sm text-slate-700 dark:text-slate-200">
+              <span className="text-sm text-c-text-secondary">
                 {row.completenessLabel || '—'}
               </span>
             ) : (
-              <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+              <span className="text-sm text-c-text-muted">—</span>
             ),
         },
         {
@@ -883,11 +892,11 @@ export const FinanceHub: React.FC = () => {
           width: '170px',
           render: (row: FinanceRow) =>
             row.kind === 'statements' ? (
-              <span className="text-sm text-slate-700 dark:text-slate-200">
+              <span className="text-sm text-c-text-secondary">
                 {row.periodLabel || `${row.periodStart} → ${row.periodEnd}`}
               </span>
             ) : (
-              <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+              <span className="text-sm text-c-text-muted">—</span>
             ),
         },
         {
@@ -896,9 +905,9 @@ export const FinanceHub: React.FC = () => {
           width: '90px',
           render: (row: FinanceRow) =>
             row.kind === 'statements' ? (
-              <span className="text-sm text-slate-700 dark:text-slate-200">{row.currency}</span>
+              <span className="text-sm text-c-text-secondary">{row.currency}</span>
             ) : (
-              <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+              <span className="text-sm text-c-text-muted">—</span>
             ),
         },
         {
@@ -907,11 +916,11 @@ export const FinanceHub: React.FC = () => {
           width: '90px',
           render: (row: FinanceRow) =>
             row.kind === 'statements' ? (
-              <span className="text-sm text-slate-700 dark:text-slate-200">
+              <span className="text-sm text-c-text-secondary">
                 {row.sourceStatementCount ?? row.statementIds?.length ?? 0}
               </span>
             ) : (
-              <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+              <span className="text-sm text-c-text-muted">—</span>
             ),
         },
         baseStatusCol,
@@ -928,11 +937,11 @@ export const FinanceHub: React.FC = () => {
           width: '220px',
           render: (row: FinanceRow) =>
             row.kind === 'models' ? (
-              <span className="text-sm text-slate-700 dark:text-slate-200 truncate">
+              <span className="text-sm text-c-text-secondary truncate">
                 {row.sourceDocumentTitle || '—'}
               </span>
             ) : (
-              <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+              <span className="text-sm text-c-text-muted">—</span>
             ),
         },
         {
@@ -941,11 +950,11 @@ export const FinanceHub: React.FC = () => {
           width: '120px',
           render: (row: FinanceRow) =>
             row.kind === 'models' ? (
-              <span className="text-sm text-slate-700 dark:text-slate-200">
+              <span className="text-sm text-c-text-secondary">
                 {row.forecastWindowLabel}
               </span>
             ) : (
-              <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+              <span className="text-sm text-c-text-muted">—</span>
             ),
         },
         {
@@ -954,9 +963,9 @@ export const FinanceHub: React.FC = () => {
           width: '190px',
           render: (row: FinanceRow) =>
             row.kind === 'models' ? (
-              <span className="text-sm text-slate-700 dark:text-slate-200">{row.variantLabel}</span>
+              <span className="text-sm text-c-text-secondary">{row.variantLabel}</span>
             ) : (
-              <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+              <span className="text-sm text-c-text-muted">—</span>
             ),
         },
         {
@@ -965,11 +974,11 @@ export const FinanceHub: React.FC = () => {
           width: '90px',
           render: (row: FinanceRow) =>
             row.kind === 'models' ? (
-              <span className="text-sm text-slate-700 dark:text-slate-200">
+              <span className="text-sm text-c-text-secondary">
                 {row.analyticalDepthLabel}
               </span>
             ) : (
-              <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+              <span className="text-sm text-c-text-muted">—</span>
             ),
         },
         baseStatusCol,
@@ -986,11 +995,11 @@ export const FinanceHub: React.FC = () => {
           width: '140px',
           render: (row: FinanceRow) =>
             row.kind === 'analysis' || row.kind === 'investment' ? (
-              <span className="text-sm text-slate-700 dark:text-slate-200 capitalize">
+              <span className="text-sm text-c-text-secondary capitalize">
                 {row.analysisType}
               </span>
             ) : (
-              <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+              <span className="text-sm text-c-text-muted">—</span>
             ),
         },
         {
@@ -999,9 +1008,9 @@ export const FinanceHub: React.FC = () => {
           width: '100px',
           render: (row: FinanceRow) =>
             row.kind === 'analysis' || row.kind === 'investment' ? (
-              <span className="text-sm text-slate-700 dark:text-slate-200">{row.periodCount}</span>
+              <span className="text-sm text-c-text-secondary">{row.periodCount}</span>
             ) : (
-              <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+              <span className="text-sm text-c-text-muted">—</span>
             ),
         },
         {
@@ -1010,9 +1019,9 @@ export const FinanceHub: React.FC = () => {
           width: '90px',
           render: (row: FinanceRow) =>
             row.kind === 'analysis' || row.kind === 'investment' ? (
-              <span className="text-sm text-slate-700 dark:text-slate-200">{row.currency}</span>
+              <span className="text-sm text-c-text-secondary">{row.currency}</span>
             ) : (
-              <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+              <span className="text-sm text-c-text-muted">—</span>
             ),
         },
         baseStatusCol,
@@ -1027,7 +1036,7 @@ export const FinanceHub: React.FC = () => {
           label: t('finance.columns.subtype', 'Subtype'),
           width: '130px',
           render: (row: FinanceRow) => {
-            if (row.kind !== 'prediction') return <span className="text-sm text-slate-400">—</span>;
+            if (row.kind !== 'prediction') return <span className="text-sm text-c-text-muted">—</span>;
             const pRow = row as FinanceModelRow;
             const isBudget = pRow.predictionType === 'budget';
             return (
@@ -1048,11 +1057,11 @@ export const FinanceHub: React.FC = () => {
           width: '120px',
           render: (row: FinanceRow) =>
             row.kind === 'prediction' ? (
-              <span className="text-sm text-slate-700 dark:text-slate-200">
+              <span className="text-sm text-c-text-secondary">
                 {(row as FinanceModelRow).scenario}
               </span>
             ) : (
-              <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+              <span className="text-sm text-c-text-muted">—</span>
             ),
         },
         {
@@ -1060,18 +1069,18 @@ export const FinanceHub: React.FC = () => {
           label: t('finance.columns.horizon', 'Horizon'),
           width: '120px',
           render: (row: FinanceRow) => {
-            if (row.kind !== 'prediction') return <span className="text-sm text-slate-500">—</span>;
+            if (row.kind !== 'prediction') return <span className="text-sm text-c-text-muted">—</span>;
             const pRow = row as FinanceModelRow;
             if (pRow.predictionType === 'budget')
               return (
-                <span className="text-sm text-slate-700 dark:text-slate-200">
+                <span className="text-sm text-c-text-secondary">
                   {pRow.periodStart && pRow.periodEnd
                     ? `${pRow.periodStart} → ${pRow.periodEnd}`
                     : '—'}
                 </span>
               );
             return (
-              <span className="text-sm text-slate-700 dark:text-slate-200">
+              <span className="text-sm text-c-text-secondary">
                 {pRow.horizonMonths} {t('finance.units.mo', 'mo')}
               </span>
             );
@@ -1090,11 +1099,11 @@ export const FinanceHub: React.FC = () => {
         width: '120px',
         render: (row: FinanceRow) =>
           row.kind === 'valuation' ? (
-            <span className="text-sm text-slate-700 dark:text-slate-200 capitalize">
+            <span className="text-sm text-c-text-secondary capitalize">
               {row.sourceType}
             </span>
           ) : (
-            <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+            <span className="text-sm text-c-text-muted">—</span>
           ),
       },
       {
@@ -1103,9 +1112,9 @@ export const FinanceHub: React.FC = () => {
         width: '100px',
         render: (row: FinanceRow) =>
           row.kind === 'valuation' ? (
-            <span className="text-sm text-slate-700 dark:text-slate-200">{row.method}</span>
+            <span className="text-sm text-c-text-secondary">{row.method}</span>
           ) : (
-            <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+            <span className="text-sm text-c-text-muted">—</span>
           ),
       },
       {
@@ -1114,11 +1123,11 @@ export const FinanceHub: React.FC = () => {
         width: '100px',
         render: (row: FinanceRow) =>
           row.kind === 'valuation' ? (
-            <span className="text-sm text-slate-700 dark:text-slate-200">
+            <span className="text-sm text-c-text-secondary">
               {row.horizonYears} {t('finance.units.yr', 'yr')}
             </span>
           ) : (
-            <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+            <span className="text-sm text-c-text-muted">—</span>
           ),
       },
       baseStatusCol,
@@ -1179,7 +1188,7 @@ export const FinanceHub: React.FC = () => {
             setShowValuationCreateModal(true);
           }
         }}
-        className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium bg-navy-900 text-white hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 transition-colors duration-150 active:scale-[0.97]"
+        className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium bg-c-text text-c-bg hover:opacity-90 transition-colors duration-150 active:scale-[0.97]"
       >
         <span>{labels[currentKind] || labels.models}</span>
       </button>
@@ -1470,10 +1479,10 @@ export const FinanceHub: React.FC = () => {
         </button>
         {showAnalyzeMenu && (
           <div
-            className="absolute right-0 mt-2 w-80 rounded-2xl border border-slate-200/80 bg-white/95 backdrop-blur-lg shadow-xl dark:border-white/[0.08] dark:bg-navy-900/95 p-1.5 z-20"
+            className="absolute right-0 mt-2 w-80 rounded-2xl border border-c-border bg-c-surface-raised backdrop-blur-lg shadow-xl p-1.5 z-20"
             role="menu"
           >
-            <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
+            <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
               {t('finance.analyze.menuTitle', 'Choose next step')}
             </div>
             <div className="space-y-0.5">
@@ -1490,18 +1499,18 @@ export const FinanceHub: React.FC = () => {
                         : 'Requires a ready statement or model'
                       : undefined
                   }
-                  className="group flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.04] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                  className="group flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-c-surface disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 >
-                  <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100/80 transition-colors group-hover:bg-slate-200/60 dark:bg-white/[0.06] dark:group-hover:bg-white/[0.08]">
+                  <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-c-surface-raised transition-colors group-hover:bg-c-border-subtle">
                     {analyzeActionIcons[action.id] || (
-                      <BarChart3 size={14} className="text-slate-500" />
+                      <BarChart3 size={14} className="text-c-text-muted" />
                     )}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[13px] font-medium text-slate-900 dark:text-white">
+                    <div className="text-[13px] font-medium text-c-text">
                       {action.label}
                     </div>
-                    <div className="mt-0.5 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+                    <div className="mt-0.5 text-[11px] leading-relaxed text-c-text-muted">
                       {action.description}
                     </div>
                   </div>
@@ -1678,7 +1687,7 @@ export const FinanceHub: React.FC = () => {
               </span>
             </button>
           ))}
-          <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
+          <div className="mx-1 h-5 w-px shrink-0 bg-c-border-subtle" />
           {runtimeChips.map((chip) => (
             <div key={chip.label} className={MENU_3_CHIP_INACTIVE}>
               <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${chip.dotClassName}`} />
@@ -1688,14 +1697,19 @@ export const FinanceHub: React.FC = () => {
           ))}
           {isFinanceRuntimeV8 && v8Dashboard && (
             <>
-              <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
-              <div className={MENU_3_CHIP_INACTIVE}>
+              <div className="mx-1 h-5 w-px shrink-0 bg-c-border-subtle" />
+              <button
+                type="button"
+                onClick={() => setShowLinkInitiativeModal(true)}
+                className={`${MENU_3_CHIP_INACTIVE} hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors`}
+                title={t('finance.v8.linkHint', 'Click to link an initiative to finance')}
+              >
                 <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-danger-400" />
                 <span>{t('finance.v8.unlinked', 'Unlinked')}</span>
                 <span className={MENU_3_BADGE_INACTIVE}>
                   {v8Dashboard.linkageHealth?.unlinkedInitiativesCount ?? 0}
                 </span>
-              </div>
+              </button>
               <div className={MENU_3_CHIP_INACTIVE}>
                 <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-amber-400" />
                 <span>{t('finance.v8.staleRefreshes', 'Stale')}</span>
@@ -1861,19 +1875,19 @@ export const FinanceHub: React.FC = () => {
       openStatement || isModelWorkspace || openAnalysis || isBudgetPrediction || openValuation;
     return (
       <div className="p-4 lg:p-6">
-        <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-hidden">
+        <div className="bg-c-surface backdrop-blur border border-c-border-subtle rounded-xl overflow-hidden">
           {!openStatement && (
-            <div className="px-4 py-3 border-b border-slate-200/70 dark:border-white/[0.06] flex items-center justify-between">
+            <div className="px-4 py-3 border-b border-c-border-subtle flex items-center justify-between">
               <div className="min-w-0">
-                <div className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <div className="text-[11px] uppercase tracking-wider text-c-text-muted">
                   {code}
                 </div>
-                <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                <div className="text-sm font-semibold text-c-text truncate">
                   {activeDocument.title}
                 </div>
               </div>
               <button
-                className="h-9 px-4 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                className="h-9 px-4 rounded-full border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                 onClick={handleShowList}
               >
                 {t('common.backToList', 'Wróć do listy')}
@@ -1955,45 +1969,146 @@ export const FinanceHub: React.FC = () => {
     handleCreateAnalysisFromStatements,
   ]);
 
+  const handleImportWizardComplete = useCallback(
+    async (statementId: string) => {
+      setShowImportWizard(false);
+      let statementDetail: any = null;
+      try {
+        const data = await V8FinanceApi.getStatement(statementId);
+        statementDetail = data?.statement ?? null;
+      } catch (error) {
+        if (!shouldFallbackToLegacyFinance(error)) {
+          throw error;
+        }
+        statementDetail = (await Api.get(`/api/finance-statements/${statementId}`)) as any;
+      }
+      const statementPackId = String(
+        statementDetail.statement_pack_id || statementDetail.statementPackId || ''
+      );
+      let packs: any[] = [];
+      try {
+        const data = await V8FinanceApi.getStatementPacks();
+        packs = Array.isArray(data?.statementPacks) ? data.statementPacks : [];
+      } catch (error) {
+        if (!shouldFallbackToLegacyFinance(error)) {
+          throw error;
+        }
+        const data = await Api.get('/api/finance-statements/packs');
+        packs = Array.isArray(data) ? data : [];
+      }
+      await refreshFinanceTruth(['statements']);
+      const pack = Array.isArray(packs)
+        ? packs.find((item: any) => String(item.id) === statementPackId)
+        : null;
+      const statementRow: FinanceStatementRow = pack
+        ? {
+            id: String(pack.id),
+            title: String(pack.entity_name || pack.period_label || pack.id),
+            kind: 'statements',
+            status:
+              String(pack.pack_readiness_status || '').toLowerCase() === 'ready'
+                ? 'APPROVED'
+                : String(pack.pack_readiness_status || '').toLowerCase() === 'recoverable'
+                  ? 'REVIEW'
+                  : 'DRAFT',
+            statementType: 'PACK',
+            statementPackId: String(pack.id),
+            entityName: String(pack.entity_name || ''),
+            periodStart: String(pack.period_start || ''),
+            periodEnd: String(pack.period_end || ''),
+            periodLabel: String(pack.period_label || ''),
+            currency: String(pack.currency || 'PLN'),
+            scaling: String(pack.scaling || 'units'),
+            sourceFileName: '',
+            validationStatus: String(pack.pack_status || 'pending'),
+            mappedLineCount: 0,
+            totalLineCount: 0,
+            unmappedLineCount: 0,
+            sourceStatementCount: Number(pack.source_statement_count ?? 0),
+            statementIds: [],
+            missingStatementTypes:
+              typeof pack.missing_statement_types === 'string' &&
+              pack.missing_statement_types.trim().startsWith('[')
+                ? JSON.parse(pack.missing_statement_types)
+                : Array.isArray(pack.missing_statement_types)
+                  ? pack.missing_statement_types
+                  : [],
+            completenessLabel: '',
+            childStatements: [],
+            overallConfidence: 0,
+            rawStatus: String(pack.pack_status || 'draft'),
+            readinessStatus: String(pack.pack_readiness_status || 'pending'),
+            readinessScore: Number(pack.pack_readiness_score ?? 0),
+            readinessSummary: String(pack.pack_quality_summary || ''),
+            readinessReasonCodes: [],
+            isWorkable: String(pack.pack_readiness_status || '').toLowerCase() === 'ready',
+            updatedAt: String(pack.updated_at || new Date().toISOString()),
+          }
+        : statementRows.find((row) => row.id === statementPackId) || statementRows[0];
+      if (!statementRow) return;
+      setActiveTab('statements');
+      focusStatementQueue(statementRow.status);
+      handleOpenFull(statementRow);
+      toast.success(
+        statementRow.isWorkable
+          ? t('finance.importWizard.completed', 'Completed')
+          : statementRow.readinessStatus === 'rejected'
+            ? t(
+                'finance.importWizard.rejected',
+                'Import finished, but the file was rejected and requires another attempt.'
+              )
+            : t(
+                'finance.importWizard.requiresReview',
+                'Import finished. The statement went to the recovery queue and requires quality closure.'
+              )
+      );
+    },
+    [refreshFinanceTruth, statementRows, setActiveTab, focusStatementQueue, handleOpenFull, t]
+  );
+
   const content = useMemo(() => {
+    // Import wizard renders INSIDE the ModuleHub shell (sidebar + topbar stay
+    // visible) as an instrument-archetype panel — not a viewport overlay that
+    // hides the app navigation. See H2.9 / H2.10.
+    if (showImportWizard)
+      return (
+        <FinancialStatementImportWizard
+          embedded
+          onClose={() => setShowImportWizard(false)}
+          onComplete={handleImportWizardComplete}
+        />
+      );
     if (loadingTab)
       return (
-        <div className="flex items-center justify-center h-full py-24">
-          <div className="text-sm text-slate-500 dark:text-slate-400">
-            {t('common.loading', 'Loading…')}
-          </div>
+        <div className="p-6">
+          <LoadingState template="list" rows={6} />
         </div>
       );
     if (!activeDocumentId && loadError)
       return (
-        <div className="flex items-center justify-center h-full p-6">
-          <div className="w-full max-w-3xl rounded-2xl border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/80 dark:bg-amber-500/10 p-6">
-            <div className="text-lg font-semibold text-slate-900 dark:text-white">
-              {t('finance.errors.realSourceTitle', 'Real finance source needs attention')}
-            </div>
-            <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">{loadError}</div>
-            <div className="mt-4 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              {t(
-                'finance.errors.realSourceHint',
-                'No synthetic demo fallback was injected. Verify active DB, organization scope, and data-context before retrying.'
-              )}
-            </div>
-          </div>
-        </div>
+        <EmptyState
+          variant="error"
+          title={t('finance.errors.realSourceTitle', 'Real finance source needs attention')}
+          description={`${loadError} — ${t(
+            'finance.errors.realSourceHint',
+            'No synthetic demo fallback was injected. Verify active DB, organization scope, and data-context before retrying.'
+          )}`}
+        />
       );
     if (!activeDocumentId && activeTab === 'investment' && filteredRows.length === 0)
       return (
-        <div className="flex items-center justify-center h-full p-6">
-          <div className="w-full max-w-3xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-6">
+        <>
+          <div className="flex items-center justify-center p-6">
+          <div className="w-full max-w-3xl rounded-2xl border border-c-border-subtle bg-c-surface p-6">
             <div className="flex items-start gap-4">
               <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-300">
                 <Target size={20} />
               </div>
               <div className="min-w-0">
-                <div className="text-lg font-semibold text-slate-900 dark:text-white">
+                <div className="text-lg font-semibold text-c-text">
                   {t('finance.investment.emptyTitle', 'Investment analysis workspace')}
                 </div>
-                <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                <div className="mt-1 text-sm text-c-text-secondary">
                   {t(
                     'finance.investment.emptyBody',
                     'Use this tab for initiative-level investment cases and go/no-go decisions based on NPV, IRR, payback, and ROI.'
@@ -2003,13 +2118,13 @@ export const FinanceHub: React.FC = () => {
                   {['NPV', 'IRR', 'Payback', 'ROI'].map((metric) => (
                     <span
                       key={metric}
-                      className="inline-flex items-center rounded-full bg-slate-100 dark:bg-white/[0.06] px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-200"
+                      className="inline-flex items-center rounded-full bg-c-surface-raised px-3 py-1 text-xs font-medium text-c-text-secondary"
                     >
                       {metric}
                     </span>
                   ))}
                 </div>
-                <div className="mt-4 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <div className="mt-4 text-xs uppercase tracking-wide text-c-text-muted">
                   {t(
                     'finance.investment.emptyHint',
                     'Create a dedicated investment case with NPV, IRR, payback, and ROI metrics from this tab.'
@@ -2018,21 +2133,26 @@ export const FinanceHub: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+          </div>
+          {isFinanceFlagEnabled('investmentAppraisal') && (
+            <div className="px-6 pb-6"><InvestmentAppraisalPanel /></div>
+          )}
+        </>
       );
     if (!activeDocumentId && activeTab === 'models' && filteredRows.length === 0)
       return (
-        <div className="flex items-center justify-center h-full p-6">
-          <div className="w-full max-w-3xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-6">
+        <>
+          <div className="flex items-center justify-center p-6">
+          <div className="w-full max-w-3xl rounded-2xl border border-c-border-subtle bg-c-surface p-6">
             <div className="flex items-start gap-4">
               <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-crimson-500/10 text-crimson-600 dark:text-crimson-300">
                 <Calculator size={20} />
               </div>
               <div className="min-w-0">
-                <div className="text-lg font-semibold text-slate-900 dark:text-white">
+                <div className="text-lg font-semibold text-c-text">
                   {t('finance.model.emptyTitle', 'Build your first financial model')}
                 </div>
-                <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                <div className="mt-1 text-sm text-c-text-secondary">
                   {t(
                     'finance.model.emptyBody',
                     'A financial model turns a statement pack into a board-ready business case: P&L, balance sheet, cash flow, and the NPV / ROI / payback story for the client.'
@@ -2061,13 +2181,13 @@ export const FinanceHub: React.FC = () => {
                         },
                       })
                     }
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/[0.1] bg-white/70 dark:bg-white/[0.04] px-3.5 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 transition hover:border-crimson-300 hover:text-crimson-700 dark:hover:text-crimson-300"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-c-border bg-c-surface px-3.5 py-2 text-sm font-medium text-c-text-secondary transition hover:border-crimson-300 hover:text-crimson-700 dark:hover:text-crimson-300"
                   >
                     <Sparkles size={14} />
                     {t('finance.model.emptyAskTeresa', 'Ask Teresa to start')}
                   </button>
                 </div>
-                <div className="mt-4 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <div className="mt-4 text-xs uppercase tracking-wide text-c-text-muted">
                   {t(
                     'finance.model.emptyHint',
                     'Seed a model from a statement pack or start from scratch — Teresa proposes the assumptions.'
@@ -2076,11 +2196,37 @@ export const FinanceHub: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+          </div>
+          {isFinanceFlagEnabled('valueOffice') && (
+            <div className="px-6 pb-4"><ValueOfficePanel /></div>
+          )}
+          {isFinanceFlagEnabled('driverPlanner') && (
+            <div className="px-6 pb-6"><DriverPlannerPanel /></div>
+          )}
+        </>
       );
     if (activeDocumentId && activeDocument) return fullView;
-    if (viewMode === 'grid') return gridView;
-    return tableWithPreview;
+    const _baseView = viewMode === 'grid' ? gridView : tableWithPreview;
+    const _showInvest = isFinanceFlagEnabled('investmentAppraisal') && activeTab === 'investment';
+    const _showValue = isFinanceFlagEnabled('valueOffice') && activeTab === 'models';
+    const _showDriver = isFinanceFlagEnabled('driverPlanner') && activeTab === 'models';
+    const _showVariance = isFinanceFlagEnabled('varianceBridge') && activeTab === 'prediction';
+    const _showValVis = isFinanceFlagEnabled('valuationVisuals') && activeTab === 'valuation';
+    if (_showInvest || _showValue || _showDriver || _showVariance || _showValVis) {
+      return (
+        <div className="flex flex-col">
+          {_baseView}
+          <div className="flex flex-col gap-4 px-4 pb-6">
+            {_showInvest && <InvestmentAppraisalPanel />}
+            {_showValue && <ValueOfficePanel />}
+            {_showDriver && <DriverPlannerPanel />}
+            {_showVariance && <VarianceBridgePanel />}
+            {_showValVis && <ValuationVisualsPanel valuation={selectedItem as any} />}
+          </div>
+        </div>
+      );
+    }
+    return _baseView;
   }, [
     loadingTab,
     loadError,
@@ -2091,16 +2237,19 @@ export const FinanceHub: React.FC = () => {
     openChatWithContext,
     activeDocumentId,
     activeDocument,
+    selectedItem,
     fullView,
     viewMode,
     gridView,
     tableWithPreview,
+    showImportWizard,
+    handleImportWizardComplete,
   ]);
 
   // ---- Render ----
   if (!isV8FlagLoading && !isV8FinanceEnabled && !useLegacyFinanceMode) {
     return (
-      <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400 p-8 text-center">
+      <div className="flex h-full items-center justify-center text-c-text-muted p-8 text-center">
         <div>
           <Calculator size={40} className="mx-auto mb-4 opacity-40" />
           <p className="text-lg font-medium">
@@ -2113,7 +2262,7 @@ export const FinanceHub: React.FC = () => {
 
   if (isFinanceBlocked) {
     return (
-      <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400 p-8 text-center">
+      <div className="flex h-full items-center justify-center text-c-text-muted p-8 text-center">
         <div>
           <Calculator size={40} className="mx-auto mb-4 opacity-40" />
           <p className="text-lg font-medium">
@@ -2202,107 +2351,6 @@ export const FinanceHub: React.FC = () => {
         />
       )}
 
-      {showImportWizard && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40">
-          <FinancialStatementImportWizard
-            onClose={() => setShowImportWizard(false)}
-            onComplete={async (statementId) => {
-              setShowImportWizard(false);
-              let statementDetail: any = null;
-              try {
-                const data = await V8FinanceApi.getStatement(statementId);
-                statementDetail = data?.statement ?? null;
-              } catch (error) {
-                if (!shouldFallbackToLegacyFinance(error)) {
-                  throw error;
-                }
-                statementDetail = (await Api.get(`/api/finance-statements/${statementId}`)) as any;
-              }
-              const statementPackId = String(
-                statementDetail.statement_pack_id || statementDetail.statementPackId || ''
-              );
-              let packs: any[] = [];
-              try {
-                const data = await V8FinanceApi.getStatementPacks();
-                packs = Array.isArray(data?.statementPacks) ? data.statementPacks : [];
-              } catch (error) {
-                if (!shouldFallbackToLegacyFinance(error)) {
-                  throw error;
-                }
-                const data = await Api.get('/api/finance-statements/packs');
-                packs = Array.isArray(data) ? data : [];
-              }
-              await refreshFinanceTruth(['statements']);
-              const pack = Array.isArray(packs)
-                ? packs.find((item: any) => String(item.id) === statementPackId)
-                : null;
-              const statementRow: FinanceStatementRow = pack
-                ? {
-                    id: String(pack.id),
-                    title: String(pack.entity_name || pack.period_label || pack.id),
-                    kind: 'statements',
-                    status:
-                      String(pack.pack_readiness_status || '').toLowerCase() === 'ready'
-                        ? 'APPROVED'
-                        : String(pack.pack_readiness_status || '').toLowerCase() === 'recoverable'
-                          ? 'REVIEW'
-                          : 'DRAFT',
-                    statementType: 'PACK',
-                    statementPackId: String(pack.id),
-                    entityName: String(pack.entity_name || ''),
-                    periodStart: String(pack.period_start || ''),
-                    periodEnd: String(pack.period_end || ''),
-                    periodLabel: String(pack.period_label || ''),
-                    currency: String(pack.currency || 'PLN'),
-                    scaling: String(pack.scaling || 'units'),
-                    sourceFileName: '',
-                    validationStatus: String(pack.pack_status || 'pending'),
-                    mappedLineCount: 0,
-                    totalLineCount: 0,
-                    unmappedLineCount: 0,
-                    sourceStatementCount: Number(pack.source_statement_count ?? 0),
-                    statementIds: [],
-                    missingStatementTypes:
-                      typeof pack.missing_statement_types === 'string' &&
-                      pack.missing_statement_types.trim().startsWith('[')
-                        ? JSON.parse(pack.missing_statement_types)
-                        : Array.isArray(pack.missing_statement_types)
-                          ? pack.missing_statement_types
-                          : [],
-                    completenessLabel: '',
-                    childStatements: [],
-                    overallConfidence: 0,
-                    rawStatus: String(pack.pack_status || 'draft'),
-                    readinessStatus: String(pack.pack_readiness_status || 'pending'),
-                    readinessScore: Number(pack.pack_readiness_score ?? 0),
-                    readinessSummary: String(pack.pack_quality_summary || ''),
-                    readinessReasonCodes: [],
-                    isWorkable: String(pack.pack_readiness_status || '').toLowerCase() === 'ready',
-                    updatedAt: String(pack.updated_at || new Date().toISOString()),
-                  }
-                : statementRows.find((row) => row.id === statementPackId) || statementRows[0];
-              if (!statementRow) return;
-              setActiveTab('statements');
-              focusStatementQueue(statementRow.status);
-              handleOpenFull(statementRow);
-              toast.success(
-                statementRow.isWorkable
-                  ? t('finance.importWizard.completed', 'Completed')
-                  : statementRow.readinessStatus === 'rejected'
-                    ? t(
-                        'finance.importWizard.rejected',
-                        'Import finished, but the file was rejected and requires another attempt.'
-                      )
-                    : t(
-                        'finance.importWizard.requiresReview',
-                        'Import finished. The statement went to the recovery queue and requires quality closure.'
-                      )
-              );
-            }}
-          />
-        </div>
-      )}
-
       {showAnalysisCreateModal && (
         <CreateAnalysisModal
           defaultAnalysisType={activeTab === 'investment' ? 'investment_case' : 'comprehensive'}
@@ -2356,6 +2404,16 @@ export const FinanceHub: React.FC = () => {
             setValuationInitialSource({});
             setValuationInitialTitle('');
             handleOpenFull(row);
+          }}
+        />
+      )}
+
+      {showLinkInitiativeModal && (
+        <LinkInitiativeModal
+          onClose={() => setShowLinkInitiativeModal(false)}
+          onLinked={() => {
+            setShowLinkInitiativeModal(false);
+            lane.refreshLane?.();
           }}
         />
       )}

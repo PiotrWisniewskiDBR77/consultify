@@ -65,7 +65,7 @@ const TooltipContent = React.forwardRef<
   return (
     <div
       ref={ref}
-      className={`absolute z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 bottom-full left-1/2 -translate-x-1/2 mb-2 ${className || ''}`}
+      className={`absolute z-dropdown overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 bottom-full left-1/2 -translate-x-1/2 mb-2 ${className || ''}`}
       style={{ marginBottom: sideOffset }}
       {...props}
     />

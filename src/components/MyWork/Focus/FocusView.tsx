@@ -205,9 +205,9 @@ const columnConfig: Record<
     title: 'Later',
     titleKey: 'myWork.focus.columns.later',
     icon: <Calendar size={16} />,
-    color: 'text-slate-600 dark:text-slate-400',
-    bgColor: 'bg-slate-50 dark:bg-slate-800/50',
-    borderColor: 'border-slate-200 dark:border-slate-700',
+    color: 'text-c-text-muted',
+    bgColor: 'bg-c-surface',
+    borderColor: 'border-c-border-subtle',
   },
 };
 
@@ -273,9 +273,9 @@ const SmartSnoozePopover: React.FC<{
       initial={{ opacity: 0, scale: 0.95, y: -4 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="absolute right-0 top-full mt-1 z-20 bg-white dark:bg-navy-900 rounded-lg shadow-xl border border-slate-200 dark:border-navy-700 py-1 min-w-[160px]"
+      className="absolute right-0 top-full mt-1 z-20 bg-c-surface rounded-lg shadow-hig-lg border border-c-border-subtle py-1 min-w-[160px]"
     >
-      <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
+      <div className="px-3 py-1.5 text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider">
         {t('myWork.focus.snooze.moveTo', 'Move to')}
       </div>
       {filtered.map((opt) => (
@@ -285,7 +285,7 @@ const SmartSnoozePopover: React.FC<{
             onSnooze(item, opt.column);
             onClose();
           }}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised transition-colors"
         >
           {opt.icon}
           {opt.label}
@@ -362,15 +362,15 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
       onClick={() => onSelect(item)}
       onDoubleClick={() => onOpenFull(item)}
       className={`
-        group relative bg-white dark:bg-navy-900 rounded-xl border
+        group relative bg-c-surface rounded-xl border
         ${
           item.isCompleted
-            ? 'border-slate-200/60 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]'
+            ? 'border-c-border-subtle bg-c-surface-raised'
             : isSelected
-              ? 'border-brand dark:border-brand ring-2 ring-brand/30'
-              : 'border-slate-200/60 dark:border-white/[0.06] hover:border-brand/30 dark:hover:border-brand/20'
+              ? 'border-c-border-strong ring-1 ring-inset ring-c-border-strong shadow-[inset_4px_0_0_var(--c-info)]'
+              : 'border-c-border-subtle hover:border-c-border'
         }
-        ${isDragging || isSortableDragging ? 'shadow-xl ring-2 ring-brand opacity-50' : 'shadow-sm'}
+        ${isDragging || isSortableDragging ? 'shadow-hig-lg ring-1 ring-c-border-strong opacity-70' : 'shadow-sm'}
         transition-all duration-200 cursor-pointer
       `}
     >
@@ -382,7 +382,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
           onClick={(e) => e.stopPropagation()}
           className="shrink-0 pt-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
         >
-          <GripVertical size={14} className="text-slate-600 dark:text-slate-400" />
+          <GripVertical size={14} className="text-c-text-muted" />
         </div>
 
         {/* Type Badge & Completion Toggle */}
@@ -398,7 +398,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
           ) : item.type === 'decision' ? (
             <Zap size={20} className="text-blue-500" />
           ) : (
-            <div className="w-5 h-5 rounded-full border-2 border-slate-300 hover:border-brand transition-colors" />
+            <div className="w-5 h-5 rounded-full border-2 border-c-border hover:border-c-border-strong transition-colors" />
           )}
         </button>
 
@@ -430,7 +430,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
                   />
                 )}
                 {item.initiativeName && (
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                  <span className="text-[10px] text-c-text-muted truncate">
                     {item.initiativeName}
                   </span>
                 )}
@@ -440,8 +440,8 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
               <h4
                 className={`text-sm font-semibold leading-snug ${
                   item.isCompleted
-                    ? 'text-slate-600 dark:text-slate-500 line-through'
-                    : 'text-navy-900 dark:text-white'
+                    ? 'text-c-text-muted line-through'
+                    : 'text-c-text'
                 }`}
               >
                 {item.title}
@@ -461,19 +461,19 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
               />
             )}
             {item.checklistTotal != null && item.checklistTotal > 0 && (
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+              <span className="text-[10px] text-c-text-muted flex items-center gap-1">
                 <ListChecks size={10} />
                 {item.checklistDone || 0}/{item.checklistTotal}
               </span>
             )}
             {item.estimatedHours != null && item.estimatedHours > 0 && (
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+              <span className="text-[10px] text-c-text-muted flex items-center gap-1">
                 <Timer size={10} />
                 {item.estimatedHours}h
               </span>
             )}
             {item.assignee && (
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+              <span className="text-[10px] text-c-text-muted flex items-center gap-1">
                 <User size={10} />
                 {item.assignee.name}
               </span>
@@ -630,12 +630,12 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
 const FocusCardOverlay: React.FC<{ item: FocusItem }> = ({ item }) => {
   return (
     // Canon §8.2 — neutral surface; no colored border-l accent (parity with the card).
-    <div className="bg-white dark:bg-navy-900 rounded-xl border border-brand shadow-2xl p-3 w-[300px] ring-2 ring-brand">
+    <div className="bg-c-surface rounded-xl border border-c-border-strong shadow-hig-lg p-3 w-[300px] ring-1 ring-c-border-strong">
       <div className="flex items-center gap-3">
         {item.type === 'decision' ? (
           <Zap size={20} className="text-blue-500" />
         ) : (
-          <div className="w-5 h-5 rounded-full border-2 border-brand" />
+          <div className="w-5 h-5 rounded-full border-2 border-c-border-strong" />
         )}
         <div className="flex-1 min-w-0">
           <ChipBase
@@ -649,7 +649,7 @@ const FocusCardOverlay: React.FC<{ item: FocusItem }> = ({ item }) => {
           >
             {item.type === 'decision' ? 'Decision' : 'Task'}
           </ChipBase>
-          <h4 className="text-sm font-semibold text-navy-900 dark:text-white truncate mt-1">
+          <h4 className="text-sm font-semibold text-c-text truncate mt-1">
             {item.title}
           </h4>
         </div>
@@ -698,12 +698,12 @@ const FocusColumnComponent: React.FC<FocusColumnProps> = ({
         <div className="flex items-center gap-2">
           <span className={config.color}>{renderIconNode(config.icon, { size: 16 })}</span>
           <h3 className={`font-semibold ${config.color}`}>{t(config.titleKey, config.title)}</h3>
-          <span className="text-xs text-slate-500 dark:text-slate-400">
+          <span className="text-xs text-c-text-muted">
             {completedCount}/{items.length}
           </span>
         </div>
         {items.length > 0 && (
-          <div className="w-16 h-1.5 bg-white/50 dark:bg-white/10 rounded-full overflow-hidden">
+          <div className="w-16 h-1.5 bg-c-border-subtle rounded-full overflow-hidden">
             <div
               className="h-full bg-green-500 transition-all duration-500"
               style={{ width: `${items.length > 0 ? (completedCount / items.length) * 100 : 0}%` }}
@@ -737,7 +737,7 @@ const FocusColumnComponent: React.FC<FocusColumnProps> = ({
             <div className={`p-3 rounded-full ${config.bgColor} mb-2`}>
               {renderIconNode(config.icon, { size: 16 })}
             </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t('myWork.focus.emptyColumn', 'No items')}
             </p>
           </div>
@@ -816,17 +816,17 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.95, y: 20 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 w-full max-w-md mx-4"
+        className="bg-c-surface rounded-xl shadow-hig-lg border border-c-border-subtle w-full max-w-md mx-4"
       >
         <div className="p-6">
-          <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-2">
+          <h3 className="text-lg font-bold text-c-text mb-2">
             {t('myWork.focus.delegateTitle', 'Delegate Task')}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{item.title}</p>
+          <p className="text-sm text-c-text-muted mb-4">{item.title}</p>
 
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="animate-spin text-brand" size={24} />
+              <Loader2 className="animate-spin text-c-text-muted" size={24} />
             </div>
           ) : (
             <div className="space-y-4 max-h-80 overflow-y-auto">
@@ -840,7 +840,7 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                     </span>
                   </div>
                   {aiLoading ? (
-                    <div className="flex items-center gap-2 text-xs text-slate-600 py-2">
+                    <div className="flex items-center gap-2 text-xs text-c-text-secondary py-2">
                       <Loader2 size={12} className="animate-spin" />
                       {t('myWork.focus.delegate.analyzing', 'Analyzing team...')}
                     </div>
@@ -852,8 +852,8 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                           onClick={() => setSelectedUserId(sug.userId)}
                           className={`w-full flex items-start gap-3 p-3 rounded-lg border transition-all text-left ${
                             selectedUserId === sug.userId
-                              ? 'border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/[0.05]'
-                              : 'border-slate-200 dark:border-white/[0.08] bg-slate-50/30 dark:bg-white/[0.03] hover:border-slate-300 dark:hover:border-white/[0.15]'
+                              ? 'border-c-border-strong bg-c-surface-raised'
+                              : 'border-c-border-subtle bg-c-surface hover:border-c-border'
                           }`}
                         >
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-brand flex items-center justify-center shrink-0">
@@ -863,10 +863,10 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-navy-900 dark:text-white truncate">
+                              <span className="text-sm font-medium text-c-text truncate">
                                 {sug.name}
                               </span>
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium shrink-0">
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-c-info/15 text-c-info font-medium shrink-0">
                                 {sug.score}%
                               </span>
                             </div>
@@ -874,7 +874,7 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                               {sug.reasons.map((r, ri) => (
                                 <span
                                   key={ri}
-                                  className="text-[10px] text-slate-500 dark:text-slate-400"
+                                  className="text-[10px] text-c-text-muted"
                                 >
                                   {ri > 0 && '·'} {r}
                                 </span>
@@ -892,7 +892,7 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
               {users.filter((u) => !suggestedIds.has(u.id)).length > 0 && (
                 <div>
                   {aiSuggestions.length > 0 && (
-                    <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
+                    <span className="text-[11px] font-semibold text-c-text-secondary uppercase tracking-wider">
                       {t('myWork.focus.delegate.allMembers', 'All Team Members')}
                     </span>
                   )}
@@ -905,8 +905,8 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                           onClick={() => setSelectedUserId(user.id)}
                           className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
                             selectedUserId === user.id
-                              ? 'border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/[0.05]'
-                              : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
+                              ? 'border-c-border-strong bg-c-surface-raised'
+                              : 'border-c-border-subtle hover:border-c-border'
                           }`}
                         >
                           {user.avatarUrl ? (
@@ -922,7 +922,7 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                               </span>
                             </div>
                           )}
-                          <span className="text-sm font-medium text-navy-900 dark:text-white">
+                          <span className="text-sm font-medium text-c-text">
                             {user.name}
                           </span>
                         </button>
@@ -934,10 +934,10 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-3 p-4 border-t border-slate-200 dark:border-navy-700">
+        <div className="flex items-center justify-end gap-3 p-4 border-t border-c-border-subtle">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="px-4 py-2 rounded-lg text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
             {t('common.cancel', 'Cancel')}
           </button>
@@ -949,7 +949,7 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
               }
             }}
             disabled={!selectedUserId}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-c-text text-c-surface hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('myWork.focus.actions.delegate', 'Delegate')}
           </button>
@@ -1677,17 +1677,17 @@ export const FocusView: React.FC<FocusViewProps> = ({
   return (
     <div className="p-4 h-full min-h-0">
       <div className="mb-4 grid grid-cols-1 xl:grid-cols-3 gap-3">
-        <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-3">
+        <div className="rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
                 {t('myWork.focus.rules', 'Focus rules')}
               </div>
-              <div className="mt-1 text-sm font-semibold text-navy-900 dark:text-white">
+              <div className="mt-1 text-sm font-semibold text-c-text">
                 {t('myWork.focus.owner', 'Planner')}{' '}
                 {currentUser?.firstName || currentUser?.email || ''}
               </div>
-              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              <div className="mt-1 text-xs text-c-text-muted">
                 {activeCounts.today}/{focusRules.maxToday}{' '}
                 {t('myWork.focus.columns.today', 'Today')} ·{' '}
                 {activeCounts.today + activeCounts.thisWeek}/{focusRules.maxWeek}{' '}
@@ -1720,8 +1720,8 @@ export const FocusView: React.FC<FocusViewProps> = ({
                     }
                     className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border transition-colors ${
                       active
-                        ? 'border-slate-300 dark:border-white/[0.15] bg-slate-100 dark:bg-white/[0.08] text-[var(--c-info)]'
-                        : 'border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+                        ? 'border-c-border-strong bg-c-surface-raised text-[var(--c-info)]'
+                        : 'border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised'
                     }`}
                   >
                     <Sparkles size={12} />
@@ -1733,16 +1733,16 @@ export const FocusView: React.FC<FocusViewProps> = ({
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-3">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <div className="rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
             {t('myWork.focus.capacity', 'Capacity summary')}
           </div>
           <div className="mt-2 flex items-center gap-4">
             <div>
-              <div className="text-lg font-semibold text-navy-900 dark:text-white">
+              <div className="text-lg font-semibold text-c-text">
                 {workloadSummary?.total ?? 0}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="text-xs text-c-text-muted">
                 {t('myWork.focus.openItems', 'Open items')}
               </div>
             </div>
@@ -1750,7 +1750,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
               <div className="text-lg font-semibold text-amber-600 dark:text-amber-400">
                 {workloadSummary?.atRisk ?? 0}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="text-xs text-c-text-muted">
                 {t('myWork.focus.atRisk', 'At risk')}
               </div>
             </div>
@@ -1758,12 +1758,12 @@ export const FocusView: React.FC<FocusViewProps> = ({
               <div className="text-lg font-semibold text-danger-600 dark:text-danger-400">
                 {workloadSummary?.overdue ?? 0}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="text-xs text-c-text-muted">
                 {t('myWork.focus.overdue', 'Overdue')}
               </div>
             </div>
           </div>
-          <label className="mt-3 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+          <label className="mt-3 flex items-center gap-2 text-xs text-c-text-secondary">
             <input
               type="checkbox"
               checked={focusRules.capacityAware}
@@ -1778,12 +1778,12 @@ export const FocusView: React.FC<FocusViewProps> = ({
           </label>
         </div>
 
-        <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-3">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <div className="rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
             {t('myWork.focus.limits', 'Limits')}
           </div>
           <div className="mt-3 grid grid-cols-2 gap-3">
-            <label className="text-xs text-slate-600 dark:text-slate-300">
+            <label className="text-xs text-c-text-secondary">
               {t('myWork.focus.maxToday', 'Max today')}
               <input
                 type="number"
@@ -1797,10 +1797,10 @@ export const FocusView: React.FC<FocusViewProps> = ({
                   }))
                 }
                 onBlur={() => persistFocusRules(focusRules, activeTemplate)}
-                className="mt-1 w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2"
+                className="mt-1 w-full rounded-lg border border-c-border bg-c-surface text-c-text px-3 py-2"
               />
             </label>
-            <label className="text-xs text-slate-600 dark:text-slate-300">
+            <label className="text-xs text-c-text-secondary">
               {t('myWork.focus.maxWeek', 'Max this week')}
               <input
                 type="number"
@@ -1814,7 +1814,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
                   }))
                 }
                 onBlur={() => persistFocusRules(focusRules, activeTemplate)}
-                className="mt-1 w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2"
+                className="mt-1 w-full rounded-lg border border-c-border bg-c-surface text-c-text px-3 py-2"
               />
             </label>
           </div>
@@ -1860,7 +1860,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
 
           {showAIPlan ? (
             <div
-              className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3"
+              className="shrink-0 bg-c-bg p-3"
               style={{ width: 'clamp(340px, 28%, 480px)' }}
             >
               <PreviewPaneShell
@@ -1872,7 +1872,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
             </div>
           ) : previewOpen && selectedItem ? (
             <div
-              className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3"
+              className="shrink-0 bg-c-bg p-3"
               style={{ width: 'clamp(340px, 28%, 480px)' }}
             >
               <PreviewPaneShell
@@ -1884,7 +1884,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
                 actions={
                   <button
                     onClick={() => onItemClick?.(selectedItem)}
-                    className="inline-flex items-center gap-2 h-9 px-4 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-transparent text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 text-xs font-medium"
+                    className="inline-flex items-center gap-2 h-9 px-4 rounded-full border border-c-border-subtle bg-transparent text-c-text-secondary hover:bg-c-surface-raised transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 text-xs font-medium"
                     title={t('common.open', 'Open')}
                   >
                     <ArrowRight size={14} />
@@ -1913,7 +1913,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
                           handleSnooze(selectedItem, next[selectedItem.column]);
                       }}
                       disabled={selectedItem.column === 'later'}
-                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed"
                       title={t('myWork.focus.actions.snooze', 'Snooze')}
                     >
                       <Clock size={14} />
@@ -1922,7 +1922,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
                     <button
                       onClick={() => setDelegateItem(selectedItem)}
                       disabled={selectedItem.type !== 'task'}
-                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed"
                       title={t('myWork.focus.actions.delegate', 'Delegate')}
                     >
                       <UserPlus size={14} />
@@ -1940,7 +1940,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
                 }
               >
                 <div className="space-y-4">
-                  <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
+                  <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <span
                         className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
@@ -1954,7 +1954,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
                           : t('myWork.focus.task', 'Task')}
                       </span>
                       {selectedItem.priority ? (
-                        <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+                        <span className="text-[11px] font-semibold text-c-text-secondary">
                           {selectedItem.priority}
                         </span>
                       ) : null}
@@ -1968,13 +1968,13 @@ export const FocusView: React.FC<FocusViewProps> = ({
                           />
                         </div>
                       ) : (
-                        <span className="text-[11px] font-medium text-slate-600 dark:text-slate-500 italic">
+                        <span className="text-[11px] font-medium text-c-text-muted italic">
                           {t('myWork.focus.noDue', 'No due date')}
                         </span>
                       )}
                     </div>
                     {selectedItem.initiativeName ? (
-                      <div className="mt-2 text-xs text-slate-600 dark:text-slate-300 truncate">
+                      <div className="mt-2 text-xs text-c-text-secondary truncate">
                         {selectedItem.initiativeName}
                       </div>
                     ) : null}
@@ -1982,10 +1982,10 @@ export const FocusView: React.FC<FocusViewProps> = ({
 
                   {selectedItem.description ? (
                     <div className="space-y-2">
-                      <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      <div className="text-[11px] font-semibold text-c-text-muted uppercase tracking-wider">
                         {t('common.details', 'Details')}
                       </div>
-                      <div className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
+                      <div className="text-sm text-c-text-secondary leading-relaxed whitespace-pre-wrap">
                         {selectedItem.description}
                       </div>
                     </div>
@@ -2007,7 +2007,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
             onNavigateToInbox && (
               <button
                 onClick={onNavigateToInbox}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 font-medium hover:bg-navy-800 dark:hover:bg-[#DDE5EF] transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-c-text text-c-surface font-medium hover:opacity-90 transition-opacity"
               >
                 {t('myWork.focus.goToInbox', 'Go to Inbox')}
                 <ChevronRight size={16} />

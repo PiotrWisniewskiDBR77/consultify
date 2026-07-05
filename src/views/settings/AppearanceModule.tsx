@@ -84,10 +84,10 @@ const ThemeSettings: React.FC<{
     <div className="space-y-8">
       {/* Theme Mode */}
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+        <h3 className="text-lg font-semibold text-c-text mb-4">
           {t('settings.theme.title', 'Theme Mode')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+        <p className="text-sm text-c-text-muted mb-6">
           {t('settings.theme.description', 'Choose your preferred appearance')}
         </p>
 
@@ -98,16 +98,16 @@ const ThemeSettings: React.FC<{
               onClick={() => toggleTheme(t_.id)}
               className={`p-6 rounded-xl border-2 transition-all ${
                 theme === t_.id
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-white/5'
+                  ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+                  : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-white/20 bg-c-surface'
               }`}
             >
               <div className="text-4xl mb-3">{t_.icon}</div>
               <p
                 className={`font-medium ${
                   theme === t_.id
-                    ? 'text-primary-700 dark:text-primary-300'
-                    : 'text-slate-900 dark:text-white'
+                    ? 'text-c-accent'
+                    : 'text-c-text'
                 }`}
               >
                 {t_.label}
@@ -118,11 +118,11 @@ const ThemeSettings: React.FC<{
       </div>
 
       {/* Accent Color */}
-      <div className="pt-6 border-t border-slate-200 dark:border-navy-700">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+      <div className="pt-6 border-t border-c-border-subtle dark:border-navy-700">
+        <h3 className="text-lg font-semibold text-c-text mb-4">
           {t('settings.theme.accentColor', 'Accent Color')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+        <p className="text-sm text-c-text-muted mb-6">
           {t(
             'settings.theme.accentColorDescription',
             'Customize the highlight color used throughout the app'
@@ -136,7 +136,7 @@ const ThemeSettings: React.FC<{
               onClick={() => handleAccentColorChange(color.id)}
               className={`relative w-12 h-12 rounded-full transition-all transform hover:scale-110 ${
                 accentColor === color.id
-                  ? 'ring-2 ring-offset-2 ring-slate-900 dark:ring-white'
+                  ? 'ring-2 ring-offset-2 ring-c-border-strong dark:ring-white'
                   : ''
               }`}
               style={{ backgroundColor: color.value }}
@@ -153,14 +153,14 @@ const ThemeSettings: React.FC<{
       </div>
 
       {/* Theme Preview */}
-      <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg">
+      <div className="p-4 bg-c-surface-raised rounded-lg">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t('settings.theme.currentTheme', 'Current theme')}:{' '}
-              <strong className="text-slate-900 dark:text-white capitalize">{theme}</strong>
+              <strong className="text-c-text capitalize">{theme}</strong>
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-c-text-muted mt-1">
               {t('settings.theme.currentAccent', 'Accent color')}:{' '}
               <strong
                 className="capitalize"
@@ -173,10 +173,10 @@ const ThemeSettings: React.FC<{
           {/* Preview Swatch */}
           <div className="flex items-center gap-2">
             <div
-              className="w-8 h-8 rounded-lg border border-slate-200 dark:border-navy-700"
+              className="w-8 h-8 rounded-lg border border-c-border-subtle dark:border-navy-700"
               style={{ backgroundColor: ACCENT_COLORS.find((c) => c.id === accentColor)?.value }}
             />
-            <div className="text-sm text-slate-500 dark:text-slate-400">
+            <div className="text-sm text-c-text-muted">
               {ACCENT_COLORS.find((c) => c.id === accentColor)?.value}
             </div>
           </div>
@@ -225,10 +225,10 @@ const LanguageSettings: React.FC<{
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+        <h3 className="text-lg font-semibold text-c-text mb-4">
           {t('settings.language.title', 'Language')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+        <p className="text-sm text-c-text-muted mb-6">
           {t('settings.language.description', 'Choose your preferred language')}
         </p>
       </div>
@@ -240,21 +240,21 @@ const LanguageSettings: React.FC<{
             onClick={() => handleLanguageChange(lang.code as Language)}
             className={`w-full p-4 rounded-lg border-2 transition-all flex items-center gap-4 ${
               selectedLanguage === lang.code
-                ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
-                : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-white/5'
+                ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+                : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-white/20 bg-c-surface'
             }`}
           >
             <span className="text-2xl">{lang.flag}</span>
             <span
               className={`font-medium ${
                 selectedLanguage === lang.code
-                  ? 'text-primary-700 dark:text-primary-300'
-                  : 'text-slate-900 dark:text-white'
+                  ? 'text-c-accent'
+                  : 'text-c-text'
               }`}
             >
               {lang.name}
             </span>
-            {selectedLanguage === lang.code && <span className="ml-auto text-primary-500">✓</span>}
+            {selectedLanguage === lang.code && <span className="ml-auto text-c-accent">✓</span>}
           </button>
         ))}
       </div>

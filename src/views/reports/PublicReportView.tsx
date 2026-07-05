@@ -51,10 +51,10 @@ export const PublicReportView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-c-bg">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">{t('reports.loading')}</p>
+          <Loader2 className="w-12 h-12 animate-spin text-c-info mx-auto mb-4" />
+          <p className="text-c-text-secondary">{t('reports.loading')}</p>
         </div>
       </div>
     );
@@ -63,21 +63,21 @@ export const PublicReportView: React.FC = () => {
   // Handle revoked links
   if (error === 'revoked') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-c-bg">
         <div className="text-center max-w-md mx-auto p-8">
-          <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Lock className="w-8 h-8 text-amber-500" />
+          <div className="w-16 h-16 bg-c-warning/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Lock className="w-8 h-8 text-c-warning" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-2xl font-bold text-c-text mb-2">
             {t('reports.linkRevoked', 'Link Revoked')}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-c-text-secondary mb-6">
             {t(
               'reports.linkRevokedDescription',
               'This share link has been revoked by the organization.'
             )}
           </p>
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+          <div className="flex items-center justify-center gap-2 text-sm text-c-text-muted">
             <Lock className="w-4 h-4" />
             <span>{t('reports.contactOrg', 'Contact the organization for access')}</span>
           </div>
@@ -88,18 +88,18 @@ export const PublicReportView: React.FC = () => {
 
   if (error === 'expired' || error === 'notfound' || !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-c-bg">
         <div className="text-center max-w-md mx-auto p-8">
           <div className="w-16 h-16 bg-danger-100 dark:bg-danger-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
             <Clock className="w-8 h-8 text-danger-500" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-2xl font-bold text-c-text mb-2">
             {t('reports.linkExpired')}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-c-text-secondary mb-6">
             {t('reports.linkExpiredDescription')}
           </p>
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+          <div className="flex items-center justify-center gap-2 text-sm text-c-text-muted">
             <Lock className="w-4 h-4" />
             <span>{t('reports.requestNewLink')}</span>
           </div>
@@ -110,22 +110,22 @@ export const PublicReportView: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-c-bg">
         <div className="text-center max-w-md mx-auto p-8">
           <AlertTriangle className="w-16 h-16 text-danger-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-xl font-bold text-c-text mb-2">
             {t('reports.error')}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">{error}</p>
+          <p className="text-c-text-secondary">{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 relative">
+    <div className="min-h-screen bg-c-bg py-8 relative">
       {/* Watermark Banner - Fixed at top */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-700 to-slate-800 text-white">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-c-text text-white">
         <div className="max-w-5xl mx-auto px-6 py-2 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 text-xs font-medium bg-white/10 px-2 py-1 rounded">
@@ -156,12 +156,12 @@ export const PublicReportView: React.FC = () => {
 
       {/* Bottom watermark */}
       <div className="max-w-5xl mx-auto px-6 py-8 mt-4">
-        <div className="text-center text-sm text-gray-600 dark:text-gray-500 border-t border-gray-200 dark:border-gray-700 pt-6">
+        <div className="text-center text-sm text-c-text-secondary border-t border-c-border-subtle pt-6">
           <p className="flex items-center justify-center gap-2">
             <Lock className="w-4 h-4" />
             {t('reports.sharedSnapshotFooter', 'This is a read-only shared snapshot')} • Consultify
           </p>
-          <p className="text-xs mt-1 text-gray-600 dark:text-gray-500 dark:text-gray-400">
+          <p className="text-xs mt-1 text-c-text-secondary">
             {t('reports.snapshotGeneratedAt', 'Generated')}:{' '}
             {new Date(data.createdAt).toLocaleString()}
           </p>

@@ -562,7 +562,7 @@ export function V8ArtifactRunControl({
               data-testid="v8-artifact-run-plan"
               onClick={handlePlan}
               disabled={!canPlan}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-c-text px-3 py-2 text-sm font-medium text-c-bg transition hover:bg-c-text-secondary disabled:cursor-not-allowed disabled:opacity-50"
             >
               {createRun.isPending ? (
                 <Loader2 size={16} className="animate-spin" />

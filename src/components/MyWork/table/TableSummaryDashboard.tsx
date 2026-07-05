@@ -140,21 +140,21 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
   if (!open) return null;
 
   return (
-    <div className="border-t border-slate-200/60 dark:border-navy-700/60 bg-gradient-to-b from-slate-50/80 to-white dark:from-navy-900/50 dark:to-navy-950">
+    <div className="border-t border-c-border-subtle bg-c-surface-raised">
       {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+        className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-c-surface-raised transition-colors"
       >
-        <BarChart3 size={13} className="text-primary-500" />
-        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+        <BarChart3 size={13} className="text-c-accent" />
+        <span className="text-[11px] font-bold text-c-text">
           {isPl ? 'Podsumowanie tabeli' : 'Table Summary'}
         </span>
         <div className="flex-1" />
         {expanded ? (
-          <ChevronDown size={12} className="text-slate-600" />
+          <ChevronDown size={12} className="text-c-text-secondary" />
         ) : (
-          <ChevronUp size={12} className="text-slate-600" />
+          <ChevronUp size={12} className="text-c-text-secondary" />
         )}
       </button>
 
@@ -167,7 +167,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
                 label: isPl ? 'Pomysły' : 'Ideas',
                 value: stats.totalRows,
                 icon: FileText,
-                color: '#6366f1',
+                color: 'var(--c-info)',
               },
               {
                 label: isPl ? 'Kompletność' : 'Completeness',
@@ -175,33 +175,33 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
                 icon: CheckCircle2,
                 color:
                   stats.completeness > 70
-                    ? '#10b981'
+                    ? 'var(--c-success)'
                     : stats.completeness > 40
-                      ? '#f59e0b'
-                      : '#f43f5e',
+                      ? 'var(--c-warning)'
+                      : 'var(--c-danger)',
               },
               {
                 label: isPl ? 'Kategorie' : 'Categories',
                 value: stats.categories,
                 icon: TrendingUp,
-                color: '#6366f1',
+                color: 'var(--c-info)',
               },
               {
                 label: isPl ? 'Z komentarzami' : 'With comments',
                 value: stats.withComments,
                 icon: FileText,
-                color: '#3b82f6',
+                color: 'var(--c-info)',
               },
             ].map((stat) => {
               const Icon = stat.icon;
               return (
                 <div
                   key={stat.label}
-                  className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/40 dark:border-navy-700/40 p-3"
+                  className="rounded-xl bg-c-surface border border-c-border-subtle p-3"
                 >
                   <div className="flex items-center gap-1.5 mb-1">
                     <Icon size={11} style={{ color: stat.color }} />
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-600">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary">
                       {stat.label}
                     </span>
                   </div>
@@ -214,20 +214,20 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
           </div>
 
           {/* Completeness gauge */}
-          <div className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/40 dark:border-navy-700/40 p-3">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-2 block">
+          <div className="rounded-xl bg-c-surface border border-c-border-subtle p-3">
+            <span className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-2 block">
               {isPl ? 'Kompletność danych' : 'Data completeness'}
             </span>
-            <div className="h-2.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+            <div className="h-2.5 rounded-full bg-c-border-subtle overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-500"
                 style={{
                   width: `${stats.completeness}%`,
-                  background: `linear-gradient(90deg, ${stats.completeness > 70 ? '#10b981' : stats.completeness > 40 ? '#f59e0b' : '#f43f5e'}, ${stats.completeness > 70 ? '#06d6a0' : stats.completeness > 40 ? '#fbbf24' : '#fb7185'})`,
+                  background: `linear-gradient(90deg, ${stats.completeness > 70 ? 'var(--c-success)' : stats.completeness > 40 ? 'var(--c-warning)' : 'var(--c-danger)'}, ${stats.completeness > 70 ? 'var(--c-success)' : stats.completeness > 40 ? 'var(--c-warning)' : 'var(--c-danger)'})`,
                 }}
               />
             </div>
-            <span className="text-[10px] text-slate-500 mt-1 block">
+            <span className="text-[10px] text-c-text-muted mt-1 block">
               {stats.completeness}% —{' '}
               {stats.completeness > 70
                 ? isPl
@@ -249,18 +249,18 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
               {selectDistributions.map(({ column, distribution }) => (
                 <div
                   key={column.key}
-                  className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/40 dark:border-navy-700/40 p-3"
+                  className="rounded-xl bg-c-surface border border-c-border-subtle p-3"
                 >
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-2 block">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-2 block">
                     {column.header}
                   </span>
                   <div className="space-y-1.5">
                     {distribution.map((d) => (
                       <div key={d.label} className="flex items-center gap-2">
-                        <span className="text-[10px] text-slate-600 dark:text-slate-300 w-20 truncate">
+                        <span className="text-[10px] text-c-text-secondary w-20 truncate">
                           {d.label}
                         </span>
-                        <div className="flex-1 h-2 rounded-full bg-slate-100 dark:bg-navy-800 overflow-hidden">
+                        <div className="flex-1 h-2 rounded-full bg-c-surface-raised overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all"
                             style={{
@@ -269,7 +269,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
                             }}
                           />
                         </div>
-                        <span className="text-[9px] text-slate-600 w-6 text-right">{d.count}</span>
+                        <span className="text-[9px] text-c-text-secondary w-6 text-right">{d.count}</span>
                       </div>
                     ))}
                   </div>
@@ -284,25 +284,25 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
               {numberStats.map(({ column, avg, min, max, sum }) => (
                 <div
                   key={column.key}
-                  className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/40 dark:border-navy-700/40 p-3"
+                  className="rounded-xl bg-c-surface border border-c-border-subtle p-3"
                 >
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-1 block">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1 block">
                     {column.header}
                   </span>
                   <div className="grid grid-cols-2 gap-1 text-[10px]">
-                    <span className="text-slate-500">
+                    <span className="text-c-text-muted">
                       {isPl ? 'Śr.' : 'Avg'}:{' '}
-                      <strong className="text-slate-700 dark:text-slate-300">{avg}</strong>
+                      <strong className="text-c-text">{avg}</strong>
                     </span>
-                    <span className="text-slate-500">
+                    <span className="text-c-text-muted">
                       {isPl ? 'Suma' : 'Sum'}:{' '}
-                      <strong className="text-slate-700 dark:text-slate-300">{sum}</strong>
+                      <strong className="text-c-text">{sum}</strong>
                     </span>
-                    <span className="text-slate-500">
-                      Min: <strong className="text-slate-700 dark:text-slate-300">{min}</strong>
+                    <span className="text-c-text-muted">
+                      Min: <strong className="text-c-text">{min}</strong>
                     </span>
-                    <span className="text-slate-500">
-                      Max: <strong className="text-slate-700 dark:text-slate-300">{max}</strong>
+                    <span className="text-c-text-muted">
+                      Max: <strong className="text-c-text">{max}</strong>
                     </span>
                   </div>
                 </div>
@@ -311,22 +311,22 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
           )}
 
           {/* AI Narrative */}
-          <div className="rounded-xl border border-primary-500/20 bg-primary-500/5 p-3">
+          <div className="rounded-xl border border-c-accent bg-c-accent-soft p-3">
             <div className="flex items-center gap-1.5 mb-2">
-              <Sparkles size={11} className="text-primary-500" />
-              <span className="text-[10px] font-bold text-primary-600 dark:text-primary-400">
+              <Sparkles size={11} className="text-c-accent" />
+              <span className="text-[10px] font-bold text-c-accent">
                 {isPl ? 'Narracja AI' : 'AI Narrative'}
               </span>
             </div>
             {aiNarrative ? (
-              <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed">
+              <p className="text-[11px] text-c-text leading-relaxed">
                 {aiNarrative}
               </p>
             ) : (
               <button
                 onClick={handleGenerateNarrative}
                 disabled={aiLoading}
-                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold text-c-accent hover:bg-c-accent-soft transition-colors disabled:opacity-50"
               >
                 {aiLoading ? (
                   <Loader2 size={12} className="animate-spin" />
