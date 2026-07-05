@@ -1,0 +1,478 @@
+{
+  "changeConflictDetectedRefreshingMapFrom": {
+    "pl": "Wykryto konflikt zmian. Odświeżam mapę z serwera.",
+    "en": "Change conflict detected. Refreshing map from server."
+  },
+  "failedToApplyChanges": {
+    "pl": "Nie udało się zastosować zmian",
+    "en": "Failed to apply changes"
+  },
+  "selectAnObjectOnTheCanvas": {
+    "pl": "Najpierw zaznacz obiekt na canvasie",
+    "en": "Select an object on the canvas first"
+  },
+  "noMatchingArtifactsFound": {
+    "pl": "Nie znaleziono pasujących artefaktów",
+    "en": "No matching artifacts found"
+  },
+  "failedToFindLinks": {
+    "pl": "Nie udało się wyszukać powiązań",
+    "en": "Failed to find links"
+  },
+  "switchedToProcessFlow": {
+    "pl": "Przełączono na przepływ procesu",
+    "en": "Switched to Process Flow"
+  },
+  "templateNotFound": {
+    "pl": "Nie znaleziono szablonu",
+    "en": "Template not found"
+  },
+  "templateApplied": {
+    "pl": "Szablon zastosowany",
+    "en": "Template applied"
+  },
+  "failedToApplyTemplate": {
+    "pl": "Nie udało się zastosować szablonu",
+    "en": "Failed to apply template"
+  },
+  "aiReturnedNoProposalsToReview": {
+    "pl": "AI nie zwróciło propozycji do review",
+    "en": "AI returned no proposals to review"
+  },
+  "failedToRunAi": {
+    "pl": "Nie udało się uruchomić AI",
+    "en": "Failed to run AI"
+  },
+  "failedToSaveReview": {
+    "pl": "Nie udało się zapisać review",
+    "en": "Failed to save review"
+  },
+  "importFailed": {
+    "pl": "Import nie powiódł się",
+    "en": "Import failed"
+  },
+  "newChallenge": {
+    "pl": "Nowe wyzwanie",
+    "en": "New challenge"
+  },
+  "failedToLoad": {
+    "pl": "Nie udało się wczytać",
+    "en": "Failed to load"
+  },
+  "switchToolMindMapWhiteboardProcess": {
+    "pl": "Przełącz narzędzie (Mapa / Tablica / Przepływ / Tabela)",
+    "en": "Switch tool (Mind Map / Whiteboard / Process Flow / Table)"
+  },
+  "searchThisIdea": {
+    "pl": "Szukaj w tej idei",
+    "en": "Search this idea"
+  },
+  "zoomToFit": {
+    "pl": "Dopasuj widok (zoom to fit)",
+    "en": "Zoom to fit"
+  },
+  "workspaceTool": {
+    "pl": "Narzędzie workspace",
+    "en": "Workspace tool"
+  },
+  "openTemplateGallery": {
+    "pl": "Otwórz galerię szablonów",
+    "en": "Open template gallery"
+  },
+  "export": {
+    "pl": "Eksportuj…",
+    "en": "Export…"
+  },
+  "keyboardShortcuts": {
+    "pl": "Skróty klawiszowe",
+    "en": "Keyboard shortcuts"
+  },
+  "challenge": {
+    "pl": "Wyzwanie",
+    "en": "Challenge"
+  },
+  "theMapIsEmpty": {
+    "pl": "Mapa jest pusta",
+    "en": "The map is empty"
+  },
+  "mindMap": {
+    "pl": "Mapa myśli",
+    "en": "Mind map"
+  },
+  "saved": {
+    "pl": "Zapisano",
+    "en": "Saved"
+  },
+  "failedToSave": {
+    "pl": "Nie udało się zapisać",
+    "en": "Failed to save"
+  },
+  "describeTheChallengeFirst": {
+    "pl": "Najpierw opisz wyzwanie.",
+    "en": "Describe the challenge first."
+  },
+  "challengeAccepted": {
+    "pl": "Wyzwanie zaakceptowane",
+    "en": "Challenge accepted"
+  },
+  "failed": {
+    "pl": "Nie udało się",
+    "en": "Failed"
+  },
+  "thisConversionTargetIsNotYet": {
+    "pl": "Ten typ konwersji nie jest jeszcze wspierany",
+    "en": "This conversion target is not yet supported"
+  },
+  "thisConversionIsComingSoon": {
+    "pl": "Ta konwersja będzie wkrótce",
+    "en": "This conversion is coming soon"
+  },
+  "doneOutputAvailableInTargetModule": {
+    "pl": "Gotowe — wynik dostępny w module docelowym",
+    "en": "Done — output available in target module"
+  },
+  "failedToAttach": {
+    "pl": "Nie udało się dołączyć",
+    "en": "Failed to attach"
+  },
+  "aiProposedChangesToTheMap": {
+    "pl": "AI zaproponowało zmiany w mapie",
+    "en": "AI proposed changes to the map"
+  },
+  "noProjectContext": {
+    "pl": "Brak kontekstu projektu",
+    "en": "No project context"
+  },
+  "failedToCreateTask": {
+    "pl": "Nie udało się utworzyć zadania",
+    "en": "Failed to create task"
+  },
+  "interviewEvidenceAttached": {
+    "pl": "Dodano dowód z wywiadu",
+    "en": "Interview evidence attached"
+  },
+  "saving": {
+    "pl": "Zapisuję…",
+    "en": "Saving…"
+  },
+  "refineTheCurrentSelectionInTools": {
+    "pl": "Dopracuj zaznaczenie w panelu Tools albo rozwiń je na aktywnym canvasie.",
+    "en": "Refine the current selection in Tools or expand it on the active canvas."
+  },
+  "openTheToolsPanelToGive": {
+    "pl": "Otwórz panel Tools, aby nadać temu pomysłowi następny konkretny ruch.",
+    "en": "Open the Tools panel to give this idea a concrete next move."
+  },
+  "startWithTheCoreProblemAnd": {
+    "pl": "Zacznij od głównego problemu i dołóż pierwszą gałąź rekomendacji.",
+    "en": "Start with the core problem and add the first recommendation branch."
+  },
+  "sketchOptionsAndClusterTheStrongest": {
+    "pl": "Naszkicuj warianty i zgrupuj najmocniejszy kierunek.",
+    "en": "Sketch options and cluster the strongest direction."
+  },
+  "mapTheMainStepsOwnersAnd": {
+    "pl": "Rozpisz główne kroki, właścicieli i blokery przepływu.",
+    "en": "Map the main steps, owners, and blockers in the flow."
+  },
+  "translateTheIdeaIntoStructuredRows": {
+    "pl": "Przełóż pomysł na uporządkowane wiersze, żeby przygotować dalsze decyzje.",
+    "en": "Translate the idea into structured rows to prepare the next decisions."
+  },
+  "giveThisIdeaTheNextConcrete": {
+    "pl": "Nadaj tej idei kolejny konkretny ruch.",
+    "en": "Give this idea the next concrete move."
+  },
+  "ideaMapWorkspace": {
+    "pl": "Obszar roboczy mapy idei",
+    "en": "Idea map workspace"
+  },
+  "ideaCanvasAndMapTools": {
+    "pl": "Płótno idei i narzędzia mapy",
+    "en": "Idea canvas and map tools"
+  },
+  "rootMap": {
+    "pl": "Główna mapa",
+    "en": "Root map"
+  },
+  "objectFocus": {
+    "pl": "Tryb obiektu",
+    "en": "Object focus"
+  },
+  "fullCanvas": {
+    "pl": "← Pełny canvas",
+    "en": "← Full canvas"
+  },
+  "ideas": {
+    "pl": "Idee",
+    "en": "Ideas"
+  },
+  "untitled": {
+    "pl": "Bez tytułu",
+    "en": "Untitled"
+  },
+  "recommendationMap": {
+    "pl": "Mapa rekomendacji",
+    "en": "Recommendation map"
+  },
+  "failedToChangeStage": {
+    "pl": "Nie udało się zmienić etapu",
+    "en": "Failed to change stage"
+  },
+  "thisNodeIsBeingEditedBy": {
+    "pl": "Ten węzeł jest edytowany przez inną osobę",
+    "en": "This node is being edited by another collaborator"
+  },
+  "openNodeProperties": {
+    "pl": "Otwórz właściwości węzła",
+    "en": "Open node properties"
+  },
+  "addChildTab": {
+    "pl": "Dodaj gałąź (Tab)",
+    "en": "Add child (Tab)"
+  },
+  "addSiblingShiftEnter": {
+    "pl": "Dodaj sąsiada (Shift+Enter)",
+    "en": "Add sibling (Shift+Enter)"
+  },
+  "type": {
+    "pl": "Wpisz…",
+    "en": "Type…"
+  },
+  "clickToType": {
+    "pl": "Kliknij, aby wpisać…",
+    "en": "Click to type…"
+  },
+  "expand": {
+    "pl": "Rozwiń",
+    "en": "Expand"
+  },
+  "collapse": {
+    "pl": "Zwiń",
+    "en": "Collapse"
+  },
+  "evidence": {
+    "pl": "dowodów",
+    "en": "evidence"
+  },
+  "selectionMovedBranchCollapsed": {
+    "pl": "Zaznaczenie przeniesione — gałąź zwinięta",
+    "en": "Selection moved — branch collapsed"
+  },
+  "deleteNodes": {
+    "pl": "Usunąć węzły?",
+    "en": "Delete nodes?"
+  },
+  "delete": {
+    "pl": "Usuń",
+    "en": "Delete"
+  },
+  "cancel": {
+    "pl": "Anuluj",
+    "en": "Cancel"
+  },
+  "expanded": {
+    "pl": "Rozwinięto",
+    "en": "Expanded"
+  },
+  "collapsed": {
+    "pl": "Zwinięto",
+    "en": "Collapsed"
+  },
+  "you": {
+    "pl": "Ty",
+    "en": "You"
+  },
+  "thisNodeIsCurrentlyLockedBy": {
+    "pl": "Ten węzeł jest aktualnie zablokowany przez inną osobę",
+    "en": "This node is currently locked by another collaborator"
+  },
+  "renamed": {
+    "pl": "Zmieniono nazwę",
+    "en": "Renamed"
+  },
+  "insertedIntoMap": {
+    "pl": "Wstawiono do mapy",
+    "en": "Inserted into map"
+  },
+  "allExpanded": {
+    "pl": "Wszystko rozwinięte",
+    "en": "All expanded"
+  },
+  "connectionRemoved": {
+    "pl": "Połączenie usunięte",
+    "en": "Connection removed"
+  },
+  "connectionLabel": {
+    "pl": "Etykieta połączenia:",
+    "en": "Connection label:"
+  },
+  "directionReversed": {
+    "pl": "Kierunek odwrócony",
+    "en": "Direction reversed"
+  },
+  "acceptTheChallengeFirst": {
+    "pl": "Najpierw zaakceptuj wyzwanie.",
+    "en": "Accept the challenge first."
+  },
+  "noSelectedChanges": {
+    "pl": "Brak wybranych zmian",
+    "en": "No selected changes"
+  },
+  "aiExpandBranch": {
+    "pl": "AI expand branch",
+    "en": "AI expand branch"
+  },
+  "failedToApplyProposals": {
+    "pl": "Nie udało się zastosować propozycji",
+    "en": "Failed to apply proposals"
+  },
+  "aiRequiresBackend": {
+    "pl": "AI wymaga działającego backendu.",
+    "en": "AI requires backend."
+  },
+  "noNewSuggestions": {
+    "pl": "Brak nowych propozycji",
+    "en": "No new suggestions"
+  },
+  "aiFailed": {
+    "pl": "AI nie zadziałało",
+    "en": "AI failed"
+  },
+  "branchDetached": {
+    "pl": "Gałąź odłączona",
+    "en": "Branch detached"
+  },
+  "thisNodeHasNoLinkedArtifacts": {
+    "pl": "Ten wezel nie ma jeszcze artefaktow",
+    "en": "This node has no linked artifacts yet"
+  },
+  "selectAnotherNodeToCreateA": {
+    "pl": "Zaznacz drugi wezel, aby utworzyc polaczenie",
+    "en": "Select another node to create a connection"
+  },
+  "styleCopied": {
+    "pl": "Styl skopiowany",
+    "en": "Style copied"
+  },
+  "linkCopied": {
+    "pl": "Link skopiowany!",
+    "en": "Link copied!"
+  },
+  "copyLink": {
+    "pl": "Skopiuj link:",
+    "en": "Copy link:"
+  },
+  "newTopic": {
+    "pl": "Nowy temat",
+    "en": "New topic"
+  },
+  "showingLevel0": {
+    "pl": "Widok: poziom 0",
+    "en": "Showing level 0"
+  },
+  "showingLevel1": {
+    "pl": "Widok: poziom 1",
+    "en": "Showing level 1"
+  },
+  "showingLevel2": {
+    "pl": "Widok: poziom 2",
+    "en": "Showing level 2"
+  },
+  "backendRestartRequired": {
+    "pl": "Backend wymaga restartu",
+    "en": "Backend restart required"
+  },
+  "mapTableMissing": {
+    "pl": "Brakuje tabeli mapy",
+    "en": "Map table missing"
+  },
+  "offlineNotSaving": {
+    "pl": "Offline - brak zapisu",
+    "en": "Offline - not saving"
+  },
+  "saving2": {
+    "pl": "Zapisuję...",
+    "en": "Saving..."
+  },
+  "notSavedYet": {
+    "pl": "Nie zapisano",
+    "en": "Not saved yet"
+  },
+  "modePan": {
+    "pl": "Tryb: przesuwanie",
+    "en": "Mode: pan"
+  },
+  "modeConnect": {
+    "pl": "Tryb: łączenie",
+    "en": "Mode: connect"
+  },
+  "modeSelect": {
+    "pl": "Tryb: zaznaczanie",
+    "en": "Mode: select"
+  },
+  "artifactDetached": {
+    "pl": "Artefakt odłączony",
+    "en": "Artifact detached"
+  },
+  "failedToDetachArtifact": {
+    "pl": "Nie udało się odłączyć artefaktu",
+    "en": "Failed to detach artifact"
+  },
+  "closeMap": {
+    "pl": "Zamknij mapę",
+    "en": "Close map"
+  },
+  "mapReached500NodeLimitAdding": {
+    "pl": "Mapa osiągnęła limit 500 węzłów. Dodawanie zablokowane.",
+    "en": "Map reached 500 node limit. Adding blocked."
+  },
+  "ideaRecommendationMapArrowNavigationEnte": {
+    "pl": "Mapa rekomendacji pomysłu — nawigacja strzałkami, Enter/Tab dodawanie węzłów",
+    "en": "Idea recommendation map — arrow navigation, Enter/Tab add nodes"
+  },
+  "describeYourChallenge": {
+    "pl": "Opisz swoje wyzwanie",
+    "en": "Describe your challenge"
+  },
+  "fillInTheTitleAndDescription": {
+    "pl": "Wypełnij tytuł i opis w panelu Tools po prawej, a następnie zaakceptuj wyzwanie.",
+    "en": "Fill in the title and description in the Tools panel on the right, then accept."
+  },
+  "openPanelStart": {
+    "pl": "Otwórz panel i zacznij",
+    "en": "Open panel & start"
+  },
+  "selectABranchAndPressTab": {
+    "pl": "Wybierz gałąź i naciśnij Tab, aby dodać pierwszy węzeł",
+    "en": "Select a branch and press Tab to add the first node"
+  },
+  "versionRestored": {
+    "pl": "Przywrócono wersję",
+    "en": "Version restored"
+  },
+  "exportFormat": {
+    "pl": "Format eksportu",
+    "en": "Export format"
+  },
+  "markdownOutline": {
+    "pl": "Markdown (konspekt)",
+    "en": "Markdown outline"
+  },
+  "markdownCopiedToClipboard": {
+    "pl": "Markdown skopiowany do schowka",
+    "en": "Markdown copied to clipboard"
+  },
+  "artifactAttached": {
+    "pl": "Artefakt dołączony",
+    "en": "Artifact attached"
+  },
+  "failedToAttachArtifact": {
+    "pl": "Nie udało się dołączyć artefaktu",
+    "en": "Failed to attach artifact"
+  },
+  "imageAdded": {
+    "pl": "Obraz dodany",
+    "en": "Image added"
+  }
+}
