@@ -23,9 +23,10 @@ import {
   AlertTriangle,
   CheckCircle,
   GitMerge,
+  Grid3x3,
   Lightbulb,
   Loader2,
-  MessageSquare,
+  Magnet,
   Plus,
   X,
 } from 'lucide-react';
@@ -46,8 +47,13 @@ import ReactFlow, {
   type NodeChange,
   type NodeProps,
   ReactFlowProvider,
-  useUpdateNodeInternals,
 } from 'reactflow';
+// useUpdateNodeInternals: import from @reactflow/core where the named type export
+// resolves cleanly. The `reactflow` barrel's types redirect drops this hook's
+// named export (TS2614), the same quirk that affects useNodesInitialized elsewhere
+// (IdeaRecommendationMap). The runtime value is identical — core is reactflow's
+// implementation package. Used by EdgeRehydrateFix (Londyn c117ed3fcb).
+import { useUpdateNodeInternals } from '@reactflow/core';
 
 import { Api } from '@/services/api';
 import {
@@ -63,11 +69,7 @@ import TeresaMark from '../shared/TeresaMark';
 import { getCanvasBg } from './canvas/canvasBackground';
 import { type ProcessFlowSemanticKit } from './canvas/canvasOsContract';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
-import {
-  formatIdeaMapSyncLabel,
-  resolveIdeaMapHydration,
-  useIdeaMapSync,
-} from './canvas/useIdeaMapSync';
+import { formatIdeaMapSyncLabel, resolveIdeaMapHydration } from './canvas/useIdeaMapSync';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
   type CanvasToolType,
@@ -84,6 +86,7 @@ import {
 } from './mindmap/CollaborationOverlay';
 import { useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 import { AIProposalPanel } from './processflow/AIProposalPanel';
+import type { ApplyPatchResult } from './processflow/applyProposalPatch';
 import { ExportDialog } from './processflow/ExportDialog';
 import { FlowEdgeComponent } from './processflow/FlowEdgeComponent';
 import {
@@ -99,7 +102,14 @@ import {
   LANE_COLORS,
 } from './processflow/LaneSystem';
 import { LaneSystem } from './processflow/LaneSystem';
-import { MessageFlowEdge } from './processflow/MessageFlowEdge';
+import { isNodeInCollapsedLane, setLaneHeight, toggleLaneCollapsed } from './processflow/laneState';
+import { appendComment, removeComment, type ProcessFlowNodeComment } from './processflow/nodeComments';
+import { ProcessFlowNodeCommentThread } from './processflow/ProcessFlowNodeCommentThread';
+import {
+  normalizeProcessFlowViewState,
+  processFlowViewportStorageKey,
+  resolveHydrationViewport,
+} from './processflow/viewState';
 import { ActivityNode } from './processflow/nodes/ActivityNode';
 import { BPMNEndNode } from './processflow/nodes/BPMNEndNode';
 import { BPMNStartNode } from './processflow/nodes/BPMNStartNode';
@@ -124,16 +134,19 @@ import {
 import { ProcessFlowToolbar } from './processflow/ProcessFlowToolbar';
 import { ReadbackPanel } from './processflow/ReadbackPanel';
 import { useProcessFlowAIProposal } from './processflow/useProcessFlowAIProposal';
-import { useProcessFlowCRUD } from './processflow/useProcessFlowCRUD';
-import { useV8 } from '@/providers/V8Provider';
-import { useProcessFlowDegraded } from './processflow/useProcessFlowDegraded';
+import { type ChangeOrigin, useProcessFlowCollab } from './processflow/useProcessFlowCollab';
 import { useProcessFlowExport } from './processflow/useProcessFlowExport';
 import { useProcessFlowNodes } from './processflow/useProcessFlowNodes';
+import {
+  type ProcessFlowExternalRuntime,
+  useProcessFlowPersistence,
+} from './processflow/useProcessFlowPersistence';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { useCanvasKeyboard } from './canvas/useIdeasToolKeyboard';
 import { useProcessFlowQuickActions } from './processflow/useProcessFlowQuickActions';
 import { useProcessFlowReadback } from './processflow/useProcessFlowReadback';
 import { useProcessFlowUndoRedo } from './processflow/useProcessFlowUndoRedo';
+import { type ValidationWarning, validateFlowWarnings } from './processflow/validateFlow';
 import { useProcessFlowValidation } from './processflow/useProcessFlowValidation';
 import { ValidationResultsPanel } from './processflow/ValidationResultsPanel';
 import { ProcessKPIDashboard } from './ProcessKPIDashboard';
@@ -207,7 +220,6 @@ const baseNodeTypes: RFNodeTypes = {
 
 const edgeTypes: RFEdgeTypes = {
   flowEdge: FlowEdgeComponent,
-  messageFlow: MessageFlowEdge,
 };
 
 /**
@@ -241,185 +253,8 @@ const EdgeRehydrateFix: React.FC<{ nodeIdsKey: string; nodeIds: string[] }> = ({
 };
 
 // ── Validation ───────────────────────────────────────────────────────────────
-
-type ValidationWarning = { id: string; message: string; messagePl: string };
-
-function validateFlow(
-  nodes: Node[],
-  edges: Edge[],
-  semanticKit: ProcessFlowSemanticKit
-): ValidationWarning[] {
-  const warnings: ValidationWarning[] = [];
-  const flowNodes = nodes.filter((n: Node) => n.type === 'flowNode');
-
-  const startShapes =
-    semanticKit === 'bpmn'
-      ? ['start', 'bpmn_event']
-      : semanticKit === 'system' || semanticKit === 'org'
-        ? []
-        : ['start'];
-  const endShapes =
-    semanticKit === 'bpmn'
-      ? ['end', 'bpmn_event']
-      : semanticKit === 'system' || semanticKit === 'org'
-        ? []
-        : ['end'];
-  const hasStart =
-    startShapes.length === 0 ||
-    flowNodes.some((n: Node) => startShapes.includes(String(n.data?.shape || '')));
-  const hasEnd =
-    endShapes.length === 0 ||
-    flowNodes.some((n: Node) => endShapes.includes(String(n.data?.shape || '')));
-
-  if (startShapes.length > 0 && !hasStart) {
-    warnings.push({ id: 'no-start', message: 'Missing Start node', messagePl: 'Brak węzła Start' });
-  }
-  if (endShapes.length > 0 && !hasEnd) {
-    warnings.push({ id: 'no-end', message: 'Missing End node', messagePl: 'Brak węzła Koniec' });
-  }
-
-  if (semanticKit === 'bpmn') {
-    const hasGateway = flowNodes.some((n: Node) => n.data?.shape === 'bpmn_gateway');
-    const hasTask = flowNodes.some((n: Node) => n.data?.shape === 'bpmn_task');
-    if (!hasGateway) {
-      warnings.push({
-        id: 'bpmn-no-gateway',
-        message: 'BPMN kit: add at least one gateway',
-        messagePl: 'Kit BPMN: dodaj przynajmniej jedną bramkę',
-      });
-    }
-    if (!hasTask) {
-      warnings.push({
-        id: 'bpmn-no-task',
-        message: 'BPMN kit: add at least one task',
-        messagePl: 'Kit BPMN: dodaj przynajmniej jedno zadanie',
-      });
-    }
-  }
-
-  if (semanticKit === 'system') {
-    const hasActor = flowNodes.some((n: Node) => n.data?.shape === 'system_actor');
-    const hasService = flowNodes.some((n: Node) => n.data?.shape === 'system_service');
-    if (!hasActor) {
-      warnings.push({
-        id: 'system-no-actor',
-        message: 'System kit: missing actor boundary',
-        messagePl: 'Kit systemowy: brakuje granicy aktora',
-      });
-    }
-    if (!hasService) {
-      warnings.push({
-        id: 'system-no-service',
-        message: 'System kit: missing service node',
-        messagePl: 'Kit systemowy: brakuje węzła serwisu',
-      });
-    }
-  }
-
-  if (semanticKit === 'org') {
-    const hasRole = flowNodes.some((n: Node) => n.data?.shape === 'org_role');
-    const hasHandoff = flowNodes.some((n: Node) => n.data?.shape === 'org_handoff');
-    if (!hasRole) {
-      warnings.push({
-        id: 'org-no-role',
-        message: 'Org kit: add at least one role',
-        messagePl: 'Kit organizacyjny: dodaj przynajmniej jedną rolę',
-      });
-    }
-    if (!hasHandoff) {
-      warnings.push({
-        id: 'org-no-handoff',
-        message: 'Org kit: missing handoff marker',
-        messagePl: 'Kit organizacyjny: brakuje markera przekazania',
-      });
-    }
-  }
-
-  for (const node of flowNodes) {
-    const outgoing = edges.filter((e: Edge) => e.source === node.id);
-    const incoming = edges.filter((e: Edge) => e.target === node.id);
-
-    if (
-      ['decision', 'bpmn_gateway', 'org_handoff'].includes(String(node.data?.shape)) &&
-      outgoing.length < 2
-    ) {
-      warnings.push({
-        id: `decision-exits-${node.id}`,
-        message: `Decision "${node.data?.label || node.id}" needs at least 2 exits`,
-        messagePl: `Decyzja "${node.data?.label || node.id}" wymaga min. 2 wyjść`,
-      });
-    }
-
-    if (!startShapes.includes(String(node.data?.shape || '')) && incoming.length === 0) {
-      warnings.push({
-        id: `dangling-${node.id}`,
-        message: `"${node.data?.label || node.id}" has no incoming connections`,
-        messagePl: `"${node.data?.label || node.id}" nie ma połączeń wejściowych`,
-      });
-    }
-
-    if (!endShapes.includes(String(node.data?.shape || '')) && outgoing.length === 0) {
-      warnings.push({
-        id: `no-exit-${node.id}`,
-        message: `"${node.data?.label || node.id}" has no outgoing connections`,
-        messagePl: `"${node.data?.label || node.id}" nie ma połączeń wyjściowych`,
-      });
-    }
-  }
-
-  // V5-IDEA-23: VSM-specific validation
-  const vsmNodes = nodes.filter(
-    (n: Node) => n.data?.shape?.startsWith('vsm_') || n.type?.startsWith('vsm_')
-  );
-  if (vsmNodes.length > 0) {
-    const hasSupplier = vsmNodes.some(
-      (n) => n.data?.shape === 'vsm_supplier' || n.type === 'vsm_supplier'
-    );
-    const hasCustomer = vsmNodes.some(
-      (n) => n.data?.shape === 'vsm_customer' || n.type === 'vsm_customer'
-    );
-    const hasProcess = vsmNodes.some(
-      (n) => n.data?.shape === 'vsm_process' || n.type === 'vsm_process'
-    );
-
-    if (!hasSupplier) {
-      warnings.push({
-        id: 'vsm-no-supplier',
-        message: 'VSM: Missing Supplier node',
-        messagePl: 'VSM: Brak węzła Dostawca',
-      });
-    }
-    if (!hasCustomer) {
-      warnings.push({
-        id: 'vsm-no-customer',
-        message: 'VSM: Missing Customer node',
-        messagePl: 'VSM: Brak węzła Klient',
-      });
-    }
-    if (!hasProcess) {
-      warnings.push({
-        id: 'vsm-no-process',
-        message: 'VSM: Missing Process node',
-        messagePl: 'VSM: Brak węzła Proces',
-      });
-    }
-
-    const processNodes = vsmNodes.filter(
-      (n) => n.data?.shape === 'vsm_process' || n.type === 'vsm_process'
-    );
-    for (const pn of processNodes) {
-      if (!pn.data?.cycleTime) {
-        warnings.push({
-          id: `vsm-no-ct-${pn.id}`,
-          message: `VSM: "${pn.data?.label || pn.id}" missing Cycle Time`,
-          messagePl: `VSM: "${pn.data?.label || pn.id}" brak Czasu Cyklu`,
-        });
-      }
-    }
-  }
-
-  return warnings;
-}
+// validateFlow (warnings list) extracted to ./processflow/validateFlow
+// (validateFlowWarnings) — same rule set, now shared with useProcessFlowValidation.
 
 // LaneBackground replaced by LaneSystem import (./processflow/LaneSystem)
 // Undo/Redo replaced by useProcessFlowUndoRedo hook (./processflow/useProcessFlowUndoRedo)
@@ -475,6 +310,10 @@ interface IdeaProcessFlowToolProps {
     edges: any[];
     extensions?: Record<string, unknown>;
   }) => void;
+  /** M07 F4: shared workspace graph runtime. When supplied, persistence is
+   *  delegated to it (one runtime per ideaId across tools). When absent, the
+   *  adapter falls back to the legacy per-tool useIdeaMapSync. */
+  externalRuntime?: ProcessFlowExternalRuntime;
 }
 
 export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
@@ -492,6 +331,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   onOpenChat,
   onQuickAction,
   onGraphChange,
+  externalRuntime,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -537,6 +377,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const [showKPIDashboard, setShowKPIDashboard] = useState(false);
   const [showMiniMap, setShowMiniMap] = useState(false);
   const [internalFullscreen, setInternalFullscreen] = useState(false);
+  // M07 F5b B1: real grid/snap view-state (previously a hardcoded stub that
+  // was written on save but never reflected actual UI state or restored).
+  const [showGrid, setShowGrid] = useState(true);
+  const [snapToGridEnabled, setSnapToGridEnabled] = useState(true);
+  const [savedViewport, setSavedViewport] = useState<{ x: number; y: number; zoom: number } | null>(
+    null
+  );
+  // Viewport read from the persisted blob/localStorage during hydrate, applied
+  // to the live ReactFlow instance once it mounts (see onInit below).
+  const pendingViewportRef = useRef<{ x: number; y: number; zoom: number } | null>(null);
   const flowContainerRef = useRef<HTMLDivElement>(null);
   const reactFlowInstanceRef = useRef<ReactFlowInstance | null>(null);
 
@@ -569,13 +419,23 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const [metricsDraft, setMetricsDraft] = useState<Record<string, string>>({});
   const [savingsLoading, setSavingsLoading] = useState(false);
   const [dragOverLaneId, setDragOverLaneId] = useState<string | null>(null);
-  const { saving, syncState, lastSavedAt, queueSync, flushNow, primeServerVersion } =
-    useIdeaMapSync({
-      ideaId,
-      tool: 'process_flow',
-      open,
-      locked,
-    });
+  // M07 F4: `hydrate` is defined below; the persistence adapter's onExternalChange
+  // (peer save / conflict) needs it, so route through a ref to avoid TDZ.
+  const hydrateRef = useRef<() => void>(() => {});
+  const {
+    saving,
+    syncState,
+    lastSavedAt,
+    save: persistSave,
+    scheduleSave,
+    primeServerVersion,
+  } = useProcessFlowPersistence({
+    ideaId,
+    open,
+    locked,
+    externalRuntime,
+    onExternalChange: () => hydrateRef.current(),
+  });
 
   // V5-IDEA-21: Flow mode
   const [flowMode, setFlowMode] = useState<ProcessFlowMode>('classic');
@@ -588,7 +448,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     [flowMode]
   );
 
-  // ── New hooks: validation, AI proposal, readback, export, degraded ──────
+  // ── New hooks: validation, AI proposal, readback, export ────────────────
+  // Client-side since DP-7 (V8 process-flow routes cut) — no fetch involved.
   const processId = ideaId;
   const {
     result: validationResult,
@@ -599,37 +460,28 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     processId,
     nodes,
     edges,
+    semanticKit,
     autoValidate: false,
     onError: (message) =>
       toast.error(isPl ? 'Walidacja przepływu nie powiodła się. Spróbuj ponownie.' : message),
   });
-  const {
-    activeProposal,
-    isGenerating: isAIGenerating,
-    error: aiError,
-    createProposal,
-    resolveProposal,
-    dismiss: dismissProposal,
-  } = useProcessFlowAIProposal({ processId });
+  // (M07 F2: useProcessFlowAIProposal moved below useProcessFlowUndoRedo —
+  // its onApply handler needs pushUndo for the single-undo-step acceptance.)
   const {
     result: readbackResult,
     isLoading: isReadbackLoading,
     fetchReadback,
-  } = useProcessFlowReadback({ processId });
+  } = useProcessFlowReadback({ processId, nodes, edges, lanes, isPl: !!isPl });
   const { isExporting, exportAs } = useProcessFlowExport({
     processId,
     canvasRef: flowContainerRef as React.RefObject<HTMLDivElement | null>,
+    nodes,
+    edges,
+    lanes,
+    flowMode,
+    semanticKit,
+    isPl: !!isPl,
   });
-  const {
-    isDegraded,
-    activeScenarios: degradedScenarios,
-    checkHealth,
-  } = useProcessFlowDegraded({ processId });
-
-  const { isV8Enabled } = useV8();
-  // Structural V8 CRUD — persists semantic nodes/edges alongside the blob.
-  // Only fires when V8 is globally enabled; otherwise silently disabled.
-  const pfCrud = useProcessFlowCRUD({ processId, enabled: !locked && isV8Enabled });
 
   // ── New UI state: panels, context menu, export dialog ─────────────────
   const [showValidationPanel, setShowValidationPanel] = useState(false);
@@ -637,6 +489,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const [showReadbackPanel, setShowReadbackPanel] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [showPropertiesPanel, setShowPropertiesPanel] = useState(false);
+  // M07 F5b B3: node comment threads — comments live in `node.data.comments[]`
+  // and ride the existing graph blob (no new API, no F4 save-layer change).
+  const [commentsPanelNodeId, setCommentsPanelNodeId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
@@ -677,8 +532,21 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     () => formatIdeaMapSyncLabel(syncState, lastSavedAt, isPl),
     [isPl, lastSavedAt, syncState]
   );
-  const buildPersistPayload = useCallback(
-    () => ({
+  const buildPersistPayload = useCallback(() => {
+    // M07 F5b B1 (bug L-04): persist the REAL grid/snap/viewport state
+    // instead of the previous hardcoded stub, so hydration can restore it.
+    const currentViewport = reactFlowInstanceRef.current?.getViewport?.() ?? null;
+    if (currentViewport) {
+      try {
+        localStorage.setItem(
+          processFlowViewportStorageKey(ideaId),
+          JSON.stringify(currentViewport)
+        );
+      } catch {
+        /* ignore (private mode / disabled storage) */
+      }
+    }
+    return {
       nodes: nodes as any,
       edges: edges as any,
       preferredTool: 'process_flow' as CanvasToolType,
@@ -691,12 +559,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           lanes,
           flowMode,
           semanticKit,
-          viewState: { layoutMode: 'horizontal', showGrid: true, snap: true },
+          viewState: {
+            layoutMode: 'horizontal' as const,
+            showGrid,
+            snap: snapToGridEnabled,
+            ...(currentViewport ? { viewport: currentViewport } : {}),
+          },
         },
       },
-    }),
-    [edges, extensions, flowMode, lanes, nodes, semanticKit]
-  );
+    };
+  }, [edges, extensions, flowMode, ideaId, lanes, nodes, semanticKit, showGrid, snapToGridEnabled]);
 
   useEffect(() => {
     if (flowMode === 'classic' || flowMode === 'automation' || flowMode === 'vsm') {
@@ -707,16 +579,126 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   }, [flowMode]);
 
   // ── Undo/Redo (via extracted hook) ──────────────────────────────────
-  const { pushUndo, undo, redo, resetUndo, canUndo, canRedo, undoRedoTick } =
-    useProcessFlowUndoRedo({
-      nodes,
-      edges,
-      lanes,
-      setNodes,
-      setEdges,
-      setLanes,
-    });
+  const {
+    pushUndo,
+    undo: undoRaw,
+    redo: redoRaw,
+    resetUndo,
+    canUndo,
+    canRedo,
+    undoRedoTick,
+  } = useProcessFlowUndoRedo({
+    nodes,
+    edges,
+    lanes,
+    setNodes,
+    setEdges,
+    setLanes,
+  });
   const dragSnapshotTakenRef = useRef(false);
+  // Latest state mirror — lets undo/redo (which setState async) read the just-
+  // restored snapshot on the next tick to broadcast it as a graph_snapshot.
+  const latestStateRef = useRef({ nodes, edges, lanes });
+  useEffect(() => {
+    latestStateRef.current = { nodes, edges, lanes };
+  }, [nodes, edges, lanes]);
+
+  // ── M07 F3: realtime edit-sync (org-scoped WS, mirrors whiteboard model) ──
+  // Origin of the last state change: 'remote' means a peer's patch produced it,
+  // so the autosave effect must NOT re-persist it (the author persists via its
+  // own runtime). The collab receive handler flips this to 'remote' before
+  // mutating; the scheduleSave effect below resets it to 'local'.
+  const lastChangeOriginRef = useRef<ChangeOrigin>('local');
+  const collab = useProcessFlowCollab({
+    currentUserId: currentUser?.id || 'anonymous',
+    setNodes,
+    setEdges,
+    setLanes,
+    lastChangeOriginRef,
+    // A peer's mass change (graph_snapshot) — record the CURRENT state as one
+    // undo step before it is overwritten, so the local user can consciously
+    // undo a collaborator's bulk change.
+    onRemoteSnapshot: () => {
+      pushUndo();
+    },
+  });
+  const lockedByOthers = collab.lockedByOthers;
+
+  // Undo/redo restore the whole state → mass change → emit graph_snapshot. The
+  // hook applies via setState, so we read the settled state on the next tick.
+  const undo = useCallback(() => {
+    undoRaw();
+    setTimeout(() => collab.broadcastSnapshot(latestStateRef.current), 0);
+  }, [collab, undoRaw]);
+  const redo = useCallback(() => {
+    redoRaw();
+    setTimeout(() => collab.broadcastSnapshot(latestStateRef.current), 0);
+  }, [collab, redoRaw]);
+
+  // ── M07 F2: AI proposal (real backend via /my-ideas/:id/ai-generate) ────
+  // Decision 5: accepting a proposal applies the whole patch as ONE undo
+  // step, then persists via the autosave effect (scheduleSave fires from the
+  // nodes/edges/lanes → buildPersistPayload → scheduleSave effect below).
+  const handleApplyAIProposal = useCallback(
+    (result: ApplyPatchResult) => {
+      if (locked) return;
+      pushUndo();
+      const added = new Set(result.addedNodeIds);
+      setNodes(
+        result.nodes.map((n) =>
+          added.has(String(n.id))
+            ? {
+                ...n,
+                data: {
+                  ...n.data,
+                  locked,
+                  onLabelChange: (next: string) => {
+                    setNodes((nds: Node[]) =>
+                      nds.map((x: Node) =>
+                        x.id === n.id ? { ...x, data: { ...x.data, label: next } } : x
+                      )
+                    );
+                  },
+                  onNodeDetail: onNodeDetail || undefined,
+                },
+              }
+            : n
+        )
+      );
+      setEdges(result.edges);
+      setLanes(result.lanes);
+      // F3: AI-accept is a mass change — emit the full state as a snapshot so
+      // peers converge without a per-node diff (Decision 5 + F3 spec §Snapshot).
+      collab.broadcastSnapshot({
+        nodes: result.nodes,
+        edges: result.edges,
+        lanes: result.lanes,
+      });
+      toast.success(isPl ? 'Zastosowano propozycję AI' : 'AI proposal applied', {
+        duration: 1200,
+      });
+    },
+    [collab, isPl, locked, onNodeDetail, pushUndo, setEdges, setNodes]
+  );
+
+  const {
+    activeProposal,
+    isGenerating: isAIGenerating,
+    error: aiError,
+    createProposal,
+    resolveProposal,
+    dismiss: dismissProposal,
+  } = useProcessFlowAIProposal({
+    ideaId,
+    nodes,
+    edges,
+    lanes,
+    semanticKit,
+    isPl: !!isPl,
+    language: i18n.language,
+    selectedNodeIds,
+    onApply: handleApplyAIProposal,
+  });
 
   // ── Selection tracking ─────────────────────────────────────────────────
   const handleSelectionUpdate = useCallback(
@@ -759,12 +741,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       if (locked) return;
       pushUndo();
       setEdges((eds) =>
-        eds.map((e) =>
-          e.id === edgeId ? { ...e, label: newLabel, data: { ...e.data, label: newLabel } } : e
-        )
+        eds.map((e) => {
+          if (e.id !== edgeId) return e;
+          const nextEdge = { ...e, label: newLabel, data: { ...e.data, label: newLabel } };
+          collab.broadcastEdgeUpdate(nextEdge);
+          return nextEdge;
+        })
       );
     },
-    [locked, pushUndo]
+    [collab, locked, pushUndo]
   );
 
   const handleEdgeConditionChange = useCallback(
@@ -772,10 +757,108 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       if (locked) return;
       pushUndo();
       setEdges((eds) =>
-        eds.map((e) => (e.id === edgeId ? { ...e, data: { ...e.data, conditionType } } : e))
+        eds.map((e) => {
+          if (e.id !== edgeId) return e;
+          const nextEdge = { ...e, data: { ...e.data, conditionType } };
+          collab.broadcastEdgeUpdate(nextEdge);
+          return nextEdge;
+        })
       );
     },
-    [locked, pushUndo]
+    [collab, locked, pushUndo]
+  );
+
+  // ── F5a A1: waypoint editing ───────────────────────────────────────────
+  // Waypoints live in edge.data.waypoints[] and persist through the existing
+  // graph blob (edges in the payload) — no persistence-layer change (F4 stands).
+  const screenToFlow = useCallback((clientX: number, clientY: number) => {
+    const inst = reactFlowInstanceRef.current as any;
+    if (inst?.screenToFlowPosition) return inst.screenToFlowPosition({ x: clientX, y: clientY });
+    if (inst?.project) {
+      const rect = flowContainerRef.current?.getBoundingClientRect();
+      return inst.project({ x: clientX - (rect?.left || 0), y: clientY - (rect?.top || 0) });
+    }
+    return { x: clientX, y: clientY };
+  }, []);
+
+  const handleEdgeAddWaypoint = useCallback(
+    (edgeId: string, info: { clientX: number; clientY: number }) => {
+      if (locked) return;
+      const pos = screenToFlow(info.clientX, info.clientY);
+      pushUndo();
+      setEdges((prev) =>
+        prev.map((e) => {
+          if (e.id !== edgeId) return e;
+          const existing = Array.isArray(e.data?.waypoints) ? e.data.waypoints : [];
+          const nextEdge = {
+            ...e,
+            data: {
+              ...e.data,
+              orthogonal: true,
+              waypoints: [...existing, { x: pos.x, y: pos.y }],
+            },
+          };
+          collab.broadcastEdgeUpdate(nextEdge);
+          return nextEdge;
+        })
+      );
+    },
+    [collab, locked, pushUndo, screenToFlow]
+  );
+
+  const handleEdgeWaypointDrag = useCallback(
+    (edgeId: string, index: number, ev: React.PointerEvent) => {
+      if (locked) return;
+      ev.preventDefault();
+      let moved = false;
+      const onMove = (moveEv: PointerEvent) => {
+        const pos = screenToFlow(moveEv.clientX, moveEv.clientY);
+        if (!moved) {
+          moved = true;
+          pushUndo();
+        }
+        setEdges((prev) =>
+          prev.map((e) => {
+            if (e.id !== edgeId) return e;
+            const wps = Array.isArray(e.data?.waypoints) ? [...e.data.waypoints] : [];
+            if (!wps[index]) return e;
+            wps[index] = { x: pos.x, y: pos.y };
+            return { ...e, data: { ...e.data, waypoints: wps } };
+          })
+        );
+      };
+      const onUp = () => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        // Broadcast the committed edge once, at drag end (avoids flooding peers).
+        setEdges((prev) => {
+          const edge = prev.find((e) => e.id === edgeId);
+          if (edge) collab.broadcastEdgeUpdate(edge);
+          return prev;
+        });
+      };
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+    },
+    [collab, locked, pushUndo, screenToFlow]
+  );
+
+  const handleEdgeRemoveWaypoint = useCallback(
+    (edgeId: string, index: number) => {
+      if (locked) return;
+      pushUndo();
+      setEdges((prev) =>
+        prev.map((e) => {
+          if (e.id !== edgeId) return e;
+          const wps = Array.isArray(e.data?.waypoints) ? [...e.data.waypoints] : [];
+          wps.splice(index, 1);
+          const nextEdge = { ...e, data: { ...e.data, waypoints: wps } };
+          collab.broadcastEdgeUpdate(nextEdge);
+          return nextEdge;
+        })
+      );
+    },
+    [collab, locked, pushUndo]
   );
 
   // ── Inject edge handlers into edge data ────────────────────────────────
@@ -794,10 +877,22 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             locked,
             onLabelChange: handleEdgeLabelChange,
             onConditionChange: handleEdgeConditionChange,
+            onAddWaypoint: handleEdgeAddWaypoint,
+            onWaypointDrag: handleEdgeWaypointDrag,
+            onRemoveWaypoint: handleEdgeRemoveWaypoint,
           },
         };
       }),
-    [edges, nodeMap, locked, handleEdgeLabelChange, handleEdgeConditionChange]
+    [
+      edges,
+      nodeMap,
+      locked,
+      handleEdgeLabelChange,
+      handleEdgeConditionChange,
+      handleEdgeAddWaypoint,
+      handleEdgeWaypointDrag,
+      handleEdgeRemoveWaypoint,
+    ]
   );
 
   // ── Focus mode: filter nodes/edges for display ──────────────────────────
@@ -837,6 +932,33 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       filteredGhostNodes: filteredGhosts,
     };
   }, [nodes, ghostNodes, edgesWithHandlers, focusMode, focusObjectId]);
+
+  // ── F3 soft locks: nodes locked by other collaborators are non-draggable
+  // and get a subtle advisory ring + locker avatar. Tokens only (var(--c-*));
+  // ZERO new colors per Piotr's visual-acceptance protocol. Server does not
+  // enforce these (advisory) — accepted per F3 spec §Locki.
+  const displayNodes = useMemo(() => {
+    // F5a A3: hide nodes whose lane is collapsed.
+    const anyCollapsed = lanes.some((l) => l.collapsed);
+    const visible = anyCollapsed
+      ? filteredNodes.filter((n) => !isNodeInCollapsedLane(n.data?.laneId, lanes))
+      : filteredNodes;
+    if (lockedByOthers.size === 0) return visible;
+    return visible.map((n) => {
+      if (!lockedByOthers.has(n.id)) return n;
+      return {
+        ...n,
+        draggable: false,
+        style: {
+          ...(n.style || {}),
+          outline: '2px solid var(--c-info)',
+          outlineOffset: '2px',
+          borderRadius: '10px',
+        },
+        data: { ...n.data, _lockedByOther: true, locked: true },
+      };
+    });
+  }, [filteredNodes, lockedByOthers, lanes]);
 
   // ── Node/Edge change handlers ──────────────────────────────────────────
   const onNodesChange = useCallback(
@@ -880,7 +1002,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             }
             return n;
           });
+          // F3: broadcast final positions (+ cross-lane laneId in node.data) and
+          // any removals from this batch. `updated` carries the resolved state.
+          collab.broadcastNodeChanges(changes, updated);
           return updated;
+        }
+
+        // Removals (delete via React Flow) with no accompanying position change.
+        if (changes.some((c: NodeChange) => c.type === 'remove')) {
+          collab.broadcastNodeChanges(changes, next);
         }
 
         // Live drag: show target lane highlight
@@ -904,47 +1034,75 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         return next;
       });
     },
-    [handleSelectionUpdate, lanes, pushUndo]
+    [collab, handleSelectionUpdate, lanes, pushUndo]
   );
 
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
       const mutating = changes.some((change) => change.type !== 'select');
       if (mutating) pushUndo();
+      // F3: propagate edge removals (add/update flow through their own handlers).
+      collab.broadcastEdgeChanges(changes);
       setEdges((eds) => applyEdgeChanges(changes, eds));
     },
-    [pushUndo]
+    [collab, pushUndo]
   );
 
   // ── Hydrate ────────────────────────────────────────────────────────────
+
+  // M07 F4: keep a stable ref to the runtime graph so hydrate (in runtime mode)
+  // reads the latest snapshot without re-creating its identity every save cycle.
+  const externalRuntimeRef = useRef(externalRuntime);
+  externalRuntimeRef.current = externalRuntime;
 
   const hydrate = useCallback(async () => {
     if (!open) return;
     setLoading(true);
     setLoadError(null);
     try {
-      // M07 reload-race fix (2026-06-24): retry the map GET on transient failure.
-      // The nodes ARE on the server (the autosave already landed — useIdeaMapSync is
-      // single-flight + 409-self-healing), so a reload that lands during caboose
-      // latency / cold-start must NOT blank the canvas to [] on the first timeout
-      // (that was the "0 nodes after reload" symptom). Fetch-with-backoff, then hydrate.
-      let res: any = null;
-      let lastErr: any = null;
-      for (let attempt = 0; attempt < 3; attempt += 1) {
-        try {
-          res = await Api.getMyIdeaMap(ideaId, { language: i18n.language });
-          lastErr = null;
-          break;
-        } catch (e) {
-          lastErr = e;
-          if (attempt < 2) {
-            await new Promise((resolve) => setTimeout(resolve, 600 * (attempt + 1)));
+      // M07 F4: in runtime mode read from the shared workspace graph runtime
+      // instead of a second Api.getMyIdeaMap round-trip. The runtime is the
+      // single owner of hydration for this ideaId; the parent's refresh() primes
+      // it. Fallback (no runtime) keeps the legacy per-tool API path.
+      const runtime = externalRuntimeRef.current;
+      let map: any;
+      if (runtime) {
+        map = {
+          version: runtime.version,
+          nodes: Array.isArray(runtime.nodes) ? runtime.nodes : [],
+          edges: Array.isArray(runtime.edges) ? runtime.edges : [],
+          extensions:
+            runtime.extensions && typeof runtime.extensions === 'object' ? runtime.extensions : {},
+          // Runtime does not carry preferredTool; skip the preferred-tool
+          // back-write below (the workspace runtime owns preferredTool).
+          preferredTool: 'process_flow',
+        };
+      } else {
+        // M07 reload-race fix (Londyn 2026-06-24): retry the fallback map GET on
+        // transient failure. The nodes ARE on the server (the autosave already
+        // landed — useIdeaMapSync is single-flight + 409-self-healing), so a reload
+        // that lands during caboose latency / cold-start must NOT blank the canvas
+        // to [] on the first timeout (the "0 nodes after reload" symptom).
+        // In runtime mode (F4) this race can't happen — the primed runtime is the
+        // source — so the retry only wraps the legacy fallback path.
+        let res: any = null;
+        let lastErr: any = null;
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          try {
+            res = await Api.getMyIdeaMap(ideaId, { language: i18n.language });
+            lastErr = null;
+            break;
+          } catch (e) {
+            lastErr = e;
+            if (attempt < 2) {
+              await new Promise((resolve) => setTimeout(resolve, 600 * (attempt + 1)));
+            }
           }
         }
+        if (lastErr) throw lastErr;
+        const hydration = resolveIdeaMapHydration(ideaId, res?.map || {});
+        map = hydration.map || {};
       }
-      if (lastErr) throw lastErr;
-      const hydration = resolveIdeaMapHydration(ideaId, res?.map || {});
-      const map = hydration.map || {};
       primeServerVersion(Number(map?.version || 1));
       const rawNodes = Array.isArray(map.nodes) ? (map.nodes as any[]) : [];
       const rawEdges = Array.isArray(map.edges) ? (map.edges as any[]) : [];
@@ -973,6 +1131,26 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       ) {
         setSemanticKit(savedSemantic);
       }
+
+      // M07 F5b B1 (bug L-04): viewState was written on every save but never
+      // read back — restore the user's own grid/snap/viewport prefs here.
+      // The viewport itself needs the live ReactFlow instance (not mounted
+      // yet on first hydrate), so stash it and apply post-mount below.
+      const restoredViewState = normalizeProcessFlowViewState(pfExt?.viewState);
+      setShowGrid(restoredViewState.showGrid);
+      setSnapToGridEnabled(restoredViewState.snap);
+      let localViewportRaw: string | null = null;
+      try {
+        localViewportRaw = localStorage.getItem(processFlowViewportStorageKey(ideaId));
+      } catch {
+        /* ignore (private mode / disabled storage) */
+      }
+      const resolvedViewport = resolveHydrationViewport(
+        restoredViewState.viewport,
+        localViewportRaw
+      );
+      pendingViewportRef.current = resolvedViewport;
+      setSavedViewport(resolvedViewport);
 
       const hydratedNodes = rawNodes
         .filter((n: any) => n?.id)
@@ -1020,14 +1198,17 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       resetUndo();
 
-      // NOTE (M07 fix 2026-06-21): the old eager preferredTool stamp here did a SECOND,
-      // independent `Api.syncMyIdeaMap` on hydrate — carrying the just-loaded (often empty)
-      // graph with its own baseVersion. It raced the user's first autosave on the same
+      // NOTE (M07 fix 2026-06-21, Londyn): the old eager preferredTool stamp here did a
+      // SECOND, independent `Api.syncMyIdeaMap` on hydrate — carrying the just-loaded (often
+      // empty) graph with its own baseVersion. It raced the user's first autosave on the same
       // baseVersion → one 200, the other 409, and the user's freshly-added nodes were dropped
       // (data loss after reload). Removed: the autosave already stamps
       // `preferredTool: 'process_flow'` (buildPersistPayload) on the first edit, so the only
       // cost is that an idea OPENED-but-not-edited won't persist process_flow as its default —
       // and the /workspace/process_flow URL already forces the tool on open. One sync path = no race.
+      // This removal supersedes F4's fallback-only back-write: in runtime mode F4 already
+      // never synced here, and in fallback mode this eager sync is exactly the autosave-race,
+      // so it is dropped in both modes.
       didPersistRef.current = true;
     } catch (err: any) {
       const nextError = err?.message || (isPl ? 'Nie udało się wczytać' : 'Failed to load');
@@ -1042,6 +1223,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     }
   }, [i18n.language, ideaId, isPl, locked, open, setEdges, setNodes]);
 
+  // Keep the ref current so the persistence adapter's onExternalChange (peer
+  // save / conflict) can re-hydrate without a TDZ on `hydrate`.
+  hydrateRef.current = hydrate;
+
   useEffect(() => {
     if (!open) return;
     didPersistRef.current = false;
@@ -1054,8 +1239,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     (connection: Connection) => {
       if (locked) return;
       pushUndo();
-      setEdges((eds: Edge[]) =>
-        addEdge(
+      setEdges((eds: Edge[]) => {
+        const nextEdges = addEdge(
           {
             ...connection,
             type: 'flowEdge',
@@ -1063,14 +1248,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             data: {},
           },
           eds
-        )
-      );
-      // Persist the structural edge to the V8 tables (fire-and-forget).
-      if (connection.source && connection.target) {
-        void pfCrud.createEdge({ source: connection.source, target: connection.target });
-      }
+        );
+        // F3: the new edge is the one addEdge appended that wasn't in eds.
+        const prevIds = new Set(eds.map((e) => e.id));
+        const added = (nextEdges as Edge[]).filter((e: Edge) => !prevIds.has(e.id));
+        if (added.length > 0) collab.broadcastEdgeAdd(added);
+        return nextEdges;
+      });
     },
-    [locked, pfCrud, pushUndo, setEdges]
+    [collab, locked, pushUndo, setEdges]
   );
 
   // ── Add node ───────────────────────────────────────────────────────────
@@ -1117,14 +1303,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         },
       };
       setNodes((prev: Node[]) => [...prev, newNode]);
-
-      // Persist the structural node to the V8 tables (fire-and-forget).
-      void pfCrud.createNode({
-        shape,
-        label: String(newNode.data?.label ?? ''),
-        position: newNode.position,
-        laneId: lane.id,
-      });
+      collab.broadcastNodeAdd(newNode); // F3: realtime add
 
       // Ghost nodes: AI suggests next steps
       if (!locked && shape !== 'end') {
@@ -1171,6 +1350,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       }
     },
     [
+      collab,
       edges,
       i18n.language,
       ideaId,
@@ -1179,7 +1359,6 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       locked,
       nodes,
       onNodeDetail,
-      pfCrud,
       pushUndo,
       semanticKit,
       setNodes,
@@ -1228,23 +1407,40 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       },
     };
 
+    const edgeA: Edge = { ...selectedEdge, id: `e-${selectedEdge.source}-${newId}`, target: newId };
+    const edgeB: Edge = {
+      id: `e-${newId}-${selectedEdge.target}`,
+      source: newId,
+      target: selectedEdge.target,
+      type: 'flowEdge',
+      data: {},
+    };
     setNodes((prev: Node[]) => [...prev, newNode]);
     setEdges((prev: Edge[]) => {
       const filtered = prev.filter((e) => e.id !== selectedEdge.id);
-      return [
-        ...filtered,
-        { ...selectedEdge, id: `e-${selectedEdge.source}-${newId}`, target: newId },
-        {
-          id: `e-${newId}-${selectedEdge.target}`,
-          source: newId,
-          target: selectedEdge.target,
-          type: 'flowEdge',
-          data: {},
-        },
-      ];
+      return [...filtered, edgeA, edgeB];
     });
+    // F3: emit the whole rewire as one batch (add node, drop old edge, add two).
+    collab.broadcastOps([
+      { op: 'add_node', data: newNode },
+      { op: 'remove_edge', data: { id: selectedEdge.id } },
+      { op: 'add_edge', data: edgeA },
+      { op: 'add_edge', data: edgeB },
+    ]);
     toast.success(isPl ? 'Wstawiono krok' : 'Step inserted', { duration: 800 });
-  }, [edges, flowMode, isPl, lanes, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes]);
+  }, [
+    collab,
+    edges,
+    flowMode,
+    isPl,
+    lanes,
+    locked,
+    nodes,
+    onNodeDetail,
+    pushUndo,
+    setEdges,
+    setNodes,
+  ]);
 
   // ── V5-IDEA-21: Split path (add parallel decision branch) ─────────────
   const splitPath = useCallback(() => {
@@ -1283,20 +1479,23 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       },
     };
 
+    const splitEdge: Edge = {
+      id: `e-${selected.id}-${newId}`,
+      source: selected.id,
+      target: newId,
+      type: 'flowEdge',
+      data: { conditionType: 'no' },
+      label: 'No',
+    };
     setNodes((prev: Node[]) => [...prev, newNode]);
-    setEdges((prev: Edge[]) => [
-      ...prev,
-      {
-        id: `e-${selected.id}-${newId}`,
-        source: selected.id,
-        target: newId,
-        type: 'flowEdge',
-        data: { conditionType: 'no' },
-        label: 'No',
-      },
+    setEdges((prev: Edge[]) => [...prev, splitEdge]);
+    // F3: emit the added branch node + its edge as one batch.
+    collab.broadcastOps([
+      { op: 'add_node', data: newNode },
+      { op: 'add_edge', data: splitEdge },
     ]);
     toast.success(isPl ? 'Ścieżka rozdzielona' : 'Path split', { duration: 800 });
-  }, [flowMode, isPl, lanes, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes]);
+  }, [collab, flowMode, isPl, lanes, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes]);
 
   // ── Add lane ───────────────────────────────────────────────────────────
 
@@ -1309,8 +1508,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       label: `Lane ${idx + 1}`,
       color: LANE_COLORS[idx % LANE_COLORS.length],
     };
-    setLanes((prev: Lane[]) => [...prev, newLane]);
-  }, [lanes.length, locked, pushUndo]);
+    setLanes((prev: Lane[]) => {
+      const nextLanes = [...prev, newLane];
+      collab.broadcastLanes(nextLanes); // F3: full Lane[] replacement
+      return nextLanes;
+    });
+  }, [collab, lanes.length, locked, pushUndo]);
 
   const insertAutomationTrigger = useCallback(() => {
     if (locked) return;
@@ -1350,27 +1553,28 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     if (locked || !metricsEditorNodeId) return;
     pushUndo();
     setNodes((prev) =>
-      prev.map((node) =>
-        node.id !== metricsEditorNodeId
-          ? node
-          : {
-              ...node,
-              data: {
-                ...node.data,
-                duration: metricsDraft.duration.trim() || undefined,
-                durationUnit: metricsDraft.durationUnit.trim() || 'h',
-                cost: metricsDraft.cost.trim() ? Number(metricsDraft.cost) : undefined,
-                fteCount: metricsDraft.fteCount.trim() ? Number(metricsDraft.fteCount) : undefined,
-                automationCandidate: metricsDraft.automationPotential.trim() !== 'low',
-                automationPotential: metricsDraft.automationPotential.trim() || undefined,
-                savingsEstimate: metricsDraft.savingsEstimate.trim() || undefined,
-              },
-            }
-      )
+      prev.map((node) => {
+        if (node.id !== metricsEditorNodeId) return node;
+        const nextNode = {
+          ...node,
+          data: {
+            ...node.data,
+            duration: metricsDraft.duration.trim() || undefined,
+            durationUnit: metricsDraft.durationUnit.trim() || 'h',
+            cost: metricsDraft.cost.trim() ? Number(metricsDraft.cost) : undefined,
+            fteCount: metricsDraft.fteCount.trim() ? Number(metricsDraft.fteCount) : undefined,
+            automationCandidate: metricsDraft.automationPotential.trim() !== 'low',
+            automationPotential: metricsDraft.automationPotential.trim() || undefined,
+            savingsEstimate: metricsDraft.savingsEstimate.trim() || undefined,
+          },
+        };
+        collab.broadcastNodeUpdate(nextNode); // F3: metrics edit → update_node
+        return nextNode;
+      })
     );
     setMetricsEditorNodeId(null);
     toast.success(isPl ? 'Zapisano metryki kroku' : 'Step metrics saved', { duration: 900 });
-  }, [isPl, locked, metricsDraft, metricsEditorNodeId, pushUndo]);
+  }, [collab, isPl, locked, metricsDraft, metricsEditorNodeId, pushUndo]);
 
   const runSavingsAnalysis = useCallback(async () => {
     if (locked || savingsLoading) return;
@@ -1442,7 +1646,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     isPl,
     pushUndo,
     onNodeDetail,
-    onNodesDeleted: (ids: string[]) => ids.forEach((id) => void pfCrud.deleteNode(id)),
+    collab: {
+      broadcastNodeRemove: collab.broadcastNodeRemove,
+      broadcastEdgeRemove: collab.broadcastEdgeRemove,
+      broadcastOps: collab.broadcastOps,
+      broadcastLanes: collab.broadcastLanes,
+    },
     confirmBulkDelete: (count: number) =>
       confirmBulkDelete({
         title: isPl ? 'Usunąć węzły?' : 'Delete nodes?',
@@ -1454,6 +1663,32 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         variant: 'danger',
       }),
   });
+
+  // ── F5a A3: lane collapse / resize (state in lanes[].{collapsed,height}) ──
+  const handleLaneToggleCollapse = useCallback(
+    (laneId: string) => {
+      if (locked) return;
+      pushUndo();
+      setLanes((prev) => {
+        const next = toggleLaneCollapsed(prev, laneId);
+        collab.broadcastLanes?.(next);
+        return next;
+      });
+    },
+    [collab, locked, pushUndo, setLanes]
+  );
+
+  const handleLaneResize = useCallback(
+    (laneId: string, height: number) => {
+      if (locked) return;
+      setLanes((prev) => {
+        const next = setLaneHeight(prev, laneId, height);
+        collab.broadcastLanes?.(next);
+        return next;
+      });
+    },
+    [collab, locked, setLanes]
+  );
 
   // ── Quick action listener (extracted to useProcessFlowQuickActions) ─────
   useProcessFlowQuickActions({
@@ -1484,7 +1719,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   // ── Validate ───────────────────────────────────────────────────────────
 
   const runValidation = useCallback(() => {
-    const w = validateFlow(nodes, edges, semanticKit);
+    const w = validateFlowWarnings(nodes, edges, semanticKit);
     setWarnings(w);
     setShowWarnings(true);
   }, [edges, nodes, semanticKit]);
@@ -1496,10 +1731,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     pushUndo();
     const layouted = autoLayout(nodes, edges, lanes);
     setNodes(layouted);
+    // F3: auto-layout moves every node → mass change → graph_snapshot.
+    collab.broadcastSnapshot({ nodes: layouted, edges, lanes });
     toast.success(isPl ? 'Układ automatyczny zastosowany' : 'Auto-layout applied', {
       duration: 900,
     });
-  }, [edges, isPl, lanes, locked, nodes, pushUndo]);
+  }, [collab, edges, isPl, lanes, locked, nodes, pushUndo]);
 
   // ── AI Coach ──────────────────────────────────────────────────────────
 
@@ -1601,9 +1838,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       };
       setNodes((prev: Node[]) => [...prev, realNode]);
       setGhostNodes((prev) => prev.filter((g) => g.id !== ghostId));
+      collab.broadcastNodeAdd(realNode); // F3: accepted ghost → real add
       toast.success(isPl ? 'Krok zaakceptowany' : 'Step accepted', { duration: 800 });
     },
-    [ghostNodes, isPl, locked, onNodeDetail, pushUndo, setNodes]
+    [collab, ghostNodes, isPl, locked, onNodeDetail, pushUndo, setNodes]
   );
 
   // ── Save ───────────────────────────────────────────────────────────────
@@ -1611,7 +1849,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const handleSave = useCallback(async () => {
     if (locked) return;
     try {
-      await flushNow(buildPersistPayload(), {
+      await persistSave(buildPersistPayload(), {
         reason: 'manual',
         createSnapshot: true,
         snapshotLabel: isPl ? 'Process flow checkpoint' : 'Process flow checkpoint',
@@ -1621,12 +1859,24 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     } catch (err: any) {
       toast.error(err?.message || (isPl ? 'Nie udało się zapisać' : 'Failed to save'));
     }
-  }, [buildPersistPayload, flushNow, isPl, locked, onSaved]);
+  }, [buildPersistPayload, persistSave, isPl, locked, onSaved]);
 
   useEffect(() => {
     if (!open || locked || loading) return;
-    queueSync(buildPersistPayload(), { reason: 'draft' });
-  }, [buildPersistPayload, loading, locked, open, queueSync]);
+    // F3 autosave styk (binding decision, preserved verbatim through F4): a
+    // remote patch must NOT trigger the recipient's autosave — the author
+    // persists it via their own runtime. The collab receive handler flips
+    // lastChangeOriginRef to 'remote' before mutating; here we skip the sync and
+    // reset to 'local' so the NEXT genuine local edit persists normally.
+    // Known v1 limitation: if the recipient then makes their own edit, their
+    // autosave sends the merged state under their baseVersion — last-writer-wins
+    // blob semantics, identical to the whiteboard.
+    if (lastChangeOriginRef.current === 'remote') {
+      lastChangeOriginRef.current = 'local';
+      return;
+    }
+    scheduleSave(buildPersistPayload(), { reason: 'draft' });
+  }, [buildPersistPayload, loading, locked, open, scheduleSave]);
 
   // ── Lane backgrounds ──────────────────────────────────────────────────
 
@@ -1970,6 +2220,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         generateSummary={handleProcessSummary}
         showKPIDashboard={showKPIDashboard}
         setShowKPIDashboard={setShowKPIDashboard}
+        showReadbackPanel={showReadbackPanel}
+        onOpenReadback={() => {
+          setShowReadbackPanel(true);
+          void fetchReadback();
+        }}
+        showAIPanel={showAIPanel}
+        onOpenAIProposal={() => setShowAIPanel(true)}
         canUndo={canUndo}
         canRedo={canRedo}
         undo={undo}
@@ -1985,13 +2242,6 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         guidance={FLOW_MODE_GUIDANCE[flowMode]}
         onOpenChat={onOpenChat ? handleOpenChatWithContext : undefined}
         onConvert={onQuickAction ? handleConvert : undefined}
-        onAIProposal={() => setShowAIPanel(true)}
-        onReadback={() => {
-          setShowReadbackPanel(true);
-          // Readback reads the existing graph (no user prompt needed) — fetch on open
-          // so the panel shows content immediately instead of an empty "fetch" prompt.
-          fetchReadback();
-        }}
       />
       </div>
 
@@ -2307,9 +2557,45 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               onColorChange={handleLaneColorChange}
               onMoveUp={handleLaneMoveUp}
               onMoveDown={handleLaneMoveDown}
+              onToggleCollapse={handleLaneToggleCollapse}
+              onResize={handleLaneResize}
               dragOverLaneId={dragOverLaneId}
             />
           </div>
+
+          {/* M07 F5b B1: grid/snap toggle — real, user-controllable, and now
+              round-trips through hydration (bug L-04). Solid c-* tokens only
+              (no /alpha suffix — those don't emit rules for hex-valued c-*
+              tokens, see finding_c_token_alpha_colormix). */}
+          <div className="absolute top-2 left-2 z-20 flex items-center gap-0.5 rounded-xl border border-c-border bg-c-surface shadow-sm px-1 py-0.5">
+            <button
+              type="button"
+              onClick={() => setShowGrid((prev) => !prev)}
+              className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
+                showGrid ? 'text-c-info bg-c-surface-raised' : 'text-c-text-muted hover:bg-c-surface-raised'
+              }`}
+              title={isPl ? 'Pokaż/ukryj siatkę' : 'Toggle grid'}
+              aria-label={isPl ? 'Pokaż/ukryj siatkę' : 'Toggle grid'}
+              aria-pressed={showGrid}
+            >
+              <Grid3x3 size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setSnapToGridEnabled((prev) => !prev)}
+              className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
+                snapToGridEnabled
+                  ? 'text-c-info bg-c-surface-raised'
+                  : 'text-c-text-muted hover:bg-c-surface-raised'
+              }`}
+              title={isPl ? 'Przyciąganie do siatki' : 'Snap to grid'}
+              aria-label={isPl ? 'Przyciąganie do siatki' : 'Snap to grid'}
+              aria-pressed={snapToGridEnabled}
+            >
+              <Magnet size={14} />
+            </button>
+          </div>
+
           {/* V51-28: Empty state overlay */}
           {filteredNodes.length === 0 && filteredGhostNodes.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
@@ -2349,12 +2635,21 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             />
             <ReactFlow
               nodes={[
-                ...filteredNodes,
+                ...displayNodes,
                 ...filteredGhostNodes.map((g) => ({
                   ...g,
                   style: { opacity: 0.4 },
                   data: { ...g.data, onAcceptGhost: acceptGhostNode },
                 })),
+                // M07 F2 decision 6: pending AI proposal → added nodes shown
+                // as ghosts (no per-node accept; the whole proposal is
+                // accepted/rejected in the panel). Cleared with the proposal.
+                ...(activeProposal?.status === 'pending' && activeProposal.previewNodes
+                  ? activeProposal.previewNodes.map((g) => ({
+                      ...g,
+                      style: { opacity: 0.4 },
+                    }))
+                  : []),
               ]}
               edges={filteredEdgesWithHandlers}
               onNodesChange={locked ? undefined : onNodesChange}
@@ -2387,14 +2682,29 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 });
               }}
               {...getIdeasToolInteractionProps('processflow', { locked, connectMode: !locked })}
+              snapToGrid={snapToGridEnabled}
+              snapGrid={[16, 16]}
               onInit={(instance: ReactFlowInstance) => {
                 reactFlowInstanceRef.current = instance;
+                // M07 F5b B1: restore the user's own last viewport (bug L-04
+                // — viewState was persisted but never read back). Applied
+                // after the initial `fitView` pass settles so it wins.
+                const pending = pendingViewportRef.current;
+                if (pending) {
+                  window.setTimeout(() => {
+                    try {
+                      instance.setViewport(pending, { duration: 300 });
+                    } catch {
+                      /* ignore */
+                    }
+                  }, 50);
+                }
               }}
-              fitView
+              fitView={!pendingViewportRef.current}
               className="bg-transparent"
               defaultEdgeOptions={{ type: 'flowEdge', animated: false }}
             >
-              {(() => { const bg = getCanvasBg('process_flow', isDarkFlow ? 'dark' : 'light'); return <Background color={bg.color} gap={bg.gap} size={bg.size} variant={bg.variant as any} />; })()}
+              {(() => { const bg = getCanvasBg('process_flow', isDarkFlow ? 'dark' : 'light', showGrid ? undefined : 'blank'); return <Background color={bg.color} gap={bg.gap} size={bg.size} variant={bg.variant as any} />; })()}
               {showMiniMap && (
                 <MiniMap
                   nodeStrokeWidth={3}
@@ -2405,6 +2715,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               )}
               <CanvasZoomControls
                 isPolish={isPl}
+                savedViewport={savedViewport}
                 selectedNodeId={selectedNodeId}
                 showMiniMap={showMiniMap}
                 onToggleMiniMap={() => setShowMiniMap((prev) => !prev)}
@@ -2439,7 +2750,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             currentUserId={currentUser?.id || 'anonymous'}
             currentUserName={currentUserName}
             selectedNodeIds={selectedNodeIds}
-            onSessionStateChange={(_: CollaborationSessionState | null) => undefined}
+            onRegisterSend={collab.registerCollabSend}
+            onSessionStateChange={(state: CollaborationSessionState | null) =>
+              collab.onSessionState(state)
+            }
           />
 
           {selectedNode && !locked && (
@@ -2467,10 +2781,53 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   )
                 );
               }}
+              onOpenComments={() => setCommentsPanelNodeId(selectedNode.id)}
+              commentCount={
+                Array.isArray(selectedNode.data?.comments) ? selectedNode.data.comments.length : 0
+              }
             />
           )}
         </div>
       )}
+
+      {commentsPanelNodeId &&
+        (() => {
+          const node = nodes.find((n) => n.id === commentsPanelNodeId);
+          if (!node) return null;
+          const nodeComments: ProcessFlowNodeComment[] = Array.isArray(node.data?.comments)
+            ? node.data.comments
+            : [];
+          return (
+            <ProcessFlowNodeCommentThread
+              open
+              onClose={() => setCommentsPanelNodeId(null)}
+              nodeId={commentsPanelNodeId}
+              nodeLabel={node.data?.label || commentsPanelNodeId}
+              comments={nodeComments}
+              locked={locked}
+              currentUser={currentUserName}
+              isPl={!!isPl}
+              onAddComment={(nodeId, comment) => {
+                setNodes((nds) =>
+                  nds.map((n) =>
+                    n.id === nodeId
+                      ? { ...n, data: { ...n.data, comments: appendComment(n.data?.comments, comment) } }
+                      : n
+                  )
+                );
+              }}
+              onDeleteComment={(nodeId, commentId) => {
+                setNodes((nds) =>
+                  nds.map((n) =>
+                    n.id === nodeId
+                      ? { ...n, data: { ...n.data, comments: removeComment(n.data?.comments, commentId) } }
+                      : n
+                  )
+                );
+              }}
+            />
+          );
+        })()}
 
       {/* ── New panels: Validation, AI Proposal, Readback, Properties, Export, Context Menu ── */}
 
@@ -2522,9 +2879,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             isPl={!!isPl}
             onAccept={() => resolveProposal('accept')}
             onReject={() => resolveProposal('reject')}
-            onEditPrompt={(prompt) => {
+            onEditPrompt={() => {
+              // Back to the prompt form (the panel keeps the previous prompt
+              // in its draft); the user edits and regenerates explicitly.
               dismissProposal();
-              createProposal(prompt);
             }}
             onDismiss={dismissProposal}
             onGenerate={createProposal}
@@ -2607,6 +2965,33 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 prev.map((e) => (e.id === edgeId ? { ...e, label, data: { ...e.data, label } } : e))
               );
             }}
+            onEdgeConditionChange={(edgeId, conditionType) =>
+              handleEdgeConditionChange(edgeId, conditionType)
+            }
+            onEdgeKindChange={(edgeId, kind) => {
+              if (locked) return;
+              pushUndo();
+              setEdges((prev) =>
+                prev.map((e) => {
+                  if (e.id !== edgeId) return e;
+                  const nextEdge = { ...e, data: { ...e.data, edgeKind: kind } };
+                  collab.broadcastEdgeUpdate(nextEdge);
+                  return nextEdge;
+                })
+              );
+            }}
+            onEdgeOrthogonalToggle={(edgeId, orthogonal) => {
+              if (locked) return;
+              pushUndo();
+              setEdges((prev) =>
+                prev.map((e) => {
+                  if (e.id !== edgeId) return e;
+                  const nextEdge = { ...e, data: { ...e.data, orthogonal } };
+                  collab.broadcastEdgeUpdate(nextEdge);
+                  return nextEdge;
+                })
+              );
+            }}
             onNodeMetricsChange={(nodeId, metrics) => {
               setNodes((prev) =>
                 prev.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...metrics } } : n))
@@ -2624,6 +3009,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         isPl={!!isPl}
       />
 
+      {/* M07 F5b B2 decision: KEEP this own ProcessFlowContextMenu, do NOT
+          adopt the shared `IdeaCanvasContextMenu` (src/components/MyWork/
+          IdeaCanvasContextMenu.tsx). That component is a different tool
+          entirely — an AI-actions menu (expand/challenge/find-evidence/
+          brainstorm via generateAIProposal), not a structural editing menu.
+          It has zero PF-shaped actions (no add-node-per-shape, no lane ops,
+          no auto-layout/paste/duplicate/delete) and would need real feature
+          additions to the shared file to cover them — out of budget per the
+          spec's "minimal risk, don't grow someone else's shared component"
+          guidance. Leaving PF's own menu as-is. */}
       {contextMenu && (
         <ProcessFlowContextMenu
           x={contextMenu.x}
@@ -2672,24 +3067,6 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           }
           onClose={() => setContextMenu(null)}
         />
-      )}
-
-      {/* ── Degraded state banner ── */}
-      {isDegraded && degradedScenarios.length > 0 && (
-        <div className="absolute top-14 left-4 right-4 z-30">
-          <div className="rounded-xl bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-800 px-4 py-2.5 flex items-center gap-2">
-            <AlertTriangle size={16} className="text-warning-600 dark:text-warning-400 flex-shrink-0" />
-            <div className="text-xs text-warning-800 dark:text-warning-300 flex-1">
-              {degradedScenarios.map((s) => s.scenario).join(', ')}
-            </div>
-            <button
-              onClick={checkHealth}
-              className="text-xs font-medium text-warning-700 dark:text-warning-300 hover:underline flex-shrink-0"
-            >
-              {isPl ? 'Sprawdź ponownie' : 'Retry'}
-            </button>
-          </div>
-        </div>
       )}
 
       {metricsEditorNode && (

@@ -1,4 +1,4 @@
-import { Copy, Edit3, GitMerge, Link2, MessageSquare, Trash2 } from 'lucide-react';
+import { Copy, Edit3, GitMerge, Link2, MessageCircle, MessageSquare, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { ArtifactLink } from '@/utils/artifactLinks';
@@ -16,6 +16,9 @@ interface ProcessFlowFloatingToolbarProps {
   onOpenChat?: () => void;
   artifactLinks?: ArtifactLink[];
   onArtifactLinksChange?: (links: ArtifactLink[]) => void;
+  /** M07 F5b B3: node comment thread trigger (badge shows comment count). */
+  onOpenComments?: () => void;
+  commentCount?: number;
 }
 
 const BTN =
@@ -34,6 +37,8 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
   onOpenChat,
   artifactLinks,
   onArtifactLinksChange,
+  onOpenComments,
+  commentCount = 0,
 }) => {
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [showLinks, setShowLinks] = useState(false);
@@ -110,6 +115,23 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
           {linkCount > 0 && (
             <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full bg-c-tag-2 text-white text-[8px] font-bold flex items-center justify-center">
               {linkCount}
+            </span>
+          )}
+        </button>
+      )}
+
+      {onOpenComments && (
+        <button
+          type="button"
+          className={`${BTN} relative`}
+          onClick={onOpenComments}
+          title={isPl ? 'Komentarze' : 'Comments'}
+          aria-label={isPl ? 'Komentarze' : 'Comments'}
+        >
+          <MessageCircle size={14} />
+          {commentCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full bg-c-info text-white text-[8px] font-bold flex items-center justify-center">
+              {commentCount}
             </span>
           )}
         </button>

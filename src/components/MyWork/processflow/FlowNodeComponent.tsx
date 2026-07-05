@@ -242,8 +242,9 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
         </div>
       )}
 
-      {/* Ghost node Accept button */}
-      {isGhost && (
+      {/* Ghost node Accept button (M07 F2: proposal-preview ghosts have no
+          onAcceptGhost — they are accepted/rejected as a whole in the panel) */}
+      {isGhost && typeof data?.onAcceptGhost === 'function' && (
         <button
           type="button"
           onClick={(e) => {

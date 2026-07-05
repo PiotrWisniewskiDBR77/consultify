@@ -2948,6 +2948,19 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               isFullscreen={isFullscreen}
               onOpenChat={openChat}
               onQuickAction={handleQuickAction}
+              externalRuntime={{
+                version: graphRuntime.graph.version,
+                loading: graphRuntime.loading,
+                saving: graphRuntime.saving,
+                lastSavedAt: graphRuntime.lastSavedAt,
+                syncState: graphRuntime.syncState,
+                nodes: graphNodes as any,
+                edges: graphEdges as any,
+                extensions: mapExtensions,
+                captureGraph: graphRuntime.captureToolGraph,
+                flushGraph: graphRuntime.flushGraph,
+                refresh: graphRuntime.refresh,
+              }}
             />
           </CanvasToolErrorBoundary>
         )}

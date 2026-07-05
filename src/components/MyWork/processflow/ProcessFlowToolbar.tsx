@@ -21,6 +21,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import TeresaMark from '../../shared/TeresaMark';
 import { type ProcessFlowSemanticKit } from '../canvas/canvasOsContract';
 import { type FlowShape, SHAPE_CONFIG } from './FlowNodeComponent';
+
+// M07 F2: useProcessFlowAIProposal / AIProposalPanel now consume the real
+// blob backend (POST /api/my-work/my-ideas/:id/ai-generate). This constant
+// stays in the code as an emergency kill-switch (spec decision 7) — flip to
+// false to hide the "Propozycja AI" button without touching the wiring.
+export const AI_PROPOSAL_ENABLED = true;
+
 // ── Re-export types ──────────────────────────────────────────────────────────
 
 export type ProcessFlowMode = 'classic' | 'automation' | 'vsm';
@@ -135,6 +142,10 @@ export interface ProcessFlowToolbarProps {
   generateSummary: () => void;
   showKPIDashboard: boolean;
   setShowKPIDashboard: React.Dispatch<React.SetStateAction<boolean>>;
+  showReadbackPanel?: boolean;
+  onOpenReadback?: () => void;
+  showAIPanel?: boolean;
+  onOpenAIProposal?: () => void;
   canUndo: boolean;
   canRedo: boolean;
   undo: () => void;
@@ -150,10 +161,6 @@ export interface ProcessFlowToolbarProps {
   guidance: { en: string; pl: string; stageEn: string; stagePl: string };
   onOpenChat?: () => void;
   onConvert?: (action: string) => void;
-  /** Open the AI Proposal side panel (AI suggests graph operations). Optional — button hidden when unset. */
-  onAIProposal?: () => void;
-  /** Open the Semantic Readback side panel (plain-language read of the flow). Optional — button hidden when unset. */
-  onReadback?: () => void;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -188,6 +195,10 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
   generateSummary,
   showKPIDashboard,
   setShowKPIDashboard,
+  showReadbackPanel,
+  onOpenReadback,
+  showAIPanel,
+  onOpenAIProposal,
   canUndo,
   canRedo,
   undo,
@@ -203,8 +214,6 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
   guidance,
   onOpenChat,
   onConvert,
-  onAIProposal,
-  onReadback,
 }) => {
   const [overflowOpen, setOverflowOpen] = useState(false);
   const overflowRef = useRef<HTMLDivElement>(null);
@@ -437,27 +446,35 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               )}
               {isPl ? 'Podsumuj' : 'Summary'}
             </button>
-            {onAIProposal && (
+            {onOpenReadback && (
               <button
                 type="button"
-                onClick={onAIProposal}
-                disabled={locked}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-tag-2 hover:bg-c-surface-raised transition-colors disabled:opacity-40"
-                title={isPl ? 'Propozycja AI — zmiany w przepływie' : 'AI Proposal — flow edits'}
-              >
-                <Sparkles size={14} />
-                {isPl ? 'Propozycja AI' : 'AI Proposal'}
-              </button>
-            )}
-            {onReadback && (
-              <button
-                type="button"
-                onClick={onReadback}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-c-info hover:bg-c-surface-raised transition-colors"
-                title={isPl ? 'Odczyt semantyczny przepływu' : 'Semantic readback of the flow'}
+                onClick={onOpenReadback}
+                className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
+                  showReadbackPanel
+                    ? 'text-c-info bg-c-surface-raised'
+                    : 'text-c-info hover:bg-c-surface-raised'
+                }`}
+                title={isPl ? 'Odczyt semantyczny' : 'Semantic readback'}
               >
                 <ScanText size={14} />
                 {isPl ? 'Odczyt' : 'Readback'}
+              </button>
+            )}
+            {AI_PROPOSAL_ENABLED && onOpenAIProposal && (
+              <button
+                type="button"
+                onClick={onOpenAIProposal}
+                disabled={locked}
+                className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors disabled:opacity-40 ${
+                  showAIPanel
+                    ? 'text-c-tag-2 bg-c-surface-raised'
+                    : 'text-c-tag-2 hover:bg-c-surface-raised'
+                }`}
+                title={isPl ? 'Propozycja AI' : 'AI proposal'}
+              >
+                <Sparkles size={14} />
+                {isPl ? 'Propozycja AI' : 'AI Proposal'}
               </button>
             )}
           </div>
