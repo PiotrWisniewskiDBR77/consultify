@@ -1606,7 +1606,11 @@
         "rejectedAll": "Odrzucono wszystkie propozycje AI",
         "generated": "AI wygenerowało propozycję",
         "proposalApplied": "Propozycja zastosowana",
-        "allProposalsApplied": "Wszystkie propozycje zastosowane"
+        "allProposalsApplied": "Wszystkie propozycje zastosowane",
+        "generating": "AI analizuje tablic\u0119\u2026",
+        "generateFailed": "Generowanie AI nie powiod\u0142o si\u0119",
+        "noProposals": "AI nie zwr\u00f3ci\u0142o propozycji dla tej tablicy",
+        "needsElements": "Najpierw dodaj elementy na tablic\u0119"
       },
       "errors": {
         "saveFailed": "Błąd zapisu",
@@ -1623,7 +1627,11 @@
         "voteSyncFailed": "Błąd synchronizacji głosów",
         "missingSessionId": "Brak sessionId",
         "voteSaveFailed": "Nie udało się zapisać głosu",
-        "selectAtLeastTwo": "Zaznacz co najmniej 2 elementy"
+        "selectAtLeastTwo": "Zaznacz co najmniej 2 elementy",
+        "imageTooLarge": "Obraz za duży (maks. 10MB)",
+        "imageUploadFallback": "Obraz zapisany lokalnie (offline) — zapis w magazynie niedostępny",
+        "objectLimitWarning": "Zbliżasz się do limitu obiektów (200 obiektów). Rozważ archiwizację.",
+        "objectLimitReached": "Osiągnięto limit obiektów (maksymalnie 500). Usuń elementy lub podziel na wiele tablic."
       },
       "drawingsCleared": "Rysunki wyczyszczone",
       "boardMode": "Tryb tablicy",

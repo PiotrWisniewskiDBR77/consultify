@@ -9,6 +9,12 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
+import {
+  insertMentionIntoText,
+  renderMentionText,
+  useMentionAutocomplete,
+} from '../mentionAutocomplete';
+
 export interface NodeComment {
   id: string;
   author: string;
@@ -28,11 +34,6 @@ interface NodeCommentThreadProps {
   currentUser: string;
   onAddComment: (nodeId: string, comment: NodeComment) => void;
   onDeleteComment: (nodeId: string, commentId: string) => void;
-}
-
-function extractMentions(text: string): string[] {
-  const matches = text.match(/@(\w+)/g);
-  return matches ? matches.map((m) => m.slice(1)) : [];
 }
 
 function formatTime(iso: string): string {
@@ -69,6 +70,16 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
   const [loading, setLoading] = useState(false);
   const [apiAvailable, setApiAvailable] = useState(true);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // @mention org-member autocomplete (shared with IdeaNodeDetailDrawer, B2b).
+  const {
+    mentionPool,
+    mentionQuery,
+    mentionSuggestions,
+    resolveMentionIds,
+    handleMentionInput,
+    closeMentionMenu,
+  } = useMentionAutocomplete(open);
 
   const comments = apiAvailable ? localComments : propComments;
 
@@ -107,7 +118,9 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
     const trimmed = text.trim();
     if (!trimmed) return;
 
-    const mentions = extractMentions(trimmed);
+    // Prefer resolved org-member user ids; fall back to bare name tokens.
+    const mentions = resolveMentionIds(trimmed);
+    closeMentionMenu();
 
     if (apiAvailable && ideaId) {
       try {
@@ -135,7 +148,17 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
     setLocalComments((prev) => [...prev, comment]);
     setText('');
     inputRef.current?.focus();
-  }, [apiAvailable, currentUser, ideaId, isPl, nodeId, onAddComment, text]);
+  }, [
+    apiAvailable,
+    closeMentionMenu,
+    currentUser,
+    ideaId,
+    isPl,
+    nodeId,
+    onAddComment,
+    resolveMentionIds,
+    text,
+  ]);
 
   const handleDelete = useCallback(
     async (commentId: string) => {
@@ -155,14 +178,48 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
     [apiAvailable, ideaId, isPl, nodeId, onDeleteComment]
   );
 
+  const handleInput = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const val = e.target.value;
+      setText(val);
+      const caret = e.target.selectionStart ?? val.length;
+      handleMentionInput(val, caret);
+    },
+    [handleMentionInput]
+  );
+
+  const insertMention = useCallback(
+    (user: { id: string; name: string }) => {
+      const ta = inputRef.current;
+      const body = text || '';
+      const caretPos = ta?.selectionStart ?? body.length;
+      const result = insertMentionIntoText(body, caretPos, user);
+      if (!result) return;
+      setText(result.text);
+      closeMentionMenu();
+      requestAnimationFrame(() => {
+        if (ta) {
+          ta.focus();
+          ta.setSelectionRange(result.caret, result.caret);
+        }
+      });
+    },
+    [closeMentionMenu, text]
+  );
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape' && mentionQuery !== null) {
+        e.preventDefault();
+        closeMentionMenu();
+        return;
+      }
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         handleSubmit();
       }
     },
-    [handleSubmit]
+    [closeMentionMenu, handleSubmit, mentionQuery]
   );
 
   if (!open) return null;
@@ -176,7 +233,9 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
           <div className="text-[11px] font-bold text-c-text dark:text-c-text truncate">
             {isPl ? 'Komentarze' : 'Comments'}
           </div>
-          <div className="text-[9px] text-c-text-secondary dark:text-c-text-muted truncate">{nodeLabel}</div>
+          <div className="text-[9px] text-c-text-secondary dark:text-c-text-muted truncate">
+            {nodeLabel}
+          </div>
         </div>
         <span className="text-[10px] text-c-text-secondary font-medium">{comments.length}</span>
         <button
@@ -213,7 +272,9 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
                     <span className="text-[10px] font-bold text-c-text-secondary dark:text-c-text">
                       {c.author}
                     </span>
-                    <span className="text-[8px] text-c-text-secondary">{formatTime(c.createdAt)}</span>
+                    <span className="text-[8px] text-c-text-secondary">
+                      {formatTime(c.createdAt)}
+                    </span>
                     {c.author === currentUser && (
                       <button
                         onClick={() => handleDelete(c.id)}
@@ -224,15 +285,7 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
                     )}
                   </div>
                   <div className="text-[11px] text-c-text-secondary dark:text-c-text-muted mt-0.5 leading-relaxed whitespace-pre-wrap">
-                    {c.text.split(/(@\w+)/g).map((part, idx) =>
-                      part.startsWith('@') ? (
-                        <span key={idx} className="text-c-info font-medium">
-                          {part}
-                        </span>
-                      ) : (
-                        <span key={idx}>{part}</span>
-                      )
-                    )}
+                    {renderMentionText(c.text, mentionPool)}
                   </div>
                 </div>
               </div>
@@ -245,10 +298,35 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
         <div className="px-4 py-3 border-t border-c-border-subtle dark:border-c-border">
           <div className="flex items-end gap-2">
             <div className="flex-1 relative">
+              {mentionQuery !== null && mentionSuggestions.length > 0 && (
+                <div
+                  role="listbox"
+                  aria-label={isPl ? 'Wspomnij osobę' : 'Mention a teammate'}
+                  className="absolute bottom-full left-0 mb-1 w-64 rounded-xl border border-c-border bg-c-surface shadow-lg max-h-40 overflow-y-auto z-overlay"
+                >
+                  {mentionSuggestions.map((user) => (
+                    <button
+                      key={user.id}
+                      type="button"
+                      role="option"
+                      className="w-full text-left px-3 py-2 text-[11px] hover:bg-c-surface-raised flex items-center gap-2"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        insertMention(user);
+                      }}
+                    >
+                      <div className="h-6 w-6 rounded-full bg-c-surface-raised text-c-info flex items-center justify-center text-[9px] font-bold">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="text-c-text-secondary truncate">{user.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
               <textarea
                 ref={inputRef}
                 value={text}
-                onChange={(e) => setText(e.target.value)}
+                onChange={handleInput}
                 onKeyDown={handleKeyDown}
                 rows={2}
                 placeholder={

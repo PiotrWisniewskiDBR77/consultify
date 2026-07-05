@@ -5118,13 +5118,10 @@ export const Api = {
   },
 
   deleteLinkGraphEdge: async (edgeId: string): Promise<{ ok: boolean }> => {
-    const res = await fetch(
-      `${API_URL}/my-work/link-graph/edges/${encodeURIComponent(edgeId)}`,
-      {
-        method: 'DELETE',
-        headers: getHeaders(),
-      }
-    );
+    const res = await fetch(`${API_URL}/my-work/link-graph/edges/${encodeURIComponent(edgeId)}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
     return handleResponse(res, 'Failed to delete link edge');
   },
 
@@ -9094,9 +9091,12 @@ export const Api = {
     opts?: { lang?: 'pl' | 'en' }
   ): Promise<{ html: string; narrative: 'llm' | 'deterministic' }> => {
     const qs = new URLSearchParams({ format: 'json', ...(opts?.lang ? { lang: opts.lang } : {}) });
-    const res = await fetch(`${API_URL}/assessment-reports/${reportId}/drd-report?${qs.toString()}`, {
-      headers: getHeaders(),
-    });
+    const res = await fetch(
+      `${API_URL}/assessment-reports/${reportId}/drd-report?${qs.toString()}`,
+      {
+        headers: getHeaders(),
+      }
+    );
     return handleResponse(res, 'Failed to generate DRD report');
   },
 
@@ -18678,6 +18678,15 @@ export const Api = {
       headers: getHeaders(),
     });
     return handleResponse(res, 'Failed to get facilitation session');
+  },
+  // B1 (M09): read-only resolve of the ACTIVE shared session for a toolSessionId
+  // (e.g. `whiteboard:<ideaId>`) WITHOUT creating one → { session } | { session: null }.
+  facilitationResolveByTool: async (toolSessionId: string) => {
+    const res = await fetch(
+      `${API_URL}/realtime-v4/facilitation/sessions/by-tool/${encodeURIComponent(toolSessionId)}`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to resolve facilitation session');
   },
   facilitationUpdateTimer: async (sessionId: string, timerState: object) => {
     const res = await fetch(`${API_URL}/realtime-v4/facilitation/sessions/${sessionId}/timer`, {
