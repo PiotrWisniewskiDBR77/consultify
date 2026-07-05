@@ -87,7 +87,6 @@ import PortfolioInsightsPanel from './PortfolioInsightsPanel';
 import { isResultsFlagEnabled } from './resultsFeatureFlags';
 import { ResultsKpiReportsView } from './ResultsKpiReportsView';
 import { ResultsKpiScorecardsView } from './ResultsKpiScorecardsView';
-import { ResultsKpisTableV3 } from './ResultsKpisTableV3';
 import { ResultsGridView } from './ResultsKPITable';
 import {
   ResultsKpiConnectorsView,
@@ -108,11 +107,11 @@ const ResultsInitiativeDocumentView = React.lazy(async () => {
 const WATCHED_RESULTS_KPI_STORAGE_KEY = 'results.kpi.watched';
 
 // Triada standard (canon §4.1/§4.0): KPI domain status → semantic chip tone.
-// Mirrors ResultsKpisTableV3's KPI_STATUS_TONE — EntityStatusChip's generic
-// TONE_BY_STATUS map does not know the KPI-specific statuses ('on-target' /
-// 'below' / 'no-data'), so the local map is duplicated here on purpose rather
-// than exported from the shared ResultsKpisTableV3 (kept untouched — see
-// `results_reports`+`tracked` sibling call site).
+// Historically mirrored ResultsKpisTableV3's KPI_STATUS_TONE (pre-triada
+// FilterableTable component, now unused — see `renderKpiStandardTable`).
+// EntityStatusChip's generic TONE_BY_STATUS map does not know the
+// KPI-specific statuses ('on-target' / 'below' / 'no-data'), so this local
+// map stays as the single source for both StandardTable KPI render sites.
 const CATALOG_KPI_STATUS_TONE: Record<'on-target' | 'below' | 'no-data', StatusTone> = {
   'on-target': 'success',
   below: 'warning',
@@ -1433,8 +1432,11 @@ export const ResultsHub: React.FC = () => {
 
   // Triada standard (canon A3/A6): checkbox selection on the KPI catalog list
   // tab switches Menu 3 into bulk mode (1:1 markup with Assessment 'list').
+  // Also covers the `results_reports`+`tracked` sibling (same StandardTable
+  // inline render, same `filteredKpis` source, same selection/preview state).
   const isCatalogListView =
-    activeTab === 'results_kpi' && kpiWorkspaceMode === 'catalog' && viewMode === 'table';
+    (activeTab === 'results_kpi' && kpiWorkspaceMode === 'catalog' && viewMode === 'table') ||
+    (activeTab === 'results_reports' && reportWorkspaceMode === 'tracked');
   const catalogBulkCommandRowContent =
     isCatalogListView && selectedKpiIds.size > 0 ? (
       <div className={MENU_3_LEFT_CLASS + ' w-full justify-between flex'}>
@@ -1538,6 +1540,317 @@ export const ResultsHub: React.FC = () => {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [isCatalogListView, selectedCatalogKpiId, catalogPreviewActions]);
+
+  // Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): shared
+  // StandardTable + StandardPreview render for the KPI list, used verbatim by
+  // BOTH the `results_kpi`+`catalog` tab and the `results_reports`+`tracked`
+  // sibling (same `filteredKpis` source, same selection/preview state via
+  // `isCatalogListView`). Factored into one function so the two tabs cannot
+  // drift apart — only `persistKey` differs (independent column width/sort
+  // persistence per tab).
+  const renderKpiStandardTable = (persistKey: string) => {
+    const catalogRows = filteredKpis.map((k) => ({ ...k, id: k.id }));
+    const catalogColumns: StandardTableColumn[] = [
+      {
+        id: 'name',
+        label: t('results.columns.name', 'Name'),
+        render: (row: Record<string, unknown>) => (
+          <span className="text-sm font-semibold text-c-text truncate block max-w-[420px]">
+            {String(row.name || '—')}
+          </span>
+        ),
+      },
+      {
+        id: 'initiativeName',
+        label: t('results.columns.initiative', 'Initiative'),
+        width: '200px',
+        filterable: true,
+        filterOptions: [
+          ...new Set(
+            filteredKpis
+              .flatMap((k) => [
+                k.initiativeName,
+                ...(k.linkedInitiatives || []).map((i) => i.name),
+              ])
+              .filter(Boolean) as string[]
+          ),
+        ].map((n) => ({ value: n, label: n })),
+        render: (row: Record<string, unknown>) => (
+          <span className="text-sm text-c-text-muted truncate block max-w-[220px]">
+            {String(row.initiativeName || '—')}
+          </span>
+        ),
+      },
+      {
+        id: 'current',
+        label: t('results.columns.current', 'Current'),
+        width: '110px',
+        align: 'right' as const,
+        render: (row: Record<string, unknown>) => {
+          const k = row as unknown as ResultsKPI;
+          return k.latestValue == null ? (
+            <span className="text-sm text-c-text-muted">—</span>
+          ) : (
+            <span className="text-sm tabular-nums text-c-text">
+              {k.latestValue.toLocaleString()}
+              {k.unit ? <span className="ml-0.5 text-xs text-c-text-muted">{k.unit}</span> : null}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'target',
+        label: t('results.columns.target', 'Target'),
+        width: '110px',
+        align: 'right' as const,
+        render: (row: Record<string, unknown>) => {
+          const k = row as unknown as ResultsKPI;
+          return k.targetValue == null ? (
+            <span className="text-sm text-c-text-muted">—</span>
+          ) : (
+            <span className="text-sm tabular-nums text-c-text">
+              {k.targetValue.toLocaleString()}
+              {k.unit ? <span className="ml-0.5 text-xs text-c-text-muted">{k.unit}</span> : null}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'ownerName',
+        label: t('results.columns.owner', 'Owner'),
+        width: '160px',
+        filterable: true,
+        filterOptions: Array.from(
+          new Set(filteredKpis.map((k) => String(k.ownerName || '').trim()).filter(Boolean))
+        ).map((owner) => ({ value: owner, label: owner })),
+        render: (row: Record<string, unknown>) => (
+          <AssigneeCell
+            name={(row.ownerName as string) || null}
+            unassignedLabel={t('common.unassigned', 'Unassigned')}
+          />
+        ),
+      },
+      {
+        id: 'status',
+        label: t('results.columns.status', 'Status'),
+        width: '140px',
+        filterable: true,
+        filterOptions: [
+          {
+            value: 'on-target',
+            label: t('results.status.onTarget', 'On target'),
+          },
+          { value: 'below', label: t('results.status.below', 'Below target') },
+          { value: 'no-data', label: t('results.status.noData', 'No data') },
+        ],
+        render: (row: Record<string, unknown>) => {
+          const k = row as unknown as ResultsKPI;
+          const label =
+            k.status === 'on-target'
+              ? t('results.status.onTarget', 'On target')
+              : k.status === 'below'
+                ? t('results.status.below', 'Below target')
+                : t('results.status.noData', 'No data');
+          return <StatusChip tone={CATALOG_KPI_STATUS_TONE[k.status] ?? 'neutral'} label={label} />;
+        },
+      },
+      {
+        id: 'needsEntry',
+        label: t('results.columns.needsEntry', 'Needs entry'),
+        width: '140px',
+        filterable: true,
+        filterOptions: [
+          { value: 'yes', label: t('common.yes', 'Yes') },
+          { value: 'no', label: t('common.no', 'No') },
+        ],
+        render: (row: Record<string, unknown>) => {
+          const k = row as unknown as ResultsKPI;
+          return k.needsEntry ? (
+            <StatusChip tone="warning" label={t('results.needsEntry.badge', 'Needs entry')} />
+          ) : (
+            <span className="text-c-text-muted">—</span>
+          );
+        },
+      },
+      {
+        id: 'updatedAt',
+        label: t('common.updated', 'Updated'),
+        width: '130px',
+        sortable: true,
+        sortAccessor: (row: Record<string, unknown>) => {
+          const k = row as unknown as ResultsKPI;
+          const raw = k.latestMeasurementDate || k.createdAt;
+          return raw ? new Date(raw).getTime() : 0;
+        },
+        render: (row: Record<string, unknown>) => {
+          const k = row as unknown as ResultsKPI;
+          const raw = k.latestMeasurementDate || k.createdAt;
+          return raw ? (
+            <span className="text-[11px] text-c-text-muted">
+              {new Date(raw).toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </span>
+          ) : (
+            <span className="text-c-text-muted">—</span>
+          );
+        },
+      },
+    ];
+
+    return (
+      <div className="h-full flex overflow-hidden">
+        <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+          <StandardTable
+            columns={catalogColumns}
+            data={catalogRows as unknown as Array<Record<string, unknown> & { id: string }>}
+            selectedRowId={selectedCatalogKpiId}
+            onRowClick={(row) => setSelectedCatalogKpiId(String((row as any).id))}
+            onRowDoubleClick={(row) => openKpiDrawer(String((row as any).id), 'summary')}
+            rowDescription={() => null}
+            defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
+            persistKey={persistKey}
+            selection={{ selectedIds: selectedKpiIds, onChange: setSelectedKpiIds }}
+            empty={{
+              icon: Target,
+              title: t('results.emptyState', 'No KPIs found'),
+              description: t(
+                'results.emptyState.description',
+                'Add your first KPI to start tracking results.'
+              ),
+              actionLabel: t('results.emptyState.createFirst', 'Add KPI'),
+              onAction: () => setShowCreateModal(true),
+            }}
+            rowMenu={(row): StandardRowMenu => {
+              const k = row as unknown as ResultsKPI;
+              return {
+                primary: [
+                  {
+                    id: 'record',
+                    label: t('results.actions.recordValue', 'Record value'),
+                    icon: Target,
+                    onClick: () => openKpiDrawer(k.id, 'record'),
+                  },
+                  {
+                    id: 'watch',
+                    label: watchedKpiIds.has(k.id)
+                      ? t('results.watch.unfollow', 'Unfollow KPI')
+                      : t('results.watch.follow', 'Follow KPI'),
+                    icon: watchedKpiIds.has(k.id) ? BellOff : Bell,
+                    onClick: () => toggleWatchKpi(k.id),
+                  },
+                ],
+                // Brak API zmiany statusu KPI (status jest derived, nie ma
+                // endpointu przejścia) — brak statusTransitions celowo.
+                universalHandlers: {
+                  preview: () => setSelectedCatalogKpiId(k.id),
+                  edit: () => openKpiDrawer(k.id, 'definition'),
+                  // Brak API archiwizacji KPI (nie istnieje w ogóle) —
+                  // disabled z notą (StandardTable dokłada ją sama).
+                },
+                destructive: {
+                  onClick: () => void handleDeleteKpi(k.id),
+                },
+              };
+            }}
+          />
+        </div>
+
+        {selectedCatalogKpi ? (
+          <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+            <StandardPreview
+              title={selectedCatalogKpi.name || 'KPI'}
+              onClose={() => setSelectedCatalogKpiId(null)}
+              onOpenFull={() => openKpiDrawer(selectedCatalogKpi.id, 'summary')}
+              meta={{
+                pills: [
+                  {
+                    label:
+                      selectedCatalogKpi.status === 'on-target'
+                        ? t('results.status.onTarget', 'On target')
+                        : selectedCatalogKpi.status === 'below'
+                          ? t('results.status.below', 'Below target')
+                          : t('results.status.noData', 'No data'),
+                    tone: CATALOG_KPI_STATUS_TONE[selectedCatalogKpi.status] ?? 'neutral',
+                  },
+                  ...(selectedCatalogKpi.needsEntry
+                    ? [
+                        {
+                          label: t('results.needsEntry.badge', 'Needs entry'),
+                          tone: 'warning',
+                        } as MetaPill,
+                      ]
+                    : []),
+                  ...(watchedKpiIds.has(selectedCatalogKpi.id)
+                    ? [
+                        {
+                          label: t('results.filters.watched', 'Watched KPI'),
+                          tone: 'info',
+                        } as MetaPill,
+                      ]
+                    : []),
+                ] as MetaPill[],
+                trailing: (
+                  <span className="text-[11px] font-semibold text-c-text-secondary">
+                    {selectedCatalogKpi.latestMeasurementDate
+                      ? new Date(selectedCatalogKpi.latestMeasurementDate).toLocaleDateString(
+                          undefined,
+                          { month: 'short', day: 'numeric', year: 'numeric' }
+                        )
+                      : '—'}
+                  </span>
+                ),
+              }}
+              details={{
+                text: [
+                  `${t('results.columns.current', 'Current')}: ${
+                    selectedCatalogKpi.latestValue != null
+                      ? `${selectedCatalogKpi.latestValue.toLocaleString()}${selectedCatalogKpi.unit ? ` ${selectedCatalogKpi.unit}` : ''}`
+                      : '—'
+                  }`,
+                  `${t('results.columns.target', 'Target')}: ${
+                    selectedCatalogKpi.targetValue != null
+                      ? `${selectedCatalogKpi.targetValue.toLocaleString()}${selectedCatalogKpi.unit ? ` ${selectedCatalogKpi.unit}` : ''}`
+                      : '—'
+                  }`,
+                  `${t('results.columns.owner', 'Owner')}: ${selectedCatalogKpi.ownerName || '—'}`,
+                  `${t('results.columns.frequency', 'Frequency')}: ${selectedCatalogKpi.measurementFrequency || '—'}`,
+                  '',
+                  selectedCatalogKpi.description?.trim() ||
+                    t('common.noDescription', 'No description'),
+                ].join('\n'),
+                onCopy: () => {
+                  void navigator.clipboard?.writeText(
+                    `${selectedCatalogKpi.name} — ${selectedCatalogKpi.status} (${selectedCatalogKpi.latestValue ?? '—'})`
+                  );
+                },
+              }}
+              ai={{
+                hints: [
+                  t('results.kpi.ai.why', 'Why off target?'),
+                  t('results.kpi.ai.plan', 'Action plan'),
+                ],
+                disabled: true,
+                disabledTooltip: t('common.comingSoon', 'Coming soon'),
+              }}
+              relations={
+                selectedCatalogKpi.initiativeName
+                  ? [
+                      {
+                        label: `${t('results.columns.initiative', 'Initiative')}: ${selectedCatalogKpi.initiativeName}`,
+                      },
+                    ]
+                  : []
+              }
+              actions={catalogPreviewActions}
+            />
+          </aside>
+        ) : null}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -1753,15 +2066,13 @@ export const ResultsHub: React.FC = () => {
           </div>
         ) : activeTab === 'results_reports' ? (
           reportWorkspaceMode === 'tracked' ? (
-            <ResultsKpisTableV3
-              kpis={filteredKpis}
-              activeFilters={activeFilters}
-              onFilterChange={setActiveFilters}
-              onOpenKpi={openKpiDrawer}
-              onDeleteKpi={handleDeleteKpi}
-              watchedKpiIds={watchedKpiIds}
-              onToggleWatch={toggleWatchKpi}
-            />
+            // Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): same
+            // StandardTable + StandardPreview render as the `results_kpi`
+            // catalog tab (see `renderKpiStandardTable`, shared function
+            // defined above `return`). `ResultsKpisTableV3` (FilterableTable,
+            // pre-triada) has no other consumers left — kept as a file for
+            // now but no longer rendered anywhere in this hub.
+            renderKpiStandardTable('results.kpi.tracked.list')
           ) : reportWorkspaceMode === 'reports' ? (
             <ResultsKpiReportsView
               activeFilters={activeFilters}
@@ -1843,312 +2154,10 @@ export const ResultsHub: React.FC = () => {
         ) : activeTab === 'results_kpi' && viewMode === 'table' ? (
           // Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): KPI
           // catalog tab → StandardTable + StandardPreview, 1:1 with the
-          // Assessment 'list' / Interview Inbox adopters. This is a SEPARATE
-          // inline render from `ResultsKpisTableV3` (left untouched — still
-          // used verbatim by the `results_reports`+`tracked` sibling below).
-          (() => {
-            const catalogRows = filteredKpis.map((k) => ({ ...k, id: k.id }));
-            const catalogColumns: StandardTableColumn[] = [
-              {
-                id: 'name',
-                label: t('results.columns.name', 'Name'),
-                render: (row: Record<string, unknown>) => (
-                  <span className="text-sm font-semibold text-c-text truncate block max-w-[420px]">
-                    {String(row.name || '—')}
-                  </span>
-                ),
-              },
-              {
-                id: 'initiativeName',
-                label: t('results.columns.initiative', 'Initiative'),
-                width: '200px',
-                filterable: true,
-                filterOptions: [
-                  ...new Set(
-                    filteredKpis
-                      .flatMap((k) => [
-                        k.initiativeName,
-                        ...(k.linkedInitiatives || []).map((i) => i.name),
-                      ])
-                      .filter(Boolean) as string[]
-                  ),
-                ].map((n) => ({ value: n, label: n })),
-                render: (row: Record<string, unknown>) => (
-                  <span className="text-sm text-c-text-muted truncate block max-w-[220px]">
-                    {String(row.initiativeName || '—')}
-                  </span>
-                ),
-              },
-              {
-                id: 'current',
-                label: t('results.columns.current', 'Current'),
-                width: '110px',
-                align: 'right' as const,
-                render: (row: Record<string, unknown>) => {
-                  const k = row as unknown as ResultsKPI;
-                  return k.latestValue == null ? (
-                    <span className="text-sm text-c-text-muted">—</span>
-                  ) : (
-                    <span className="text-sm tabular-nums text-c-text">
-                      {k.latestValue.toLocaleString()}
-                      {k.unit ? <span className="ml-0.5 text-xs text-c-text-muted">{k.unit}</span> : null}
-                    </span>
-                  );
-                },
-              },
-              {
-                id: 'target',
-                label: t('results.columns.target', 'Target'),
-                width: '110px',
-                align: 'right' as const,
-                render: (row: Record<string, unknown>) => {
-                  const k = row as unknown as ResultsKPI;
-                  return k.targetValue == null ? (
-                    <span className="text-sm text-c-text-muted">—</span>
-                  ) : (
-                    <span className="text-sm tabular-nums text-c-text">
-                      {k.targetValue.toLocaleString()}
-                      {k.unit ? <span className="ml-0.5 text-xs text-c-text-muted">{k.unit}</span> : null}
-                    </span>
-                  );
-                },
-              },
-              {
-                id: 'ownerName',
-                label: t('results.columns.owner', 'Owner'),
-                width: '160px',
-                filterable: true,
-                filterOptions: Array.from(
-                  new Set(filteredKpis.map((k) => String(k.ownerName || '').trim()).filter(Boolean))
-                ).map((owner) => ({ value: owner, label: owner })),
-                render: (row: Record<string, unknown>) => (
-                  <AssigneeCell
-                    name={(row.ownerName as string) || null}
-                    unassignedLabel={t('common.unassigned', 'Unassigned')}
-                  />
-                ),
-              },
-              {
-                id: 'status',
-                label: t('results.columns.status', 'Status'),
-                width: '140px',
-                filterable: true,
-                filterOptions: [
-                  {
-                    value: 'on-target',
-                    label: t('results.status.onTarget', 'On target'),
-                  },
-                  { value: 'below', label: t('results.status.below', 'Below target') },
-                  { value: 'no-data', label: t('results.status.noData', 'No data') },
-                ],
-                render: (row: Record<string, unknown>) => {
-                  const k = row as unknown as ResultsKPI;
-                  const label =
-                    k.status === 'on-target'
-                      ? t('results.status.onTarget', 'On target')
-                      : k.status === 'below'
-                        ? t('results.status.below', 'Below target')
-                        : t('results.status.noData', 'No data');
-                  return <StatusChip tone={CATALOG_KPI_STATUS_TONE[k.status] ?? 'neutral'} label={label} />;
-                },
-              },
-              {
-                id: 'needsEntry',
-                label: t('results.columns.needsEntry', 'Needs entry'),
-                width: '140px',
-                filterable: true,
-                filterOptions: [
-                  { value: 'yes', label: t('common.yes', 'Yes') },
-                  { value: 'no', label: t('common.no', 'No') },
-                ],
-                render: (row: Record<string, unknown>) => {
-                  const k = row as unknown as ResultsKPI;
-                  return k.needsEntry ? (
-                    <StatusChip tone="warning" label={t('results.needsEntry.badge', 'Needs entry')} />
-                  ) : (
-                    <span className="text-c-text-muted">—</span>
-                  );
-                },
-              },
-              {
-                id: 'updatedAt',
-                label: t('common.updated', 'Updated'),
-                width: '130px',
-                sortable: true,
-                sortAccessor: (row: Record<string, unknown>) => {
-                  const k = row as unknown as ResultsKPI;
-                  const raw = k.latestMeasurementDate || k.createdAt;
-                  return raw ? new Date(raw).getTime() : 0;
-                },
-                render: (row: Record<string, unknown>) => {
-                  const k = row as unknown as ResultsKPI;
-                  const raw = k.latestMeasurementDate || k.createdAt;
-                  return raw ? (
-                    <span className="text-[11px] text-c-text-muted">
-                      {new Date(raw).toLocaleDateString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </span>
-                  ) : (
-                    <span className="text-c-text-muted">—</span>
-                  );
-                },
-              },
-            ];
-
-            return (
-              <div className="h-full flex overflow-hidden">
-                <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
-                  <StandardTable
-                    columns={catalogColumns}
-                    data={catalogRows as unknown as Array<Record<string, unknown> & { id: string }>}
-                    selectedRowId={selectedCatalogKpiId}
-                    onRowClick={(row) => setSelectedCatalogKpiId(String((row as any).id))}
-                    onRowDoubleClick={(row) => openKpiDrawer(String((row as any).id), 'summary')}
-                    rowDescription={() => null}
-                    defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
-                    persistKey="results.kpi.catalog.list"
-                    selection={{ selectedIds: selectedKpiIds, onChange: setSelectedKpiIds }}
-                    empty={{
-                      icon: Target,
-                      title: t('results.emptyState', 'No KPIs found'),
-                      description: t(
-                        'results.emptyState.description',
-                        'Add your first KPI to start tracking results.'
-                      ),
-                      actionLabel: t('results.emptyState.createFirst', 'Add KPI'),
-                      onAction: () => setShowCreateModal(true),
-                    }}
-                    rowMenu={(row): StandardRowMenu => {
-                      const k = row as unknown as ResultsKPI;
-                      return {
-                        primary: [
-                          {
-                            id: 'record',
-                            label: t('results.actions.recordValue', 'Record value'),
-                            icon: Target,
-                            onClick: () => openKpiDrawer(k.id, 'record'),
-                          },
-                          {
-                            id: 'watch',
-                            label: watchedKpiIds.has(k.id)
-                              ? t('results.watch.unfollow', 'Unfollow KPI')
-                              : t('results.watch.follow', 'Follow KPI'),
-                            icon: watchedKpiIds.has(k.id) ? BellOff : Bell,
-                            onClick: () => toggleWatchKpi(k.id),
-                          },
-                        ],
-                        // Brak API zmiany statusu KPI (status jest derived, nie ma
-                        // endpointu przejścia) — brak statusTransitions celowo.
-                        universalHandlers: {
-                          preview: () => setSelectedCatalogKpiId(k.id),
-                          edit: () => openKpiDrawer(k.id, 'definition'),
-                          // Brak API archiwizacji KPI (nie istnieje w ogóle) —
-                          // disabled z notą (StandardTable dokłada ją sama).
-                        },
-                        destructive: {
-                          onClick: () => void handleDeleteKpi(k.id),
-                        },
-                      };
-                    }}
-                  />
-                </div>
-
-                {selectedCatalogKpi ? (
-                  <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
-                    <StandardPreview
-                      title={selectedCatalogKpi.name || 'KPI'}
-                      onClose={() => setSelectedCatalogKpiId(null)}
-                      onOpenFull={() => openKpiDrawer(selectedCatalogKpi.id, 'summary')}
-                      meta={{
-                        pills: [
-                          {
-                            label:
-                              selectedCatalogKpi.status === 'on-target'
-                                ? t('results.status.onTarget', 'On target')
-                                : selectedCatalogKpi.status === 'below'
-                                  ? t('results.status.below', 'Below target')
-                                  : t('results.status.noData', 'No data'),
-                            tone: CATALOG_KPI_STATUS_TONE[selectedCatalogKpi.status] ?? 'neutral',
-                          },
-                          ...(selectedCatalogKpi.needsEntry
-                            ? [
-                                {
-                                  label: t('results.needsEntry.badge', 'Needs entry'),
-                                  tone: 'warning',
-                                } as MetaPill,
-                              ]
-                            : []),
-                          ...(watchedKpiIds.has(selectedCatalogKpi.id)
-                            ? [
-                                {
-                                  label: t('results.filters.watched', 'Watched KPI'),
-                                  tone: 'info',
-                                } as MetaPill,
-                              ]
-                            : []),
-                        ] as MetaPill[],
-                        trailing: (
-                          <span className="text-[11px] font-semibold text-c-text-secondary">
-                            {selectedCatalogKpi.latestMeasurementDate
-                              ? new Date(selectedCatalogKpi.latestMeasurementDate).toLocaleDateString(
-                                  undefined,
-                                  { month: 'short', day: 'numeric', year: 'numeric' }
-                                )
-                              : '—'}
-                          </span>
-                        ),
-                      }}
-                      details={{
-                        text: [
-                          `${t('results.columns.current', 'Current')}: ${
-                            selectedCatalogKpi.latestValue != null
-                              ? `${selectedCatalogKpi.latestValue.toLocaleString()}${selectedCatalogKpi.unit ? ` ${selectedCatalogKpi.unit}` : ''}`
-                              : '—'
-                          }`,
-                          `${t('results.columns.target', 'Target')}: ${
-                            selectedCatalogKpi.targetValue != null
-                              ? `${selectedCatalogKpi.targetValue.toLocaleString()}${selectedCatalogKpi.unit ? ` ${selectedCatalogKpi.unit}` : ''}`
-                              : '—'
-                          }`,
-                          `${t('results.columns.owner', 'Owner')}: ${selectedCatalogKpi.ownerName || '—'}`,
-                          `${t('results.columns.frequency', 'Frequency')}: ${selectedCatalogKpi.measurementFrequency || '—'}`,
-                          '',
-                          selectedCatalogKpi.description?.trim() ||
-                            t('common.noDescription', 'No description'),
-                        ].join('\n'),
-                        onCopy: () => {
-                          void navigator.clipboard?.writeText(
-                            `${selectedCatalogKpi.name} — ${selectedCatalogKpi.status} (${selectedCatalogKpi.latestValue ?? '—'})`
-                          );
-                        },
-                      }}
-                      ai={{
-                        hints: [
-                          t('results.kpi.ai.why', 'Why off target?'),
-                          t('results.kpi.ai.plan', 'Action plan'),
-                        ],
-                        disabled: true,
-                        disabledTooltip: t('common.comingSoon', 'Coming soon'),
-                      }}
-                      relations={
-                        selectedCatalogKpi.initiativeName
-                          ? [
-                              {
-                                label: `${t('results.columns.initiative', 'Initiative')}: ${selectedCatalogKpi.initiativeName}`,
-                              },
-                            ]
-                          : []
-                      }
-                      actions={catalogPreviewActions}
-                    />
-                  </aside>
-                ) : null}
-              </div>
-            );
-          })()
+          // Assessment 'list' / Interview Inbox adopters. Shared render fn
+          // `renderKpiStandardTable` (defined above `return`) is reused
+          // verbatim by the `results_reports`+`tracked` sibling above.
+          renderKpiStandardTable('results.kpi.catalog.list')
         ) : activeTab === 'results_kpi' ? (
           <ResultsGridView
             kpis={filteredKpis}
