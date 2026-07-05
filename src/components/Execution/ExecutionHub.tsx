@@ -30,9 +30,11 @@ import {
   ChevronRight,
   ClipboardList,
   Clock,
+  ExternalLink,
   FileText,
   GripVertical,
   LayoutDashboard,
+  Link2,
   Loader2,
   MessageSquare,
   Pencil,
@@ -42,7 +44,6 @@ import {
   Shield,
   Sparkles,
   Target,
-  Trash2,
   TrendingUp,
   Users,
 } from 'lucide-react';
@@ -61,7 +62,14 @@ import { ReportGeneratorWizard } from '@/components/Reports/Wizard';
 import { Callout } from '@/components/shared/NModeBlocks';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { LoadingState } from '@/components/shared/states';
-import { DueChip, EntityStatusChip } from '@/components/ui/primitives/chips';
+import {
+  standardPreviewShortcuts,
+  StandardPreview,
+  type StandardPreviewActions,
+  type StandardRowMenu,
+  StandardTable,
+} from '@/components/standard';
+import { DueChip, EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import {
@@ -91,11 +99,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useInitiativeRefreshStore } from '../../store/useInitiativeRefreshStore';
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
-import {
-  InitiativePreviewV3Body,
-  InitiativePreviewV3Footer,
-  type InitiativePreviewV3Model,
-} from '../Initiatives/InitiativePreviewV3';
+import { type InitiativePreviewV3Model } from '../Initiatives/InitiativePreviewV3';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
 import {
   FilterableTable,
@@ -114,9 +118,11 @@ import {
   MENU_3_BADGE_INACTIVE,
   MENU_3_CHIP_ACTIVE,
   MENU_3_CHIP_INACTIVE,
+  MENU_3_INNER_CLASS,
   MENU_3_LEFT_CLASS,
+  MENU_3_RIGHT_CLASS,
+  Menu3Chip,
 } from '../shared/ModuleMenu3';
-import type { RowAction } from '../shared/RowActionsMenu';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
 import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
@@ -1980,18 +1986,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const columns: TableColumn[] = useMemo(
     () => [
       {
-        // #12 — leading bulk-select column. Per canon §3.5, BOTH the select-all
-        // (header) and the per-row checkboxes are now rendered by FilterableTable
-        // itself, driven by the `selection` prop below. We only declare the column
-        // slot here; no per-row render needed.
-        id: 'select',
-        label: '',
-        type: 'select',
-        width: '44px',
-      },
-      {
         // #12 — NAME is the first content column (title left). Relabeled to
-        // "Initiative".
+        // "Initiative". The leading select column is auto-prepended by
+        // StandardTable (MUST #7) whenever a `selection` prop is passed — the
+        // module no longer declares its own select column slot here.
         id: 'name',
         label: t('execution.table.initiative', 'Initiative'),
         render: (row) => (
@@ -2558,60 +2556,55 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [handleOpenSidePanel, handleOpenDocument]
   );
 
-  // Canon §9.2 — Fixed Bottom Manifest kebab for initiative rows.
-  // Order: Otwórz podgląd · Edytuj · Archiwizuj · (Delay ▸ only if due date).
-  // Archive has no execution-side endpoint yet → disabled slot ("Wkrótce (backend)"),
-  // never silently omitted.
-  const buildInitiativeRowActions = useCallback(
-    (init: FullInitiative): RowAction[] => {
+  // Triada standard (docs/ui-standards/TRIADA_KANON.md A6): kebab contract for
+  // initiative rows. Module declares blocks 1-3 only; StandardTable auto-adds
+  // block 4 (Open preview · Edit · Archive) and block 5 (Delete, danger,
+  // always last). Archive/Delete have no execution-side endpoint yet → left
+  // undeclared so StandardTable renders them disabled with "Coming soon
+  // (backend)", never silently omitted.
+  const buildInitiativeRowMenu = useCallback(
+    (init: FullInitiative): StandardRowMenu => {
       const hasDue = Boolean(init.plannedEndDate || init.slaDeadline);
-      const actions: RowAction[] = [
-        {
-          id: 'open_preview',
-          label: t('common.openPreview', 'Otwórz podgląd'),
-          icon: ChevronRight,
-          onClick: () => setSummaryPreviewInitiativeId(init.id),
+      const statusActions = isPilotParticipant ? [] : getStatusActions(init.status as InitiativeStatus);
+      return {
+        primary: [
+          {
+            id: 'open_preview',
+            label: t('common.openPreview', 'Otwórz podgląd'),
+            icon: ChevronRight,
+            onClick: () => setSummaryPreviewInitiativeId(init.id),
+          },
+        ],
+        statusTransitions: statusActions.map((action) => ({
+          id: `status-${action.targetStatus}`,
+          label: action.label,
+          icon: CheckCircle2,
+          onClick: () => handleInlineStatusChange(init.id, String(action.targetStatus)),
+        })),
+        timeActions: hasDue
+          ? [
+              {
+                id: 'delay',
+                label: t('common.delay', 'Opóźnij'),
+                icon: Clock,
+                disabled: true,
+                note: t('common.comingSoonBackend', 'Wkrótce (backend)'),
+              },
+            ]
+          : undefined,
+        universalHandlers: {
+          preview: () => setSummaryPreviewInitiativeId(init.id),
+          edit: isPilotParticipant ? undefined : () => handleOpenDocument(init),
+          // Brak API archiwizacji inicjatywy — pozycja disabled z notą
+          // (StandardTable dokłada ją sama, canon A6 blok 4).
         },
-        {
-          id: 'edit',
-          label: t('common.edit', 'Edytuj'),
-          icon: Pencil,
-          disabled: isPilotParticipant,
-          onClick: () => handleOpenDocument(init),
+        destructive: {
+          // Brak endpointu usuwania inicjatywy — disabled z notą (StandardTable
+          // dokłada ją sama, canon A6 blok 5).
         },
-        {
-          id: 'archive',
-          label: t('common.archive', 'Archiwizuj'),
-          icon: Archive,
-          disabled: true,
-          description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
-          onClick: () => undefined,
-        },
-      ];
-      if (hasDue) {
-        actions.push({
-          id: 'delay',
-          label: t('common.delay', 'Opóźnij'),
-          icon: Clock,
-          disabled: true,
-          description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
-          onClick: () => undefined,
-        });
-      }
-      // Canon §9.1/§9.2 — danger Usuń always present (last), never silently
-      // omitted. No delete endpoint exists → disabled "Wkrótce (backend)".
-      actions.push({
-        id: 'delete',
-        label: t('common.delete', 'Usuń'),
-        icon: Trash2,
-        variant: 'danger',
-        disabled: true,
-        description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
-        onClick: () => undefined,
-      });
-      return actions;
+      };
     },
-    [handleOpenDocument, isPilotParticipant, t]
+    [handleInlineStatusChange, handleOpenDocument, isPilotParticipant, t]
   );
 
   const portfolioInitiatives = useMemo(
@@ -4922,6 +4915,106 @@ Please return:
     [selectedInitiative]
   );
 
+  // Triada standard (StandardPreview, canon A7): selected row + actions for the
+  // 'list' tab (Portfolio) preview pane. 1:1 with the Assessment 'list' /
+  // Meeting 'list' / Results KPI catalog adopters.
+  const selectedSummaryInitiative: FullInitiative | null = summaryPreviewInitiativeId
+    ? (summaryInitiatives.find((i) => i.id === summaryPreviewInitiativeId) ?? null)
+    : null;
+
+  const listPreviewActions: StandardPreviewActions | undefined = useMemo(
+    () =>
+      selectedSummaryInitiative
+        ? {
+            informational: [
+              {
+                id: 'open',
+                variant: 'neutral',
+                label: t('common.open', 'Open'),
+                icon: ExternalLink,
+                shortcut: 'O',
+                onClick: () => handleOpenDocument(selectedSummaryInitiative),
+              },
+              {
+                id: 'copy-link',
+                variant: 'neutral',
+                label: t('execution.actions.copyLink', 'Copy link'),
+                icon: Link2,
+                onClick: () => void copyExecutionLink(selectedSummaryInitiative.id),
+              },
+            ],
+          }
+        : undefined,
+    [selectedSummaryInitiative, t, handleOpenDocument, copyExecutionLink]
+  );
+
+  // Esc closes preview; single-key shortcuts (O) active while preview open (kanon B.24/B.31).
+  useEffect(() => {
+    if (activeTab !== 'list' || viewMode !== 'table' || !summaryPreviewInitiativeId) return;
+    const shortcuts = standardPreviewShortcuts(listPreviewActions);
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable)
+        return;
+      if (e.key === 'Escape') {
+        setSummaryPreviewInitiativeId(null);
+        return;
+      }
+      const handler = shortcuts[e.key.toUpperCase()];
+      if (handler) {
+        e.preventDefault();
+        handler();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [activeTab, viewMode, summaryPreviewInitiativeId, listPreviewActions]);
+
+  // Triada standard (canon A3/Menu 3): bulk command row for the 'list' tab
+  // table, 1:1 with Assessment/Results catalog bulk bars. Replaces the
+  // FilterableTable-internal bulk strip that used to live inline in the table
+  // content area.
+  const summaryBulkCommandRowContent =
+    activeTab === 'list' && viewMode === 'table' && summarySelectedIds.size > 0 ? (
+      <div className={MENU_3_INNER_CLASS}>
+        <div className={MENU_3_LEFT_CLASS}>
+          <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
+            {t('execution.table.selectedCount', '{{count}} selected', {
+              count: summarySelectedIds.size,
+            })}
+          </span>
+          <Menu3Chip onClick={toggleSummarySelectAll}>
+            {t('common.selectAll', 'Select all')}
+          </Menu3Chip>
+          <Menu3Chip onClick={clearSummarySelection}>{t('common.clear', 'Clear')}</Menu3Chip>
+          {!isPilotParticipant && bulkStatusTargets.length > 0 && (
+            <>
+              <span className="text-xs text-c-text-muted select-none">·</span>
+              <span className="text-xs text-c-text-muted select-none">
+                {t('execution.bulk.setStatus', 'Zmień status:')}
+              </span>
+              {bulkStatusTargets.map((tg) => (
+                <button
+                  key={tg.targetStatus}
+                  type="button"
+                  onClick={() => void handleBulkStatusChange(tg.targetStatus)}
+                  className="rounded-md border border-c-border-subtle px-2 py-0.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+                >
+                  {tg.label}
+                </button>
+              ))}
+            </>
+          )}
+          {!isPilotParticipant && bulkStatusTargets.length === 0 && (
+            <span className="text-xs text-c-text-muted select-none">
+              {t('execution.bulk.noCommonStatus', 'Brak wspólnej akcji statusu dla zaznaczenia')}
+            </span>
+          )}
+        </div>
+        <div className={MENU_3_RIGHT_CLASS} />
+      </div>
+    ) : null;
+
   // Render content
   const renderContent = () => {
     // Rollout tab manages its own data + loading/error states independently of
@@ -5085,15 +5178,13 @@ Please return:
         );
       }
 
-      type PreviewItem = FullInitiative & { title: string };
-
-      const selectedInit = summaryPreviewInitiativeId
-        ? summaryInitiatives.find((i) => i.id === summaryPreviewInitiativeId) || null
-        : null;
-      const selectedItem: PreviewItem | null = selectedInit
-        ? ({ ...selectedInit, title: selectedInit.name } as PreviewItem)
-        : null;
-      const itemIds = summaryInitiatives.map((i) => i.id);
+      // Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): Execution
+      // 'list' (Portfolio) tab → StandardTable + StandardPreview, 1:1 with the
+      // Assessment 'list' / Meeting 'list' / Results KPI catalog adopters.
+      // Module declares TYLKO data + kebab contract (buildInitiativeRowMenu);
+      // all chrome comes from the Standard* facades.
+      const selectedRow = selectedSummaryInitiative;
+      const previewModel = selectedRow ? mapToPreviewModel(selectedRow) : null;
 
       return (
         <div className="flex h-full flex-col overflow-hidden">
@@ -5111,125 +5202,111 @@ Please return:
               />
             </div>
           )}
-          <div className="min-h-0 flex-1">
-          <TableWithPreviewLayout<PreviewItem>
-            selectedId={summaryPreviewInitiativeId}
-            selectedItem={selectedItem}
-            onSelect={setSummaryPreviewInitiativeId}
-            itemIds={itemIds}
-            getItemById={(id) => {
-              const x = summaryInitiatives.find((i) => i.id === id);
-              return x ? ({ ...x, title: x.name || x.id } as any) : null;
-            }}
-            onOpenFull={(id) => {
-              const init = summaryInitiatives.find((x) => x.id === id);
-              if (init) handleOpenDocument(init);
-            }}
-            renderPreview={(item) => (
-              <InitiativePreviewV3Body
-                initiative={mapToPreviewModel(item)}
-                onSummarize={() =>
-                  openAiChatForInitiative(
-                    item,
-                    t(
-                      'execution.summary.summarizePrompt',
-                      'Summarize this initiative in 5 bullets and propose 3 next steps.'
-                    )
-                  )
-                }
+          {bulkConfirmDialog}
+          <div className="min-h-0 flex-1 flex overflow-hidden">
+            <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+              <StandardTable
+                columns={columns}
+                data={summaryInitiatives as unknown as Array<Record<string, unknown> & { id: string }>}
+                selectedRowId={summaryPreviewInitiativeId}
+                onRowClick={(row) => setSummaryPreviewInitiativeId(String((row as any).id))}
+                onRowDoubleClick={(row) => {
+                  const init = summaryInitiatives.find((x) => x.id === (row as any).id);
+                  if (init) handleOpenDocument(init);
+                }}
+                rowDescription={() => null}
+                persistKey="execution-summary"
+                density="compact"
+                selection={{ selectedIds: summarySelectedIds, onChange: setSummarySelectedIds }}
+                empty={{
+                  icon: LayoutDashboard,
+                  title: t('execution.empty.noInExecution', 'No initiatives in execution'),
+                  description: t(
+                    'execution.empty.noInExecutionDesc',
+                    'Initiatives promoted to execution will appear here.'
+                  ),
+                }}
+                rowMenu={(row) => {
+                  const init = summaryInitiatives.find((x) => x.id === (row as any).id);
+                  return init
+                    ? buildInitiativeRowMenu(init)
+                    : ({ primary: [], universalHandlers: {}, destructive: {} } as StandardRowMenu);
+                }}
+                activeFilters={summaryFilters}
+                onFilterChange={setSummaryFilters}
               />
-            )}
-            renderPreviewFooter={(item) => (
-              <InitiativePreviewV3Footer
-                initiative={mapToPreviewModel(item)}
-                tasksCount={tasksByInitiative[item.id]?.length}
-                onOpenFull={() => handleOpenDocument(item)}
-                onOpenChat={(prompt) => openAiChatForInitiative(item, prompt)}
-                onCopyLink={() => copyExecutionLink(item.id)}
-              />
-            )}
-          >
-            <div className="flex h-full min-h-0 flex-col">
-              {/* #12 — bulk action bar. The select-all checkbox + indeterminate
-                  now live in the FilterableTable header (canon §3.5); this bar
-                  only surfaces the selected-count + bulk actions when a selection
-                  exists. */}
-              {summarySelectedIds.size > 0 && (
-                <div className="flex flex-wrap items-center gap-2 px-4 pt-2">
-                  <span className="text-xs font-medium text-c-text-muted select-none">
-                    {t('execution.table.selectedCount', '{{count}} selected', {
-                      count: summarySelectedIds.size,
-                    })}
-                  </span>
-                  {!isPilotParticipant && bulkStatusTargets.length > 0 && (
-                    <>
-                      <span className="text-xs text-c-text-muted select-none">·</span>
-                      <span className="text-xs text-c-text-muted select-none">
-                        {t('execution.bulk.setStatus', 'Zmień status:')}
-                      </span>
-                      {bulkStatusTargets.map((tg) => (
-                        <button
-                          key={tg.targetStatus}
-                          type="button"
-                          onClick={() => void handleBulkStatusChange(tg.targetStatus)}
-                          className="rounded-md border border-c-border-subtle px-2 py-0.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
-                        >
-                          {tg.label}
-                        </button>
-                      ))}
-                    </>
-                  )}
-                  {!isPilotParticipant && bulkStatusTargets.length === 0 && (
-                    <span className="text-xs text-c-text-muted select-none">
-                      {t(
-                        'execution.bulk.noCommonStatus',
-                        'Brak wspólnej akcji statusu dla zaznaczenia'
-                      )}
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={clearSummarySelection}
-                    className="ml-auto text-xs font-medium text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  >
-                    {t('common.clear', 'Clear')}
-                  </button>
-                </div>
-              )}
-              {bulkConfirmDialog}
-              <div className="min-h-0 flex-1">
-                <FilterableTable
-                  columns={columns}
-                  data={summaryInitiatives as any[]}
-                  selectedRowId={summaryPreviewInitiativeId}
-                  persistKey="execution-summary"
-                  selection={{
-                    selectedIds: summarySelectedIds,
-                    onToggleRow: toggleSummaryRow,
-                    onToggleAll: toggleSummarySelectAll,
-                    isAllSelected: summaryAllSelected,
-                    isIndeterminate: summarySelectedIds.size > 0 && !summaryAllSelected,
-                    selectRowLabel: t('execution.table.selectRow', 'Select row'),
-                    selectAllLabel: t('execution.table.selectAll', 'Select all'),
-                  }}
-                  onRowClick={(row) => setSummaryPreviewInitiativeId(String(row.id))}
-                  onRowDoubleClick={(row) => {
-                    const init = summaryInitiatives.find((x) => x.id === row.id);
-                    if (init) handleOpenDocument(init);
-                  }}
-                  getRowActions={(row) => {
-                    const init = summaryInitiatives.find((x) => x.id === row.id);
-                    return init ? buildInitiativeRowActions(init) : [];
-                  }}
-                  activeFilters={summaryFilters}
-                  onFilterChange={setSummaryFilters}
-                  emptyMessage={t('execution.empty.noInExecution')}
-                  canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
-                  density="compact"
-                />
-              </div>
             </div>
-          </TableWithPreviewLayout>
+
+            {selectedRow && previewModel ? (
+              <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+                <StandardPreview
+                  title={selectedRow.name || t('execution.initiativeLabel', 'Initiative')}
+                  onClose={() => setSummaryPreviewInitiativeId(null)}
+                  onOpenFull={() => handleOpenDocument(selectedRow)}
+                  meta={{
+                    pills: [
+                      {
+                        label: STATUS_METADATA[selectedRow.status as InitiativeStatus]?.label || String(selectedRow.status),
+                        tone: statusChipTone(String(selectedRow.status)),
+                      },
+                      {
+                        label: `${previewModel.progress ?? 0}%`,
+                        tone: 'neutral',
+                      },
+                    ],
+                    trailing: (
+                      <span className="text-[11px] font-semibold text-c-text-secondary">
+                        {selectedRow.plannedEndDate
+                          ? new Date(selectedRow.plannedEndDate).toLocaleDateString()
+                          : '—'}
+                      </span>
+                    ),
+                  }}
+                  details={{
+                    text: [
+                      `${t('execution.table.assignee', 'Owner')}: ${
+                        previewModel.ownerBusiness
+                          ? `${previewModel.ownerBusiness.firstName ?? ''} ${previewModel.ownerBusiness.lastName ?? ''}`.trim()
+                          : t('execution.table.unassigned', 'Unassigned')
+                      }`,
+                      `${t('execution.table.progress', 'Progress')}: ${previewModel.progress ?? 0}%`,
+                      `${t('execution.table.deadline', 'Due')}: ${
+                        selectedRow.plannedEndDate
+                          ? new Date(selectedRow.plannedEndDate).toLocaleDateString()
+                          : '—'
+                      }`,
+                      `${t('execution.table.tasks', 'Tasks')}: ${
+                        tasksByInitiative[selectedRow.id]?.length ?? 0
+                      }`,
+                      '',
+                      previewModel.summary?.trim() ||
+                        previewModel.description?.trim() ||
+                        t('common.noDescription', 'No description'),
+                    ].join('\n'),
+                    onCopy: () => {
+                      void navigator.clipboard?.writeText(
+                        `${selectedRow.name} — ${selectedRow.status} (${previewModel.progress ?? 0}%)`
+                      );
+                    },
+                  }}
+                  ai={{
+                    hints: [
+                      t(
+                        'execution.summary.summarizePrompt',
+                        'Summarize this initiative in 5 bullets and propose 3 next steps.'
+                      ),
+                    ],
+                    onRunHint: (hint) => openAiChatForInitiative(selectedRow, hint),
+                  }}
+                  relations={
+                    previewModel.sourceType
+                      ? [{ label: `${t('common.source', 'Source')}: ${previewModel.sourceType}` }]
+                      : []
+                  }
+                  actions={listPreviewActions}
+                />
+              </aside>
+            ) : null}
           </div>
         </div>
       );
@@ -5339,7 +5416,7 @@ Please return:
             ? managerCommandRowContent
             : activeTab === ('rollout' as ModuleTab)
               ? rolloutCommandRowContent
-              : commandRowContent
+              : (summaryBulkCommandRowContent ?? commandRowContent)
         }
         commandRowRightContent={
           activeTab === ('people_change' as ModuleTab) ? managerCommandRowRightContent : undefined
