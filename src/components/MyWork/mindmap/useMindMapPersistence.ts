@@ -35,6 +35,7 @@ import { Api } from '@/services/api';
 import type { IdeaMapSyncState } from '../canvas/useIdeaMapSync';
 import { mergeWorkspaceExtensions } from '../canvas/workspaceGraphRuntime';
 import type { CanvasToolType } from '../ideaSelectionTypes';
+import { isEmptyWipe } from './mindmapCanonHelpers';
 import { normalizeMindMapNodes } from './mindMapNodeModel';
 
 type PersistenceStatus = 'online' | 'no_route' | 'missing_table' | 'offline';
@@ -214,6 +215,12 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
   const skipNextAutoSaveRef = useRef(false);
   const lastScheduledPayloadKeyRef = useRef('');
   const localVersionRef = useRef(1);
+  // Anti-wipe guard: last node count we accepted as a legitimate graph state.
+  // A mind map always has at least the (non-deletable) root node, so a 0-node
+  // payload while we previously knew a non-empty graph is ALWAYS a bug (bad
+  // hydration, remount race, crashed transform) — never a real user action.
+  // We refuse to persist it. See lesson 26a2a896ef.
+  const lastKnownNodeCountRef = useRef(0);
   const runtimeVersion = externalRuntime?.version ?? null;
   const runtimeLoading = externalRuntime?.loading ?? false;
   const runtimeSaving = externalRuntime?.saving ?? false;
@@ -364,6 +371,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       isHydratingRef.current = true;
       skipNextAutoSaveRef.current = true;
       lastScheduledPayloadKeyRef.current = '';
+      if (depthPatchedNodes.length > 0) lastKnownNodeCountRef.current = depthPatchedNodes.length;
       setNodes(depthPatchedNodes);
       setEdges(nextEdges);
       clearUndoHistory();
@@ -438,6 +446,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       isHydratingRef.current = true;
       skipNextAutoSaveRef.current = true;
       lastScheduledPayloadKeyRef.current = '';
+      if (depthPatchedNodes.length > 0) lastKnownNodeCountRef.current = depthPatchedNodes.length;
       setNodes(depthPatchedNodes);
       setEdges(nextEdges);
       clearUndoHistory();
@@ -484,6 +493,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       isHydratingRef.current = true;
       skipNextAutoSaveRef.current = true;
       lastScheduledPayloadKeyRef.current = '';
+      if (def.nodes.length > 0) lastKnownNodeCountRef.current = def.nodes.length;
       setNodes(def.nodes);
       setEdges(def.edges);
       setTimeout(() => {
@@ -620,6 +630,22 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
         skipNextAutoSaveRef.current = false;
         return;
       }
+      // Anti-wipe guard (root-cause independent): refuse to persist an empty
+      // graph when we previously held a non-empty one. Root is non-deletable,
+      // so a real map is never legitimately 0 nodes — an empty payload here is
+      // always a defect (hydration crash / remount race / bad transform) and
+      // persisting it would silently destroy the user's map. Skip the sync and
+      // warn; the next legitimate change re-syncs the real graph.
+      const nextCount = Array.isArray(nextNodes) ? nextNodes.length : 0;
+      if (isEmptyWipe(nextCount, lastKnownNodeCountRef.current)) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[mindmap] anti-wipe guard: refusing to sync 0 nodes (last known ${lastKnownNodeCountRef.current}). ` +
+            'Likely a hydration/remount defect — map preserved on server.'
+        );
+        return;
+      }
+      if (nextCount > 0) lastKnownNodeCountRef.current = nextCount;
       const {
         collapsedNodeIds: latestCollapsedNodeIds,
         extensions: latestExtensions,
