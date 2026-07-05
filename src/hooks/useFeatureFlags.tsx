@@ -174,6 +174,17 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     allowLocalOverride: true,
   },
   {
+    id: 'mindmapMultiToolbar',
+    name: 'Mind Map: Multi-select Toolbar (M06 Fala 3.2)',
+    description:
+      'Shows the floating styling toolbar (branch color, shape, priority) when more than one ' +
+      'node is selected on the mind map canvas, applying the chosen style to every selected ' +
+      'node. OFF = today’s behavior where the toolbar only appears for a single selected node.',
+    defaultValue: false,
+    category: 'beta',
+    allowLocalOverride: true,
+  },
+  {
     id: 'ENABLE_TERESA_MINDMAP',
     name: 'Teresa: Mind Map Bridge',
     description:
