@@ -21,8 +21,10 @@ import { SmartLayoutBlock } from './blocks/SmartLayoutBlock';
 import { TableBlock } from './blocks/TableBlock';
 import { TimelineBlock } from './blocks/TimelineBlock';
 import { sanitizeDeckBlock, sanitizeDeckDisplayText } from './deckTextSanitizer';
+import type { BlockDensity } from './blocks/blockDensity';
 import {
   assignBlocksToRegions,
+  blockDensityFor,
   selectLayout,
   verticalFillMode,
   type VerticalFillMode,
@@ -44,7 +46,10 @@ interface CardRendererProps {
   }) => void;
 }
 
-const BLOCK_COMPONENTS: Record<string, React.FC<{ block: CardBlock; theme: CuratedColorSet }>> = {
+const BLOCK_COMPONENTS: Record<
+  string,
+  React.FC<{ block: CardBlock; theme: CuratedColorSet; density?: BlockDensity }>
+> = {
   heading: HeadingBlock,
   paragraph: ParagraphBlock,
   bullet_list: BulletListBlock,
@@ -149,11 +154,23 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
     }
   };
 
-  const renderBlockItem = (rawBlock: CardBlock, blockIndex: number) => {
+  const renderBlockItem = (
+    rawBlock: CardBlock,
+    blockIndex: number,
+    regionSiblings?: CardBlock[]
+  ) => {
     const Component = BLOCK_COMPONENTS[rawBlock.type];
     if (!Component) return null;
     // Display-time safeguard: decks stored before the server-side polish
     // (polishDeckText) may carry raw `##`/`[Fact: …]`/`Data gap:` tokens.
+    // GROW-CONTENT — dominant blocks in their region render at 'hero' density.
+    // Compute on the RAW block so self-exclusion (`b !== block`) matches by
+    // reference against `regionSiblings` (which holds the raw blocks); sanitize
+    // only rewrites text, never the `type`/`content` shape density reads.
+    const density = blockDensityFor(rawBlock, regionSiblings ?? card.blocks, {
+      intent: card.intent,
+      variant: card.composition?.layoutVariantId,
+    });
     const block = sanitizeDeckBlock(rawBlock);
     return (
       <AnimatedBlock
@@ -167,7 +184,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
           onClick={() => onBlockClick?.(block.block_id)}
           className="relative group cursor-pointer"
         >
-          <Component block={block} theme={theme} />
+          <Component block={block} theme={theme} density={density} />
           {block.source_ref && (
             <BlockSourceBadge
               sourceRef={block.source_ref}
@@ -227,7 +244,9 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
                   style={{ gridArea: region.gridArea, justifyContent: justifyFor(regionFill) }}
                   className="flex flex-col gap-2 overflow-hidden"
                 >
-                  {blocksInRegion.map((block, idx) => renderBlockItem(block as CardBlock, idx))}
+                  {blocksInRegion.map((block, idx) =>
+                    renderBlockItem(block as CardBlock, idx, blocksInRegion as CardBlock[])
+                  )}
                 </div>
               );
             })}
