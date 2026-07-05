@@ -117,6 +117,7 @@ import { normalizeMindmapNodeQuickAction } from './mindmap/mindmapInteractionGra
 import {
   appendAIHistoryEntry,
   applyNodeStyle,
+  applyStyleToNodes,
   collectDescendantIds,
   copyNodeStyle,
 } from './mindmap/mindMapNodeModel';
@@ -1226,13 +1227,15 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
             : undefined
         }
         className={`group px-3 py-2 ${shapeClass} border-2 ${!accentColor && tagColor ? tagColor.borderClass : colors.border} ${!accentColor && tagColor ? tagColor.bgClass : colors.bg} ${depthOpacity} ${
-          data._dropTarget
-            ? 'ring-3 ring-slate-400 ring-offset-2 border-slate-500 shadow-lg shadow-slate-500/30'
-            : data._justMoved
-              ? 'ring-2 ring-emerald-400 animate-pulse'
-              : selected
-                ? `ring-2 ${colors.ring}`
-                : ''
+          data._searchHit
+            ? 'ring-offset-2 shadow-hig-focus animate-pulse'
+            : data._dropTarget
+              ? 'ring-3 ring-slate-400 ring-offset-2 border-slate-500 shadow-lg shadow-slate-500/30'
+              : data._justMoved
+                ? 'ring-2 ring-emerald-400 animate-pulse'
+                : selected
+                  ? `ring-2 ${colors.ring}`
+                  : ''
         } ${isRemoteLocked ? 'opacity-50 grayscale cursor-not-allowed' : 'cursor-pointer'} min-w-[120px] max-w-[210px] relative transition-colors duration-150`}
       >
         <Handle type="target" position={Position.Left} id="target-left" className={handleTarget} />
@@ -2087,6 +2090,11 @@ function MindMapInner({
   const [remoteLockedNodeIds, setRemoteLockedNodeIds] = useState<Set<string>>(new Set());
   const drillFocusId = drillPath.length > 0 ? drillPath[drillPath.length - 1].nodeId : null;
 
+  // M06 Fala 3.2: active search-result highlight (IdeaUnifiedSearch → this
+  // node id). Purely a rendering flag (mirrors _dropTarget/_justMoved) — no
+  // structural change, cleared after a short pulse so it doesn't linger.
+  const [searchHitNodeId, setSearchHitNodeId] = useState<string | null>(null);
+
   // Apply collapse visibility + drill-down filtering
   const visibleNodes = useMemo(() => {
     const childrenOf = new Map<string, string[]>();
@@ -2225,6 +2233,10 @@ function MindMapInner({
       // _justMoved pattern.
       const remoteLocked = remoteLockedNodeIds.has(n.id);
       if (remoteLocked !== !!n.data?._remoteLocked) extra._remoteLocked = remoteLocked;
+      // M06 Fala 3.2: flag the active search-result node for a transient
+      // highlight ring — same pattern as _remoteLocked above.
+      const isSearchHit = searchHitNodeId != null && n.id === searchHitNodeId;
+      if (isSearchHit !== !!n.data?._searchHit) extra._searchHit = isSearchHit;
       if (n.type === 'branch') {
         const count = structuralChildCount.get(n.id) || 0;
         if (count !== n.data?.count || simplifiedMode || Object.keys(extra).length > 0) {
@@ -2236,7 +2248,7 @@ function MindMapInner({
       }
       return n;
     });
-  }, [edges, focusFilteredNodes, remoteLockedNodeIds, simplifiedMode]);
+  }, [edges, focusFilteredNodes, remoteLockedNodeIds, simplifiedMode, searchHitNodeId]);
 
   const visibleIdeaNodeCount = useMemo(
     () => enrichedNodes.filter((n) => n.type === 'idea' && !n.hidden).length,
@@ -3016,6 +3028,35 @@ function MindMapInner({
     window.addEventListener('idea-mindmap-open-drawer', handler);
     return () => window.removeEventListener('idea-mindmap-open-drawer', handler);
   }, []);
+
+  // M06 Fala 3.2: IdeaUnifiedSearch (⌘F) dispatches this on Enter/Shift+Enter
+  // navigation and on result click. Jump the viewport to the matched node and
+  // pulse-highlight it — the search overlay itself already tracks "X/Y" state,
+  // this is purely the canvas-side reaction that was previously missing.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      if (detail.ideaId && detail.ideaId !== ideaId) return;
+      const nodeId = String(detail.nodeId || '').trim();
+      if (!nodeId) return;
+      setSearchHitNodeId(nodeId);
+      try {
+        fitView({ nodes: [{ id: nodeId } as any], padding: 0.6, duration: 350 });
+      } catch {
+        /* fitView throws if the canvas is mid-teardown — safe to ignore */
+      }
+    };
+    window.addEventListener('idea-workspace-highlight-node', handler);
+    return () => window.removeEventListener('idea-workspace-highlight-node', handler);
+  }, [fitView, ideaId]);
+
+  // Clear the pulse after a short delay so it doesn't linger once the user
+  // moves on (matches the _justMoved ring's transient nature elsewhere).
+  useEffect(() => {
+    if (!searchHitNodeId) return;
+    const t = setTimeout(() => setSearchHitNodeId(null), 1600);
+    return () => clearTimeout(t);
+  }, [searchHitNodeId]);
 
   // ── Handle edge label edits ──────────────────────────────────────────────
   useEffect(() => {
@@ -4936,30 +4977,76 @@ function MindMapInner({
       ? 'fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950'
       : `relative w-full h-full bg-slate-50 dark:bg-navy-950 isolate z-0 ${className || ''}`;
 
+  // M06 Fala 3.2: behind `mindmapMultiToolbar`, a >1 selection shows a shared
+  // styling toolbar anchored above the topmost selected node. OFF keeps the
+  // exact pre-existing behavior (null unless exactly one node is selected).
+  const multiToolbarEnabled = isFeatureEnabled('mindmapMultiToolbar');
+
   const floatingToolbarInfo = useMemo(() => {
     if (locked) return null;
-    if (selectedNodeIds.length !== 1) return null;
     if (contextMenu) return null;
-    const nodeId = selectedNodeIds[0];
-    const node = (nodes as Node[]).find((n) => n.id === nodeId);
-    if (!node || !node.position) return null;
+    if (selectedNodeIds.length === 1) {
+      const nodeId = selectedNodeIds[0];
+      const node = (nodes as Node[]).find((n) => n.id === nodeId);
+      if (!node || !node.position) return null;
+      const vp = getViewport();
+      const screenX = node.position.x * vp.zoom + vp.x;
+      const screenY = node.position.y * vp.zoom + vp.y;
+      return {
+        nodeId,
+        node,
+        position: { x: screenX + ((node.width || 160) * vp.zoom) / 2, y: screenY },
+        mode: 'single' as const,
+        nodeIds: selectedNodeIds,
+      };
+    }
+    if (!multiToolbarEnabled) return null;
+    if (selectedNodeIds.length <= 1) return null;
+    const selectedSet = new Set(selectedNodeIds);
+    const selected = (nodes as Node[]).filter((n) => selectedSet.has(n.id) && n.position);
+    if (selected.length === 0) return null;
     const vp = getViewport();
-    const screenX = node.position.x * vp.zoom + vp.x;
-    const screenY = node.position.y * vp.zoom + vp.y;
+    // Anchor above the topmost (lowest y) selected node, horizontally
+    // centered over the selection bbox — mirrors the single-node anchor math.
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    for (const n of selected) {
+      const w = n.width || 160;
+      minX = Math.min(minX, n.position.x);
+      maxX = Math.max(maxX, n.position.x + w);
+      minY = Math.min(minY, n.position.y);
+    }
+    const screenX = minX * vp.zoom + vp.x;
+    const screenWidth = (maxX - minX) * vp.zoom;
+    const screenY = minY * vp.zoom + vp.y;
+    // Use the first selected node as the representative node for style
+    // read-back (shows its current color/shape/etc. as the toolbar's value).
+    const repNode = selected[0];
     return {
-      nodeId,
-      node,
-      position: { x: screenX + ((node.width || 160) * vp.zoom) / 2, y: screenY },
+      nodeId: repNode.id,
+      node: repNode,
+      position: { x: screenX + screenWidth / 2, y: screenY },
+      mode: 'multi' as const,
+      nodeIds: selected.map((n) => n.id),
     };
-  }, [locked, selectedNodeIds, nodes, contextMenu, getViewport]);
+  }, [locked, selectedNodeIds, nodes, contextMenu, getViewport, multiToolbarEnabled]);
 
   const handleFloatingToolbarUpdate = useCallback(
     (patch: Record<string, any>) => {
       debugLog(`floatingToolbarUpdate: ${JSON.stringify(patch).slice(0, 100)}`);
       if (!floatingToolbarInfo) return;
+      if (floatingToolbarInfo.mode === 'multi' && floatingToolbarInfo.nodeIds.length > 1) {
+        const targetIds = floatingToolbarInfo.nodeIds;
+        setNodes((prev: Node[]) => applyStyleToNodes(prev, targetIds, patch));
+        for (const nodeId of targetIds) {
+          broadcastNodeUpdate({ id: nodeId, data: patch } as any);
+        }
+        return;
+      }
       updateNodeDataById(floatingToolbarInfo.nodeId, (data: any) => ({ ...data, ...patch }));
     },
-    [debugLog, floatingToolbarInfo, updateNodeDataById]
+    [debugLog, floatingToolbarInfo, updateNodeDataById, setNodes, broadcastNodeUpdate]
   );
 
   return (
@@ -4975,6 +5062,8 @@ function MindMapInner({
             floatingToolbarInfo.nodeId.startsWith('branch-')
           }
           hasChildren={findChildrenIds(floatingToolbarInfo.nodeId).length > 0}
+          mode={floatingToolbarInfo.mode}
+          selectionCount={floatingToolbarInfo.nodeIds.length}
           style={{
             color: floatingToolbarInfo.node.data?.color,
             fillOpacity: floatingToolbarInfo.node.data?.fillOpacity,

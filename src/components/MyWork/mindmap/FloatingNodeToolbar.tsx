@@ -63,6 +63,17 @@ export interface FloatingNodeToolbarProps {
   disabled?: boolean;
   isProtected?: boolean;
   hasChildren?: boolean;
+  /**
+   * M06 Fala 3.2: 'multi' renders only the shared styling controls (type,
+   * branch theme, auto-layout, color, font size, bold, lock) that apply
+   * uniformly to every selected node — hides single-node-only affordances
+   * (add child/sibling, rename, collapse, artifacts, quick task/notes/tags/
+   * link, convert branch, AI, chat, context menu). Defaults to 'single' so
+   * every existing call site is unaffected.
+   */
+  mode?: 'single' | 'multi';
+  /** Count of selected nodes when mode === 'multi' (for the toolbar label). */
+  selectionCount?: number;
   style?: {
     color?: string;
     fillOpacity?: number;
@@ -93,6 +104,8 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
   disabled = false,
   isProtected = false,
   hasChildren = false,
+  mode = 'single',
+  selectionCount,
   style = {},
   position,
   onUpdate,
@@ -108,6 +121,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
+  const isMulti = mode === 'multi';
   const [openDropdown, setOpenDropdown] = useState<DropdownId>(null);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -149,61 +163,74 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
       }}
     >
       <div className="flex items-center gap-0.5 rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border shadow-hig-xl px-1 py-0.5">
-        {/* 0a. Add child — primary growth affordance */}
-        <button
-          onClick={onAddChild}
-          disabled={disabled}
-          title={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
-          aria-label={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
-          className={`flex h-9 items-center gap-1 px-1.5 rounded-hig-lg transition-all duration-150 text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
-        >
-          <Plus size={14} strokeWidth={2.5} />
-          <span className="text-[10px] font-semibold">{isPl ? 'Gałąź' : 'Child'}</span>
-        </button>
-
-        {/* 0b. Add sibling — secondary growth affordance */}
-        {!isProtected && (
-          <button
-            onClick={onAddSibling}
-            disabled={disabled}
-            title={isPl ? 'Dodaj sąsiada (Shift+Enter)' : 'Add sibling (Shift+Enter)'}
-            aria-label={isPl ? 'Dodaj sąsiada (Shift+Enter)' : 'Add sibling (Shift+Enter)'}
-            className={`flex h-9 items-center gap-1 px-1.5 rounded-hig-lg transition-all duration-150 text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
-          >
-            <GitBranch size={13} />
-            <span className="text-[10px] font-medium">{isPl ? 'Sąsiad' : 'Sibling'}</span>
-          </button>
+        {/* Multi-select label — replaces the single-node growth affordances */}
+        {isMulti && (
+          <div className="flex h-9 items-center px-2 text-[10px] font-semibold text-c-text-secondary dark:text-c-text-muted whitespace-nowrap">
+            {isPl
+              ? `${selectionCount ?? ''} zaznaczonych`.trim()
+              : `${selectionCount ?? ''} selected`.trim()}
+          </div>
         )}
 
-        {/* 0c. Rename */}
-        <button
-          onClick={() => onAction('ctx_edit')}
-          disabled={disabled || isProtected}
-          title={isPl ? 'Zmień nazwę (F2)' : 'Rename (F2)'}
-          aria-label={isPl ? 'Zmień nazwę (F2)' : 'Rename (F2)'}
-          className={btnClass(false)}
-        >
-          <Edit3 size={13} />
-        </button>
+        {!isMulti && (
+          <>
+            {/* 0a. Add child — primary growth affordance */}
+            <button
+              onClick={onAddChild}
+              disabled={disabled}
+              title={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
+              aria-label={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
+              className={`flex h-9 items-center gap-1 px-1.5 rounded-hig-lg transition-all duration-150 text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
+            >
+              <Plus size={14} strokeWidth={2.5} />
+              <span className="text-[10px] font-semibold">{isPl ? 'Gałąź' : 'Child'}</span>
+            </button>
 
-        {/* 0d. Collapse/Expand */}
-        {hasChildren && (
-          <button
-            onClick={() => onAction('mm_toggle_collapse')}
-            title={
-              isPl
-                ? nodeData?._collapsed
-                  ? 'Rozwiń (Space)'
-                  : 'Zwiń (Space)'
-                : nodeData?._collapsed
-                  ? 'Expand (Space)'
-                  : 'Collapse (Space)'
-            }
-            aria-label={isPl ? 'Zwiń/Rozwiń' : 'Collapse/Expand'}
-            className={btnClass(false)}
-          >
-            {nodeData?._collapsed ? <UnfoldVertical size={13} /> : <FoldVertical size={13} />}
-          </button>
+            {/* 0b. Add sibling — secondary growth affordance */}
+            {!isProtected && (
+              <button
+                onClick={onAddSibling}
+                disabled={disabled}
+                title={isPl ? 'Dodaj sąsiada (Shift+Enter)' : 'Add sibling (Shift+Enter)'}
+                aria-label={isPl ? 'Dodaj sąsiada (Shift+Enter)' : 'Add sibling (Shift+Enter)'}
+                className={`flex h-9 items-center gap-1 px-1.5 rounded-hig-lg transition-all duration-150 text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
+              >
+                <GitBranch size={13} />
+                <span className="text-[10px] font-medium">{isPl ? 'Sąsiad' : 'Sibling'}</span>
+              </button>
+            )}
+
+            {/* 0c. Rename */}
+            <button
+              onClick={() => onAction('ctx_edit')}
+              disabled={disabled || isProtected}
+              title={isPl ? 'Zmień nazwę (F2)' : 'Rename (F2)'}
+              aria-label={isPl ? 'Zmień nazwę (F2)' : 'Rename (F2)'}
+              className={btnClass(false)}
+            >
+              <Edit3 size={13} />
+            </button>
+
+            {/* 0d. Collapse/Expand */}
+            {hasChildren && (
+              <button
+                onClick={() => onAction('mm_toggle_collapse')}
+                title={
+                  isPl
+                    ? nodeData?._collapsed
+                      ? 'Rozwiń (Space)'
+                      : 'Zwiń (Space)'
+                    : nodeData?._collapsed
+                      ? 'Expand (Space)'
+                      : 'Collapse (Space)'
+                }
+                aria-label={isPl ? 'Zwiń/Rozwiń' : 'Collapse/Expand'}
+                className={btnClass(false)}
+              >
+                {nodeData?._collapsed ? <UnfoldVertical size={13} /> : <FoldVertical size={13} />}
+              </button>
+            )}
+          </>
         )}
 
         <div className="w-px h-4 bg-c-surface-raised dark:bg-c-surface-raised mx-0.5" />
@@ -349,6 +376,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         <div className="w-px h-4 bg-c-surface-raised dark:bg-c-surface-raised mx-0.5" />
 
         {/* 7. Link / Artifact */}
+        {!isMulti && (
         <div className="relative">
           <button
             onClick={() => toggle('artifacts')}
@@ -381,8 +409,10 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             </div>
           )}
         </div>
+        )}
 
         {/* 8. Quick Task */}
+        {!isMulti && (
         <div className="relative">
           <button
             onClick={() => toggle('task')}
@@ -404,9 +434,10 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             </div>
           )}
         </div>
+        )}
 
         {/* 8b. Convert branch */}
-        {hasChildren && !isProtected && (
+        {!isMulti && hasChildren && !isProtected && (
           <div className="relative">
             <button
               onClick={() => toggle('convertBranch')}
@@ -482,6 +513,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         </button>
 
         {/* 9a. Quick Notes */}
+        {!isMulti && (
         <div className="relative">
           <button
             onClick={() => toggle('quickNotes')}
@@ -503,8 +535,10 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             </div>
           )}
         </div>
+        )}
 
         {/* 9b. Quick Tags */}
+        {!isMulti && (
         <div className="relative">
           <button
             onClick={() => toggle('quickTags')}
@@ -526,8 +560,10 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             </div>
           )}
         </div>
+        )}
 
         {/* 9c. Quick Link */}
+        {!isMulti && (
         <div className="relative">
           <button
             onClick={() => toggle('quickLink')}
@@ -549,10 +585,12 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             </div>
           )}
         </div>
+        )}
 
         <div className="w-px h-4 bg-c-surface-raised dark:bg-c-surface-raised mx-0.5" />
 
         {/* 10. AI */}
+        {!isMulti && (
         <div className="relative">
           <button
             onClick={() => toggle('ai')}
@@ -574,8 +612,10 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             </div>
           )}
         </div>
+        )}
 
-        {/* 10. More (opens context menu) */}
+        {/* 10. More (opens context menu) — single-node only, context menu acts on one node */}
+        {!isMulti && (
         <button
           onClick={(e) => onOpenContextMenu({ x: e.clientX, y: e.clientY })}
           title={isPl ? 'Więcej opcji' : 'More options'}
@@ -584,6 +624,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         >
           <MoreVertical size={13} />
         </button>
+        )}
       </div>
     </div>
   );
