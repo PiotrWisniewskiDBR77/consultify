@@ -40,7 +40,7 @@ export const PreviewBatchPanel: React.FC<PreviewBatchPanelProps> = ({
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center gap-2 mb-4">
-        <CheckSquare2 size={16} className="text-primary-500" />
+        <CheckSquare2 size={16} className="text-c-info" />
         <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
           {totalCount ? <span className="text-slate-600 font-normal"> / {totalCount}</span> : null}

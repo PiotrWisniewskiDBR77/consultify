@@ -112,10 +112,10 @@ export const PreviewMetaCard: React.FC<PreviewMetaCardProps> = ({
                           : pill.tone === 'danger'
                             ? 'bg-danger-500/10 text-danger-600 dark:text-danger-300'
                             : pill.tone === 'info'
-                              ? 'bg-primary-500/10 text-primary-600 dark:text-primary-300'
+                              ? 'bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)] text-c-info'
                               : 'bg-slate-500/10 text-slate-600 dark:text-slate-300'),
                     isClickable
-                      ? 'cursor-pointer hover:ring-1 hover:ring-primary-400/30 transition-shadow'
+                      ? 'cursor-pointer hover:ring-1 hover:ring-c-info/30 transition-shadow'
                       : '',
                     pill.editable ? 'group/pill' : '',
                   ]
@@ -161,18 +161,18 @@ export const PreviewMetaCard: React.FC<PreviewMetaCardProps> = ({
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.15, delay: 0.1 }}
-          className="mt-2 flex items-center gap-2 rounded-lg bg-primary-50/60 dark:bg-primary-500/[0.08] border border-primary-200/40 dark:border-primary-500/20 px-2.5 py-1.5"
+          className="mt-2 flex items-center gap-2 rounded-lg bg-[color-mix(in_srgb,var(--c-info)_8%,transparent)] border border-c-info/25 px-2.5 py-1.5"
         >
-          <Sparkles size={12} className="text-primary-500 dark:text-primary-400 shrink-0" />
-          <span className="flex-1 text-[11px] text-primary-700 dark:text-primary-300 truncate">
+          <Sparkles size={12} className="text-c-info shrink-0" />
+          <span className="flex-1 text-[11px] text-c-info truncate">
             {suggestion.label}
           </span>
-          <span className="text-[10px] text-primary-400 dark:text-primary-500 tabular-nums shrink-0">
+          <span className="text-[10px] text-c-info/70 tabular-nums shrink-0">
             {Math.round(suggestion.confidence * 100)}%
           </span>
           <button
             onClick={suggestion.action}
-            className="shrink-0 text-[10px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 transition-colors"
+            className="shrink-0 text-[10px] font-semibold text-c-info hover:opacity-80 transition-colors"
           >
             Apply
           </button>
