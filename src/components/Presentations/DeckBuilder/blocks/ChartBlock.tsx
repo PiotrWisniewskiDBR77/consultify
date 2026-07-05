@@ -32,6 +32,7 @@ import {
 } from 'recharts';
 
 import type { CardBlock, CuratedColorSet } from '../../wizard/types';
+import type { BlockDensity } from './blockDensity';
 import {
   adaptChartBlockContent,
   type CartesianSpec,
@@ -47,9 +48,17 @@ import {
 interface Props {
   block: CardBlock;
   theme: CuratedColorSet;
+  /** GROW-CONTENT: 'hero' when the chart owns a tall region → render it large. */
+  density?: BlockDensity;
 }
 
-const CHART_H = 150;
+/**
+ * GROW-CONTENT: the chart was a fixed 150px tall regardless of how much canvas
+ * it was given, so a chart owning a full lower region floated small in
+ * whitespace. `density: 'hero'` lets it grow to fill the region.
+ */
+const CHART_H_DEFAULT = 150;
+const CHART_H_HERO = 320;
 
 const RAG_COLORS: Record<'green' | 'amber' | 'red', string> = {
   green: '#16A34A',
@@ -64,36 +73,38 @@ const ChartTitle: React.FC<{ title?: string; theme: CuratedColorSet }> = ({ titl
     </p>
   ) : null;
 
-export const ChartBlock: React.FC<Props> = ({ block, theme }) => {
+export const ChartBlock: React.FC<Props> = ({ block, theme, density = 'default' }) => {
   const spec = adaptChartBlockContent(block.content);
   // FAIL-OPEN: no usable data → render nothing (no placeholder balast).
   if (!spec) return null;
 
+  const chartH = density === 'hero' ? CHART_H_HERO : CHART_H_DEFAULT;
+
   return (
-    <div className="space-y-1 w-full">
+    <div className="space-y-1 w-full h-full flex flex-col">
       <ChartTitle title={spec.title} theme={theme} />
-      {renderSpec(spec, theme)}
+      {renderSpec(spec, theme, chartH)}
     </div>
   );
 };
 
-function renderSpec(spec: DeckChartSpec, theme: CuratedColorSet): React.ReactNode {
+function renderSpec(spec: DeckChartSpec, theme: CuratedColorSet, chartH: number): React.ReactNode {
   switch (spec.type) {
     case 'bar':
     case 'line':
     case 'area':
-      return <CartesianChart spec={spec} theme={theme} />;
+      return <CartesianChart spec={spec} theme={theme} chartH={chartH} />;
     case 'pie':
     case 'donut':
-      return <PieChartView spec={spec} theme={theme} />;
+      return <PieChartView spec={spec} theme={theme} chartH={chartH} />;
     case 'waterfall':
-      return <WaterfallChart spec={spec} theme={theme} />;
+      return <WaterfallChart spec={spec} theme={theme} chartH={chartH} />;
     case 'matrix_2x2':
-      return <MatrixChart spec={spec} theme={theme} />;
+      return <MatrixChart spec={spec} theme={theme} chartH={chartH} />;
     case 'rag':
       return <RagChart spec={spec} theme={theme} />;
     case 'marimekko':
-      return <MarimekkoChart spec={spec} theme={theme} />;
+      return <MarimekkoChart spec={spec} theme={theme} chartH={chartH} />;
     case 'harvey_balls':
       return <HarveyChart spec={spec} theme={theme} />;
     default:
@@ -111,9 +122,10 @@ const TOOLTIP_STYLE: React.CSSProperties = {
 };
 
 // ── Cartesian (bar / line / area) ────────────────────────────────────────────
-const CartesianChart: React.FC<{ spec: CartesianSpec; theme: CuratedColorSet }> = ({
+const CartesianChart: React.FC<{ spec: CartesianSpec; theme: CuratedColorSet; chartH: number }> = ({
   spec,
   theme,
+  chartH,
 }) => {
   const palette = theme.chartPalette;
   const rows = spec.categories.map((name, i) => {
@@ -125,7 +137,7 @@ const CartesianChart: React.FC<{ spec: CartesianSpec; theme: CuratedColorSet }> 
   });
 
   return (
-    <ResponsiveContainer width="100%" height={CHART_H}>
+    <ResponsiveContainer width="100%" height={chartH}>
       {spec.type === 'line' ? (
         <LineChart data={rows} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -185,10 +197,14 @@ const CartesianChart: React.FC<{ spec: CartesianSpec; theme: CuratedColorSet }> 
 };
 
 // ── Pie / donut ──────────────────────────────────────────────────────────────
-const PieChartView: React.FC<{ spec: PieSpec; theme: CuratedColorSet }> = ({ spec, theme }) => {
+const PieChartView: React.FC<{ spec: PieSpec; theme: CuratedColorSet; chartH: number }> = ({
+  spec,
+  theme,
+  chartH,
+}) => {
   const palette = theme.chartPalette;
   return (
-    <ResponsiveContainer width="100%" height={CHART_H}>
+    <ResponsiveContainer width="100%" height={chartH}>
       <PieChart>
         <Pie
           data={spec.slices}
@@ -196,8 +212,8 @@ const PieChartView: React.FC<{ spec: PieSpec; theme: CuratedColorSet }> = ({ spe
           nameKey="name"
           cx="50%"
           cy="50%"
-          outerRadius={CHART_H * 0.38}
-          innerRadius={spec.type === 'donut' ? CHART_H * 0.22 : 0}
+          outerRadius={chartH * 0.38}
+          innerRadius={spec.type === 'donut' ? chartH * 0.22 : 0}
           paddingAngle={2}
           labelLine={false}
           label={({ name, percent }) => `${name} ${Math.round((percent ?? 0) * 100)}%`}
@@ -213,9 +229,10 @@ const PieChartView: React.FC<{ spec: PieSpec; theme: CuratedColorSet }> = ({ spe
 };
 
 // ── Waterfall (bridge) — recharts stacked-bar approximation ───────────────────
-const WaterfallChart: React.FC<{ spec: WaterfallSpec; theme: CuratedColorSet }> = ({
+const WaterfallChart: React.FC<{ spec: WaterfallSpec; theme: CuratedColorSet; chartH: number }> = ({
   spec,
   theme,
+  chartH,
 }) => {
   const palette = theme.chartPalette;
   // Float trick: transparent base up to `start`, coloured delta of height (end-start).
@@ -229,7 +246,7 @@ const WaterfallChart: React.FC<{ spec: WaterfallSpec; theme: CuratedColorSet }> 
     kind === 'total' ? palette[0] : kind === 'increase' ? RAG_COLORS.green : RAG_COLORS.red;
 
   return (
-    <ResponsiveContainer width="100%" height={CHART_H}>
+    <ResponsiveContainer width="100%" height={chartH}>
       <BarChart data={rows} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
         <XAxis dataKey="name" tick={AXIS_TICK} />
@@ -247,9 +264,10 @@ const WaterfallChart: React.FC<{ spec: WaterfallSpec; theme: CuratedColorSet }> 
 };
 
 // ── Matrix 2×2 — recharts-free scatter over quadrant grid ─────────────────────
-const MatrixChart: React.FC<{ spec: Matrix2x2Spec; theme: CuratedColorSet }> = ({
+const MatrixChart: React.FC<{ spec: Matrix2x2Spec; theme: CuratedColorSet; chartH: number }> = ({
   spec,
   theme,
+  chartH,
 }) => {
   const xs = spec.points.map((p) => p.x);
   const ys = spec.points.map((p) => p.y);
@@ -263,7 +281,7 @@ const MatrixChart: React.FC<{ spec: Matrix2x2Spec; theme: CuratedColorSet }> = (
   return (
     <div
       className="relative w-full rounded border"
-      style={{ height: CHART_H, borderColor: '#e2e8f0' }}
+      style={{ height: chartH, borderColor: '#e2e8f0' }}
     >
       {/* Axis crosshair at midpoints */}
       <div
@@ -326,15 +344,16 @@ const RagChart: React.FC<{ spec: RagSpec; theme: CuratedColorSet }> = ({ spec, t
 );
 
 // ── Marimekko — normalized rects (0..1) mapped to a flex-height container ──────
-const MarimekkoChart: React.FC<{ spec: MarimekkoSpec; theme: CuratedColorSet }> = ({
+const MarimekkoChart: React.FC<{ spec: MarimekkoSpec; theme: CuratedColorSet; chartH: number }> = ({
   spec,
   theme,
+  chartH,
 }) => {
   const palette = theme.chartPalette;
   const segColor = (name: string) =>
     palette[Math.max(0, spec.segmentNames.indexOf(name)) % palette.length];
   return (
-    <div className="w-full" style={{ height: CHART_H }}>
+    <div className="w-full" style={{ height: chartH }}>
       <div className="relative w-full h-[85%]">
         {spec.rects.map((r, i) => (
           <div
