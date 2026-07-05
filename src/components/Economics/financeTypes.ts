@@ -267,7 +267,7 @@ export const KIND_ICONS: Record<FinanceKind, React.ReactNode> = {
   }),
   prediction: React.createElement(TrendingUp, {
     size: 14,
-    className: 'text-primary-500 dark:text-primary-400',
+    className: 'text-violet-500 dark:text-violet-400',
   }),
   valuation: React.createElement(Target, {
     size: 14,
@@ -280,7 +280,7 @@ export const KIND_ACCENT: Record<FinanceKind, string> = {
   models: 'border-l-blue-500 dark:border-l-blue-400',
   analysis: 'border-l-emerald-500 dark:border-l-emerald-400',
   investment: 'border-l-fuchsia-500 dark:border-l-fuchsia-400',
-  prediction: 'border-l-primary-500 dark:border-l-primary-400',
+  prediction: 'border-l-violet-500 dark:border-l-violet-400',
   valuation: 'border-l-amber-500 dark:border-l-amber-400',
 };
 
