@@ -933,8 +933,8 @@ const MindMapInteractionModeContext = React.createContext<MindMapInteractionMode
 const MindMapIdeaIdContext = React.createContext<string>('');
 
 const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, selected }) => {
-  const { i18n } = useTranslation();
-  const isPl = i18n.language?.startsWith('pl');
+  const { t, i18n } = useTranslation();
+  const isPolish = i18n.language?.startsWith('pl');
   const interactionMode = useContext(MindMapInteractionModeContext);
   const ideaId = useContext(MindMapIdeaIdContext);
   const { getNodes, getEdges } = useReactFlow();
@@ -1225,9 +1225,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         style={nodeSurfaceStyle}
         title={
           isRemoteLocked
-            ? isPl
-              ? 'Ten węzeł jest edytowany przez inną osobę'
-              : 'This node is being edited by another collaborator'
+            ? t('mindmap.thisNodeIsBeingEditedBy')
             : undefined
         }
         className={`group px-3 py-2 ${shapeClass} border-2 ${!accentColor && tagColor ? tagColor.borderClass : colors.border} ${!accentColor && tagColor ? tagColor.bgClass : colors.bg} ${depthOpacity} ${
@@ -1261,8 +1259,8 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
           <>
             <button
               type="button"
-              aria-label={isPl ? 'Otwórz właściwości węzła' : 'Open node properties'}
-              title={isPl ? 'Otwórz właściwości węzła' : 'Open node properties'}
+              aria-label={t('mindmap.openNodeProperties')}
+              title={t('mindmap.openNodeProperties')}
               onClick={(e) => {
                 e.stopPropagation();
                 window.dispatchEvent(
@@ -1281,7 +1279,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
           <div className="nodrag absolute -right-3 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-1">
             <button
               type="button"
-              title={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
+              title={t('mindmap.addChildTab')}
               className="w-6 h-6 flex items-center justify-center rounded-full bg-slate-600 text-white hover:bg-slate-700 active:scale-[0.98] transition-all"
               onClick={(e) => {
                 e.stopPropagation();
@@ -1300,7 +1298,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
           <div className="nodrag absolute -bottom-3 left-1/2 -translate-x-1/2 z-20">
             <button
               type="button"
-              title={isPl ? 'Dodaj sąsiada (Shift+Enter)' : 'Add sibling (Shift+Enter)'}
+              title={t('mindmap.addSiblingShiftEnter')}
               className="w-5 h-5 flex items-center justify-center rounded-full bg-slate-500 text-white hover:bg-slate-600 active:scale-[0.98] transition-all opacity-70 hover:opacity-100"
               onClick={(e) => {
                 e.stopPropagation();
@@ -1359,9 +1357,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         {nodeStatus === 'converted' && data._convertedTo && (
           <div
             className="absolute -bottom-1 -left-1 flex items-center gap-0.5 rounded-full bg-navy-900 text-white px-1.5 py-0.5 text-[7px] font-bold shadow-sm dark:bg-white dark:text-navy-950"
-            title={
-              isPl ? `Skonwertowano na: ${data._convertedTo}` : `Converted to: ${data._convertedTo}`
-            }
+            title={t('mindmap.convertedToTarget', { target: data._convertedTo })}
           >
             <ExternalLink size={8} />
             <span className="uppercase">{String(data._convertedTo).replace('_', ' ')}</span>
@@ -1393,7 +1389,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                 onKeyDown={handleKeyDown}
                 rows={2}
                 className="w-full text-[11px] font-semibold text-slate-800 dark:text-slate-200 bg-transparent border-none outline-none resize-none p-0 leading-tight nodrag"
-                placeholder={isPl ? 'Wpisz…' : 'Type…'}
+                placeholder={t('mindmap.type')}
               />
               {loadingSuggestions && suggestions.length === 0 && editValue.trim() === '' && (
                 <div className="flex flex-wrap gap-1 mt-1 nodrag">
@@ -1441,7 +1437,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   <div
                     className={`text-[11px] font-semibold ${data.label ? colors.text : 'text-slate-600 dark:text-slate-500 italic'} line-clamp-2 leading-tight`}
                   >
-                    {data.label || (isPl ? 'Kliknij, aby wpisać…' : 'Click to type…')}
+                    {data.label || (t('mindmap.clickToType'))}
                   </div>
                   {data.nodeType && (
                     <div className="text-[9px] text-slate-600 dark:text-slate-500 mt-0.5 uppercase tracking-wide">
@@ -1495,7 +1491,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   }}
                   className="nodrag mt-0.5 flex items-center gap-0.5 text-slate-600 hover:bg-slate-100/80 dark:hover:bg-slate-700/50 rounded px-0.5 transition-colors"
                   title={
-                    data._collapsed ? (isPl ? 'Rozwiń' : 'Expand') : isPl ? 'Zwiń' : 'Collapse'
+                    data._collapsed ? (t('mindmap.expand')) : t('mindmap.collapse')
                   }
                 >
                   {data._collapsed ? <ChevronRight size={11} /> : <ChevronDown size={11} />}
@@ -1539,7 +1535,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                 {Array.isArray(data.evidenceLinks) && data.evidenceLinks.length > 0 && (
                   <span
                     className="inline-flex items-center gap-0.5 shrink-0"
-                    title={`${data.evidenceLinks.length} ${isPl ? 'dowodów' : 'evidence'}`}
+                    title={`${data.evidenceLinks.length} ${t('mindmap.evidence')}`}
                   >
                     <Link2 size={8} className="text-blue-400 dark:text-blue-500" />
                     <span className="text-[7px] font-bold text-blue-400 dark:text-blue-500">
@@ -1663,7 +1659,7 @@ function MindMapInner({
   onInteractionModeChange,
   externalRuntime,
 }: IdeaRecommendationMapProps) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const currentUser = useAppStore((state) => state.currentUser);
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
   const isDarkMindmap = useIsDark();
@@ -2187,7 +2183,7 @@ function MindMapInner({
     );
 
     toast(
-      isPolish ? 'Zaznaczenie przeniesione — gałąź zwinięta' : 'Selection moved — branch collapsed',
+      t('mindmap.selectionMovedBranchCollapsed'),
       { id: 'mm-op-cue', duration: 2000 }
     );
   }, [edges, isPolish, setNodes, visibleNodes]);
@@ -2675,12 +2671,10 @@ function MindMapInner({
     broadcastGraphPatch,
     confirmSubtreeDelete: (childCount: number) =>
       confirmSubtreeDelete({
-        title: isPolish ? 'Usunąć węzły?' : 'Delete nodes?',
-        description: isPolish
-          ? `Usunięcie obejmie ${childCount} podwęzł${childCount === 1 ? '' : 'ów'}. Tej operacji nie można cofnąć po synchronizacji.`
-          : `This will also delete ${childCount} child node${childCount === 1 ? '' : 's'}. This cannot be undone after sync.`,
-        confirmLabel: isPolish ? 'Usuń' : 'Delete',
-        cancelLabel: isPolish ? 'Anuluj' : 'Cancel',
+        title: t('mindmap.deleteNodes'),
+        description: t('mindmap.deleteSubtreeWarning', { count: childCount }),
+        confirmLabel: t('mindmap.delete'),
+        cancelLabel: t('mindmap.cancel'),
         variant: 'danger',
       }),
   });
@@ -2780,7 +2774,7 @@ function MindMapInner({
       const wasCollapsed = collapsedNodeIds.has(nodeId);
       toggleCollapseNode(nodeId, setCollapsedNodeIds);
       toast(
-        wasCollapsed ? (isPolish ? 'Rozwinięto' : 'Expanded') : isPolish ? 'Zwinięto' : 'Collapsed',
+        wasCollapsed ? (t('mindmap.expanded')) : t('mindmap.collapsed'),
         { id: 'mm-op-cue', duration: 1200 }
       );
     },
@@ -2865,9 +2859,9 @@ function MindMapInner({
         const ok = reparentNode(node.id, validTarget.id);
         if (ok) {
           toast.success(
-            isPolish
-              ? `Przeniesiono pod „${validTarget.data?.label || validTarget.id}"`
-              : `Moved under "${validTarget.data?.label || validTarget.id}"`
+            t('mindmap.movedUnderTarget', {
+              label: validTarget.data?.label || validTarget.id,
+            })
           );
         }
       }
@@ -2891,14 +2885,12 @@ function MindMapInner({
       .filter(Boolean)
       .join(' ')
       .trim();
-    return fullName || currentUser?.email || (isPolish ? 'Ty' : 'You');
+    return fullName || currentUser?.email || (t('mindmap.you'));
   }, [currentUser?.email, currentUser?.firstName, currentUser?.lastName, isPolish]);
 
   const notifyLockedNode = useCallback(() => {
     toast.error(
-      isPolish
-        ? 'Ten węzeł jest aktualnie zablokowany przez inną osobę'
-        : 'This node is currently locked by another collaborator'
+      t('mindmap.thisNodeIsCurrentlyLockedBy')
     );
   }, [isPolish]);
 
@@ -3016,7 +3008,7 @@ function MindMapInner({
       broadcastNodeUpdate({ id: nodeId, data: { label } } as any);
 
       if (label !== originalLabel) {
-        toast.success(isPolish ? 'Zmieniono nazwę' : 'Renamed', {
+        toast.success(t('mindmap.renamed'), {
           id: 'mm-op-cue',
           duration: 1500,
         });
@@ -3201,7 +3193,7 @@ function MindMapInner({
         setNodes((prev: Node[]) => [...prev, newNode]);
         setEdges((prev: Edge[]) => [...prev, newEdge]);
       }
-      toast.success(isPolish ? 'Wstawiono do mapy' : 'Inserted into map', { duration: 1000 });
+      toast.success(t('mindmap.insertedIntoMap'), { duration: 1000 });
     };
     window.addEventListener(IDEA_WORKSPACE_INSERT_EVENT, handler);
     return () => window.removeEventListener(IDEA_WORKSPACE_INSERT_EVENT, handler);
@@ -3360,7 +3352,7 @@ function MindMapInner({
           detail: `Alt+${e.key} → level ${level}`,
         });
         setFoldLevel(level);
-        toast.success(isPolish ? `Widok: poziom ${level}` : `Showing level ${level}`, {
+        toast.success(t('mindmap.quickActions.viewLevel', { level }), {
           duration: 1200,
         });
         return;
@@ -3373,7 +3365,7 @@ function MindMapInner({
           detail: 'Alt+9 → expand all',
         });
         setFoldLevel(Infinity);
-        toast.success(isPolish ? 'Wszystko rozwinięte' : 'All expanded', { duration: 1200 });
+        toast.success(t('mindmap.allExpanded'), { duration: 1200 });
         return;
       }
 
@@ -3684,7 +3676,7 @@ function MindMapInner({
       if (currentState === 'reversed' && isUser) {
         pushUndo();
         setEdges((prev: Edge[]) => (prev || []).filter((e: Edge) => e.id !== edge.id));
-        toast.success(isPolish ? 'Połączenie usunięte' : 'Connection removed', { duration: 1200 });
+        toast.success(t('mindmap.connectionRemoved'), { duration: 1200 });
         return;
       }
 
@@ -3753,7 +3745,7 @@ function MindMapInner({
       if (action === 'edge_add_label') {
         const current = targetEdge.data?.label || '';
         const label = window.prompt(
-          isPolish ? 'Etykieta połączenia:' : 'Connection label:',
+          t('mindmap.connectionLabel'),
           current
         );
         if (label !== null) {
@@ -3822,7 +3814,7 @@ function MindMapInner({
               : e
           )
         );
-        toast.success(isPolish ? 'Kierunek odwrócony' : 'Direction reversed', { duration: 800 });
+        toast.success(t('mindmap.directionReversed'), { duration: 800 });
       }
 
       if (action === 'edge_change_style') {
@@ -3848,9 +3840,7 @@ function MindMapInner({
         const current = targetEdge.data?.relation || '';
         const relations = ['related', 'depends_on', 'blocks', 'supports', 'contradicts'];
         const label = window.prompt(
-          isPolish
-            ? `Typ relacji (${relations.join(', ')}):`
-            : `Relation type (${relations.join(', ')}):`,
+          t('mindmap.relationTypePrompt', { relations: relations.join(', ') }),
           current
         );
         if (label !== null) {
@@ -3865,7 +3855,7 @@ function MindMapInner({
       if (action === 'edge_delete' && relationEdge) {
         pushUndo();
         setEdges((prev: Edge[]) => prev.filter((e) => e.id !== targetEdge.id));
-        toast.success(isPolish ? 'Połączenie usunięte' : 'Connection removed', { duration: 800 });
+        toast.success(t('mindmap.connectionRemoved'), { duration: 800 });
       }
 
       setEdgeContextMenu(null);
@@ -4011,7 +4001,7 @@ function MindMapInner({
     async (overrideSelectedIdx?: Record<number, boolean>) => {
       if (!aiProposal) return;
       if (locked) {
-        toast((isPolish ? 'Najpierw zaakceptuj wyzwanie.' : 'Accept the challenge first.') as any);
+        toast((t('mindmap.acceptTheChallengeFirst')) as any);
         return;
       }
       const effectiveIdx = overrideSelectedIdx ?? selectedAddIdx;
@@ -4019,7 +4009,7 @@ function MindMapInner({
       const toAddEdges = aiProposal.add?.edges || [];
 
       if (toAddNodes.length === 0) {
-        toast((isPolish ? 'Brak wybranych zmian' : 'No selected changes') as any);
+        toast((t('mindmap.noSelectedChanges')) as any);
         return;
       }
 
@@ -4048,7 +4038,7 @@ function MindMapInner({
                 ...(existing.data || {}),
                 aiExpansionHistory: appendAIHistoryEntry(existing.data?.aiExpansionHistory as any, {
                   timestamp: new Date().toISOString(),
-                  prompt: isPolish ? 'AI expand branch' : 'AI expand branch',
+                  prompt: t('mindmap.aiExpandBranch'),
                   resultSummary: labels.join(', '),
                 }),
               },
@@ -4094,25 +4084,21 @@ function MindMapInner({
         }
 
         toast.success(
-          isPolish
-            ? `Zastosowano propozycje AI (${toAddNodes.length} dodano)`
-            : `Applied AI proposals (${toAddNodes.length} added)`,
+          t('mindmap.appliedAiProposalsCount', { count: toAddNodes.length }),
           { duration: 1200 }
         );
         closeAIModal();
       } catch (err: any) {
         if (err?.status === 409) {
           toast(
-            isPolish
-              ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
-              : 'Change conflict detected. Refreshing map from server.',
+            t('mindmap.changeConflictDetectedRefreshingMapFrom'),
             { icon: '⚠️' }
           );
           closeAIModal();
         } else {
           toast.error(
             err?.message ||
-              (isPolish ? 'Nie udało się zastosować propozycji' : 'Failed to apply proposals')
+              (t('mindmap.failedToApplyProposals'))
           );
         }
       } finally {
@@ -4141,11 +4127,11 @@ function MindMapInner({
   const handleAIExpand = useCallback(
     async (targetNodeId?: string) => {
       if (locked) {
-        toast((isPolish ? 'Najpierw zaakceptuj wyzwanie.' : 'Accept the challenge first.') as any);
+        toast((t('mindmap.acceptTheChallengeFirst')) as any);
         return;
       }
       if (persistence !== 'online') {
-        toast((isPolish ? 'AI wymaga działającego backendu.' : 'AI requires backend.') as any);
+        toast((t('mindmap.aiRequiresBackend')) as any);
         return;
       }
       setSaving(true);
@@ -4190,7 +4176,7 @@ function MindMapInner({
           return [];
         })();
         if (!proposedNodes.length) {
-          toast((isPolish ? 'Brak nowych propozycji' : 'No new suggestions') as any);
+          toast((t('mindmap.noNewSuggestions')) as any);
           return;
         }
 
@@ -4209,7 +4195,7 @@ function MindMapInner({
         setApplySuggestedOrder(false);
         setShowAIModal(true);
       } catch (err: any) {
-        toast.error(err?.message || (isPolish ? 'AI nie zadziałało' : 'AI failed'));
+        toast.error(err?.message || (t('mindmap.aiFailed')));
       } finally {
         setSaving(false);
       }
@@ -4476,7 +4462,7 @@ function MindMapInner({
       const targetId = nodeId || getContextTargetNode()?.id;
       if (!targetId) return;
       setEdges((prev: Edge[]) => prev.filter((e) => e.target !== targetId));
-      toast.success(isPolish ? 'Gałąź odłączona' : 'Branch detached', { duration: 800 });
+      toast.success(t('mindmap.branchDetached'), { duration: 800 });
     },
     [getContextTargetNode, isPolish, setEdges]
   );
@@ -4533,9 +4519,7 @@ function MindMapInner({
       setNodes((prev: Node[]) => [...prev, ...newNodes]);
       setEdges((prev: Edge[]) => [...prev, ...newEdges]);
       toast.success(
-        isPolish
-          ? `Zduplikowano gałąź (${newNodes.length} węzłów)`
-          : `Duplicated branch (${newNodes.length} nodes)`,
+        t('mindmap.duplicatedBranchCount', { count: newNodes.length }),
         { duration: 1000 }
       );
     },
@@ -4553,9 +4537,10 @@ function MindMapInner({
         .map((id) => (nodes as Node[]).find((n) => n.id === id)?.data?.label)
         .filter(Boolean);
 
-      const prompt = isPolish
-        ? `Podsumuj gałąź "${target?.data?.label || targetId}":\n${branchLabels.map((l) => `- ${l}`).join('\n')}`
-        : `Summarize the branch "${target?.data?.label || targetId}":\n${branchLabels.map((l) => `- ${l}`).join('\n')}`;
+      const prompt = t('mindmap.summarizeBranchPrompt', {
+        label: target?.data?.label || targetId,
+        branchList: branchLabels.map((l) => `- ${l}`).join('\n'),
+      });
 
       window.dispatchEvent(
         new CustomEvent('idea-workspace-chat-prompt', { detail: { prompt, ideaId } })
@@ -4584,7 +4569,7 @@ function MindMapInner({
           detail: { action, nodeIds: branchNodeIds, ideaId },
         })
       );
-      toast.success(isPolish ? `Konwersja gałęzi do ${target}` : `Converting branch to ${target}`, {
+      toast.success(t('mindmap.convertingBranchTo', { target }), {
         duration: 1000,
       });
     },
@@ -4654,9 +4639,7 @@ function MindMapInner({
         const links = Array.isArray(ctxNode.data?.artifactLinks) ? ctxNode.data.artifactLinks : [];
         if (links.length === 0) {
           toast(
-            isPolish
-              ? 'Ten wezel nie ma jeszcze artefaktow'
-              : 'This node has no linked artifacts yet'
+            t('mindmap.thisNodeHasNoLinkedArtifacts')
           );
         } else if (links.length === 1) {
           const link = links[0];
@@ -4687,9 +4670,7 @@ function MindMapInner({
         const peer = peerId ? nodes.find((n) => n.id === peerId) : undefined;
         if (!peer) {
           toast(
-            isPolish
-              ? 'Zaznacz drugi wezel, aby utworzyc polaczenie'
-              : 'Select another node to create a connection'
+            t('mindmap.selectAnotherNodeToCreateA')
           );
         } else {
           setEdges((prev: Edge[]) => [
@@ -4730,7 +4711,7 @@ function MindMapInner({
       }
       if (action === 'ctx_copy_style' && ctxNode) {
         setStyleClipboard(copyNodeStyle(ctxNode));
-        toast.success(isPolish ? 'Styl skopiowany' : 'Style copied', { duration: 800 });
+        toast.success(t('mindmap.styleCopied'), { duration: 800 });
       }
       if (action === 'ctx_paste_style' && ctxNode && styleClipboard) {
         setNodes((prev: Node[]) =>
@@ -4743,10 +4724,10 @@ function MindMapInner({
           navigator.clipboard
             .writeText(url)
             .then(() => {
-              toast.success(isPolish ? 'Link skopiowany!' : 'Link copied!', { duration: 1200 });
+              toast.success(t('mindmap.linkCopied'), { duration: 1200 });
             })
             .catch(() => {
-              window.prompt(isPolish ? 'Skopiuj link:' : 'Copy link:', url);
+              window.prompt(t('mindmap.copyLink'), url);
             });
         }
       }
@@ -4827,7 +4808,7 @@ function MindMapInner({
           type: 'idea',
           position: pos,
           data: {
-            label: isPolish ? 'Nowy temat' : 'New topic',
+            label: t('mindmap.newTopic'),
             branchKey: 'uncategorized',
             sourceType: 'manual',
             priority: 50,
@@ -4868,21 +4849,21 @@ function MindMapInner({
 
       if (action === 'pane_collapse_all') {
         setFoldLevel(0);
-        toast.success(isPolish ? 'Widok: poziom 0' : 'Showing level 0', { duration: 1200 });
+        toast.success(t('mindmap.showingLevel0'), { duration: 1200 });
       }
 
       if (action === 'pane_expand_all') {
         setFoldLevel(Infinity);
-        toast.success(isPolish ? 'Wszystko rozwinięte' : 'All expanded', { duration: 1200 });
+        toast.success(t('mindmap.allExpanded'), { duration: 1200 });
       }
 
       if (action === 'pane_fold_1') {
         setFoldLevel(1);
-        toast.success(isPolish ? 'Widok: poziom 1' : 'Showing level 1', { duration: 1200 });
+        toast.success(t('mindmap.showingLevel1'), { duration: 1200 });
       }
       if (action === 'pane_fold_2') {
         setFoldLevel(2);
-        toast.success(isPolish ? 'Widok: poziom 2' : 'Showing level 2', { duration: 1200 });
+        toast.success(t('mindmap.showingLevel2'), { duration: 1200 });
       }
 
       if (action === 'pane_auto_layout') {
@@ -4966,20 +4947,20 @@ function MindMapInner({
 
   const savedLabel = useMemo(() => {
     if (persistence === 'no_route')
-      return isPolish ? 'Backend wymaga restartu' : 'Backend restart required';
+      return t('mindmap.backendRestartRequired');
     if (persistence === 'missing_table')
-      return isPolish ? 'Brakuje tabeli mapy' : 'Map table missing';
+      return t('mindmap.mapTableMissing');
     if (persistence === 'offline')
-      return isPolish ? 'Offline - brak zapisu' : 'Offline - not saving';
-    if (saving) return isPolish ? 'Zapisuję...' : 'Saving...';
-    if (!lastSavedAt) return isPolish ? 'Nie zapisano' : 'Not saved yet';
+      return t('mindmap.offlineNotSaving');
+    if (saving) return t('mindmap.saving2');
+    if (!lastSavedAt) return t('mindmap.notSavedYet');
     const sec = Math.max(1, Math.round((Date.now() - lastSavedAt) / 1000));
-    return isPolish ? `Zapisano ${sec}s temu` : `Saved ${sec}s ago`;
+    return t('mindmap.savedSecondsAgo', { count: sec });
   }, [isPolish, lastSavedAt, persistence, saving]);
   const interactionModeLabel = useMemo(() => {
-    if (interactionMode === 'pan') return isPolish ? 'Tryb: przesuwanie' : 'Mode: pan';
-    if (interactionMode === 'connect') return isPolish ? 'Tryb: łączenie' : 'Mode: connect';
-    return isPolish ? 'Tryb: zaznaczanie' : 'Mode: select';
+    if (interactionMode === 'pan') return t('mindmap.modePan');
+    if (interactionMode === 'connect') return t('mindmap.modeConnect');
+    return t('mindmap.modeSelect');
   }, [interactionMode, isPolish]);
 
   const containerClassName =
@@ -5193,7 +5174,7 @@ function MindMapInner({
                     ),
                   }));
                 }
-                toast.success(isPolish ? 'Artefakt odłączony' : 'Artifact detached', {
+                toast.success(t('mindmap.artifactDetached'), {
                   duration: 900,
                 });
               } catch (err: any) {
@@ -5206,7 +5187,7 @@ function MindMapInner({
                 }
                 toast.error(
                   err?.message ||
-                    (isPolish ? 'Nie udało się odłączyć artefaktu' : 'Failed to detach artifact')
+                    (t('mindmap.failedToDetachArtifact'))
                 );
               }
             })();
@@ -5340,13 +5321,13 @@ function MindMapInner({
             <button
               onClick={onClose}
               className="p-0.5 rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors shrink-0"
-              title={isPolish ? 'Zamknij mapę' : 'Close map'}
+              title={t('mindmap.closeMap')}
             >
               <X size={12} />
             </button>
           )}
           <h3 className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 leading-snug truncate flex-1 min-w-0">
-            {ideaTitle || (isPolish ? 'Bez tytułu' : 'Untitled')}
+            {ideaTitle || (t('mindmap.untitled'))}
           </h3>
           <span className="hidden sm:inline-flex rounded-full border border-slate-200/80 dark:border-navy-700 px-2 py-0.5 text-[9px] text-slate-500 dark:text-slate-400 shrink-0">
             {interactionModeLabel}
@@ -5374,9 +5355,7 @@ function MindMapInner({
       {/* Large map warning */}
       {nodes.length >= 500 && (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[60] px-4 py-2 rounded-xl bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-xs font-medium shadow-lg">
-          {isPolish
-            ? 'Mapa osiągnęła limit 500 węzłów. Dodawanie zablokowane.'
-            : 'Map reached 500 node limit. Adding blocked.'}
+          {t('mindmap.mapReached500NodeLimitAdding')}
         </div>
       )}
 
@@ -5431,9 +5410,7 @@ function MindMapInner({
                 interactionMode === 'connect' ? 'cursor-crosshair' : 'cursor-default'
               }`}
               aria-label={
-                isPolish
-                  ? 'Mapa rekomendacji pomysłu — nawigacja strzałkami, Enter/Tab dodawanie węzłów'
-                  : 'Idea recommendation map — arrow navigation, Enter/Tab add nodes'
+                t('mindmap.ideaRecommendationMapArrowNavigationEnte')
               }
               defaultEdgeOptions={reactFlowDefaultEdgeOptions}
               onDragOver={(event: React.DragEvent) => {
@@ -5558,12 +5535,10 @@ function MindMapInner({
                           <Lightbulb size={28} className="text-white" />
                         </div>
                         <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-2">
-                          {isPolish ? 'Opisz swoje wyzwanie' : 'Describe your challenge'}
+                          {t('mindmap.describeYourChallenge')}
                         </h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-                          {isPolish
-                            ? 'Wypełnij tytuł i opis w panelu Tools po prawej, a następnie zaakceptuj wyzwanie.'
-                            : 'Fill in the title and description in the Tools panel on the right, then accept.'}
+                          {t('mindmap.fillInTheTitleAndDescription')}
                         </p>
                         <div className="space-y-2 text-left mb-6">
                           {[
@@ -5595,7 +5570,7 @@ function MindMapInner({
                           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-amber-500 text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all"
                         >
                           <Sparkles size={16} />
-                          {isPolish ? 'Otwórz panel i zacznij' : 'Open panel & start'}
+                          {t('mindmap.openPanelStart')}
                         </button>
                       </div>
                     </Panel>
@@ -5604,9 +5579,7 @@ function MindMapInner({
                       <div className="mb-14 px-5 py-3 rounded-2xl bg-white/90 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200/40 dark:border-white/[0.06] shadow-xl text-sm text-slate-500 dark:text-slate-400 flex items-center gap-4 pointer-events-auto">
                         <Lightbulb size={16} className="text-amber-500 shrink-0" />
                         <span className="text-slate-600 dark:text-slate-300">
-                          {isPolish
-                            ? 'Wybierz gałąź i naciśnij Tab, aby dodać pierwszy węzeł'
-                            : 'Select a branch and press Tab to add the first node'}
+                          {t('mindmap.selectABranchAndPressTab')}
                         </span>
                         <div className="w-px h-5 bg-slate-200 dark:bg-white/10" />
                       </div>
@@ -5930,7 +5903,7 @@ function MindMapInner({
             setEdges(restoredEdges);
             scheduleSave(restoredNodes as any, restoredEdges as any);
             setShowSnapshots(false);
-            toast.success(isPolish ? 'Przywrócono wersję' : 'Version restored');
+            toast.success(t('mindmap.versionRestored'));
           }}
           onPreview={(previewNodes, previewEdges) => {
             setNodes(previewNodes);
@@ -6377,7 +6350,7 @@ function MindMapInner({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-600">
-              {isPolish ? 'Format eksportu' : 'Export format'}
+              {t('mindmap.exportFormat')}
             </div>
             {[
               { key: 'png', label: 'PNG', fn: () => exportAsPNG(`${ideaTitle || 'mindmap'}.png`) },
@@ -6389,7 +6362,7 @@ function MindMapInner({
               },
               {
                 key: 'md',
-                label: isPolish ? 'Markdown (konspekt)' : 'Markdown outline',
+                label: t('mindmap.markdownOutline'),
                 fn: () => {
                   exportAsMarkdown(
                     nodes,
@@ -6398,7 +6371,7 @@ function MindMapInner({
                     `${ideaTitle || 'mindmap'}.md`
                   );
                   toast.success(
-                    isPolish ? 'Markdown skopiowany do schowka' : 'Markdown copied to clipboard'
+                    t('mindmap.markdownCopiedToClipboard')
                   );
                 },
               },
@@ -6432,7 +6405,7 @@ function MindMapInner({
           onAssign={(name) => {
             if (assignModalNodeId) {
               updateNodeDataById(assignModalNodeId, (data: any) => ({ ...data, assignee: name }));
-              toast.success(isPolish ? `Przypisano: ${name}` : `Assigned: ${name}`, {
+              toast.success(t('mindmap.assignedName', { name }), {
                 duration: 1000,
               });
             }
@@ -6464,7 +6437,7 @@ function MindMapInner({
                       ],
                     }));
                   }
-                  toast.success(isPolish ? 'Artefakt dołączony' : 'Artifact attached', {
+                  toast.success(t('mindmap.artifactAttached'), {
                     duration: 900,
                   });
                 } catch (err: any) {
@@ -6480,7 +6453,7 @@ function MindMapInner({
                   }
                   toast.error(
                     err?.message ||
-                      (isPolish ? 'Nie udało się dołączyć artefaktu' : 'Failed to attach artifact')
+                      (t('mindmap.failedToAttachArtifact'))
                   );
                 }
               })();
@@ -6495,7 +6468,7 @@ function MindMapInner({
           onSubmit={(url) => {
             if (imageUrlNodeId) {
               updateNodeDataById(imageUrlNodeId, (data: any) => ({ ...data, imageUrl: url }));
-              toast.success(isPolish ? 'Obraz dodany' : 'Image added', { duration: 800 });
+              toast.success(t('mindmap.imageAdded'), { duration: 800 });
             }
           }}
         />
