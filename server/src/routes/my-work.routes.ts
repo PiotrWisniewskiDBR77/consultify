@@ -3473,6 +3473,57 @@ async function resolveCanonicalMapOwner(
   return ownerUserId || null;
 }
 
+/**
+ * B1 (M09 facilitation enforcement) — is the CALLING user gated to read-only because
+ * they hold the 'observer' role in an ACTIVE facilitation session for this whiteboard?
+ *
+ * The whiteboard's facilitation session is keyed on tool_session_id = `whiteboard:<ideaId>`
+ * (see IdeaWhiteboardTool.tsx `toolSessionId`). Role rows live in tool_facilitation_roles,
+ * scoped to the session and org. We only enforce the 'observer' role — facilitator /
+ * participant / no-role / no-active-session are ALL unchanged (returns false), so single-
+ * player editing and the A1 canonical-owner write path are untouched.
+ *
+ * Fail-open by design: any DB error (e.g. facilitation tables absent on an older schema)
+ * must NOT block a legitimate write — we log-and-allow rather than 500 the editor.
+ * Uses a single queryAll so the mocked call-sequences in existing PUT/sync contract
+ * tests (which return [] for queryAll) keep their behavior unchanged.
+ */
+async function isWhiteboardObserver(
+  ideaId: string,
+  orgId: string,
+  userId: string
+): Promise<boolean> {
+  const toolSessionId = `whiteboard:${ideaId}`;
+  try {
+    const rows = await queryHelpers.queryAll<{ role_name?: string | null }>(
+      `SELECT r.role_name AS role_name
+         FROM tool_facilitation_roles r
+         JOIN tool_facilitation_sessions s ON s.id = r.facilitation_session_id
+        WHERE s.organization_id = ?
+          AND s.tool_session_id = ?
+          AND s.status <> 'ended'
+          AND r.user_id = ?
+        LIMIT 1`,
+      [orgId, toolSessionId, userId]
+    );
+    const roleName = rows?.[0]?.role_name;
+    return String(roleName || '').toLowerCase() === 'observer';
+  } catch (err) {
+    // Older orgs / schemas without the facilitation tables must not be blocked.
+    logger.warn('[my-work] isWhiteboardObserver check failed (allowing write):', err as Error);
+    return false;
+  }
+}
+
+const WHITEBOARD_OBSERVER_READONLY = {
+  status: 403,
+  body: {
+    error:
+      'You are an observer in this facilitation session and cannot edit the shared whiteboard.',
+    code: 'WHITEBOARD_OBSERVER_READONLY',
+  },
+} as const;
+
 function buildMapConflictPayload(
   existing:
     | {
@@ -3885,6 +3936,11 @@ router.put(
     const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
     if (!canonicalUserId) return res.status(404).json({ error: 'Idea not found' });
 
+    // B1 (M09): observers in an active facilitation session are read-only on the shared board.
+    if (await isWhiteboardObserver(ideaId, orgId, userId)) {
+      return res.status(WHITEBOARD_OBSERVER_READONLY.status).json(WHITEBOARD_OBSERVER_READONLY.body);
+    }
+
     const baseVersionRaw = req.body?.baseVersion ?? req.body?.version ?? null;
     const baseVersionParsed = parseOptionalVersion(baseVersionRaw);
     if (baseVersionParsed === 'invalid') {
@@ -4161,6 +4217,11 @@ router.post(
     // A1 (D-WB-2): canonical (owner) row write-through — see resolveCanonicalMapOwner.
     const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
     if (!canonicalUserId) return res.status(404).json({ error: 'Idea not found' });
+
+    // B1 (M09): observers in an active facilitation session are read-only on the shared board.
+    if (await isWhiteboardObserver(ideaId, orgId, userId)) {
+      return res.status(WHITEBOARD_OBSERVER_READONLY.status).json(WHITEBOARD_OBSERVER_READONLY.body);
+    }
 
     const mapCols = await getTableColumns('my_idea_maps');
     const preferredToolSelect = mapCols.has('preferred_tool')
@@ -5748,6 +5809,11 @@ router.post(
     const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
     if (!canonicalUserId) return res.status(404).json({ error: 'Idea not found' });
 
+    // B1 (M09): observers in an active facilitation session are read-only on the shared board.
+    if (await isWhiteboardObserver(ideaId, orgId, userId)) {
+      return res.status(WHITEBOARD_OBSERVER_READONLY.status).json(WHITEBOARD_OBSERVER_READONLY.body);
+    }
+
     const mapRow = await queryHelpers.queryOne<any>(
       `SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
       [ideaId, canonicalUserId, orgId]
@@ -5848,6 +5914,11 @@ router.post(
     // A1 (D-WB-2): canonical (owner) row write-through so org members can create outcomes.
     const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
     if (!canonicalUserId) return res.status(404).json({ error: 'Idea not found' });
+
+    // B1 (M09): observers in an active facilitation session are read-only on the shared board.
+    if (await isWhiteboardObserver(ideaId, orgId, userId)) {
+      return res.status(WHITEBOARD_OBSERVER_READONLY.status).json(WHITEBOARD_OBSERVER_READONLY.body);
+    }
 
     const mapRow = await queryHelpers.queryOne<any>(
       `SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
@@ -5951,6 +6022,11 @@ router.post(
     // Idea metadata (title/body/etc.) is org-scoped here; ownership only picks the map row.
     const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
     if (!canonicalUserId) return res.status(404).json({ error: 'Idea not found' });
+
+    // B1 (M09): observers in an active facilitation session are read-only on the shared board.
+    if (await isWhiteboardObserver(ideaId, orgId, userId)) {
+      return res.status(WHITEBOARD_OBSERVER_READONLY.status).json(WHITEBOARD_OBSERVER_READONLY.body);
+    }
 
     const idea = await queryHelpers.queryOne<any>(
       `SELECT id, title, body, seed_text as "seedText", ai_expansion as "aiExpansion" FROM my_ideas WHERE id = ? AND organization_id = ? LIMIT 1`,

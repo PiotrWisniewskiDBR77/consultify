@@ -490,6 +490,36 @@ router.post(
   })
 );
 
+// B1 (M09): read-only resolve of the ACTIVE shared session for a tool_session_id (e.g.
+// `whiteboard:<ideaId>`) WITHOUT creating one — used to enforce observer read-only on
+// board-open while keeping facilitation lazy. Registered before /:sessionId; the
+// distinct `by-tool` segment prevents any route-matching ambiguity.
+router.get(
+  '/facilitation/sessions/by-tool/:toolSessionId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = requireUser(req, res);
+    if (!id) return;
+    try {
+      const s = await realtimePlatformService.getActiveFacilitationSessionByTool(
+        id.orgId,
+        req.params.toolSessionId
+      );
+      // 200 with { session: null } when none active — the caller treats absence as
+      // "no facilitation → not an observer", so this must not be a 404.
+      res.json({ session: s ?? null });
+    } catch (error) {
+      if (isRealtimeSubstrateUnavailableError(error)) {
+        res.status(503).json({
+          error: 'Facilitation substrate is temporarily unavailable',
+          code: 'REALTIME_FACILITATION_SUBSTRATE_UNAVAILABLE',
+        });
+        return;
+      }
+      throw error;
+    }
+  })
+);
+
 router.get(
   '/facilitation/sessions/:sessionId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
