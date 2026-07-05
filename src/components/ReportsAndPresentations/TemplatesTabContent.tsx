@@ -1,15 +1,16 @@
 /**
  * TemplatesTabContent — "Biblioteka wzorców" tab
- * Golden standard: FilterableTable (6 columns) + GridView cards + Preview pane
+ * Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): table view →
+ * StandardTable + StandardPreview, 1:1 with the Assessment 'list' / Interview
+ * Inbox / Results KPI catalog adopters. Grid view (GridView) is untouched —
+ * same as ResultsHub, which keeps its own grid branch alongside the triada
+ * table branch.
  * Canonical source: /api/artifacts?artifactFamily=template (P24 Outputs artifacts)
  */
 
 import {
-  Archive,
   BookTemplate,
-  ChevronRight,
   Copy,
-  Edit,
   FileSpreadsheet,
   FileText,
   MessageSquare,
@@ -20,25 +21,24 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import {
+  type MetaPill,
+  StandardPreview,
+  type StandardPreviewActions,
+  standardPreviewShortcuts,
+  type StandardRowMenu,
+  StandardTable,
+  type TableColumn as StandardTableColumn,
+} from '@/components/standard';
 import { LoadingState, StatusChip } from '@/components/ui/primitives';
 
 import { useOpenChatWithContext } from '../../hooks/useOpenChatWithContext';
-import {
-  FilterableTable,
-  type FilterChip,
-  type GridItem,
-  GridView,
-  type TableColumn,
-  type ViewMode,
-} from '../shared/ModuleHub';
-import type { RowAction } from '../shared/RowActionsMenu';
-import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { type FilterChip, type GridItem, GridView, type ViewMode } from '../shared/ModuleHub';
 import {
   resolveTemplateClonePath,
   resolveTemplateEditPath,
   resolveTemplateUsePath,
 } from './artifactNavigation';
-import { TemplatePreviewBody, TemplatePreviewFooter } from './previews/TemplatePreview';
 import { TEMPLATE_STATUS_META, TEMPLATE_TYPE_META, type TemplateItem } from './types';
 
 interface TemplatesTabContentProps {
@@ -74,6 +74,12 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   const openChat = useOpenChatWithContext();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [submitBusyId, setSubmitBusyId] = useState<string | null>(null);
+  // Triada standard (canon A4/#13): checkbox selection state for the table's
+  // left-hand checkbox column. This tab is a leaf under ReportsAndPresentationsHub
+  // (which owns Menu 1/2/3) — there is no bulk-mode command-row slot exposed to
+  // tab content today, so selection drives the checkbox affordance only; a
+  // future wave can lift this into the hub's Menu 3 bulk bar (see self-audit).
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const deepLinkConsumed = useRef(false);
 
   const filteredData = useMemo(() => {
@@ -94,7 +100,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     return data;
   }, [templates, searchQuery, activeFilters]);
 
-  const columns: TableColumn[] = useMemo(
+  const columns: StandardTableColumn[] = useMemo(
     () => [
       {
         id: 'title',
@@ -211,6 +217,10 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         label: t('rap.columns.updatedAt', 'Ostatnia zmiana'),
         width: '150px',
         sortable: true,
+        sortAccessor: (row: Record<string, unknown>) => {
+          const raw = (row as unknown as TemplateItem).updatedAt;
+          return raw ? new Date(raw).getTime() : 0;
+        },
         render: (row: TemplateItem) => {
           const d = new Date(row.updatedAt);
           return (
@@ -228,85 +238,74 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     [t, isPolish]
   );
 
-  const getRowActions = (row: TemplateItem): RowAction[] => [
-    // canon §9.2 FIXED BOTTOM MANIFEST position 1
-    {
-      id: 'open_preview',
-      label: t('rap.actions.openPreview', 'Otwórz podgląd'),
-      icon: ChevronRight,
-      onClick: () => setSelectedId(row.id),
-    },
-    {
-      id: 'use',
-      label: t('rap.actions.useTemplate', 'Użyj wzorca'),
-      icon: Play,
-      variant: 'primary',
-      onClick: () => navigate(resolveTemplateUsePath(row.id, row.type)),
-    },
-    {
-      id: 'ask_ai',
-      label: t('rap.actions.askAI', 'Zapytaj AI'),
-      icon: MessageSquare,
-      onClick: () => {
-        openChat({
-          entityType: 'template',
-          entityId: row.id,
-          entityName: row.title,
-          contextData: {
-            templateType: row.type,
-            category: row.category,
-            scope: row.scope,
-            status: row.status,
-            description: row.description,
-          },
-        });
+  // Triada standard (canon A6 / ANEKS #4): moduł deklaruje TYLKO bloki 1-3;
+  // StandardTable sam dokłada blok 4 (Open preview · Edit · Archive) i blok 5
+  // (Delete — brak API kasowania wzorca, więc disabled z notą "Coming soon
+  // (backend)", automatycznie przez StandardTable, NIE ukryte).
+  const buildRowMenu = (row: TemplateItem): StandardRowMenu => ({
+    primary: [
+      {
+        id: 'use',
+        label: t('rap.actions.useTemplate', 'Użyj wzorca'),
+        icon: Play,
+        onClick: () => navigate(resolveTemplateUsePath(row.id, row.type)),
       },
-    },
-    ...(row.status === 'draft' && row.scope === 'organization'
-      ? ([
-          {
-            id: 'submit_review',
-            label: t('rap.actions.submitTemplateReview', 'Submit for review'),
-            icon: BookTemplate,
-            variant: 'primary',
-            disabled: submitBusyId === row.id,
-            onClick: async () => {
-              setSubmitBusyId(row.id);
-              try {
-                if (actions?.startArtifactReview) {
-                  await actions.startArtifactReview(row.id);
-                }
-                onRefresh?.();
-              } finally {
-                setSubmitBusyId(null);
-              }
+      {
+        id: 'clone',
+        label: t('rap.actions.clone', 'Klonuj'),
+        icon: Copy,
+        onClick: () => navigate(resolveTemplateClonePath(row.id, row.type)),
+      },
+      {
+        id: 'ask_ai',
+        label: t('rap.actions.askAI', 'Zapytaj AI'),
+        icon: MessageSquare,
+        onClick: () => {
+          openChat({
+            entityType: 'template',
+            entityId: row.id,
+            entityName: row.title,
+            contextData: {
+              templateType: row.type,
+              category: row.category,
+              scope: row.scope,
+              status: row.status,
+              description: row.description,
             },
-          } as RowAction,
-        ] as RowAction[])
-      : []),
-    {
-      id: 'clone',
-      label: t('rap.actions.clone', 'Klonuj'),
-      icon: Copy,
-      onClick: () => navigate(resolveTemplateClonePath(row.id, row.type)),
+          });
+        },
+      },
+      ...(row.status === 'draft' && row.scope === 'organization'
+        ? [
+            {
+              id: 'submit_review',
+              label: t('rap.actions.submitTemplateReview', 'Submit for review'),
+              icon: BookTemplate,
+              disabled: submitBusyId === row.id,
+              onClick: () => {
+                setSubmitBusyId(row.id);
+                void (async () => {
+                  try {
+                    if (actions?.startArtifactReview) {
+                      await actions.startArtifactReview(row.id);
+                    }
+                    onRefresh?.();
+                  } finally {
+                    setSubmitBusyId(null);
+                  }
+                })();
+              },
+            },
+          ]
+        : []),
+    ],
+    universalHandlers: {
+      preview: () => setSelectedId(row.id),
+      edit: () => navigate(resolveTemplateEditPath(row.id, row.type)),
+      // Brak API archiwizacji wzorca — pozycja disabled z notą (StandardTable dokłada ją sama).
     },
-    {
-      id: 'edit',
-      label: t('rap.actions.edit', 'Edytuj'),
-      icon: Edit,
-      onClick: () => navigate(resolveTemplateEditPath(row.id, row.type)),
-    },
-    {
-      // canon §14 + §9.2: Archive slot — soft-delete placeholder (backend TBD)
-      id: 'archive',
-      label: t('rap.actions.archive', 'Archiwizuj'),
-      icon: Archive,
-      divider: true,
-      disabled: true,
-      description: 'Wkrótce',
-      onClick: () => {},
-    },
-  ];
+    // Brak API kasowania wzorca — blok 5 disabled z notą (StandardTable dokłada ją sama).
+  });
 
   useEffect(() => {
     if (!initialArtifactId || deepLinkConsumed.current || filteredData.length === 0) return;
@@ -318,8 +317,79 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   }, [initialArtifactId, filteredData]);
 
   const selectedItem = selectedId ? filteredData.find((i) => i.id === selectedId) || null : null;
-  const previewItem = selectedItem ? { ...selectedItem, title: selectedItem.title } : null;
-  const itemIds = filteredData.map((i) => i.id);
+
+  // Triada standard (canon A7/A8): StandardPreview action grid — row 1
+  // rozstrzygnięcia (none — templates have no approve/reject step), row 2
+  // informacyjne (Open/Use · Clone · Ask AI).
+  const previewActions: StandardPreviewActions | undefined = useMemo(
+    () =>
+      selectedItem
+        ? {
+            informational: [
+              {
+                id: 'use',
+                variant: 'neutral',
+                label: t('rap.actions.useTemplate', 'Użyj wzorca'),
+                icon: Play,
+                shortcut: 'O',
+                onClick: () => navigate(resolveTemplateUsePath(selectedItem.id, selectedItem.type)),
+              },
+              {
+                id: 'clone',
+                variant: 'neutral',
+                label: t('rap.actions.clone', 'Klonuj'),
+                icon: Copy,
+                onClick: () => navigate(resolveTemplateClonePath(selectedItem.id, selectedItem.type)),
+              },
+              {
+                id: 'ask_ai',
+                variant: 'neutral',
+                label: t('rap.actions.askAI', 'Zapytaj AI'),
+                icon: MessageSquare,
+                onClick: () => {
+                  openChat({
+                    entityType: 'template',
+                    entityId: selectedItem.id,
+                    entityName: selectedItem.title,
+                    contextData: {
+                      templateType: selectedItem.type,
+                      category: selectedItem.category,
+                      scope: selectedItem.scope,
+                      status: selectedItem.status,
+                      description: selectedItem.description,
+                    },
+                  });
+                },
+              },
+            ],
+          }
+        : undefined,
+    [selectedItem, t, navigate, openChat]
+  );
+
+  // Esc closes preview; single-key shortcut (O) active while preview open (kanon B.24/B.31).
+  useEffect(() => {
+    if (viewMode !== 'table' || !selectedId) return;
+    const shortcuts = standardPreviewShortcuts(previewActions);
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isTyping =
+        target &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+      if (isTyping) return;
+      if (e.key === 'Escape') {
+        setSelectedId(null);
+        return;
+      }
+      const handlerFn = shortcuts[e.key.toUpperCase()];
+      if (handlerFn) {
+        e.preventDefault();
+        handlerFn();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [selectedId, previewActions]);
 
   if (loading) {
     return <LoadingState variant="spinner" className="h-64" />;
@@ -445,37 +515,114 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     );
   }
 
+  // Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): templates
+  // table view → StandardTable + StandardPreview, 1:1 with the Assessment
+  // 'list' / Interview Inbox / Results KPI catalog adopters.
+  const typeMeta = selectedItem ? TEMPLATE_TYPE_META[selectedItem.type] : null;
+  const statusMeta = selectedItem
+    ? TEMPLATE_STATUS_META[selectedItem.status] || TEMPLATE_STATUS_META.active
+    : null;
+
   return (
-    <div className="h-full overflow-hidden">
-      <TableWithPreviewLayout<TemplateItem & { title: string }>
-        selectedId={selectedId}
-        selectedItem={previewItem}
-        onSelect={setSelectedId}
-        onOpenFull={(id) => {
-          const row = filteredData.find((x) => x.id === id);
-          if (row) navigate(resolveTemplateUsePath(row.id, row.type));
-        }}
-        itemIds={itemIds}
-        getItemById={(id) => filteredData.find((x) => x.id === id) ?? null}
-        renderPreview={(item) => <TemplatePreviewBody template={item} />}
-        renderPreviewFooter={(item) => <TemplatePreviewFooter template={item} />}
-      >
-        <FilterableTable
+    <div className="h-full flex overflow-hidden">
+      <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+        <StandardTable
           columns={columns}
-          data={filteredData}
+          data={filteredData as unknown as Array<Record<string, unknown> & { id: string }>}
           selectedRowId={selectedId}
-          onRowClick={(row) => setSelectedId(row.id)}
+          onRowClick={(row) => setSelectedId(String((row as unknown as TemplateItem).id))}
           onRowDoubleClick={(row) => {
             const item = row as unknown as TemplateItem;
             navigate(resolveTemplateUsePath(item.id, item.type));
           }}
-          getRowActions={(row) => getRowActions(row as unknown as TemplateItem)}
-          activeFilters={activeFilters}
-          onFilterChange={onFilterChange}
-          emptyMessage={t('rap.empty.templates', 'Brak wzorców')}
-          canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+          rowDescription={(row) => (row as unknown as TemplateItem).description ?? null}
+          defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
+          persistKey="rap.templates.list"
+          selection={{ selectedIds, onChange: setSelectedIds }}
+          empty={{
+            icon: BookTemplate,
+            title: t('rap.empty.templates', 'Brak wzorców'),
+            description: t(
+              'rap.empty.templatesOnboardingDesc',
+              'Wzorce (templates) definiują strukturę i standard raportów oraz prezentacji. Zacznij od jednej z kanonicznych rodzin lub utwórz własny wzorzec.'
+            ),
+          }}
+          rowMenu={(row) => buildRowMenu(row as unknown as TemplateItem)}
         />
-      </TableWithPreviewLayout>
+      </div>
+
+      {selectedItem ? (
+        <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+          <StandardPreview
+            title={selectedItem.title}
+            onClose={() => setSelectedId(null)}
+            onOpenFull={() => navigate(resolveTemplateUsePath(selectedItem.id, selectedItem.type))}
+            openLabel={t('rap.actions.useTemplate', 'Użyj wzorca')}
+            meta={{
+              pills: [
+                ...(typeMeta
+                  ? [{ label: isPolish ? typeMeta.labelPl : typeMeta.label, tone: 'neutral' as const }]
+                  : []),
+                ...(statusMeta
+                  ? [{ label: isPolish ? statusMeta.labelPl : statusMeta.label, tone: statusMeta.tone }]
+                  : []),
+              ] as MetaPill[],
+              trailing: (
+                <span className="text-[11px] font-semibold text-c-text-secondary">
+                  {new Date(selectedItem.updatedAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </span>
+              ),
+            }}
+            details={{
+              text: [
+                `${t('rap.preview.scope', 'Zakres')}: ${
+                  selectedItem.scope === 'application'
+                    ? t('reports.application')
+                    : selectedItem.scope === 'personal'
+                      ? t('reports.personal')
+                      : t('reports.organization')
+                }`,
+                `${t('rap.preview.category', 'Kategoria')}: ${selectedItem.category}`,
+                ...(selectedItem.sectionCount != null
+                  ? [`${t('rap.preview.sections', 'Sekcje')}: ${selectedItem.sectionCount}`]
+                  : []),
+                ...(selectedItem.slideCount != null
+                  ? [`${t('rap.preview.slides', 'Slajdy')}: ${selectedItem.slideCount}`]
+                  : []),
+                '',
+                selectedItem.description?.trim() || t('common.noDescription', 'No description'),
+              ].join('\n'),
+              onCopy: () => {
+                void navigator.clipboard?.writeText(
+                  `${selectedItem.title} — ${selectedItem.category} (${selectedItem.status})`
+                );
+              },
+            }}
+            ai={{
+              hints: [
+                t('rap.preview.ai.improve', 'Suggest improvements'),
+                t('rap.preview.ai.summary', 'Summarize sections'),
+              ],
+              disabled: true,
+              disabledTooltip: t('common.comingSoon', 'Coming soon'),
+            }}
+            relations={
+              selectedItem.replacedByArtifactId
+                ? [
+                    {
+                      label: `${t('rap.preview.replacedBy', 'Nowy wzorzec')}: ${selectedItem.replacedByArtifactId.slice(0, 8)}…`,
+                    },
+                  ]
+                : []
+            }
+            actions={previewActions}
+          />
+        </aside>
+      ) : null}
     </div>
   );
 };
