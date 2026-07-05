@@ -342,7 +342,10 @@ export function useIdeaMapSync({
         const pending = queuedPayloadRef.current;
         if (pending && flushNowRef.current) {
           queuedPayloadRef.current = null;
-          void flushNowRef.current(pending, opts);
+          // Fire-and-forget re-flush (draft timers / conflict self-heal already surface
+          // failures via syncState); swallow here so a rejected retry (e.g. repeated 409)
+          // doesn't escape as an unhandled promise rejection.
+          void flushNowRef.current(pending, opts).catch(() => null);
         }
       }
     },
