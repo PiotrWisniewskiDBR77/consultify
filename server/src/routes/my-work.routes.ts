@@ -23,9 +23,9 @@ import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import type { OutcomeType } from '../services/ideaClusterService.js';
 import { createOutcomeFromCluster, materializeClusters } from '../services/ideaClusterService.js';
-import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { InboxAiAssistItemSchema, runInboxAiAssist } from '../services/inboxAiAssistService.js';
 import inboxService from '../services/inboxService.js';
+import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import NotificationService from '../services/notificationService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import projectionService from '../services/tablePlatform/ProjectionService.js';
@@ -38,6 +38,7 @@ import { getCapacityOverview, getOverloadAlerts } from '../services/workloadCapa
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
+import { resolveMentionsFromComment } from '../utils/mentionResolver.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import {
   ensureLatestSchema,
@@ -362,7 +363,8 @@ const decorateIdeaLineage = (row: any) => ({
   sourcePack: parseJsonField(row?.source_pack_json, {}),
   evidenceRefs: parseJsonField(row?.evidence_refs_json, []),
   researchData: row?.researchData != null ? parseJsonField(row.researchData, []) : undefined,
-  creativeProposals: row?.creativeProposals != null ? parseJsonField(row.creativeProposals, []) : undefined,
+  creativeProposals:
+    row?.creativeProposals != null ? parseJsonField(row.creativeProposals, []) : undefined,
   summaryData: row?.summaryData != null ? parseJsonField(row.summaryData, null) : undefined,
   action_contract_json: undefined,
   source_pack_json: undefined,
@@ -2800,7 +2802,13 @@ router.post(
         logger.warn('[MyIdeas] org-context capture failed (create):', err?.message)
       );
 
-    res.status(201).json(decorateIdeaLineage({ ...row, tags: parseTagsArray((row as any)?.tags), isFavorite: !!(row as any)?.isFavorite }));
+    res.status(201).json(
+      decorateIdeaLineage({
+        ...row,
+        tags: parseTagsArray((row as any)?.tags),
+        isFavorite: !!(row as any)?.isFavorite,
+      })
+    );
   })
 );
 
@@ -2867,7 +2875,13 @@ router.get(
       return;
     }
 
-    res.json(decorateIdeaLineage({ ...row, tags: parseTagsArray((row as any)?.tags), isFavorite: !!(row as any)?.isFavorite }));
+    res.json(
+      decorateIdeaLineage({
+        ...row,
+        tags: parseTagsArray((row as any)?.tags),
+        isFavorite: !!(row as any)?.isFavorite,
+      })
+    );
   })
 );
 
@@ -3022,7 +3036,13 @@ router.put(
         logger.warn('[MyIdeas] org-context capture failed (update):', err?.message)
       );
 
-    res.json(decorateIdeaLineage({ ...row, tags: parseTagsArray((row as any)?.tags), isFavorite: !!(row as any)?.isFavorite }));
+    res.json(
+      decorateIdeaLineage({
+        ...row,
+        tags: parseTagsArray((row as any)?.tags),
+        isFavorite: !!(row as any)?.isFavorite,
+      })
+    );
   })
 );
 
@@ -3460,10 +3480,7 @@ function parseOptionalVersion(value: unknown): number | null | 'invalid' {
  * We intentionally do NOT delete any historical per-requester ("orphan") rows; the owner's
  * row is authoritative and orphans are simply ignored (consistent with the read-fallback).
  */
-async function resolveCanonicalMapOwner(
-  ideaId: string,
-  orgId: string
-): Promise<string | null> {
+async function resolveCanonicalMapOwner(ideaId: string, orgId: string): Promise<string | null> {
   const idea = await queryHelpers.queryOne<{ ownerUserId?: string | null }>(
     `SELECT user_id as "ownerUserId" FROM my_ideas WHERE id = ? AND organization_id = ? LIMIT 1`,
     [ideaId, orgId]
@@ -4978,6 +4995,47 @@ router.post(
       resourceId: id,
     });
 
+    // @mention → notification. Resolve tokens against the caller's org roster
+    // (org-scoped: tokens matching no org member are dropped, so a comment can
+    // never notify a user outside the organization). Best-effort — a notify
+    // failure must never fail the comment write.
+    try {
+      const { getMembers } = await import('../services/organizationService.js');
+      const members = await getMembers(orgId);
+      const mentionedUserIds = resolveMentionsFromComment(
+        parsed.data.text,
+        parsed.data.mentions,
+        members,
+        userId // don't notify the author for self-mentions
+      );
+      if (mentionedUserIds.length > 0) {
+        const snippet =
+          parsed.data.text.length > 140 ? `${parsed.data.text.slice(0, 140)}…` : parsed.data.text;
+        await Promise.allSettled(
+          mentionedUserIds.map((uid) =>
+            NotificationService.send({
+              userId: uid,
+              organizationId: orgId,
+              type: 'whiteboard.mention',
+              title: `${userName} mentioned you in a whiteboard comment`,
+              body: snippet,
+              entityType: 'idea',
+              entityId: ideaId,
+              relatedObjectType: 'idea_node',
+              relatedObjectId: nodeId,
+              actionUrl: `/my-work/ideas/${ideaId}`,
+              actorId: userId,
+              actorName: userName,
+              priority: 'normal',
+              metadata: { ideaId, nodeId, commentId: id },
+            })
+          )
+        );
+      }
+    } catch (notifyErr) {
+      logger.warn('[my-work] whiteboard mention notification failed (non-fatal):', notifyErr);
+    }
+
     res.status(201).json({
       comment: {
         id,
@@ -6252,9 +6310,7 @@ router.post(
         );
         if (mapRow?.nodes_json) {
           const nodes: Array<{ data?: { label?: string } }> = JSON.parse(String(mapRow.nodes_json));
-          const labels = nodes
-            .map((n) => (n.data?.label ?? '').trim())
-            .filter(Boolean);
+          const labels = nodes.map((n) => (n.data?.label ?? '').trim()).filter(Boolean);
           if (labels.length > 0) processFlowReadback = labels.join(' → ');
         }
       } catch {
