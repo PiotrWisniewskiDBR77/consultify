@@ -61,6 +61,14 @@ import {
   evaluateRevertEligibility,
   type RevertEligibilityReason,
 } from '../services/presentationDeckRevertService.js';
+import {
+  type CollaboratorRole,
+  isValidRole,
+  listCollaborators,
+  permissionToRole,
+  revokeCollaborator,
+  upsertCollaborator,
+} from '../services/presentationDeckCollaboratorService.js';
 import { buildParityReportForDeck } from '../services/presentationExportParityService.js';
 import type { DeckSetup } from '../services/presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
@@ -1925,6 +1933,128 @@ router.delete(
       metadata: { organizationId: orgId, title: before.title },
     });
     res.json({ success: true, data: { revoked: true } });
+  })
+);
+
+// ============================================================
+// P3.3 — PER-USER DECK COLLABORATORS (presentation_deck_collaborators)
+// ============================================================
+//
+// The deferred half of P3.1: inviting a collaborator writes a real membership
+// row (deck + user/email + role) instead of only minting a share-link. All
+// three endpoints are org-scoped, gated by the `presentation_share` capability,
+// and FAIL-OPEN — if the collaborators table is unavailable the service returns
+// storage_error and we surface a soft 200/`collaborators: []` rather than a 500,
+// so the editor never blocks on the membership layer.
+
+// List collaborators for a deck.
+router.get(
+  '/decks/:id/collaborators',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_view')) return;
+    const orgId = getOrgId(req);
+    const deck = (await dbGet(
+      `SELECT id FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as any;
+    if (!deck) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
+    const collaborators = await listCollaborators(req.params.id, orgId);
+    res.json({ success: true, data: { collaborators } });
+  })
+);
+
+// Invite / upsert a collaborator with a role. Accepts either an explicit
+// { role } or a P3.1-style { permission: 'view' | 'comment' }.
+router.post(
+  '/decks/:id/collaborators',
+  shareRateLimiter,
+  requireAudit,
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_share')) return;
+    const orgId = getOrgId(req);
+    const inviterId = getUserId(req);
+    const deck = (await dbGet(
+      `SELECT id, title FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as any;
+    if (!deck) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
+
+    const body = req.body || {};
+    const email = typeof body.email === 'string' ? body.email.trim() : '';
+    const targetUserId = typeof body.userId === 'string' ? body.userId.trim() : '';
+    if (!email && !targetUserId) {
+      return res
+        .status(400)
+        .json({ success: false, error: 'email or userId is required', code: 'INVALID_INVITE' });
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, error: 'Invalid email', code: 'INVALID_EMAIL' });
+    }
+
+    const role: CollaboratorRole = isValidRole(body.role)
+      ? body.role
+      : permissionToRole(body.permission);
+
+    const result = await upsertCollaborator({
+      deckId: req.params.id,
+      organizationId: orgId,
+      userId: targetUserId || null,
+      invitedEmail: email || null,
+      role,
+      invitedBy: inviterId,
+    });
+
+    if (result.status !== 'ok') {
+      // Fail-open: membership layer unavailable. Return a soft 200 so the FE can
+      // still fall back to the share-link invite path without an error toast.
+      return res.json({
+        success: true,
+        data: { collaborator: null, degraded: true, reason: result.reason },
+      });
+    }
+
+    await (req as any).emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'collaborator_invite',
+      resourceType: 'presentation_deck',
+      resourceId: req.params.id,
+      after: { role, email: email || null, userId: targetUserId || null },
+      metadata: { organizationId: orgId, title: deck.title },
+    });
+
+    res.json({ success: true, data: { collaborator: result.collaborator ?? null } });
+  })
+);
+
+// Revoke a collaborator (soft delete).
+router.delete(
+  '/decks/:id/collaborators/:collaboratorId',
+  shareRateLimiter,
+  requireAudit,
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_share')) return;
+    const orgId = getOrgId(req);
+    const deck = (await dbGet(
+      `SELECT id, title FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as any;
+    if (!deck) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
+    const result = await revokeCollaborator(req.params.id, orgId, req.params.collaboratorId);
+    await (req as any).emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'collaborator_revoke',
+      resourceType: 'presentation_deck',
+      resourceId: req.params.id,
+      after: { collaboratorId: req.params.collaboratorId },
+      metadata: { organizationId: orgId, title: deck.title },
+    });
+    res.json({ success: true, data: { revoked: result.status === 'ok', degraded: result.status !== 'ok' } });
   })
 );
 
