@@ -6014,6 +6014,7 @@ function MindMapInner({
       <ExportPowerPoint
         open={showExportPPTX}
         onClose={() => setShowExportPPTX(false)}
+        ideaId={ideaId}
         ideaTitle={ideaTitle}
         branches={nodes
           .filter((n) => n.id.startsWith('branch-'))
