@@ -68,7 +68,6 @@ import { ExportToOutputDialog } from '../Finance/ExportToOutputDialog';
 import { FinancialStatementImportWizard } from '../Finance/FinancialStatementImportWizard';
 import { FinancialStatementPackWorkspace } from '../Finance/FinancialStatementPackWorkspace';
 import {
-  FilterableTable,
   FilterChip,
   type GridItem,
   GridView,
@@ -93,7 +92,6 @@ import {
   Menu3Chip,
 } from '../shared/ModuleMenu3';
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
-import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { FinanceDegradedBanner } from './FinanceDegradedBanner';
 import { getFinanceErrorMessage } from './financeErrorMap';
 import { FinanceLanePanel } from './FinanceLanePanel';
@@ -102,7 +100,6 @@ import { FinanceModelDocumentView } from './FinanceModelDocumentView';
 import { buildFinanceTeresaPrompt } from './financeModelLabels';
 import { useFinancePreview } from './FinancePreviewPanel';
 import {
-  CANVAS_PADDING,
   type FinanceAnalysisRow,
   type FinanceKind,
   type FinanceModelRow,
@@ -155,6 +152,17 @@ function sanitizeStatementTitle(raw?: string | null): string {
   return value;
 }
 
+// Empty-state icon per tab for the shared Models/Analysis/Prediction/Valuation/
+// Investment StandardTable block (canon A4, StandardTableEmpty.icon wants a
+// LucideIcon component, not the pre-rendered ReactNode in KIND_ICONS).
+const EMPTY_STATE_ICON_BY_TAB: Partial<Record<ModuleTab, typeof Calculator>> = {
+  models: Calculator,
+  analysis: BarChart3,
+  investment: Target,
+  prediction: TrendingUp,
+  valuation: Target,
+};
+
 function isInvestmentAnalysisType(value: unknown): boolean {
   const normalized = String(value || '')
     .trim()
@@ -186,6 +194,10 @@ export const FinanceHub: React.FC = () => {
   // Triada standard (canon A3/A6): checkbox selection on the 'statements' tab
   // switches Menu 3 into bulk mode (1:1 markup with AssessmentHub 'list').
   const [selectedStatementIds, setSelectedStatementIds] = useState<Set<string>>(new Set());
+  // Same pattern for the shared Models/Analysis/Prediction/Valuation/Investment
+  // block (docs/ui-standards/TRIADA_KANON.md A3/A6) — one selection set shared
+  // by the 5 tabs, cleared whenever the active tab changes.
+  const [selectedFinanceRowIds, setSelectedFinanceRowIds] = useState<Set<string>>(new Set());
 
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('finance');
@@ -247,6 +259,15 @@ export const FinanceHub: React.FC = () => {
   useEffect(() => {
     if (activeTab !== 'statements' && selectedStatementIds.size > 0) {
       setSelectedStatementIds(new Set());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  // Clear bulk-selection when switching between the 5 shared tabs (or leaving
+  // to Statements) — mirrors the Statements-tab clearing effect above.
+  useEffect(() => {
+    if (selectedFinanceRowIds.size > 0) {
+      setSelectedFinanceRowIds(new Set());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
@@ -1832,10 +1853,10 @@ export const FinanceHub: React.FC = () => {
   }, [activeFilters, activeTab, t]);
 
   // ---- Statements tab (Triada standard, docs/ui-standards/TRIADA_KANON.md A4-A7) ----
-  // Statements is the only Finance tab wired to StandardTable + StandardPreview in
-  // this rollout wave. Models/Analysis/Prediction/Enterprise valuation/Investment
-  // analysis stay on the legacy FilterableTable + TableWithPreviewLayout below —
-  // out of scope for this change.
+  // Statements has its own StandardTable + StandardPreview block (below). The
+  // Models/Analysis/Prediction/Valuation/Investment tabs share a second
+  // StandardTable + StandardPreview block further down (tableWithPreview),
+  // parametrized by columnsForActiveTab/filteredRows per docs/ui-standards/TRIADA_KANON.md.
   const statementRowsData = useMemo(
     () => filteredRows.filter((row): row is FinanceStatementRow => row.kind === 'statements'),
     [filteredRows]
@@ -2144,58 +2165,250 @@ export const FinanceHub: React.FC = () => {
     ]
   );
 
-  // ---- Table + Preview (legacy — Models/Analysis/Prediction/Valuation/Investment) ----
+  // ---- Table + Preview (Triada standard — Models/Analysis/Prediction/Valuation/
+  // Investment share this block; columns/data are parametrized by activeTab via
+  // columnsForActiveTab/filteredRows. Same StandardTable+StandardPreview wiring
+  // as the Statements block above — docs/ui-standards/TRIADA_KANON.md A4-A7). ----
+
+  // RowAction ids that represent a positive state-changing transition for the
+  // active kind (approve/confirm/compute/generate/computeDcf) — surfaced as the
+  // "resolutions" row (positive variant) in the preview, ahead of Delete.
+  const RESOLUTION_ACTION_IDS = useMemo(
+    () => new Set(['approve', 'compute', 'generate', 'computeDcf', 'confirm']),
+    []
+  );
+  // RowAction ids folded into the manifest StandardTable already renders itself
+  // (blocks 4-5: Open preview/Edit/Archive/Delete) — excluded from rowMenu/
+  // preview mapping below to avoid duplicating them.
+  const MANIFEST_ACTION_IDS = useMemo(
+    () => new Set(['preview', 'edit', 'archive', 'delete']),
+    []
+  );
+
+  // Maps the existing per-kind getRowActions(row) (RowAction[]) onto the
+  // StandardRowMenu 5-block contract (kebab). Blocks 4-5 (Open preview / Edit /
+  // Archive / Delete) are appended automatically by StandardTable — we only
+  // declare blocks 1-3 here.
+  const financeRowMenu = useCallback(
+    (row: FinanceRow): StandardRowMenu => {
+      const actions = getRowActions(row);
+      const primary: StandardRowMenu['primary'] = [];
+      const statusTransitions: StandardRowMenu['statusTransitions'] = [];
+      for (const action of actions) {
+        if (MANIFEST_ACTION_IDS.has(action.id)) continue;
+        const mapped = {
+          id: action.id,
+          label: action.label,
+          icon: action.icon,
+          onClick: action.disabled ? undefined : action.onClick,
+          disabled: action.disabled,
+          note: action.description,
+        };
+        if (RESOLUTION_ACTION_IDS.has(action.id)) statusTransitions.push(mapped);
+        else primary.push(mapped);
+      }
+      return {
+        primary,
+        statusTransitions,
+        universalHandlers: {
+          preview: () => onSelectRow(row),
+          edit: () => handleOpenFull(row),
+          // Brak API archiwizacji pozycji Finance — disabled z notą (StandardTable dokłada ją sama).
+        },
+        destructive: {
+          onClick: () => void handleFinanceDelete(row),
+        },
+      };
+    },
+    [getRowActions, onSelectRow, handleOpenFull, handleFinanceDelete, MANIFEST_ACTION_IDS, RESOLUTION_ACTION_IDS]
+  );
+
+  // Maps the same getRowActions(row) onto the StandardPreview action-button
+  // contract (positive/destructive/warning/neutral, canon A7.6/A8): the
+  // resolution action (if any) + Delete go in "resolutions"; everything else
+  // (Open, contextual creates, export, chat, duplicate) goes in "informational".
+  const financePreviewActions = useCallback(
+    (row: FinanceRow): StandardPreviewActions => {
+      const actions = getRowActions(row).filter((a) => a.id !== 'archive');
+      const resolutions: StandardPreviewActions['resolutions'] = [];
+      const informational: StandardPreviewActions['informational'] = [];
+      for (const action of actions) {
+        if (action.id === 'preview') continue; // preview pane already open
+        if (action.id === 'delete') {
+          resolutions.push({
+            id: 'delete',
+            variant: 'destructive',
+            label: action.label,
+            icon: action.icon,
+            onClick: action.onClick,
+            disabled: action.disabled,
+          });
+          continue;
+        }
+        if (RESOLUTION_ACTION_IDS.has(action.id)) {
+          resolutions.push({
+            id: action.id,
+            variant: 'positive',
+            label: action.label,
+            icon: action.icon,
+            onClick: action.onClick,
+            disabled: action.disabled,
+          });
+          continue;
+        }
+        informational.push({
+          id: action.id,
+          variant: 'neutral',
+          label: action.label,
+          icon: action.icon,
+          shortcut: action.id === 'edit' ? 'O' : undefined,
+          onClick: action.onClick,
+          disabled: action.disabled,
+        });
+      }
+      return { resolutions, informational };
+    },
+    [getRowActions, RESOLUTION_ACTION_IDS]
+  );
+
+  const selectedFinanceRow: FinanceRow | null =
+    selectedId && selectedItem && selectedItem.kind !== 'statements' ? selectedItem : null;
+
+  const financePreviewActionsForSelected = useMemo(
+    () => (selectedFinanceRow ? financePreviewActions(selectedFinanceRow) : undefined),
+    [selectedFinanceRow, financePreviewActions]
+  );
+
+  // Esc closes preview; single-key shortcuts active while preview open (kanon B.24/B.31).
+  useEffect(() => {
+    if (activeTab === 'statements' || !selectedFinanceRow) return;
+    const shortcuts = standardPreviewShortcuts(financePreviewActionsForSelected);
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable)
+        return;
+      if (e.key === 'Escape') {
+        deselectRow();
+        return;
+      }
+      const handler = shortcuts[e.key.toUpperCase()];
+      if (handler) {
+        e.preventDefault();
+        handler();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [activeTab, selectedFinanceRow, financePreviewActionsForSelected, deselectRow]);
+
+  const handleBulkDeleteFinanceRows = useCallback(async () => {
+    if (selectedFinanceRowIds.size === 0) return;
+    const confirmMsg = isPl
+      ? `Czy na pewno chcesz usunąć ${selectedFinanceRowIds.size} pozycji? Tej operacji nie można cofnąć.`
+      : `Are you sure you want to delete ${selectedFinanceRowIds.size} item(s)? This cannot be undone.`;
+    if (!window.confirm(confirmMsg)) return;
+    const ids = Array.from(selectedFinanceRowIds);
+    for (const id of ids) {
+      const row = filteredRows.find((r) => r.id === id);
+      if (row) await handleFinanceDelete(row);
+    }
+    setSelectedFinanceRowIds(new Set());
+  }, [selectedFinanceRowIds, filteredRows, handleFinanceDelete, isPl]);
+
+  const financeBulkCommandRowContent =
+    activeTab !== 'statements' && selectedFinanceRowIds.size > 0 ? (
+      <div className={MENU_3_INNER_CLASS}>
+        <div className={MENU_3_LEFT_CLASS}>
+          <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
+            {`${selectedFinanceRowIds.size} selected`}
+          </span>
+          <Menu3Chip
+            onClick={() => setSelectedFinanceRowIds(new Set(filteredRows.map((r) => r.id)))}
+          >
+            {t('common.selectAll', 'Select all')}
+          </Menu3Chip>
+          <Menu3Chip onClick={() => setSelectedFinanceRowIds(new Set())}>
+            {t('common.clear', 'Clear')}
+          </Menu3Chip>
+        </div>
+        <div className={MENU_3_RIGHT_CLASS}>
+          <button
+            type="button"
+            onClick={() => void handleBulkDeleteFinanceRows()}
+            className={MENU_3_ACTION_DANGER}
+          >
+            <Trash2 size={12} />
+            {t('common.delete', 'Delete')}
+          </button>
+        </div>
+      </div>
+    ) : null;
+
   const tableWithPreview = useMemo(
     () => (
-      <TableWithPreviewLayout
-        selectedId={selectedId}
-        selectedItem={selectedItem}
-        onSelect={(id) => {
-          if (!id) {
-            deselectRow();
-            return;
-          }
-          const row = filteredRows.find((r) => r.id === id) || null;
-          if (row) onSelectRow(row);
-        }}
-        onOpenFull={(id) => {
-          const row = filteredRows.find((r) => r.id === id);
-          if (row) handleOpenFull(row);
-        }}
-        renderPreview={renderPreviewBody}
-        renderPreviewFooter={renderPreviewFooter}
-        itemIds={filteredRows.map((r) => r.id)}
-        getItemById={(id) => filteredRows.find((x) => x.id === id) ?? null}
-      >
-        <FilterableTable
-          columns={columnsForActiveTab}
-          data={filteredRows as any}
-          density="compact"
-          canvasClassName={CANVAS_PADDING}
-          selectedRowId={selectedId}
-          onRowClick={(row) => onSelectRow(row as any)}
-          onRowDoubleClick={(row) => handleOpenFull(row as any)}
-          getRowActions={(row) => getRowActions(row as any)}
-          activeFilters={activeFilters}
-          onFilterChange={setActiveFilters}
-          emptyMessage={emptyMessage}
-          enableColumnSettings
-        />
-      </TableWithPreviewLayout>
+      <div className="h-full flex overflow-hidden">
+        <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+          <StandardTable
+            columns={columnsForActiveTab}
+            data={filteredRows as unknown as Array<Record<string, unknown> & { id: string }>}
+            selectedRowId={selectedId}
+            onRowClick={(row) => onSelectRow(row as unknown as FinanceRow)}
+            onRowDoubleClick={(row) => handleOpenFull(row as unknown as FinanceRow)}
+            rowDescription={() => null}
+            defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
+            persistKey={`finance.${activeTab}.list`}
+            selection={{ selectedIds: selectedFinanceRowIds, onChange: setSelectedFinanceRowIds }}
+            activeFilters={activeFilters}
+            onFilterChange={setActiveFilters}
+            empty={{
+              icon: EMPTY_STATE_ICON_BY_TAB[activeTab] ?? Calculator,
+              title: emptyMessage,
+            }}
+            rowMenu={(row) => financeRowMenu(row as unknown as FinanceRow)}
+          />
+        </div>
+
+        {selectedFinanceRow ? (
+          <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+            {/*
+              Header (block 1) comes from StandardPreview (title/pin/Open/×,
+              canon A7.1). Blocks 2-3 (meta card + Details) and 4-6 (AI hints /
+              relations / action bar) are supplied via children/actions from
+              the existing per-kind renderPreviewBody/renderPreviewFooter
+              (useFinancePreview) — same content the legacy TableWithPreviewLayout
+              rendered, now hosted inside the canonical shell. `meta`/`details`
+              props are intentionally omitted here to avoid double-rendering
+              the meta/details blocks that renderPreviewBody already supplies.
+            */}
+            <StandardPreview
+              title={selectedFinanceRow.title}
+              onClose={() => deselectRow()}
+              onOpenFull={() => handleOpenFull(selectedFinanceRow)}
+              actions={financePreviewActionsForSelected}
+            >
+              {renderPreviewBody(selectedFinanceRow)}
+              {renderPreviewFooter(selectedFinanceRow)}
+            </StandardPreview>
+          </aside>
+        ) : null}
+      </div>
     ),
     [
-      selectedId,
-      selectedItem,
-      filteredRows,
       columnsForActiveTab,
+      filteredRows,
+      selectedId,
+      selectedFinanceRow,
+      onSelectRow,
+      handleOpenFull,
       activeFilters,
       emptyMessage,
-      onSelectRow,
+      activeTab,
+      selectedFinanceRowIds,
+      financeRowMenu,
+      financePreviewActionsForSelected,
       deselectRow,
-      handleOpenFull,
       renderPreviewBody,
       renderPreviewFooter,
-      getRowActions,
     ]
   );
 
@@ -2670,7 +2883,9 @@ export const FinanceHub: React.FC = () => {
         onClearFilters={handleClearFilters}
         availableViewModes={['table', 'grid']}
         primaryCta={primaryCta}
-        commandRowContent={statementsBulkCommandRowContent ?? commandRowContent}
+        commandRowContent={
+          statementsBulkCommandRowContent ?? financeBulkCommandRowContent ?? commandRowContent
+        }
       >
         {isFinanceRuntimeV8 && (
           <FinanceDegradedBanner
