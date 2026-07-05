@@ -8,6 +8,7 @@
 import {
   AlertTriangle,
   ArrowRight,
+  AtSign,
   Bot,
   ChevronDown,
   ChevronRight,
@@ -30,12 +31,18 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api, getMapVersionFromPayload } from '@/services/api';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { getArtifactLabel } from '@/utils/artifactLinks';
 
+import {
+  insertMentionIntoText,
+  renderMentionText,
+  useMentionAutocomplete,
+} from './mentionAutocomplete';
 import type { AIProposalBatch, CanvasToolType } from './ideaSelectionTypes';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -238,10 +245,22 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
   const [newTag, setNewTag] = useState('');
   const [newAttachmentUrl, setNewAttachmentUrl] = useState('');
   const [newComment, setNewComment] = useState('');
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const commentInputRef = useRef<HTMLTextAreaElement>(null);
   const [aiContext, setAiContext] = useState<AIContextResult | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [artifactLinks, setArtifactLinks] = useState<any[]>([]);
   const [artifactLoading, setArtifactLoading] = useState(false);
+
+  // @mention org-member autocomplete (shared with NodeCommentThread, B2b).
+  const {
+    mentionPool,
+    mentionQuery,
+    mentionSuggestions,
+    resolveMentionIds,
+    handleMentionInput,
+    closeMentionMenu,
+  } = useMentionAutocomplete(open);
 
   const [showEvidenceForm, setShowEvidenceForm] = useState(false);
   const [newEvidenceTitle, setNewEvidenceTitle] = useState('');
@@ -425,18 +444,48 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
     }
   }, []);
 
-  const handleAddComment = useCallback(() => {
-    if (!newComment.trim()) return;
-    const comment: NodeComment = {
-      id: `cmt-${Date.now()}`,
-      text: newComment.trim(),
-      createdAt: new Date().toISOString(),
-      userName: isPl ? 'Ja' : 'Me',
-    };
-    const comments = [...(nodeData.comments || []), comment];
-    onNodeDataChange(nodeId, { comments });
-    setNewComment('');
-  }, [isPl, newComment, nodeData.comments, nodeId, onNodeDataChange]);
+  const handleAddComment = useCallback(async () => {
+    const trimmed = newComment.trim();
+    if (!trimmed || commentSubmitting) return;
+
+    // Prefer resolved org-member user ids; fall back to bare name tokens.
+    // The server also re-resolves mentions from the raw text itself, so this
+    // is belt-and-suspenders — but sending them keeps the two paths consistent.
+    const mentions = resolveMentionIds(trimmed);
+    closeMentionMenu();
+    setCommentSubmitting(true);
+
+    try {
+      const res = await Api.addNodeComment(ideaId, nodeId, trimmed, mentions);
+      if (res?.comment) {
+        const comment: NodeComment = {
+          id: res.comment.id,
+          userName: res.comment.author,
+          text: res.comment.text,
+          createdAt: res.comment.createdAt,
+        };
+        const comments = [...(nodeData.comments || []), comment];
+        onNodeDataChange(nodeId, { comments });
+        setNewComment('');
+        commentInputRef.current?.focus();
+        return;
+      }
+    } catch {
+      toast.error(isPl ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
+    } finally {
+      setCommentSubmitting(false);
+    }
+  }, [
+    closeMentionMenu,
+    commentSubmitting,
+    ideaId,
+    isPl,
+    newComment,
+    nodeData.comments,
+    nodeId,
+    onNodeDataChange,
+    resolveMentionIds,
+  ]);
 
   const fetchAIContext = useCallback(async () => {
     if (!nodeData.label) return;
@@ -1235,28 +1284,83 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                       {new Date(cmt.createdAt).toLocaleDateString()}
                     </span>
                   </div>
-                  <div className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                    {cmt.text}
+                  <div className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">
+                    {renderMentionText(cmt.text, mentionPool)}
                   </div>
                 </div>
               ))}
               <div className="flex items-start gap-1.5">
-                <textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleAddComment();
+                <div className="flex-1 relative">
+                  {mentionQuery !== null && mentionSuggestions.length > 0 && (
+                    <div
+                      role="listbox"
+                      aria-label={isPl ? 'Wspomnij osobę' : 'Mention a teammate'}
+                      className="absolute bottom-full left-0 mb-1 w-64 rounded-xl border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-800 shadow-lg max-h-40 overflow-y-auto z-overlay"
+                    >
+                      {mentionSuggestions.map((user) => (
+                        <button
+                          key={user.id}
+                          type="button"
+                          role="option"
+                          className="w-full text-left px-3 py-2 text-[11px] hover:bg-slate-50 dark:hover:bg-navy-700 flex items-center gap-2"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            const ta = commentInputRef.current;
+                            const body = newComment || '';
+                            const caretPos = ta?.selectionStart ?? body.length;
+                            const result = insertMentionIntoText(body, caretPos, user);
+                            if (!result) return;
+                            setNewComment(result.text);
+                            closeMentionMenu();
+                            requestAnimationFrame(() => {
+                              if (ta) {
+                                ta.focus();
+                                ta.setSelectionRange(result.caret, result.caret);
+                              }
+                            });
+                          }}
+                        >
+                          <div className="h-6 w-6 rounded-full bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 flex items-center justify-center text-[9px] font-bold">
+                            {user.name.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="text-slate-700 dark:text-slate-300 truncate">
+                            {user.name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <textarea
+                    ref={commentInputRef}
+                    value={newComment}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setNewComment(val);
+                      const caret = e.target.selectionStart ?? val.length;
+                      handleMentionInput(val, caret);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape' && mentionQuery !== null) {
+                        e.preventDefault();
+                        closeMentionMenu();
+                        return;
+                      }
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleAddComment();
+                      }
+                    }}
+                    placeholder={
+                      isPl ? 'Dodaj komentarz... (@wzmianka)' : 'Add comment... (@mention)'
                     }
-                  }}
-                  placeholder={isPl ? 'Dodaj komentarz...' : 'Add comment...'}
-                  className="flex-1 text-[11px] bg-slate-50 dark:bg-navy-800 rounded-lg px-2.5 py-2 border border-slate-200 dark:border-navy-700 outline-none text-slate-600 dark:text-slate-400 placeholder:text-slate-400 resize-none"
-                  rows={2}
-                />
+                    className="w-full text-[11px] bg-slate-50 dark:bg-navy-800 rounded-lg pl-2.5 pr-6 py-2 border border-slate-200 dark:border-navy-700 outline-none text-slate-600 dark:text-slate-400 placeholder:text-slate-400 resize-none"
+                    rows={2}
+                  />
+                  <AtSign size={10} className="absolute right-2 bottom-2.5 text-slate-500" />
+                </div>
                 <button
                   onClick={handleAddComment}
-                  disabled={!newComment.trim()}
+                  disabled={!newComment.trim() || commentSubmitting}
                   className="p-2 rounded-lg text-primary-500 hover:bg-primary-500/10 transition-colors disabled:opacity-30"
                 >
                   <ArrowRight size={14} />

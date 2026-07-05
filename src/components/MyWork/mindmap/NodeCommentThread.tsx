@@ -3,13 +3,17 @@
  * Fetches from server API when available, falls back to prop-based comments.
  */
 import { AtSign, Loader2, MessageSquare, Send, Trash2, X } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { OrganizationApi } from '@/services/api/organizations.api';
-import { useAppStore } from '@/store/useAppStore';
+
+import {
+  insertMentionIntoText,
+  renderMentionText,
+  useMentionAutocomplete,
+} from '../mentionAutocomplete';
 
 export interface NodeComment {
   id: string;
@@ -30,35 +34,6 @@ interface NodeCommentThreadProps {
   currentUser: string;
   onAddComment: (nodeId: string, comment: NodeComment) => void;
   onDeleteComment: (nodeId: string, commentId: string) => void;
-}
-
-/**
- * Render comment text with @mentions highlighted as distinct tokens. Known
- * member names (which may contain spaces, e.g. "@Anna Kowalska") are matched
- * first against the supplied pool; anything else falls back to a single-word
- * "@handle" token.
- */
-function renderMentionText(
-  text: string,
-  pool: Array<{ id: string; name: string }>
-): React.ReactNode[] {
-  const names = pool
-    .map((p) => p.name)
-    .filter(Boolean)
-    .sort((a, b) => b.length - a.length); // longest-first so full names win
-  const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const nameAlt = names.map(escape).join('|');
-  const pattern = nameAlt ? `@(?:${nameAlt}|\\w+)` : '@\\w+';
-  const re = new RegExp(`(${pattern})`, 'g');
-  return text.split(re).map((part, idx) =>
-    part.startsWith('@') ? (
-      <span key={idx} className="text-c-info font-medium">
-        {part}
-      </span>
-    ) : (
-      <span key={idx}>{part}</span>
-    )
-  );
 }
 
 function formatTime(iso: string): string {
@@ -96,69 +71,17 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
   const [apiAvailable, setApiAvailable] = useState(true);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // @mention org-member autocomplete (mirrors the Table tool RowDetailPanel).
-  const currentOrganization = useAppStore((s) => s.currentOrganization);
-  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
-  const [mentionPool, setMentionPool] = useState<Array<{ id: string; name: string }>>([]);
+  // @mention org-member autocomplete (shared with IdeaNodeDetailDrawer, B2b).
+  const {
+    mentionPool,
+    mentionQuery,
+    mentionSuggestions,
+    resolveMentionIds,
+    handleMentionInput,
+    closeMentionMenu,
+  } = useMentionAutocomplete(open);
 
   const comments = apiAvailable ? localComments : propComments;
-
-  useEffect(() => {
-    if (!open || !currentOrganization?.id) return;
-    let cancelled = false;
-    OrganizationApi.getOrganizationMembers(currentOrganization.id)
-      .then((rows) => {
-        if (cancelled) return;
-        setMentionPool(
-          rows.map((r) => ({
-            id: r.userId,
-            name: (r.name && r.name.trim()) || r.email || r.userId,
-          }))
-        );
-      })
-      .catch(() => {
-        if (!cancelled) setMentionPool([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [open, currentOrganization?.id]);
-
-  const mentionSuggestions = useMemo(() => {
-    if (mentionQuery === null) return [];
-    const q = mentionQuery.toLowerCase();
-    return mentionPool
-      .filter(
-        (u) => !q || u.name.toLowerCase().includes(q) || String(u.id).toLowerCase().includes(q)
-      )
-      .slice(0, 12);
-  }, [mentionQuery, mentionPool]);
-
-  /**
-   * Resolve the @tokens in the composed text to org-member user ids (so the
-   * backend notifies the right people). Falls back to the raw name token when a
-   * mention doesn't match a known member — the server resolver is tolerant and
-   * org-scopes anyway, so an unmatched token is simply ignored server-side.
-   */
-  const resolveMentionIds = useCallback(
-    (body: string): string[] => {
-      const rawTokens = body.match(/@([^\s@]{1,80})/g)?.map((m) => m.slice(1)) || [];
-      const out: string[] = [];
-      const seen = new Set<string>();
-      for (const tok of rawTokens) {
-        const t = tok.toLowerCase();
-        const hit = mentionPool.find(
-          (u) => u.name.toLowerCase() === t || String(u.id).toLowerCase() === t
-        );
-        const val = hit ? hit.id : tok;
-        if (seen.has(val)) continue;
-        seen.add(val);
-        out.push(val);
-      }
-      return out;
-    },
-    [mentionPool]
-  );
 
   useEffect(() => {
     if (!open || !ideaId || !nodeId) return;
@@ -197,7 +120,7 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
 
     // Prefer resolved org-member user ids; fall back to bare name tokens.
     const mentions = resolveMentionIds(trimmed);
-    setMentionQuery(null);
+    closeMentionMenu();
 
     if (apiAvailable && ideaId) {
       try {
@@ -225,7 +148,17 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
     setLocalComments((prev) => [...prev, comment]);
     setText('');
     inputRef.current?.focus();
-  }, [apiAvailable, currentUser, ideaId, isPl, nodeId, onAddComment, resolveMentionIds, text]);
+  }, [
+    apiAvailable,
+    closeMentionMenu,
+    currentUser,
+    ideaId,
+    isPl,
+    nodeId,
+    onAddComment,
+    resolveMentionIds,
+    text,
+  ]);
 
   const handleDelete = useCallback(
     async (commentId: string) => {
@@ -245,53 +178,40 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
     [apiAvailable, ideaId, isPl, nodeId, onDeleteComment]
   );
 
-  const handleInput = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const val = e.target.value;
-    setText(val);
-    const caret = e.target.selectionStart ?? val.length;
-    const beforeCaret = val.slice(0, caret);
-    const lastAtIdx = beforeCaret.lastIndexOf('@');
-    if (lastAtIdx < 0) {
-      setMentionQuery(null);
-      return;
-    }
-    // "@" must be at start or follow whitespace (so email@host doesn't trigger).
-    const charBefore = lastAtIdx > 0 ? beforeCaret[lastAtIdx - 1] : ' ';
-    const afterAt = beforeCaret.slice(lastAtIdx + 1);
-    if (!/\s/.test(charBefore) || afterAt.includes(' ') || afterAt.includes('\n')) {
-      setMentionQuery(null);
-      return;
-    }
-    setMentionQuery(afterAt);
-  }, []);
+  const handleInput = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const val = e.target.value;
+      setText(val);
+      const caret = e.target.selectionStart ?? val.length;
+      handleMentionInput(val, caret);
+    },
+    [handleMentionInput]
+  );
 
   const insertMention = useCallback(
     (user: { id: string; name: string }) => {
       const ta = inputRef.current;
       const body = text || '';
       const caretPos = ta?.selectionStart ?? body.length;
-      const beforeCaret = body.slice(0, caretPos);
-      const lastAt = beforeCaret.lastIndexOf('@');
-      if (lastAt < 0) return;
-      const newText = body.slice(0, lastAt) + `@${user.name} ` + body.slice(caretPos);
-      setText(newText);
-      setMentionQuery(null);
+      const result = insertMentionIntoText(body, caretPos, user);
+      if (!result) return;
+      setText(result.text);
+      closeMentionMenu();
       requestAnimationFrame(() => {
         if (ta) {
-          const pos = lastAt + user.name.length + 2;
           ta.focus();
-          ta.setSelectionRange(pos, pos);
+          ta.setSelectionRange(result.caret, result.caret);
         }
       });
     },
-    [text]
+    [closeMentionMenu, text]
   );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Escape' && mentionQuery !== null) {
         e.preventDefault();
-        setMentionQuery(null);
+        closeMentionMenu();
         return;
       }
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -299,7 +219,7 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
         handleSubmit();
       }
     },
-    [handleSubmit, mentionQuery]
+    [closeMentionMenu, handleSubmit, mentionQuery]
   );
 
   if (!open) return null;
