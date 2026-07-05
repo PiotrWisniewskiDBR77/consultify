@@ -5,7 +5,7 @@
  * Provides: zoom in/out, visible zoom level, fit view, fullscreen, optional focus/restore,
  * and a toggle link for opening the full-field mini map.
  */
-import { Focus, Maximize2, Minimize2, Minus, Plus, RotateCcw } from 'lucide-react';
+import { Focus, Grid3x3, Maximize2, Minimize2, Minus, Plus, RotateCcw } from 'lucide-react';
 import React, { useCallback } from 'react';
 import { useReactFlow } from 'reactflow';
 
@@ -19,6 +19,13 @@ interface CanvasZoomControlsProps {
   /** When provided, Maximize2 toggles fullscreen instead of fit view */
   onFullscreenToggle?: () => void;
   isFullscreen?: boolean;
+  /**
+   * M06 Fala 3.1 (mind map only): when `onToggleSnap` is provided, render a
+   * snap-to-grid toggle button. Other canvases omit these props entirely, so
+   * the control never appears for them.
+   */
+  snapEnabled?: boolean;
+  onToggleSnap?: () => void;
 }
 
 const ZOOM_DURATION = 220;
@@ -49,6 +56,8 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
   onToggleMiniMap,
   onFullscreenToggle,
   isFullscreen = false,
+  snapEnabled = false,
+  onToggleSnap,
 }) => {
   const { zoomIn, zoomOut, fitView, setViewport, getZoom } = useReactFlow();
 
@@ -130,6 +139,32 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
           >
             <RotateCcw size={13} />
           </ZoomBtn>
+        )}
+        {onToggleSnap && (
+          <>
+            <Divider />
+            <button
+              type="button"
+              onClick={onToggleSnap}
+              aria-pressed={snapEnabled}
+              className={`p-1.5 rounded-lg transition-all duration-150 active:scale-95 ${
+                snapEnabled
+                  ? 'bg-c-surface-raised text-c-focus dark:bg-c-surface'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-white/[0.06]'
+              }`}
+              title={
+                snapEnabled
+                  ? isPolish
+                    ? 'Wyłącz przyciąganie do siatki'
+                    : 'Disable snap to grid'
+                  : isPolish
+                    ? 'Przyciągaj do siatki'
+                    : 'Snap to grid'
+              }
+            >
+              <Grid3x3 size={14} />
+            </button>
+          </>
         )}
         {onToggleMiniMap && (
           <>

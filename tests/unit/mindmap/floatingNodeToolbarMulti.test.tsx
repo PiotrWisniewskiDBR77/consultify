@@ -1,0 +1,83 @@
+/**
+ * M06 Fala 3.2 — FloatingNodeToolbar 'multi' mode.
+ * Verifies: (1) default/'single' mode is byte-for-byte the pre-existing
+ * behavior (no `mode` prop passed = old behavior, covered further in
+ * floatingNodeToolbar.test.tsx), and (2) 'multi' mode hides single-node-only
+ * affordances while keeping the shared styling controls that apply to every
+ * selected node (color/branch/type/font/bold/lock).
+ */
+import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    i18n: { language: 'en' },
+    t: (key: string) => key,
+  }),
+}));
+
+import { FloatingNodeToolbar } from '@/components/MyWork/mindmap/FloatingNodeToolbar';
+
+const baseProps = {
+  nodeId: 'node-1',
+  nodeData: { label: 'Test Node' },
+  style: {},
+  position: { x: 200, y: 100 },
+  onUpdate: vi.fn(),
+  onAddChild: vi.fn(),
+  onAddSibling: vi.fn(),
+  onOpenContextMenu: vi.fn(),
+  onOpenArtifactModal: vi.fn(),
+  onOpenNodeDetail: vi.fn(),
+  onRemoveArtifact: vi.fn(),
+  onOpenLinkedArtifact: vi.fn(),
+  onOpenChatAboutNode: vi.fn(),
+  onAction: vi.fn(),
+};
+
+describe('FloatingNodeToolbar — mode="multi" (M06 Fala 3.2)', () => {
+  it('hides single-node-only affordances (add child/sibling, rename, more/context menu, AI, artifacts)', () => {
+    render(<FloatingNodeToolbar {...baseProps} mode="multi" selectionCount={3} />);
+
+    expect(screen.queryByTitle('Add child (Tab)')).toBeNull();
+    expect(screen.queryByTitle('Add sibling (Shift+Enter)')).toBeNull();
+    expect(screen.queryByTitle('Rename (F2)')).toBeNull();
+    expect(screen.queryByTitle('More options')).toBeNull();
+    expect(screen.queryByTitle('AI')).toBeNull();
+    expect(screen.queryByTitle('Linked artifacts')).toBeNull();
+    expect(screen.queryByTitle('Quick task')).toBeNull();
+    expect(screen.queryByTitle('Quick notes')).toBeNull();
+  });
+
+  it('shows the shared styling controls that apply to the whole selection', () => {
+    render(<FloatingNodeToolbar {...baseProps} mode="multi" selectionCount={3} />);
+
+    expect(screen.getByTitle('Node type')).toBeTruthy();
+    expect(screen.getByTitle('Line style')).toBeTruthy();
+    expect(screen.getByTitle('Auto-layout branch')).toBeTruthy();
+    expect(screen.getByTitle('Color')).toBeTruthy();
+    expect(screen.getByTitle('Font size')).toBeTruthy();
+    expect(screen.getByTitle('Bold')).toBeTruthy();
+  });
+
+  it('shows the selection count label', () => {
+    render(<FloatingNodeToolbar {...baseProps} mode="multi" selectionCount={5} />);
+    expect(screen.getByText('5 selected')).toBeTruthy();
+  });
+
+  it('applying a style calls onUpdate once with the patch (caller fans it out to all selected nodes)', () => {
+    const onUpdate = vi.fn();
+    render(<FloatingNodeToolbar {...baseProps} mode="multi" selectionCount={2} onUpdate={onUpdate} />);
+    const boldBtn = screen.getByTitle('Bold');
+    fireEvent.click(boldBtn);
+    expect(onUpdate).toHaveBeenCalledWith({ bold: true });
+  });
+
+  it('defaults to single mode (all 10+ slots) when mode is omitted — unchanged from before Fala 3.2', () => {
+    render(<FloatingNodeToolbar {...baseProps} />);
+    const buttons = screen.getAllByRole('button');
+    expect(buttons.length).toBeGreaterThanOrEqual(10);
+    expect(screen.getByTitle('Add child (Tab)')).toBeTruthy();
+    expect(screen.getByTitle('More options')).toBeTruthy();
+  });
+});

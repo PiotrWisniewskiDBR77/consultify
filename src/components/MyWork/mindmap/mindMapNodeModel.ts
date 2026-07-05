@@ -212,6 +212,23 @@ export function applyNodeStyle(node: Node, style: MindMapNodeStyle): Node {
   return { ...node, data: { ...node.data, ...patch } };
 }
 
+/**
+ * M06 Fala 3.2 — multi-select toolbar: apply the same style patch to every
+ * node whose id is in `nodeIds`, leaving all other nodes referentially
+ * unchanged (so callers can cheaply detect "nothing changed").
+ * Pure function — no side effects, easy to unit-test in isolation from the
+ * 6400-LOC IdeaRecommendationMap component.
+ */
+export function applyStyleToNodes(
+  nodes: Node[],
+  nodeIds: string[] | Set<string>,
+  style: MindMapNodeStyle
+): Node[] {
+  const ids = nodeIds instanceof Set ? nodeIds : new Set(nodeIds);
+  if (ids.size === 0) return nodes;
+  return nodes.map((node) => (ids.has(node.id) ? applyNodeStyle(node, style) : node));
+}
+
 export function appendAIHistoryEntry(
   history: MindMapAIHistoryEntry[] | undefined,
   entry: MindMapAIHistoryEntry

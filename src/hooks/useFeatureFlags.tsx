@@ -174,6 +174,42 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     allowLocalOverride: true,
   },
   {
+    id: 'mindmapMultiToolbar',
+    name: 'Mind Map: Multi-select Toolbar (M06 Fala 3.2)',
+    description:
+      'Shows the floating styling toolbar (branch color, shape, priority) when more than one ' +
+      'node is selected on the mind map canvas, applying the chosen style to every selected ' +
+      'node. OFF = today’s behavior where the toolbar only appears for a single selected node.',
+    defaultValue: false,
+    category: 'beta',
+    allowLocalOverride: true,
+  },
+  {
+    id: 'mindmapAlignSnap',
+    name: 'Mind Map: Align/Distribute + Snap (M06 Fala 3.1)',
+    description:
+      'Positional canvas tools for the mind map (M06 Fala 3.1): align/distribute buttons on the ' +
+      'multi-select toolbar (align left/center-H/right/top/middle-V/bottom for 2+ nodes, ' +
+      'distribute H/V for 3+), an opt-in snap-to-grid toggle, and smart guide lines while ' +
+      'dragging. OFF = today’s free-form positioning with no alignment affordances.',
+    defaultValue: false,
+    category: 'beta',
+    allowLocalOverride: true,
+  },
+  {
+    id: 'mindmapVirtualization',
+    name: 'Mind Map: Viewport Virtualization (M06 Fala 3.3)',
+    description:
+      'Real viewport culling for large mind maps (M06 Fala 3.3): once a map crosses the node ' +
+      'threshold, ReactFlow only mounts DOM for nodes intersecting the visible viewport ' +
+      '(onlyRenderVisibleElements). All nodes stay in the graph store, so selection, the ' +
+      'minimap, smart guides and multi-select styling keep working for off-screen nodes. ' +
+      'OFF = today’s behavior where every node is always mounted in the DOM.',
+    defaultValue: false,
+    category: 'beta',
+    allowLocalOverride: true,
+  },
+  {
     id: 'ENABLE_TERESA_MINDMAP',
     name: 'Teresa: Mind Map Bridge',
     description:
