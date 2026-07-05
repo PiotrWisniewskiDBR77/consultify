@@ -35,9 +35,14 @@ export const TransformativeConfirmDialog: React.FC<TransformativeConfirmDialogPr
 }) => {
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!open) return undefined;
+    // Remember whatever had focus before the dialog opened (the "Create
+    // proposal" button) so we can return focus to it on close — otherwise
+    // keyboard/screen-reader users land back at the top of the document.
+    triggerRef.current = document.activeElement as HTMLElement | null;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         onCancel();
@@ -48,6 +53,7 @@ export const TransformativeConfirmDialog: React.FC<TransformativeConfirmDialogPr
     return () => {
       clearTimeout(focusTimer);
       document.removeEventListener('keydown', handleKeyDown);
+      triggerRef.current?.focus?.();
     };
   }, [open, onCancel]);
 
