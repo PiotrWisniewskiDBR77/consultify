@@ -25,10 +25,21 @@ import {
   buildThreeScenarioPnLSchema,
   type ThreeScenarioPnLParams,
 } from './threeScenarioPnL.js';
+import {
+  buildBudgetVsActualSchema,
+  type BudgetVsActualParams,
+} from './budgetVsActual.js';
+import {
+  buildUnitEconomicsSchema,
+  type UnitEconomicsParams,
+} from './unitEconomics.js';
 import type { WorkbookSchema } from '../WorkbookSchema.js';
 
 /** Stable identifiers for registered model templates. */
-export type WorkbookTemplateId = 'threeScenarioPnL';
+export type WorkbookTemplateId =
+  | 'threeScenarioPnL'
+  | 'budgetVsActual'
+  | 'unitEconomics';
 
 /** A registered template: metadata + a params→schema builder. */
 export interface WorkbookTemplateEntry<P = any> {
@@ -44,6 +55,8 @@ export interface WorkbookTemplateEntry<P = any> {
 /** The registry map: `templateId → entry`. */
 export const WORKBOOK_TEMPLATES: {
   threeScenarioPnL: WorkbookTemplateEntry<ThreeScenarioPnLParams>;
+  budgetVsActual: WorkbookTemplateEntry<BudgetVsActualParams>;
+  unitEconomics: WorkbookTemplateEntry<UnitEconomicsParams>;
 } = {
   threeScenarioPnL: {
     id: 'threeScenarioPnL',
@@ -51,6 +64,20 @@ export const WORKBOOK_TEMPLATES: {
     description:
       'Parametryczny P&L (Base/Bull/Bear) na 3 lata: przychody→COGS→zysk brutto→OPEX→EBITDA→D&A→EBIT→odsetki→EBT→podatek→zysk netto→marża, każda pozycja jako formuła, wejścia na arkuszu Założenia, arkusz Porównanie.',
     build: buildThreeScenarioPnLSchema,
+  },
+  budgetVsActual: {
+    id: 'budgetVsActual',
+    title: 'Budżet vs Wykonanie',
+    description:
+      'Parametryczny raport kontrolingowy: pozycje budżetowe z budżetem, wykonaniem, wariancją i wariancją % (formuły), wejścia na arkuszu Założenia, wiersz SUMA.',
+    build: buildBudgetVsActualSchema,
+  },
+  unitEconomics: {
+    id: 'unitEconomics',
+    title: 'Unit Economics — ekonomika jednostkowa (SaaS/e-commerce)',
+    description:
+      'Parametryczny model jednostkowej ekonomiki: ARPU, koszt zmienny, CAC, churn → marża brutto, contribution margin %, lifetime, LTV, LTV/CAC, okres zwrotu CAC — każda metryka jako formuła, wejścia na arkuszu Założenia.',
+    build: buildUnitEconomicsSchema,
   },
 };
 
@@ -72,5 +99,5 @@ export function buildFromTemplate(
   return entry.build(params as any);
 }
 
-export { buildThreeScenarioPnLSchema };
-export type { ThreeScenarioPnLParams };
+export { buildThreeScenarioPnLSchema, buildBudgetVsActualSchema, buildUnitEconomicsSchema };
+export type { ThreeScenarioPnLParams, BudgetVsActualParams, UnitEconomicsParams };
