@@ -2692,6 +2692,12 @@ router.post(
     }
     const { userId, rating, context, comment, timestamp } = parsed.data;
 
+    // Guarantee the feedback tables exist before inserting: /pulse and /feature
+    // are often the FIRST feedback endpoints a fresh process serves, and unlike
+    // createFeedbackInternal they previously skipped this — a missing table (no
+    // migration yet applied) surfaced as a bare 500 instead of self-healing.
+    await ensureFeedbackSchema();
+
     const id = uuidv4();
     const actualUserId = userId || req.user?.id;
 
@@ -2778,6 +2784,10 @@ router.post(
       context,
       requestAIAnalysis,
     } = parsed.data;
+
+    // Self-heal the schema before insert (see /pulse note above): /feature may
+    // be the first feedback endpoint hit in a fresh process.
+    await ensureFeedbackSchema();
 
     const id = uuidv4();
     const actualUserId = userId || req.user?.id;
