@@ -33,13 +33,18 @@ import {
   buildUnitEconomicsSchema,
   type UnitEconomicsParams,
 } from './unitEconomics.js';
+import {
+  buildDcfValuationSchema,
+  type DcfValuationParams,
+} from './dcfValuation.js';
 import type { WorkbookSchema } from '../WorkbookSchema.js';
 
 /** Stable identifiers for registered model templates. */
 export type WorkbookTemplateId =
   | 'threeScenarioPnL'
   | 'budgetVsActual'
-  | 'unitEconomics';
+  | 'unitEconomics'
+  | 'dcfValuation';
 
 /** A registered template: metadata + a params→schema builder. */
 export interface WorkbookTemplateEntry<P = any> {
@@ -57,6 +62,7 @@ export const WORKBOOK_TEMPLATES: {
   threeScenarioPnL: WorkbookTemplateEntry<ThreeScenarioPnLParams>;
   budgetVsActual: WorkbookTemplateEntry<BudgetVsActualParams>;
   unitEconomics: WorkbookTemplateEntry<UnitEconomicsParams>;
+  dcfValuation: WorkbookTemplateEntry<DcfValuationParams>;
 } = {
   threeScenarioPnL: {
     id: 'threeScenarioPnL',
@@ -79,6 +85,13 @@ export const WORKBOOK_TEMPLATES: {
       'Parametryczny model jednostkowej ekonomiki: ARPU, koszt zmienny, CAC, churn → marża brutto, contribution margin %, lifetime, LTV, LTV/CAC, okres zwrotu CAC — każda metryka jako formuła, wejścia na arkuszu Założenia.',
     build: buildUnitEconomicsSchema,
   },
+  dcfValuation: {
+    id: 'dcfValuation',
+    title: 'Wycena DCF — zdyskontowane przepływy pieniężne',
+    description:
+      'Parametryczny model wyceny DCF: prognoza wolnych przepływów (unlevered FCF), dyskontowanie stopą WACC, wartość rezydualna metodą Gordona → Enterprise Value → Equity Value. Każda pozycja jako formuła, wejścia na arkuszu Założenia, arkusz Wycena.',
+    build: buildDcfValuationSchema,
+  },
 };
 
 /** All registered templates as a list (for enumeration / prompt injection). */
@@ -99,5 +112,15 @@ export function buildFromTemplate(
   return entry.build(params as any);
 }
 
-export { buildThreeScenarioPnLSchema, buildBudgetVsActualSchema, buildUnitEconomicsSchema };
-export type { ThreeScenarioPnLParams, BudgetVsActualParams, UnitEconomicsParams };
+export {
+  buildThreeScenarioPnLSchema,
+  buildBudgetVsActualSchema,
+  buildUnitEconomicsSchema,
+  buildDcfValuationSchema,
+};
+export type {
+  ThreeScenarioPnLParams,
+  BudgetVsActualParams,
+  UnitEconomicsParams,
+  DcfValuationParams,
+};
