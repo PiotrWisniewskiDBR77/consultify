@@ -419,6 +419,25 @@ const scheduleStartupTask = (
   timer.unref?.();
 };
 
+// ============================================================
+// SAML SIGNATURE VERIFIER — wire the real xml-crypto verifier into BOTH SSO
+// paths so SAML login is cryptographically verified (and wrapping-safe). Until
+// this runs, both services fail closed and reject every SAML response.
+// Registered synchronously at boot (cheap, no DB dependency), before listen().
+// ============================================================
+scheduleStartupTask(async () => {
+  try {
+    const { verifySAMLSignature } = await import('./utils/samlSignatureVerifier.js');
+    const { ssoService: tablePlatformSsoService } = await import(
+      './services/tablePlatform/SSOService.js'
+    );
+    tablePlatformSsoService.setSignatureVerifier(verifySAMLSignature);
+    logger.info('[Server] ✅ SAML signature verifier registered (xml-crypto)');
+  } catch (err: any) {
+    logger.error('[Server] SAML signature verifier registration failed:', err?.message || err);
+  }
+}, 0);
+
 if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
   // Init Scheduler (ES modules) - non-blocking
   scheduleStartupTask(async () => {

@@ -177,7 +177,7 @@ export class SSOService {
       };
     }
 
-    let signatureOk = false;
+    let verifierResult: boolean | SAMLSignatureVerifierResult | null = false;
     try {
       const config = await this.getSSOConfig(organizationId);
       const certificate =
@@ -185,7 +185,7 @@ export class SSOService {
       if (!certificate) {
         return { valid: false, error: 'no SAML certificate configured' };
       }
-      signatureOk = await this.signatureVerifier(decoded, certificate);
+      verifierResult = await this.signatureVerifier(decoded, certificate);
     } catch (err) {
       logger.error('[SSOService] SAML signature verification threw', {
         error: (err as Error).message,
@@ -193,16 +193,26 @@ export class SSOService {
       return { valid: false, error: 'signature verification failed' };
     }
 
-    if (!signatureOk) {
+    if (!verifierResult) {
       logger.warn('[SSOService] SAML signature verification failed — rejecting response', {
         organizationId,
       });
       return { valid: false, error: 'invalid SAML signature' };
     }
 
+    // ANTI-WRAPPING: when the verifier returns the signed assertion fragment,
+    // derive identity from THAT fragment only — never from the surrounding
+    // (attacker-controllable) envelope. A bare `true` falls back to the legacy
+    // whole-envelope extraction (compat path; not wrapping-safe on its own).
+    const identitySource =
+      typeof verifierResult === 'object' && verifierResult.signedAssertionXml
+        ? verifierResult.signedAssertionXml
+        : decoded;
+
     // Signature verified: only NOW is it safe to extract identity claims.
-    const nameIdMatch = decoded.match(/<saml:NameID[^>]*>([^<]+)<\/saml:NameID>/);
-    const emailMatch = decoded.match(/email[^>]*>([^<]+)</i);
+    // Match NameID with or without a namespace prefix (saml:, saml2:, none).
+    const nameIdMatch = identitySource.match(/<(?:[\w-]+:)?NameID[^>]*>([^<]+)<\/(?:[\w-]+:)?NameID>/);
+    const emailMatch = identitySource.match(/email[^>]*>([^<]+)</i);
     if (!nameIdMatch) {
       return { valid: false, error: 'no NameID in assertion' };
     }
@@ -218,13 +228,30 @@ export class SSOService {
 
 /**
  * Verifies the XML signature of a decoded SAML response against the IdP
- * certificate. Returns true only if the signature is cryptographically valid.
- * Implement this with xml-crypto (or @node-saml/node-saml) and register it via
- * `ssoService.setSignatureVerifier(...)`.
+ * certificate. Implement this with xml-crypto (or @node-saml/node-saml) and
+ * register it via `ssoService.setSignatureVerifier(...)`.
+ *
+ * A verifier MUST fail closed. It may report the outcome in either form:
+ *  - a boolean: `true` = signature valid (identity is then extracted from the
+ *    whole decoded envelope — legacy shape; DOES NOT defend against signature
+ *    wrapping, retained only for backwards compatibility / tests);
+ *  - a `{ signedAssertionXml }` object: signature valid AND the XML of the ONE
+ *    assertion element genuinely covered by the signature (the secure shape —
+ *    identity is extracted from this signed fragment only, immune to XSW).
+ *
+ * Any falsy / null return (or a throw) means "reject".
  */
+export interface SAMLSignatureVerifierResult {
+  signedAssertionXml: string;
+}
+
 export type SAMLSignatureVerifier = (
   decodedXml: string,
   certificate: string
-) => boolean | Promise<boolean>;
+) =>
+  | boolean
+  | SAMLSignatureVerifierResult
+  | null
+  | Promise<boolean | SAMLSignatureVerifierResult | null>;
 
 export const ssoService = new SSOService();
