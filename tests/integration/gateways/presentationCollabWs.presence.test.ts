@@ -107,37 +107,72 @@ function sendUpgrade(port: number, path: string, token?: string): Promise<number
   });
 }
 
-function openClient(port: number, deckId: string, token: string): Promise<WebSocket> {
+/**
+ * A test client that BUFFERS every message from the moment the socket is
+ * created. This is the load-bearing fix for flakiness: the server sends
+ * `presence:list`/`presence:joined` immediately on connect, and a bare
+ * `ws.on('message', …)` attached only after `await open` can miss frames that
+ * already arrived (EventEmitter does not replay past events). Buffering from
+ * construction means `waitForMessage` can match frames that landed before it
+ * was called.
+ */
+interface TestClient {
+  ws: WebSocket;
+  waitFor: (predicate: (msg: any) => boolean, timeoutMs?: number) => Promise<any>;
+  close: () => void;
+}
+
+function openClient(port: number, deckId: string, token: string): Promise<TestClient> {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(
       `ws://127.0.0.1:${port}/ws/presentations/${deckId}?token=${encodeURIComponent(token)}`
     );
-    ws.on('open', () => resolve(ws));
-    ws.on('error', reject);
-  });
-}
+    const buffer: any[] = [];
+    const waiters: { predicate: (m: any) => boolean; resolve: (m: any) => void }[] = [];
 
-/** Wait for the first message whose parsed JSON satisfies `predicate`. */
-function waitForMessage(
-  ws: WebSocket,
-  predicate: (msg: any) => boolean,
-  timeoutMs = 2000
-): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const t = setTimeout(() => reject(new Error('timeout waiting for message')), timeoutMs);
-    const handler = (raw: WebSocket.RawData) => {
+    ws.on('message', (raw: WebSocket.RawData) => {
+      let msg: any;
       try {
-        const msg = JSON.parse(raw.toString());
-        if (predicate(msg)) {
-          clearTimeout(t);
-          ws.off('message', handler);
-          resolve(msg);
-        }
+        msg = JSON.parse(raw.toString());
       } catch {
-        /* ignore */
+        return;
       }
+      const idx = waiters.findIndex((w) => w.predicate(msg));
+      if (idx >= 0) {
+        const [w] = waiters.splice(idx, 1);
+        w.resolve(msg);
+      } else {
+        buffer.push(msg);
+      }
+    });
+
+    const client: TestClient = {
+      ws,
+      waitFor(predicate, timeoutMs = 15000) {
+        const existing = buffer.findIndex((m) => predicate(m));
+        if (existing >= 0) return Promise.resolve(buffer.splice(existing, 1)[0]);
+        return new Promise((res, rej) => {
+          const t = setTimeout(() => rej(new Error('timeout waiting for message')), timeoutMs);
+          waiters.push({
+            predicate,
+            resolve: (m) => {
+              clearTimeout(t);
+              res(m);
+            },
+          });
+        });
+      },
+      close() {
+        try {
+          ws.terminate();
+        } catch {
+          /* ignore */
+        }
+      },
     };
-    ws.on('message', handler);
+
+    ws.on('open', () => resolve(client));
+    ws.on('error', reject);
   });
 }
 
@@ -153,9 +188,16 @@ describe('P3.3 — presentationCollabWs presence gateway', () => {
   });
 
   afterAll(async () => {
-    await new Promise<void>((resolve, reject) =>
-      server.close((err) => (err ? reject(err) : resolve()))
-    );
+    // Force-terminate any lingering client sockets so server.close() can't hang
+    // the hook (a failed live-socket test may leave a connection open).
+    await new Promise<void>((resolve) => {
+      const t = setTimeout(resolve, 3000);
+      server.close(() => {
+        clearTimeout(t);
+        resolve();
+      });
+      server.closeAllConnections?.();
+    });
   });
 
   beforeEach(() => {
@@ -227,33 +269,35 @@ describe('P3.3 — presentationCollabWs presence gateway', () => {
     const tokenB = signToken({ id: 'user-b', organizationId: 'org-a', name: 'Bob' });
 
     const wsA = await openClient(port, 'deck-live', tokenA);
+    let wsB: TestClient | undefined;
+    try {
+      wsB = await openClient(port, 'deck-live', tokenB);
 
-    // When B joins, A must receive a presence:joined for user-b.
-    const aSeesB = waitForMessage(
-      wsA,
-      (m) => m.type === 'presence:joined' && m.user?.userId === 'user-b'
-    );
-    const wsB = await openClient(port, 'deck-live', tokenB);
+      // B should receive the roster (presence:list) including A. (Buffered from
+      // socket construction, so this matches even if the frame arrived before
+      // this call — the fix for cross-run flakiness.)
+      const bRoster = await wsB.waitFor(
+        (m) => m.type === 'presence:list' && Array.isArray(m.users)
+      );
+      expect(bRoster.users.some((u: any) => u.userId === 'user-a')).toBe(true);
 
-    // B should receive the roster (presence:list) including A.
-    const bRoster = await waitForMessage(
-      wsB,
-      (m) => m.type === 'presence:list' && Array.isArray(m.users)
-    );
-    expect(bRoster.users.some((u: any) => u.userId === 'user-a')).toBe(true);
+      // A must have received a presence:joined for user-b.
+      const joinedMsg = await wsA.waitFor(
+        (m) => m.type === 'presence:joined' && m.user?.userId === 'user-b'
+      );
+      expect(joinedMsg.user.name).toBe('Bob');
 
-    const joinedMsg = await aSeesB;
-    expect(joinedMsg.user.name).toBe('Bob');
-
-    // A must be notified when B disconnects.
-    const aSeesLeft = waitForMessage(
-      wsA,
-      (m) => m.type === 'presence:left' && m.userId === 'user-b'
-    );
-    wsB.close();
-    const leftMsg = await aSeesLeft;
-    expect(leftMsg.userId).toBe('user-b');
-
-    wsA.close();
+      // A must be notified when B disconnects.
+      const aSeesLeft = wsA.waitFor(
+        (m) => m.type === 'presence:left' && m.userId === 'user-b'
+      );
+      wsB.close();
+      wsB = undefined;
+      const leftMsg = await aSeesLeft;
+      expect(leftMsg.userId).toBe('user-b');
+    } finally {
+      wsB?.close();
+      wsA.close();
+    }
   });
 });
