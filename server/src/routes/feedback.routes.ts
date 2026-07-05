@@ -48,6 +48,7 @@ import {
   inferPriorityForPipeline as inferFeedbackPriority,
 } from '../services/feedbackTriage.js';
 import NotificationService from '../services/notificationService.js';
+import { computeSlaDueAtIso } from '../services/feedbackSla.js';
 import { anchorSlackThread } from '../services/slack/feedbackThreadAnchor.js';
 import { routeToSlack } from '../services/slack/slackRouter.js';
 import WhatsAppService from '../services/WhatsAppService.js';
@@ -244,6 +245,10 @@ async function ensureFeedbackSchema(): Promise<void> {
       ['cluster', 'TEXT'],
       ['deploy_status', 'TEXT'],
       ['workflow_updated_at', 'TIMESTAMP'],
+      // F5 (SLA): response deadline computed from severity at intake, and the
+      // timestamp we last escalated an overdue ticket (so the sweep alerts once).
+      ['due_at', 'TIMESTAMP'],
+      ['sla_escalated_at', 'TIMESTAMP'],
     ];
     for (const [col, type] of additive) {
       try {
@@ -1357,8 +1362,14 @@ export async function createFeedbackInternal(
     }
     const status: TicketStatus = 'NEW';
 
+    // F5 (SLA): response deadline from severity (fallback priority), stamped at
+    // intake. Persisted to the due_at column when present AND mirrored into
+    // metadata so engines/rows without the column still carry the deadline.
+    const slaDueAt = computeSlaDueAtIso(severity || null, priority, Date.now());
+
     let metadataJson: Record<string, unknown> = {
       ...(metadata || {}),
+      sla_due_at: slaDueAt,
       ...contextMeta,
       appEnv,
       clientEnv: clientEnv || undefined,
@@ -1401,6 +1412,8 @@ export async function createFeedbackInternal(
       // time; owner / deploy_status land once a human (or Cursor) PATCHes
       // the workflow.
       ['cluster', (workflowSeed?.cluster as string | undefined) || null],
+      // F5 (SLA): response deadline, so the overdue sweep can query it directly.
+      ['due_at', slaDueAt],
     ];
 
     for (const [col, val] of optional) {
