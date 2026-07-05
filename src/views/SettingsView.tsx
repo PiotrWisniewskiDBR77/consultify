@@ -57,6 +57,7 @@ import { AuthenticationAccessPage } from '../components/settings/security/Authen
 import { SecurityOverviewPage } from '../components/settings/security/SecurityOverviewPage';
 import SettingsOwnershipPanels from '../components/settings/SettingsOwnershipPanels';
 import SettingsSidebar, { SettingsSection } from '../components/settings/SettingsSidebar';
+import { EmptyState } from '../components/shared/states';
 import { ThemeSettings } from '../components/settings/ThemeSettings';
 import { VoiceSettings } from '../components/settings/VoiceSettings';
 import { WebhooksSettings } from '../components/settings/WebhooksSettings';
@@ -454,19 +455,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
       default:
         return (
-          <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
-            {t('settings.sectionNotFound', 'Section not found')}
-          </div>
+          <EmptyState
+            variant="filter"
+            title={t('settings.sectionNotFound', 'Section not found')}
+            description={t(
+              'settings.sectionNotFoundHint',
+              'This settings section does not exist. Pick another from the sidebar.'
+            )}
+          />
         );
     }
   }, [activeSection, currentUser, onUpdateUser, t]);
 
   return (
-    <div className="flex h-full bg-slate-50 dark:bg-navy-950 relative">
+    <div className="relative flex h-full bg-[var(--c-bg)]">
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -488,30 +494,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-navy-900">
+      <div className="flex min-w-0 flex-1 flex-col bg-[var(--c-surface)]">
         {/* Header - Breadcrumbs Style (Golden Standard) */}
-        <header className="flex items-center justify-between px-4 lg:px-6 h-12 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-900 sticky top-0 z-20">
+        <header className="sticky top-0 z-20 flex h-12 items-center justify-between border-b border-[var(--c-border-subtle)] bg-[var(--c-surface)] px-4 lg:px-6">
           <div className="flex items-center gap-3">
             {/* Mobile menu button */}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden text-slate-600 hover:text-navy-900 dark:text-slate-400 dark:hover:text-white p-2"
+              className="p-2 text-[var(--c-text-secondary)] hover:text-[var(--c-text)] lg:hidden"
             >
-              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
 
             {/* Breadcrumbs */}
-            <div className="flex items-center text-sm font-medium text-slate-500 dark:text-slate-400">
+            <div className="flex items-center text-sm font-medium text-[var(--c-text-muted)]">
               <span
                 onClick={handleBackToDashboard}
-                className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors"
+                className="cursor-pointer transition-colors hover:text-[var(--c-text)]"
               >
-                Settings
+                {t('settings.sidebar.title', 'Settings')}
               </span>
               <ChevronRight size={14} className="mx-2" />
-              <span className="text-navy-900 dark:text-white">{currentMeta.title}</span>
+              <span className="text-[var(--c-text)]">{currentMeta.title}</span>
             </div>
           </div>
         </header>

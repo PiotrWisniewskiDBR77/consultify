@@ -139,7 +139,7 @@ export const MobileV8ScopePanel: React.FC<MobileV8ScopePanelProps> = ({
                     className="rounded-xl border border-slate-200/80 dark:border-navy-700 bg-white dark:bg-navy-900 p-4"
                   >
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300">
-                      <Icon size={18} />
+                      <Icon size={16} />
                     </div>
                     <div className="mt-3 text-sm font-semibold text-slate-900 dark:text-white">
                       {item.title}

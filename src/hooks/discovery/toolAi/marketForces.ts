@@ -20,6 +20,7 @@ import type {
 } from '@/store/useToolStore';
 
 import type { ToolAiPendingAction } from './dynamicSwot';
+import { pickW2SummaryFields } from './w2SummaryFields';
 
 const FORCE_IDS: PorterForceId[] = PORTER_FORCE_IDS;
 
@@ -502,6 +503,7 @@ export function applyMarketForcesPendingAction({
     actions.updateInputData({
       summary: {
         proposalId: 'porter-summary',
+        ...pickW2SummaryFields(summaryObj),
         executiveSummary:
           typeof summaryObj?.executiveSummary === 'string'
             ? summaryObj.executiveSummary

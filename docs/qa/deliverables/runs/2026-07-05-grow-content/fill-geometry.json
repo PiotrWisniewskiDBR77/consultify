@@ -1,0 +1,176 @@
+{
+  "generatedAt": "2026-07-05T11:39:31.487Z",
+  "note": "Deterministic DOM geometry. fill = fraction of usable height the content spans; dominant = tallest single block / usable height (grow makes hero blocks bigger); deadBottom = fraction empty below content. BEFORE = W7 rhythm alone (grow off), AFTER = grow on.",
+  "before": [
+    {
+      "slide": 0,
+      "variant": "centered",
+      "intent": "cover",
+      "top": 0.044,
+      "bottom": 0.172,
+      "fill": 0.127,
+      "dominant": 0.05,
+      "deadBottom": 0.828,
+      "chartPx": 0,
+      "heroPx": 0
+    },
+    {
+      "slide": 1,
+      "variant": "two_column",
+      "intent": "executive_summary",
+      "top": 0.352,
+      "bottom": 0.648,
+      "fill": 0.296,
+      "dominant": 0.111,
+      "deadBottom": 0.352,
+      "chartPx": 0,
+      "heroPx": 12
+    },
+    {
+      "slide": 2,
+      "variant": "kpi_grid_2x2",
+      "intent": "performance_overview",
+      "top": 0.044,
+      "bottom": 0.728,
+      "fill": 0.683,
+      "dominant": 0.242,
+      "deadBottom": 0.272,
+      "chartPx": 150,
+      "heroPx": 30
+    },
+    {
+      "slide": 3,
+      "variant": "big_number",
+      "intent": "single_insight",
+      "top": 0.299,
+      "bottom": 0.701,
+      "fill": 0.402,
+      "dominant": 0.151,
+      "deadBottom": 0.299,
+      "chartPx": 0,
+      "heroPx": 30
+    },
+    {
+      "slide": 4,
+      "variant": "split_lr",
+      "intent": "comparison",
+      "top": 0.379,
+      "bottom": 0.621,
+      "fill": 0.242,
+      "dominant": 0.242,
+      "deadBottom": 0.379,
+      "chartPx": 150,
+      "heroPx": 12
+    },
+    {
+      "slide": 5,
+      "variant": "stacked",
+      "intent": "recommendation_single",
+      "top": 0.396,
+      "bottom": 0.593,
+      "fill": 0.197,
+      "dominant": 0.058,
+      "deadBottom": 0.407,
+      "chartPx": 0,
+      "heroPx": 14
+    },
+    {
+      "slide": 6,
+      "variant": "timeline_strip",
+      "intent": "next_steps",
+      "top": 0.044,
+      "bottom": 0.615,
+      "fill": 0.57,
+      "dominant": 0.078,
+      "deadBottom": 0.385,
+      "chartPx": 0,
+      "heroPx": 9
+    }
+  ],
+  "after": [
+    {
+      "slide": 0,
+      "variant": "centered",
+      "intent": "cover",
+      "top": 0.044,
+      "bottom": 0.172,
+      "fill": 0.127,
+      "dominant": 0.05,
+      "deadBottom": 0.828,
+      "chartPx": 0,
+      "heroPx": 0
+    },
+    {
+      "slide": 1,
+      "variant": "two_column",
+      "intent": "executive_summary",
+      "top": 0.352,
+      "bottom": 0.648,
+      "fill": 0.296,
+      "dominant": 0.111,
+      "deadBottom": 0.352,
+      "chartPx": 0,
+      "heroPx": 12
+    },
+    {
+      "slide": 2,
+      "variant": "kpi_grid_2x2",
+      "intent": "performance_overview",
+      "top": 0.044,
+      "bottom": 0.846,
+      "fill": 0.801,
+      "dominant": 0.478,
+      "deadBottom": 0.154,
+      "chartPx": 320,
+      "heroPx": 30
+    },
+    {
+      "slide": 3,
+      "variant": "big_number",
+      "intent": "single_insight",
+      "top": 0.203,
+      "bottom": 0.797,
+      "fill": 0.593,
+      "dominant": 0.342,
+      "deadBottom": 0.203,
+      "chartPx": 0,
+      "heroPx": 112
+    },
+    {
+      "slide": 4,
+      "variant": "split_lr",
+      "intent": "comparison",
+      "top": 0.261,
+      "bottom": 0.739,
+      "fill": 0.478,
+      "dominant": 0.478,
+      "deadBottom": 0.261,
+      "chartPx": 320,
+      "heroPx": 12
+    },
+    {
+      "slide": 5,
+      "variant": "stacked",
+      "intent": "recommendation_single",
+      "top": 0.396,
+      "bottom": 0.593,
+      "fill": 0.197,
+      "dominant": 0.058,
+      "deadBottom": 0.407,
+      "chartPx": 0,
+      "heroPx": 14
+    },
+    {
+      "slide": 6,
+      "variant": "timeline_strip",
+      "intent": "next_steps",
+      "top": 0.044,
+      "bottom": 0.615,
+      "fill": 0.57,
+      "dominant": 0.078,
+      "deadBottom": 0.385,
+      "chartPx": 0,
+      "heroPx": 9
+    }
+  ]
+}

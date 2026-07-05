@@ -431,7 +431,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
   const formatCurrency = (num: number) => `$${num.toFixed(2)}`;
 
   const getIntensityColor = (intensity: number) => {
-    if (intensity >= 80) return 'bg-navy-900';
+    if (intensity >= 80) return 'bg-c-accent';
     if (intensity >= 60) return 'bg-primary-400';
     if (intensity >= 40) return 'bg-primary-300/70';
     if (intensity >= 20) return 'bg-primary-200/50';
@@ -469,7 +469,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                 title={loadError || undefined}
                 className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
                   timeRange === range
-                    ? 'bg-navy-900 text-white'
+                    ? 'bg-c-text text-c-bg'
                     : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
@@ -626,7 +626,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                       }}
                     />
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
-                      <div className="bg-slate-900 border border-slate-200 dark:border-white/10 rounded-lg p-2 text-xs whitespace-nowrap">
+                      <div className="bg-c-surface border border-slate-200 dark:border-white/10 rounded-lg p-2 text-xs whitespace-nowrap">
                         <div className="font-medium text-slate-900 dark:text-white">
                           {point.date}
                         </div>
@@ -761,7 +761,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                     {hour.hour % 4 === 0 ? `${hour.hour}:00` : ''}
                   </div>
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
-                    <div className="bg-slate-900 border border-slate-200 dark:border-white/10 rounded px-2 py-1 text-xs whitespace-nowrap">
+                    <div className="bg-c-surface border border-slate-200 dark:border-white/10 rounded px-2 py-1 text-xs whitespace-nowrap">
                       <div className="text-slate-900 dark:text-white">
                         {hour.hour}:00 - {hour.hour + 1}:00
                       </div>
@@ -778,7 +778,7 @@ export const UsageAnalyticsDashboard: React.FC = () => {
                 <div className="w-4 h-3 bg-primary-200/50 rounded-sm" />
                 <div className="w-4 h-3 bg-primary-300/70 rounded-sm" />
                 <div className="w-4 h-3 bg-primary-400 rounded-sm" />
-                <div className="w-4 h-3 bg-navy-900 rounded-sm" />
+                <div className="w-4 h-3 bg-c-surface rounded-sm" />
               </div>
               <span>High</span>
             </div>

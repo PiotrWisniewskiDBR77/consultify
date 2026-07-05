@@ -76,16 +76,16 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   const needsValue = (op: FilterOperator) => op !== 'not_empty' && op !== 'is_empty';
 
   return (
-    <div className="absolute left-0 top-full mt-1 z-50 w-[400px] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200/60 dark:border-navy-700/60">
+    <div className="absolute left-0 top-full mt-1 z-overlay w-[400px] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+          <span className="text-xs font-bold text-c-text">
             {isPl ? 'Filtry' : 'Filters'}
           </span>
           {filters.rules.length > 1 && (
             <button
               onClick={toggleLogic}
-              className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-primary-500/10 text-primary-600 dark:text-primary-400"
+              className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-c-accent-soft text-c-accent"
             >
               {filters.logic.toUpperCase()}
             </button>
@@ -95,30 +95,30 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           {filters.rules.length > 0 && (
             <button
               onClick={clearAll}
-              className="text-[10px] text-slate-600 hover:text-danger-500 transition-colors px-1"
+              className="text-[10px] text-c-text-secondary hover:text-danger-500 transition-colors px-1"
             >
               {isPl ? 'Wyczyść' : 'Clear'}
             </button>
           )}
           <button
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="p-1 rounded-lg hover:bg-c-surface-raised"
           >
-            <X size={14} className="text-slate-600" />
+            <X size={14} className="text-c-text-secondary" />
           </button>
         </div>
       </div>
 
       <div className="px-4 py-3 space-y-2 max-h-[300px] overflow-auto">
         {filters.rules.length === 0 && (
-          <p className="text-[11px] text-slate-600 text-center py-4">
+          <p className="text-[11px] text-c-text-secondary text-center py-4">
             {isPl ? 'Brak filtrów. Dodaj pierwszy.' : 'No filters. Add one.'}
           </p>
         )}
         {filters.rules.map((rule, idx) => (
           <div key={rule.id} className="flex items-center gap-1.5">
             {idx > 0 && (
-              <span className="text-[9px] font-bold text-slate-600 w-6 text-center flex-shrink-0">
+              <span className="text-[9px] font-bold text-c-text-secondary w-6 text-center flex-shrink-0">
                 {filters.logic === 'and' ? (isPl ? 'I' : 'AND') : isPl ? 'LUB' : 'OR'}
               </span>
             )}
@@ -126,7 +126,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             <select
               value={rule.column}
               onChange={(e) => updateRule(rule.id, { column: e.target.value })}
-              className="flex-1 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none"
+              className="flex-1 rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               {columns.map((col) => (
                 <option key={col.key} value={col.key}>
@@ -137,7 +137,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             <select
               value={rule.operator}
               onChange={(e) => updateRule(rule.id, { operator: e.target.value as FilterOperator })}
-              className="w-28 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none"
+              className="w-28 rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               {OPERATORS.map((op) => (
                 <option key={op.value} value={op.value}>
@@ -150,12 +150,12 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                 value={String(rule.value ?? '')}
                 onChange={(e) => updateRule(rule.id, { value: e.target.value })}
                 placeholder="..."
-                className="w-24 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none"
+                className="w-24 rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               />
             )}
             <button
               onClick={() => removeRule(rule.id)}
-              className="p-1 rounded-lg text-slate-600 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors"
+              className="p-1 rounded-lg text-c-text-secondary hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors"
             >
               <Trash2 size={12} />
             </button>
@@ -163,10 +163,10 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
         ))}
       </div>
 
-      <div className="px-4 py-3 border-t border-slate-200/60 dark:border-navy-700/60">
+      <div className="px-4 py-3 border-t border-c-border-subtle">
         <button
           onClick={addRule}
-          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 px-2 py-1.5 rounded-lg transition-colors"
+          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-c-accent hover:bg-c-accent-soft px-2 py-1.5 rounded-lg transition-colors"
         >
           <Plus size={12} />
           {isPl ? 'Dodaj filtr' : 'Add filter'}

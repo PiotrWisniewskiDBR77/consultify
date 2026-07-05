@@ -76,7 +76,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Title page (company, date, report subtitle)',
     descriptionPl: 'Strona tytułowa (firma, data, podtytuł raportu)',
     icon: <FileText className="w-6 h-6" />,
-    color: 'from-slate-500 to-slate-600',
+    color: 'bg-c-surface-raised',
     category: 'content',
   },
 
@@ -123,7 +123,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Description of assessment methodology used',
     descriptionPl: 'Opis zastosowanej metodologii oceny',
     icon: <List className="w-6 h-6" />,
-    color: 'from-slate-500 to-slate-600',
+    color: 'bg-c-surface-raised',
     category: 'content',
     sourceTypes: ['ASSESSMENT'],
   },
@@ -135,7 +135,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Free-form text section with custom content',
     descriptionPl: 'Sekcja tekstowa z własną treścią',
     icon: <Type className="w-6 h-6" />,
-    color: 'from-gray-500 to-gray-600',
+    color: 'bg-c-surface-raised',
     category: 'content',
   },
   {
@@ -146,7 +146,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Highlighted quote or key statement',
     descriptionPl: 'Wyróżniony cytat lub kluczowe stwierdzenie',
     icon: <Quote className="w-6 h-6" />,
-    color: 'from-primary-500 to-primary-600',
+    color: 'bg-c-accent',
     category: 'content',
   },
   {
@@ -190,7 +190,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Additional details, tables, glossary and evidence',
     descriptionPl: 'Dodatkowe szczegóły, tabele, słownik i dowody',
     icon: <FileText className="w-6 h-6" />,
-    color: 'from-slate-500 to-slate-600',
+    color: 'bg-c-surface-raised',
     category: 'content',
   },
 
@@ -203,7 +203,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Visual matrix showing assessment scores',
     descriptionPl: 'Wizualna macierz pokazująca wyniki oceny',
     icon: <LayoutGrid className="w-6 h-6" />,
-    color: 'from-primary-500 to-primary-600',
+    color: 'bg-c-accent',
     category: 'data',
     sourceTypes: ['ASSESSMENT'],
   },
@@ -327,7 +327,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Risk register and mitigation',
     descriptionPl: 'Rejestr ryzyk i mitygacje',
     icon: <MessageSquare className="w-6 h-6" />,
-    color: 'from-primary-500 to-primary-600',
+    color: 'bg-c-accent',
     category: 'visual',
   },
   {
@@ -338,7 +338,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Impact vs effort, initiative prioritization',
     descriptionPl: 'Wpływ vs nakład, priorytety inicjatyw',
     icon: <LayoutGrid className="w-6 h-6" />,
-    color: 'from-primary-500 to-primary-600',
+    color: 'bg-c-accent',
     category: 'visual',
   },
   {
@@ -349,7 +349,7 @@ const BLOCK_TYPES: BlockType[] = [
     description: 'Rich initiative cards with strategy, effort, metrics',
     descriptionPl: 'Karty inicjatyw ze strategią, wysiłkiem, metrykami',
     icon: <Zap className="w-6 h-6" />,
-    color: 'from-crimson-500 to-primary-600',
+    color: 'bg-c-accent',
     category: 'visual',
     renderKind: 'initiatives',
     defaultLength: 'long',
@@ -407,11 +407,11 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
             rk === 'chart'
               ? 'from-pink-500 to-pink-600'
               : rk === 'matrix'
-                ? 'from-primary-500 to-primary-600'
+                ? 'bg-c-accent'
                 : rk === 'table'
                   ? 'from-blue-500 to-blue-600'
                   : rk === 'callout'
-                    ? 'from-primary-500 to-primary-600'
+                    ? 'bg-c-accent'
                     : rk === 'json'
                       ? 'from-emerald-500 to-emerald-600'
                       : 'from-blue-500 to-blue-600';
@@ -500,17 +500,17 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl h-[min(720px,85vh)] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="bg-c-surface rounded-2xl shadow-2xl w-full max-w-2xl h-[min(720px,85vh)] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-slate-200 dark:border-slate-800">
+        <div className="p-6 border-b border-c-border-subtle">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            <h2 className="text-xl font-bold text-c-text">
               {isPl ? 'Dodaj blok' : 'Add Block'}
             </h2>
             <button
               onClick={onClose}
-              className="p-2 text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+              className="p-2 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
             >
               <X className="w-5 h-5" />
             </button>
@@ -518,13 +518,13 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-c-text-secondary" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={isPl ? 'Szukaj bloków...' : 'Search blocks...'}
-              className="w-full pl-10 pr-4 py-3 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-3 bg-c-surface-raised border-none rounded-xl text-c-text placeholder:text-c-text-muted focus:ring-2 focus:ring-blue-500"
               autoFocus
             />
           </div>
@@ -539,8 +539,8 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
                   px-4 py-2 rounded-lg text-sm font-medium transition-all
                   ${
                     activeCategory === cat.id
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      ? 'bg-blue-600 text-c-text'
+                      : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-border-subtle'
                   }
                 `}
               >
@@ -569,30 +569,30 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
                     })
                   }
                   className={[
-                    'p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-left transition-all group border-2 border-transparent',
+                    'p-4 bg-c-surface-raised rounded-xl text-left transition-all group border-2 border-transparent',
                     isCompatible
-                      ? 'hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-blue-500'
+                      ? 'hover:bg-c-surface-raised hover:border-blue-500'
                       : 'opacity-50 cursor-not-allowed',
                   ].join(' ')}
                 >
                   <div className="flex items-start gap-4">
                     <div
-                      className={`w-12 h-12 rounded-xl bg-gradient-to-br ${block.color} flex items-center justify-center text-white flex-shrink-0 group-hover:scale-110 transition-transform`}
+                      className={`w-12 h-12 rounded-xl bg-gradient-to-br ${block.color} flex items-center justify-center text-c-text flex-shrink-0 group-hover:scale-110 transition-transform`}
                     >
                       {block.icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-slate-900 dark:text-white">
+                      <h3 className="font-semibold text-c-text">
                         {isPl ? block.titlePl : block.title}
                       </h3>
                       {!isCompatible && (
-                        <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                        <div className="mt-1 text-[11px] text-c-text-secondary">
                           {isPl
                             ? 'Niedostępny dla tego kontekstu'
                             : 'Not available for this context'}
                         </div>
                       )}
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                      <p className="text-sm text-c-text-secondary mt-1 line-clamp-2">
                         {isPl ? block.descriptionPl : block.description}
                       </p>
                     </div>
@@ -603,13 +603,13 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
           </div>
 
           {filteredBlocks.length === 0 && (
-            <div className="text-center py-12 text-slate-500">
+            <div className="text-center py-12 text-c-text-secondary">
               {isPl ? 'Nie znaleziono bloków' : 'No blocks found'}
             </div>
           )}
 
           {!libraryLoaded && (
-            <div className="text-center pt-6 text-xs text-slate-600">
+            <div className="text-center pt-6 text-xs text-c-text-secondary">
               {isPl ? 'Ładowanie biblioteki bloków…' : 'Loading block library…'}
             </div>
           )}

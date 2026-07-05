@@ -41,6 +41,7 @@ import { toast } from 'react-hot-toast';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
+import { EmptyState, LoadingState } from '../../shared/states';
 
 interface AuditLog {
   id: string;
@@ -81,18 +82,18 @@ interface FilterState {
 }
 
 const RISK_LEVELS = {
-  LOW: { color: 'bg-slate-500', text: 'text-slate-600 dark:text-slate-500', icon: Info },
-  MEDIUM: { color: 'bg-amber-500', text: 'text-amber-400', icon: AlertTriangle },
-  HIGH: { color: 'bg-amber-500', text: 'text-amber-400', icon: AlertCircle },
-  CRITICAL: { color: 'bg-danger-500', text: 'text-danger-400', icon: Shield },
+  LOW: { color: 'bg-c-text-muted', text: 'text-c-text-muted', icon: Info },
+  MEDIUM: { color: 'bg-c-warning', text: 'text-c-warning', icon: AlertTriangle },
+  HIGH: { color: 'bg-c-warning', text: 'text-c-warning', icon: AlertCircle },
+  CRITICAL: { color: 'bg-c-danger', text: 'text-c-danger', icon: Shield },
 };
 
 const COMPLIANCE_TAGS = [
-  { id: 'GDPR', name: 'GDPR', color: 'bg-blue-500/20 text-blue-400' },
-  { id: 'SOC2', name: 'SOC2', color: 'bg-primary-500/20 text-primary-400' },
-  { id: 'ISO27001', name: 'ISO 27001', color: 'bg-emerald-500/20 text-emerald-400' },
-  { id: 'HIPAA', name: 'HIPAA', color: 'bg-pink-500/20 text-pink-400' },
-  { id: 'PMO', name: 'PMO Audit', color: 'bg-blue-500/20 text-blue-400' },
+  { id: 'GDPR', name: 'GDPR', color: 'bg-c-info/20 text-c-info' },
+  { id: 'SOC2', name: 'SOC2', color: 'bg-c-accent/20 text-c-accent' },
+  { id: 'ISO27001', name: 'ISO 27001', color: 'bg-c-success/20 text-c-success' },
+  { id: 'HIPAA', name: 'HIPAA', color: 'bg-c-danger/20 text-c-danger' },
+  { id: 'PMO', name: 'PMO Audit', color: 'bg-c-info/20 text-c-info' },
 ];
 
 const ACTION_TYPES = [
@@ -359,19 +360,19 @@ export const EnterpriseAuditLog: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Audit Log</h2>
-          <p className="text-slate-600 dark:text-slate-500 text-sm">
+          <h2 className="text-2xl font-bold text-c-text">Audit Log</h2>
+          <p className="text-c-text-secondary text-sm">
             Comprehensive activity tracking for compliance and security
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1">
+          <div className="flex items-center gap-1 bg-c-surface-raised rounded-lg p-1">
             <button
               onClick={() => setActiveView('logs')}
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 activeView === 'logs'
-                  ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
+                  ? 'bg-c-surface text-c-text'
+                  : 'text-c-text-secondary hover:bg-c-surface-raised'
               }`}
             >
               Logs
@@ -380,8 +381,8 @@ export const EnterpriseAuditLog: React.FC = () => {
               onClick={() => setActiveView('analytics')}
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 activeView === 'analytics'
-                  ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
+                  ? 'bg-c-surface text-c-text'
+                  : 'text-c-text-secondary hover:bg-c-surface-raised'
               }`}
             >
               Analytics
@@ -390,7 +391,7 @@ export const EnterpriseAuditLog: React.FC = () => {
           <div className="relative group">
             <button
               disabled={exporting || !!loadError}
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-c-success hover:bg-c-success/90 text-c-text rounded-lg transition-colors disabled:opacity-50"
             >
               {exporting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -400,16 +401,16 @@ export const EnterpriseAuditLog: React.FC = () => {
               Export
               <ChevronDown className="w-4 h-4" />
             </button>
-            <div className="absolute right-0 mt-2 w-40 bg-slate-800 border border-white/10 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+            <div className="absolute right-0 mt-2 w-40 bg-c-surface border border-c-border rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
               <button
                 onClick={() => handleExport('csv')}
-                className="w-full px-4 py-2 text-sm text-left text-slate-200 hover:bg-slate-700 rounded-t-lg"
+                className="w-full px-4 py-2 text-sm text-left text-c-text-secondary hover:bg-c-surface-raised rounded-t-lg"
               >
                 Export as CSV
               </button>
               <button
                 onClick={() => handleExport('json')}
-                className="w-full px-4 py-2 text-sm text-left text-slate-200 hover:bg-slate-700 rounded-b-lg"
+                className="w-full px-4 py-2 text-sm text-left text-c-text-secondary hover:bg-c-surface-raised rounded-b-lg"
               >
                 Export as JSON
               </button>
@@ -421,7 +422,7 @@ export const EnterpriseAuditLog: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-danger-500/30 bg-danger-500/5 p-4 text-sm text-danger-600 dark:text-danger-300"
+          className="rounded-xl border border-c-danger/30 bg-c-danger/5 p-4 text-sm text-c-danger"
         >
           {actionError}
         </div>
@@ -429,35 +430,35 @@ export const EnterpriseAuditLog: React.FC = () => {
 
       {/* Stats Cards */}
       {loadError ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+        <div className="rounded-xl border border-c-border bg-c-surface p-6">
           <DegradedState title="Audit log overview unavailable" description={loadError} />
         </div>
       ) : (
         stats && (
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-              <div className="text-sm text-slate-600 dark:text-slate-500">Total Events</div>
-              <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">
+            <div className="p-4 bg-c-surface rounded-xl border border-c-border">
+              <div className="text-sm text-c-text-secondary">Total Events</div>
+              <div className="text-2xl font-bold text-c-text mt-1">
                 {stats.total || 0}
               </div>
             </div>
-            <div className="p-4 bg-slate-50 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-              <div className="text-sm text-slate-600 dark:text-slate-500">Low Risk</div>
-              <div className="text-2xl font-bold text-slate-700 dark:text-slate-300 mt-1">
+            <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+              <div className="text-sm text-c-text-secondary">Low Risk</div>
+              <div className="text-2xl font-bold text-c-text-secondary mt-1">
                 {stats.low_risk || 0}
               </div>
             </div>
-            <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
-              <div className="text-sm text-slate-600 dark:text-slate-500">Medium Risk</div>
-              <div className="text-2xl font-bold text-amber-400 mt-1">{stats.medium_risk || 0}</div>
+            <div className="p-4 bg-c-warning/10 rounded-xl border border-c-warning/30">
+              <div className="text-sm text-c-text-secondary">Medium Risk</div>
+              <div className="text-2xl font-bold text-c-warning mt-1">{stats.medium_risk || 0}</div>
             </div>
-            <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
-              <div className="text-sm text-slate-600 dark:text-slate-500">High Risk</div>
-              <div className="text-2xl font-bold text-amber-400 mt-1">{stats.high_risk || 0}</div>
+            <div className="p-4 bg-c-warning/10 rounded-xl border border-c-warning/30">
+              <div className="text-sm text-c-text-secondary">High Risk</div>
+              <div className="text-2xl font-bold text-c-warning mt-1">{stats.high_risk || 0}</div>
             </div>
-            <div className="p-4 bg-danger-500/10 rounded-xl border border-danger-500/30">
-              <div className="text-sm text-slate-600 dark:text-slate-500">Critical</div>
-              <div className="text-2xl font-bold text-danger-400 mt-1">
+            <div className="p-4 bg-c-danger/10 rounded-xl border border-c-danger/30">
+              <div className="text-sm text-c-text-secondary">Critical</div>
+              <div className="text-2xl font-bold text-c-danger mt-1">
                 {stats.critical_risk || 0}
               </div>
             </div>
@@ -470,7 +471,7 @@ export const EnterpriseAuditLog: React.FC = () => {
         <div className="flex items-center gap-4">
           <div className="flex-1 relative">
             <Search
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 dark:text-slate-400"
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-c-text-muted"
               size={16}
             />
             <input
@@ -479,14 +480,14 @@ export const EnterpriseAuditLog: React.FC = () => {
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
               disabled={!!loadError}
-              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border rounded-lg text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 ring-c-focus"
             />
           </div>
           <select
             value={filters.riskLevel}
             onChange={(e) => setFilters({ ...filters, riskLevel: e.target.value })}
             disabled={!!loadError}
-            className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-4 py-2 bg-c-surface border border-c-border rounded-lg text-c-text focus:outline-none focus:ring-2 ring-c-focus"
           >
             <option value="ALL">All Risk Levels</option>
             <option value="LOW">Low</option>
@@ -499,8 +500,8 @@ export const EnterpriseAuditLog: React.FC = () => {
             disabled={!!loadError}
             className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${
               showFilters
-                ? 'bg-navy-900 border-navy-900 text-white'
-                : 'bg-white/5 border-white/10 text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800/40'
+                ? 'bg-c-surface border-c-border text-c-text'
+                : 'bg-c-surface-raised border-c-border text-c-text-secondary hover:bg-c-surface-raised'
             }`}
           >
             <Filter size={16} />
@@ -509,7 +510,7 @@ export const EnterpriseAuditLog: React.FC = () => {
           <button
             onClick={fetchLogs}
             disabled={loading || !!loadError}
-            className="p-2 bg-white dark:bg-navy-950/20 hover:bg-slate-50 dark:hover:bg-navy-800/40 border border-slate-200 dark:border-white/10 rounded-lg text-slate-700 dark:text-slate-300"
+            className="p-2 bg-c-surface hover:bg-c-surface-raised border border-c-border rounded-lg text-c-text-secondary"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -517,17 +518,17 @@ export const EnterpriseAuditLog: React.FC = () => {
 
         {/* Advanced Filters */}
         {showFilters && (
-          <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 space-y-4">
+          <div className="p-4 bg-c-surface rounded-xl border border-c-border space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-c-text-secondary mb-1">
                   Action Type
                 </label>
                 <select
                   value={filters.actionType}
                   onChange={(e) => setFilters({ ...filters, actionType: e.target.value })}
                   disabled={!!loadError}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 text-sm"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
                 >
                   <option value="">All Actions</option>
                   {ACTION_TYPES.map((type) => (
@@ -538,14 +539,14 @@ export const EnterpriseAuditLog: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-c-text-secondary mb-1">
                   Resource Type
                 </label>
                 <select
                   value={filters.resourceType}
                   onChange={(e) => setFilters({ ...filters, resourceType: e.target.value })}
                   disabled={!!loadError}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 text-sm"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
                 >
                   <option value="">All Resources</option>
                   {RESOURCE_TYPES.map((type) => (
@@ -556,14 +557,14 @@ export const EnterpriseAuditLog: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-c-text-secondary mb-1">
                   Compliance Tag
                 </label>
                 <select
                   value={filters.complianceTag}
                   onChange={(e) => setFilters({ ...filters, complianceTag: e.target.value })}
                   disabled={!!loadError}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 text-sm"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
                 >
                   <option value="">All Tags</option>
                   {COMPLIANCE_TAGS.map((tag) => (
@@ -574,7 +575,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-c-text-secondary mb-1">
                   User ID
                 </label>
                 <input
@@ -583,11 +584,11 @@ export const EnterpriseAuditLog: React.FC = () => {
                   onChange={(e) => setFilters({ ...filters, userId: e.target.value })}
                   placeholder="Filter by user"
                   disabled={!!loadError}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 text-sm"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-c-text-secondary mb-1">
                   Start Date
                 </label>
                 <input
@@ -595,11 +596,11 @@ export const EnterpriseAuditLog: React.FC = () => {
                   value={filters.startDate}
                   onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
                   disabled={!!loadError}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 text-sm"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
+                <label className="block text-xs text-c-text-secondary mb-1">
                   End Date
                 </label>
                 <input
@@ -607,7 +608,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                   value={filters.endDate}
                   onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
                   disabled={!!loadError}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 text-sm"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
                 />
               </div>
             </div>
@@ -615,7 +616,7 @@ export const EnterpriseAuditLog: React.FC = () => {
               <button
                 onClick={resetFilters}
                 disabled={!!loadError}
-                className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+                className="text-sm text-c-text-secondary hover:text-c-text transition-colors"
               >
                 Reset Filters
               </button>
@@ -628,19 +629,18 @@ export const EnterpriseAuditLog: React.FC = () => {
       {activeView === 'logs' && (
         <div className="space-y-2">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
-            </div>
+            <LoadingState template="list" />
           ) : loadError ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+            <div className="rounded-xl border border-c-border bg-c-surface p-6">
               <DegradedState title="Audit logs unavailable" description={loadError} />
             </div>
           ) : logs.length === 0 ? (
-            <div className="text-center py-12 text-slate-600 dark:text-slate-500">
-              <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No audit logs found</p>
-              <p className="text-sm mt-1">Try adjusting your filters</p>
-            </div>
+            <EmptyState
+              variant="new"
+              icon={FileText}
+              title="No audit logs yet"
+              description="Try adjusting your filters to see more activity."
+            />
           ) : (
             logs.map((log) => {
               const riskConfig = RISK_LEVELS[log.risk_level] || RISK_LEVELS.LOW;
@@ -650,10 +650,10 @@ export const EnterpriseAuditLog: React.FC = () => {
               return (
                 <div
                   key={log.id}
-                  className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden"
+                  className="bg-c-surface rounded-xl border border-c-border overflow-hidden"
                 >
                   <div
-                    className="p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
+                    className="p-4 cursor-pointer hover:bg-c-surface-raised transition-colors"
                     onClick={() => setExpandedLog(isExpanded ? null : log.id)}
                   >
                     <div className="flex items-center justify-between">
@@ -663,16 +663,16 @@ export const EnterpriseAuditLog: React.FC = () => {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-slate-900 dark:text-slate-100">
+                            <span className="font-medium text-c-text">
                               {log.action_type}
                             </span>
                             {log.resource_type && (
-                              <span className="text-slate-600 dark:text-slate-400">
+                              <span className="text-c-text-secondary">
                                 on {log.resource_type}
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          <div className="flex items-center gap-3 text-xs text-c-text-muted mt-1">
                             <span className="flex items-center gap-1">
                               <User className="w-3 h-3" />
                               {log.user_email || 'System'}
@@ -700,14 +700,14 @@ export const EnterpriseAuditLog: React.FC = () => {
                               return (
                                 <span
                                   key={tag}
-                                  className={`px-2 py-0.5 text-xs rounded ${tagConfig?.color || 'bg-slate-700 text-slate-600 dark:text-slate-500'}`}
+                                  className={`px-2 py-0.5 text-xs rounded ${tagConfig?.color || 'bg-c-surface-raised text-c-text-muted'}`}
                                 >
                                   {tagConfig?.name || tag}
                                 </span>
                               );
                             })}
                             {log.compliance_tags.length > 2 && (
-                              <span className="text-xs text-slate-500 dark:text-slate-400">
+                              <span className="text-xs text-c-text-muted">
                                 +{log.compliance_tags.length - 2}
                               </span>
                             )}
@@ -719,9 +719,9 @@ export const EnterpriseAuditLog: React.FC = () => {
                           {log.risk_level}
                         </span>
                         {isExpanded ? (
-                          <ChevronDown className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+                          <ChevronDown className="w-4 h-4 text-c-text-muted" />
                         ) : (
-                          <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+                          <ChevronRight className="w-4 h-4 text-c-text-muted" />
                         )}
                       </div>
                     </div>
@@ -729,12 +729,12 @@ export const EnterpriseAuditLog: React.FC = () => {
 
                   {/* Expanded Details */}
                   {isExpanded && (
-                    <div className="px-4 pb-4 pt-0 border-t border-slate-200 dark:border-white/5 mt-0">
+                    <div className="px-4 pb-4 pt-0 border-t border-c-border-subtle mt-0">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                         <div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">Log ID</div>
+                          <div className="text-xs text-c-text-muted">Log ID</div>
                           <div className="flex items-center gap-1 mt-1">
-                            <code className="text-xs text-slate-700 dark:text-slate-300 font-mono">
+                            <code className="text-xs text-c-text-secondary font-mono">
                               {log.id.slice(0, 8)}...
                             </code>
                             <button
@@ -742,42 +742,42 @@ export const EnterpriseAuditLog: React.FC = () => {
                                 e.stopPropagation();
                                 handleCopyId(log.id);
                               }}
-                              className="p-1 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded"
+                              className="p-1 hover:bg-c-surface-raised rounded"
                             >
                               {copiedId === log.id ? (
-                                <Check className="w-3 h-3 text-emerald-400" />
+                                <Check className="w-3 h-3 text-c-success" />
                               ) : (
-                                <Copy className="w-3 h-3 text-slate-500 dark:text-slate-400" />
+                                <Copy className="w-3 h-3 text-c-text-muted" />
                               )}
                             </button>
                           </div>
                         </div>
                         {log.request_id && (
                           <div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                            <div className="text-xs text-c-text-muted">
                               Request ID
                             </div>
-                            <code className="text-xs text-slate-700 dark:text-slate-300 font-mono mt-1 block">
+                            <code className="text-xs text-c-text-secondary font-mono mt-1 block">
                               {log.request_id.slice(0, 12)}...
                             </code>
                           </div>
                         )}
                         {log.resource_id && (
                           <div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                            <div className="text-xs text-c-text-muted">
                               Resource ID
                             </div>
-                            <code className="text-xs text-slate-700 dark:text-slate-300 font-mono mt-1 block">
+                            <code className="text-xs text-c-text-secondary font-mono mt-1 block">
                               {log.resource_id.slice(0, 12)}...
                             </code>
                           </div>
                         )}
                         {log.organization_id && (
                           <div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                            <div className="text-xs text-c-text-muted">
                               Organization
                             </div>
-                            <code className="text-xs text-slate-700 dark:text-slate-300 font-mono mt-1 block">
+                            <code className="text-xs text-c-text-secondary font-mono mt-1 block">
                               {log.organization_id.slice(0, 12)}...
                             </code>
                           </div>
@@ -788,20 +788,20 @@ export const EnterpriseAuditLog: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                           {log.before_data && (
                             <div>
-                              <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                              <div className="text-xs text-c-text-muted mb-2">
                                 Before
                               </div>
-                              <pre className="p-2 bg-slate-900 rounded-lg text-xs text-slate-100 overflow-x-auto max-h-32">
+                              <pre className="p-2 bg-c-surface rounded-lg text-xs text-c-text overflow-x-auto max-h-32">
                                 {JSON.stringify(log.before_data, null, 2)}
                               </pre>
                             </div>
                           )}
                           {log.after_data && (
                             <div>
-                              <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                              <div className="text-xs text-c-text-muted mb-2">
                                 After
                               </div>
-                              <pre className="p-2 bg-slate-900 rounded-lg text-xs text-slate-100 overflow-x-auto max-h-32">
+                              <pre className="p-2 bg-c-surface rounded-lg text-xs text-c-text overflow-x-auto max-h-32">
                                 {JSON.stringify(log.after_data, null, 2)}
                               </pre>
                             </div>
@@ -811,10 +811,10 @@ export const EnterpriseAuditLog: React.FC = () => {
 
                       {log.user_agent && (
                         <div className="mt-4">
-                          <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          <div className="text-xs text-c-text-muted mb-1">
                             User Agent
                           </div>
-                          <div className="text-xs text-slate-600 dark:text-slate-500 truncate">
+                          <div className="text-xs text-c-text-secondary truncate">
                             {log.user_agent}
                           </div>
                         </div>
@@ -829,7 +829,7 @@ export const EnterpriseAuditLog: React.FC = () => {
           {/* Pagination */}
           {logs.length > 0 && (
             <div className="flex items-center justify-between pt-4">
-              <div className="text-sm text-slate-600 dark:text-slate-500">
+              <div className="text-sm text-c-text-secondary">
                 Showing {logs.length} of {pagination.total || logs.length} entries
               </div>
               <div className="flex items-center gap-2">
@@ -838,17 +838,17 @@ export const EnterpriseAuditLog: React.FC = () => {
                     setPagination((prev) => ({ ...prev, page: Math.max(1, prev.page - 1) }))
                   }
                   disabled={pagination.page === 1}
-                  className="px-3 py-1 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 border border-white/10 rounded text-sm text-slate-600 disabled:opacity-50"
+                  className="px-3 py-1 bg-c-surface-raised hover:bg-c-surface-raised border border-c-border rounded text-sm text-c-text-secondary disabled:opacity-50"
                 >
                   Previous
                 </button>
-                <span className="text-sm text-slate-600 dark:text-slate-500">
+                <span className="text-sm text-c-text-secondary">
                   Page {pagination.page}
                 </span>
                 <button
                   onClick={() => setPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
                   disabled={logs.length < pagination.pageSize}
-                  className="px-3 py-1 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 border border-white/10 rounded text-sm text-slate-600 disabled:opacity-50"
+                  className="px-3 py-1 bg-c-surface-raised hover:bg-c-surface-raised border border-c-border rounded text-sm text-c-text-secondary disabled:opacity-50"
                 >
                   Next
                 </button>
@@ -862,29 +862,29 @@ export const EnterpriseAuditLog: React.FC = () => {
       {activeView === 'analytics' && (
         <div className="space-y-6">
           {loadError ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+            <div className="rounded-xl border border-c-border bg-c-surface p-6">
               <DegradedState title="Audit analytics unavailable" description={loadError} />
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Activity by Action Type */}
-              <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-blue-400" />
+              <div className="p-4 bg-c-surface rounded-xl border border-c-border">
+                <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-c-info" />
                   Activity by Action Type
                 </h3>
                 <div className="space-y-3">
                   {analyticsActionCounts.length === 0 ? (
-                    <div className="text-sm text-slate-500 dark:text-slate-400">No data</div>
+                    <div className="text-sm text-c-text-muted">No data</div>
                   ) : (
                     analyticsActionCounts.map(({ action, count }) => (
                       <div key={action} className="flex items-center gap-3">
-                        <div className="w-24 text-sm text-slate-600 dark:text-slate-500">
+                        <div className="w-24 text-sm text-c-text-secondary">
                           {action}
                         </div>
-                        <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div className="flex-1 h-2 bg-c-surface-raised rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full"
+                            className="h-full bg-c-info rounded-full"
                             style={{ width: `${(count / analyticsActionMax) * 100}%` }}
                           />
                         </div>
@@ -895,9 +895,9 @@ export const EnterpriseAuditLog: React.FC = () => {
               </div>
 
               {/* Risk Distribution */}
-              <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-primary-400" />
+              <div className="p-4 bg-c-surface rounded-xl border border-c-border">
+                <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-c-accent" />
                   Risk Distribution
                 </h3>
                 <div className="space-y-3">
@@ -907,13 +907,13 @@ export const EnterpriseAuditLog: React.FC = () => {
                     return (
                       <div key={level} className="flex items-center gap-3">
                         <div className={`w-24 text-sm ${config.text}`}>{level}</div>
-                        <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div className="flex-1 h-2 bg-c-surface-raised rounded-full overflow-hidden">
                           <div
                             className={`h-full ${config.color} rounded-full`}
                             style={{ width: `${percent}%` }}
                           />
                         </div>
-                        <div className="w-12 text-right text-sm text-slate-600 dark:text-slate-500">
+                        <div className="w-12 text-right text-sm text-c-text-secondary">
                           {Number(count)}
                         </div>
                       </div>
@@ -923,9 +923,9 @@ export const EnterpriseAuditLog: React.FC = () => {
               </div>
 
               {/* Compliance Coverage */}
-              <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-emerald-400" />
+              <div className="p-4 bg-c-surface rounded-xl border border-c-border">
+                <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-c-success" />
                   Compliance Coverage
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
@@ -937,7 +937,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                       <div className={`text-sm font-medium ${tag.color.split(' ')[1]}`}>
                         {tag.name}
                       </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      <div className="text-xs text-c-text-muted mt-1">
                         {tag.count} events
                       </div>
                     </div>
@@ -946,19 +946,19 @@ export const EnterpriseAuditLog: React.FC = () => {
               </div>
 
               {/* Recent Activity Timeline */}
-              <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-amber-400" />
+              <div className="p-4 bg-c-surface rounded-xl border border-c-border">
+                <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-c-warning" />
                   Activity Timeline (Last 7 Days)
                 </h3>
                 <div className="flex items-end gap-2 h-32">
                   {analyticsTimeline.series.map(({ date, count }, i) => (
                     <div key={i} className="flex-1 flex flex-col items-center">
                       <div
-                        className="w-full bg-gradient-to-t from-amber-500 to-amber-400 rounded-t-sm transition-all hover:from-amber-400 hover:to-amber-300"
+                        className="w-full bg-c-warning rounded-t-sm transition-all hover:opacity-80"
                         style={{ height: `${(count / analyticsTimeline.max) * 100}%` }}
                       />
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                      <div className="text-xs text-c-text-muted mt-2">
                         {date.toLocaleDateString('en-US', { weekday: 'short' })}
                       </div>
                     </div>

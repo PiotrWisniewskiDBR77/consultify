@@ -160,6 +160,73 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     category: 'experimental',
     allowLocalOverride: false,
   },
+  {
+    id: 'mindmapHeuristicAiOverlays',
+    name: 'Mind Map: Heuristic AI Overlays (DP-5)',
+    description:
+      'DP-5 honesty gate for mind-map overlays whose displayed result is a client-side ' +
+      'heuristic rather than real LLM output: AIBranchBalancer (no LLM call at all), ' +
+      'AISentimentOverlay (sentiment = confidence-threshold mapping), AIAutoClustering ' +
+      '(cluster membership = substring match), AIDependencyDetector (node pairs default to ' +
+      'indices the backend never returns). OFF by default until backed by real AI analysis.',
+    defaultValue: false,
+    category: 'ai',
+    allowLocalOverride: true,
+  },
+  {
+    id: 'mindmapMultiToolbar',
+    name: 'Mind Map: Multi-select Toolbar (M06 Fala 3.2)',
+    description:
+      'Shows the floating styling toolbar (branch color, shape, priority) when more than one ' +
+      'node is selected on the mind map canvas, applying the chosen style to every selected ' +
+      'node. OFF = today’s behavior where the toolbar only appears for a single selected node.',
+    defaultValue: false,
+    category: 'beta',
+    allowLocalOverride: true,
+  },
+  {
+    id: 'mindmapAlignSnap',
+    name: 'Mind Map: Align/Distribute + Snap (M06 Fala 3.1)',
+    description:
+      'Positional canvas tools for the mind map (M06 Fala 3.1): align/distribute buttons on the ' +
+      'multi-select toolbar (align left/center-H/right/top/middle-V/bottom for 2+ nodes, ' +
+      'distribute H/V for 3+), an opt-in snap-to-grid toggle, and smart guide lines while ' +
+      'dragging. OFF = today’s free-form positioning with no alignment affordances.',
+    defaultValue: false,
+    category: 'beta',
+    allowLocalOverride: true,
+  },
+  {
+    id: 'mindmapVirtualization',
+    name: 'Mind Map: Viewport Virtualization (M06 Fala 3.3)',
+    description:
+      'Real viewport culling for large mind maps (M06 Fala 3.3): once a map crosses the node ' +
+      'threshold, ReactFlow only mounts DOM for nodes intersecting the visible viewport ' +
+      '(onlyRenderVisibleElements). All nodes stay in the graph store, so selection, the ' +
+      'minimap, smart guides and multi-select styling keep working for off-screen nodes. ' +
+      'OFF = today’s behavior where every node is always mounted in the DOM.',
+    defaultValue: false,
+    category: 'beta',
+    allowLocalOverride: true,
+  },
+  {
+    id: 'ENABLE_TERESA_MINDMAP',
+    name: 'Teresa: Mind Map Bridge',
+    description:
+      'Sidekick→chat entity-context bridge for Ideas mind maps (M06 Fala 2 §2.1): kickoff carries ideaId/intent and reuses the existing conversation instead of creating a new one. OFF = today’s local-only kickoff behavior.',
+    defaultValue: false,
+    category: 'ai',
+    allowLocalOverride: true,
+  },
+  {
+    id: 'mindmapDrawerUnified',
+    name: 'Mind Map: Unified Node Detail Drawer (Fala 4.1b)',
+    description:
+      'M06 Fala 4.1b consolidation: renders the single canonical UnifiedNodeDetailDrawer in both consumers (IdeaRecommendationMap M06 + IdeaMapWorkspace M05) instead of the two duplicated drawers (NodeDetailDrawer ~1042 LOC + IdeaNodeDetailDrawer ~1383 LOC). Superset of both capabilities (status enum, editable ExtendedNodeData fields, comments, evidence, convert, AI context). OFF = today’s two separate drawers (zero visual change).',
+    defaultValue: false,
+    category: 'beta',
+    allowLocalOverride: true,
+  },
 ];
 
 // ============================================

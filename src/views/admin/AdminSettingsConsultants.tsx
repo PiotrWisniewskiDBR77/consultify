@@ -669,7 +669,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                       value={inviteAccessCode}
                       onChange={(e) => setInviteAccessCode(e.target.value.toUpperCase())}
                       placeholder="Enter existing code (e.g., CONS-A1B2C3D4)"
-                      className="w-full px-4 py-2 bg-c-bg/30 dark:bg-navy-950/20 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-white font-mono placeholder:text-c-text-secondary"
+                      className="w-full px-4 py-2 bg-c-bg/30 dark:bg-navy-950/20 border border-white/10 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-c-text font-mono placeholder:text-c-text-secondary"
                     />
                   )}
 
@@ -716,7 +716,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                                   className="rounded border-white/20 bg-c-surface/5 text-blue-500 focus:ring-blue-500"
                                 />
                                 <div>
-                                  <span className="text-sm text-white">{perm.label}</span>
+                                  <span className="text-sm text-c-text">{perm.label}</span>
                                   <p className="text-xs text-c-text-muted">
                                     {perm.description}
                                   </p>
@@ -771,10 +771,10 @@ export const AdminSettingsConsultants: React.FC = () => {
       {/* Add Project Modal */}
       {showAddProjectModal && selectedConsultant && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-navy-900 border border-white/10 rounded-xl shadow-2xl w-full max-w-md">
+          <div className="bg-c-surface border border-white/10 rounded-xl shadow-2xl w-full max-w-md">
             <div className="p-6 border-b border-white/10 flex justify-between items-center">
               <div>
-                <h3 className="text-lg font-semibold text-white">Add to Project</h3>
+                <h3 className="text-lg font-semibold text-c-text">Add to Project</h3>
                 <p className="text-sm text-c-text-muted mt-1">
                   {selectedConsultant.email}
                 </p>
@@ -806,7 +806,7 @@ export const AdminSettingsConsultants: React.FC = () => {
                     >
                       <Briefcase className="w-4 h-4 text-c-text-muted" />
                       <div>
-                        <p className="font-medium text-white">{project.name}</p>
+                        <p className="font-medium text-c-text">{project.name}</p>
                         <EntityStatusChip status={project.status} />
                       </div>
                     </button>
@@ -886,10 +886,10 @@ const PermissionsModal: React.FC<{
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-navy-900 border border-white/10 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-c-surface border border-white/10 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="p-6 border-b border-white/10 flex justify-between items-center flex-shrink-0">
           <div>
-            <h3 className="text-lg font-semibold text-white">Edit Permissions</h3>
+            <h3 className="text-lg font-semibold text-c-text">Edit Permissions</h3>
             <p className="text-sm text-c-text-muted mt-1">
               {projectAccess.projectName}
             </p>
@@ -962,7 +962,7 @@ const PermissionsModal: React.FC<{
                       />
                       <div>
                         <span
-                          className={`text-sm ${permissions[perm.key] ? 'text-white' : 'text-slate-300'}`}
+                          className={`text-sm ${permissions[perm.key] ? 'text-c-text' : 'text-slate-300'}`}
                         >
                           {perm.label}
                         </span>

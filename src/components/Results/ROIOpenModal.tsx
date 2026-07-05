@@ -50,7 +50,7 @@ export const ROIOpenModal: React.FC<ROIOpenModalProps> = ({ onClose, onSelect, t
     'w-full h-9 pl-9 pr-9 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center">
       <div className="absolute inset-0 bg-navy-950/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-lg mx-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-2xl shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">

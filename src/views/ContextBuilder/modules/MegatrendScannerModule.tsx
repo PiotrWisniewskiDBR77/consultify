@@ -86,7 +86,7 @@ export const MegatrendScannerModule: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex border-b border-slate-200 dark:border-navy-700 space-x-6 overflow-x-auto">
+      <div className="flex border-b border-c-border-subtle space-x-6 overflow-x-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -97,8 +97,8 @@ export const MegatrendScannerModule: React.FC = () => {
                             flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap
                             ${
                               activeTab === tab.id
-                                ? 'border-primary-600 text-primary-600 dark:text-primary-400'
-                                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
+                                ? 'border-c-accent text-c-accent'
+                                : 'border-transparent text-c-text-muted hover:text-c-text'
                             }
                         `}
           >
@@ -138,13 +138,13 @@ export const MegatrendScannerModule: React.FC = () => {
             {selectedTrendId ? (
               <TrendDetailCard trendId={selectedTrendId} onClose={() => setActiveTab(lastTab)} />
             ) : (
-              <div className="text-center py-12 bg-slate-50 dark:bg-navy-900/50 rounded-lg border border-dashed border-slate-300 dark:border-navy-700">
-                <p className="text-slate-500 dark:text-slate-400">
+              <div className="text-center py-12 bg-c-surface-raised dark:bg-c-surface rounded-lg border border-dashed border-c-border-subtle">
+                <p className="text-c-text-muted">
                   Please select a trend from the Baseline or Radar Map to see details.
                 </p>
                 <button
                   onClick={() => setActiveTab('baseline')}
-                  className="mt-4 text-primary-600 hover:text-primary-700 font-medium"
+                  className="mt-4 text-c-accent hover:opacity-80 font-medium"
                 >
                   Go to Baseline
                 </button>

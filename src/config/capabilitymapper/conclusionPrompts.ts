@@ -78,24 +78,30 @@ ${scoreLines}
 ${seqLines}
 
 W2 STRUCTURE (mandatory):
-1. "verdict" — answer-first, 1-2 sentences: which gap to close FIRST and with which sourcing (build/buy/partner), leading with the highest importance-weighted gap.
-2. "rationale" — why, anchored in the gap ranking and the sourcing sequence above (cite capability ids).
-3. "tradeoffs" — >= 1: what we build/buy AT THE COST of what deferred capability; every sourcing choice names the option it rejects.
-4. "moves" (3-5) — each a sourcing DECISION (build/buy/partner/reskill/sustain), each with tradeOff + rejectedVariant + firstStep, linked to capability ids.
-5. "expectedEffect" — capability-maturity outcome, behaviorally observable, WITH a time horizon; no maturity levels absent from the facts.
+1. "summary.verdict" — answer-first, 1-2 sentences: which gap to close FIRST and with which sourcing (build/buy/partner), leading with the highest importance-weighted gap.
+2. "summary.executiveSummary" — 3-4 sentences: restates the verdict, then the why, anchored in the gap ranking and the sourcing sequence above (cite capability ids).
+3. "summary.tradeoffs" — >= 1: what we build/buy AT THE COST of what deferred capability; every sourcing choice names the option it rejects.
+4. "moves" (3-5) — each a sourcing DECISION (build/buy/partner/reskill/restructure), each with its trade-off (chosen at the cost of what) and rejected variant folded into "rationale", plus firstStep, linked to capability ids.
+5. "summary.expectedEffect" — capability-maturity outcome, behaviorally observable, WITH a time horizon; no maturity levels absent from the facts.
 
 QUALITY BARS:
 - The sourcing verdict and order are the engine's — do not override them; numbers only from the facts block.
-- Zero filler; every sentence falsifiable — with a different capability map it would read differently.
+- Zero filler and zero AI meta-phrases ("As an AI", "Based on the provided data", "In conclusion"); every sentence falsifiable — with a different capability map it would read differently.
 - Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
 
 Return JSON:
 {
-  "verdict": "answer-first: which gap first, with which sourcing",
-  "rationale": "why — anchored in the gap ranking and the sourcing sequence above",
-  "tradeoffs": [{"chosen":"...","rejected":"...","why":"..."}],
-  "moves": [{"title":"...","category":"build|buy|partner|reskill|sustain","rationale":"...","tradeOff":"...","rejectedVariant":"...","linkedCapabilityIds":["cap-id"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
-  "expectedEffect": {"text":"capability-maturity outcome, behaviorally observable","horizon":"..."},
+  "summary": {
+    "verdict": "answer-first: which gap first, with which sourcing",
+    "executiveSummary": "3-4 sentences: restate the verdict, then why — anchored in the gap ranking and the sourcing sequence above",
+    "keyInsights": ["3 insights, each tied to named session elements"],
+    "appliedConclusions": ["what to build", "what to buy or partner", "what NOT to do", "what to validate next"],
+    "tradeoffs": [{"chosen":"...","rejected":"...","why":"..."}],
+    "expectedEffect": {"text":"capability-maturity outcome, behaviorally observable","horizon":"..."}
+  },
+  "moves": [{"title":"...","category":"build|buy|partner|reskill|restructure","rationale":"why — anchored in listed element ids; MUST name the trade-off (chosen at the cost of what) and the rejected variant","linkedGapIds":[],"linkedCapabilityIds":["cap-id"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"verb + artifact + role"}],
+  "initiatives": [{"title":"...","description":"...","type":"strategic|operational|defensive|growth","estimatedImpact":"high|medium|low","estimatedEffort":"high|medium|low","rationale":"...","linkedItems":["cap-id"]}],
+  "outputCandidates": [{"outputType":"initiative|report|presentation|idea","title":"...","description":"...","linkedCapabilityIds":["cap-id"],"rationale":"...","readiness":"ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}],
   "selfCheck": {"signature":"pass|fail","formulaComplete":"pass|fail","numbersFromFacts":"pass|fail","falsifiable":"pass|fail","tradeoffPresent":"pass|fail","effectHasHorizon":"pass|fail"}
 }`;
 }

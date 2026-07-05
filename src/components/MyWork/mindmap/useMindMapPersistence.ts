@@ -29,11 +29,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import type { Edge, Node } from 'reactflow';
 
+import i18n from '@/i18n';
 import { Api } from '@/services/api';
 
 import type { IdeaMapSyncState } from '../canvas/useIdeaMapSync';
 import { mergeWorkspaceExtensions } from '../canvas/workspaceGraphRuntime';
 import type { CanvasToolType } from '../ideaSelectionTypes';
+import { isEmptyWipe } from './mindmapCanonHelpers';
 import { normalizeMindMapNodes } from './mindMapNodeModel';
 
 type PersistenceStatus = 'online' | 'no_route' | 'missing_table' | 'offline';
@@ -61,6 +63,7 @@ function shouldBootstrapStarterGraph(
 function buildLocalDefaultIdeaMap(
   ideaId: string,
   ideaTitle: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept for call-site compatibility (molochs pass this positionally)
   isPolish: boolean
 ): { nodes: Node[]; edges: Edge[] } {
   const rootNode: Node = {
@@ -68,43 +71,43 @@ function buildLocalDefaultIdeaMap(
     type: 'center',
     position: { x: 0, y: 0 },
     data: {
-      label: ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea'),
-      hint: isPolish ? 'Kliknij, aby edytować' : 'Click to edit',
+      label: ideaTitle || i18n.t('mindmap.persistence.myIdea'),
+      hint: i18n.t('mindmap.persistence.clickToEdit'),
     },
   };
   const branchSpecs = [
     {
       id: 'branch-problem',
       branchKey: 'problem',
-      label: isPolish ? 'Problem' : 'Problem',
+      label: i18n.t('mindmap.persistence.branchProblem'),
       position: { x: -320, y: -180 },
       selected: false,
     },
     {
       id: 'branch-options',
       branchKey: 'options',
-      label: isPolish ? 'Opcje' : 'Options',
+      label: i18n.t('mindmap.persistence.branchOptions'),
       position: { x: 320, y: -180 },
       selected: true,
     },
     {
       id: 'branch-evidence',
       branchKey: 'evidence',
-      label: isPolish ? 'Dowody' : 'Evidence',
+      label: i18n.t('mindmap.persistence.branchEvidence'),
       position: { x: -320, y: 20 },
       selected: false,
     },
     {
       id: 'branch-risks',
       branchKey: 'risks',
-      label: isPolish ? 'Ryzyka' : 'Risks',
+      label: i18n.t('mindmap.persistence.branchRisks'),
       position: { x: 320, y: 20 },
       selected: false,
     },
     {
       id: 'branch-experiments',
       branchKey: 'experiments',
-      label: isPolish ? 'Eksperymenty' : 'Experiments',
+      label: i18n.t('mindmap.persistence.branchExperiments'),
       position: { x: 0, y: 240 },
       selected: false,
     },
@@ -118,7 +121,7 @@ function buildLocalDefaultIdeaMap(
     data: {
       label: branch.label,
       branchKey: branch.branchKey,
-      hint: isPolish ? 'Wybierz gałąź i naciśnij Tab' : 'Select branch and press Tab',
+      hint: i18n.t('mindmap.persistence.selectBranchHint'),
     },
   }));
 
@@ -212,6 +215,12 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
   const skipNextAutoSaveRef = useRef(false);
   const lastScheduledPayloadKeyRef = useRef('');
   const localVersionRef = useRef(1);
+  // Anti-wipe guard: last node count we accepted as a legitimate graph state.
+  // A mind map always has at least the (non-deletable) root node, so a 0-node
+  // payload while we previously knew a non-empty graph is ALWAYS a bug (bad
+  // hydration, remount race, crashed transform) — never a real user action.
+  // We refuse to persist it. See lesson 26a2a896ef.
+  const lastKnownNodeCountRef = useRef(0);
   const runtimeVersion = externalRuntime?.version ?? null;
   const runtimeLoading = externalRuntime?.loading ?? false;
   const runtimeSaving = externalRuntime?.saving ?? false;
@@ -293,10 +302,22 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
 
   // Keep a stable ref to runtime data so `hydrate` doesn't get a new identity
   // on every save cycle (which would cascade into effect re-runs).
-  const runtimeDataRef = useRef({ runtimeNodes, runtimeEdges, runtimeExtensions, runtimeVersion });
+  const runtimeDataRef = useRef({
+    runtimeNodes,
+    runtimeEdges,
+    runtimeExtensions,
+    runtimeVersion,
+    runtimeLoading,
+  });
   useEffect(() => {
-    runtimeDataRef.current = { runtimeNodes, runtimeEdges, runtimeExtensions, runtimeVersion };
-  }, [runtimeNodes, runtimeEdges, runtimeExtensions, runtimeVersion]);
+    runtimeDataRef.current = {
+      runtimeNodes,
+      runtimeEdges,
+      runtimeExtensions,
+      runtimeVersion,
+      runtimeLoading,
+    };
+  }, [runtimeNodes, runtimeEdges, runtimeExtensions, runtimeVersion, runtimeLoading]);
 
   const hydrate = useCallback(async () => {
     const {
@@ -304,8 +325,22 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       runtimeEdges: rtEdges,
       runtimeExtensions: rtExt,
       runtimeVersion: rtVer,
+      runtimeLoading: rtLoading,
     } = runtimeDataRef.current;
     if (externalRuntime) {
+      // Bootstrap race guard (M06): hydrate() fires from the [ideaId] mount
+      // effect BEFORE the workspace runtime's GET /map has resolved, so
+      // runtimeDataRef still holds the initial EMPTY graph (nodes:[] version:1).
+      // shouldBootstrapStarterGraph() then returns true and seeds the 6-node
+      // default starter — which is captured + synced, overwriting the real
+      // server map. Because the server version is 1, it never changes, so the
+      // [runtimeVersion] re-hydrate effect below never re-fires with the loaded
+      // nodes and the wrong graph sticks. Refuse to bootstrap while the runtime
+      // is still loading; the loaded-transition effect re-runs hydrate() once
+      // the GET resolves and the real nodes are in runtimeDataRef.
+      if (rtLoading) {
+        return;
+      }
       localVersionRef.current = Math.max(1, Number(rtVer || 1));
       const runtimeNodesSafe = Array.isArray(rtNodes) ? rtNodes : [];
       const runtimeEdgesSafe = Array.isArray(rtEdges) ? rtEdges : [];
@@ -338,8 +373,8 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
           ...n,
           data: {
             ...(n.data || {}),
-            label: ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea'),
-            hint: isPolish ? 'Kliknij, aby edytować' : 'Click to edit',
+            label: ideaTitle || i18n.t('mindmap.persistence.myIdeaAccented'),
+            hint: i18n.t('mindmap.persistence.clickToEditAccented'),
           },
         };
       });
@@ -362,6 +397,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       isHydratingRef.current = true;
       skipNextAutoSaveRef.current = true;
       lastScheduledPayloadKeyRef.current = '';
+      if (depthPatchedNodes.length > 0) lastKnownNodeCountRef.current = depthPatchedNodes.length;
       setNodes(depthPatchedNodes);
       setEdges(nextEdges);
       clearUndoHistory();
@@ -406,8 +442,8 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
           ...n,
           data: {
             ...(n.data || {}),
-            label: ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea'),
-            hint: isPolish ? 'Kliknij, aby edytować' : 'Click to edit',
+            label: ideaTitle || i18n.t('mindmap.persistence.myIdeaAccented'),
+            hint: i18n.t('mindmap.persistence.clickToEditAccented'),
           },
         };
       });
@@ -436,6 +472,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       isHydratingRef.current = true;
       skipNextAutoSaveRef.current = true;
       lastScheduledPayloadKeyRef.current = '';
+      if (depthPatchedNodes.length > 0) lastKnownNodeCountRef.current = depthPatchedNodes.length;
       setNodes(depthPatchedNodes);
       setEdges(nextEdges);
       clearUndoHistory();
@@ -468,21 +505,13 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
 
       if (isNoRoute) {
         setPersistence('no_route');
-        toast(
-          (isPolish
-            ? 'Backend wymaga restartu (route mapy jeszcze nie działa).'
-            : 'Backend needs restart (map route not active).') as any
-        );
+        toast(i18n.t('mindmap.persistence.backendNeedsRestart') as any);
       } else if (isMissingTable) {
         setPersistence('missing_table');
-        toast(
-          (isPolish
-            ? 'Brakuje tabeli mapy — uruchom migracje DB.'
-            : 'Map table missing — run DB migrations.') as any
-        );
+        toast(i18n.t('mindmap.persistence.mapTableMissing') as any);
       } else {
         setPersistence('offline');
-        toast.error(msg || (isPolish ? 'Nie udało się wczytać mapy' : 'Failed to load map'));
+        toast.error(msg || i18n.t('mindmap.persistence.failedToLoadMap'));
       }
 
       const def = buildLocalDefaultIdeaMap(ideaId, ideaTitle, isPolish);
@@ -490,6 +519,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       isHydratingRef.current = true;
       skipNextAutoSaveRef.current = true;
       lastScheduledPayloadKeyRef.current = '';
+      if (def.nodes.length > 0) lastKnownNodeCountRef.current = def.nodes.length;
       setNodes(def.nodes);
       setEdges(def.edges);
       setTimeout(() => {
@@ -522,6 +552,36 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ideaId]);
 
+  // Re-hydrate when the workspace runtime finishes its initial GET /map load
+  // (loading true→false). The [ideaId] mount hydrate above bails out while
+  // externalRuntime.loading is true (empty runtime state would bootstrap and
+  // clobber the real map), so this is the effect that actually hydrates the
+  // real server graph once it has arrived. Server maps at version 1 never bump
+  // the version, so the version-jump effect below cannot cover this — the
+  // loaded transition is the only reliable "the GET resolved" signal.
+  const didHydrateLoadedRef = useRef(false);
+  useEffect(() => {
+    didHydrateLoadedRef.current = false;
+  }, [ideaId]);
+  useEffect(() => {
+    if (!externalRuntime) return;
+    if (runtimeLoading) return;
+    // Runtime has finished loading (GET /map resolved). Hydrate the real graph
+    // exactly once per idea. Covers both the true→false transition AND the case
+    // where the runtime was already loaded before this hook mounted (in which
+    // case the [ideaId] mount hydrate bailed on stale loading state). Guard so
+    // we don't re-hydrate on every unrelated runtime re-render.
+    if (didHydrateLoadedRef.current) return;
+    didHydrateLoadedRef.current = true;
+    // Mark this version as hydrated so the version-jump effect does not
+    // immediately re-hydrate (and reset the viewport) right after us.
+    if (runtimeVersion !== null) {
+      lastHydratedRuntimeVersionRef.current = runtimeVersion;
+    }
+    hydrate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runtimeLoading, ideaId]);
+
   // Re-hydrate ONLY when the runtime version jumps by more than 1 (external
   // change, e.g. conflict resolution or another user's save).  A +1 bump is
   // the normal result of our own scheduleSave — re-hydrating on that would
@@ -542,9 +602,41 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runtimeVersion]);
 
+  // DP-3 (T6): `graph_version` = the WS gateway persisted a live graph_patch
+  // we have ALREADY applied to the canvas (the patch relay precedes the
+  // version broadcast; our own edits are in local state anyway). Treat it
+  // exactly like our own +1 save bumps: advance localVersionRef and mark the
+  // version as already-hydrated, so a later runtimeVersion jump caused by
+  // accumulated live versions does NOT re-trigger hydrate(). Ref-only —
+  // never a re-hydration, never a canvas remount (hard lesson 26a2a896ef).
+  // First hydration is untouched (lastHydratedRuntimeVersionRef === null),
+  // and versions never seen live (WS down ⇒ no graph_version) still
+  // re-hydrate through the >1-jump path above — today's conflict recovery.
   useEffect(() => {
-    const label = ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea');
-    const hint = isPolish ? 'Kliknij, aby edytować' : 'Click to edit';
+    if (typeof window === 'undefined') return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail) return;
+      if (detail.ideaId && detail.ideaId !== ideaId) return;
+      const version = Number(detail.version || 0);
+      if (!Number.isFinite(version) || version <= 0) return;
+      if (version > localVersionRef.current) {
+        localVersionRef.current = version;
+      }
+      if (
+        lastHydratedRuntimeVersionRef.current !== null &&
+        version > lastHydratedRuntimeVersionRef.current
+      ) {
+        lastHydratedRuntimeVersionRef.current = version;
+      }
+    };
+    window.addEventListener('idea-collab-graph-version', handler);
+    return () => window.removeEventListener('idea-collab-graph-version', handler);
+  }, [ideaId]);
+
+  useEffect(() => {
+    const label = ideaTitle || i18n.t('mindmap.persistence.myIdeaAccented');
+    const hint = i18n.t('mindmap.persistence.clickToEditAccented');
     setNodes((prev: Node[]) => {
       let hasChanges = false;
       const next = (prev || []).map((n: any) => {
@@ -594,6 +686,22 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
         skipNextAutoSaveRef.current = false;
         return;
       }
+      // Anti-wipe guard (root-cause independent): refuse to persist an empty
+      // graph when we previously held a non-empty one. Root is non-deletable,
+      // so a real map is never legitimately 0 nodes — an empty payload here is
+      // always a defect (hydration crash / remount race / bad transform) and
+      // persisting it would silently destroy the user's map. Skip the sync and
+      // warn; the next legitimate change re-syncs the real graph.
+      const nextCount = Array.isArray(nextNodes) ? nextNodes.length : 0;
+      if (isEmptyWipe(nextCount, lastKnownNodeCountRef.current)) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[mindmap] anti-wipe guard: refusing to sync 0 nodes (last known ${lastKnownNodeCountRef.current}). ` +
+            'Likely a hydration/remount defect — map preserved on server.'
+        );
+        return;
+      }
+      if (nextCount > 0) lastKnownNodeCountRef.current = nextCount;
       const {
         collapsedNodeIds: latestCollapsedNodeIds,
         extensions: latestExtensions,
@@ -733,18 +841,11 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
           setLastSavedAt(Date.now());
         } catch (err: any) {
           if (err?.status === 409) {
-            toast(
-              isPolish
-                ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
-                : 'Change conflict detected. Refreshing map from server.',
-              { icon: '⚠️' }
-            );
+            toast(i18n.t('mindmap.persistence.conflictDetected'), { icon: '⚠️' });
             await hydrate();
             return;
           }
-          toast.error(
-            err?.message || (isPolish ? 'Nie udało się zapisać mapy' : 'Failed to save map')
-          );
+          toast.error(err?.message || i18n.t('mindmap.persistence.failedToSaveMap'));
         } finally {
           setSaving(false);
         }

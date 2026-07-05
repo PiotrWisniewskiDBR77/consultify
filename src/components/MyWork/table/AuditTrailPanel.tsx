@@ -8,6 +8,7 @@ import { Calendar, ChevronDown, Clock, Filter, Loader2, Plus, Trash2, User, X } 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import { getHeaders } from '@/services/api';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -79,14 +80,14 @@ const ACTION_STYLES: Record<string, string> = {
 const FieldDiff = React.memo(function FieldDiff({ change }: { change: FieldChange }) {
   return (
     <div className="ml-9 mt-1 text-[11px] leading-relaxed">
-      <span className="font-medium text-slate-500 dark:text-slate-400">
+      <span className="font-medium text-c-text-muted">
         {change.fieldName || change.fieldId}
       </span>
       <div className="flex items-start gap-1.5 mt-0.5">
         <span className="inline-block px-1.5 py-0.5 rounded bg-danger-500/10 text-danger-600 dark:text-danger-400 line-through max-w-[45%] truncate">
           {formatValue(change.oldValue)}
         </span>
-        <span className="text-slate-600 dark:text-slate-500 mt-0.5">→</span>
+        <span className="text-c-text-secondary mt-0.5">→</span>
         <span className="inline-block px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 max-w-[45%] truncate">
           {formatValue(change.newValue)}
         </span>
@@ -106,30 +107,30 @@ const RevisionItem = React.memo(function RevisionItem({
   const hasChanges = revision.changes.length > 0;
 
   return (
-    <div className="px-3 py-2.5 border-b border-slate-200 dark:border-white/[0.04] last:border-0">
+    <div className="px-3 py-2.5 border-b border-c-border-subtle last:border-0">
       <div
         className={`flex items-start gap-2.5 ${hasChanges ? 'cursor-pointer' : ''}`}
         onClick={() => hasChanges && setExpanded((p) => !p)}
       >
-        <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-300 flex-shrink-0 mt-0.5">
+        <div className="w-7 h-7 rounded-full bg-c-border-subtle flex items-center justify-center text-[10px] font-bold text-c-text-secondary flex-shrink-0 mt-0.5">
           {getInitials(revision.userName)}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+            <span className="text-xs font-semibold text-c-text truncate">
               {revision.userName || (isPl ? 'Nieznany' : 'Unknown')}
             </span>
             <span
-              className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full ${ACTION_STYLES[revision.action] ?? 'bg-slate-100 dark:bg-navy-800 text-slate-500'}`}
+              className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full ${ACTION_STYLES[revision.action] ?? 'bg-c-surface-raised text-c-text-muted'}`}
             >
               {revision.action}
             </span>
           </div>
-          <div className="flex items-center gap-1 mt-0.5 text-[10px] text-slate-600 dark:text-slate-500">
+          <div className="flex items-center gap-1 mt-0.5 text-[10px] text-c-text-secondary">
             <Clock size={10} />
             {relativeTime(revision.timestamp, isPl)}
             {hasChanges && (
-              <span className="ml-1 text-slate-600">
+              <span className="ml-1 text-c-text-secondary">
                 ({revision.changes.length} {isPl ? 'zmian' : 'changes'})
               </span>
             )}
@@ -223,22 +224,22 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
   if (!open) return null;
 
   return (
-    <div className="w-80 border-l border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900 flex flex-col h-full overflow-hidden flex-shrink-0">
+    <div className="w-80 border-l border-c-border-subtle bg-c-surface flex flex-col h-full overflow-hidden flex-shrink-0">
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-200/60 dark:border-navy-700/60">
-        <Clock size={14} className="text-slate-500 dark:text-slate-400" />
-        <span className="text-xs font-bold text-slate-700 dark:text-slate-200 flex-1">
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-c-border-subtle">
+        <Clock size={14} className="text-c-text-muted" />
+        <span className="text-xs font-bold text-c-text flex-1">
           {isPl ? 'Historia zmian' : 'Revision History'}
         </span>
         <button
           onClick={() => setShowFilters((p) => !p)}
-          className={`p-1 rounded transition-colors ${showFilters ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
+          className={`p-1 rounded transition-colors ${showFilters ? 'bg-c-accent-soft text-c-accent' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
         >
           <Filter size={12} />
         </button>
         <button
           onClick={onClose}
-          className="p-1 rounded text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+          className="p-1 rounded text-c-text-secondary hover:text-c-text-secondary transition-colors"
         >
           <X size={14} />
         </button>
@@ -246,12 +247,12 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
 
       {/* Filters */}
       {showFilters && (
-        <div className="px-3 py-2 border-b border-slate-200 dark:border-white/[0.04] space-y-2">
+        <div className="px-3 py-2 border-b border-c-border-subtle space-y-2">
           <input
             value={filterUser}
             onChange={(e) => setFilterUser(e.target.value)}
             placeholder={isPl ? 'Filtruj po użytkowniku…' : 'Filter by user…'}
-            className="w-full h-7 px-2 rounded-lg text-[11px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 outline-none focus:ring-2 focus:ring-blue-500/30 text-slate-700 dark:text-slate-200"
+            className="w-full h-7 px-2 rounded-lg text-[11px] bg-c-surface-raised border border-c-border-subtle outline-none focus:ring-2 focus:ring-blue-500/30 text-c-text"
           />
           <div className="flex gap-1">
             {['created', 'updated', 'deleted'].map((a) => (
@@ -261,7 +262,7 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
                 className={`text-[9px] font-bold uppercase px-2 py-1 rounded-full transition-colors ${
                   filterAction === a
                     ? ACTION_STYLES[a]
-                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600'
+                    : 'bg-c-surface-raised text-c-text-secondary'
                 }`}
               >
                 {a}
@@ -274,23 +275,29 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {!recordId ? (
-          <div className="flex flex-col items-center justify-center h-full text-slate-600 dark:text-slate-500 px-4 text-center">
-            <Clock size={24} className="mb-2 opacity-40" />
-            <span className="text-xs">
-              {isPl ? 'Wybierz rekord, aby zobaczyć historię' : 'Select a record to view history'}
-            </span>
-          </div>
+          <EmptyState
+            variant="new"
+            icon={Clock}
+            compact
+            title={isPl ? 'Wybierz rekord' : 'Select a record'}
+            description={
+              isPl ? 'Wybierz rekord, aby zobaczyć historię zmian.' : 'Select a record to view its change history.'
+            }
+          />
         ) : loading && revisions.length === 0 ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 size={20} className="animate-spin text-slate-600" />
-          </div>
+          <LoadingState template="list" rows={5} />
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-slate-600 dark:text-slate-500 px-4 text-center">
-            <Clock size={20} className="mb-2 opacity-40" />
-            <span className="text-[11px]">
-              {isPl ? 'Brak historii zmian' : 'No revision history'}
-            </span>
-          </div>
+          <EmptyState
+            variant="new"
+            icon={Clock}
+            compact
+            title={isPl ? 'Brak historii zmian' : 'No revision history'}
+            description={
+              isPl
+                ? 'Zmiany tego rekordu pojawią się tutaj po pierwszej edycji.'
+                : 'Changes to this record will appear here after the first edit.'
+            }
+          />
         ) : (
           <>
             {filtered.map((rev) => (
@@ -301,7 +308,7 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
                 <button
                   onClick={() => fetchRevisions(false)}
                   disabled={loading}
-                  className="w-full py-2 rounded-lg text-[11px] font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/5 hover:bg-primary-500/10 transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5"
+                  className="w-full py-2 rounded-lg text-[11px] font-semibold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5"
                 >
                   {loading ? (
                     <Loader2 size={12} className="animate-spin" />

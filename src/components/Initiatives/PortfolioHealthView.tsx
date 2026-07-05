@@ -1,13 +1,13 @@
 /**
- * Zdrowie portfela (Kręgosłup inicjatyw · F4 · D9).
+ * Portfolio health (Initiatives backbone · F4 · D9).
  *
- * Read-only widok zdrowia portfela inicjatyw: mapa pokrycia MECE nad stałą
- * taksonomią obszarów, lista luk, klastry duplikatów oraz rozkład statusów i
- * balansu effort×impact. Karmiony z endpointu `GET /api/initiatives/portfolio-health`
- * (kontrakt = PortfolioHealth z server/.../portfolioAnalysisService.ts).
+ * Read-only view of initiative portfolio health: MECE coverage map over a fixed
+ * area taxonomy, gap list, duplicate clusters, plus status distribution and
+ * effort x impact balance. Fed from the `GET /api/initiatives/portfolio-health`
+ * endpoint (contract = PortfolioHealth from server/.../portfolioAnalysisService.ts).
  *
- * Samowystarczalny: własny hook fetch (bez zależności od współdzielonego
- * initiatives.api.ts), i18n PL/EN z fallbackami przez t(). Tokeny kanonu (bez
+ * Self-contained: own fetch hook (no dependency on the shared
+ * initiatives.api.ts), i18n PL/EN with fallbacks via t(). Canon tokens (no
  * hex/rose — primary + slate).
  */
 import {
@@ -22,7 +22,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // ---------------------------------------------------------------------------
-// Kontrakt danych (lustrzane wobec portfolioAnalysisService.ts)
+// Data contract (mirrors portfolioAnalysisService.ts)
 // ---------------------------------------------------------------------------
 export interface AreaCoverage {
   area: string;
@@ -57,7 +57,7 @@ export interface PortfolioHealth {
 const LEVELS: Array<'low' | 'medium' | 'high'> = ['low', 'medium', 'high'];
 
 // ---------------------------------------------------------------------------
-// Fetch hook (samowystarczalny — stub endpoint)
+// Fetch hook (self-contained — stub endpoint)
 // ---------------------------------------------------------------------------
 export function usePortfolioHealth(endpoint = '/api/initiatives/portfolio-health') {
   const [data, setData] = useState<PortfolioHealth | null>(null);
@@ -77,7 +77,7 @@ export function usePortfolioHealth(endpoint = '/api/initiatives/portfolio-health
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as PortfolioHealth | { data?: PortfolioHealth };
         if (!alive) return;
-        // Toleruj oba kształty: surowy obiekt lub { data }.
+        // Tolerate both shapes: raw object or { data }.
         const payload = (json as { data?: PortfolioHealth }).data ?? (json as PortfolioHealth);
         setData(payload ?? null);
       } catch (e: unknown) {
@@ -97,7 +97,7 @@ export function usePortfolioHealth(endpoint = '/api/initiatives/portfolio-health
 }
 
 // ---------------------------------------------------------------------------
-// Podkomponenty
+// Subcomponents
 // ---------------------------------------------------------------------------
 function ShareBar({ label, count, total }: { label: React.ReactNode; count: number; total: number }) {
   const pct = total > 0 ? Math.round((count / total) * 100) : 0;
@@ -124,19 +124,19 @@ function HeadlineStat({ label, value }: { label: string; value: number }) {
 }
 
 // ---------------------------------------------------------------------------
-// Widok główny
+// Main view
 // ---------------------------------------------------------------------------
 export interface PortfolioHealthViewProps {
-  /** Nadpisanie endpointu (testy / inne osadzenie). */
+  /** Endpoint override (tests / other embedding). */
   endpoint?: string;
-  /** Wstrzyknięcie danych (testy / storybook) — pomija fetch. */
+  /** Injected data (tests / storybook) — skips fetch. */
   health?: PortfolioHealth | null;
 }
 
 export function PortfolioHealthView({ endpoint, health: injected }: PortfolioHealthViewProps) {
   const { t } = useTranslation();
   const hook = usePortfolioHealth(endpoint);
-  // Wstrzyknięte dane mają priorytet (test/preview), inaczej z hooka.
+  // Injected data takes priority (test/preview), otherwise from the hook.
   const health = injected !== undefined ? injected : hook.data;
   const loading = injected !== undefined ? false : hook.loading;
 
@@ -153,7 +153,7 @@ export function PortfolioHealthView({ endpoint, health: injected }: PortfolioHea
     return (
       <div className="flex items-center gap-2 p-6 text-sm text-slate-500" data-testid="portfolio-health-loading">
         <Loader2 className="h-4 w-4 animate-spin" />
-        {t('common.loading', 'Ładowanie…')}
+        {t('common.loading', 'Loading…')}
       </div>
     );
   }
@@ -161,32 +161,32 @@ export function PortfolioHealthView({ endpoint, health: injected }: PortfolioHea
   if (!health) {
     return (
       <div className="p-6 text-sm text-slate-500" data-testid="portfolio-health-empty">
-        {t('initiatives.portfolioHealth.empty', 'Brak danych o zdrowiu portfela.')}
+        {t('initiatives.portfolioHealth.empty', 'No portfolio health data.')}
       </div>
     );
   }
 
-  // Maks. liczność komórki balansu — do skali tła heatmapy.
+  // Max balance cell count — for scaling the heatmap background.
   const maxCell = health.balance.grid.reduce((m, c) => Math.max(m, c.count), 0) || 1;
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-auto p-4" data-testid="portfolio-health-view">
-      {/* Nagłówek + statystyki ------------------------------------------------ */}
+      {/* Header + stats ------------------------------------------------ */}
       <header className="flex flex-wrap items-center gap-2">
         <MapIcon className="h-5 w-5 text-primary-500" />
         <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-          {t('initiatives.portfolioHealth.title', 'Zdrowie portfela')}
+          {t('initiatives.portfolioHealth.title', 'Portfolio health')}
         </h2>
         <span className="ml-auto text-xs text-slate-500 dark:text-slate-400">
-          {t('initiatives.portfolioHealth.total', '{{count}} inicjatyw', { count: health.total })}
+          {t('initiatives.portfolioHealth.total', '{{count}} initiatives', { count: health.total })}
         </span>
       </header>
 
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-        <HeadlineStat label={t('initiatives.portfolioHealth.quickWins', 'Szybkie wygrane')} value={health.balance.quickWins} />
-        <HeadlineStat label={t('initiatives.portfolioHealth.bigBets', 'Duże zakłady')} value={health.balance.bigBets} />
-        <HeadlineStat label={t('initiatives.portfolioHealth.moneyPits', 'Studnie bez dna')} value={health.balance.moneyPits} />
-        <HeadlineStat label={t('initiatives.portfolioHealth.gapsCount', 'Luki pokrycia')} value={health.gaps.length} />
+        <HeadlineStat label={t('initiatives.portfolioHealth.quickWins', 'Quick wins')} value={health.balance.quickWins} />
+        <HeadlineStat label={t('initiatives.portfolioHealth.bigBets', 'Big bets')} value={health.balance.bigBets} />
+        <HeadlineStat label={t('initiatives.portfolioHealth.moneyPits', 'Money pits')} value={health.balance.moneyPits} />
+        <HeadlineStat label={t('initiatives.portfolioHealth.gapsCount', 'Coverage gaps')} value={health.gaps.length} />
       </div>
 
       {/* MECE coverage -------------------------------------------------------- */}
@@ -194,11 +194,11 @@ export function PortfolioHealthView({ endpoint, health: injected }: PortfolioHea
         <header className="mb-3 flex items-center gap-2">
           <Layers className="h-4 w-4 text-primary-500" />
           <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-            {t('initiatives.portfolioHealth.coverageTitle', 'Mapa pokrycia (MECE)')}
+            {t('initiatives.portfolioHealth.coverageTitle', 'Coverage map (MECE)')}
           </h3>
         </header>
         {health.coverage.length === 0 ? (
-          <p className="py-2 text-sm text-slate-500">{t('initiatives.portfolioHealth.noCoverage', 'Brak danych pokrycia.')}</p>
+          <p className="py-2 text-sm text-slate-500">{t('initiatives.portfolioHealth.noCoverage', 'No coverage data.')}</p>
         ) : (
           <div className="space-y-0.5">
             {[...health.coverage]
@@ -222,13 +222,13 @@ export function PortfolioHealthView({ endpoint, health: injected }: PortfolioHea
         )}
       </section>
 
-      {/* Luki ----------------------------------------------------------------- */}
+      {/* Gaps ----------------------------------------------------------------- */}
       {health.gaps.length > 0 && (
         <section className="rounded-xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900/40 dark:bg-amber-900/10">
           <header className="mb-2 flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-amber-500" />
             <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-              {t('initiatives.portfolioHealth.gapsTitle', 'Luki pokrycia')}
+              {t('initiatives.portfolioHealth.gapsTitle', 'Coverage gaps')}
             </h3>
           </header>
           <div className="flex flex-wrap gap-2" data-testid="portfolio-health-gaps">
@@ -244,12 +244,12 @@ export function PortfolioHealthView({ endpoint, health: injected }: PortfolioHea
         </section>
       )}
 
-      {/* Balans effort × impact (heatmapa 3×3) -------------------------------- */}
+      {/* Effort x impact balance (3x3 heatmap) -------------------------------- */}
       <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
         <header className="mb-3 flex items-center gap-2">
           <Grid3x3 className="h-4 w-4 text-primary-500" />
           <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-            {t('initiatives.portfolioHealth.balanceTitle', 'Balans wysiłek × wpływ')}
+            {t('initiatives.portfolioHealth.balanceTitle', 'Effort × impact balance')}
           </h3>
         </header>
         <div className="inline-grid grid-cols-[auto_repeat(3,minmax(3.5rem,1fr))] gap-1 text-xs">
@@ -280,9 +280,9 @@ export function PortfolioHealthView({ endpoint, health: injected }: PortfolioHea
                               15 + intensity * 70
                             )}%, transparent)`,
                     }}
-                    title={`${t('initiatives.portfolioHealth.effort', 'Wysiłek')}: ${levelLabel(
+                    title={`${t('initiatives.portfolioHealth.effort', 'Effort')}: ${levelLabel(
                       eff
-                    )} · ${t('initiatives.portfolioHealth.impact', 'Wpływ')}: ${levelLabel(imp)}`}
+                    )} · ${t('initiatives.portfolioHealth.impact', 'Impact')}: ${levelLabel(imp)}`}
                   >
                     <span className={count > 0 ? 'font-semibold text-slate-900 dark:text-slate-100' : 'text-slate-300'}>
                       {count}
@@ -294,18 +294,18 @@ export function PortfolioHealthView({ endpoint, health: injected }: PortfolioHea
           ))}
         </div>
         <p className="mt-2 text-[11px] text-slate-400">
-          {t('initiatives.portfolioHealth.balanceHint', 'Wiersze = wysiłek, kolumny = wpływ.')}
+          {t('initiatives.portfolioHealth.balanceHint', 'Rows = effort, columns = impact.')}
         </p>
       </section>
 
-      {/* Status + Duplikaty --------------------------------------------------- */}
+      {/* Status + Duplicates --------------------------------------------------- */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
           <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
-            {t('initiatives.portfolioHealth.byStatus', 'Wg statusu')}
+            {t('initiatives.portfolioHealth.byStatus', 'By status')}
           </h3>
           {Object.keys(health.byStatus).length === 0 ? (
-            <p className="text-sm text-slate-500">{t('initiatives.portfolioHealth.empty', 'Brak danych.')}</p>
+            <p className="text-sm text-slate-500">{t('initiatives.portfolioHealth.empty', 'No data.')}</p>
           ) : (
             Object.entries(health.byStatus)
               .sort((a, b) => b[1] - a[1])
@@ -319,12 +319,12 @@ export function PortfolioHealthView({ endpoint, health: injected }: PortfolioHea
           <header className="mb-3 flex items-center gap-2">
             <CopyX className="h-4 w-4 text-primary-500" />
             <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-              {t('initiatives.portfolioHealth.duplicatesTitle', 'Klastry duplikatów')}
+              {t('initiatives.portfolioHealth.duplicatesTitle', 'Duplicate clusters')}
             </h3>
           </header>
           {health.duplicateClusters.length === 0 ? (
             <p className="text-sm text-slate-500" data-testid="portfolio-health-no-dupes">
-              {t('initiatives.portfolioHealth.noDuplicates', 'Brak wykrytych duplikatów.')}
+              {t('initiatives.portfolioHealth.noDuplicates', 'No duplicates detected.')}
             </p>
           ) : (
             <ul className="space-y-2" data-testid="portfolio-health-dupes">
@@ -335,7 +335,7 @@ export function PortfolioHealthView({ endpoint, health: injected }: PortfolioHea
                 >
                   <div className="mb-1 flex items-center justify-between">
                     <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                      {t('initiatives.portfolioHealth.cluster', 'Grupa {{n}}', { n: idx + 1 })}
+                      {t('initiatives.portfolioHealth.cluster', 'Group {{n}}', { n: idx + 1 })}
                     </span>
                     <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                       {Math.round(cl.peakScore * 100)}%
@@ -344,7 +344,7 @@ export function PortfolioHealthView({ endpoint, health: injected }: PortfolioHea
                   <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300">
                     {cl.titles.map((tt, i) => (
                       <li key={`${cl.ids[i] ?? i}`} className="truncate">
-                        {tt || t('initiatives.portfolioHealth.untitled', '(bez tytułu)')}
+                        {tt || t('initiatives.portfolioHealth.untitled', '(untitled)')}
                       </li>
                     ))}
                   </ul>

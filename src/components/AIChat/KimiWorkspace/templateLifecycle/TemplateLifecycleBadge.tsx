@@ -29,8 +29,8 @@ const STYLES: Record<
 > = {
   draft: {
     chipClass:
-      'bg-slate-100 text-slate-600 border-slate-300 dark:bg-slate-700/40 dark:text-slate-300 dark:border-slate-600',
-    dotClass: 'text-slate-500 dark:text-slate-400',
+      'bg-c-surface-raised text-c-text-secondary border-c-border',
+    dotClass: 'text-c-text-secondary',
     icon: <Circle size={11} />,
     en: 'Draft',
   },

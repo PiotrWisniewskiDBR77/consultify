@@ -115,7 +115,7 @@ export const NotebookBacklinksBar: React.FC<NotebookBacklinksBarProps> = ({
 
   return (
     <div className="mt-3 flex flex-wrap items-center gap-1.5">
-      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-c-text-muted">
         <Link2 size={12} />
         {isPolish ? 'Wzmiankowane w' : 'Mentioned in'}
       </span>
@@ -131,7 +131,7 @@ export const NotebookBacklinksBar: React.FC<NotebookBacklinksBarProps> = ({
             )
           }
           title={chip.status ? `${chip.title} · ${chip.status}` : chip.title}
-          className="inline-flex max-w-[220px] items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] text-slate-600 transition-colors hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.04]"
+          className="inline-flex max-w-[220px] items-center gap-1 rounded-full border border-c-border bg-c-surface px-2 py-0.5 text-[11px] text-c-text-secondary transition-colors hover:bg-c-surface-raised dark:border-navy-700 dark:bg-navy-900 dark:text-c-text-secondary dark:hover:bg-white/[0.04]"
         >
           <span className="leading-none">{EMOJI[chip.type] || '🔗'}</span>
           <span className="truncate">{chip.title}</span>

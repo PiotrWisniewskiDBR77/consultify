@@ -212,7 +212,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
   return (
     <div className="px-2.5 pb-1">
       <div
-        className="flex items-center justify-between px-1 py-0.5 cursor-pointer group/section hover:bg-slate-50 dark:hover:bg-navy-800/50 rounded-md transition-colors"
+        className="flex items-center justify-between px-1 py-0.5 cursor-pointer group/section hover:bg-c-surface-raised rounded-md transition-colors"
         onClick={onToggleSectionCollapsed}
         role="button"
         tabIndex={0}
@@ -224,14 +224,14 @@ const FolderSection: React.FC<FolderSectionProps> = ({
         }}
         aria-expanded={!sectionCollapsed}
       >
-        <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-          <span className="shrink-0 text-slate-600 dark:text-slate-500 group-hover/section:text-slate-600 dark:group-hover/section:text-slate-300">
+        <span className="text-[10px] font-semibold text-c-text-muted uppercase tracking-wider flex items-center gap-1.5">
+          <span className="shrink-0 text-c-text-muted group-hover/section:text-c-text-secondary">
             {sectionCollapsed ? <ChevronRight size={11} /> : <ChevronDown size={11} />}
           </span>
           {icon}
           {title}
           {projects.length > 0 && (
-            <span className="text-[9px] text-slate-600 dark:text-slate-400 font-normal tabular-nums">
+            <span className="text-[9px] text-c-text-secondary font-normal tabular-nums">
               {projects.length}
             </span>
           )}
@@ -241,7 +241,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
             e.stopPropagation();
             setShowInput(true);
           }}
-          className="p-0.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded transition-colors"
+          className="p-0.5 text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised rounded transition-colors"
           title={createButtonLabel}
         >
           <FolderPlus size={12} />
@@ -266,13 +266,13 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                   }
                 }}
                 placeholder={t('aiChat.folderName', 'Folder name...')}
-                className="flex-1 px-2 py-1.5 text-sm rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="flex-1 px-2 py-1.5 text-sm rounded-lg bg-c-surface-raised border border-c-border text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
                 autoFocus
               />
               <button
                 onClick={handleCreate}
                 disabled={!name.trim()}
-                className="px-2 py-1.5 text-sm bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white rounded-lg transition-colors"
+                className="px-2 py-1.5 text-sm bg-c-text text-c-bg hover:opacity-90 disabled:bg-c-border disabled:text-c-text-muted rounded-lg transition-colors"
               >
                 {t('common.add', 'Add')}
               </button>
@@ -293,7 +293,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                       className={`group flex items-center gap-1.5 pr-2 py-1 rounded-md cursor-pointer transition-colors ${
                         dropTargetId === project.id
                           ? 'bg-primary-100 dark:bg-primary-900/30 ring-1 ring-primary-400/50'
-                          : 'hover:bg-slate-100 dark:hover:bg-navy-800'
+                          : 'hover:bg-c-surface-raised'
                       }`}
                       onClick={() => onToggleExpanded(project.id)}
                       onDragOver={(e) => handleFolderDragOver(e, project.id)}
@@ -301,7 +301,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                       onDrop={(e) => handleFolderDrop(e, project.id)}
                     >
                       <button
-                        className="shrink-0 text-slate-600 dark:text-slate-500"
+                        className="shrink-0 text-c-text-muted"
                         onClick={(e) => {
                           e.stopPropagation();
                           onToggleExpanded(project.id);
@@ -330,11 +330,11 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                             }
                             if (e.key === 'Escape') setEditingId(null);
                           }}
-                          className="flex-1 min-w-0 bg-white dark:bg-navy-950 border border-primary-400 rounded px-1.5 py-0.5 text-[13px] text-slate-800 dark:text-slate-100 outline-none"
+                          className="flex-1 min-w-0 bg-c-surface border border-c-focus-solid rounded px-1.5 py-0.5 text-[13px] text-c-text outline-none"
                         />
                       ) : (
                         <span
-                          className="flex-1 text-[13px] text-slate-700 dark:text-slate-300 truncate hover:text-primary-600 dark:hover:text-primary-400"
+                          className="flex-1 text-[13px] text-c-text-secondary truncate hover:text-primary-600 dark:hover:text-primary-400"
                           onClick={(e) => {
                             if (onFolderClick) {
                               e.stopPropagation();
@@ -346,7 +346,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                           {project.name}
                         </span>
                       )}
-                      <span className="text-[10px] tabular-nums text-slate-600 dark:text-slate-500">
+                      <span className="text-[10px] tabular-nums text-c-text-muted">
                         {project.conversationCount}
                       </span>
                       <div className="relative">
@@ -355,14 +355,14 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                             e.stopPropagation();
                             setMenuId(menuId === project.id ? null : project.id);
                           }}
-                          className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded transition-all"
+                          className="opacity-0 group-hover:opacity-100 p-0.5 text-c-text-muted hover:text-c-text rounded transition-all"
                         >
                           <MoreHorizontal size={13} />
                         </button>
 
                         {/* Project Menu */}
                         {menuId === project.id && (
-                          <div className="absolute right-0 top-full mt-1 z-50 w-40 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1">
+                          <div className="absolute right-0 top-full mt-1 z-50 w-40 bg-c-surface rounded-lg shadow-lg border border-c-border py-1">
                             {onUpdateProject && (
                               <button
                                 onClick={(e) => {
@@ -371,7 +371,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                                   setRenameDraft(project.name);
                                   setMenuId(null);
                                 }}
-                                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700"
+                                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
                               >
                                 <Pencil size={13} />
                                 {t('aiChat.actions.rename', 'Rename')}
@@ -379,7 +379,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                             )}
                             {onUpdateProject && (
                               <div className="px-3 py-1.5">
-                                <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-500 mb-1">
+                                <div className="text-[10px] uppercase tracking-wider text-c-text-muted mb-1">
                                   {t('aiChat.folderColor', 'Color')}
                                 </div>
                                 <div className="flex flex-wrap gap-1.5">
@@ -393,7 +393,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                                       }}
                                       className={`w-4 h-4 rounded-full border transition-transform hover:scale-110 ${
                                         project.color === c
-                                          ? 'border-slate-900 dark:border-white'
+                                          ? 'border-c-text'
                                           : 'border-transparent'
                                       }`}
                                       style={{ backgroundColor: c }}
@@ -411,7 +411,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                                   onManageMembers(project);
                                   setMenuId(null);
                                 }}
-                                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700"
+                                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
                               >
                                 <Users size={13} />
                                 {t('aiChat.members.manage', 'Members & sharing')}
@@ -427,13 +427,13 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                                       movePickerId === project.id ? null : project.id
                                     );
                                   }}
-                                  className="w-full flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200"
+                                  className="w-full flex items-center gap-2 text-sm text-c-text-secondary"
                                 >
                                   <FolderInput size={13} />
                                   {t('aiChat.moveToFolderShort', 'Move to folder')}
                                 </button>
                                 {movePickerId === project.id && (
-                                  <div className="mt-1 max-h-40 overflow-y-auto rounded-md border border-slate-200 dark:border-navy-700">
+                                  <div className="mt-1 max-h-40 overflow-y-auto rounded-md border border-c-border">
                                     {project.parentId && (
                                       <button
                                         onClick={(e) => {
@@ -442,7 +442,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                                           setMovePickerId(null);
                                           setMenuId(null);
                                         }}
-                                        className="w-full text-left px-2 py-1 text-[12px] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+                                        className="w-full text-left px-2 py-1 text-[12px] text-c-text-secondary hover:bg-c-surface-raised"
                                       >
                                         {t('aiChat.moveToTopLevel', '↥ Top level')}
                                       </button>
@@ -458,7 +458,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                                       );
                                       if (targets.length === 0) {
                                         return (
-                                          <div className="px-2 py-1 text-[11px] text-slate-500 italic">
+                                          <div className="px-2 py-1 text-[11px] text-c-text-muted italic">
                                             {t('aiChat.noTargetFolders', 'No other folders')}
                                           </div>
                                         );
@@ -472,7 +472,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                                             setMovePickerId(null);
                                             setMenuId(null);
                                           }}
-                                          className="w-full flex items-center gap-1.5 text-left px-2 py-1 text-[12px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700"
+                                          className="w-full flex items-center gap-1.5 text-left px-2 py-1 text-[12px] text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
                                         >
                                           <Folder size={11} style={{ color: tp.color }} />
                                           <span className="truncate">{tp.name}</span>
@@ -483,7 +483,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                                 )}
                               </div>
                             )}
-                            <div className="my-1 border-t border-slate-200 dark:border-navy-700" />
+                            <div className="my-1 border-t border-c-border" />
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -516,7 +516,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                     )}
 
                     {isExpanded && projectConversations.length === 0 && (
-                      <div className="ml-7 px-2 py-1 text-[11px] text-slate-600 dark:text-slate-500 italic">
+                      <div className="ml-7 px-2 py-1 text-[11px] text-c-text-muted italic">
                         {t('aiChat.noFolderConversations', 'No conversations in this folder')}
                       </div>
                     )}
@@ -527,7 +527,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
               {hasMore && (
                 <button
                   onClick={() => setShowAll(!showAll)}
-                  className="w-full flex items-center justify-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-600 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/50 rounded-md transition-colors"
+                  className="w-full flex items-center justify-center gap-1 px-2 py-1 text-[10px] font-medium text-c-text-muted hover:text-c-text hover:bg-c-surface-raised rounded-md transition-colors"
                 >
                   {showAll ? (
                     <>
@@ -549,7 +549,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                 e.stopPropagation();
                 setShowInput(true);
               }}
-              className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 border border-dashed border-slate-300/60 dark:border-navy-700/60 rounded-md hover:border-slate-400 dark:hover:border-navy-600 transition-colors"
+              className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] text-c-text-muted hover:text-c-text border border-dashed border-c-border rounded-md hover:border-c-border-strong transition-colors"
             >
               <FolderPlus size={12} />
               {emptyLabel}
@@ -930,9 +930,9 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
             if (!isSidebarOpen) setShouldRenderSidebar(false);
           }}
           className={`
-                fixed top-0 h-full z-40
-                bg-slate-50 dark:bg-navy-900
-                border-r border-slate-200 dark:border-navy-800
+                fixed top-0 h-full z-dropdown
+                bg-c-bg
+                border-r border-c-border
                 shadow-2xl
                 flex flex-col
                 transition-all duration-300 ease-in-out
@@ -953,7 +953,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
               <button
                 onClick={toggleSidebar}
                 data-testid="chat-history-close"
-                className="p-1 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-md transition-colors"
+                className="p-1 text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised rounded-md transition-colors"
                 title={t('aiChat.closeSidebar', 'Close sidebar')}
               >
                 <X size={16} />
@@ -963,7 +963,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
             <button
               onClick={handleNewChat}
               data-testid="chat-history-new-chat"
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-xl font-medium text-sm transition-colors shadow-sm hover:shadow-md"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-c-text text-c-bg hover:opacity-90 rounded-xl font-medium text-sm transition-colors shadow-sm hover:shadow-md"
             >
               {t('aiChat.newChat', 'Nowy czat')}
             </button>
@@ -972,13 +972,13 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
             {!selectMode ? (
               <button
                 onClick={() => setSelectMode(true)}
-                className="mt-2 w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
+                className="mt-2 w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] font-medium text-c-text-muted hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors"
               >
                 {t('aiChat.bulk.select', 'Select')}
               </button>
             ) : (
-              <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 px-2 py-1.5">
-                <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 tabular-nums">
+              <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-c-surface-raised px-2 py-1.5">
+                <span className="text-[11px] font-medium text-c-text-secondary tabular-nums">
                   {String(
                     t('aiChat.bulk.selected', '{{count}} selected', {
                       count: selectedIds.size,
@@ -990,7 +990,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                   onClick={() => void runBulk('archive')}
                   disabled={bulkBusy || selectedIds.size === 0}
                   title={t('aiChat.actions.archive', 'Archive')}
-                  className="p-1 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 disabled:opacity-40"
+                  className="p-1 rounded text-c-text-secondary hover:bg-c-border-subtle disabled:opacity-40"
                 >
                   <Archive size={14} />
                 </button>
@@ -1005,7 +1005,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                 <button
                   onClick={exitSelectMode}
                   title={t('common.cancel', 'Cancel')}
-                  className="p-1 rounded text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700"
+                  className="p-1 rounded text-c-text-secondary hover:bg-c-border-subtle"
                 >
                   <X size={14} />
                 </button>
@@ -1024,15 +1024,15 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
 
           {/* Folder breadcrumb */}
           {activeFolderId && activeFolder && (
-            <div className="px-3 py-1.5 border-b border-slate-200/60 dark:border-navy-700/60 flex items-center gap-1.5">
+            <div className="px-3 py-1.5 border-b border-c-border-subtle flex items-center gap-1.5">
               <button
                 onClick={() => setActiveFolderId(null)}
-                className="text-[11px] text-slate-600 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                className="text-[11px] text-c-text-muted hover:text-c-text transition-colors"
               >
                 {t('aiChat.allConversations', 'All')}
               </button>
-              <ChevronRight size={10} className="text-slate-600 dark:text-slate-400" />
-              <div className="flex items-center gap-1 text-[11px] font-medium text-slate-700 dark:text-slate-300">
+              <ChevronRight size={10} className="text-c-text-secondary" />
+              <div className="flex items-center gap-1 text-[11px] font-medium text-c-text-secondary">
                 <Folder size={11} style={{ color: activeFolder.color }} />
                 <span className="truncate">{activeFolder.name}</span>
               </div>
@@ -1069,7 +1069,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
               serverSearchLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-                  <span className="ml-2 text-xs text-slate-600 dark:text-slate-500">
+                  <span className="ml-2 text-xs text-c-text-muted">
                     {t('aiChat.searching', 'Searching...')}
                   </span>
                 </div>
@@ -1092,8 +1092,8 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                   )}
                   {/* E7: Scope-blocked results indicator */}
                   {searchScopeBlocked > 0 && (
-                    <div className="mb-2 px-2.5 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/40">
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    <div className="mb-2 px-2.5 py-1.5 rounded-md bg-c-surface-raised border border-c-border-subtle">
+                      <p className="text-[11px] text-c-text-muted">
                         {t(
                           'aiChat.scopeBlocked',
                           '{{count}} result(s) hidden due to access restrictions.',
@@ -1166,14 +1166,14 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                 {/* Separator between folders and unassigned conversations */}
                 {(personalProjects.length > 0 || teamProjects.length > 0) &&
                   unassignedConversations.length > 0 && (
-                    <div className="border-t border-slate-200 dark:border-navy-700 mx-3" />
+                    <div className="border-t border-c-border mx-3" />
                   )}
 
                 {/* Unassigned Conversations — also a drop zone to remove from folder */}
                 <div
                   className={`px-3 min-h-[40px] transition-colors ${
                     isUnassignedDropTarget
-                      ? 'bg-slate-100/80 dark:bg-navy-800/60 ring-1 ring-inset ring-slate-300/50 dark:ring-navy-600/50 rounded-lg mx-1'
+                      ? 'bg-c-surface-raised ring-1 ring-inset ring-c-border-strong rounded-lg mx-1'
                       : ''
                   }`}
                   onDragOver={handleUnassignedDragOver}
@@ -1205,19 +1205,19 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
           </div>
 
           {/* Footer - Archive toggle */}
-          <div className="px-3 py-2 border-t border-slate-200/60 dark:border-navy-700/60">
+          <div className="px-3 py-2 border-t border-c-border-subtle">
             <button
               onClick={toggleShowArchived}
               className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-lg transition-colors ${
                 showArchived
-                  ? 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800'
+                  ? 'bg-c-surface-raised text-c-text-secondary'
+                  : 'text-c-text-muted hover:bg-c-surface-raised'
               }`}
             >
               <Archive size={14} />
               {t('aiChat.sections.archived', 'Archived')}
               {displayGroups.archived.length > 0 && (
-                <span className="ml-auto text-[10px] tabular-nums bg-slate-200 dark:bg-navy-700 px-1.5 py-0.5 rounded-full">
+                <span className="ml-auto text-[10px] tabular-nums bg-c-surface-raised px-1.5 py-0.5 rounded-full">
                   {displayGroups.archived.length}
                 </span>
               )}

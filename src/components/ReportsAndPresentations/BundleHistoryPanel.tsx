@@ -62,7 +62,7 @@ function QualityIcon({ passed }: { passed: boolean | null }) {
     return <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Quality OK" />;
   if (passed === false)
     return <XCircle className="h-4 w-4 text-red-500" aria-label="Quality issues" />;
-  return <Clock className="h-4 w-4 text-slate-400" aria-label="Quality pending" />;
+  return <Clock className="h-4 w-4 text-c-text-muted" aria-label="Quality pending" />;
 }
 
 // ---------------------------------------------------------------------------
@@ -100,26 +100,26 @@ function BundleDetailModal({ bundle, onClose }: BundleDetailModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-overlay flex items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
     >
       <div
-        className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-2xl dark:bg-navy-900 dark:shadow-slate-900/60"
+        className="relative w-full max-w-md rounded-xl bg-c-surface p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
             <Package2 className="h-5 w-5 shrink-0 text-blue-500" />
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+            <h2 className="text-base font-semibold text-c-text">
               {bundle.title ?? t('rap.bundles.untitled', 'Untitled bundle')}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            className="rounded-lg p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text"
             aria-label={t('common.close', 'Close')}
           >
             <XCircle className="h-5 w-5" />
@@ -129,7 +129,7 @@ function BundleDetailModal({ bundle, onClose }: BundleDetailModalProps) {
         {/* Metadata */}
         <dl className="space-y-3 text-sm">
           <div className="flex items-center gap-2">
-            <dt className="w-28 shrink-0 text-slate-500 dark:text-slate-400">
+            <dt className="w-28 shrink-0 text-c-text-muted">
               {t('rap.bundles.detail.status', 'Status')}
             </dt>
             <dd>
@@ -138,12 +138,12 @@ function BundleDetailModal({ bundle, onClose }: BundleDetailModalProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <dt className="w-28 shrink-0 text-slate-500 dark:text-slate-400">
+            <dt className="w-28 shrink-0 text-c-text-muted">
               {t('rap.bundles.detail.quality', 'Quality')}
             </dt>
             <dd className="flex items-center gap-1.5">
               <QualityIcon passed={bundle.qualityPassed} />
-              <span className="text-slate-700 dark:text-slate-300">
+              <span className="text-c-text-secondary">
                 {bundle.qualityPassed === true
                   ? t('rap.bundles.quality.ok', '✓ OK')
                   : bundle.qualityPassed === false
@@ -154,17 +154,17 @@ function BundleDetailModal({ bundle, onClose }: BundleDetailModalProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <dt className="w-28 shrink-0 text-slate-500 dark:text-slate-400">
+            <dt className="w-28 shrink-0 text-c-text-muted">
               {t('rap.bundles.detail.created', 'Created')}
             </dt>
-            <dd className="text-slate-700 dark:text-slate-300">{formatDate(bundle.createdAt)}</dd>
+            <dd className="text-c-text-secondary">{formatDate(bundle.createdAt)}</dd>
           </div>
 
           <div className="flex items-center gap-2">
-            <dt className="w-28 shrink-0 text-slate-500 dark:text-slate-400">
+            <dt className="w-28 shrink-0 text-c-text-muted">
               {t('rap.bundles.detail.language', 'Language')}
             </dt>
-            <dd className="text-slate-700 dark:text-slate-300">{bundle.language.toUpperCase()}</dd>
+            <dd className="text-c-text-secondary">{bundle.language.toUpperCase()}</dd>
           </div>
         </dl>
       </div>
@@ -178,12 +178,12 @@ function BundleDetailModal({ bundle, onClose }: BundleDetailModalProps) {
 
 function SkeletonRows() {
   return (
-    <div className="divide-y divide-slate-100 dark:divide-slate-800" aria-hidden="true">
+    <div className="divide-y divide-c-border-subtle" aria-hidden="true">
       {[1, 2, 3].map((i) => (
         <div key={i} className="flex items-center gap-3 px-4 py-3">
-          <div className="h-4 w-40 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
-          <div className="h-4 w-20 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
-          <div className="ml-auto h-5 w-14 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
+          <div className="h-4 w-40 animate-pulse rounded bg-c-surface-raised" />
+          <div className="h-4 w-20 animate-pulse rounded bg-c-surface-raised" />
+          <div className="ml-auto h-5 w-14 animate-pulse rounded-full bg-c-surface-raised" />
         </div>
       ))}
     </div>
@@ -211,7 +211,7 @@ export function BundleHistoryPanel({ refreshSignal }: BundleHistoryPanelProps = 
 
   return (
     <div
-      className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-navy-900"
+      className="rounded-xl border border-c-border-subtle bg-c-surface"
       data-testid="bundle-history-panel"
     >
       {/* Loading */}
@@ -224,26 +224,26 @@ export function BundleHistoryPanel({ refreshSignal }: BundleHistoryPanelProps = 
 
       {/* Empty state */}
       {!loading && !error && bundles.length === 0 && (
-        <p className="px-4 py-8 text-center text-sm text-slate-400 dark:text-slate-600">
+        <p className="px-4 py-8 text-center text-sm text-c-text-muted">
           {t('rap.bundles.empty', 'No bundles generated yet')}
         </p>
       )}
 
       {/* Bundle list */}
       {!loading && !error && bundles.length > 0 && (
-        <ul className="divide-y divide-slate-100 dark:divide-slate-800" role="list">
+        <ul className="divide-y divide-c-border-subtle" role="list">
           {bundles.map((bundle) => (
             <li key={bundle.id}>
               <button
                 onClick={() => setSelected(bundle)}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-c-surface-raised"
               >
                 {/* Title + date */}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">
+                  <p className="truncate text-sm font-medium text-c-text">
                     {truncate(bundle.title)}
                   </p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                  <p className="text-xs text-c-text-muted">
                     {formatDate(bundle.createdAt)}
                   </p>
                 </div>

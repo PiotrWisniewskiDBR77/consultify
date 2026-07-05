@@ -164,7 +164,7 @@ const REPORT_TYPE_V3_OPTIONS: Array<{
 ];
 
 const selectClasses =
-  'w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 text-sm';
+  'w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 text-sm';
 
 export const IntentStep: React.FC<IntentStepProps> = (props) => {
   const { i18n } = useTranslation();
@@ -228,12 +228,12 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
       <SourceSelectStep {...props} />
 
       {/* ── V3: Report Type Selection ── */}
-      <div className="border-t border-slate-200 dark:border-slate-700 pt-8 space-y-4">
+      <div className="border-t border-c-border-subtle pt-8 space-y-4">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-c-text">
             {isPl ? 'Typ raportu' : 'Report Type'}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-secondary mt-1">
             {isPl
               ? 'Wybierz kanoniczny typ raportowy (R1-R4) lub stwórz własny raport'
               : 'Choose a canonical report type (R1-R4) or create a custom report'}
@@ -253,7 +253,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
                   ${
                     selected
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-500/20'
-                      : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                      : 'border-c-border-subtle hover:border-blue-300 hover:bg-c-surface-raised'
                   }
                 `}
               >
@@ -262,20 +262,20 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
                     className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                       selected
                         ? 'bg-blue-100 dark:bg-blue-900/50'
-                        : 'bg-slate-100 dark:bg-slate-800'
+                        : 'bg-c-surface-raised'
                     }`}
                   >
-                    <Icon className={`w-5 h-5 ${selected ? 'text-blue-600' : 'text-slate-500'}`} />
+                    <Icon className={`w-5 h-5 ${selected ? 'text-blue-600' : 'text-c-text-secondary'}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-slate-900 dark:text-white text-sm">
+                    <div className="font-medium text-c-text text-sm">
                       {isPl ? opt.labelPl : opt.labelEn}
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    <div className="text-xs text-c-text-secondary mt-0.5">
                       {isPl ? opt.descPl : opt.descEn}
                     </div>
                     {opt.frequency && (
-                      <span className="inline-block mt-1.5 text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded">
+                      <span className="inline-block mt-1.5 text-xs px-2 py-0.5 bg-c-surface-raised text-c-text-secondary rounded">
                         {opt.frequency}
                       </span>
                     )}
@@ -289,12 +289,12 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
 
       {/* ── Legacy profile selection (only for custom + source-based) ── */}
       {reportTypeV3 === 'custom' && sourceType && profiles.length > 0 && (
-        <div className="border-t border-slate-200 dark:border-slate-700 pt-8 space-y-4">
+        <div className="border-t border-c-border-subtle pt-8 space-y-4">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+            <h3 className="text-lg font-semibold text-c-text">
               {isPl ? 'Profil inwokacji' : 'Invocation Profile'}
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-c-text-secondary mt-1">
               {isPl
                 ? 'Opcjonalnie wybierz szablon generowania dopasowany do źródła'
                 : 'Optionally select a generation template tailored to your source'}
@@ -303,7 +303,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
 
           {isLoadingProfiles ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-slate-600" />
+              <Loader2 className="w-6 h-6 animate-spin text-c-text-secondary" />
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -314,7 +314,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
                   className={`p-4 rounded-lg border text-left transition-all ${
                     intent.profileId === profile.id
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-500/20'
-                      : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                      : 'border-c-border-subtle hover:border-blue-300 hover:bg-c-surface-raised'
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -322,23 +322,23 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
                       className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                         intent.profileId === profile.id
                           ? 'bg-blue-100 dark:bg-blue-900/50'
-                          : 'bg-slate-100 dark:bg-slate-800'
+                          : 'bg-c-surface-raised'
                       }`}
                     >
                       <FileText
-                        className={`w-5 h-5 ${intent.profileId === profile.id ? 'text-blue-600' : 'text-slate-500'}`}
+                        className={`w-5 h-5 ${intent.profileId === profile.id ? 'text-blue-600' : 'text-c-text-secondary'}`}
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-slate-900 dark:text-white">
+                      <div className="font-medium text-c-text">
                         {isPl ? profile.namePl : profile.name}
                       </div>
-                      <div className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                      <div className="text-sm text-c-text-secondary mt-0.5">
                         {isPl ? profile.descriptionPl : profile.description}
                       </div>
                       <div className="flex flex-wrap gap-1 mt-2">
                         {profile.features.allowMatrixVisualization && (
-                          <span className="text-xs px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded">
+                          <span className="text-xs px-2 py-0.5 bg-c-accent-soft text-c-accent rounded">
                             {isPl ? 'Macierz' : 'Matrix'}
                           </span>
                         )}
@@ -358,12 +358,12 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
       )}
 
       {/* ── V3 Report Definition Layer ── */}
-      <div className="border-t border-slate-200 dark:border-slate-700 pt-8 space-y-6">
+      <div className="border-t border-c-border-subtle pt-8 space-y-6">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-c-text">
             {isPl ? 'Definicja raportu' : 'Report Definition'}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-secondary mt-1">
             {isPl
               ? 'Te parametry sterują strukturą, stylem i treścią raportu'
               : 'These parameters control the structure, style, and content of the report'}
@@ -373,7 +373,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {/* Goal V3 */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text mb-1">
               {isPl ? 'Cel raportu' : 'Report Goal'}
             </label>
             <select
@@ -390,7 +390,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
 
           {/* Communication Register */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text mb-1">
               {isPl ? 'Rejestr komunikacji' : 'Communication Register'}
             </label>
             <select
@@ -409,7 +409,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
 
           {/* Language */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text mb-1">
               {isPl ? 'Język raportu' : 'Report Language'}
             </label>
             <select
@@ -424,7 +424,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
 
           {/* Density */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text mb-1">
               {isPl ? 'Gęstość treści' : 'Content Density'}
             </label>
             <select
@@ -441,7 +441,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
 
           {/* Form */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text mb-1">
               {isPl ? 'Forma raportu' : 'Report Form'}
             </label>
             <select
@@ -458,7 +458,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
 
           {/* Data Level */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text mb-1">
               {isPl ? 'Poziom danych' : 'Data Level'}
             </label>
             <select
@@ -474,7 +474,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
 
           {/* Period */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text mb-1">
               <CalendarRange className="inline w-4 h-4 mr-1 -mt-0.5" />
               {isPl ? 'Okres od' : 'Period From'}
             </label>
@@ -486,7 +486,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text mb-1">
               <CalendarRange className="inline w-4 h-4 mr-1 -mt-0.5" />
               {isPl ? 'Okres do' : 'Period To'}
             </label>
@@ -500,7 +500,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
 
           {/* Confidentiality */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text mb-1">
               <Shield className="inline w-4 h-4 mr-1 -mt-0.5" />
               {isPl ? 'Poufność' : 'Confidentiality'}
             </label>
@@ -522,12 +522,12 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
       </div>
 
       {/* ── Legacy intent parameters (Audience, Tone, Scope) ── */}
-      <div className="border-t border-slate-200 dark:border-slate-700 pt-8 space-y-6">
+      <div className="border-t border-c-border-subtle pt-8 space-y-6">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-c-text">
             {isPl ? 'Zaawansowane parametry' : 'Advanced Parameters'}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-secondary mt-1">
             {isPl
               ? 'Dodatkowe ustawienia sterujące generowaniem treści'
               : 'Additional settings controlling content generation'}
@@ -537,7 +537,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Audience */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text mb-1">
               {isPl ? 'Odbiorca' : 'Audience'}
             </label>
             <select
@@ -554,7 +554,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
 
           {/* Tone */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text mb-1">
               {isPl ? 'Ton' : 'Tone'}
             </label>
             <select
@@ -570,7 +570,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
 
           {/* Scope */}
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text mb-2">
               {isPl ? 'Zakres' : 'Scope'}
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -585,10 +585,10 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
                   className={`p-3 rounded-lg border text-center transition-all ${
                     intent.scope === opt.id
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-slate-200 dark:border-slate-700 hover:border-blue-300'
+                      : 'border-c-border-subtle hover:border-blue-300'
                   }`}
                 >
-                  <div className="font-medium text-sm text-slate-900 dark:text-white">
+                  <div className="font-medium text-sm text-c-text">
                     {opt.label}
                   </div>
                 </button>
@@ -598,7 +598,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
 
           {intent.scope === 'focused' && (
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-c-text mb-2">
                 {isPl ? 'Wybierz osie' : 'Select axes'}
               </label>
               <div className="flex flex-wrap gap-2">
@@ -611,7 +611,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
                       className={`px-3 py-1.5 rounded-full border text-sm transition-all ${
                         selected
                           ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-200'
-                          : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-300'
+                          : 'border-c-border-subtle text-c-text-secondary hover:border-blue-300'
                       }`}
                     >
                       {ax.label}
@@ -624,10 +624,10 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
 
           {/* Visuals */}
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text mb-2">
               {isPl ? 'Wizualizacje' : 'Visuals'}
             </label>
-            <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+            <label className="inline-flex items-center gap-2 text-sm text-c-text">
               <input
                 type="checkbox"
                 checked={Boolean(intent.visuals?.assessmentMatrix)}
@@ -644,16 +644,16 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
       </div>
 
       {/* Style & Verbosity */}
-      <div className="border-t border-slate-200 dark:border-slate-700 pt-8 space-y-6">
+      <div className="border-t border-c-border-subtle pt-8 space-y-6">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-c-text">
             {isPl ? 'Styl generowania treści' : 'Content Generation Style'}
           </h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text mb-2">
               {isPl ? 'Styl pisania' : 'Writing Style'}
             </label>
             <select
@@ -669,7 +669,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text mb-2">
               {isPl ? 'Przykłady' : 'Examples'}
             </label>
             <select
@@ -686,21 +686,21 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
           </div>
 
           <div className="flex flex-col justify-end gap-2">
-            <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+            <label className="inline-flex items-center gap-2 text-sm text-c-text">
               <input
                 type="checkbox"
                 checked={Boolean(intent.useMetrics)}
                 onChange={(e) => onIntentChange({ useMetrics: e.target.checked })}
-                className="rounded border-slate-300"
+                className="rounded border-c-border"
               />
               {isPl ? 'Metryki liczbowe' : 'Use metrics'}
             </label>
-            <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+            <label className="inline-flex items-center gap-2 text-sm text-c-text">
               <input
                 type="checkbox"
                 checked={Boolean(intent.includeReferences)}
                 onChange={(e) => onIntentChange({ includeReferences: e.target.checked })}
-                className="rounded border-slate-300"
+                className="rounded border-c-border"
               />
               {isPl ? 'Standardy branżowe' : 'Industry references'}
             </label>

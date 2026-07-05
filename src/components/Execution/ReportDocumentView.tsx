@@ -1787,7 +1787,7 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
             <button
               type="button"
               onClick={() => onGenerateAI(safeReport)}
-              className="flex h-8 items-center gap-1.5 rounded-lg bg-primary-600 px-3 text-[11px] font-medium text-white shadow-sm transition-colors hover:bg-primary-700 active:scale-[0.98]"
+              className="flex h-8 items-center gap-1.5 rounded-lg bg-c-text px-3 text-[11px] font-medium text-c-bg shadow-sm transition-colors hover:bg-c-text-secondary active:scale-[0.98]"
             >
               <Sparkles size={12} />
               {t('execution.reportPanel.generateAI', 'Generate with AI')}

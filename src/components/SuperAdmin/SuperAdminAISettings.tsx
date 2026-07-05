@@ -30,6 +30,7 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '@/components/Admin/AdminState';
+import { LoadingState } from '@/components/shared/states';
 
 import { InfoButton } from '../shared/InfoButton';
 
@@ -74,19 +75,19 @@ const PII_SENSITIVITY_OPTIONS = [
     value: 'low',
     label: 'Low',
     description: 'Basic PII detection (emails, phone numbers)',
-    color: 'text-green-400',
+    color: 'text-c-success',
   },
   {
     value: 'medium',
     label: 'Medium',
     description: 'Standard detection (+ names, addresses)',
-    color: 'text-yellow-400',
+    color: 'text-c-warning',
   },
   {
     value: 'high',
     label: 'High',
     description: 'Aggressive detection (+ financial, health data)',
-    color: 'text-danger-400',
+    color: 'text-c-danger',
   },
 ];
 
@@ -373,8 +374,8 @@ export const SuperAdminAISettings: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <RefreshCw size={32} className="animate-spin text-primary-400" />
+      <div className="p-6">
+        <LoadingState template="panel" />
       </div>
     );
   }
@@ -382,7 +383,7 @@ export const SuperAdminAISettings: React.FC = () => {
   if (!settings) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6 max-w-xl w-full">
+        <div className="bg-c-surface rounded-xl border border-c-border p-6 max-w-xl w-full">
           <DegradedState
             title="AI settings unavailable"
             description={loadError || 'Failed to load settings'}
@@ -393,26 +394,26 @@ export const SuperAdminAISettings: React.FC = () => {
   }
 
   return (
-    <div className="p-6 space-y-6 overflow-y-auto h-full relative text-slate-900 dark:text-slate-100">
+    <div className="p-6 space-y-6 overflow-y-auto h-full relative text-c-text">
       <InfoButton cardId="superadmin-ai-global-settings" position="top-right" />
 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500/20 to-primary-600/10">
-              <Settings size={24} className="text-primary-400" />
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-c-accent/20 to-c-accent/10">
+              <Settings size={24} className="text-c-accent" />
             </div>
             Global AI Settings
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 mt-1">
+          <p className="text-c-text-secondary mt-1">
             Platform-wide AI configuration and constraints
           </p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => void loadSettings()}
-            className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+            className="px-4 py-2 text-c-text-secondary hover:text-c-text transition-colors"
           >
             <RefreshCw size={18} />
           </button>
@@ -421,8 +422,8 @@ export const SuperAdminAISettings: React.FC = () => {
             disabled={!hasChanges || saving}
             className={`flex items-center gap-2 p-4 py-2.5 rounded-xl font-medium transition-all ${
               hasChanges
-                ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:shadow-lg hover:shadow-primary-500/25'
-                : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                ? 'bg-gradient-to-r from-c-accent to-c-accent text-c-text hover:shadow-lg hover:shadow-c-accent/25'
+                : 'bg-c-surface-raised text-c-text-muted cursor-not-allowed'
             }`}
           >
             {saving ? <RefreshCw size={18} className="animate-spin" /> : <Save size={18} />}
@@ -434,7 +435,7 @@ export const SuperAdminAISettings: React.FC = () => {
       {saveError ? (
         <div
           role="alert"
-          className="rounded-xl border border-danger-200 bg-danger-50 p-4 text-sm text-danger-700 dark:border-danger-900/60 dark:bg-danger-900/30 dark:text-danger-300"
+          className="rounded-xl border border-c-danger/30 bg-c-danger/10 p-4 text-sm text-c-danger"
         >
           {saveError}
         </div>
@@ -442,16 +443,16 @@ export const SuperAdminAISettings: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Default Provider & Fallback Chain */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6">
+        <div className="bg-c-surface rounded-xl border border-c-border p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 rounded-lg bg-blue-500/20">
-              <Server size={20} className="text-blue-400" />
+            <div className="p-2 rounded-lg bg-c-info/20">
+              <Server size={20} className="text-c-info" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+              <h3 className="font-semibold text-c-text">
                 Provider Configuration
               </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-c-text-secondary">
                 Default model and fallback chain
               </p>
             </div>
@@ -459,13 +460,13 @@ export const SuperAdminAISettings: React.FC = () => {
 
           {/* Default Provider */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">
               Default Provider
             </label>
             <select
               value={settings.defaultProvider || ''}
               onChange={(e) => updateSetting('defaultProvider', e.target.value || null)}
-              className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
+              className="w-full px-4 py-3 bg-c-surface border border-c-border rounded-xl text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus transition-colors"
             >
               <option value="">Auto-select</option>
               {providers.map((p) => (
@@ -478,9 +479,9 @@ export const SuperAdminAISettings: React.FC = () => {
 
           {/* Fallback Chain */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">
               Fallback Chain
-              <span className="text-slate-500 dark:text-slate-400 font-normal ml-2">
+              <span className="text-c-text-muted font-normal ml-2">
                 (drag to reorder)
               </span>
             </label>
@@ -501,18 +502,18 @@ export const SuperAdminAISettings: React.FC = () => {
                     <Reorder.Item
                       key={providerId}
                       value={providerId}
-                      className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-navy-800/50 border border-slate-200 dark:border-white/10 rounded-xl cursor-grab active:cursor-grabbing"
+                      className="flex items-center gap-3 px-4 py-3 bg-c-surface-raised border border-c-border rounded-xl cursor-grab active:cursor-grabbing"
                     >
-                      <GripVertical size={16} className="text-slate-500 dark:text-slate-400" />
-                      <span className="text-xs font-mono text-slate-500 dark:text-slate-400 w-6">
+                      <GripVertical size={16} className="text-c-text-muted" />
+                      <span className="text-xs font-mono text-c-text-muted w-6">
                         {index + 1}
                       </span>
-                      <span className="flex-1 text-slate-900 dark:text-slate-100">
+                      <span className="flex-1 text-c-text">
                         {provider?.name || providerId}
                       </span>
                       <button
                         onClick={() => removeFromFallbackChain(providerId)}
-                        className="p-1 text-slate-600 dark:text-slate-500 hover:text-danger-400 transition-colors"
+                        className="p-1 text-c-text-secondary hover:text-c-danger transition-colors"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -528,7 +529,7 @@ export const SuperAdminAISettings: React.FC = () => {
               onChange={(e) => {
                 if (e.target.value) addToFallbackChain(e.target.value);
               }}
-              className="w-full px-4 py-2 bg-navy-900/30 border border-dashed border-white/20 rounded-xl text-slate-600 dark:text-slate-500 text-sm"
+              className="w-full px-4 py-2 bg-c-surface-raised border border-dashed border-c-border-strong rounded-xl text-c-text-secondary text-sm"
             >
               <option value="">+ Add provider to fallback chain</option>
               {providers
@@ -543,14 +544,14 @@ export const SuperAdminAISettings: React.FC = () => {
         </div>
 
         {/* Rate Limits */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6">
+        <div className="bg-c-surface rounded-xl border border-c-border p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 rounded-lg bg-amber-500/20">
-              <Gauge size={20} className="text-amber-400" />
+            <div className="p-2 rounded-lg bg-c-warning/20">
+              <Gauge size={20} className="text-c-warning" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 dark:text-slate-100">Rate Limits</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-500">
+              <h3 className="font-semibold text-c-text">Rate Limits</h3>
+              <p className="text-sm text-c-text-secondary">
                 Global request throttling
               </p>
             </div>
@@ -558,7 +559,7 @@ export const SuperAdminAISettings: React.FC = () => {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 Requests per Minute
               </label>
               <input
@@ -571,12 +572,12 @@ export const SuperAdminAISettings: React.FC = () => {
                     parseInt(e.target.value)
                   )
                 }
-                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                className="w-full px-4 py-3 bg-c-surface border border-c-border rounded-xl text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 Requests per Hour
               </label>
               <input
@@ -589,48 +590,48 @@ export const SuperAdminAISettings: React.FC = () => {
                     parseInt(e.target.value)
                   )
                 }
-                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                className="w-full px-4 py-3 bg-c-surface border border-c-border rounded-xl text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 Global Token Limit (monthly)
               </label>
               <input
                 type="number"
                 value={settings.globalTokenLimit || 10000000}
                 onChange={(e) => updateSetting('globalTokenLimit', parseInt(e.target.value))}
-                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                className="w-full px-4 py-3 bg-c-surface border border-c-border rounded-xl text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus"
               />
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-xs text-c-text-muted mt-1">
                 {((settings.globalTokenLimit || 10000000) / 1000000).toFixed(1)}M tokens
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 Max Tokens per Request
               </label>
               <input
                 type="number"
                 value={settings.maxTokensPerRequest || 8192}
                 onChange={(e) => updateSetting('maxTokensPerRequest', parseInt(e.target.value))}
-                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                className="w-full px-4 py-3 bg-c-surface border border-c-border rounded-xl text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 Max Context Window Size
               </label>
               <input
                 type="number"
                 value={settings.maxContextWindowSize || 128000}
                 onChange={(e) => updateSetting('maxContextWindowSize', parseInt(e.target.value))}
-                className="w-full px-4 py-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-slate-100 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                className="w-full px-4 py-3 bg-c-surface border border-c-border rounded-xl text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus"
               />
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-xs text-c-text-muted mt-1">
                 {((settings.maxContextWindowSize || 128000) / 1000).toFixed(0)}K context
               </p>
             </div>
@@ -638,16 +639,16 @@ export const SuperAdminAISettings: React.FC = () => {
         </div>
 
         {/* Security & PII */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6">
+        <div className="bg-c-surface rounded-xl border border-c-border p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 rounded-lg bg-danger-500/20">
-              <Shield size={20} className="text-danger-400" />
+            <div className="p-2 rounded-lg bg-c-danger/20">
+              <Shield size={20} className="text-c-danger" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+              <h3 className="font-semibold text-c-text">
                 Security & Privacy
               </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-500">
+              <p className="text-sm text-c-text-secondary">
                 PII detection and encryption
               </p>
             </div>
@@ -656,7 +657,7 @@ export const SuperAdminAISettings: React.FC = () => {
           <div className="space-y-6">
             {/* PII Sensitivity */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-3">
+              <label className="block text-sm font-medium text-c-text-secondary mb-3">
                 PII Detection Sensitivity
               </label>
               <div className="space-y-2">
@@ -665,8 +666,8 @@ export const SuperAdminAISettings: React.FC = () => {
                     key={option.value}
                     className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${
                       settings.piiDetectionSensitivity === option.value
-                        ? 'bg-primary-500/10 border-primary-500/50'
-                        : 'bg-navy-900/30 border-white/10 hover:border-white/20'
+                        ? 'bg-c-accent/10 border-c-accent/50'
+                        : 'bg-c-surface-raised border-c-border hover:border-c-border-strong'
                     }`}
                   >
                     <input
@@ -687,12 +688,12 @@ export const SuperAdminAISettings: React.FC = () => {
                     />
                     <div className="flex-1">
                       <div className={`font-medium ${option.color}`}>{option.label}</div>
-                      <div className="text-sm text-slate-600 dark:text-slate-500">
+                      <div className="text-sm text-c-text-secondary">
                         {option.description}
                       </div>
                     </div>
                     {settings.piiDetectionSensitivity === option.value && (
-                      <CheckCircle size={20} className="text-primary-400" />
+                      <CheckCircle size={20} className="text-c-accent" />
                     )}
                   </label>
                 ))}
@@ -700,12 +701,12 @@ export const SuperAdminAISettings: React.FC = () => {
             </div>
 
             {/* Require Encryption */}
-            <div className="flex items-center justify-between p-4 bg-navy-900/30 rounded-xl border border-white/10">
+            <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-xl border border-c-border">
               <div className="flex items-center gap-3">
-                <Lock size={20} className="text-emerald-400" />
+                <Lock size={20} className="text-c-success" />
                 <div>
-                  <div className="font-medium text-white">Require Encryption</div>
-                  <div className="text-sm text-slate-600 dark:text-slate-500">
+                  <div className="font-medium text-c-text">Require Encryption</div>
+                  <div className="text-sm text-c-text-secondary">
                     Encrypt all AI requests/responses
                   </div>
                 </div>
@@ -717,23 +718,23 @@ export const SuperAdminAISettings: React.FC = () => {
                   onChange={(e) => updateSetting('requireEncryption', e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                <div className="w-11 h-6 bg-c-border-strong peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-c-success"></div>
               </label>
             </div>
           </div>
         </div>
 
         {/* Circuit Breaker & Data Residency */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6">
+        <div className="bg-c-surface rounded-xl border border-c-border p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 rounded-lg bg-blue-500/20">
-              <Activity size={20} className="text-blue-400" />
+            <div className="p-2 rounded-lg bg-c-info/20">
+              <Activity size={20} className="text-c-info" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+              <h3 className="font-semibold text-c-text">
                 Resilience & Compliance
               </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-500">
+              <p className="text-sm text-c-text-secondary">
                 Circuit breaker and data residency
               </p>
             </div>
@@ -741,15 +742,15 @@ export const SuperAdminAISettings: React.FC = () => {
 
           <div className="space-y-6">
             {/* Circuit Breaker */}
-            <div className="p-4 bg-navy-900/30 rounded-xl border border-white/10">
+            <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
               <div className="flex items-center gap-2 mb-4">
-                <Zap size={18} className="text-amber-400" />
-                <span className="font-medium text-white">Circuit Breaker</span>
+                <Zap size={18} className="text-c-warning" />
+                <span className="font-medium text-c-text">Circuit Breaker</span>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
+                  <label className="block text-sm text-c-text-secondary mb-1">
                     Failure Threshold
                   </label>
                   <input
@@ -762,14 +763,14 @@ export const SuperAdminAISettings: React.FC = () => {
                         parseInt(e.target.value)
                       )
                     }
-                    className="w-full px-3 py-2 bg-navy-900/50 border border-white/10 rounded-lg text-white text-sm"
+                    className="w-full px-3 py-2 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
                   />
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-xs text-c-text-muted mt-1">
                     failures before trip
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
+                  <label className="block text-sm text-c-text-secondary mb-1">
                     Cooldown (seconds)
                   </label>
                   <input
@@ -782,16 +783,16 @@ export const SuperAdminAISettings: React.FC = () => {
                         parseInt(e.target.value)
                       )
                     }
-                    className="w-full px-3 py-2 bg-navy-900/50 border border-white/10 rounded-lg text-white text-sm"
+                    className="w-full px-3 py-2 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
                   />
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">before retry</p>
+                  <p className="text-xs text-c-text-muted mt-1">before retry</p>
                 </div>
               </div>
             </div>
 
             {/* Data Residency */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-3">
+              <label className="block text-sm font-medium text-c-text-secondary mb-3">
                 Data Residency
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -800,8 +801,8 @@ export const SuperAdminAISettings: React.FC = () => {
                     key={option.value || 'none'}
                     className={`flex flex-col p-4 rounded-xl border cursor-pointer transition-all ${
                       settings.dataResidency === option.value
-                        ? 'bg-primary-500/10 border-primary-500/50'
-                        : 'bg-navy-900/30 border-white/10 hover:border-white/20'
+                        ? 'bg-c-accent/10 border-c-accent/50'
+                        : 'bg-c-surface-raised border-c-border hover:border-c-border-strong'
                     }`}
                   >
                     <input
@@ -817,13 +818,13 @@ export const SuperAdminAISettings: React.FC = () => {
                         size={16}
                         className={
                           settings.dataResidency === option.value
-                            ? 'text-primary-400'
-                            : 'text-slate-600 dark:text-slate-500'
+                            ? 'text-c-accent'
+                            : 'text-c-text-secondary'
                         }
                       />
-                      <span className="font-medium text-white">{option.label}</span>
+                      <span className="font-medium text-c-text">{option.label}</span>
                     </div>
-                    <span className="text-xs text-slate-600 dark:text-slate-500">
+                    <span className="text-xs text-c-text-secondary">
                       {option.description}
                     </span>
                   </label>
@@ -836,7 +837,7 @@ export const SuperAdminAISettings: React.FC = () => {
 
       {/* Last Updated Info */}
       {settings.updatedAt && (
-        <div className="text-center text-sm text-slate-500 dark:text-slate-400">
+        <div className="text-center text-sm text-c-text-muted">
           Last updated: {new Date(settings.updatedAt).toLocaleString()}
           {settings.updatedBy && ` by ${settings.updatedBy}`}
         </div>

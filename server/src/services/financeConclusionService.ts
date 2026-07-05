@@ -119,6 +119,20 @@ export interface IndicatorFacts {
   /** Industry / peer benchmark band [low, high]. */
   benchmark?: [number, number];
   /**
+   * Provenance of `benchmark`, when it came from a NAMED industry range
+   * rather than a generic assumption (O6.2/O6.3 — replaces the old
+   * universal "±15%" framing). Populate via
+   * `financeIndustryBenchmarks.getRatioBenchmark(...)` upstream; optional —
+   * when absent the narrator still renders the band, just without a named
+   * source/industry in the prose.
+   */
+  benchmarkMeta?: {
+    industryLabel: string;
+    source: string;
+    asOf: string;
+    confidence: 'sourced' | 'expert-estimate';
+  };
+  /**
    * Historical series oldest→newest (incl. current), from engine.
    * Trend (K1) is derived deterministically from this — never guessed.
    */
@@ -284,11 +298,19 @@ export const deterministicIndicatorNarrator: FinanceNarrator = (input) => {
   const toThreshold = periodsToThreshold(ind, trend);
 
   // ---- K1: indicator + trend (the FACT) ----
+  // O6.2/O6.3: when the caller supplied benchmarkMeta (named industry +
+  // source), cite it explicitly instead of a bare, unsourced peer band —
+  // this is the "mediana branży produkcyjnej 11–14% (Damodaran NYU 2025)"
+  // framing that replaces the old universal ±15% variance rule.
   const benchTxt =
     ind.benchmark && ind.benchmark.length === 2
-      ? isPL
-        ? `; branżowo ${fmt(ind.benchmark[0], lang)}–${fmt(ind.benchmark[1], lang)}`
-        : `; peer band ${fmt(ind.benchmark[0], lang)}–${fmt(ind.benchmark[1], lang)}`
+      ? ind.benchmarkMeta
+        ? isPL
+          ? `; mediana branży ${ind.benchmarkMeta.industryLabel} ${fmt(ind.benchmark[0], lang)}–${fmt(ind.benchmark[1], lang)} (${ind.benchmarkMeta.source}${ind.benchmarkMeta.confidence === 'expert-estimate' ? ', estymacja ekspercka' : ''})`
+          : `; ${ind.benchmarkMeta.industryLabel} industry median ${fmt(ind.benchmark[0], lang)}–${fmt(ind.benchmark[1], lang)} (${ind.benchmarkMeta.source}${ind.benchmarkMeta.confidence === 'expert-estimate' ? ', expert estimate' : ''})`
+        : isPL
+          ? `; branżowo ${fmt(ind.benchmark[0], lang)}–${fmt(ind.benchmark[1], lang)}`
+          : `; peer band ${fmt(ind.benchmark[0], lang)}–${fmt(ind.benchmark[1], lang)}`
       : '';
   const thrTxt =
     ind.threshold != null
@@ -316,7 +338,12 @@ export const deterministicIndicatorNarrator: FinanceNarrator = (input) => {
       ? 'Driver: rozkład na składowe do ustalenia — brak dekompozycji w danych silnika.'
       : 'Driver: component decomposition to be established — not present in engine data.';
 
-  const meaningLead = buildMeaningLead(isPL, { withinBench, passesThreshold, trend });
+  const meaningLead = buildMeaningLead(isPL, {
+    withinBench,
+    passesThreshold,
+    trend,
+    benchmarkMeta: ind.benchmarkMeta,
+  });
   const k2Text = `${meaningLead} ${driverTxt}`.trim();
 
   // ---- forecast (only if engine can extrapolate to a threshold) ----
@@ -351,6 +378,15 @@ export const deterministicIndicatorNarrator: FinanceNarrator = (input) => {
             type: 'driver',
             ref: `${ind.code}:${topDriver.name}`,
             excerpt: pct(num(topDriver.changePct), lang),
+          },
+        ]
+      : []),
+    ...(ind.benchmark && ind.benchmarkMeta
+      ? [
+          {
+            type: 'benchmark',
+            ref: `${ind.code}:${ind.benchmarkMeta.industryLabel}`,
+            excerpt: `${ind.benchmarkMeta.source} (${ind.benchmarkMeta.asOf})`,
           },
         ]
       : []),
@@ -417,7 +453,12 @@ function pluralPeriods(n: number, base: string): string {
 
 function buildMeaningLead(
   isPL: boolean,
-  ctx: { withinBench: boolean | null; passesThreshold: boolean | null; trend: TrendFact | null }
+  ctx: {
+    withinBench: boolean | null;
+    passesThreshold: boolean | null;
+    trend: TrendFact | null;
+    benchmarkMeta?: IndicatorFacts['benchmarkMeta'];
+  }
 ): string {
   if (ctx.passesThreshold === true && ctx.trend && !ctx.trend.improving) {
     return isPL
@@ -430,9 +471,16 @@ function buildMeaningLead(
       : 'The indicator is below the safety threshold — this is a live risk, not an early warning.';
   }
   if (ctx.withinBench === false) {
+    // O6.2/O6.3: name the industry + source when known, instead of a bare
+    // "segment benchmark" (the old universal ±15% framing had no source).
+    const segmentTxt = ctx.benchmarkMeta
+      ? isPL
+        ? ` (branża: ${ctx.benchmarkMeta.industryLabel}, źródło: ${ctx.benchmarkMeta.source})`
+        : ` (industry: ${ctx.benchmarkMeta.industryLabel}, source: ${ctx.benchmarkMeta.source})`
+      : '';
     return isPL
-      ? 'Wskaźnik odstaje od benchmarku segmentu — różnica ma konsekwencję konkurencyjną.'
-      : 'The indicator diverges from the segment benchmark — the gap carries a competitive consequence.';
+      ? `Wskaźnik odstaje od benchmarku segmentu${segmentTxt} — różnica ma konsekwencję konkurencyjną.`
+      : `The indicator diverges from the segment benchmark${segmentTxt} — the gap carries a competitive consequence.`;
   }
   return isPL
     ? 'Wskaźnik w akceptowalnym zakresie; sam poziom nie jest problemem — pilnujemy kierunku.'

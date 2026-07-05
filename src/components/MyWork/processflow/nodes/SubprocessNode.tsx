@@ -22,8 +22,8 @@ export const SubprocessNode: React.FC<NodeProps<any>> = ({ id, data, selected })
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-center min-w-[120px] min-h-[56px] px-3 py-2 rounded-xl border-2 border-dashed border-slate-400 dark:border-navy-500 bg-white dark:bg-navy-800 shadow-sm transition-shadow ${
-        selected ? 'ring-2 ring-slate-500/60 dark:ring-white/30' : ''
+      className={`relative flex flex-col items-center justify-center min-w-[120px] min-h-[56px] px-3 py-2 rounded-xl border-2 border-dashed border-c-border-strong bg-c-surface shadow-sm transition-shadow ${
+        selected ? 'ring-2 ring-c-border-strong' : ''
       }`}
       style={{
         borderLeftColor: laneColor,
@@ -41,7 +41,7 @@ export const SubprocessNode: React.FC<NodeProps<any>> = ({ id, data, selected })
         }
       }}
     >
-      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />
+      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-c-border-strong" />
 
       {editing ? (
         <input
@@ -53,16 +53,16 @@ export const SubprocessNode: React.FC<NodeProps<any>> = ({ id, data, selected })
             if (e.key === 'Enter') commitEdit();
             if (e.key === 'Escape') setEditing(false);
           }}
-          className="bg-transparent text-xs font-medium text-slate-800 dark:text-slate-200 text-center outline-none border-b border-primary-400 w-full"
+          className="bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-c-accent w-full"
         />
       ) : (
-        <div className="text-xs font-medium text-slate-800 dark:text-slate-200 text-center">
+        <div className="text-xs font-medium text-c-text text-center">
           {data?.label || 'Subprocess'}
         </div>
       )}
 
       {/* [+] / [-] collapse marker at bottom center */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-5 h-5 rounded border border-slate-400 dark:border-navy-500 bg-white dark:bg-navy-800 flex items-center justify-center">
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-5 h-5 rounded border border-c-border-strong bg-c-surface flex items-center justify-center">
         <svg width={12} height={12} viewBox="0 0 12 12">
           <line
             x1={2}
@@ -71,7 +71,7 @@ export const SubprocessNode: React.FC<NodeProps<any>> = ({ id, data, selected })
             y2={6}
             stroke="currentColor"
             strokeWidth={1.5}
-            className="text-slate-600 dark:text-slate-300"
+            className="text-c-text-secondary"
           />
           {collapsed && (
             <line
@@ -81,13 +81,13 @@ export const SubprocessNode: React.FC<NodeProps<any>> = ({ id, data, selected })
               y2={10}
               stroke="currentColor"
               strokeWidth={1.5}
-              className="text-slate-600 dark:text-slate-300"
+              className="text-c-text-secondary"
             />
           )}
         </svg>
       </div>
 
-      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-slate-400" />
+      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-c-border-strong" />
     </div>
   );
 };

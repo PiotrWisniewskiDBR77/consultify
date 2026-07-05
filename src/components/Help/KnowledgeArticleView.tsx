@@ -328,7 +328,7 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
             <button
               type="button"
               onClick={() => closePanelAndNavigate(effectiveNextRoute)}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-c-text px-4 py-2.5 text-sm font-semibold text-c-bg hover:bg-c-text-secondary transition-colors"
               data-testid="help-next-action"
             >
               {nextActionRoute

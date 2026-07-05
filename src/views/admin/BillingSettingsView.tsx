@@ -238,7 +238,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-medium text-white flex items-center gap-2">
+          <h2 className="text-lg font-medium text-c-text flex items-center gap-2">
             <FileText size={18} className="text-c-text-muted" />
             {t('admin.billing.settings', 'Billing Settings')}
           </h2>
@@ -271,7 +271,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
             onClick={() => setActiveTab(tab.id as any)}
             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all -mb-px ${
               activeTab === tab.id
-                ? 'border-white text-white'
+                ? 'border-white text-c-text'
                 : 'border-transparent text-c-text-muted hover:text-slate-300'
             }`}
           >
@@ -291,7 +291,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
           <div className="space-y-6">
             {/* Company Information */}
             <div className="admin-card p-6">
-              <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+              <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
                 <Building2 size={14} className="text-c-text-muted" />
                 Company Information
               </h3>
@@ -329,7 +329,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
 
             {/* Tax ID */}
             <div className="admin-card p-6">
-              <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+              <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
                 <Shield size={14} className="text-c-text-muted" />
                 Tax Information
               </h3>
@@ -383,7 +383,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
 
             {/* Billing Address */}
             <div className="admin-card p-6">
-              <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+              <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
                 <Globe size={14} className="text-c-text-muted" />
                 Billing Address
               </h3>
@@ -475,7 +475,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
 
             {/* Invoice Settings */}
             <div className="admin-card p-6">
-              <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+              <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
                 <FileText size={14} className="text-c-text-muted" />
                 Invoice Settings
               </h3>
@@ -524,24 +524,24 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
 
           {/* Information about Partner Program */}
           <div className="admin-card p-6">
-            <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+            <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
               <UserCheck size={14} className="text-c-text-muted" />
               Partner Program Benefits
             </h3>
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="bg-navy-900/50 rounded-lg p-4">
+              <div className="bg-c-surface/50 rounded-lg p-4">
                 <div className="text-2xl font-bold text-primary-400 mb-1">15%</div>
                 <div className="text-sm text-c-text-muted">
                   Standard discount for referred customers
                 </div>
               </div>
-              <div className="bg-navy-900/50 rounded-lg p-4">
+              <div className="bg-c-surface/50 rounded-lg p-4">
                 <div className="text-2xl font-bold text-emerald-400 mb-1">12 mo</div>
                 <div className="text-sm text-c-text-muted">
                   Typical discount duration
                 </div>
               </div>
-              <div className="bg-navy-900/50 rounded-lg p-4">
+              <div className="bg-c-surface/50 rounded-lg p-4">
                 <div className="text-2xl font-bold text-blue-400 mb-1">24/7</div>
                 <div className="text-sm text-c-text-muted">
                   Priority support from partner
@@ -566,7 +566,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
           <div className="space-y-6">
             {/* Notification Preferences */}
             <div className="admin-card p-6">
-              <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+              <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
                 <Bell size={14} className="text-c-text-muted" />
                 Email Notifications
               </h3>
@@ -611,7 +611,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
                       className="w-4 h-4 mt-0.5 rounded border-slate-600 bg-transparent text-[var(--admin-accent)]"
                     />
                     <div className="flex-1">
-                      <p className="text-sm text-white group-hover:text-slate-200">{item.label}</p>
+                      <p className="text-sm text-c-text group-hover:text-slate-200">{item.label}</p>
                       <p className="text-xs text-c-text-muted">{item.desc}</p>
                     </div>
                   </label>
@@ -643,7 +643,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
             {/* Billing Contacts */}
             <div className="admin-card p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-medium text-white flex items-center gap-2">
+                <h3 className="text-sm font-medium text-c-text flex items-center gap-2">
                   <Mail size={14} className="text-c-text-muted" />
                   Billing Contacts
                 </h3>
@@ -676,11 +676,11 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
                       className="flex items-center justify-between p-3 bg-c-surface/[0.02] rounded-lg border border-white/[0.05]"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-full bg-c-surface-raised flex items-center justify-center">
                           <Mail size={14} className="text-c-text-muted" />
                         </div>
                         <div>
-                          <p className="text-sm text-white">
+                          <p className="text-sm text-c-text">
                             {contact.name}
                             {contact.is_primary && (
                               <span className="ml-2 text-xs bg-slate-200 dark:bg-slate-700 text-c-text-secondary px-1.5 py-0.5 rounded">
@@ -722,7 +722,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
         ) : (
           <div className="space-y-6">
             <div className="admin-card p-6">
-              <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+              <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
                 <Download size={14} className="text-c-text-muted" />
                 Export Billing Data
               </h3>
@@ -764,7 +764,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
                   <div className="flex items-start gap-3">
                     <FileText size={20} className="text-c-text-muted mt-0.5" />
                     <div className="flex-1">
-                      <h4 className="text-sm font-medium text-white">Invoices</h4>
+                      <h4 className="text-sm font-medium text-c-text">Invoices</h4>
                       <p className="text-xs text-c-text-muted mt-1">
                         Download all invoices for the selected year including amounts, dates, and
                         status.
@@ -789,7 +789,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
                   <div className="flex items-start gap-3">
                     <BarChart3 size={20} className="text-c-text-muted mt-0.5" />
                     <div className="flex-1">
-                      <h4 className="text-sm font-medium text-white">Usage History</h4>
+                      <h4 className="text-sm font-medium text-c-text">Usage History</h4>
                       <p className="text-xs text-c-text-muted mt-1">
                         Download daily usage data including tokens consumed, costs, and request
                         counts.
@@ -838,7 +838,7 @@ export const BillingSettingsView: React.FC<BillingSettingsViewProps> = ({ classN
               className="admin-card w-full max-w-md overflow-hidden"
             >
               <div className="p-6 border-b border-white/[0.05] flex items-center justify-between">
-                <h3 className="text-lg font-medium text-white">Add Billing Contact</h3>
+                <h3 className="text-lg font-medium text-c-text">Add Billing Contact</h3>
                 <button
                   onClick={() => setShowAddContact(false)}
                   className="text-c-text-muted hover:text-white transition-colors"

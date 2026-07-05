@@ -128,8 +128,8 @@ const ToolbarOverflow: React.FC<{ label: string; items: OverflowItem[] }> = ({ l
         title={label}
         className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors shrink-0 ${
           open
-            ? 'bg-slate-200 dark:bg-navy-700 text-slate-900 dark:text-slate-100'
-            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+            ? 'bg-c-surface-raised text-c-text'
+            : 'text-c-text-secondary hover:bg-c-surface-raised'
         }`}
       >
         <MoreHorizontal size={14} />
@@ -141,7 +141,7 @@ const ToolbarOverflow: React.FC<{ label: string; items: OverflowItem[] }> = ({ l
             ref={menuRef}
             data-testid="whiteboard-toolbar-overflow-menu"
             role="menu"
-            className="fixed z-[1000] w-[200px] bg-white dark:bg-navy-950/95 border border-slate-200 dark:border-white/[0.08] rounded-xl shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] py-1 max-h-[70vh] overflow-y-auto"
+            className="fixed z-[1000] w-[200px] bg-c-surface border border-c-border-subtle rounded-xl shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] py-1 max-h-[70vh] overflow-y-auto"
             style={{ top: coords.top, left: coords.left }}
           >
             {items.map((it) => {
@@ -160,8 +160,8 @@ const ToolbarOverflow: React.FC<{ label: string; items: OverflowItem[] }> = ({ l
                     it.danger
                       ? 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20'
                       : it.active
-                        ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10'
-                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700'
+                        ? 'text-c-accent bg-c-accent-soft'
+                        : 'text-c-text-secondary hover:bg-c-surface-raised'
                   }`}
                 >
                   <Icon size={12} /> <span>{it.label}</span>
@@ -205,11 +205,11 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
 
   return (
     <div
-      className="flex items-center gap-1 px-3 py-1.5 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 backdrop-blur-sm flex-shrink-0 overflow-x-auto"
+      className="flex items-center gap-1 px-3 py-1.5 border-b border-c-border-subtle bg-c-surface-raised backdrop-blur-sm flex-shrink-0 overflow-x-auto"
       role="toolbar"
       aria-label={t('myWork.whiteboard.toolbarExtra.ariaLabel')}
     >
-      <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mr-1.5 shrink-0">
+      <div className="text-xs font-semibold text-c-text-secondary mr-1.5 shrink-0">
         {t('myWork.whiteboard.toolbarExtra.title')}
       </div>
 
@@ -294,7 +294,7 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
         />
       )}
 
-      <div className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5 shrink-0" />
+      <div className="w-px h-5 bg-c-surface-raised mx-0.5 shrink-0" />
 
       <ToolbarBtn
         icon={Undo2}
@@ -311,7 +311,7 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
         ariaLabel={t('myWork.whiteboard.toolbar.redo')}
       />
 
-      <div className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5 shrink-0" />
+      <div className="w-px h-5 bg-c-surface-raised mx-0.5 shrink-0" />
 
       {/*
        * Editor Shell Canon §2 GÓRNA — secondary tools (session/collab, export,
@@ -397,14 +397,14 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
         aria-busy={saving}
         className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors shrink-0 ${
           saving || loading || locked
-            ? 'bg-slate-200/60 text-slate-500 dark:bg-white/[0.06] dark:text-slate-400'
-            : 'bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100'
+            ? 'bg-c-surface-raised text-c-text-muted'
+            : 'bg-c-accent text-white hover:brightness-110'
         }`}
       >
         {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
         {saving ? t('myWork.whiteboard.toolbarExtra.saving') : t('myWork.whiteboard.toolbar.save')}
       </button>
-      <span className="text-[11px] text-slate-500 dark:text-slate-400">{saveStatusLabel}</span>
+      <span className="text-[11px] text-c-text-muted">{saveStatusLabel}</span>
     </div>
   );
 };

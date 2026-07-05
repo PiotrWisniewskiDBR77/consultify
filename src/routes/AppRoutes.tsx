@@ -82,6 +82,10 @@ const ResultsHub = lazyWithRetry(() =>
   import('@/components/Results/ResultsHub').then((m) => ({ default: m.default }))
 );
 
+const ConclusionsHub = lazyWithRetry(() =>
+  import('@/components/Conclusions/ConclusionsHub').then((m) => ({ default: m.default }))
+);
+
 // Legacy views (kept for backward compatibility)
 const FullInitiativesView = lazyWithRetry(() =>
   import('@/views/FullInitiativesView').then((m) => ({ default: m.FullInitiativesView }))
@@ -1992,7 +1996,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <BetaGate moduleId="MODULE_PRESENTATIONS">
               <MainLayout
-                breadcrumbs={breadcrumbs || [t('sidebar.materialy', 'Materiały')]}
+                breadcrumbs={breadcrumbs || [t('sidebar.materialy', 'Materials')]}
                 noPadding
               >
                 <ProductionModuleGate
@@ -2168,6 +2172,29 @@ export const AppRoutes: React.FC = () => {
                 >
                   <RouteErrorBoundary>
                     <ResultsHub />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* Conclusions layer — governed conclusions (verdict/rationale/evidence) +
+            per-conclusion readout. Infra live since OXFORD #41; this is the user
+            surface. Beta-gated via MODULE_CONCLUSIONS (open for admins). */}
+        <Route
+          path={ROUTES.CONCLUSIONS}
+          element={
+            <BetaGate moduleId="MODULE_CONCLUSIONS">
+              <MainLayout
+                breadcrumbs={breadcrumbs || [t('sidebar.conclusions', 'Conclusions')]}
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Conclusions"
+                >
+                  <RouteErrorBoundary>
+                    <ConclusionsHub />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
               </MainLayout>

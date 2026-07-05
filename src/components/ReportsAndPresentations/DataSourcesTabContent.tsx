@@ -34,7 +34,7 @@ function DatasetTable({ dataset }: { dataset: MaterialDataset }): React.ReactEle
   const rows = dataset.rows ?? [];
   return (
     <div className="mt-3">
-      <div className="mb-1 flex items-center gap-2 text-xs text-gray-500">
+      <div className="mb-1 flex items-center gap-2 text-xs text-c-text-muted">
         <span>
           {dataset.rowCount} wierszy · {cols.length} kolumn · źródło: {dataset.source?.kind}
         </span>
@@ -44,14 +44,14 @@ function DatasetTable({ dataset }: { dataset: MaterialDataset }): React.ReactEle
           </span>
         )}
       </div>
-      <div className="max-h-72 overflow-auto rounded-lg border border-gray-200 dark:border-navy-700">
+      <div className="max-h-72 overflow-auto rounded-lg border border-c-border">
         <table className="w-full border-collapse text-left text-xs">
-          <thead className="sticky top-0 bg-gray-50 dark:bg-navy-800">
+          <thead className="sticky top-0 bg-c-surface-raised">
             <tr>
               {cols.map((c) => (
                 <th
                   key={c}
-                  className="whitespace-nowrap border-b border-gray-200 px-3 py-2 font-semibold text-gray-700 dark:border-navy-700 dark:text-slate-200"
+                  className="whitespace-nowrap border-b border-c-border px-3 py-2 font-semibold text-c-text-secondary"
                 >
                   {c}
                 </th>
@@ -60,11 +60,11 @@ function DatasetTable({ dataset }: { dataset: MaterialDataset }): React.ReactEle
           </thead>
           <tbody>
             {rows.map((row, i) => (
-              <tr key={i} className="odd:bg-white even:bg-gray-50/50 dark:odd:bg-navy-900 dark:even:bg-navy-800/40">
+              <tr key={i} className="odd:bg-c-surface even:bg-c-surface-raised">
                 {cols.map((c) => (
                   <td
                     key={c}
-                    className="whitespace-nowrap border-b border-gray-100 px-3 py-1.5 text-gray-600 dark:border-navy-800 dark:text-slate-300"
+                    className="whitespace-nowrap border-b border-c-border-subtle px-3 py-1.5 text-c-text-secondary"
                   >
                     {String(row?.[c] ?? '—')}
                   </td>
@@ -137,35 +137,35 @@ export const DataSourcesTabContent: React.FC = () => {
     <div className="h-full overflow-auto p-4" data-testid="rap-data-tab">
       <div className="mx-auto flex max-w-3xl flex-col gap-4">
         <header className="flex items-center gap-2">
-          <Database size={18} className="text-gray-500" />
+          <Database size={18} className="text-c-text-muted" />
           <div>
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-slate-100">
+            <h2 className="text-sm font-semibold text-c-text">
               Źródła danych materiału
             </h2>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-c-text-muted">
               Podłącz dane do generowanych materiałów — z konektora albo z formularza intake.
             </p>
           </div>
         </header>
 
         {/* Połącz źródło */}
-        <section className="rounded-xl border border-gray-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
-          <h3 className="mb-2 text-sm font-semibold text-gray-900 dark:text-slate-100">
+        <section className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
+          <h3 className="mb-2 text-sm font-semibold text-c-text">
             Połącz źródło
           </h3>
           {types.length === 0 ? (
-            <p className="text-xs text-gray-400" data-testid="rap-data-no-connectors">
+            <p className="text-xs text-c-text-muted" data-testid="rap-data-no-connectors">
               Brak dostępnych konektorów (warstwa danych wyłączona lub bez rejestru).
             </p>
           ) : (
             <>
               <div className="flex flex-wrap items-center gap-2">
-                <label className="text-xs text-gray-500">Konektor:</label>
+                <label className="text-xs text-c-text-muted">Konektor:</label>
                 <select
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
                   data-testid="rap-data-connector-select"
-                  className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-800 dark:border-navy-700 dark:bg-navy-800 dark:text-slate-200"
+                  className="rounded-md border border-c-border bg-c-surface px-2 py-1 text-xs text-c-text"
                 >
                   {types.map((t) => (
                     <option key={t} value={t}>
@@ -184,14 +184,14 @@ export const DataSourcesTabContent: React.FC = () => {
                   Podgląd danych
                 </button>
               </div>
-              <label className="mt-2 block text-xs text-gray-500">Konfiguracja (JSON):</label>
+              <label className="mt-2 block text-xs text-c-text-muted">Konfiguracja (JSON):</label>
               <textarea
                 value={config}
                 onChange={(e) => setConfig(e.target.value)}
                 spellCheck={false}
                 rows={4}
                 data-testid="rap-data-config"
-                className="mt-1 w-full rounded-md border border-gray-300 bg-gray-50 px-2 py-1.5 font-mono text-xs text-gray-800 dark:border-navy-700 dark:bg-navy-800 dark:text-slate-200"
+                className="mt-1 w-full rounded-md border border-c-border bg-c-surface-raised px-2 py-1.5 font-mono text-xs text-c-text"
               />
               {connectorError && (
                 <p className="mt-2 text-xs text-amber-600" data-testid="rap-data-connector-error">
@@ -204,8 +204,8 @@ export const DataSourcesTabContent: React.FC = () => {
         </section>
 
         {/* Zbierz przez formularz */}
-        <section className="rounded-xl border border-gray-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
-          <h3 className="mb-2 text-sm font-semibold text-gray-900 dark:text-slate-100">
+        <section className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
+          <h3 className="mb-2 text-sm font-semibold text-c-text">
             Zbierz przez formularz
           </h3>
           <div className="flex flex-wrap items-center gap-2">
@@ -214,7 +214,7 @@ export const DataSourcesTabContent: React.FC = () => {
               onChange={(e) => setFormId(e.target.value)}
               placeholder="ID formularza intake"
               data-testid="rap-data-form-id"
-              className="min-w-[14rem] flex-1 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-800 dark:border-navy-700 dark:bg-navy-800 dark:text-slate-200"
+              className="min-w-[14rem] flex-1 rounded-md border border-c-border bg-c-surface px-2 py-1 text-xs text-c-text"
             />
             <button
               type="button"

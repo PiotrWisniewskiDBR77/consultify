@@ -945,7 +945,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                           >
                             -
                           </button>
-                          <span className="w-12 text-center font-medium text-white">
+                          <span className="w-12 text-center font-medium text-c-text">
                             {addonQuantity}
                           </span>
                           <button

@@ -179,23 +179,23 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
           <Shield className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+          <h2 className="text-xl font-bold text-c-text">
             {t('settings.security.title', 'Security')}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-c-text-muted">
             {t('settings.security.subtitle', 'Manage your password and active sessions')}
           </p>
         </div>
       </div>
 
       {/* Change Password Section */}
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <div className="p-6 border-b border-slate-200 dark:border-navy-700">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-            <Key className="w-5 h-5 text-primary-500" />
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
+        <div className="p-6 border-b border-c-border-subtle dark:border-navy-700">
+          <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
+            <Key className="w-5 h-5 text-c-accent" />
             {t('settings.security.changePassword', 'Change Password')}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             {t(
               'settings.security.changePasswordDescription',
               'Update your password to keep your account secure'
@@ -206,22 +206,22 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
         <div className="p-6 space-y-4">
           {/* Current Password */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">
               {t('settings.security.currentPassword', 'Current Password')}
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600 dark:text-slate-500" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-c-text-secondary" />
               <input
                 type={showCurrentPassword ? 'text' : 'password'}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                className="w-full pl-11 pr-11 py-3 rounded-xl border border-c-border-subtle dark:border-navy-700 bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all"
                 placeholder="••••••••"
               />
               <button
                 type="button"
                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600 dark:text-slate-400"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-c-text-secondary hover:text-c-text-secondary"
               >
                 {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -230,22 +230,22 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
 
           {/* New Password */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">
               {t('settings.security.newPassword', 'New Password')}
             </label>
             <div className="relative">
-              <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600 dark:text-slate-500" />
+              <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-c-text-secondary" />
               <input
                 type={showNewPassword ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                className="w-full pl-11 pr-11 py-3 rounded-xl border border-c-border-subtle dark:border-navy-700 bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all"
                 placeholder="••••••••"
               />
               <button
                 type="button"
                 onClick={() => setShowNewPassword(!showNewPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600 dark:text-slate-400"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-c-text-secondary hover:text-c-text-secondary"
               >
                 {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -272,13 +272,13 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                   {passwordRequirements[key as keyof typeof passwordRequirements] ? (
                     <CheckCircle className="w-4 h-4 text-emerald-500" />
                   ) : (
-                    <div className="w-4 h-4 rounded-full border-2 border-slate-300 dark:border-slate-600" />
+                    <div className="w-4 h-4 rounded-full border-2 border-c-border" />
                   )}
                   <span
                     className={
                       passwordRequirements[key as keyof typeof passwordRequirements]
                         ? 'text-emerald-600 dark:text-emerald-400'
-                        : 'text-slate-500 dark:text-slate-400'
+                        : 'text-c-text-muted'
                     }
                   >
                     {label}
@@ -290,16 +290,16 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
 
           {/* Confirm Password */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">
               {t('settings.security.confirmPassword', 'Confirm New Password')}
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600 dark:text-slate-500" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-c-text-secondary" />
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                className="w-full pl-11 pr-11 py-3 rounded-xl border border-c-border-subtle dark:border-navy-700 bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all"
                 placeholder="••••••••"
               />
               {confirmPassword && (
@@ -336,7 +336,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
           <button
             onClick={handleChangePassword}
             disabled={!isPasswordValid || !currentPassword || isChangingPassword}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-primary-600 to-crimson-600 text-white font-medium hover:from-primary-500 hover:to-crimson-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-c-accent-soft to-c-accent text-white font-medium hover:from-c-accent-soft hover:to-c-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isChangingPassword ? (
               <>
@@ -354,14 +354,14 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
       </div>
 
       {/* Active Sessions Section */}
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <div className="p-6 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
+        <div className="p-6 border-b border-c-border-subtle dark:border-navy-700 flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
               <Monitor className="w-5 h-5 text-blue-500" />
               {t('settings.security.activeSessions', 'Active Sessions')}
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-c-text-muted mt-1">
               {t(
                 'settings.security.activeSessionsDescription',
                 'Devices and browsers where you are currently logged in'
@@ -379,25 +379,25 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
           )}
         </div>
 
-        <div className="divide-y divide-slate-200 dark:divide-white/5">
+        <div className="divide-y divide-c-border-subtle dark:divide-white/5">
           {isLoadingSessions ? (
             <div className="p-8 flex items-center justify-center">
-              <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+              <Loader2 className="w-6 h-6 animate-spin text-c-accent" />
             </div>
           ) : sessions.length === 0 ? (
-            <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+            <div className="p-8 text-center text-c-text-muted">
               {t('settings.security.noSessions', 'No active sessions found')}
             </div>
           ) : (
             (sessions || []).map((session) => (
               <div key={session.id} className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-navy-800 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                  <div className="w-10 h-10 rounded-lg bg-c-surface-raised flex items-center justify-center text-c-text-muted">
                     {getDeviceIcon(session.deviceInfo || '')}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-slate-900 dark:text-white">
+                      <p className="font-medium text-c-text">
                         {session.deviceInfo || 'Unknown Device'}
                       </p>
                       {session.isCurrent && (
@@ -407,7 +407,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                         />
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                    <div className="flex items-center gap-3 text-sm text-c-text-muted mt-0.5">
                       <span className="flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
                         {session.ip || 'Unknown IP'}
@@ -441,13 +441,13 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
       </div>
 
       {/* Security Documents Section */}
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <div className="p-6 border-b border-slate-200 dark:border-navy-700">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-            <FileText className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
+        <div className="p-6 border-b border-c-border-subtle dark:border-navy-700">
+          <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
+            <FileText className="w-5 h-5 text-c-text-muted" />
             {t('settings.security.documents', 'Security Documentation')}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             {t(
               'settings.security.documentsDescription',
               'Learn about our security practices and compliance'
@@ -489,19 +489,19 @@ interface SecurityDocLinkProps {
 const SecurityDocLink: React.FC<SecurityDocLinkProps> = ({ to, icon, title, description }) => (
   <Link
     to={to}
-    className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors group"
+    className="flex items-start gap-3 p-3 bg-c-surface-raised rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors group"
   >
-    <div className="text-slate-600 dark:text-slate-500 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 mt-0.5">
+    <div className="text-c-text-secondary group-hover:text-emerald-600 dark:group-hover:text-emerald-400 mt-0.5">
       {icon}
     </div>
     <div className="flex-1 min-w-0">
       <div className="flex items-center gap-1">
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
+        <span className="text-sm font-medium text-c-text-secondary group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
           {title}
         </span>
-        <ExternalLink className="w-3 h-3 text-slate-600 dark:text-slate-500" />
+        <ExternalLink className="w-3 h-3 text-c-text-secondary" />
       </div>
-      <span className="text-xs text-slate-500 dark:text-slate-400">{description}</span>
+      <span className="text-xs text-c-text-muted">{description}</span>
     </div>
   </Link>
 );

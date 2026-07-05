@@ -181,7 +181,7 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
   return (
     <div
       className={cn(
-        'w-72 shrink-0 border-r border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/30',
+        'w-72 shrink-0 border-r border-c-border-subtle bg-c-surface/60',
         className
       )}
     >
@@ -190,9 +190,9 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
           <button
             type="button"
             onClick={onBack}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised"
           >
-            <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300">
+            <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-c-surface-raised text-c-text-secondary">
               <Target size={16} />
             </span>
             {t('organization.sidebar.back', 'Back to Dashboard')}
@@ -201,7 +201,7 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
       </div>
 
       <div className="px-4 pb-4">
-        <div className="text-xs font-semibold tracking-wider text-slate-600 dark:text-slate-500">
+        <div className="text-xs font-semibold tracking-wider text-c-text-secondary">
           {t('organization.sidebar.title', 'Organization')}
         </div>
       </div>
@@ -214,7 +214,7 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
               <button
                 type="button"
                 onClick={() => toggleGroup(group.id)}
-                className="w-full flex items-center justify-between px-2 py-1 text-[11px] font-bold tracking-wider text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white"
+                className="w-full flex items-center justify-between px-2 py-1 text-[11px] font-bold tracking-wider text-c-text-muted hover:text-c-text"
               >
                 <span>{t(group.labelKey, group.defaultLabel)}</span>
                 <ChevronDown
@@ -235,16 +235,16 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
                         className={cn(
                           'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors',
                           active
-                            ? 'bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white'
-                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-navy-900 dark:hover:text-white'
+                            ? 'bg-c-surface-raised text-c-text'
+                            : 'text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text'
                         )}
                       >
                         <span
                           className={cn(
                             'inline-flex items-center justify-center w-8 h-8 rounded-lg',
                             active
-                              ? 'bg-slate-200 dark:bg-white/10 text-[var(--c-info)]'
-                              : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
+                              ? 'bg-c-accent-soft text-c-info'
+                              : 'bg-c-surface-raised text-c-text-muted'
                           )}
                         >
                           <item.icon size={18} />

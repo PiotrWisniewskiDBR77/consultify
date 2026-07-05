@@ -265,13 +265,13 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-            <Shield className="w-7 h-7 text-slate-900 dark:text-white" />
+            <Shield className="w-7 h-7 text-c-text" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+            <h2 className="text-2xl font-bold text-c-text">
               {t('security.dashboard.title', 'Security Dashboard')}
             </h2>
-            <p className="text-slate-500 dark:text-slate-400">
+            <p className="text-c-text-muted">
               {t(
                 'security.dashboard.subtitle',
                 'Monitor your account security and compliance status'
@@ -282,7 +282,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           {t('common.refresh', 'Refresh')}
@@ -293,20 +293,20 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Score */}
         <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6 h-full">
-            <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-4">
+          <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6 h-full">
+            <h3 className="text-sm font-medium text-c-text-muted mb-4">
               {t('security.dashboard.securityScore', 'Security Score')}
             </h3>
             <div className="flex flex-col items-center">
               <div
                 className={`relative w-32 h-32 rounded-full bg-gradient-to-br ${getScoreBgColor(score.total)} p-1`}
               >
-                <div className="w-full h-full rounded-full bg-white dark:bg-navy-900 flex items-center justify-center">
+                <div className="w-full h-full rounded-full bg-c-surface flex items-center justify-center">
                   <div className="text-center">
                     <span className={`text-4xl font-bold ${getScoreColor(score.total)}`}>
                       {score.total}
                     </span>
-                    <span className="text-slate-500 dark:text-slate-400 dark:text-slate-500 text-lg">
+                    <span className="text-c-text-muted text-lg">
                       /100
                     </span>
                   </div>
@@ -329,8 +329,8 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
 
         {/* Score Breakdown */}
         <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6 h-full">
-            <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-4">
+          <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6 h-full">
+            <h3 className="text-sm font-medium text-c-text-muted mb-4">
               {t('security.dashboard.scoreBreakdown', 'Score Breakdown')}
             </h3>
             <div className="space-y-4">
@@ -345,14 +345,14 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <span className="text-sm font-medium text-c-text-secondary">
                       {t('security.dashboard.mfaStatus', 'Two-Factor Authentication')}
                     </span>
-                    <span className="text-sm text-slate-500 dark:text-slate-400">
+                    <span className="text-sm text-c-text-muted">
                       {score.breakdown.mfa.score}/{score.breakdown.mfa.max}
                     </span>
                   </div>
-                  <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
+                  <div className="h-2 bg-c-surface-raised rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all ${score.breakdown.mfa.enabled ? 'bg-emerald-500' : 'bg-rose-500'}`}
                       style={{
@@ -370,15 +370,15 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <span className="text-sm font-medium text-c-text-secondary">
                       {t('security.dashboard.passwordStrength', 'Password Strength')}
                     </span>
-                    <span className="text-sm text-slate-500 dark:text-slate-400">
+                    <span className="text-sm text-c-text-muted">
                       {score.breakdown.passwordStrength.score}/
                       {score.breakdown.passwordStrength.max}
                     </span>
                   </div>
-                  <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
+                  <div className="h-2 bg-c-surface-raised rounded-full overflow-hidden">
                     <div
                       className="h-full bg-blue-500 rounded-full transition-all"
                       style={{
@@ -391,21 +391,21 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
 
               {/* Recent Activity */}
               <div className="flex items-center gap-4">
-                <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-500/20">
-                  <Activity className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                <div className="p-2 rounded-lg bg-c-accent-soft dark:bg-c-accent-soft">
+                  <Activity className="w-5 h-5 text-c-accent" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <span className="text-sm font-medium text-c-text-secondary">
                       {t('security.dashboard.recentActivity', 'Recent Activity')}
                     </span>
-                    <span className="text-sm text-slate-500 dark:text-slate-400">
+                    <span className="text-sm text-c-text-muted">
                       {score.breakdown.recentActivity.score}/{score.breakdown.recentActivity.max}
                     </span>
                   </div>
-                  <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
+                  <div className="h-2 bg-c-surface-raised rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-primary-500 rounded-full transition-all"
+                      className="h-full bg-c-accent rounded-full transition-all"
                       style={{
                         width: `${(score.breakdown.recentActivity.score / score.breakdown.recentActivity.max) * 100}%`,
                       }}
@@ -421,14 +421,14 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <span className="text-sm font-medium text-c-text-secondary">
                       {t('security.dashboard.sessionManagement', 'Session Management')}
                     </span>
-                    <span className="text-sm text-slate-500 dark:text-slate-400">
+                    <span className="text-sm text-c-text-muted">
                       {score.breakdown.sessions.score}/{score.breakdown.sessions.max}
                     </span>
                   </div>
-                  <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
+                  <div className="h-2 bg-c-surface-raised rounded-full overflow-hidden">
                     <div
                       className="h-full bg-amber-500 rounded-full transition-all"
                       style={{
@@ -446,14 +446,14 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <span className="text-sm font-medium text-c-text-secondary">
                       {t('security.dashboard.dataControls', 'Data Controls')}
                     </span>
-                    <span className="text-sm text-slate-500 dark:text-slate-400">
+                    <span className="text-sm text-c-text-muted">
                       {score.breakdown.dataControls.score}/{score.breakdown.dataControls.max}
                     </span>
                   </div>
-                  <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
+                  <div className="h-2 bg-c-surface-raised rounded-full overflow-hidden">
                     <div
                       className="h-full bg-blue-500 rounded-full transition-all"
                       style={{
@@ -509,10 +509,10 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
       {/* Compliance Badges & Recent Events */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Compliance Status */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <Award className="w-5 h-5 text-primary-500" />
+            <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
+              <Award className="w-5 h-5 text-c-accent" />
               {t('security.dashboard.compliance', 'Compliance Certifications')}
             </h3>
           </div>
@@ -545,15 +545,15 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
         </div>
 
         {/* Recent Security Events */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
               <Activity className="w-5 h-5 text-blue-500" />
               {t('security.dashboard.recentEvents', 'Recent Security Events')}
             </h3>
             <button
               onClick={() => onNavigateToTab?.('events')}
-              className="text-sm text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
+              className="text-sm text-c-accent hover:underline flex items-center gap-1"
             >
               {t('common.viewAll', 'View all')}
               <ChevronRight className="w-4 h-4" />
@@ -561,31 +561,31 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
           </div>
           <div className="space-y-3">
             {recentEvents.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">
+              <p className="text-sm text-c-text-muted text-center py-8">
                 {t('security.dashboard.noEvents', 'No recent security events')}
               </p>
             ) : (
               recentEvents.map((event) => (
                 <div
                   key={event.id}
-                  className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-lg"
+                  className="flex items-start gap-3 p-3 bg-c-surface-raised rounded-lg"
                 >
                   {getSeverityIcon(event.severity)}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                    <p className="text-sm font-medium text-c-text truncate">
                       {event.description}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
-                      <Clock className="w-3 h-3 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                      <Clock className="w-3 h-3 text-c-text-muted" />
+                      <span className="text-xs text-c-text-muted">
                         {formatTimestamp(event.timestamp)}
                       </span>
                       {event.ip && (
                         <>
-                          <span className="text-slate-700 dark:text-slate-300 dark:text-slate-400">
+                          <span className="text-c-text-secondary">
                             •
                           </span>
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                          <span className="text-xs text-c-text-muted">
                             {event.ip}
                           </span>
                         </>
@@ -655,17 +655,17 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
   return (
     <button
       onClick={onClick}
-      className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4 text-left hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-500/50 transition-all group"
+      className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-4 text-left hover:shadow-lg hover:border-c-accent dark:hover:border-c-accent transition-all group"
     >
       <div
         className={`w-12 h-12 rounded-xl ${statusColors[status]} flex items-center justify-center mb-3`}
       >
         {icon}
       </div>
-      <h4 className="font-semibold text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+      <h4 className="font-semibold text-c-text group-hover:text-c-accent dark:group-hover:text-c-accent transition-colors">
         {title}
       </h4>
-      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{description}</p>
+      <p className="text-sm text-c-text-muted mt-1">{description}</p>
     </button>
   );
 };
@@ -689,7 +689,7 @@ const ComplianceBadge: React.FC<ComplianceBadgeProps> = ({
       className={`p-4 rounded-xl border-2 ${
         compliant
           ? 'border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10'
-          : 'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-white/5'
+          : 'border-c-border-subtle dark:border-navy-700 bg-c-surface-raised'
       }`}
     >
       <div className="flex items-center gap-3">
@@ -697,17 +697,17 @@ const ComplianceBadge: React.FC<ComplianceBadgeProps> = ({
           className={`p-2 rounded-lg ${
             compliant
               ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
-              : 'bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400'
+              : 'bg-c-surface-raised text-c-text-muted'
           }`}
         >
           {icon}
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-900 dark:text-white">{name}</span>
+            <span className="font-semibold text-c-text">{name}</span>
             {compliant && <CheckCircle className="w-4 h-4 text-emerald-500" />}
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>
+          <p className="text-xs text-c-text-muted">{description}</p>
         </div>
       </div>
     </div>

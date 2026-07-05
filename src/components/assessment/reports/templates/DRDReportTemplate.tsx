@@ -152,6 +152,21 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
         </div>
       </div>
 
+      {/* ====================================================== */}
+      {/* FLAGSHIP MATURITY RADAR — the 3-second profile          */}
+      {/* Placed at the very top, before any textual detail, so a */}
+      {/* consultant sees the client's maturity shape immediately.*/}
+      {/* Fail-soft: AssessmentRadarChart returns null on thin     */}
+      {/* data, in which case this whole block collapses.          */}
+      {/* ====================================================== */}
+      <section className="mb-8">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <BarChart3 size={20} className="text-blue-600 dark:text-blue-400" />
+          {label('Profil dojrzałości cyfrowej', 'Digital maturity profile')}
+        </h2>
+        <AssessmentRadarChart data={vizData} height={460} />
+      </section>
+
       <section className="mb-8">
         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Target size={20} className="text-blue-600 dark:text-blue-400" />
@@ -201,10 +216,7 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
         </h2>
         <div className="space-y-6">
           <ScoreCardsGrid data={vizData} />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <AssessmentRadarChart data={vizData} />
-            <GapHeatmap data={vizData} />
-          </div>
+          <GapHeatmap data={vizData} />
           <DimensionBars data={vizData} />
         </div>
       </section>

@@ -93,7 +93,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   }, []);
 
   return (
-    <div className="flex items-center h-7 bg-gray-50 dark:bg-navy-900/80 border-t border-slate-200/60 dark:border-navy-700/60 px-3 gap-4 text-xs text-slate-500 dark:text-slate-400 flex-shrink-0 overflow-x-auto">
+    <div className="flex items-center h-7 bg-c-surface-raised border-t border-c-border-subtle px-3 gap-4 text-xs text-c-text-muted flex-shrink-0 overflow-x-auto">
       {/* Record count */}
       <span>
         {totalRecords} {isPl ? 'rekordów' : 'records'}
@@ -101,7 +101,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
       {/* Selection count */}
       {selectedCount > 0 && (
-        <span className="text-blue-600 dark:text-blue-400 font-medium">
+        <span className="text-c-info font-medium">
           {selectedCount} {isPl ? 'zaznaczonych' : 'selected'}
         </span>
       )}
@@ -116,31 +116,31 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           <div key={col.id} className="relative flex items-center gap-1">
             <button
               onClick={() => handleDropdownToggle(col.id)}
-              className="flex items-center gap-0.5 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+              className="flex items-center gap-0.5 hover:text-c-text-secondary transition-colors"
             >
-              <span className="text-slate-600 dark:text-slate-500">{col.name}:</span>
+              <span className="text-c-text-muted">{col.name}:</span>
               {mode !== 'none' && value ? (
-                <span className="font-mono font-medium text-slate-600 dark:text-slate-300">
+                <span className="font-mono font-medium text-c-text-secondary">
                   {value}
                 </span>
               ) : (
-                <span className="text-slate-600">—</span>
+                <span className="text-c-text-muted">—</span>
               )}
-              <ChevronDown size={10} className="text-slate-600" />
+              <ChevronDown size={10} className="text-c-text-muted" />
             </button>
 
             {isOpen && (
               <div
-                className="absolute bottom-full mb-1 left-0 z-[100] bg-white dark:bg-navy-900 rounded-lg shadow-xl border border-slate-200 dark:border-navy-700 py-1 min-w-[120px]"
+                className="absolute bottom-full mb-1 left-0 z-[100] bg-c-surface rounded-lg shadow-xl border border-c-border py-1 min-w-[120px]"
                 onClick={(e) => e.stopPropagation()}
               >
                 {AGG_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
-                    className={`w-full px-3 py-1 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors ${
+                    className={`w-full px-3 py-1 text-xs text-left hover:bg-c-surface-raised transition-colors ${
                       mode === opt.value
-                        ? 'text-blue-600 dark:text-blue-400 font-medium'
-                        : 'text-slate-600 dark:text-slate-300'
+                        ? 'text-c-info font-medium'
+                        : 'text-c-text-secondary'
                     }`}
                     onClick={() => {
                       onAggregateChange(col.id, opt.value);

@@ -6,6 +6,7 @@
 
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { QaAxisDetail, QaAxisName, QaBand } from '@/services/api/tablePlatform.api';
 
@@ -23,6 +24,14 @@ const AXIS_LABEL: Record<QaAxisName, string> = {
   formulaConsistency: 'Formula consistency',
 };
 
+const AXIS_LABEL_KEY: Record<QaAxisName, string> = {
+  completeness: 'kimi.tabeleShell.qa.axis.completeness',
+  freshness: 'kimi.tabeleShell.qa.axis.freshness',
+  sourceCoverage: 'kimi.tabeleShell.qa.axis.sourceCoverage',
+  methodology: 'kimi.tabeleShell.qa.axis.methodology',
+  formulaConsistency: 'kimi.tabeleShell.qa.axis.formulaConsistency',
+};
+
 export interface QaAxisCardProps {
   axisName: QaAxisName;
   detail: QaAxisDetail;
@@ -36,12 +45,13 @@ export const QaAxisCard: React.FC<QaAxisCardProps> = ({
   defaultExpanded = false,
   labelOverride,
 }) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(defaultExpanded);
-  const label = labelOverride ?? AXIS_LABEL[axisName];
+  const label = labelOverride ?? t(AXIS_LABEL_KEY[axisName], AXIS_LABEL[axisName]);
   const pct = Math.round(detail.score * 100);
   return (
     <div
-      className="rounded-md border border-slate-200 dark:border-slate-700"
+      className="rounded-md border border-c-border-subtle"
       data-testid={`qa-axis-${axisName}`}
     >
       <button
@@ -55,23 +65,23 @@ export const QaAxisCard: React.FC<QaAxisCardProps> = ({
             className={`inline-block h-2 w-2 rounded-full ${BAND_DOT[detail.band]}`}
             aria-hidden
           />
-          <span className="text-sm text-slate-800 dark:text-slate-100">{label}</span>
+          <span className="text-sm text-c-text">{label}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{pct}%</span>
+          <span className="text-xs font-medium text-c-text">{pct}%</span>
           {open ? (
-            <ChevronDown className="h-3.5 w-3.5 text-slate-600" />
+            <ChevronDown className="h-3.5 w-3.5 text-c-text-secondary" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 text-slate-600" />
+            <ChevronRight className="h-3.5 w-3.5 text-c-text-secondary" />
           )}
         </div>
       </button>
       {open && (
-        <dl className="border-t border-slate-200 dark:border-slate-800 px-3 py-2 text-xs">
+        <dl className="border-t border-c-border-subtle px-3 py-2 text-xs">
           {detail.details.map((d, idx) => (
             <div key={`${d.metric}-${idx}`} className="flex justify-between gap-2 py-0.5">
-              <dt className="text-slate-500 dark:text-slate-400">{d.metric}</dt>
-              <dd className="text-slate-700 dark:text-slate-200">{formatValue(d.value)}</dd>
+              <dt className="text-c-text-secondary">{d.metric}</dt>
+              <dd className="text-c-text">{formatValue(d.value)}</dd>
             </div>
           ))}
         </dl>

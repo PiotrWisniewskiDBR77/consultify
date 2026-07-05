@@ -252,7 +252,7 @@ const CommentInput: React.FC<{
         onClick={handleSubmit}
         disabled={!content.trim()}
         aria-label="Send comment"
-        className="absolute right-2 bottom-2 p-2 bg-primary-500 hover:bg-primary-600 disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white rounded-lg transition-colors"
+        className="absolute right-2 bottom-2 p-2 bg-c-text hover:bg-c-text-secondary disabled:bg-slate-300 dark:disabled:bg-navy-700 text-c-bg rounded-lg transition-colors"
       >
         <Send size={16} />
       </button>

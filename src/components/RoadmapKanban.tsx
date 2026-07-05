@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '@/routes/routeConfig';
 
+import { getPriorityStyle } from '../constants/statusColors';
 import { FullInitiative, InitiativeStatus, Quarter, User } from '../types';
 import { InitiativeCompactPanel } from './Initiatives/InitiativeCompactPanel';
 
@@ -54,6 +55,7 @@ const SortableItem: React.FC<{ id: string; initiative: FullInitiative; onClick: 
   };
 
   const isHighChange = (initiative.effortProfile?.change || 0) >= 4;
+  const priorityStyle = getPriorityStyle(initiative.priority);
 
   return (
     <div
@@ -62,13 +64,7 @@ const SortableItem: React.FC<{ id: string; initiative: FullInitiative; onClick: 
       {...attributes}
       {...listeners}
       onClick={onClick}
-      className={`bg-c-surface p-3 rounded-lg mb-2 border hover:border-c-border-strong hover:shadow-lg transition-all cursor-pointer group relative ${
-        initiative.priority === 'High'
-          ? 'border-danger-500/20'
-          : initiative.priority === 'Medium'
-            ? 'border-yellow-500/20'
-            : 'border-green-500/20'
-      }`}
+      className="bg-c-surface p-3 rounded-lg mb-2 border border-c-border-subtle hover:border-c-border-strong hover:shadow-lg transition-all cursor-pointer group relative"
     >
       <div className="flex items-start gap-3">
         {/* Drag Handle */}
@@ -97,13 +93,7 @@ const SortableItem: React.FC<{ id: string; initiative: FullInitiative; onClick: 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span
-              className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
-                initiative.priority === 'High'
-                  ? 'text-danger-400 bg-danger-500/10'
-                  : initiative.priority === 'Medium'
-                    ? 'text-yellow-400 bg-yellow-500/10'
-                    : 'text-green-400 bg-green-500/10'
-              }`}
+              className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${priorityStyle.bg} ${priorityStyle.text}`}
             >
               {initiative.priority}
             </span>

@@ -134,13 +134,13 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
           <div className="flex bg-c-surface-raised p-1 rounded-lg border border-c-border-subtle">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20' : 'text-c-text-muted hover:text-navy-900 dark:hover:text-slate-300'}`}
+              className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-c-text text-c-bg shadow-lg shadow-primary-900/20' : 'text-c-text-muted hover:text-navy-900 dark:hover:text-slate-300'}`}
             >
               <LayoutGrid size={18} />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20' : 'text-c-text-muted hover:text-navy-900 dark:hover:text-slate-300'}`}
+              className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-c-text text-c-bg shadow-lg shadow-primary-900/20' : 'text-c-text-muted hover:text-navy-900 dark:hover:text-slate-300'}`}
             >
               <List size={18} />
             </button>
@@ -206,7 +206,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
               className="bg-c-surface/50 backdrop-blur-sm border border-c-border-subtle rounded-xl p-6 hover:bg-c-surface-raised transition-all group relative border-l-4 border-l-primary-500 cursor-pointer shadow-sm dark:shadow-none"
             >
               <div className="flex justify-between items-start mb-4">
-                <div className="p-3 rounded-xl bg-primary-500/10 text-primary-400 group-hover:bg-primary-500 group-hover:text-white transition-all">
+                <div className="p-3 rounded-xl bg-c-accent/10 text-c-accent group-hover:bg-c-accent/20 transition-all">
                   <Layers size={22} />
                 </div>
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -400,7 +400,7 @@ export const AdminProjectManagement: React.FC<AdminProjectManagementProps> = ({
           <div className="bg-c-surface border border-c-border-subtle rounded-xl p-8 w-full max-w-lg shadow-2xl animate-in zoom-in duration-200">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-navy-900 rounded-lg text-white">
+                <div className="p-2 bg-c-text text-c-bg rounded-lg">
                   <Plus size={20} />
                 </div>
                 <h2 className="text-xl font-bold text-navy-900 dark:text-white">

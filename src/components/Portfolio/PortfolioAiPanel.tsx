@@ -327,7 +327,7 @@ export function PortfolioAiPanel(props: {
   };
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-overlay">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
       <div className="absolute right-0 top-0 h-full w-full max-w-[560px] bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-white/10 shadow-2xl overflow-y-auto">
         <div className="sticky top-0 z-10 bg-white/90 dark:bg-navy-900/90 backdrop-blur border-b border-slate-200 dark:border-white/10 px-4 py-3 flex items-center justify-between">

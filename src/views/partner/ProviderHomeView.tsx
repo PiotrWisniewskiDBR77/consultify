@@ -628,7 +628,7 @@ const OnboardingChecklistSection: React.FC = () => {
           </button>
           <button
             onClick={openCustomTerms}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="inline-flex items-center gap-2 rounded-lg bg-c-text px-4 py-2 text-sm font-medium text-c-bg hover:bg-c-text-secondary"
           >
             <MessageCircle className="w-4 h-4" />
             {t('partner.home.onboarding.customTerms', 'Omów niestandardowe warunki')}
@@ -958,7 +958,7 @@ const AcademyPreviewSection: React.FC = () => {
           <div className="mt-4 flex flex-wrap gap-3">
             <button
               onClick={() => navigate(`${ROUTES.PARTNER.LANDING}?tab=learning-path`)}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-c-text px-4 py-2 text-sm font-medium text-c-bg hover:bg-c-text-secondary"
             >
               {t('partner.home.academy.openLearningPath', 'Otwórz ścieżkę nauki')}
               <ArrowRight className="w-4 h-4" />

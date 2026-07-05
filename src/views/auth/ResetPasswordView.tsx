@@ -17,18 +17,18 @@ export const ResetPasswordView: React.FC = () => {
 
   if (!token) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-navy-800 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="flex min-h-screen items-center justify-center bg-c-bg px-4 py-12 sm:px-6 lg:px-8">
         <div className="w-full max-w-md text-center">
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-navy-700 dark:bg-navy-900">
+          <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-8 shadow-sm">
             <h2 className="text-xl font-semibold text-danger-600">
               {t('auth.resetPassword.invalidToken', 'Invalid or missing reset token')}
             </h2>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            <p className="mt-2 text-sm text-c-text-secondary">
               {t('auth.resetPassword.requestNew', 'Please request a new password reset link.')}
             </p>
             <button
               onClick={() => navigate('/forgot-password')}
-              className="mt-6 w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors"
+              className="mt-6 w-full rounded-lg bg-c-accent px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-colors"
             >
               {t('auth.forgotPassword.title', 'Reset your password')}
             </button>
@@ -40,12 +40,12 @@ export const ResetPasswordView: React.FC = () => {
 
   if (status === 'success') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-navy-800 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="flex min-h-screen items-center justify-center bg-c-bg px-4 py-12 sm:px-6 lg:px-8">
         <div className="w-full max-w-md text-center">
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-navy-700 dark:bg-navy-900">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+          <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-8 shadow-sm">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-c-success/10">
               <svg
-                className="h-6 w-6 text-green-600 dark:text-green-400"
+                className="h-6 w-6 text-c-success"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth={2}
@@ -54,10 +54,10 @@ export const ResetPasswordView: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-c-text">
               {t('auth.resetPassword.successTitle', 'Password updated')}
             </h2>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            <p className="mt-2 text-sm text-c-text-secondary">
               {t(
                 'auth.resetPassword.successMessage',
                 'Your password has been reset successfully. You can now log in with your new password.'
@@ -65,7 +65,7 @@ export const ResetPasswordView: React.FC = () => {
             </p>
             <button
               onClick={() => navigate('/login')}
-              className="mt-6 w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors"
+              className="mt-6 w-full rounded-lg bg-c-accent px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-colors"
             >
               {t('auth.backToLogin', 'Back to login')}
             </button>
@@ -109,13 +109,13 @@ export const ResetPasswordView: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-navy-800 px-4 py-12 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen items-center justify-center bg-c-bg px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-6">
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-navy-700 dark:bg-navy-900">
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-8 shadow-sm">
+          <h2 className="text-xl font-semibold text-c-text">
             {t('auth.resetPassword.title', 'Set new password')}
           </h2>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          <p className="mt-2 text-sm text-c-text-secondary">
             {t('auth.resetPassword.subtitle', 'Enter your new password below.')}
           </p>
 
@@ -123,7 +123,7 @@ export const ResetPasswordView: React.FC = () => {
             <div>
               <label
                 htmlFor="newPassword"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                className="block text-sm font-medium text-c-text-secondary"
               >
                 {t('auth.newPassword', 'New password')}
               </label>
@@ -134,7 +134,7 @@ export const ResetPasswordView: React.FC = () => {
                 minLength={8}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-navy-600 dark:bg-navy-800 dark:text-white dark:placeholder-slate-500"
+                className="mt-1 block w-full rounded-lg border border-c-border bg-c-surface px-3 py-2.5 text-sm text-c-text placeholder-c-text-muted focus:border-c-focus-solid focus:outline-none focus:ring-1 focus:ring-c-focus"
                 placeholder="********"
               />
             </div>
@@ -142,7 +142,7 @@ export const ResetPasswordView: React.FC = () => {
             <div>
               <label
                 htmlFor="confirmPassword"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                className="block text-sm font-medium text-c-text-secondary"
               >
                 {t('auth.confirmPassword', 'Confirm password')}
               </label>
@@ -153,7 +153,7 @@ export const ResetPasswordView: React.FC = () => {
                 minLength={8}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-navy-600 dark:bg-navy-800 dark:text-white dark:placeholder-slate-500"
+                className="mt-1 block w-full rounded-lg border border-c-border bg-c-surface px-3 py-2.5 text-sm text-c-text placeholder-c-text-muted focus:border-c-focus-solid focus:outline-none focus:ring-1 focus:ring-c-focus"
                 placeholder="********"
               />
             </div>
@@ -165,7 +165,7 @@ export const ResetPasswordView: React.FC = () => {
             <button
               type="submit"
               disabled={status === 'loading'}
-              className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full rounded-lg bg-c-accent px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {status === 'loading'
                 ? t('common.saving', 'Saving...')
@@ -176,7 +176,7 @@ export const ResetPasswordView: React.FC = () => {
           <div className="mt-4 text-center">
             <button
               onClick={() => navigate('/login')}
-              className="text-sm text-indigo-600 hover:underline dark:text-indigo-400"
+              className="text-sm text-c-accent hover:underline"
             >
               {t('auth.backToLogin', 'Back to login')}
             </button>

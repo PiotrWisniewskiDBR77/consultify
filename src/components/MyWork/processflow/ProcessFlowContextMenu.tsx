@@ -58,13 +58,13 @@ export const ProcessFlowContextMenu: React.FC<ProcessFlowContextMenuProps> = ({
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 min-w-[180px] rounded-xl border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900 shadow-xl py-1"
+      className="fixed z-overlay min-w-[180px] rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1"
       style={{ top: y, left: x }}
     >
       {actions.map((action) => (
         <React.Fragment key={action.id}>
           {action.separatorBefore && (
-            <div className="my-1 border-t border-slate-200/70 dark:border-navy-700/70" />
+            <div className="my-1 border-t border-c-border-subtle" />
           )}
           <button
             onClick={() => {
@@ -75,7 +75,7 @@ export const ProcessFlowContextMenu: React.FC<ProcessFlowContextMenuProps> = ({
             className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors disabled:opacity-40 ${
               action.danger
                 ? 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20'
-                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                : 'text-c-text-secondary hover:bg-c-surface-raised'
             }`}
           >
             {action.icon}

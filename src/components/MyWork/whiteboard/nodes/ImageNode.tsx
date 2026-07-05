@@ -2,8 +2,11 @@ import { Image as ImageIcon } from 'lucide-react';
 import React from 'react';
 import { Handle, type NodeProps, NodeResizer, Position } from 'reactflow';
 
-export const ImageNode: React.FC<NodeProps> = ({ data, selected }) => {
+import { commentCountOf, CommentPinBadge } from './CommentPinBadge';
+
+export const ImageNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
   const imgSrc = data?.imageUrl || data?.src;
+  const commentCount = commentCountOf(data);
 
   return (
     <>
@@ -13,10 +16,22 @@ export const ImageNode: React.FC<NodeProps> = ({ data, selected }) => {
         minHeight={60}
         keepAspectRatio
       />
+      {/* Comment badge sits in a non-clipped overlay sibling — the image
+          wrapper below uses overflow-hidden to crop the photo, which would
+          otherwise clip a corner-anchored badge. */}
+      <div className="pointer-events-none absolute inset-0 z-10">
+        <div className="pointer-events-auto">
+          <CommentPinBadge nodeId={nodeId} count={commentCount} />
+        </div>
+      </div>
       <div
-        className={`relative w-full h-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-500/20 shadow-sm dark:shadow-[0_0_12px_rgba(148,163,184,0.1)] transition-shadow ${selected ? 'ring-2 ring-slate-500/60 shadow-lg' : ''}`}
+        className={`relative w-full h-full rounded-xl overflow-hidden border border-c-border-subtle shadow-sm dark:shadow-[0_0_12px_rgba(148,163,184,0.1)] transition-shadow ${selected ? 'ring-2 ring-c-border-strong shadow-lg' : ''}`}
       >
-        <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-slate-400 !-top-1" />
+        <Handle
+          type="target"
+          position={Position.Top}
+          className="!w-2 !h-2 !bg-c-border-strong !-top-1"
+        />
         {imgSrc ? (
           <img
             src={imgSrc}
@@ -25,20 +40,25 @@ export const ImageNode: React.FC<NodeProps> = ({ data, selected }) => {
             draggable={false}
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 dark:bg-navy-900/80 text-slate-600">
+          <div className="w-full h-full flex flex-col items-center justify-center bg-c-surface-raised text-c-text-secondary">
             <ImageIcon size={24} />
             <div className="text-[10px] mt-1">{data?.label || 'Image'}</div>
           </div>
         )}
+        {/* Caption scrim sits over an arbitrary photo, so it stays a fixed
+            dark wash (theme-independent) with white text for legibility. */}
         {data?.label && imgSrc && (
-          <div className="absolute bottom-0 left-0 right-0 bg-black/40 text-white text-[10px] px-2 py-1 truncate">
+          <div
+            className="absolute bottom-0 left-0 right-0 text-white text-[10px] px-2 py-1 truncate"
+            style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
+          >
             {data.label}
           </div>
         )}
         <Handle
           type="source"
           position={Position.Bottom}
-          className="!w-2 !h-2 !bg-slate-400 !-bottom-1"
+          className="!w-2 !h-2 !bg-c-border-strong !-bottom-1"
         />
       </div>
     </>

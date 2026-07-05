@@ -216,11 +216,11 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
             <Shield size={28} className="text-emerald-500" />
             {t('settings.privacy.title', 'Privacy & Data')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t('settings.privacy.description', 'Manage your privacy settings and personal data')}
           </p>
         </div>
@@ -235,12 +235,12 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
       </div>
 
       {/* Profile Visibility */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <UserCircle size={20} className="text-blue-500" />
           {t('settings.privacy.profileVisibility', 'Profile Visibility')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+        <p className="text-sm text-c-text-muted mb-4">
           {t(
             'settings.privacy.profileVisibilityDescription',
             'Control who can see your profile information'
@@ -256,7 +256,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
                 className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${
                   isSelected
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-blue-300'
+                    : 'border-c-border-subtle dark:border-navy-700 hover:border-blue-300'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -277,18 +277,18 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
                     className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                       isSelected
                         ? 'border-blue-500 bg-blue-500'
-                        : 'border-slate-300 dark:border-slate-600'
+                        : 'border-c-border'
                     }`}
                   >
                     {isSelected && <Check size={12} className="text-white" />}
                   </div>
                   <div>
                     <span
-                      className={`font-medium ${isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-slate-700 dark:text-slate-300'}`}
+                      className={`font-medium ${isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-c-text-secondary'}`}
                     >
                       {option.label}
                     </span>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-xs text-c-text-muted mt-0.5">
                       {option.description}
                     </p>
                   </div>
@@ -296,7 +296,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
                 {isSelected ? (
                   <Eye size={18} className="text-blue-500" />
                 ) : (
-                  <EyeOff size={18} className="text-slate-600 dark:text-slate-500" />
+                  <EyeOff size={18} className="text-c-text-secondary" />
                 )}
               </label>
             );
@@ -305,8 +305,8 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
       </div>
 
       {/* Activity & Status */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Activity size={20} className="text-green-500" />
           {t('settings.privacy.activityStatus', 'Activity & Status')}
         </h3>
@@ -315,11 +315,11 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
           {/* Online Status */}
           <div className="flex items-center justify-between py-3">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+              <label className="block font-medium text-c-text-secondary flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-green-500" />
                 {t('settings.privacy.showOnlineStatus', 'Show Online Status')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.privacy.showOnlineStatusDescription',
                   'Let others see when you are online'
@@ -329,22 +329,22 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
             <button
               onClick={() => updatePreference('showOnlineStatus', !preferences.showOnlineStatus)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.showOnlineStatus ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.showOnlineStatus ? 'bg-emerald-600' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`${preferences.showOnlineStatus ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                className={`${preferences.showOnlineStatus ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
               />
             </button>
           </div>
 
           {/* Activity Status */}
-          <div className="flex items-center justify-between py-3 border-t border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between py-3 border-t border-c-border-subtle dark:border-navy-700">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300">
+              <label className="block font-medium text-c-text-secondary">
                 {t('settings.privacy.showActivityStatus', 'Show Activity Status')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.privacy.showActivityStatusDescription',
                   'Show what you are currently working on'
@@ -356,34 +356,34 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
                 updatePreference('showActivityStatus', !preferences.showActivityStatus)
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.showActivityStatus ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.showActivityStatus ? 'bg-emerald-600' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`${preferences.showActivityStatus ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                className={`${preferences.showActivityStatus ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
               />
             </button>
           </div>
 
           {/* Last Seen */}
-          <div className="flex items-center justify-between py-3 border-t border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between py-3 border-t border-c-border-subtle dark:border-navy-700">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                <Clock size={16} className="text-slate-600 dark:text-slate-500" />
+              <label className="block font-medium text-c-text-secondary flex items-center gap-2">
+                <Clock size={16} className="text-c-text-secondary" />
                 {t('settings.privacy.showLastSeen', 'Show Last Seen')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t('settings.privacy.showLastSeenDescription', 'Show when you were last active')}
               </p>
             </div>
             <button
               onClick={() => updatePreference('showLastSeen', !preferences.showLastSeen)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.showLastSeen ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.showLastSeen ? 'bg-emerald-600' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`${preferences.showLastSeen ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                className={`${preferences.showLastSeen ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
               />
             </button>
           </div>
@@ -391,9 +391,9 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
       </div>
 
       {/* Data Sharing & Analytics */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <BarChart3 size={20} className="text-primary-500" />
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
+          <BarChart3 size={20} className="text-c-accent" />
           {t('settings.privacy.dataSharing', 'Data Sharing')}
         </h3>
 
@@ -401,10 +401,10 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
           {/* Analytics */}
           <div className="flex items-center justify-between py-3">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300">
+              <label className="block font-medium text-c-text-secondary">
                 {t('settings.privacy.shareAnalytics', 'Share Analytics Data')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.privacy.shareAnalyticsDescription',
                   'Help us improve with anonymous usage statistics'
@@ -414,22 +414,22 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
             <button
               onClick={() => updatePreference('shareAnalytics', !preferences.shareAnalytics)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.shareAnalytics ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.shareAnalytics ? 'bg-c-accent' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`${preferences.shareAnalytics ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                className={`${preferences.shareAnalytics ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
               />
             </button>
           </div>
 
           {/* AI Improvement */}
-          <div className="flex items-center justify-between py-3 border-t border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between py-3 border-t border-c-border-subtle dark:border-navy-700">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300">
+              <label className="block font-medium text-c-text-secondary">
                 {t('settings.privacy.improveAI', 'Help Improve AI')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.privacy.improveAIDescription',
                   'Allow anonymized data to improve AI responses'
@@ -439,23 +439,23 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
             <button
               onClick={() => updatePreference('improveAI', !preferences.improveAI)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.improveAI ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.improveAI ? 'bg-c-accent' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`${preferences.improveAI ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                className={`${preferences.improveAI ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
               />
             </button>
           </div>
 
           {/* Third Party Integrations */}
-          <div className="flex items-center justify-between py-3 border-t border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between py-3 border-t border-c-border-subtle dark:border-navy-700">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+              <label className="block font-medium text-c-text-secondary flex items-center gap-2">
                 <Globe size={16} className="text-blue-500" />
                 {t('settings.privacy.thirdParty', 'Third-Party Integrations')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.privacy.thirdPartyDescription',
                   'Allow connected apps to access your data'
@@ -471,12 +471,12 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                 preferences.allowThirdPartyIntegrations
-                  ? 'bg-primary-600'
-                  : 'bg-slate-200 dark:bg-slate-700'
+                  ? 'bg-c-accent'
+                  : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`${preferences.allowThirdPartyIntegrations ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                className={`${preferences.allowThirdPartyIntegrations ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
               />
             </button>
           </div>
@@ -484,8 +484,8 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
       </div>
 
       {/* Marketing Preferences */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Mail size={20} className="text-amber-500" />
           {t('settings.privacy.marketing', 'Communication Preferences')}
         </h3>
@@ -494,10 +494,10 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
           {/* Product Updates */}
           <div className="flex items-center justify-between py-3">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300">
+              <label className="block font-medium text-c-text-secondary">
                 {t('settings.privacy.productUpdates', 'Product Updates')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.privacy.productUpdatesDescription',
                   'Receive emails about new features and improvements'
@@ -507,22 +507,22 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
             <button
               onClick={() => updatePreference('productUpdates', !preferences.productUpdates)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.productUpdates ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.productUpdates ? 'bg-amber-500' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`${preferences.productUpdates ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                className={`${preferences.productUpdates ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
               />
             </button>
           </div>
 
           {/* Marketing Emails */}
-          <div className="flex items-center justify-between py-3 border-t border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between py-3 border-t border-c-border-subtle dark:border-navy-700">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300">
+              <label className="block font-medium text-c-text-secondary">
                 {t('settings.privacy.marketingEmails', 'Marketing Emails')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.privacy.marketingEmailsDescription',
                   'Receive promotional offers and marketing content'
@@ -532,22 +532,22 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
             <button
               onClick={() => updatePreference('marketingEmails', !preferences.marketingEmails)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.marketingEmails ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.marketingEmails ? 'bg-amber-500' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`${preferences.marketingEmails ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                className={`${preferences.marketingEmails ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
               />
             </button>
           </div>
 
           {/* Newsletter */}
-          <div className="flex items-center justify-between py-3 border-t border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between py-3 border-t border-c-border-subtle dark:border-navy-700">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300">
+              <label className="block font-medium text-c-text-secondary">
                 {t('settings.privacy.newsletter', 'Newsletter')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t('settings.privacy.newsletterDescription', 'Subscribe to our monthly newsletter')}
               </p>
             </div>
@@ -556,11 +556,11 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
                 updatePreference('newsletterSubscribed', !preferences.newsletterSubscribed)
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.newsletterSubscribed ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.newsletterSubscribed ? 'bg-amber-500' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`${preferences.newsletterSubscribed ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                className={`${preferences.newsletterSubscribed ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
               />
             </button>
           </div>
@@ -568,12 +568,12 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
       </div>
 
       {/* Data Export & Deletion */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Download size={20} className="text-blue-500" />
           {t('settings.privacy.dataManagement', 'Data Management')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+        <p className="text-sm text-c-text-muted mb-6">
           {t(
             'settings.privacy.dataManagementDescription',
             'Export or delete your personal data in compliance with GDPR'
@@ -582,16 +582,16 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Export Data */}
-          <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-xl border border-slate-200 dark:border-navy-700">
+          <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle dark:border-navy-700">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-blue-100 dark:bg-blue-500/20 rounded-lg">
                 <FileDown size={20} className="text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <h4 className="font-medium text-slate-900 dark:text-white">
+                <h4 className="font-medium text-c-text">
                   {t('settings.privacy.exportData', 'Export Your Data')}
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-c-text-muted">
                   {t(
                     'settings.privacy.exportDataDescription',
                     'Download all your data in JSON format'
@@ -600,7 +600,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
               </div>
             </div>
             {lastExportDate && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+              <p className="text-xs text-c-text-muted mb-3">
                 {t('settings.privacy.lastExport', 'Last export:')}{' '}
                 {new Date(lastExportDate).toLocaleDateString()}
               </p>
@@ -650,16 +650,16 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
       {/* Delete Account Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white dark:bg-navy-800 rounded-xl max-w-md w-full p-6 shadow-2xl">
+          <div className="bg-c-surface rounded-xl max-w-md w-full p-6 shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-3 bg-rose-100 dark:bg-rose-500/20 rounded-full">
                 <AlertTriangle size={24} className="text-rose-600 dark:text-rose-400" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                <h3 className="text-lg font-bold text-c-text">
                   {t('settings.privacy.confirmDeletion', 'Confirm Account Deletion')}
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-c-text-muted">
                   {t(
                     'settings.privacy.deletionWarningDetail',
                     'This will permanently delete all your data'
@@ -678,7 +678,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 {t('settings.privacy.typeEmailToConfirm', 'Type your email to confirm:')}
               </label>
               <input
@@ -686,7 +686,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
                 value={deleteConfirmation}
                 onChange={(e) => setDeleteConfirmation(e.target.value)}
                 placeholder={currentUser.email}
-                className="w-full px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+                className="w-full px-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text"
               />
             </div>
 
@@ -696,7 +696,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
                   setShowDeleteModal(false);
                   setDeleteConfirmation('');
                 }}
-                className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg font-medium"
+                className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg font-medium"
               >
                 {t('common.cancel', 'Cancel')}
               </button>

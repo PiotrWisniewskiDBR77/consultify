@@ -111,20 +111,20 @@ export const NotebookTodayView: React.FC<NotebookTodayViewProps> = ({
       key={page.id}
       type="button"
       onClick={() => onOpenNote(page.id)}
-      className="group flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+      className="group flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-c-surface-raised"
     >
       <span className="text-base leading-none">{page.icon || '📝'}</span>
-      <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-slate-600 dark:group-hover:text-slate-300">
+      <span className="min-w-0 flex-1 truncate text-sm font-medium text-c-text-secondary group-hover:text-c-text">
         {page.title || (isPl ? 'Bez tytułu' : 'Untitled')}
       </span>
       {page.verificationStatus === 'disputed' && (
-        <AlertTriangle size={12} className="shrink-0 text-amber-500" />
+        <AlertTriangle size={12} className="shrink-0 text-c-warning" />
       )}
       {page.captureSource && (
-        <Sparkles size={11} className="shrink-0 text-slate-400" />
+        <Sparkles size={11} className="shrink-0 text-c-text-muted" />
       )}
       {page.updatedAt && (
-        <span className="shrink-0 text-[11px] text-slate-400">
+        <span className="shrink-0 text-[11px] text-c-text-muted">
           {formatWhen(page.updatedAt, isPl)}
         </span>
       )}
@@ -139,21 +139,21 @@ export const NotebookTodayView: React.FC<NotebookTodayViewProps> = ({
   ) => {
     const rows = data[key];
     return (
-      <section className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900/40">
-        <header className="flex items-center gap-2 border-b border-slate-100 dark:border-navy-800 px-3 py-2">
-          <span className="text-slate-400">{icon}</span>
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+      <section className="rounded-xl border border-c-border bg-c-surface">
+        <header className="flex items-center gap-2 border-b border-c-border-subtle px-3 py-2">
+          <span className="text-c-text-muted">{icon}</span>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
             {title}
           </h3>
           {rows.length > 0 && (
-            <span className="ml-auto rounded-full bg-slate-100 dark:bg-navy-800 px-1.5 text-[11px] font-medium text-slate-500">
+            <span className="ml-auto rounded-full bg-c-surface-raised px-1.5 text-[11px] font-medium text-c-text-muted">
               {rows.length}
             </span>
           )}
         </header>
         <div className="p-1.5">
           {rows.length === 0 ? (
-            <p className="px-2 py-3 text-xs text-slate-400">{emptyHint}</p>
+            <p className="px-2 py-3 text-xs text-c-text-muted">{emptyHint}</p>
           ) : (
             rows.map(renderRow)
           )}
@@ -164,7 +164,7 @@ export const NotebookTodayView: React.FC<NotebookTodayViewProps> = ({
 
   if (loading) {
     return (
-      <div className={`flex items-center justify-center gap-2 py-16 text-slate-400 ${className}`}>
+      <div className={`flex items-center justify-center gap-2 py-16 text-c-text-muted ${className}`}>
         <Loader2 size={16} className="animate-spin" />
         <span className="text-sm">{isPl ? 'Ładuję „Dziś”…' : 'Loading Today…'}</span>
       </div>
@@ -174,13 +174,13 @@ export const NotebookTodayView: React.FC<NotebookTodayViewProps> = ({
   return (
     <div className={`flex flex-col gap-4 ${className}`}>
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+        <h2 className="text-lg font-semibold text-c-text">
           {isPl ? 'Dziś' : 'Today'}
         </h2>
         <button
           type="button"
           onClick={load}
-          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-c-text-muted hover:bg-c-surface-raised"
           title={isPl ? 'Odśwież' : 'Refresh'}
         >
           <RefreshCw size={12} />
@@ -189,7 +189,7 @@ export const NotebookTodayView: React.FC<NotebookTodayViewProps> = ({
       </div>
 
       {failed && (
-        <p className="rounded-lg bg-amber-50 dark:bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+        <p className="rounded-lg bg-c-warning/10 px-3 py-2 text-xs text-c-warning">
           {isPl
             ? 'Nie udało się załadować kokpitu „Dziś”. Notatnik działa dalej.'
             : 'Could not load the Today cockpit. The notebook still works.'}

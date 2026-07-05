@@ -152,20 +152,20 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
     }[] = [
       { value: 'public', label: 'Public', icon: Globe, color: 'text-green-600' },
       { value: 'organization', label: 'Organization', icon: Building2, color: 'text-blue-600' },
-      { value: 'team', label: 'Team Only', icon: Users, color: 'text-primary-600' },
+      { value: 'team', label: 'Team Only', icon: Users, color: 'text-c-accent' },
       { value: 'private', label: 'Private', icon: Lock, color: 'text-danger-600' },
     ];
 
     return (
-      <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg space-y-3">
+      <div className="p-4 bg-c-surface-raised rounded-lg space-y-3">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-white dark:bg-navy-900 rounded-lg">
-            <Icon size={18} className="text-slate-600 dark:text-slate-400" />
+          <div className="p-2 bg-c-surface rounded-lg">
+            <Icon size={18} className="text-c-text-secondary" />
           </div>
           <div className="flex-1">
-            <label className="font-medium text-slate-900 dark:text-white">{label}</label>
+            <label className="font-medium text-c-text">{label}</label>
             {description && (
-              <p className="text-sm text-slate-500 dark:text-slate-400">{description}</p>
+              <p className="text-sm text-c-text-muted">{description}</p>
             )}
           </div>
         </div>
@@ -178,8 +178,8 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
                 onClick={() => onChange(option.value)}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   value === option.value
-                    ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950'
-                    : 'bg-white dark:bg-navy-900 dark:bg-[#F4F7FB] text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 dark:hover:bg-[#DDE5EF]'
+                    ? 'bg-navy-900 text-white dark:bg-c-surface dark:text-navy-950'
+                    : 'bg-c-surface dark:bg-[#F4F7FB] text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-800 dark:hover:bg-[#DDE5EF]'
                 }`}
               >
                 <OptionIcon size={14} />
@@ -200,26 +200,26 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
     icon: React.ElementType;
   }> = ({ value, onChange, label, description, icon: Icon }) => {
     return (
-      <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
+      <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-white dark:bg-navy-900 rounded-lg">
-            <Icon size={18} className="text-slate-600 dark:text-slate-400" />
+          <div className="p-2 bg-c-surface rounded-lg">
+            <Icon size={18} className="text-c-text-secondary" />
           </div>
           <div>
-            <label className="font-medium text-slate-900 dark:text-white">{label}</label>
+            <label className="font-medium text-c-text">{label}</label>
             {description && (
-              <p className="text-sm text-slate-500 dark:text-slate-400">{description}</p>
+              <p className="text-sm text-c-text-muted">{description}</p>
             )}
           </div>
         </div>
         <button
           onClick={() => onChange(!value)}
           className={`relative w-12 h-6 rounded-full transition-colors ${
-            value ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
+            value ? 'bg-navy-900' : 'bg-c-surface-raised'
           }`}
         >
           <span
-            className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+            className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
               value ? 'left-7' : 'left-1'
             }`}
           />
@@ -239,11 +239,11 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Eye size={28} className="text-primary-500" />
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
+            <Eye size={28} className="text-c-accent" />
             {t('settings.privacy.visibility.title', 'Privacy & Visibility')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t('settings.privacy.visibility.description', 'Control who can see your information')}
           </p>
         </div>
@@ -258,8 +258,8 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
       </div>
 
       {/* Profile Visibility Section */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Shield size={20} className="text-blue-500" />
           Profile Visibility
         </h3>
@@ -298,8 +298,8 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
       </div>
 
       {/* Activity Controls Section */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Activity size={20} className="text-green-500" />
           Activity Controls
         </h3>
@@ -328,12 +328,12 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
           icon={Activity}
         />
 
-        <div className="border-t border-slate-200 dark:border-navy-700 pt-4 space-y-3">
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+        <div className="border-t border-c-border-subtle dark:border-navy-700 pt-4 space-y-3">
+          <p className="text-sm font-medium text-c-text-secondary">
             Show in Activity Feed:
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <label className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-navy-950 rounded-lg cursor-pointer">
+            <label className="flex items-center gap-2 p-3 bg-c-surface-raised rounded-lg cursor-pointer">
               <input
                 type="checkbox"
                 checked={settings.showTaskActivity}
@@ -342,7 +342,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
               />
               <span className="text-sm">Task Activity</span>
             </label>
-            <label className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-navy-950 rounded-lg cursor-pointer">
+            <label className="flex items-center gap-2 p-3 bg-c-surface-raised rounded-lg cursor-pointer">
               <input
                 type="checkbox"
                 checked={settings.showProjectActivity}
@@ -353,7 +353,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
               />
               <span className="text-sm">Project Activity</span>
             </label>
-            <label className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-navy-950 rounded-lg cursor-pointer">
+            <label className="flex items-center gap-2 p-3 bg-c-surface-raised rounded-lg cursor-pointer">
               <input
                 type="checkbox"
                 checked={settings.showCommentActivity}
@@ -369,8 +369,8 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
       </div>
 
       {/* Directory & Search Section */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Search size={20} className="text-amber-500" />
           Directory & Search
         </h3>
@@ -392,8 +392,8 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg space-y-2">
-            <label className="block font-medium text-slate-900 dark:text-white">
+          <div className="p-4 bg-c-surface-raised rounded-lg space-y-2">
+            <label className="block font-medium text-c-text">
               Allow @mentions from
             </label>
             <select
@@ -401,7 +401,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
               onChange={(e) =>
                 setSettings({ ...settings, allowMentionsFrom: e.target.value as any })
               }
-              className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
+              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
             >
               <option value="all">Everyone</option>
               <option value="team">Team members only</option>
@@ -409,8 +409,8 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
             </select>
           </div>
 
-          <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg space-y-2">
-            <label className="block font-medium text-slate-900 dark:text-white">
+          <div className="p-4 bg-c-surface-raised rounded-lg space-y-2">
+            <label className="block font-medium text-c-text">
               Allow direct messages from
             </label>
             <select
@@ -418,7 +418,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
               onChange={(e) =>
                 setSettings({ ...settings, allowDirectMessagesFrom: e.target.value as any })
               }
-              className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
+              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
             >
               <option value="all">Everyone</option>
               <option value="team">Team members only</option>
@@ -429,12 +429,12 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
       </div>
 
       {/* Profile Sections Visibility */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Info size={20} className="text-indigo-500" />
           Profile Sections
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           Choose which sections are visible on your profile
         </p>
 
@@ -449,7 +449,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
           ].map((item) => (
             <label
               key={item.key}
-              className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-950 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+              className="flex items-center gap-3 p-3 bg-c-surface-raised rounded-lg cursor-pointer hover:bg-c-surface-raised dark:hover:bg-navy-800 transition-colors"
             >
               <input
                 type="checkbox"
@@ -457,7 +457,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
                 onChange={(e) => setSettings({ ...settings, [item.key]: e.target.checked })}
                 className="rounded"
               />
-              <span className="text-sm text-slate-700 dark:text-slate-300">{item.label}</span>
+              <span className="text-sm text-c-text-secondary">{item.label}</span>
             </label>
           ))}
         </div>

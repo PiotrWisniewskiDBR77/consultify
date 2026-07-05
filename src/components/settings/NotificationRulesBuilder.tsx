@@ -175,11 +175,11 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-          <Filter className="w-5 h-5 text-primary-500" />
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
+          <Filter className="w-5 h-5 text-c-accent" />
           {t('settings.notifications.rules.title', 'Notification Rules')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-sm text-c-text-muted mt-1">
           {t(
             'settings.notifications.rules.description',
             'Customize notifications for different projects and scenarios'
@@ -198,14 +198,14 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
       {/* Per-Project Rules */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h4 className="font-medium text-slate-900 dark:text-white flex items-center gap-2">
-            <FolderOpen className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+          <h4 className="font-medium text-c-text flex items-center gap-2">
+            <FolderOpen className="w-4 h-4 text-c-text-muted" />
             {t('settings.notifications.rules.projectRules', 'Project Rules')}
           </h4>
           <button
             onClick={() => setShowAddRule(true)}
             disabled={isReadOnly}
-            className="flex items-center gap-1 text-sm text-primary-600 dark:text-primary-400 hover:underline"
+            className="flex items-center gap-1 text-sm text-c-accent hover:underline"
           >
             <Plus className="w-4 h-4" />
             {t('settings.notifications.rules.addRule', 'Add Project Rule')}
@@ -215,15 +215,15 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
         {rules.map((rule) => (
           <div
             key={rule.id}
-            className="p-4 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-navy-700"
+            className="p-4 bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700"
           >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <span
                   className={`px-2 py-1 rounded-full text-xs font-medium ${
                     rule.project_id === null
-                      ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300'
-                      : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300'
+                      ? 'bg-c-accent-soft dark:bg-c-accent-soft text-c-accent'
+                      : 'bg-c-surface-raised text-c-text-secondary'
                   }`}
                 >
                   {rule.project_name || 'Unknown Project'}
@@ -233,7 +233,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 <button
                   onClick={() => handleDeleteRule(rule.id)}
                   disabled={isReadOnly}
-                  className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg"
+                  className="p-1.5 text-c-text-secondary hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -242,7 +242,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 
             {/* Rule Type Selector */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 {t('settings.notifications.rules.ruleType', 'Notification Mode')}
               </label>
               <div className="flex flex-wrap gap-2">
@@ -254,7 +254,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                     className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
                       rule.rule_type === type
                         ? 'bg-navy-900 text-white'
-                        : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20'
+                        : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
                     }`}
                   >
                     {t(`settings.notifications.rules.${type}`, type.replace('_', ' '))}
@@ -265,7 +265,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 
             {/* Custom Options */}
             {rule.rule_type === 'custom' && (
-              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-200 dark:border-navy-700">
+              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-c-border-subtle dark:border-navy-700">
                 {[
                   { key: 'notify_tasks', label: 'Task updates', icon: Check },
                   { key: 'notify_comments', label: 'Comments', icon: MessageSquare },
@@ -280,10 +280,10 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                       onChange={(e) =>
                         handleUpdateRule(rule.id, { [option.key]: e.target.checked })
                       }
-                      className="rounded border-slate-300 dark:border-white/20 text-primary-600 focus:ring-primary-500"
+                      className="rounded border-c-border text-c-accent focus:ring-[color:var(--c-focus)]"
                     />
-                    <option.icon className="w-4 h-4 text-slate-600 dark:text-slate-500" />
-                    <span className="text-sm text-slate-700 dark:text-slate-300">
+                    <option.icon className="w-4 h-4 text-c-text-secondary" />
+                    <span className="text-sm text-c-text-secondary">
                       {option.label}
                     </span>
                   </label>
@@ -293,8 +293,8 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 
             {/* Priority Filter */}
             {rule.rule_type !== 'muted' && (
-              <div className="mt-3 pt-3 border-t border-slate-200 dark:border-navy-700">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <div className="mt-3 pt-3 border-t border-c-border-subtle dark:border-navy-700">
+                <label className="block text-sm font-medium text-c-text-secondary mb-2">
                   {t('settings.notifications.rules.priorityFilter', 'Priority Filter')}
                 </label>
                 <select
@@ -303,7 +303,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                   onChange={(e) =>
                     handleUpdateRule(rule.id, { priority_filter: e.target.value as any })
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-c-text text-sm focus:ring-2 focus:ring-[color:var(--c-focus)]"
                 >
                   <option value="all">
                     {t('settings.notifications.rules.allPriorities', 'All priorities')}
@@ -322,12 +322,12 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 
         {/* Add Rule Modal */}
         {showAddRule && (
-          <div className="p-4 bg-primary-50 dark:bg-primary-500/10 rounded-xl border border-primary-200 dark:border-primary-500/20">
+          <div className="p-4 bg-c-accent-soft dark:bg-c-accent-soft rounded-xl border border-c-accent dark:border-c-accent">
             <div className="flex items-center gap-3">
               <select
                 value={newRuleProjectId}
                 onChange={(e) => setNewRuleProjectId(e.target.value)}
-                className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm"
+                className="flex-1 px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-c-text text-sm"
               >
                 <option value="">
                   {t('settings.notifications.rules.selectProject', 'Select a project...')}
@@ -349,7 +349,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
               </button>
               <button
                 onClick={() => setShowAddRule(false)}
-                className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-sm"
+                className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg text-sm"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -359,17 +359,17 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
       </div>
 
       {/* Digest Settings */}
-      <div className="p-4 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-navy-700 space-y-4">
+      <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center">
               <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h4 className="font-medium text-slate-900 dark:text-white">
+              <h4 className="font-medium text-c-text">
                 {t('settings.notifications.digest.title', 'Email Digest')}
               </h4>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.notifications.digest.description',
                   'Bundle notifications into periodic summaries'
@@ -381,11 +381,11 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
             onClick={() => setDigestSettings((prev) => ({ ...prev, enabled: !prev.enabled }))}
             disabled={isReadOnly}
             className={`w-12 h-6 rounded-full transition-colors ${
-              digestSettings.enabled ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
+              digestSettings.enabled ? 'bg-navy-900' : 'bg-c-surface-raised'
             }`}
           >
             <div
-              className={`w-5 h-5 bg-white dark:bg-navy-900 rounded-full transform transition-transform ${
+              className={`w-5 h-5 bg-c-surface rounded-full transform transition-transform ${
                 digestSettings.enabled ? 'translate-x-6' : 'translate-x-0.5'
               }`}
             />
@@ -393,9 +393,9 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
         </div>
 
         {digestSettings.enabled && (
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200 dark:border-navy-700">
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-c-border-subtle dark:border-navy-700">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">
                 {t('settings.notifications.digest.frequency', 'Frequency')}
               </label>
               <select
@@ -404,7 +404,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 onChange={(e) =>
                   setDigestSettings((prev) => ({ ...prev, frequency: e.target.value as any }))
                 }
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-c-text text-sm"
               >
                 <option value="instant">Instant (no digest)</option>
                 <option value="hourly">Hourly</option>
@@ -414,7 +414,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
             </div>
             {digestSettings.frequency !== 'instant' && digestSettings.frequency !== 'hourly' && (
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   {t('settings.notifications.digest.time', 'Preferred Time')}
                 </label>
                 <input
@@ -424,7 +424,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                   onChange={(e) =>
                     setDigestSettings((prev) => ({ ...prev, preferred_time: e.target.value }))
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-c-text text-sm"
                 />
               </div>
             )}
@@ -433,16 +433,16 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
       </div>
 
       {/* Keyword Filters */}
-      <div className="p-4 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-navy-700 space-y-4">
+      <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
             <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
           </div>
           <div>
-            <h4 className="font-medium text-slate-900 dark:text-white">
+            <h4 className="font-medium text-c-text">
               {t('settings.notifications.keywords.title', 'Priority Keywords')}
             </h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t(
                 'settings.notifications.keywords.description',
                 'Always notify when these keywords appear'
@@ -474,12 +474,12 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
               onKeyDown={(e) => e.key === 'Enter' && handleAddKeyword()}
               placeholder="Add keyword..."
               disabled={isReadOnly}
-              className="px-3 py-1 border border-slate-200 dark:border-navy-700 rounded-full text-sm bg-white dark:bg-navy-950 text-slate-900 dark:text-white w-32"
+              className="px-3 py-1 border border-c-border-subtle dark:border-navy-700 rounded-full text-sm bg-c-surface text-c-text w-32"
             />
             <button
               onClick={handleAddKeyword}
               disabled={isReadOnly || !newKeyword.trim()}
-              className="p-1 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-full disabled:opacity-50"
+              className="p-1 text-c-accent hover:bg-c-accent-soft dark:hover:bg-c-accent-soft rounded-full disabled:opacity-50"
             >
               <Plus className="w-4 h-4" />
             </button>
@@ -488,16 +488,16 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
       </div>
 
       {/* VIP Contacts */}
-      <div className="p-4 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-navy-700 space-y-4">
+      <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-pink-100 dark:bg-pink-500/20 flex items-center justify-center">
             <Star className="w-5 h-5 text-pink-600 dark:text-pink-400" />
           </div>
           <div>
-            <h4 className="font-medium text-slate-900 dark:text-white">
+            <h4 className="font-medium text-c-text">
               {t('settings.notifications.vip.title', 'VIP Contacts')}
             </h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t(
                 'settings.notifications.vip.description',
                 'Always receive notifications from these people'
@@ -506,7 +506,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
           </div>
         </div>
 
-        <p className="text-sm text-slate-600 dark:text-slate-500 italic">
+        <p className="text-sm text-c-text-secondary italic">
           {t(
             'settings.notifications.vip.empty',
             'No VIP contacts configured. Messages from VIP contacts will always notify you.'

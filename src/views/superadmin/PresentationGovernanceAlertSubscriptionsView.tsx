@@ -1002,7 +1002,7 @@ const NewSubscriptionWizard: React.FC<NewSubscriptionWizardProps> = ({ onClose, 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-c-surface/60 p-4">
       <div className="w-full max-w-lg rounded-lg border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
           <div>

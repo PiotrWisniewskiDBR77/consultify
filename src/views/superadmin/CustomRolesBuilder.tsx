@@ -297,7 +297,7 @@ const CustomRolesBuilder: React.FC = () => {
               onClick={() => setSelectedRole(role)}
               className={`p-4 rounded-xl border cursor-pointer transition-all ${
                 selectedRole?.id === role.id
-                  ? 'bg-slate-100 dark:bg-white/[0.08] border-[var(--c-info)]/50'
+                  ? 'bg-slate-100 dark:bg-white/[0.08] border-c-info/50'
                   : 'bg-white dark:bg-gray-800/50 border-slate-200 dark:border-gray-700 hover:border-slate-300 dark:hover:border-gray-600'
               }`}
             >
@@ -438,7 +438,7 @@ const CustomRolesBuilder: React.FC = () => {
                                 key={perm.id}
                                 className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
                                   isAssigned
-                                    ? 'bg-slate-100 dark:bg-white/[0.08] border border-[var(--c-info)]/30'
+                                    ? 'bg-slate-100 dark:bg-white/[0.08] border border-c-info/30'
                                     : 'bg-slate-50 dark:bg-gray-900/50 border border-slate-200 dark:border-gray-700 hover:border-slate-300 dark:hover:border-gray-600'
                                 }`}
                               >

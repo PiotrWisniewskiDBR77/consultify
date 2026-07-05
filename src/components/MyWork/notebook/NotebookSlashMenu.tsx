@@ -405,13 +405,13 @@ export const NotebookSlashMenu: React.FC<NotebookSlashMenuProps> = ({
       ref={menuRef}
       role="listbox"
       aria-label={t('Insert block', 'Wstaw blok')}
-      className="fixed z-[60] w-72 max-h-80 overflow-y-auto rounded-md border border-slate-200 bg-white py-1 text-[13px] shadow-xl dark:border-navy-700 dark:bg-navy-900"
+      className="fixed z-[60] w-72 max-h-80 overflow-y-auto rounded-md border border-c-border bg-c-surface py-1 text-[13px] shadow-xl dark:border-navy-700 dark:bg-navy-900"
       style={{ top: position.y, left: position.x }}
       // Prevent the editor losing focus / selection while interacting with the menu.
       onPointerDown={(e) => e.preventDefault()}
     >
       {items.length === 0 ? (
-        <div className="px-3 py-6 text-center text-[12px] text-slate-400 dark:text-slate-500">
+        <div className="px-3 py-6 text-center text-[12px] text-c-text-muted">
           {t('No blocks found', 'Brak pasujących bloków')}
         </div>
       ) : (
@@ -421,7 +421,7 @@ export const NotebookSlashMenu: React.FC<NotebookSlashMenuProps> = ({
           const groupLabel = GROUP_LABELS[groupId];
           return (
             <div key={groupId} className="px-1">
-              <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+              <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
                 {t(groupLabel.en, groupLabel.pl)}
               </div>
               {groupItems.map((block) => {
@@ -444,29 +444,29 @@ export const NotebookSlashMenu: React.FC<NotebookSlashMenuProps> = ({
                     }}
                     className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors ${
                       isActive
-                        ? 'bg-slate-100 dark:bg-navy-800'
-                        : 'hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+                        ? 'bg-c-surface-raised'
+                        : 'hover:bg-c-surface-raised dark:hover:bg-white/[0.04]'
                     }`}
                   >
                     <span
                       className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${
                         block.ai
-                          ? 'border-slate-200 bg-slate-50 text-slate-600 dark:border-navy-700 dark:bg-navy-800 dark:text-slate-300'
-                          : 'border-slate-200 bg-white text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400'
+                          ? 'border-c-border bg-c-surface-raised text-c-text-secondary dark:border-navy-700 dark:bg-navy-800 dark:text-c-text-secondary'
+                          : 'border-c-border bg-c-surface text-c-text-muted dark:border-navy-700 dark:bg-navy-900 dark:text-c-text-muted'
                       }`}
                     >
                       <Icon className="h-4 w-4" strokeWidth={1.75} />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-medium text-slate-700 dark:text-slate-200">
+                      <span className="block truncate font-medium text-c-text">
                         {t(block.label, block.labelPl)}
                       </span>
-                      <span className="block truncate text-[11px] text-slate-400 dark:text-slate-500">
+                      <span className="block truncate text-[11px] text-c-text-muted">
                         {t(block.description, block.descriptionPl)}
                       </span>
                     </span>
                     {block.ai && (
-                      <span className="ml-auto shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-slate-500 dark:bg-navy-800 dark:text-slate-400">
+                      <span className="ml-auto shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-c-text-muted dark:bg-navy-800 dark:text-c-text-muted">
                         AI
                       </span>
                     )}

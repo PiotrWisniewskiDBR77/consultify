@@ -9,6 +9,8 @@
 import type { Editor } from '@tiptap/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import i18n from '@/i18n';
+
 import { hasPendingAiDiff } from './canvasDiffOps';
 import { htmlToMarkdown, markdownToHtml } from './canvasMarkdownConversion';
 
@@ -151,7 +153,10 @@ export function useCanvasAIStream({
       // via onError so it can surface "resolve the previous suggestion first".
       if (hasPendingAiDiff(editor)) {
         onError?.(
-          'Resolve the previous AI suggestion (accept or reject) before starting a new edit.'
+          i18n.t(
+            'canvas.aiStream.resolvePendingSuggestion',
+            'Resolve the previous AI suggestion (accept or reject) before starting a new edit.'
+          )
         );
         return;
       }
@@ -318,7 +323,7 @@ export function useCanvasAIStream({
 
         if (!response.ok || !response.body) {
           setIsStreaming(false);
-          onError?.('Stream request failed');
+          onError?.(i18n.t('canvas.aiStream.streamRequestFailed', 'Stream request failed'));
           return;
         }
 
@@ -358,7 +363,7 @@ export function useCanvasAIStream({
 
               // Handle error events
               if (data.type === 'error') {
-                onError?.(data.message || 'Stream error');
+                onError?.(data.message || i18n.t('canvas.aiStream.streamError', 'Stream error'));
                 break;
               }
             } catch {
@@ -437,7 +442,7 @@ export function useCanvasAIStream({
         if (err?.name === 'AbortError') {
           // User stopped — not an error
         } else {
-          onError?.(err?.message || 'Stream failed');
+          onError?.(err?.message || i18n.t('canvas.aiStream.streamFailed', 'Stream failed'));
         }
         setIsStreaming(false);
         abortControllerRef.current = null;

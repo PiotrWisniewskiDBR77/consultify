@@ -45,13 +45,13 @@ const OP_META: Record<string, { en: string; pl: string; icon: LucideIcon; color:
     en: 'Create table',
     pl: 'Utwórz tabelę',
     icon: Table2,
-    color: 'text-primary-600 dark:text-primary-400',
+    color: 'text-c-accent',
   },
   add_table: {
     en: 'Create table',
     pl: 'Utwórz tabelę',
     icon: Table2,
-    color: 'text-primary-600 dark:text-primary-400',
+    color: 'text-c-accent',
   },
   create_field: {
     en: 'Add field',
@@ -111,7 +111,7 @@ function getOpMeta(
     en: opType.replace(/_/g, ' '),
     pl: opType.replace(/_/g, ' '),
     icon: Columns3,
-    color: 'text-slate-500 dark:text-zinc-400',
+    color: 'text-c-text-muted',
   };
   return { label: isPl ? entry.pl : entry.en, icon: entry.icon, color: entry.color };
 }
@@ -273,27 +273,27 @@ const OperationItem: React.FC<{
     <div
       className={`rounded-xl border transition-all duration-150 ${
         selected
-          ? 'border-primary-400/50 bg-primary-500/5 dark:bg-primary-500/10'
-          : 'border-slate-200/60 dark:border-zinc-700/60 bg-white dark:bg-zinc-800/50'
+          ? 'border-c-accent bg-c-accent-soft'
+          : 'border-c-border-subtle bg-c-surface'
       }`}
     >
       <div className="flex items-center gap-2 px-3 py-2">
         <button
           onClick={onToggleSelect}
           className={`flex-shrink-0 w-4 h-4 rounded border transition-colors ${
-            selected ? 'border-navy-900 bg-navy-900' : 'border-slate-300 dark:border-zinc-600'
+            selected ? 'border-c-border bg-c-surface' : 'border-c-border'
           } flex items-center justify-center`}
         >
           {selected && <Check size={10} className="text-white" />}
         </button>
         <button
           onClick={onToggleExpand}
-          className="flex-shrink-0 p-0.5 text-slate-600 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+          className="flex-shrink-0 p-0.5 text-c-text-secondary hover:text-c-text-secondary transition-colors"
         >
           {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </button>
         <Icon size={14} className={`flex-shrink-0 ${color}`} />
-        <span className="text-xs font-medium text-slate-700 dark:text-zinc-200 truncate">
+        <span className="text-xs font-medium text-c-text truncate">
           {label}
           {description ? `: ${description}` : ''}
         </span>
@@ -306,7 +306,7 @@ const OperationItem: React.FC<{
       >
         {op.payload && (
           <div className="px-3 pb-2 pl-[2.25rem]">
-            <div className="text-[10px] text-slate-500 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-900 rounded-lg p-2 overflow-x-auto max-h-32 overflow-y-auto font-mono">
+            <div className="text-[10px] text-c-text-muted bg-c-surface-raised rounded-lg p-2 overflow-x-auto max-h-32 overflow-y-auto font-mono">
               {renderPayloadDetails(op.payload, isPl)}
             </div>
             {warning && (
@@ -329,10 +329,10 @@ function renderPayloadDetails(payload: Record<string, unknown>, isPl: boolean): 
       <div className="space-y-1">
         {fields.map((f, i) => (
           <div key={i} className="flex items-center gap-2">
-            <span className="text-primary-600 dark:text-primary-400 font-semibold">
+            <span className="text-c-accent font-semibold">
               {String(f.name ?? f.fieldName ?? `field_${i}`)}
             </span>
-            <span className="text-slate-600">—</span>
+            <span className="text-c-text-secondary">—</span>
             <span>{String(f.type ?? f.fieldType ?? 'text')}</span>
             {Boolean(f.required) && (
               <span className="text-danger-500 text-[9px]">{isPl ? 'wymagane' : 'required'}</span>
@@ -446,11 +446,11 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
   const timeStr = formatTimestamp(proposal.created_at);
 
   return (
-    <div className="rounded-2xl border border-primary-500/30 bg-white dark:bg-zinc-900 dark:border-zinc-700 shadow-xl overflow-hidden transition-all duration-200">
+    <div className="rounded-2xl border border-c-accent bg-c-surface shadow-xl overflow-hidden transition-all duration-200">
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-200/60 dark:border-zinc-700/60 bg-gradient-to-r from-primary-50/50 to-transparent dark:from-primary-950/20">
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-c-border-subtle bg-c-accent-soft">
         <div className="flex items-center gap-2 flex-wrap min-w-0">
-          <span className="inline-flex items-center rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-primary-500/15 text-primary-700 dark:text-primary-300 border border-primary-500/20">
+          <span className="inline-flex items-center rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-c-accent-soft text-c-accent border border-c-accent">
             {intentLabel}
           </span>
           <span
@@ -465,7 +465,7 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
             </span>
           )}
           {timeStr && (
-            <span className="inline-flex items-center gap-1 text-[10px] text-slate-600 dark:text-zinc-500">
+            <span className="inline-flex items-center gap-1 text-[10px] text-c-text-secondary">
               <Clock size={10} />
               {timeStr}
             </span>
@@ -473,18 +473,18 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+          className="p-1 rounded-lg hover:bg-c-surface-raised text-c-text-secondary hover:text-c-text-secondary transition-colors"
         >
           <X size={14} />
         </button>
       </div>
 
       {/* Summary */}
-      <div className="px-4 py-3 bg-slate-50/50 dark:bg-zinc-800/30 border-b border-slate-200/40 dark:border-zinc-700/40">
-        <p className="text-sm text-slate-700 dark:text-zinc-200 leading-relaxed">
+      <div className="px-4 py-3 bg-c-surface-raised border-b border-c-border-subtle">
+        <p className="text-sm text-c-text leading-relaxed">
           {proposal.summary}
         </p>
-        <p className="mt-1.5 text-[11px] text-slate-500 dark:text-zinc-400 font-medium">
+        <p className="mt-1.5 text-[11px] text-c-text-muted font-medium">
           {impactText}
         </p>
       </div>
@@ -494,7 +494,7 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
         <div className="flex items-center justify-between mb-2">
           <button
             onClick={() => setAllOpsVisible((v) => !v)}
-            className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+            className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-c-text-secondary hover:text-c-text-secondary transition-colors"
           >
             {allOpsVisible ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
             {isPl ? 'Operacje' : 'Operations'} ({proposal.operations.length})
@@ -503,20 +503,20 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
             <div className="flex gap-1">
               <button
                 onClick={selectAll}
-                className="text-[10px] text-primary-600 dark:text-primary-400 hover:underline"
+                className="text-[10px] text-c-accent hover:underline"
               >
                 {isPl ? 'Wszystkie' : 'All'}
               </button>
-              <span className="text-slate-600 dark:text-zinc-600">|</span>
+              <span className="text-c-text-secondary">|</span>
               <button
                 onClick={selectNone}
-                className="text-[10px] text-primary-600 dark:text-primary-400 hover:underline"
+                className="text-[10px] text-c-accent hover:underline"
               >
                 {isPl ? 'Żadne' : 'None'}
               </button>
               {onShowDiff && (
                 <>
-                  <span className="text-slate-600 dark:text-zinc-600">|</span>
+                  <span className="text-c-text-secondary">|</span>
                   <button
                     onClick={onShowDiff}
                     className="text-[10px] text-sky-600 dark:text-sky-400 hover:underline"
@@ -552,7 +552,7 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
 
       {/* Global Warnings */}
       {globalWarnings.length > 0 && (
-        <div className="px-4 py-3 border-t border-slate-200/60 dark:border-zinc-700/60">
+        <div className="px-4 py-3 border-t border-c-border-subtle">
           <div className="flex items-start gap-2 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-400/30 dark:border-amber-500/30 p-3">
             <AlertTriangle
               size={14}
@@ -568,7 +568,7 @@ export const SchemaProposalCard: React.FC<SchemaProposalCardProps> = ({
       )}
 
       {/* Actions */}
-      <div className="flex flex-wrap items-center gap-2 px-4 py-3 border-t border-slate-200/60 dark:border-zinc-700/60 bg-slate-50/50 dark:bg-zinc-800/30">
+      <div className="flex flex-wrap items-center gap-2 px-4 py-3 border-t border-c-border-subtle bg-c-surface-raised">
         {!executed ? (
           <>
             <button

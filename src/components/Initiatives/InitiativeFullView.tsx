@@ -496,7 +496,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
       try {
         await Api.patch(`/initiatives/${initiative.id}/gate`, { gate });
         toast.success(
-          t('initiatives.toast.gateActionSuccess', 'Akcja "{{gate}}" wykonana pomyślnie', { gate })
+          t('initiatives.toast.gateActionSuccess', 'Action "{{gate}}" completed successfully', { gate })
         );
         await fetchInitiative();
         onStatusChange?.();
@@ -504,7 +504,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
         console.error('[InitiativeFullView] Gate action error:', err);
         toast.error(
           err?.response?.data?.error ||
-            t('initiatives.toast.gateActionError', 'Nie udało się wykonać {{gate}}', { gate })
+            t('initiatives.toast.gateActionError', 'Could not perform {{gate}}', { gate })
         );
       } finally {
         setIsTransitioning(false);
@@ -882,7 +882,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                         className="inline-flex items-center gap-1 text-primary-600 dark:text-primary-400 hover:underline ml-1"
                       >
                         <ExternalLink size={10} />
-                        {i18n.language === 'pl' ? 'Otwórz źródło' : 'View source'}
+                        {i18n.language === 'pl' ? 'View source' : 'View source'}
                       </a>
                     )}
                   </div>

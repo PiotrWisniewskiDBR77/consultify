@@ -388,7 +388,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
     return (
       <div className={`space-y-6 ${className}`}>
         <div>
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
             <Key size={20} />
             {t('settings.api.title', 'API Access')}
           </h3>
@@ -402,11 +402,11 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
     <div className={`space-y-6 ${className}`}>
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
             <Key size={20} />
             {t('settings.api.title', 'API Access')}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             {t('settings.api.desc', 'Manage API keys for programmatic access.')}
           </p>
         </div>
@@ -446,7 +446,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
             )}
           </p>
           <div className="flex items-center gap-2">
-            <code className="flex-1 px-3 py-2 bg-white dark:bg-navy-800 rounded text-sm font-mono">
+            <code className="flex-1 px-3 py-2 bg-c-surface rounded text-sm font-mono">
               {newKey}
             </code>
             <button
@@ -467,8 +467,8 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
 
       {/* Create Key Form */}
       {showNew && (
-        <div className="p-4 bg-slate-50 dark:bg-navy-800/50 rounded-lg">
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+        <div className="p-4 bg-c-surface-raised rounded-lg">
+          <label className="block text-sm font-medium text-c-text-secondary mb-2">
             {t('settings.api.keyName', 'Key Name')}
           </label>
           <div className="flex gap-2">
@@ -477,7 +477,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
               value={newKeyName}
               onChange={(e) => setNewKeyName(e.target.value)}
               placeholder={t('settings.api.keyNamePlaceholder', 'e.g., Production API')}
-              className="flex-1 px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800"
+              className="flex-1 px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg bg-c-surface"
             />
             <button
               onClick={createKey}
@@ -490,7 +490,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                 setShowNew(false);
                 setNewKeyName('');
               }}
-              className="px-4 py-2 border border-slate-300 dark:border-navy-600 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700"
+              className="px-4 py-2 border border-c-border dark:border-navy-600 rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700"
             >
               {t('common.cancel', 'Cancel')}
             </button>
@@ -511,15 +511,15 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
           return (
             <div
               key={key.id}
-              className={`p-4 bg-white dark:bg-navy-900 rounded-lg border transition-all ${
-                isSelected ? 'border-slate-500 dark:border-white/40' : 'border-slate-200 dark:border-navy-700'
+              className={`p-4 bg-c-surface rounded-lg border transition-all ${
+                isSelected ? 'border-c-border-strong' : 'border-c-border-subtle dark:border-navy-700'
               }`}
             >
               {/* Key Header */}
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <p className="font-medium text-slate-900 dark:text-white">{key.name}</p>
+                    <p className="font-medium text-c-text">{key.name}</p>
                     {expired && (
                       <StatusChip tone="danger" label={t('settings.api.expired', 'Expired')} />
                     )}
@@ -530,11 +530,11 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                       />
                     )}
                   </div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 font-mono">
+                  <p className="text-sm text-c-text-muted font-mono">
                     {key.prefix}••••••••••••
                   </p>
                   {key.lastUsed && (
-                    <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
+                    <p className="text-xs text-c-text-secondary mt-1">
                       {t('settings.api.lastUsed', 'Last used')}: {key.lastUsed}
                     </p>
                   )}
@@ -545,7 +545,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                     className={`p-2 rounded-lg transition-colors ${
                       isSelected
                         ? 'bg-navy-900 text-white'
-                        : 'text-slate-600 dark:text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
+                        : 'text-c-text-secondary hover:text-brand hover:bg-c-surface-raised dark:hover:bg-navy-700'
                     }`}
                     title={t('settings.api.viewUsage', 'View usage')}
                   >
@@ -556,7 +556,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                     className={`p-2 rounded-lg transition-colors ${
                       showKeySettings
                         ? 'bg-navy-900 text-white'
-                        : 'text-slate-600 dark:text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
+                        : 'text-c-text-secondary hover:text-brand hover:bg-c-surface-raised dark:hover:bg-navy-700'
                     }`}
                     title={t('common.settings', 'Settings')}
                   >
@@ -565,7 +565,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                   <button
                     onClick={() => rotateKey(key.id)}
                     disabled={rotatingKey === key.id}
-                    className="p-2 text-slate-600 dark:text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors disabled:opacity-50"
+                    className="p-2 text-c-text-secondary hover:text-brand hover:bg-c-surface-raised dark:hover:bg-navy-700 rounded-lg transition-colors disabled:opacity-50"
                     title={t('settings.api.rotate', 'Rotate key')}
                   >
                     {rotatingKey === key.id ? (
@@ -588,14 +588,14 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
               {key.quotaLimit && (
                 <div className="mb-3">
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-slate-600 dark:text-slate-400">
+                    <span className="text-c-text-secondary">
                       {t('settings.api.quota', 'Quota')}
                     </span>
-                    <span className="text-slate-600 dark:text-slate-400">
+                    <span className="text-c-text-secondary">
                       {key.quotaUsed?.toLocaleString() || 0} / {key.quotaLimit.toLocaleString()}
                     </span>
                   </div>
-                  <div className="w-full bg-slate-200 dark:bg-navy-700 rounded-full h-2">
+                  <div className="w-full bg-c-surface-raised rounded-full h-2">
                     <div
                       className={`h-2 rounded-full transition-all ${
                         quotaPercent >= 90
@@ -608,7 +608,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                     />
                   </div>
                   {key.quotaResetAt && (
-                    <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
+                    <p className="text-xs text-c-text-secondary mt-1">
                       {t('settings.api.resetsAt', 'Resets')}:{' '}
                       {new Date(key.quotaResetAt).toLocaleDateString()}
                     </p>
@@ -618,7 +618,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
 
               {/* Rate Limit */}
               {key.rateLimit && (
-                <div className="mb-3 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+                <div className="mb-3 flex items-center gap-2 text-xs text-c-text-secondary">
                   <TrendingUp size={12} />
                   <span>
                     {t('settings.api.rateLimit', 'Rate limit')}: {key.rateLimit}{' '}
@@ -629,7 +629,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
 
               {/* IP Whitelist */}
               {key.ipWhitelist && key.ipWhitelist.length > 0 && (
-                <div className="mb-3 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+                <div className="mb-3 flex items-center gap-2 text-xs text-c-text-secondary">
                   <Shield size={12} />
                   <span>
                     {key.ipWhitelist.length} {t('settings.api.allowedIPs', 'allowed IP(s)')}
@@ -639,7 +639,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
 
               {/* Expiration */}
               {key.expiresAt && (
-                <div className="mb-3 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+                <div className="mb-3 flex items-center gap-2 text-xs text-c-text-secondary">
                   <Calendar size={12} />
                   <span>
                     {t('settings.api.expires', 'Expires')}:{' '}
@@ -650,8 +650,8 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
 
               {/* Usage Dashboard */}
               {isSelected && usage && (
-                <div className="mt-4 p-4 bg-slate-50 dark:bg-navy-800/50 rounded-lg border border-slate-200 dark:border-navy-700">
-                  <h5 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                <div className="mt-4 p-4 bg-c-surface-raised rounded-lg border border-c-border-subtle dark:border-navy-700">
+                  <h5 className="text-sm font-semibold text-c-text mb-3">
                     {t('settings.api.usageDashboard', 'Usage Dashboard')}
                   </h5>
                   {usage.requests && usage.requests.length > 0 && (
@@ -659,14 +659,14 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                       <LineChart data={usage.requests}>
                         <CartesianGrid
                           strokeDasharray="3 3"
-                          stroke="var(--color-navy-700, #334155)"
+                          stroke="var(--c-border-strong)"
                         />
                         <XAxis
                           dataKey="date"
                           tick={{ fontSize: 10 }}
-                          stroke="var(--color-navy-400, #94a3b8)"
+                          stroke="var(--c-text-muted)"
                         />
-                        <YAxis tick={{ fontSize: 10 }} stroke="var(--color-navy-400, #94a3b8)" />
+                        <YAxis tick={{ fontSize: 10 }} stroke="var(--c-text-muted)" />
                         <Tooltip />
                         <Line
                           type="monotone"
@@ -682,14 +682,14 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
 
               {/* Settings Modal */}
               {showKeySettings && (
-                <div className="mt-4 p-4 bg-slate-50 dark:bg-navy-800/50 rounded-lg border border-slate-200 dark:border-navy-700 space-y-4">
-                  <h5 className="text-sm font-semibold text-slate-900 dark:text-white">
+                <div className="mt-4 p-4 bg-c-surface-raised rounded-lg border border-c-border-subtle dark:border-navy-700 space-y-4">
+                  <h5 className="text-sm font-semibold text-c-text">
                     {t('settings.api.advancedSettings', 'Advanced Settings')}
                   </h5>
 
                   {/* Rate Limit */}
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-medium text-c-text-secondary mb-1">
                       {t('settings.api.rateLimit', 'Rate Limit')} (
                       {t('settings.api.requestsPerMin', 'requests/min')})
                     </label>
@@ -703,13 +703,13 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                         }))
                       }
                       placeholder="1000"
-                      className="w-full px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg"
+                      className="w-full px-3 py-2 text-sm bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
                     />
                   </div>
 
                   {/* Scopes */}
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    <label className="block text-xs font-medium text-c-text-secondary mb-2">
                       {t('settings.api.scopes', 'Permissions')}
                     </label>
                     <div className="space-y-2">
@@ -719,13 +719,13 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                             type="checkbox"
                             checked={keySettings[key.id]?.scopes?.includes(scope.id) || false}
                             onChange={() => toggleScope(key.id, scope.id)}
-                            className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-brand focus:ring-brand"
+                            className="w-4 h-4 rounded border-c-border dark:border-navy-700 text-brand focus:ring-[color:var(--c-focus)]"
                           />
                           <div>
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            <span className="text-sm font-medium text-c-text-secondary">
                               {scope.name}
                             </span>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                            <p className="text-xs text-c-text-muted">
                               {scope.description}
                             </p>
                           </div>
@@ -744,7 +744,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                     </button>
                     <button
                       onClick={() => setShowSettings(null)}
-                      className="px-3 py-2 border border-slate-200 dark:border-navy-700 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 text-sm"
+                      className="px-3 py-2 border border-c-border-subtle dark:border-navy-700 rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700 text-sm"
                     >
                       {t('common.cancel', 'Cancel')}
                     </button>

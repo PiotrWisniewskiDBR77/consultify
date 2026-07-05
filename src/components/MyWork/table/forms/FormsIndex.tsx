@@ -161,11 +161,11 @@ export function FormsIndex({
     if (form.is_published)
       return {
         label: t('formsIndex.active', 'Active'),
-        color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+        color: 'bg-c-success text-c-success bg-c-success text-c-success',
       };
     return {
       label: t('formsIndex.draft', 'Draft'),
-      color: 'bg-gray-100 text-gray-600 dark:bg-navy-800 dark:text-gray-400',
+      color: 'bg-c-surface-raised text-c-text-secondary bg-c-surface-raised text-c-text-muted',
     };
   };
 
@@ -174,13 +174,13 @@ export function FormsIndex({
   if (editingForm) {
     return (
       <div className="flex h-full flex-col">
-        <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-2 dark:border-navy-700">
+        <div className="flex items-center gap-2 border-b border-c-border-subtle px-4 py-2 border-c-border">
           <button
             onClick={() => {
               setEditingForm(null);
               loadForms();
             }}
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-navy-800"
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised text-c-text-muted hover:bg-c-surface-raised"
           >
             &larr; {t('formsIndex.backToList', 'Back to forms')}
           </button>
@@ -251,13 +251,13 @@ export function FormsIndex({
   return (
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 className="text-lg font-semibold text-c-text">
           {t('formsIndex.title', 'Forms')}
         </h2>
         {!locked && (
           <button
             onClick={handleCreate}
-            className="flex items-center gap-1.5 rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+            className="flex items-center gap-1.5 rounded-xl bg-c-accent px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-accent"
           >
             <Plus className="h-4 w-4" />
             {t('formsIndex.createForm', 'Create Form')}
@@ -273,31 +273,31 @@ export function FormsIndex({
           return (
             <div
               key={form.id}
-              className="group relative rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-md dark:border-navy-700 dark:bg-navy-800"
+              className="group relative rounded-2xl border border-c-border-subtle bg-c-surface p-5 transition-shadow hover:shadow-md border-c-border bg-c-surface-raised"
             >
               {/* Status badge */}
               <div className="mb-3 flex items-center justify-between">
                 <span className={`rounded-lg px-2.5 py-1 text-xs font-medium ${status.color}`}>
                   {status.label}
                 </span>
-                <span className="text-xs text-gray-600 dark:text-gray-500">
+                <span className="text-xs text-c-text-muted">
                   {form.submit_count} {t('formsIndex.responses', 'responses')}
                 </span>
               </div>
 
               {/* Name */}
-              <h3 className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">
+              <h3 className="mb-1 text-sm font-semibold text-c-text">
                 {form.name}
               </h3>
               {form.description && (
-                <p className="mb-3 text-xs text-gray-500 line-clamp-2 dark:text-gray-400">
+                <p className="mb-3 text-xs text-c-text-muted line-clamp-2 text-c-text-muted">
                   {form.description}
                 </p>
               )}
 
               {/* Created date */}
               {form.created_at && (
-                <p className="mb-4 text-xs text-gray-600 dark:text-gray-500">
+                <p className="mb-4 text-xs text-c-text-muted">
                   {t('formsIndex.created', 'Created')}{' '}
                   {new Date(form.created_at).toLocaleDateString()}
                 </p>
@@ -309,10 +309,10 @@ export function FormsIndex({
                 {form.is_published && (
                   <button
                     onClick={() => handleCopyLink(form.slug, form.id)}
-                    className="flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-200 dark:bg-navy-700 dark:text-gray-300 dark:hover:bg-navy-600"
+                    className="flex items-center gap-1 rounded-lg bg-c-surface-raised px-2.5 py-1.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised text-c-text-muted hover:bg-c-surface-raised"
                   >
                     {copiedId === form.id ? (
-                      <Check className="h-3 w-3 text-green-600" />
+                      <Check className="h-3 w-3 text-c-success" />
                     ) : (
                       <ClipboardCopy className="h-3 w-3" />
                     )}
@@ -326,7 +326,7 @@ export function FormsIndex({
                 <div className="relative">
                   <button
                     onClick={() => setShareMenuId(shareMenuId === form.id ? null : form.id)}
-                    className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-navy-700"
+                    className="rounded-lg p-1.5 text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text-secondary hover:bg-c-surface-raised"
                     title={t('formsIndex.sharing', 'Sharing')}
                   >
                     {shareMode === 'public' && <Globe className="h-3.5 w-3.5" />}
@@ -335,7 +335,7 @@ export function FormsIndex({
                   </button>
 
                   {shareMenuId === form.id && (
-                    <div className="absolute left-0 top-full z-20 mt-1 w-48 rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-navy-700 dark:bg-navy-800">
+                    <div className="absolute left-0 top-full z-20 mt-1 w-48 rounded-xl border border-c-border-subtle bg-c-surface py-1 shadow-lg border-c-border bg-c-surface-raised">
                       {[
                         {
                           mode: 'public' as ShareMode,
@@ -356,10 +356,10 @@ export function FormsIndex({
                         <button
                           key={mode}
                           onClick={() => handleShareModeChange(form, mode)}
-                          className={`flex w-full items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-gray-50 dark:hover:bg-navy-700 ${
+                          className={`flex w-full items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-c-surface-raised ${
                             shareMode === mode
-                              ? 'font-medium text-primary-600 dark:text-primary-400'
-                              : 'text-gray-700 dark:text-gray-300'
+                              ? 'font-medium text-c-accent'
+                              : 'text-c-text-muted'
                           }`}
                         >
                           <Icon className="h-3.5 w-3.5" />
@@ -377,7 +377,7 @@ export function FormsIndex({
                     href={`${baseUrl}/forms/${form.slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-navy-700"
+                    className="rounded-lg p-1.5 text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text-secondary hover:bg-c-surface-raised"
                     title={t('formsIndex.preview', 'Preview')}
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
@@ -388,7 +388,7 @@ export function FormsIndex({
                 {intakeEnabled && (
                   <button
                     onClick={() => setIntakeFormId(form.id)}
-                    className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-300"
+                    className="rounded-lg p-1.5 text-c-text-secondary transition-colors hover:bg-c-success hover:text-c-success hover:bg-c-success hover:text-c-success"
                     title={t('formsIndex.manageIntake', 'Manage intake (private link)')}
                     data-testid={`forms-index-manage-intake-${form.id}`}
                   >
@@ -401,7 +401,7 @@ export function FormsIndex({
                 {/* Edit */}
                 <button
                   onClick={() => setEditingForm(form)}
-                  className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                  className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-c-info transition-colors hover:bg-c-info text-c-info hover:bg-c-info"
                 >
                   {t('formsIndex.edit', 'Edit')}
                 </button>
@@ -413,13 +413,13 @@ export function FormsIndex({
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleDelete(form.id)}
-                          className="rounded-lg px-2 py-1 text-xs font-medium text-danger-600 transition-colors hover:bg-danger-50 dark:hover:bg-danger-900/20"
+                          className="rounded-lg px-2 py-1 text-xs font-medium text-c-danger transition-colors hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] dark:hover:bg-[color-mix(in_srgb,var(--c-danger)_18%,transparent)]"
                         >
                           {t('formsIndex.confirmDelete', 'Confirm')}
                         </button>
                         <button
                           onClick={() => setDeleteConfirm(null)}
-                          className="rounded-lg px-2 py-1 text-xs text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-navy-700"
+                          className="rounded-lg px-2 py-1 text-xs text-c-text-muted transition-colors hover:bg-c-surface-raised"
                         >
                           {t('formsIndex.cancel', 'Cancel')}
                         </button>
@@ -427,7 +427,7 @@ export function FormsIndex({
                     ) : (
                       <button
                         onClick={() => setDeleteConfirm(form.id)}
-                        className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/20"
+                        className="rounded-lg p-1.5 text-c-text-secondary transition-colors hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] hover:text-c-danger dark:hover:bg-[color-mix(in_srgb,var(--c-danger)_18%,transparent)]"
                         title={t('formsIndex.delete', 'Delete')}
                       >
                         <Trash2 className="h-3.5 w-3.5" />

@@ -154,14 +154,14 @@ const CoverPage: React.FC<{
     >
       {/* Decorative elements */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-c-surface/20 -translate-y-1/2 translate-x-1/4" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-c-surface/10 translate-y-1/3 -translate-x-1/4" />
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-white/20 -translate-y-1/2 translate-x-1/4" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-white/10 translate-y-1/3 -translate-x-1/4" />
       </div>
 
       <div className="relative px-8 py-12 md:px-12 md:py-16 text-white">
         {/* Source badge */}
         {report.sourceFramework && (
-          <div className="inline-block px-3 py-1 mb-6 text-xs font-medium bg-c-surface/15 rounded-full backdrop-blur-sm border border-white/20">
+          <div className="inline-block px-3 py-1 mb-6 text-xs font-medium bg-white/15 rounded-full backdrop-blur-sm border border-white/20">
             {report.sourceFramework}
           </div>
         )}
@@ -198,7 +198,7 @@ const CoverPage: React.FC<{
 
         {/* Custom message */}
         {branding.customMessage && (
-          <div className="mt-6 px-4 py-3 bg-c-surface/10 rounded-lg backdrop-blur-sm border border-white/15 text-sm text-white/90">
+          <div className="mt-6 px-4 py-3 bg-white/10 rounded-lg backdrop-blur-sm border border-white/15 text-sm text-white/90">
             {branding.customMessage}
           </div>
         )}
@@ -224,7 +224,7 @@ const TableOfContents: React.FC<{
         className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-c-surface-raised transition-colors"
       >
         <div className="flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-blue-500" />
+          <BookOpen className="w-5 h-5 text-c-info" />
           <span className="font-semibold text-c-text">
             {isPl ? 'Spis Treści' : 'Table of Contents'}
           </span>
@@ -263,7 +263,7 @@ const TableOfContents: React.FC<{
                     <span className="text-xs text-c-text-secondary font-mono w-6 text-right">
                       {gi > 0 ? `${gi}.${si + 1}` : `${si + 1}`}
                     </span>
-                    <span className="text-sm text-c-text-secondary group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    <span className="text-sm text-c-text-secondary group-hover:text-c-info transition-colors">
                       {section.title}
                     </span>
                   </button>
@@ -329,7 +329,7 @@ const DownloadBar: React.FC<{
       <button
         onClick={() => handleDownload('pdf')}
         disabled={downloading === 'pdf'}
-        className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-c-surface/10 hover:bg-c-surface/20 rounded-lg transition-colors text-white backdrop-blur-sm"
+        className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-white backdrop-blur-sm"
       >
         {downloading === 'pdf' ? (
           <Loader2 className="w-4 h-4 animate-spin" />
@@ -345,7 +345,7 @@ const DownloadBar: React.FC<{
           <button
             onClick={() => handleDownload('pptx')}
             disabled={downloading === 'pptx'}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-c-surface/10 hover:bg-c-surface/20 rounded-lg transition-colors text-white backdrop-blur-sm"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-white backdrop-blur-sm"
           >
             {downloading === 'pptx' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -357,7 +357,7 @@ const DownloadBar: React.FC<{
           <button
             onClick={() => handleDownload('docx')}
             disabled={downloading === 'docx'}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-c-surface/10 hover:bg-c-surface/20 rounded-lg transition-colors text-white backdrop-blur-sm"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-white backdrop-blur-sm"
           >
             {downloading === 'docx' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -370,7 +370,7 @@ const DownloadBar: React.FC<{
       ) : (
         <button
           onClick={onLoginRedirect}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-blue-500/80 hover:bg-blue-500 rounded-lg transition-colors text-white backdrop-blur-sm"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-c-accent/80 hover:bg-c-accent rounded-lg transition-colors text-white backdrop-blur-sm"
           title={isPl ? 'Zaloguj się aby pobrać PPTX/DOCX' : 'Sign in to download PPTX/DOCX'}
         >
           <LogIn className="w-4 h-4" />
@@ -504,9 +504,9 @@ export const PublicReportBuilderView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-c-surface-raised">
+      <div className="min-h-screen flex items-center justify-center bg-c-bg">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 animate-spin text-c-info mx-auto mb-4" />
           <p className="text-c-text-secondary">
             {isPl ? 'Ładowanie raportu...' : 'Loading report...'}
           </p>
@@ -521,11 +521,11 @@ export const PublicReportBuilderView: React.FC = () => {
 
   if (requiresPassword) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen flex items-center justify-center bg-c-bg">
         <div className="max-w-md w-full mx-4 p-8 bg-c-surface rounded-2xl shadow-xl border border-c-border-subtle">
           <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Lock className="w-8 h-8 text-blue-500" />
+            <div className="w-16 h-16 bg-c-info/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-8 h-8 text-c-info" />
             </div>
             <h1 className="text-xl font-bold text-c-text">
               {isPl ? 'Raport chroniony hasłem' : 'Password Protected Report'}
@@ -544,10 +544,10 @@ export const PublicReportBuilderView: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={isPl ? 'Hasło' : 'Password'}
-                className={`w-full px-4 py-3 border rounded-xl bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                className={`w-full px-4 py-3 border rounded-xl bg-c-surface text-c-text focus:ring-2 focus:ring-c-focus focus:border-transparent transition-all ${
                   passwordError
                     ? 'border-danger-400 ring-2 ring-danger-100'
-                    : 'border-c-border-subtle'
+                    : 'border-c-border'
                 }`}
                 autoFocus
               />
@@ -560,7 +560,7 @@ export const PublicReportBuilderView: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full px-4 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/25"
+              className="w-full px-4 py-3 bg-c-accent text-white rounded-xl font-medium hover:opacity-90 transition-opacity shadow-lg shadow-c-accent/25"
             >
               {isPl ? 'Wyświetl raport' : 'View Report'}
             </button>
@@ -576,7 +576,7 @@ export const PublicReportBuilderView: React.FC = () => {
 
   if (error === 'notfound') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-danger-50 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen flex items-center justify-center bg-c-bg">
         <div className="text-center max-w-md mx-auto p-8">
           <div className="w-16 h-16 bg-danger-100 dark:bg-danger-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <Clock className="w-8 h-8 text-danger-500" />
@@ -602,7 +602,7 @@ export const PublicReportBuilderView: React.FC = () => {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-c-surface-raised">
+      <div className="min-h-screen flex items-center justify-center bg-c-bg">
         <div className="text-center max-w-md mx-auto p-8">
           <AlertTriangle className="w-16 h-16 text-danger-500 mx-auto mb-4" />
           <h1 className="text-xl font-bold text-c-text mb-2">
@@ -619,7 +619,7 @@ export const PublicReportBuilderView: React.FC = () => {
   // ==========================================
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
+    <div className="min-h-screen bg-c-bg">
       {/* ── Sticky Header ── */}
       <header
         className="sticky top-0 z-50 backdrop-blur-xl border-b border-white/10 print:static"
@@ -656,7 +656,7 @@ export const PublicReportBuilderView: React.FC = () => {
 
         {/* Auth info banner */}
         {authState.authenticated && (
-          <div className="flex items-center gap-2 px-4 py-2 mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-sm text-green-700 dark:text-green-300 print:hidden">
+          <div className="flex items-center gap-2 px-4 py-2 mb-6 bg-c-success/10 border border-c-success/30 rounded-lg text-sm text-c-success print:hidden">
             <Eye className="w-4 h-4" />
             <span>
               {isPl
@@ -702,7 +702,7 @@ export const PublicReportBuilderView: React.FC = () => {
                     id={`section-${section.sectionKey}`}
                   >
                     {/* Section Header */}
-                    <div className="px-6 py-4 border-b border-c-border-subtle/50">
+                    <div className="px-6 py-4 border-b border-c-border-subtle">
                       <h3 className="text-lg font-semibold text-c-text">
                         {section.title}
                       </h3>
@@ -743,7 +743,7 @@ export const PublicReportBuilderView: React.FC = () => {
       {/* ── Footer ── */}
       <footer className="max-w-5xl mx-auto px-6 py-8 print:py-2">
         <div className="border-t border-c-border-subtle pt-6 print:pt-2">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-c-text-secondary">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-c-text-muted">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5">
                 <Calendar className="w-4 h-4" />
@@ -761,7 +761,7 @@ export const PublicReportBuilderView: React.FC = () => {
 
             {data.branding.showConsultifyBranding && (
               <p className="text-xs font-medium tracking-wide">
-                Powered by <span className="text-blue-500">Consultify</span>
+                Powered by <span className="text-c-accent">Consultify</span>
               </p>
             )}
           </div>

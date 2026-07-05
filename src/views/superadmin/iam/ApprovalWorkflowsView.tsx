@@ -348,7 +348,7 @@ const ApprovalWorkflowsView: React.FC = () => {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b border-slate-700">
+      <div className="flex gap-4 border-b border-c-border">
         <button
           onClick={() => setActiveTab('workflows')}
           className={`pb-3 px-1 text-sm font-medium transition-colors ${
@@ -455,7 +455,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="px-2 py-1 bg-slate-700 rounded text-xs">
+                          <span className="px-2 py-1 bg-c-surface-raised rounded text-xs">
                             {workflow.resource_type}
                           </span>
                         </td>
@@ -557,7 +557,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                         <td className="py-3 px-4 text-sm">{request.requester_email}</td>
                         <td className="py-3 px-4">
                           <div>
-                            <span className="px-2 py-1 bg-slate-700 rounded text-xs">
+                            <span className="px-2 py-1 bg-c-surface-raised rounded text-xs">
                               {request.resource_type}
                             </span>
                             <p className="text-xs text-slate-600 dark:text-slate-500 mt-1 truncate max-w-[150px]">
@@ -622,7 +622,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Workflow name"
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm"
                 />
               </div>
               <div>
@@ -633,7 +633,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Workflow description"
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm h-20 resize-none"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm h-20 resize-none"
                 />
               </div>
               <div>
@@ -643,7 +643,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                 <select
                   value={formData.resourceType}
                   onChange={(e) => setFormData({ ...formData, resourceType: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm"
                 >
                   <option value="organization">Organization</option>
                   <option value="user">User</option>
@@ -660,7 +660,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                   value={formData.approvers}
                   onChange={(e) => setFormData({ ...formData, approvers: e.target.value })}
                   placeholder="admin@example.com, manager@example.com"
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm"
                 />
               </div>
             </div>
@@ -675,7 +675,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                     approvers: '',
                   });
                 }}
-                className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg"
+                className="px-4 py-2 text-sm bg-c-surface-raised hover:bg-slate-600 rounded-lg"
               >
                 Cancel
               </button>
@@ -706,7 +706,7 @@ const ApprovalWorkflowsView: React.FC = () => {
             <div className="flex justify-end gap-2 mt-6">
               <button
                 onClick={() => setWorkflowPendingDelete(null)}
-                className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg"
+                className="px-4 py-2 text-sm bg-c-surface-raised hover:bg-slate-600 rounded-lg"
               >
                 Cancel
               </button>

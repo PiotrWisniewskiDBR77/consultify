@@ -149,24 +149,24 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
 
   const colorClasses: Record<string, { bg: string; border: string; text: string }> = {
     purple: {
-      bg: 'bg-primary-50 dark:bg-primary-900/20',
-      border: 'border-primary-500',
-      text: 'text-primary-600 dark:text-primary-400',
+      bg: 'bg-[color-mix(in_srgb,var(--c-tag-3)_12%,transparent)]',
+      border: 'border-c-tag-3',
+      text: 'text-c-tag-3',
     },
     blue: {
-      bg: 'bg-blue-50 dark:bg-blue-900/20',
-      border: 'border-blue-500',
-      text: 'text-blue-600 dark:text-blue-400',
+      bg: 'bg-[color-mix(in_srgb,var(--c-tag-1)_12%,transparent)]',
+      border: 'border-c-tag-1',
+      text: 'text-c-tag-1',
     },
     emerald: {
-      bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-      border: 'border-emerald-500',
-      text: 'text-emerald-600 dark:text-emerald-400',
+      bg: 'bg-[color-mix(in_srgb,var(--c-tag-6)_12%,transparent)]',
+      border: 'border-c-tag-6',
+      text: 'text-c-tag-6',
     },
     amber: {
-      bg: 'bg-amber-50 dark:bg-amber-900/20',
-      border: 'border-amber-500',
-      text: 'text-amber-600 dark:text-amber-400',
+      bg: 'bg-[color-mix(in_srgb,var(--c-tag-9)_12%,transparent)]',
+      border: 'border-c-tag-9',
+      text: 'text-c-tag-9',
     },
   };
 
@@ -174,10 +174,10 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
     <div className="max-w-3xl mx-auto p-8">
       {/* Header */}
       <div className="text-center mb-10">
-        <h1 className="text-2xl font-bold text-navy-900 dark:text-white mb-3">
+        <h1 className="text-2xl font-bold text-c-text mb-3">
           {t('firstRun.goals.title', 'What do you want to achieve today?')}
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
+        <p className="text-c-text-muted max-w-xl mx-auto">
           {t(
             'firstRun.goals.subtitle',
             'Your choice helps us tailor the experience and suggest the best next steps.'
@@ -201,7 +201,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
                                 ${
                                   isSelected
                                     ? `${colors.bg} ${colors.border} shadow-lg`
-                                    : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                                    : 'bg-c-surface-raised border-c-border-subtle hover:border-c-border dark:hover:border-c-border-strong'
                                 }
                             `}
             >
@@ -216,12 +216,12 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
               <div
                 className={`
                                 w-12 h-12 rounded-xl flex items-center justify-center mb-4
-                                ${isSelected ? colors.bg : 'bg-slate-100 dark:bg-navy-900'}
+                                ${isSelected ? colors.bg : 'bg-c-surface-raised dark:bg-c-surface'}
                             `}
               >
                 <Icon
                   size={24}
-                  className={isSelected ? colors.text : 'text-slate-600 dark:text-slate-500'}
+                  className={isSelected ? colors.text : 'text-c-text-secondary dark:text-c-text-muted'}
                 />
               </div>
 
@@ -229,17 +229,17 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
               <h3
                 className={`
                                 font-semibold mb-2
-                                ${isSelected ? 'text-navy-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}
+                                ${isSelected ? 'text-c-text' : 'text-c-text-secondary'}
                             `}
               >
                 {t(`firstRun.goals.${goal.i18nKey}.title`, goal.title)}
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+              <p className="text-sm text-c-text-muted mb-3">
                 {t(`firstRun.goals.${goal.i18nKey}.description`, goal.description)}
               </p>
 
               {/* Time estimate */}
-              <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-500">
+              <div className="flex items-center gap-1.5 text-xs text-c-text-secondary dark:text-c-text-muted">
                 <Clock size={12} />
                 <span>{goal.estimatedTime}</span>
               </div>
@@ -253,7 +253,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
         {showSkip && (
           <button
             onClick={handleSkip}
-            className="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300 transition-colors"
+            className="text-sm text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted transition-colors"
           >
             {t('firstRun.goals.skip', 'Skip for now')}
           </button>
@@ -266,8 +266,8 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
                         flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all
                         ${
                           selectedGoalId
-                            ? 'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-white shadow-lg shadow-primary-900/20'
-                            : 'bg-slate-100 dark:bg-navy-900 text-slate-600 dark:text-slate-500 cursor-not-allowed'
+ ? 'bg-c-text text-c-surface hover:opacity-90 shadow-lg'
+                            : 'bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text-muted cursor-not-allowed'
                         }
                     `}
         >

@@ -227,13 +227,13 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
-            <Shield className="w-6 h-6 text-slate-900 dark:text-white" />
+            <Shield className="w-6 h-6 text-c-text" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+            <h3 className="text-lg font-semibold text-c-text">
               {t('security.devices.title', 'Trusted Devices')}
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t('security.devices.description', 'Devices that can skip 2FA verification')}
             </p>
           </div>
@@ -241,7 +241,7 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
         <div className="flex items-center gap-3">
           <button
             onClick={fetchDevices}
-            className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+            className="p-2 text-c-text-muted hover:text-c-text-secondary rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
           >
             <RefreshCw className="w-5 h-5" />
           </button>
@@ -262,15 +262,15 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
       </div>
 
       {/* Trust Duration Setting */}
-      <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-4">
+      <div className="bg-c-surface-raised rounded-xl p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Settings className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+            <Settings className="w-5 h-5 text-c-text-muted" />
             <div>
-              <p className="font-medium text-slate-900 dark:text-white">
+              <p className="font-medium text-c-text">
                 {t('security.devices.trustDuration', 'Trust Duration')}
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'security.devices.trustDurationDesc',
                   'How long devices stay trusted after verification'
@@ -282,29 +282,29 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
             <button
               onClick={() => setShowDurationDropdown(!showDurationDropdown)}
               disabled={savingDuration}
-              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg hover:border-c-accent dark:hover:border-c-accent transition-colors"
             >
               {savingDuration ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <>
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <span className="text-sm font-medium text-c-text-secondary">
                     {durationOptions.find((o) => o.value === trustDuration)?.label}
                   </span>
-                  <ChevronDown className="w-4 h-4 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+                  <ChevronDown className="w-4 h-4 text-c-text-muted" />
                 </>
               )}
             </button>
             {showDurationDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-lg z-10">
+              <div className="absolute right-0 mt-2 w-48 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg shadow-lg z-10">
                 {durationOptions.map((option) => (
                   <button
                     key={option.value}
                     onClick={() => handleSaveTrustDuration(option.value)}
-                    className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-colors first:rounded-t-lg last:rounded-b-lg ${
+                    className={`w-full px-4 py-2 text-left text-sm hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors first:rounded-t-lg last:rounded-b-lg ${
                       trustDuration === option.value
-                        ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10'
-                        : 'text-slate-700 dark:text-slate-300'
+                        ? 'text-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+                        : 'text-c-text-secondary'
                     }`}
                   >
                     {option.label}
@@ -331,12 +331,12 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
           {devices.map((device) => (
             <div
               key={device.id}
-              className={`bg-white dark:bg-navy-900 rounded-xl border ${
+              className={`bg-c-surface rounded-xl border ${
                 device.isCurrent
                   ? 'border-emerald-200 dark:border-emerald-500/30'
                   : isExpiringSoon(device.expiresAt)
                     ? 'border-amber-200 dark:border-amber-500/30'
-                    : 'border-slate-200 dark:border-navy-700'
+                    : 'border-c-border-subtle dark:border-navy-700'
               } p-4 transition-all hover:shadow-md`}
             >
               <div className="flex items-start justify-between gap-4">
@@ -345,14 +345,14 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
                     className={`p-3 rounded-xl ${
                       device.isCurrent
                         ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
-                        : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
+                        : 'bg-c-surface-raised text-c-text-muted'
                     }`}
                   >
                     {getDeviceIcon(device.deviceType)}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-slate-900 dark:text-white">
+                      <h4 className="font-semibold text-c-text">
                         {device.name}
                       </h4>
                       {device.isCurrent && (
@@ -369,24 +369,24 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
                       )}
                     </div>
                     <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
-                      <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-2 text-c-text-muted">
                         <Globe className="w-4 h-4" />
                         <span>
                           {device.browser} • {device.os}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-2 text-c-text-muted">
                         <MapPin className="w-4 h-4" />
                         <span>{device.location}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-2 text-c-text-muted">
                         <Clock className="w-4 h-4" />
                         <span>
                           {t('security.devices.lastUsed', 'Last used')}:{' '}
                           {formatRelativeTime(device.lastUsed)}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-2 text-c-text-muted">
                         <CheckCircle className="w-4 h-4" />
                         <span>
                           {t('security.devices.expires', 'Expires')}:{' '}

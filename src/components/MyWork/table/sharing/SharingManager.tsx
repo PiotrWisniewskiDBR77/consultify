@@ -188,18 +188,18 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
       <div className="flex items-center gap-2 mb-4">
         <button
           onClick={onClose}
-          className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          className="p-1 rounded-lg hover:bg-c-surface-raised transition-colors"
         >
-          <ChevronLeft size={16} className="text-slate-600" />
+          <ChevronLeft size={16} className="text-c-text-secondary" />
         </button>
-        <Shield size={18} className="text-primary-500" />
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+        <Shield size={18} className="text-c-accent" />
+        <h3 className="text-sm font-semibold text-c-text">
           {isPl ? 'Udostępnianie' : 'Sharing'}
         </h3>
       </div>
 
       {/* Tab bar */}
-      <div className="flex items-center rounded-lg bg-slate-100 dark:bg-navy-800 p-0.5 mb-4">
+      <div className="flex items-center rounded-lg bg-c-surface-raised p-0.5 mb-4">
         {[
           { key: 'views' as const, icon: Globe, en: 'Views', pl: 'Widoki' },
           { key: 'collaborators' as const, icon: Users, en: 'People', pl: 'Osoby' },
@@ -210,8 +210,8 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
             onClick={() => setTab(key)}
             className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] font-medium transition-colors flex-1 justify-center ${
               tab === key
-                ? 'bg-white text-slate-800 shadow-sm dark:bg-navy-700 dark:text-white'
-                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                ? 'bg-c-surface text-c-text shadow-sm bg-c-surface-raised text-c-text'
+                : 'text-c-text-muted hover:text-c-text-muted'
             }`}
           >
             <Icon size={12} />
@@ -225,13 +225,13 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
         <div className="flex-1 overflow-y-auto">
           {sharedViews.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="rounded-2xl bg-slate-100 dark:bg-navy-800 p-4 mb-4">
-                <Globe size={28} className="text-slate-600 dark:text-slate-500" />
+              <div className="rounded-2xl bg-c-surface-raised p-4 mb-4">
+                <Globe size={28} className="text-c-text-muted" />
               </div>
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <p className="text-sm font-medium text-c-text-muted mb-1">
                 {isPl ? 'Brak udostępnionych widoków' : 'No shared views'}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs">
+              <p className="text-xs text-c-text-muted max-w-xs">
                 {isPl
                   ? 'Udostępnij widok z poziomu menu widoku, aby wygenerować publiczny link.'
                   : 'Share a view from the view menu to generate a public link.'}
@@ -242,27 +242,27 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
               {sharedViews.map((view) => (
                 <div
                   key={view.id}
-                  className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-3"
+                  className="flex items-center gap-3 rounded-xl border border-c-border bg-c-surface px-4 py-3"
                 >
-                  <Globe size={14} className="text-primary-500 shrink-0" />
+                  <Globe size={14} className="text-c-accent shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-slate-800 dark:text-white truncate block">
+                    <span className="text-sm font-medium text-c-text truncate block">
                       {view.name}
                     </span>
-                    <span className="text-[10px] text-slate-600 truncate block">
+                    <span className="text-[10px] text-c-text-secondary truncate block">
                       {isPl ? 'Publiczny link' : 'Public link'}
                     </span>
                   </div>
                   <button
                     onClick={() => handleCopyLink(view.id, view.shareToken!)}
-                    className="p-1.5 rounded-lg text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                    className="p-1.5 rounded-lg text-c-accent hover:bg-c-accent-soft transition-colors"
                     title={isPl ? 'Kopiuj link' : 'Copy link'}
                   >
                     {copiedId === view.id ? <Check size={14} /> : <Copy size={14} />}
                   </button>
                   <button
                     onClick={() => handleRevokeShare(view.id)}
-                    className="p-1.5 rounded-lg text-danger-500 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
+                    className="p-1.5 rounded-lg text-c-danger hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] dark:hover:bg-[color-mix(in_srgb,var(--c-danger)_18%,transparent)] transition-colors"
                     title={isPl ? 'Cofnij udostępnianie' : 'Revoke'}
                   >
                     <X size={14} />
@@ -281,7 +281,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
           {!showInvite && (
             <button
               onClick={() => setShowInvite(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary-50 dark:bg-primary-500/10 px-3 py-2 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors mb-4"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-c-accent-soft px-3 py-2 text-xs font-medium text-c-accent hover:bg-c-accent-soft transition-colors mb-4"
             >
               <UserPlus size={12} />
               {isPl ? 'Zaproś osobę' : 'Invite person'}
@@ -290,9 +290,9 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
 
           {/* Invite form */}
           {showInvite && (
-            <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-4 mb-4 space-y-3">
+            <div className="rounded-xl border border-c-border bg-c-surface p-4 mb-4 space-y-3">
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                <label className="block text-xs font-medium text-c-text-muted mb-1">
                   Email
                 </label>
                 <input
@@ -300,17 +300,17 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="user@example.com"
-                  className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                  className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-info"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                <label className="block text-xs font-medium text-c-text-muted mb-1">
                   {isPl ? 'Rola' : 'Role'}
                 </label>
                 <select
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                  className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-info"
                 >
                   {ROLES.filter((r) => r.value !== 'owner').map((r) => (
                     <option key={r.value} value={r.value}>
@@ -323,7 +323,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                 <button
                   onClick={handleInvite}
                   disabled={inviting}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary-500 px-3 py-2 text-xs font-medium text-white hover:bg-primary-600 disabled:opacity-50 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-c-accent px-3 py-2 text-xs font-medium text-c-text hover:bg-c-accent disabled:opacity-50 transition-colors"
                 >
                   {inviting && <Loader2 size={12} className="animate-spin" />}
                   {isPl ? 'Zaproś' : 'Invite'}
@@ -333,7 +333,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                     setShowInvite(false);
                     setInviteEmail('');
                   }}
-                  className="px-3 py-2 text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                  className="px-3 py-2 text-xs font-medium text-c-text-muted hover:text-c-text-muted transition-colors"
                 >
                   {isPl ? 'Anuluj' : 'Cancel'}
                 </button>
@@ -344,13 +344,13 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
           {/* Loading */}
           {loading && (
             <div className="flex items-center justify-center py-8">
-              <Loader2 size={20} className="animate-spin text-slate-600" />
+              <Loader2 size={20} className="animate-spin text-c-text-secondary" />
             </div>
           )}
 
           {/* Collaborators list */}
           {!loading && collaborators.length === 0 && (
-            <div className="text-center py-8 text-xs text-slate-600">
+            <div className="text-center py-8 text-xs text-c-text-secondary">
               {isPl ? 'Brak współpracowników' : 'No collaborators yet'}
             </div>
           )}
@@ -364,21 +364,21 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                 return (
                   <div
                     key={collab.id}
-                    className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-3"
+                    className="flex items-center gap-3 rounded-xl border border-c-border bg-c-surface px-4 py-3"
                   >
                     {/* Avatar placeholder */}
-                    <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
-                      <span className="text-xs font-bold text-primary-600 dark:text-primary-400">
+                    <div className="w-8 h-8 rounded-full bg-c-accent-soft flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-c-accent">
                         {(collab.name ?? collab.email)?.[0]?.toUpperCase() ?? '?'}
                       </span>
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <span className="text-sm font-medium text-slate-800 dark:text-white truncate block">
+                      <span className="text-sm font-medium text-c-text truncate block">
                         {collab.name ?? collab.email}
                       </span>
                       {collab.name && (
-                        <span className="text-[10px] text-slate-600 truncate block">
+                        <span className="text-[10px] text-c-text-secondary truncate block">
                           {collab.email}
                         </span>
                       )}
@@ -393,8 +393,8 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                         disabled={isOwner}
                         className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium transition-colors ${
                           isOwner
-                            ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'
-                            : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700'
+                            ? 'bg-c-warning text-c-warning'
+                            : 'bg-c-surface-raised text-c-text-muted hover:bg-c-surface-raised'
                         }`}
                       >
                         {isPl ? roleLabel?.labelPl : roleLabel?.labelEn}
@@ -407,15 +407,15 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                             className="fixed inset-0 z-40"
                             onClick={() => setRoleMenuOpen(null)}
                           />
-                          <div className="absolute right-0 top-full mt-1 z-50 w-36 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1">
+                          <div className="absolute right-0 top-full mt-1 z-50 w-36 rounded-xl border border-c-border bg-c-surface shadow-xl py-1">
                             {ROLES.filter((r) => r.value !== 'owner').map((r) => (
                               <button
                                 key={r.value}
                                 onClick={() => handleChangeRole(collab.userId, r.value)}
                                 className={`flex items-center gap-2 w-full px-3 py-1.5 text-xs font-medium transition-colors ${
                                   collab.role === r.value
-                                    ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10'
-                                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                                    ? 'text-c-accent bg-c-accent-soft'
+                                    : 'text-c-text-muted hover:bg-c-surface-raised'
                                 }`}
                               >
                                 {collab.role === r.value && <Check size={10} />}
@@ -431,7 +431,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                     {!isOwner && (
                       <button
                         onClick={() => handleRemoveCollaborator(collab.userId)}
-                        className="p-1.5 rounded-lg text-danger-500 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
+                        className="p-1.5 rounded-lg text-c-danger hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] dark:hover:bg-[color-mix(in_srgb,var(--c-danger)_18%,transparent)] transition-colors"
                         title={isPl ? 'Usuń dostęp' : 'Remove access'}
                       >
                         <Trash2 size={14} />
@@ -448,20 +448,20 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
       {/* ── API tab ───────────────────────────────────────────── */}
       {tab === 'api' && (
         <div className="flex-1 overflow-y-auto">
-          <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-4 space-y-4">
+          <div className="rounded-xl border border-c-border bg-c-surface p-4 space-y-4">
             <div className="flex items-center gap-2">
-              <Key size={16} className="text-amber-500" />
-              <h4 className="text-sm font-semibold text-slate-800 dark:text-white">
+              <Key size={16} className="text-c-warning" />
+              <h4 className="text-sm font-semibold text-c-text">
                 {isPl ? 'Dostęp API' : 'API Access'}
               </h4>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+              <label className="block text-xs font-medium text-c-text-muted mb-1">
                 Base ID
               </label>
               <div className="flex items-center gap-2">
-                <code className="flex-1 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 font-mono truncate">
+                <code className="flex-1 rounded-lg border border-c-border bg-c-bg px-3 py-2 text-xs text-c-text-muted font-mono truncate">
                   {baseId}
                 </code>
                 <button
@@ -469,7 +469,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                     navigator.clipboard.writeText(baseId);
                     toast.success(isPl ? 'Skopiowano' : 'Copied');
                   }}
-                  className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                  className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-muted hover:bg-c-surface-raised transition-colors"
                 >
                   <Copy size={14} />
                 </button>
@@ -477,16 +477,16 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+              <label className="block text-xs font-medium text-c-text-muted mb-1">
                 {isPl ? 'Endpoint API' : 'API Endpoint'}
               </label>
-              <code className="block rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 font-mono break-all">
+              <code className="block rounded-lg border border-c-border bg-c-bg px-3 py-2 text-xs text-c-text-muted font-mono break-all">
                 {window.location.origin}/api/table-platform/bases/{baseId}
               </code>
             </div>
 
-            <div className="rounded-lg bg-amber-50 dark:bg-amber-900/10 px-3 py-2">
-              <p className="text-[11px] text-amber-700 dark:text-amber-400">
+            <div className="rounded-lg bg-c-warning px-3 py-2">
+              <p className="text-[11px] text-c-warning">
                 {isPl
                   ? 'Użyj tokena autoryzacyjnego w nagłówku Authorization: Bearer <token> do uwierzytelniania żądań API.'
                   : 'Use your authorization token in the Authorization: Bearer <token> header to authenticate API requests.'}

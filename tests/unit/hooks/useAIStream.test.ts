@@ -432,6 +432,55 @@ describe('useAIStream', () => {
     );
   });
 
+  it('M06 Fala 2 · 2.3: routes a mindmap deliverable event with graph + seedText to onDeliverable', async () => {
+    const mockOnDeliverable = vi.fn();
+
+    const skeletonGraph = {
+      nodes: [
+        { id: 'center', type: 'center', data: { label: 'Transformacja cyfrowa' } },
+        { id: 'branch-1', type: 'branch', data: { label: 'Ludzie' } },
+        { id: 'branch-2', type: 'branch', data: { label: 'Procesy' } },
+      ],
+      edges: [
+        { id: 'e-center-branch-1', source: 'center', target: 'branch-1' },
+        { id: 'e-center-branch-2', source: 'center', target: 'branch-2' },
+      ],
+    };
+
+    vi.mocked(Api.chatWithAIStream).mockImplementation(
+      async (message, history, onChunk, onDone, systemPrompt, context, roleName, language, onThinking) => {
+        onThinking?.({
+          type: 'deliverable',
+          draftId: 'chat-mindmap-1',
+          generationId: 'chat-mindmap-1',
+          kind: 'mindmap',
+          format: 'mindmap',
+          title: 'Transformacja cyfrowa',
+          graph: skeletonGraph,
+          seedText: 'Mapa myśli o transformacji cyfrowej: ludzie, procesy, technologia',
+        });
+        onChunk('Utworzyłem mapę myśli i otworzyłem ją w Pomysłach.');
+        onDone();
+      }
+    );
+
+    const { result } = renderHook(() => useAIStream({ onDeliverable: mockOnDeliverable }));
+
+    await act(async () => {
+      await result.current.startStream('zrób mapę myśli o transformacji', []);
+    });
+
+    expect(mockOnDeliverable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draftId: 'chat-mindmap-1',
+        kind: 'mindmap',
+        title: 'Transformacja cyfrowa',
+        graph: skeletonGraph,
+        seedText: 'Mapa myśli o transformacji cyfrowej: ludzie, procesy, technologia',
+      })
+    );
+  });
+
   it('SPEC_01 Tryb A: ignores a deliverable event without a draft id', async () => {
     const mockOnDeliverable = vi.fn();
 

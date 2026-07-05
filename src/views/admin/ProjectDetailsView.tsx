@@ -148,7 +148,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
           </div>
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-extrabold text-white tracking-tight">{project.name}</h1>
+              <h1 className="text-3xl font-extrabold text-c-text tracking-tight">{project.name}</h1>
               <span
                 className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border shadow-sm ${
                   project.status === 'active'
@@ -190,7 +190,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
             className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-semibold text-sm ${
               isEditing
                 ? 'bg-c-surface text-navy-900 shadow-xl'
-                : 'bg-c-surface/5 border border-white/10 text-white hover:bg-c-surface-raised/40'
+                : 'bg-c-surface/5 border border-white/10 text-c-text hover:bg-c-surface-raised/40'
             }`}
           >
             {isEditing ? <X size={18} /> : <Edit size={18} />}
@@ -219,7 +219,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
             onClick={() => setActiveTab(tab.id as any)}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${
               activeTab === tab.id
-                ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/30'
+                ? 'bg-c-text text-c-bg shadow-lg shadow-primary-900/30'
                 : 'text-c-text-muted hover:text-navy-900 dark:hover:text-slate-200 hover:bg-c-surface-raised dark:hover:bg-c-surface/5'
             }`}
           >
@@ -238,7 +238,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
               {isEditing ? (
                 <form
                   onSubmit={handleUpdateProject}
-                  className="bg-navy-900 border border-white/10 rounded-xl p-8 space-y-6 shadow-xl"
+                  className="bg-c-surface border border-white/10 rounded-xl p-8 space-y-6 shadow-xl"
                 >
                   <div className="space-y-4">
                     <div>
@@ -248,7 +248,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       <input
                         value={editForm.name}
                         onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                        className="w-full bg-navy-950 border border-white/10 rounded-xl p-4 text-white focus:border-primary-500 outline-none"
+                        className="w-full bg-c-text text-c-bg border border-white/10 rounded-xl p-4 focus:border-primary-500 outline-none"
                       />
                     </div>
                     <div>
@@ -259,7 +259,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                         value={editForm.description}
                         onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                         rows={4}
-                        className="w-full bg-navy-950 border border-white/10 rounded-xl p-4 text-white focus:border-primary-500 outline-none resize-none"
+                        className="w-full bg-c-text text-c-bg border border-white/10 rounded-xl p-4 focus:border-primary-500 outline-none resize-none"
                       />
                     </div>
                     <div>
@@ -269,7 +269,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                       <input
                         value={editForm.goal}
                         onChange={(e) => setEditForm({ ...editForm, goal: e.target.value })}
-                        className="w-full bg-navy-950 border border-white/10 rounded-xl p-4 text-white focus:border-primary-500 outline-none"
+                        className="w-full bg-c-text text-c-bg border border-white/10 rounded-xl p-4 focus:border-primary-500 outline-none"
                       />
                     </div>
                     <div>
@@ -284,7 +284,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                             status: e.target.value as Project['status'],
                           })
                         }
-                        className="w-full bg-navy-950 border border-white/10 rounded-xl p-4 text-white focus:border-primary-500 outline-none appearance-none"
+                        className="w-full bg-c-text text-c-bg border border-white/10 rounded-xl p-4 focus:border-primary-500 outline-none appearance-none"
                       >
                         <option value="active">Active</option>
                         <option value="archived">Archived</option>
@@ -459,7 +459,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
         {activeTab === 'initiatives' && (
           <div className="space-y-4 animate-in slide-in-from-bottom-2 duration-300">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-white">Project Initiatives</h3>
+              <h3 className="text-xl font-bold text-c-text">Project Initiatives</h3>
               <button className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-green-900/20">
                 <Plus size={16} /> New Initiative
               </button>
@@ -467,17 +467,17 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {project.initiatives?.length === 0 ? (
-                <div className="col-span-full py-12 text-center bg-navy-900/50 border border-dashed border-white/10 rounded-xl text-c-text-muted">
+                <div className="col-span-full py-12 text-center bg-c-surface/50 border border-dashed border-white/10 rounded-xl text-c-text-muted">
                   No initiatives defined for this project.
                 </div>
               ) : (
                 project.initiatives?.map((item: any) => (
                   <div
                     key={item.id}
-                    className="bg-navy-900 border border-white/10 p-6 rounded-xl hover:border-primary-500/30 transition-all flex justify-between items-start group"
+                    className="bg-c-surface border border-white/10 p-6 rounded-xl hover:border-primary-500/30 transition-all flex justify-between items-start group"
                   >
                     <div>
-                      <h4 className="font-bold text-white mb-1 group-hover:text-primary-400 transition-colors">
+                      <h4 className="font-bold text-c-text mb-1 group-hover:text-primary-400 transition-colors">
                         {item.title}
                       </h4>
                       <p className="text-xs text-c-text-muted mb-4">
@@ -506,7 +506,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
         {activeTab === 'assessments' && (
           <div className="space-y-4 animate-in slide-in-from-bottom-2 duration-300">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-white">Project Assessments</h3>
+              <h3 className="text-xl font-bold text-c-text">Project Assessments</h3>
               <button className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-xl text-sm font-bold shadow-lg shadow-primary-900/20">
                 <Plus size={16} /> Run New Assessment
               </button>
@@ -514,14 +514,14 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {project.assessments?.length === 0 ? (
-                <div className="col-span-full py-12 text-center bg-navy-900/50 border border-dashed border-white/10 rounded-xl text-c-text-muted">
+                <div className="col-span-full py-12 text-center bg-c-surface/50 border border-dashed border-white/10 rounded-xl text-c-text-muted">
                   No multi-framework assessments found.
                 </div>
               ) : (
                 project.assessments?.map((item: any) => (
                   <div
                     key={item.id}
-                    className="bg-navy-900 border border-white/10 p-6 rounded-xl hover:bg-navy-800 transition-all group"
+                    className="bg-c-surface border border-white/10 p-6 rounded-xl hover:bg-c-surface-raised transition-all group"
                   >
                     <div className="flex justify-between items-center mb-4">
                       <div className="p-2 bg-amber-500/10 text-amber-400 rounded-lg">
@@ -537,14 +537,14 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                         {item.status}
                       </span>
                     </div>
-                    <h4 className="font-bold text-white mb-2 group-hover:text-amber-400 transition-colors">
+                    <h4 className="font-bold text-c-text mb-2 group-hover:text-amber-400 transition-colors">
                       {item.framework} Diagnostic
                     </h4>
                     <div className="flex justify-between items-center mt-6">
                       <div className="text-[10px] text-c-text-muted uppercase tracking-widest font-bold">
                         Maturity Score
                       </div>
-                      <div className="text-xl font-black text-white">
+                      <div className="text-xl font-black text-c-text">
                         {item.result_score || '--'}/5
                       </div>
                     </div>
@@ -559,8 +559,8 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
         {activeTab === 'documents' && (
           <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-300">
             {/* Upload Panel */}
-            <div className="bg-navy-900 border border-white/10 p-8 rounded-xl shadow-xl">
-              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+            <div className="bg-c-surface border border-white/10 p-8 rounded-xl shadow-xl">
+              <h3 className="text-xl font-bold text-c-text mb-6 flex items-center gap-2">
                 <Upload size={22} className="text-blue-500" />
                 Project Document Ingestion
               </h3>
@@ -572,7 +572,7 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
                     onChange={(e) => setUploadFile(e.target.files ? e.target.files[0] : null)}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
-                  <div className="bg-navy-950 border-2 border-dashed border-white/10 rounded-xl p-4 text-center transition-all hover:bg-c-surface-raised/20 hover:border-blue-500 group">
+                  <div className="bg-c-bg border-2 border-dashed border-white/10 rounded-xl p-4 text-center transition-all hover:bg-c-surface-raised/20 hover:border-blue-500 group">
                     {uploadFile ? (
                       <span className="text-blue-400 font-bold flex justify-center items-center gap-2">
                         <FileText size={18} /> {uploadFile.name}
@@ -602,21 +602,21 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
             {/* Documents List */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {project.documents?.length === 0 ? (
-                <div className="col-span-full py-12 text-center text-c-text-muted bg-navy-900/30 border border-dashed border-white/10 rounded-xl">
+                <div className="col-span-full py-12 text-center text-c-text-muted bg-c-surface/30 border border-dashed border-white/10 rounded-xl">
                   No documents ingested for this project.
                 </div>
               ) : (
                 project.documents?.map((item: any) => (
                   <div
                     key={item.id}
-                    className="bg-navy-900 border border-white/10 p-4 rounded-xl hover:border-blue-500/30 transition-all flex justify-between items-center group"
+                    className="bg-c-surface border border-white/10 p-4 rounded-xl hover:border-blue-500/30 transition-all flex justify-between items-center group"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-navy-950 rounded-xl">
+                      <div className="p-2.5 bg-c-bg rounded-xl">
                         <FileText className="text-blue-400" size={22} />
                       </div>
                       <div>
-                        <div className="text-sm font-bold text-white truncate max-w-[150px]">
+                        <div className="text-sm font-bold text-c-text truncate max-w-[150px]">
                           {item.filename}
                         </div>
                         <div className="text-[10px] text-c-text-muted">

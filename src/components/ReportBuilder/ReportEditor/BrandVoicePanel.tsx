@@ -225,7 +225,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
+        <Loader2 className="h-6 w-6 animate-spin text-c-accent" />
       </div>
     );
   }
@@ -234,12 +234,12 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start gap-3">
-        <div className="rounded-xl bg-primary-500/10 p-2.5 dark:bg-primary-500/20">
-          <MessageSquare className="h-5 w-5 text-primary-500" />
+        <div className="rounded-xl bg-c-accent-soft0 p-2.5">
+          <MessageSquare className="h-5 w-5 text-c-accent" />
         </div>
         <div>
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white">{t.title}</h3>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{t.subtitle}</p>
+          <h3 className="text-base font-semibold text-c-text">{t.title}</h3>
+          <p className="mt-0.5 text-sm text-c-text-secondary">{t.subtitle}</p>
         </div>
       </div>
 
@@ -258,19 +258,19 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
       )}
 
       {/* Register Selector */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/50">
-        <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-white">
+      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
+        <label className="mb-1 block text-sm font-medium text-c-text">
           {t.register}
         </label>
-        <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">{t.registerDesc}</p>
+        <p className="mb-3 text-xs text-c-text-secondary">{t.registerDesc}</p>
         <div className="space-y-2">
           {REGISTER_OPTIONS.map((opt) => (
             <label
               key={opt}
               className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
                 register === opt
-                  ? 'border-primary-500 bg-primary-50 dark:border-primary-400 dark:bg-primary-900/20'
-                  : 'border-gray-200 hover:border-gray-300 dark:border-gray-600 dark:hover:border-gray-500'
+                  ? 'border-c-accent bg-c-accent-soft'
+                  : 'border-c-border-subtle hover:border-c-border'
               }`}
             >
               <input
@@ -279,27 +279,27 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
                 value={opt}
                 checked={register === opt}
                 onChange={() => setRegister(opt)}
-                className="accent-primary-500"
+                className="accent-c-accent"
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">{t.registers[opt]}</span>
+              <span className="text-sm text-c-text">{t.registers[opt]}</span>
             </label>
           ))}
         </div>
       </div>
 
       {/* Vocabulary */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/50">
+      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-white">
+            <label className="mb-1 block text-sm font-medium text-c-text">
               {t.preferredWords}
             </label>
-            <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">{t.preferredDesc}</p>
+            <p className="mb-2 text-xs text-c-text-secondary">{t.preferredDesc}</p>
             <textarea
               value={preferredWords}
               onChange={(e) => setPreferredWords(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
+              className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder:text-c-text-muted focus:border-c-accent focus:outline-none focus:ring-1 focus:ring-c-focus"
               placeholder={
                 isPl
                   ? 'np. transformacja, optymalizacja, strategia'
@@ -308,15 +308,15 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-white">
+            <label className="mb-1 block text-sm font-medium text-c-text">
               {t.forbiddenWords}
             </label>
-            <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">{t.forbiddenDesc}</p>
+            <p className="mb-2 text-xs text-c-text-secondary">{t.forbiddenDesc}</p>
             <textarea
               value={forbiddenWords}
               onChange={(e) => setForbiddenWords(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
+              className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder:text-c-text-muted focus:border-c-accent focus:outline-none focus:ring-1 focus:ring-c-focus"
               placeholder={
                 isPl
                   ? 'np. synergia, holistyczny, game-changer'
@@ -328,8 +328,8 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
       </div>
 
       {/* Hedging Rules */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/50">
-        <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">{t.hedgingTitle}</h4>
+      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
+        <h4 className="mb-3 text-sm font-medium text-c-text">{t.hedgingTitle}</h4>
         <div className="space-y-3">
           <ToggleRow
             label={t.requireEvidence}
@@ -345,7 +345,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
           />
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-sm text-gray-700 dark:text-gray-300">{t.maxHedging}</span>
+              <span className="text-sm text-c-text">{t.maxHedging}</span>
             </div>
             <input
               type="number"
@@ -353,17 +353,17 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
               max={20}
               value={maxHedging}
               onChange={(e) => setMaxHedging(Math.max(0, parseInt(e.target.value) || 0))}
-              className="w-20 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-center text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              className="w-20 rounded-lg border border-c-border bg-c-surface px-3 py-1.5 text-center text-sm text-c-text focus:border-c-accent focus:outline-none focus:ring-1 focus:ring-c-focus"
             />
           </div>
         </div>
       </div>
 
       {/* Compliance Mode */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/50">
+      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
         <div className="mb-3 flex items-center gap-2">
           <Shield className="h-4 w-4 text-amber-500" />
-          <h4 className="text-sm font-medium text-gray-900 dark:text-white">{t.complianceTitle}</h4>
+          <h4 className="text-sm font-medium text-c-text">{t.complianceTitle}</h4>
         </div>
         <div className="space-y-3">
           <ToggleRow
@@ -401,7 +401,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
       <button
         onClick={handleSave}
         disabled={saving}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-50 dark:bg-primary-500 dark:hover:bg-primary-600"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-c-accent-soft px-4 py-2.5 text-sm font-medium text-c-text transition-colors hover:bg-c-accent-soft disabled:opacity-50"
       >
         {saving ? (
           <>
@@ -433,8 +433,8 @@ interface ToggleRowProps {
 const ToggleRow: React.FC<ToggleRowProps> = ({ label, description, checked, onChange }) => (
   <div className="flex items-center justify-between gap-4">
     <div className="min-w-0">
-      <span className="block text-sm text-gray-700 dark:text-gray-300">{label}</span>
-      <span className="block text-xs text-gray-500 dark:text-gray-400">{description}</span>
+      <span className="block text-sm text-c-text">{label}</span>
+      <span className="block text-xs text-c-text-secondary">{description}</span>
     </div>
     <button
       type="button"
@@ -442,11 +442,11 @@ const ToggleRow: React.FC<ToggleRowProps> = ({ label, description, checked, onCh
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full transition-colors ${
-        checked ? 'bg-navy-900' : 'bg-gray-300 dark:bg-gray-600'
+        checked ? 'bg-c-surface' : 'bg-c-border'
       }`}
     >
       <span
-        className={`pointer-events-none inline-block h-4 w-4 translate-y-0.5 transform rounded-full bg-white shadow transition-transform ${
+        className={`pointer-events-none inline-block h-4 w-4 translate-y-0.5 transform rounded-full bg-c-surface shadow transition-transform ${
           checked ? 'translate-x-4' : 'translate-x-0.5'
         }`}
       />

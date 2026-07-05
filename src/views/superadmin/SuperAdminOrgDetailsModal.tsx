@@ -205,7 +205,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
           <input
             disabled
             value={editingOrg.name}
-            className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-slate-500 dark:text-slate-400"
+            className="w-full px-3 py-2 bg-c-bg border border-white/10 rounded text-slate-500 dark:text-slate-400"
           />
           <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">ID: {editingOrg.id}</p>
         </div>
@@ -216,7 +216,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
           <input
             disabled
             value={formatDate(org.created_at || org.createdAt)}
-            className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-slate-500 dark:text-slate-400"
+            className="w-full px-3 py-2 bg-c-bg border border-white/10 rounded text-slate-500 dark:text-slate-400"
           />
         </div>
       </div>
@@ -231,7 +231,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
             onChange={(e) =>
               setEditingOrg({ ...editingOrg, plan: e.target.value as Organization['plan'] })
             }
-            className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
+            className="w-full px-3 py-2 bg-c-text text-c-bg border border-white/10 rounded focus:border-blue-500 outline-none"
           >
             <option value="free">Free</option>
             <option value="pro">Pro</option>
@@ -248,7 +248,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
             onChange={(e) =>
               setEditingOrg({ ...editingOrg, status: e.target.value as Organization['status'] })
             }
-            className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
+            className="w-full px-3 py-2 bg-c-text text-c-bg border border-white/10 rounded focus:border-blue-500 outline-none"
           >
             <option value="active">Active</option>
             <option value="trial">Trial</option>
@@ -270,7 +270,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
             onChange={(e) =>
               setEditingOrg({ ...editingOrg, discount_percent: parseInt(e.target.value) || 0 })
             }
-            className="w-32 px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-blue-500 outline-none"
+            className="w-32 px-3 py-2 bg-c-text text-c-bg border border-white/10 rounded focus:border-blue-500 outline-none"
           />
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Discount applied to all future invoices.
@@ -320,14 +320,14 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
     return (
       <div className="space-y-6">
         {/* Subscription Card */}
-        <div className="bg-navy-950 rounded-lg p-4 border border-white/5">
+        <div className="bg-c-bg rounded-lg p-4 border border-white/5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center text-green-400">
                 <CreditCard size={20} />
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-white">Current Subscription</h4>
+                <h4 className="text-sm font-semibold text-c-text">Current Subscription</h4>
                 <p className="text-xs text-slate-600 dark:text-slate-500">
                   {formatText(billing.plan_name, org.plan?.toUpperCase() || '-')} Plan
                 </p>
@@ -340,17 +340,17 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
             </span>
           </div>
           <div className="grid grid-cols-3 gap-4 text-sm">
-            <div className="bg-navy-900 rounded p-3">
+            <div className="bg-c-surface rounded p-3">
               <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Monthly Cost</p>
-              <p className="font-medium text-white">{formatMoney(billing.price_monthly)}</p>
+              <p className="font-medium text-c-text">{formatMoney(billing.price_monthly)}</p>
             </div>
-            <div className="bg-navy-900 rounded p-3">
+            <div className="bg-c-surface rounded p-3">
               <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Billing Email</p>
-              <p className="font-medium text-white truncate">{formatText(billing.billing_email)}</p>
+              <p className="font-medium text-c-text truncate">{formatText(billing.billing_email)}</p>
             </div>
-            <div className="bg-navy-900 rounded p-3">
+            <div className="bg-c-surface rounded p-3">
               <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Next Invoice</p>
-              <p className="font-medium text-white">
+              <p className="font-medium text-c-text">
                 {typeof billing.current_period_end === 'string'
                   ? formatDate(billing.current_period_end)
                   : '-'}
@@ -361,19 +361,19 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
 
         {/* Usage Stats */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-navy-950 rounded-lg p-4 border border-white/5">
-            <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+          <div className="bg-c-bg rounded-lg p-4 border border-white/5">
+            <h4 className="text-sm font-semibold text-c-text mb-4 flex items-center gap-2">
               <BarChart size={16} className="text-blue-400" /> Token Usage
             </h4>
             <div className="space-y-3">
               <div>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-slate-600 dark:text-slate-500">Used</span>
-                  <span className="text-white font-medium">
+                  <span className="text-c-text font-medium">
                     {formatInteger(usage?.tokens_used)}
                   </span>
                 </div>
-                <div className="w-full bg-navy-900 h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-c-surface h-1.5 rounded-full overflow-hidden">
                   <div
                     className="bg-blue-500 h-full rounded-full"
                     style={{
@@ -388,14 +388,14 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
               </div>
             </div>
           </div>
-          <div className="bg-navy-950 rounded-lg p-4 border border-white/5">
-            <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+          <div className="bg-c-bg rounded-lg p-4 border border-white/5">
+            <h4 className="text-sm font-semibold text-c-text mb-4 flex items-center gap-2">
               <CreditCard size={16} className="text-primary-400" /> Overage
             </h4>
             <div className="space-y-2">
               <div className="flex justify-between text-sm border-b border-white/5 pb-2">
                 <span className="text-slate-600 dark:text-slate-500">Tokens Overage</span>
-                <span className="text-white">{formatInteger(usage?.tokens_overage)}</span>
+                <span className="text-c-text">{formatInteger(usage?.tokens_overage)}</span>
               </div>
               <div className="flex justify-between text-sm pt-1">
                 <span className="text-slate-600 dark:text-slate-500">Estimated Cost</span>
@@ -408,9 +408,9 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
         </div>
 
         {/* Invoices List */}
-        <div className="bg-navy-950 rounded-lg border border-white/5 overflow-hidden">
-          <div className="px-5 py-3 border-b border-white/5 bg-navy-900/50 flex justify-between items-center">
-            <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+        <div className="bg-c-bg rounded-lg border border-white/5 overflow-hidden">
+          <div className="px-5 py-3 border-b border-white/5 bg-c-surface/50 flex justify-between items-center">
+            <h4 className="text-sm font-semibold text-c-text flex items-center gap-2">
               <FileText size={16} className="text-slate-600 dark:text-slate-500" /> Invoice History
             </h4>
           </div>
@@ -429,7 +429,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
                   invoices.map((inv) => (
                     <tr key={inv.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
                       <td className="p-3 text-slate-600">{formatDate(inv.created_at)}</td>
-                      <td className="p-3 text-white font-medium">{formatMoney(inv.amount_due)}</td>
+                      <td className="p-3 text-c-text font-medium">{formatMoney(inv.amount_due)}</td>
                       <td className="p-3">
                         <span
                           className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${inv.status === 'paid' ? 'bg-green-500/20 text-green-400' : 'bg-danger-500/20 text-danger-400'}`}
@@ -470,15 +470,15 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="bg-navy-900 border border-white/10 rounded-xl w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh]">
+      <div className="bg-c-surface border border-white/10 rounded-xl w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-6 border-b border-white/10 flex items-center justify-between bg-navy-950 rounded-t-xl">
+        <div className="p-6 border-b border-white/10 flex items-center justify-between bg-c-bg rounded-t-xl">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
               <Building size={24} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">{org.name}</h2>
+              <h2 className="text-xl font-bold text-c-text">{org.name}</h2>
               <p className="text-sm text-slate-600 dark:text-slate-500">
                 Organization Settings & Billing
               </p>
@@ -493,7 +493,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-white/10 px-6 bg-navy-900">
+        <div className="border-b border-white/10 px-6 bg-c-surface">
           <div className="flex items-center gap-8">
             {[
               { id: 'general', label: 'General Info', icon: <Building size={16} /> },
@@ -505,8 +505,8 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
                 onClick={() => setActiveTab(tab.id as 'general' | 'billing' | 'users')}
                 className={`py-4 text-sm font-medium flex items-center gap-2 border-b-2 transition-colors ${
                   activeTab === tab.id
-                    ? 'border-blue-500 text-white'
-                    : 'border-transparent text-slate-600 dark:text-slate-500 hover:text-slate-300 hover:border-slate-700'
+                    ? 'border-blue-500 text-c-text'
+                    : 'border-transparent text-slate-600 dark:text-slate-500 hover:text-slate-300 hover:border-c-border'
                 }`}
               >
                 {tab.icon} {tab.label}
@@ -516,7 +516,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto flex-1 bg-navy-900">
+        <div className="p-6 overflow-y-auto flex-1 bg-c-surface">
           {activeTab === 'general' && renderGeneralTab()}
           {activeTab === 'billing' && renderBillingTab()}
           {activeTab === 'users' && (

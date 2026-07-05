@@ -172,18 +172,18 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Palette size={28} className="text-primary-500" />
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
+            <Palette size={28} className="text-c-accent" />
             {t('settings.appearance.visual.title', 'Visual Customization')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t('settings.appearance.visual.description', 'Personalize how Consultify looks')}
           </p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={resetToDefaults}
-            className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-800 rounded-lg transition-colors"
           >
             <RefreshCw size={16} />
             {t('settings.appearance.visual.reset', 'Reset')}
@@ -200,8 +200,8 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
       </div>
 
       {/* Theme Selection */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text">
           {t('settings.appearance.theme', 'Theme')}
         </h3>
 
@@ -218,19 +218,19 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
                 onClick={() => setSettings({ ...settings, theme: theme.id as any })}
                 className={`p-4 rounded-xl border-2 text-center transition-all ${
                   settings.theme === theme.id
-                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
+                    ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+                    : 'border-c-border-subtle dark:border-navy-700 hover:border-c-accent'
                 }`}
               >
                 <Icon
                   size={24}
                   className={
                     settings.theme === theme.id
-                      ? 'text-primary-600 mx-auto'
-                      : 'text-slate-600 dark:text-slate-500 mx-auto'
+                      ? 'text-c-accent mx-auto'
+                      : 'text-c-text-secondary mx-auto'
                   }
                 />
-                <p className="font-medium text-slate-900 dark:text-white mt-2">{theme.label}</p>
+                <p className="font-medium text-c-text mt-2">{theme.label}</p>
               </button>
             );
           })}
@@ -238,8 +238,8 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
       </div>
 
       {/* Accent Color */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text">
           {t('settings.appearance.accentColor', 'Accent Color')}
         </h3>
 
@@ -250,7 +250,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
               onClick={() => setSettings({ ...settings, accentColor: color.color })}
               className={`w-10 h-10 rounded-full transition-all ${
                 settings.accentColor === color.color
-                  ? 'ring-2 ring-offset-2 ring-slate-400 dark:ring-offset-navy-900'
+                  ? 'ring-2 ring-offset-2 ring-c-border dark:ring-offset-navy-900'
                   : 'hover:scale-110'
               }`}
               style={{ backgroundColor: color.color }}
@@ -268,30 +268,30 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
           </div>
         </div>
 
-        <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
+        <div className="flex items-center gap-3 p-3 bg-c-surface-raised rounded-lg">
           <div className="w-8 h-8 rounded" style={{ backgroundColor: settings.accentColor }} />
-          <span className="font-mono text-sm text-slate-600 dark:text-slate-400">
+          <span className="font-mono text-sm text-c-text-secondary">
             {settings.accentColor}
           </span>
         </div>
       </div>
 
       {/* Typography */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Type size={20} className="text-blue-500" />
           {t('settings.accessibility.typographyTitle', 'Typography')}
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">
               {t('settings.accessibility.fontFamilyTitle', 'Font Family')}
             </label>
             <select
               value={settings.fontFamily}
               onChange={(e) => setSettings({ ...settings, fontFamily: e.target.value })}
-              className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
             >
               {fontFamilies.map((font) => (
                 <option key={font.id} value={font.value}>
@@ -302,7 +302,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">
               {t('settings.accessibility.fontSizeTitle', 'Font Size')}
             </label>
             <div className="flex gap-2">
@@ -313,7 +313,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
                   className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium capitalize transition-all ${
                     settings.fontSize === size
                       ? 'bg-blue-600 text-white'
-                      : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                      : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-700'
                   }`}
                 >
                   {t(`settings.accessibility.fontSize.${size}`, size)}
@@ -324,16 +324,16 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
         </div>
 
         <div
-          className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg"
+          className="p-4 bg-c-surface-raised rounded-lg"
           style={{ fontFamily: settings.fontFamily }}
         >
-          <p className="text-slate-900 dark:text-white">
+          <p className="text-c-text">
             {t(
               'settings.appearance.previewSentence',
               'The quick brown fox jumps over the lazy dog.'
             )}
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             {t(
               'settings.appearance.visual.previewCharacters',
               'ABCDEFGHIJKLMNOPQRSTUVWXYZ - 0123456789'
@@ -343,8 +343,8 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
       </div>
 
       {/* Layout Density */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Layout size={20} className="text-green-500" />
           {t('settings.appearance.visual.displayDensity', 'Display Density')}
         </h3>
@@ -378,7 +378,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
                 className={`p-4 rounded-xl border-2 text-center transition-all ${
                   settings.density === density.id
                     ? 'border-green-500 bg-green-50 dark:bg-green-500/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-green-300'
+                    : 'border-c-border-subtle dark:border-navy-700 hover:border-green-300'
                 }`}
               >
                 <Icon
@@ -386,11 +386,11 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
                   className={
                     settings.density === density.id
                       ? 'text-green-600 mx-auto'
-                      : 'text-slate-600 dark:text-slate-500 mx-auto'
+                      : 'text-c-text-secondary mx-auto'
                   }
                 />
-                <p className="font-medium text-slate-900 dark:text-white mt-2">{density.label}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{density.desc}</p>
+                <p className="font-medium text-c-text mt-2">{density.label}</p>
+                <p className="text-xs text-c-text-muted">{density.desc}</p>
               </button>
             );
           })}
@@ -398,8 +398,8 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
       </div>
 
       {/* Additional Options */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text">
           {t('settings.appearance.visual.additionalOptions', 'Additional Options')}
         </h3>
 
@@ -407,10 +407,10 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
           {/* Sidebar Width */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              <label className="text-sm font-medium text-c-text-secondary">
                 {t('settings.appearance.visual.sidebarWidth', 'Sidebar Width')}
               </label>
-              <span className="text-sm text-primary-600">{settings.sidebarWidth}px</span>
+              <span className="text-sm text-c-accent">{settings.sidebarWidth}px</span>
             </div>
             <input
               type="range"
@@ -418,13 +418,13 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
               max="400"
               value={settings.sidebarWidth}
               onChange={(e) => setSettings({ ...settings, sidebarWidth: parseInt(e.target.value) })}
-              className="w-full h-2 bg-slate-200 dark:bg-navy-800 rounded-lg appearance-none cursor-pointer accent-primary-600"
+              className="w-full h-2 bg-c-surface-raised rounded-lg appearance-none cursor-pointer accent-c-accent"
             />
           </div>
 
           {/* Border Radius */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">
               {t('settings.appearance.visual.borderRadius', 'Border Radius')}
             </label>
             <div className="flex gap-2">
@@ -435,7 +435,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
                   className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium capitalize transition-all ${
                     settings.borderRadius === radius
                       ? 'bg-navy-900 text-white'
-                      : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                      : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-700'
                   }`}
                 >
                   {t(`settings.appearance.visual.radius.${radius}`, radius)}
@@ -445,12 +445,12 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
           </div>
 
           {/* Animations Toggle */}
-          <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
             <div>
-              <p className="font-medium text-slate-900 dark:text-white">
+              <p className="font-medium text-c-text">
                 {t('settings.appearance.visual.enableAnimations', 'Enable Animations')}
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.appearance.visual.enableAnimationsDesc',
                   'Smooth transitions and effects'
@@ -460,11 +460,11 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
             <button
               onClick={() => setSettings({ ...settings, animations: !settings.animations })}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                settings.animations ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
+                settings.animations ? 'bg-navy-900' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+                className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                   settings.animations ? 'left-7' : 'left-1'
                 }`}
               />
@@ -474,15 +474,15 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
       </div>
 
       {/* Custom CSS */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Code size={20} className="text-amber-500" />
             {t('settings.appearance.visual.customCss', 'Custom CSS')}
           </h3>
           <button
             onClick={() => setShowCustomCSS(!showCustomCSS)}
-            className="text-sm text-primary-600 hover:underline"
+            className="text-sm text-c-accent hover:underline"
           >
             {showCustomCSS
               ? t('settings.appearance.visual.hideCss', 'Hide')
@@ -492,7 +492,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
 
         {showCustomCSS && (
           <>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t(
                 'settings.appearance.visual.customCssDesc',
                 'Advanced: Add custom CSS rules (use with caution)'
@@ -505,7 +505,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
                 'settings.appearance.visual.customCssPlaceholder',
                 '/* Your custom CSS here */\n.my-class {\n  color: red;\n}'
               )}
-              className="w-full h-48 px-4 py-3 font-mono text-sm bg-slate-950 text-green-400 rounded-lg border-0 resize-none"
+              className="w-full h-48 px-4 py-3 font-mono text-sm bg-c-surface text-green-400 rounded-lg border-0 resize-none"
             />
           </>
         )}

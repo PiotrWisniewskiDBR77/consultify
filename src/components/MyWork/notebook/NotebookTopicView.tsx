@@ -91,26 +91,26 @@ export const NotebookTopicView: React.FC<NotebookTopicViewProps> = ({
     n,
     label,
   }) => (
-    <div className="flex items-center gap-1.5 rounded-lg bg-slate-50 dark:bg-white/[0.03] px-2.5 py-1.5">
-      <span className="text-slate-400">{icon}</span>
-      <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{n}</span>
-      <span className="text-[11px] text-slate-500 dark:text-slate-400">{label}</span>
+    <div className="flex items-center gap-1.5 rounded-lg bg-c-surface-raised px-2.5 py-1.5">
+      <span className="text-c-text-muted">{icon}</span>
+      <span className="text-sm font-semibold text-c-text">{n}</span>
+      <span className="text-[11px] text-c-text-muted">{label}</span>
     </div>
   );
 
   return (
     <div
-      className={`w-80 shrink-0 rounded-2xl border border-slate-200/70 dark:border-white/[0.06] overflow-hidden bg-white dark:bg-navy-950 flex flex-col ${className}`}
+      className={`w-80 shrink-0 rounded-2xl border border-c-border-subtle overflow-hidden bg-c-bg flex flex-col ${className}`}
     >
-      <div className="flex items-center justify-between px-3 py-3 border-b border-slate-200/60 dark:border-white/[0.06]">
-        <div className="flex items-center gap-2 min-w-0 text-sm font-semibold text-slate-800 dark:text-slate-200">
-          <Hash size={16} className="text-slate-500 shrink-0" />
+      <div className="flex items-center justify-between px-3 py-3 border-b border-c-border-subtle">
+        <div className="flex items-center gap-2 min-w-0 text-sm font-semibold text-c-text">
+          <Hash size={16} className="text-c-text-muted shrink-0" />
           <span className="truncate">{agg?.topic?.name || (isPl ? 'Temat' : 'Topic')}</span>
         </div>
         {onClose && (
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+            className="p-1 rounded-lg text-c-text-muted hover:bg-c-surface-raised"
             aria-label={isPl ? 'Zamknij' : 'Close'}
           >
             <X size={14} />
@@ -120,17 +120,17 @@ export const NotebookTopicView: React.FC<NotebookTopicViewProps> = ({
 
       {loading && !agg ? (
         <div className="flex flex-col items-center gap-2 py-12 text-center">
-          <Loader2 size={20} className="animate-spin text-slate-500" />
-          <span className="text-xs text-slate-500 dark:text-slate-400">
+          <Loader2 size={20} className="animate-spin text-c-text-muted" />
+          <span className="text-xs text-c-text-muted">
             {isPl ? 'Wczytywanie tematu…' : 'Loading topic…'}
           </span>
         </div>
       ) : error ? (
         <div className="flex flex-col items-center gap-3 py-12 text-center px-4">
-          <span className="text-xs text-slate-500 dark:text-slate-400">{error}</span>
+          <span className="text-xs text-c-text-muted">{error}</span>
           <button
             onClick={load}
-            className="px-3 py-1.5 rounded-lg bg-slate-500/10 hover:bg-slate-500/20 text-slate-700 dark:text-slate-300 text-xs font-medium"
+            className="px-3 py-1.5 rounded-lg bg-c-surface-raised hover:bg-c-border-subtle text-c-text-secondary text-xs font-medium"
           >
             {isPl ? 'Spróbuj ponownie' : 'Retry'}
           </button>
@@ -138,7 +138,7 @@ export const NotebookTopicView: React.FC<NotebookTopicViewProps> = ({
       ) : agg ? (
         <div className="flex-1 overflow-y-auto">
           {/* Stats + last active */}
-          <div className="px-3 py-3 border-b border-slate-200/60 dark:border-white/[0.06] space-y-2">
+          <div className="px-3 py-3 border-b border-c-border-subtle space-y-2">
             <div className="flex flex-wrap gap-2">
               <Stat
                 icon={<StickyNote size={14} />}
@@ -156,7 +156,7 @@ export const NotebookTopicView: React.FC<NotebookTopicViewProps> = ({
                 label={isPl ? 'inicjatywy' : 'initiatives'}
               />
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+            <p className="text-[11px] text-c-text-muted">
               {isPl ? 'Ostatnio aktywny: ' : 'Last active: '}
               {formatDate(agg.lastActiveAt, isPl)}
             </p>
@@ -171,19 +171,19 @@ export const NotebookTopicView: React.FC<NotebookTopicViewProps> = ({
                 <button
                   key={n.id}
                   onClick={() => onOpenNote?.(n.id)}
-                  className="w-full text-left rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/70 dark:bg-navy-900/50 px-2.5 py-2 hover:border-slate-300 transition-colors"
+                  className="w-full text-left rounded-lg border border-c-border bg-c-surface-raised px-2.5 py-2 hover:border-c-border-strong transition-colors"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                    <span className="text-xs font-medium text-c-text truncate">
                       {n.title || (isPl ? 'Bez tytułu' : 'Untitled')}
                     </span>
                     {n.source === 'ai' && (
-                      <span className="text-[11px] uppercase tracking-wide text-slate-500 shrink-0">
+                      <span className="text-[11px] uppercase tracking-wide text-c-text-muted shrink-0">
                         AI
                       </span>
                     )}
                   </div>
-                  <span className="text-[11px] text-slate-400">{formatDate(n.updatedAt, isPl)}</span>
+                  <span className="text-[11px] text-c-text-muted">{formatDate(n.updatedAt, isPl)}</span>
                 </button>
               ))
             )}
@@ -220,27 +220,27 @@ const Section: React.FC<{ title: string; count: number; children: React.ReactNod
   count,
   children,
 }) => (
-  <div className="px-3 py-3 border-b border-slate-200/40 dark:border-white/[0.04] last:border-0 space-y-1.5">
+  <div className="px-3 py-3 border-b border-c-border-subtle last:border-0 space-y-1.5">
     <div className="flex items-center gap-2">
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
         {title}
       </span>
-      <span className="text-[10px] text-slate-400">{count}</span>
+      <span className="text-[10px] text-c-text-muted">{count}</span>
     </div>
     <div className="space-y-1.5">{children}</div>
   </div>
 );
 
 const Empty: React.FC<{ text: string }> = ({ text }) => (
-  <p className="text-[11px] text-slate-400 dark:text-slate-500 italic">{text}</p>
+  <p className="text-[11px] text-c-text-muted italic">{text}</p>
 );
 
 const ArtifactRow: React.FC<{ artifact: AggregatedArtifact }> = ({ artifact }) => (
-  <div className="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/70 dark:bg-navy-900/50 px-2.5 py-1.5">
-    <span className="text-[11px] uppercase tracking-wide text-slate-400 shrink-0">
+  <div className="flex items-center gap-2 rounded-lg border border-c-border bg-c-surface-raised px-2.5 py-1.5">
+    <span className="text-[11px] uppercase tracking-wide text-c-text-muted shrink-0">
       {artifact.type}
     </span>
-    <span className="text-xs text-slate-700 dark:text-slate-300 truncate">{artifact.id}</span>
+    <span className="text-xs text-c-text-secondary truncate">{artifact.id}</span>
   </div>
 );
 

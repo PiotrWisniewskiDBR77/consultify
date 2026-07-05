@@ -79,7 +79,7 @@ const FRAMEWORKS: FrameworkDef[] = [
     descEn: 'Identify and analyze key stakeholders',
     descPl: 'Identyfikacja i analiza kluczowych interesariuszy',
     icon: Users,
-    color: 'text-primary-600',
+    color: 'text-c-accent',
     columns: [
       { key: 'label', header: 'Stakeholder', type: 'text', visible: true, width: 200 },
       { key: 'role', header: 'Role', type: 'text', visible: true, width: 160 },
@@ -400,24 +400,24 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="w-[560px] max-h-[80vh] overflow-auto rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+      <div className="w-[560px] max-h-[80vh] overflow-auto rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-primary-500" />
-            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+            <Sparkles size={16} className="text-c-accent" />
+            <h3 className="text-sm font-bold text-c-text">
               {isPl ? 'Generator frameworków' : 'Framework Generator'}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="p-1 rounded-lg hover:bg-c-surface-raised"
           >
-            <X size={16} className="text-slate-600" />
+            <X size={16} className="text-c-text-secondary" />
           </button>
         </div>
 
         <div className="px-5 py-4">
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
+          <p className="text-[11px] text-c-text-muted mb-4">
             {isPl
               ? 'Wybierz framework konsultingowy. Tabela zostanie wypełniona odpowiednimi kolumnami i przykładowymi danymi.'
               : 'Choose a consulting framework. The table will be populated with appropriate columns and sample data.'}
@@ -433,19 +433,19 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
                   onClick={() => setSelected(fw.id)}
                   className={`flex items-start gap-3 p-3 rounded-xl border text-left transition-all ${
                     isActive
-                      ? 'border-primary-500/50 bg-primary-500/5 ring-1 ring-primary-500/20'
-                      : 'border-slate-200/60 dark:border-navy-700/60 hover:bg-slate-50 dark:hover:bg-navy-800'
+                      ? 'border-c-accent bg-c-accent-soft ring-1 ring-c-focus'
+                      : 'border-c-border-subtle hover:bg-c-surface-raised'
                   }`}
                 >
                   <Icon size={20} className={`${fw.color} flex-shrink-0 mt-0.5`} />
                   <div>
-                    <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    <div className="text-xs font-bold text-c-text">
                       {isPl ? fw.namePl : fw.nameEn}
                     </div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    <div className="text-[10px] text-c-text-muted mt-0.5">
                       {isPl ? fw.descPl : fw.descEn}
                     </div>
-                    <div className="text-[9px] text-slate-600 mt-1">
+                    <div className="text-[9px] text-c-text-secondary mt-1">
                       {fw.columns.length} {isPl ? 'kolumn' : 'columns'} · {fw.sampleRows.length}{' '}
                       {isPl ? 'wierszy' : 'rows'}
                     </div>
@@ -456,18 +456,18 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
           </div>
 
           {selectedFw && (
-            <div className="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-navy-800/50 border border-slate-200/40 dark:border-navy-700/40">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+            <div className="mt-4 p-3 rounded-xl bg-c-surface-raised border border-c-border-subtle">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted mb-2">
                 {isPl ? 'Podgląd kolumn' : 'Column preview'}
               </div>
               <div className="flex flex-wrap gap-1">
                 {selectedFw.columns.map((col) => (
                   <span
                     key={col.key}
-                    className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-navy-700/60 text-slate-700 dark:text-slate-300"
+                    className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-c-surface border border-c-border-subtle text-c-text"
                   >
                     {col.header}
-                    <span className="text-slate-600 ml-1">({col.type})</span>
+                    <span className="text-c-text-secondary ml-1">({col.type})</span>
                   </span>
                 ))}
               </div>
@@ -475,17 +475,17 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60">
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-c-border-subtle">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
           <button
             onClick={handleApply}
             disabled={!selected || applying}
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors disabled:opacity-40 flex items-center gap-1.5"
+            className="px-4 py-2 rounded-xl text-xs font-semibold bg-c-text text-c-bg hover:bg-c-text-secondary transition-colors disabled:opacity-40 flex items-center gap-1.5"
           >
             {applying ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
             {isPl ? 'Zastosuj framework' : 'Apply framework'}

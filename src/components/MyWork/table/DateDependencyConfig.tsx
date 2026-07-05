@@ -130,7 +130,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-4">
-        <Loader2 size={16} className="animate-spin text-slate-600" />
+        <Loader2 size={16} className="animate-spin text-c-text-secondary" />
       </div>
     );
   }
@@ -141,14 +141,14 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
     <div className="space-y-3">
       {/* Start date */}
       <div>
-        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-0.5">
+        <label className="block text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-0.5">
           {isPl ? 'Pole daty początkowej' : 'Start date field'}
         </label>
         <select
           value={config?.startDateFieldId ?? ''}
           onChange={(e) => updateConfig({ startDateFieldId: e.target.value })}
           disabled={locked}
-          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
+          className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
         >
           <option value="">—</option>
           {dateFields.map((f) => (
@@ -161,14 +161,14 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
 
       {/* End date */}
       <div>
-        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-0.5">
+        <label className="block text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-0.5">
           {isPl ? 'Pole daty końcowej' : 'End date field'}
         </label>
         <select
           value={config?.endDateFieldId ?? ''}
           onChange={(e) => updateConfig({ endDateFieldId: e.target.value })}
           disabled={locked}
-          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
+          className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
         >
           <option value="">—</option>
           {dateFields.map((f) => (
@@ -181,14 +181,14 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
 
       {/* Duration (optional) */}
       <div>
-        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-0.5">
+        <label className="block text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-0.5">
           {isPl ? 'Pole czasu trwania (opcjonalnie)' : 'Duration field (optional)'}
         </label>
         <select
           value={config?.durationFieldId ?? ''}
           onChange={(e) => updateConfig({ durationFieldId: e.target.value || undefined })}
           disabled={locked}
-          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
+          className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
         >
           <option value="">—</option>
           {numberFields.map((f) => (
@@ -201,14 +201,14 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
 
       {/* Predecessor (optional) */}
       <div>
-        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-0.5">
+        <label className="block text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-0.5">
           {isPl ? 'Pole poprzednika (opcjonalnie)' : 'Predecessor field (optional)'}
         </label>
         <select
           value={config?.predecessorFieldId ?? ''}
           onChange={(e) => updateConfig({ predecessorFieldId: e.target.value || undefined })}
           disabled={locked}
-          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
+          className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
         >
           <option value="">—</option>
           {linkedRecordFields.map((f) => (
@@ -221,7 +221,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
 
       {/* Default dependency type */}
       <div>
-        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-0.5">
+        <label className="block text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-0.5">
           {isPl ? 'Domyślny typ zależności' : 'Default dependency type'}
         </label>
         <div className="flex flex-wrap gap-1">
@@ -233,8 +233,8 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
               disabled={locked}
               className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${
                 config?.defaultDependencyType === value
-                  ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 ring-1 ring-primary-500/30'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700'
+                  ? 'bg-c-accent-soft text-c-accent ring-1 ring-c-focus'
+                  : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-border-subtle'
               } disabled:opacity-50`}
             >
               {isPl ? labelPl : labelEn}
@@ -245,7 +245,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
 
       {/* Default lag days */}
       <div>
-        <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-0.5">
+        <label className="block text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-0.5">
           {isPl ? 'Domyślne opóźnienie (dni)' : 'Default lag days'}
         </label>
         <input
@@ -253,7 +253,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
           value={config?.defaultLagDays ?? 0}
           onChange={(e) => updateConfig({ defaultLagDays: Number(e.target.value) || 0 })}
           disabled={locked}
-          className="w-20 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2.5 py-1.5 text-[11px] text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
+          className="w-20 rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
         />
       </div>
 
@@ -267,8 +267,8 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
             disabled={locked}
             className="sr-only peer"
           />
-          <div className="w-9 h-5 rounded-full bg-slate-200 dark:bg-navy-700 peer-checked:bg-navy-900 peer-disabled:opacity-50 peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all" />
-          <span className="ml-2 text-[11px] font-medium text-slate-600 dark:text-slate-300">
+          <div className="w-9 h-5 rounded-full bg-c-border-subtle peer-checked:bg-c-surface peer-disabled:opacity-50 peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-c-surface after:rounded-full after:h-4 after:w-4 after:transition-all" />
+          <span className="ml-2 text-[11px] font-medium text-c-text-secondary">
             {isPl ? 'Pomijaj weekendy' : 'Skip weekends'}
           </span>
         </label>
@@ -289,7 +289,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
           <button
             onClick={handleSave}
             disabled={saving || !hasValidConfig}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors disabled:opacity-40"
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold bg-c-text text-c-bg hover:bg-c-text-secondary transition-colors disabled:opacity-40"
           >
             {saving ? <Loader2 size={10} className="animate-spin" /> : null}
             {isPl ? 'Zapisz' : 'Save'}
@@ -298,7 +298,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
         <button
           onClick={handleRecalculate}
           disabled={recalculating || !hasValidConfig || locked}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 transition-colors disabled:opacity-40"
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold bg-c-text text-c-bg hover:bg-c-text-secondary transition-colors disabled:opacity-40"
         >
           {recalculating ? <Loader2 size={10} className="animate-spin" /> : <Calendar size={10} />}
           {isPl ? 'Przelicz daty' : 'Recalculate'}

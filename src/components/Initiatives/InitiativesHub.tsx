@@ -529,7 +529,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     }
   }, [refreshTrigger, fetchData]);
 
-  // F4.1 — globalny sygnał z useInitiativeRefreshStore (bumped przez każdą mutację z initiativeWriteTruth)
+  // F4.1 — global signal from useInitiativeRefreshStore (bumped by every mutation from initiativeWriteTruth)
   const sharedRefreshVersion = useInitiativeRefreshStore((s) => s.version);
   useEffect(() => {
     if (sharedRefreshVersion > 0) {
@@ -603,21 +603,21 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         icon: <BarChart3 size={16} />,
       },
       {
-        // USPOJNIENIE E1/E2 — obserwowalność łańcucha (lineage + funnel)
+        // UNIFICATION E1/E2 — chain observability (lineage + funnel)
         id: 'observability' as ModuleTab,
-        label: t('initiatives.tabs.observability', 'Obserwowalność'),
+        label: t('initiatives.tabs.observability', 'Observability'),
         icon: <GitBranch size={16} />,
       },
       {
-        // F2 — skrzynka kandydatów (AI sugeruje inicjatywy z rozpoznania)
+        // F2 — candidates inbox (AI suggests initiatives from discovery)
         id: 'candidates' as ModuleTab,
-        label: t('initiatives.tabs.candidates', 'Kandydaci'),
+        label: t('initiatives.tabs.candidates', 'Candidates'),
         icon: <Sparkles size={16} />,
       },
       {
-        // F4 — zdrowie portfela (MECE / luki / balans / duplikaty)
+        // F4 — portfolio health (MECE / gaps / balance / duplicates)
         id: 'portfolioHealth' as ModuleTab,
-        label: t('initiatives.tabs.portfolioHealth', 'Zdrowie portfela'),
+        label: t('initiatives.tabs.portfolioHealth', 'Portfolio Health'),
         icon: <Activity size={16} />,
       },
     ],
@@ -885,7 +885,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         );
 
         if (!initiative?.id) {
-          toast.error(t('initiatives.toast.notFound', 'Nie znaleziono inicjatywy'));
+          toast.error(t('initiatives.toast.notFound', 'Initiative not found'));
           return;
         }
 
@@ -908,7 +908,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         toast.error(
           e?.response?.data?.error ||
             e?.message ||
-            t('initiatives.toast.openFailed', 'Nie udało się otworzyć inicjatywy')
+            t('initiatives.toast.openFailed', 'Failed to open initiative')
         );
       } finally {
         // Clear only deep-link params (preserve others if any)
@@ -982,7 +982,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             document.id === initiativeId ? { ...document, status: newStatus as any } : document
           )
         );
-        toast.success(t('initiatives.toast.statusUpdated', 'Status zaktualizowany'));
+        toast.success(t('initiatives.toast.statusUpdated', 'Status updated'));
         return;
       }
       try {
@@ -994,7 +994,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           toast.error(
             t(
               'initiatives.toast.statusNotAllowed',
-              'Nie masz uprawnień lub bramka nie jest dostępna na tym etapie.'
+              'You do not have permission or the gate is not available at this stage.'
             ),
             { duration: 5000 }
           );
@@ -1005,7 +1005,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           toast.error(
             t(
               'initiatives.toast.gateBlockedHub',
-              'Nie można przejść dalej — brakuje elementów blokujących:\n• {{items}}',
+              'Cannot proceed — blocking items are missing:\n• {{items}}',
               { items: list || t('common.missing', 'Missing required items') }
             ),
             { duration: 6500 }
@@ -1044,12 +1044,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               : document
           )
         );
-        toast.success(t('initiatives.toast.statusUpdated', 'Status zaktualizowany'));
+        toast.success(t('initiatives.toast.statusUpdated', 'Status updated'));
         fetchData(true);
       } catch (error: any) {
         toast.error(
           error?.response?.data?.error ||
-            t('initiatives.toast.statusUpdateFailed', 'Nie udało się zaktualizować statusu')
+            t('initiatives.toast.statusUpdateFailed', 'Failed to update status')
         );
       }
     },
@@ -1079,7 +1079,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           toast.error(
             t(
               'initiatives.toast.downgradeBlocked',
-              'Obniżenie poziomu jest zablokowane. Można jedynie podwyższyć poziom inicjatywy.'
+              'Downgrading the level is blocked. You can only upgrade an initiative level.'
             )
           );
           return;
@@ -1130,7 +1130,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           )
         );
       } catch (error: any) {
-        toast.error(t('initiatives.toast.updateFailed', 'Nie udało się zaktualizować'));
+        toast.error(t('initiatives.toast.updateFailed', 'Failed to update'));
       }
     },
     [isPilotParticipant, setOpenDocuments, t]
@@ -1245,8 +1245,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       const name = String(initiative.name || initiative.title || '').trim();
       const shouldProceed = window.confirm(
         t('initiatives.confirmDelete', {
-          name: name || t('initiatives.thisInitiative', 'tę inicjatywę'),
-          defaultValue: 'Trwale usunąć „{{name}}"? Tej operacji nie można cofnąć.',
+          name: name || t('initiatives.thisInitiative', 'this initiative'),
+          defaultValue: 'Permanently delete "{{name}}"? This action cannot be undone.',
         })
       );
       if (!shouldProceed) return;
@@ -1331,7 +1331,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     if (showBulkModal) setShowBulkModal(false);
   }, [isPilotParticipant, showBulkModal, showInitiativeWizard, showNewModal]);
 
-  // F5 — portfolio-level "Zrób materiał": POST /initiatives/portfolio/materialize
+  // F5 — portfolio-level "Make material": POST /initiatives/portfolio/materialize
   // and download the returned blob (deck/report/table). Best-effort UX with toasts.
   const [isMaterializing, setIsMaterializing] = useState(false);
   const handleMaterializePortfolio = useCallback(
@@ -1339,7 +1339,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       if (isMaterializing) return;
       setIsMaterializing(true);
       const toastId = toast.loading(
-        t('initiatives.materialize.working', 'Generuję materiał z portfela…')
+        t('initiatives.materialize.working', 'Generating material from the portfolio…')
       );
       try {
         const res = await fetch(`${API_URL}/initiatives/portfolio/materialize`, {
@@ -1369,10 +1369,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        toast.success(t('initiatives.materialize.done', 'Materiał gotowy'), { id: toastId });
+        toast.success(t('initiatives.materialize.done', 'Material ready'), { id: toastId });
       } catch (e: any) {
         toast.error(
-          e?.message || t('initiatives.materialize.failed', 'Nie udało się wygenerować materiału'),
+          e?.message || t('initiatives.materialize.failed', 'Failed to generate material'),
           { id: toastId }
         );
       } finally {
@@ -1392,8 +1392,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         return;
       }
       try {
-        // F2→F1 anty-dublet: jeśli accept utworzył inicjatywę serwerowo (i wypełnił
-        // przez generator), NIE twórz drugiej — nawiguj do zwróconego initiativeId.
+        // F2→F1 anti-duplicate: if accept created an initiative server-side (and filled it
+        // via the generator), do NOT create a second one — navigate to the returned initiativeId.
         let createdId: string | null;
         let truth: { initiative?: unknown } = {};
         if (payload.initiativeId) {
@@ -1734,8 +1734,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               : 'Summarize this initiative in 5 bullets and propose 3 next steps.'
           )
         }
-        // B1 (deliverables): intencja dokumentowa łapana przez intercept czatu;
-        // sourceRefs inicjatywy płyną z workspaceContext (openChatWithContext).
+        // B1 (deliverables): document intent captured by the chat intercept;
+        // the initiative's sourceRefs flow from workspaceContext (openChatWithContext).
         onMakeDocument={() =>
           openAiChat(
             item,
@@ -1751,10 +1751,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       <InitiativePreviewV3Footer
         initiative={mapToPreviewModel(item)}
         tasksCount={Array.isArray((item as any).tasks) ? (item as any).tasks.length : undefined}
-        // UWAGA #15 (TOP): ujawnij CTA „Otwórz" z board/preview — wcześniej
-        // onOpenFull nie był podawany, więc przycisku w ogóle nie było i pełny
-        // widok inicjatywy (InitiativeDocumentView) był nieosiągalny z board-preview.
-        // Wpinamy kanoniczną ścieżkę otwarcia dokumentu (ta sama, której używa
+        // NOTE #15 (TOP): expose the "Open" CTA from board/preview — previously
+        // onOpenFull was not passed, so the button did not exist at all and the full
+        // initiative view (InitiativeDocumentView) was unreachable from board-preview.
+        // We wire in the canonical document-open path (the same one used by
         // deep-link ?open=<id>&mode=doc).
         onOpenFull={() => handleOpenInitiativeDocument(item)}
         onOpenChat={(prompt) => openAiChat(item, prompt)}
@@ -2262,7 +2262,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           type="button"
           onClick={() => void handleMaterializePortfolio('deck')}
           disabled={isMaterializing}
-          className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           title={
             i18n.language?.startsWith('pl')
               ? 'Zrób materiał z portfela (prezentacja)'
@@ -2274,13 +2274,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           ) : (
             <Sparkles size={13} />
           )}
-          {t('initiatives.materialize.cta', 'Zrób materiał')}
+          {t('initiatives.materialize.cta', 'Make material')}
         </button>
       )}
       <button
         type="button"
         onClick={() => navigate(ROUTES.ROI)}
-        className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors"
+        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors"
         title={i18n.language?.startsWith('pl') ? 'Widok ROI i realizacji wartości' : 'ROI & Value Realization'}
       >
         <TrendingUp size={13} />
@@ -2386,7 +2386,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // Canon §15.3 Formula 2 — MULTI-SELECT bulk action bar.
   // When ≥1 row is selected in table view, Menu 3 becomes a bulk bar:
   // "N selected · Clear" + framed action buttons (real where wired, disabled
-  // "Wkrótce (backend)" where the endpoint doesn't exist yet — never omitted).
+  // "Coming soon (backend)" where the endpoint doesn't exist yet — never omitted).
   const isBulkMode =
     viewMode === 'table' &&
     !activeDocumentId &&
@@ -2458,7 +2458,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               toast.error(
                 t(
                   'initiatives.bulk.archiveIneligible',
-                  'Tylko zakończone/anulowane można archiwizować'
+                  'Only done/cancelled initiatives can be archived'
                 )
               );
               return;
@@ -2474,15 +2474,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           <Archive className="h-3.5 w-3.5" />
           {t('common.archive', 'Archive')}
         </button>
-        {/* AI: Analizuj zaznaczenie — contextual, retained */}
+        {/* AI: Analyze selection — contextual, retained */}
         <button
           type="button"
           onClick={() => setShowBulkModal(true)}
           className={MENU_3_ACTION_NEUTRAL}
-          title={t('portfolio.ai.analyzeSelection', 'AI: Analizuj zaznaczenie')}
+          title={t('portfolio.ai.analyzeSelection', 'AI: Analyze selection')}
         >
           <Sparkles className="h-3.5 w-3.5" />
-          {t('portfolio.ai.analyzeSelection', 'AI: Analizuj zaznaczenie')}
+          {t('portfolio.ai.analyzeSelection', 'AI: Analyze selection')}
         </button>
         {/* Delete — danger, no backend endpoint (DP-5: hidden unless stub flag on) */}
         {showBulkStubActions && (

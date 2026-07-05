@@ -45,7 +45,7 @@ const GOVERNANCE_DOT_CLASS: Record<string, string> = {
   PASS_WITH_P2: 'bg-amber-500',
   BLOCKED_P1: 'bg-orange-500',
   BLOCKED_P0: 'bg-danger-500',
-  INCONCLUSIVE: 'bg-slate-400',
+  INCONCLUSIVE: 'bg-c-text-muted',
 };
 
 type ConfidentialityLevel = 'public' | 'internal' | 'confidential';
@@ -149,7 +149,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
       label: t('presentations.builder.topBar.governance', 'Governance'),
       onClick: onGovernance,
       dot: governanceVerdict
-        ? GOVERNANCE_DOT_CLASS[governanceVerdict] || 'bg-slate-400'
+        ? GOVERNANCE_DOT_CLASS[governanceVerdict] || 'bg-c-text-muted'
         : undefined,
     },
     onAnalytics && {
@@ -213,7 +213,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
       </div>
 
       {/* Undo / Redo */}
-      <div className="flex items-center gap-1 border-r border-slate-200 dark:border-navy-700 pr-3 mr-1">
+      <div className="flex items-center gap-1 border-r border-c-border-subtle pr-3 mr-1">
         <button
           onClick={onUndo}
           disabled={!canUndo}
@@ -243,7 +243,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
       <button
         onClick={onTheme}
         data-testid="deck-theme-btn"
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-c-text-secondary hover:bg-c-surface-raised"
       >
         <Palette size={14} />
         <span className="hidden md:inline">{t('presentations.builder.topBar.theme', 'Theme')}</span>
@@ -254,7 +254,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
         <div className="relative" ref={moreRef}>
           <button
             onClick={() => setMoreOpen((v) => !v)}
-            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm text-c-text-secondary hover:bg-c-surface-raised"
             title={t('presentations.builder.topBar.more', 'More')}
             aria-label={t('presentations.builder.topBar.more', 'More')}
             aria-haspopup="menu"
@@ -264,14 +264,14 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
             {governanceVerdict && (
               <span
                 aria-hidden="true"
-                className={`w-1.5 h-1.5 rounded-full ${GOVERNANCE_DOT_CLASS[governanceVerdict] || 'bg-slate-400'}`}
+                className={`w-1.5 h-1.5 rounded-full ${GOVERNANCE_DOT_CLASS[governanceVerdict] || 'bg-c-text-muted'}`}
               />
             )}
           </button>
           {moreOpen && (
             <div
               role="menu"
-              className="absolute top-full right-0 mt-1 min-w-[12rem] bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-xl p-1 z-50"
+              className="absolute top-full right-0 mt-1 min-w-[12rem] bg-c-surface border border-c-border-subtle rounded-lg shadow-xl p-1 z-50"
             >
               {overflowItems.map((item) => (
                 <button
@@ -281,7 +281,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
                     setMoreOpen(false);
                     item.onClick();
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700"
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-c-text hover:bg-c-surface-raised"
                 >
                   {item.icon}
                   <span className="flex-1 text-left">{item.label}</span>
@@ -298,7 +298,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
       <button
         onClick={onShare}
         data-testid="deck-share-btn"
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-c-text-secondary hover:bg-c-surface-raised"
       >
         <Share2 size={14} />
         <span className="hidden md:inline">{t('presentations.builder.topBar.share', 'Share')}</span>
@@ -321,7 +321,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
       <button
         onClick={onPresent}
         data-testid="deck-present-btn"
-        className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800"
+        className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium bg-c-surface text-c-text hover:bg-c-surface-raised"
       >
         <Monitor size={14} />
         <span>{t('presentations.builder.topBar.present', 'Present')}</span>

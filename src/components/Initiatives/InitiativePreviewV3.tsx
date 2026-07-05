@@ -4,6 +4,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import type { TFunction } from 'i18next';
+
 import {
   type ActionRow,
   type DetailsAction,
@@ -15,6 +17,7 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { statusChipTone } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { ROUTES } from '@/routes/routeConfig';
 import { type ArtifactConversion, ConclusionsApi } from '@/services/api/conclusions.api';
 import { type InitiativeEconomicsLink, InitiativeApi } from '@/services/api/initiatives.api';
@@ -49,12 +52,58 @@ const formatDate = (value: unknown): string => {
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
+/** Humanize an unknown enum key (never surface a raw UPPER_SNAKE key). */
+const humanizeKey = (raw: string): string => {
+  const spaced = raw.trim().replace(/[_-]+/g, ' ').trim().toLowerCase();
+  return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1) : '';
+};
+
+/**
+ * Localized initiative status label — canon §7.3: no raw enum keys in preview.
+ * Tone stays owned by statusChipTone(); this only supplies the text.
+ */
+const initiativeStatusLabel = (t: TFunction, raw: string): string => {
+  const key = raw.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  const map: Record<string, string> = {
+    draft: t('preview.statuses.draft', 'Draft'),
+    pending_review: t('initiatives.status.pendingReview', 'Pending review'),
+    review: t('preview.statuses.review', 'In review'),
+    promoted: t('initiatives.status.promoted', 'Promoted'),
+    planning: t('initiatives.status.planning', 'Planning'),
+    approved: t('preview.statuses.approved', 'Approved'),
+    scheduled: t('initiatives.status.scheduled', 'Scheduled'),
+    executing: t('initiatives.status.executing', 'Executing'),
+    blocked: t('initiatives.status.blocked', 'Blocked'),
+    done: t('initiatives.status.done', 'Done'),
+    tracking: t('initiatives.status.tracking', 'Tracking'),
+    cancelled: t('initiatives.status.cancelled', 'Cancelled'),
+    archived: t('initiatives.status.archived', 'Archived'),
+  };
+  return map[key] ?? humanizeKey(raw);
+};
+
+/** Localized initiative priority label. */
+const initiativePriorityLabel = (t: TFunction, raw: string): string => {
+  const key = raw.trim().toLowerCase();
+  const map: Record<string, string> = {
+    critical: t('initiatives.priorityLevels.critical', 'Critical'),
+    high: t('initiatives.priorityLevels.high', 'High'),
+    medium: t('initiatives.priorityLevels.medium', 'Medium'),
+    low: t('initiatives.priorityLevels.low', 'Low'),
+    p1: t('initiatives.priorityLevels.critical', 'Critical'),
+    p2: t('initiatives.priorityLevels.high', 'High'),
+    p3: t('initiatives.priorityLevels.medium', 'Medium'),
+    p4: t('initiatives.priorityLevels.low', 'Low'),
+  };
+  return map[key] ?? humanizeKey(raw);
+};
+
 export const InitiativePreviewV3Body: React.FC<{
   initiative: InitiativePreviewV3Model;
   detailsExpanded?: boolean;
   onToggleDetailsExpanded?: () => void;
   onSummarize?: () => Promise<void> | void;
-  /** B1 (deliverables): generuje dokument ugruntowany w tej inicjatywie (czat). */
+  /** B1 (deliverables): generates a document grounded in this initiative (chat). */
   onMakeDocument?: () => Promise<void> | void;
 }> = ({ initiative, detailsExpanded, onToggleDetailsExpanded, onSummarize, onMakeDocument }) => {
   const { i18n, t } = useTranslation();
@@ -108,30 +157,36 @@ export const InitiativePreviewV3Body: React.FC<{
 
   const metaPills = useMemo((): MetaPill[] => {
     const pillClass = 'bg-c-surface-raised text-c-text-secondary';
+    // Canon §4.1: status carries a semantic tone (dot); label is localized —
+    // never the raw UPPER_SNAKE enum. Other meta stay neutral.
+    const statusTone = statusChipTone(status) as MetaPill['tone'];
     const pills: MetaPill[] = [
       { label: t('initiatives.initiative2'), className: pillClass },
-      { label: status.replace(/_/g, ' '), className: pillClass },
+      { label: initiativeStatusLabel(t, status), tone: statusTone },
     ];
     if (progress != null) {
       pills.push({
-        label: `${t('preview.progress', 'Progress')}: ${progress}%`,
+        label: t('preview.progress', 'Progress'),
+        value: `${progress}%`,
         className: pillClass,
       });
     }
     if (axis) {
       pills.push({
-        label: `${t('initiatives.axis3')}: ${axis}`,
+        label: t('initiatives.axis3'),
+        value: axis,
         className: pillClass,
       });
     }
     if (priority) {
       pills.push({
-        label: `${t('initiatives.priority4')}: ${priority}`,
+        label: t('initiatives.priority4'),
+        value: initiativePriorityLabel(t, priority),
         className: pillClass,
       });
     }
     return pills;
-  }, [axis, isPolish, priority, progress, status, t]);
+  }, [axis, priority, progress, status, t]);
 
   const detailsCustomActions = useMemo((): DetailsAction[] => {
     const title = String(initiative.name || initiative.title || '').trim();
@@ -315,7 +370,7 @@ function getLinkageTypeLabel(
 }
 
 /**
- * Inline "Powiązane modele finansowe / Linked finance models" list.
+ * Inline "Linked finance models" list.
  * Reads the M16-written economics linkages for this initiative (org-scoped on the
  * server) and renders name (finance model ref) + type + status, with an action to
  * open the model in /economics. Renders nothing when there are no linkages so the

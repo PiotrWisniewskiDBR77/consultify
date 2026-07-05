@@ -8,7 +8,7 @@
  *
  * Shape intentionally matches the CONCLUSION_LAYER_STANDARD variant W2:
  *   input  -> scored pillars + audience/core-message context
- *   output -> { comparisons[], moves[] } with rationale/tradeOff/rejectedVariant
+ *   output -> { summary{verdict,tradeoffs,expectedEffect}, threads[], moves[], initiatives[], outputCandidates[] } (W2)
  */
 
 import type { NarrativeEngineData } from '@/store/useToolStore';
@@ -80,10 +80,35 @@ ${seqLines}
 Rules:
 ${rules.map((r) => `- ${r}`).join('\n')}
 
+W2 STRUCTURE (mandatory):
+1. "summary.verdict" — answer-first, 1-2 sentences: which storyline carries the core message and what must be proven first.
+2. "summary.executiveSummary" — 3-4 sentences: restates the verdict, then the why, anchored in the scored pillars and the delivery sequence above (cite ids).
+3. "summary.tradeoffs" — >= 1 at recommendation level: which pillar leads AT THE COST of which; the canonical rejected alternative is "say everything -> the audience remembers nothing".
+4. "threads" (2-4) — how the pillars connect into a persuasive arc, each with an answer-first "insight" and a "recommendation" that takes a side.
+5. "moves" (3-5) — each a delivery DECISION (open/build/prove/cta/reframe) with its trade-off and rejected variant folded into "rationale", plus firstStep, linked to pillar ids.
+6. "summary.expectedEffect" — audience-behavior change, behaviorally observable, WITH a time horizon.
+
+QUALITY BARS:
+- Proof points exclusively from the pillars above — do not invent evidence.
+- Zero filler and zero AI meta-phrases ("As an AI", "Based on the provided data", "In conclusion") — write like a partner signing the work with their name.
+- Numbers exclusively from the facts above; do not compute or invent new ones.
+- Every sentence falsifiable: with opposite facts it would read differently.
+- Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
+
 Return JSON:
 {
-  "comparisons": [{"title":"...","insight":"...","linkedPillarIds":["pillar-id"],"recommendation":"...","priority":"high|medium|low","confidence":4}],
-  "moves": [{"title":"...","category":"open|build|prove|cta|reframe","rationale":"...","tradeOff":"...","rejectedVariant":"...","linkedThreadIds":[],"linkedPillarIds":["pillar-id"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}]
+  "summary": {
+    "verdict": "answer-first: which storyline carries the core message and what to prove first",
+    "executiveSummary": "3-4 sentences: restate the verdict, then why — anchored in the scored pillars and the delivery sequence above",
+    "keyInsights": ["3 insights, each tied to named session elements"],
+    "appliedConclusions": ["how to open", "what to prove", "what call-to-action", "what to validate next"],
+    "tradeoffs": [{"chosen":"...","rejected":"...","why":"..."}],
+    "expectedEffect": {"text":"audience-behavior change, behaviorally observable","horizon":"..."}
+  },
+  "threads": [{"title":"...","pillarIds":["pillar-id"],"insight":"answer-first: how these pillars connect into one persuasive claim","priority":"high|medium|low","urgency":"high|medium|low","recommendation":"...","confidence":4}],
+  "moves": [{"title":"...","category":"open|build|prove|cta|reframe","rationale":"why — anchored in listed element ids; MUST name the trade-off (chosen at the cost of what) and the rejected variant","linkedThreadIds":[],"linkedPillarIds":["pillar-id"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"verb + artifact + role"}],
+  "initiatives": [{"title":"...","description":"...","type":"strategic|operational|defensive|growth","estimatedImpact":"high|medium|low","estimatedEffort":"high|medium|low","rationale":"...","linkedItems":["pillar-id"]}],
+  "outputCandidates": [{"outputType":"initiative|report|presentation|idea","title":"...","description":"...","linkedMoveIds":[],"linkedPillarIds":["pillar-id"],"rationale":"...","readiness":"ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
 }`;
 }
 

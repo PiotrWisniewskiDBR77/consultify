@@ -86,7 +86,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
   // Get category icon
   const getCategoryIcon = (category: string) => {
     const Icon = CATEGORY_ICONS[category] || FileText;
-    return <Icon size={14} className="text-slate-600" />;
+    return <Icon size={14} className="text-[var(--c-text-muted)]" />;
   };
 
   return (
@@ -95,14 +95,14 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-              <Sparkles size={20} className="text-primary-500" />
+            <h2 className="text-lg font-semibold text-[var(--c-text)] flex items-center gap-2">
+              <Sparkles size={20} className="text-[var(--c-accent)]" />
               Interview Summary
             </h2>
             <button
               onClick={handleGenerate}
               disabled={isGenerating}
-              className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-400 text-white text-sm font-medium rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--c-text)] text-[var(--c-surface)] hover:brightness-110 disabled:opacity-50 text-sm font-medium rounded-token-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
             >
               {isGenerating ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -114,21 +114,21 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
           </div>
 
           {/* Progress indicator */}
-          <div className="p-4 bg-slate-50 dark:bg-navy-800/50 rounded-lg">
+          <div className="p-4 bg-[var(--c-surface-raised)] rounded-token-md">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-slate-600 dark:text-slate-400">Interview Progress</span>
-              <span className="text-sm font-medium text-navy-900 dark:text-white">
+              <span className="text-sm text-[var(--c-text-secondary)]">Interview Progress</span>
+              <span className="text-sm font-medium text-[var(--c-text)]">
                 {session.answeredQuestions} / {session.totalQuestions} questions answered
               </span>
             </div>
-            <div className="w-full h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-[var(--c-border-subtle)] rounded-token-pill overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all ${
+                className={`h-full rounded-token-pill transition-all ${
                   progress >= 80
-                    ? 'bg-emerald-500'
+                    ? 'bg-[var(--c-success)]'
                     : progress >= 50
-                      ? 'bg-amber-500'
-                      : 'bg-navy-900'
+                      ? 'bg-[var(--c-warning)]'
+                      : 'bg-[var(--c-text)]'
                 }`}
                 style={{ width: `${progress}%` }}
               />
@@ -136,10 +136,10 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
           </div>
 
           {/* Important notice */}
-          <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+          <div className="mt-4 p-3 bg-c-warning/8 border border-c-warning/20 rounded-token-md">
             <div className="flex items-start gap-2">
-              <AlertCircle size={16} className="text-amber-500 mt-0.5" />
-              <div className="text-sm text-amber-800 dark:text-amber-300">
+              <AlertCircle size={16} className="text-[var(--c-warning)] mt-0.5" />
+              <div className="text-sm text-[var(--c-text-secondary)]">
                 <strong>Note:</strong> This summary contains only facts and observations (as-is
                 state). It does not include recommendations, action plans, or next steps. Those will
                 be generated in the Tools and Assessment modules.
@@ -158,12 +158,12 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
           <div className="space-y-6">
             {/* Key Facts */}
             <section>
-              <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
-                <CheckCircle2 size={16} className="text-emerald-500" />
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-[var(--c-text-secondary)] uppercase tracking-wider mb-3">
+                <CheckCircle2 size={16} className="text-[var(--c-success)]" />
                 Key Facts (As-Is)
               </h3>
               {session.summaryFacts.length === 0 ? (
-                <p className="text-sm text-slate-600 dark:text-slate-500 italic">
+                <p className="text-sm text-[var(--c-text-muted)] italic">
                   No facts extracted yet.
                 </p>
               ) : (
@@ -171,12 +171,12 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   {session.summaryFacts.map((item, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 rounded-lg"
+                      className="flex items-start gap-3 p-3 bg-c-success/8 border border-c-success/20 rounded-token-md"
                     >
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">
-                        <span className="text-xs text-slate-600 uppercase">{item.category}</span>
-                        <p className="text-sm text-slate-700 dark:text-slate-300">{item.fact}</p>
+                        <span className="text-xs text-[var(--c-text-muted)] uppercase">{item.category}</span>
+                        <p className="text-sm text-[var(--c-text)]">{item.fact}</p>
                       </div>
                     </div>
                   ))}
@@ -186,12 +186,12 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
 
             {/* Information Gaps */}
             <section>
-              <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
-                <HelpCircle size={16} className="text-blue-500" />
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-[var(--c-text-secondary)] uppercase tracking-wider mb-3">
+                <HelpCircle size={16} className="text-[var(--c-info)]" />
                 Information Gaps
               </h3>
               {session.summaryGaps.length === 0 ? (
-                <p className="text-sm text-slate-600 dark:text-slate-500 italic">
+                <p className="text-sm text-[var(--c-text-muted)] italic">
                   No gaps identified.
                 </p>
               ) : (
@@ -199,12 +199,12 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   {session.summaryGaps.map((item, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/30 rounded-lg"
+                      className="flex items-start gap-3 p-3 bg-c-info/8 border border-c-info/20 rounded-token-md"
                     >
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">
-                        <span className="text-xs text-slate-600 uppercase">{item.category}</span>
-                        <p className="text-sm text-slate-700 dark:text-slate-300">{item.gap}</p>
+                        <span className="text-xs text-[var(--c-text-muted)] uppercase">{item.category}</span>
+                        <p className="text-sm text-[var(--c-text)]">{item.gap}</p>
                       </div>
                     </div>
                   ))}
@@ -214,12 +214,12 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
 
             {/* Constraints */}
             <section>
-              <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
-                <AlertTriangle size={16} className="text-amber-500" />
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-[var(--c-text-secondary)] uppercase tracking-wider mb-3">
+                <AlertTriangle size={16} className="text-[var(--c-warning)]" />
                 Constraints & Limitations
               </h3>
               {session.summaryConstraints.length === 0 ? (
-                <p className="text-sm text-slate-600 dark:text-slate-500 italic">
+                <p className="text-sm text-[var(--c-text-muted)] italic">
                   No constraints identified.
                 </p>
               ) : (
@@ -227,12 +227,12 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   {session.summaryConstraints.map((item, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-lg"
+                      className="flex items-start gap-3 p-3 bg-c-warning/8 border border-c-warning/20 rounded-token-md"
                     >
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">
-                        <span className="text-xs text-slate-600 uppercase">{item.category}</span>
-                        <p className="text-sm text-slate-700 dark:text-slate-300">
+                        <span className="text-xs text-[var(--c-text-muted)] uppercase">{item.category}</span>
+                        <p className="text-sm text-[var(--c-text)]">
                           {item.constraint}
                         </p>
                       </div>
@@ -244,12 +244,12 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
 
             {/* Pain Points */}
             <section>
-              <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
-                <XCircle size={16} className="text-danger-500" />
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-[var(--c-text-secondary)] uppercase tracking-wider mb-3">
+                <XCircle size={16} className="text-[var(--c-danger)]" />
                 Current Pain Points
               </h3>
               {session.summaryPainPoints.length === 0 ? (
-                <p className="text-sm text-slate-600 dark:text-slate-500 italic">
+                <p className="text-sm text-[var(--c-text-muted)] italic">
                   No pain points identified.
                 </p>
               ) : (
@@ -257,12 +257,12 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   {session.summaryPainPoints.map((item, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-3 p-3 bg-danger-50 dark:bg-danger-900/10 border border-danger-200 dark:border-danger-800/30 rounded-lg"
+                      className="flex items-start gap-3 p-3 bg-c-danger/8 border border-c-danger/20 rounded-token-md"
                     >
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">
-                        <span className="text-xs text-slate-600 uppercase">{item.category}</span>
-                        <p className="text-sm text-slate-700 dark:text-slate-300">
+                        <span className="text-xs text-[var(--c-text-muted)] uppercase">{item.category}</span>
+                        <p className="text-sm text-[var(--c-text)]">
                           {item.painPoint}
                         </p>
                       </div>

@@ -28,6 +28,7 @@ import {
   Tag,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export type TabeleSectionId =
   | 'cover'
@@ -73,8 +74,17 @@ const DEFAULT_OUTLINE: TabeleOutlineItem[] = [
   { id: 'rationale', label: 'Rationale', icon: Sparkles },
 ];
 
+const DEFAULT_OUTLINE_LABEL_KEY: Record<string, string> = {
+  cover: 'kimi.tabeleShell.leftRail.cover',
+  kpi: 'kimi.tabeleShell.leftRail.kpi',
+  schema: 'kimi.tabeleShell.leftRail.schema',
+  records: 'kimi.tabeleShell.leftRail.records',
+  relations: 'kimi.tabeleShell.leftRail.relations',
+  rationale: 'kimi.tabeleShell.leftRail.rationale',
+};
+
 const TONE_DOT: Record<NonNullable<TabeleOutlineItem['tone']>, string> = {
-  neutral: 'bg-slate-400',
+  neutral: 'bg-c-text-muted',
   success: 'bg-emerald-500',
   warning: 'bg-amber-500',
   danger: 'bg-danger-500',
@@ -89,6 +99,7 @@ export const TabeleLeftRail: React.FC<TabeleLeftRailProps> = ({
   emptyLabel,
   testId,
 }) => {
+  const { t } = useTranslation();
   const outline = items ?? DEFAULT_OUTLINE;
   const empty = outline.length === 0;
 
@@ -100,16 +111,23 @@ export const TabeleLeftRail: React.FC<TabeleLeftRailProps> = ({
         </div>
       ) : null}
 
-      <ul className="flex-1 overflow-y-auto py-1" role="listbox" aria-label="Tabele outline">
+      <ul
+        className="flex-1 overflow-y-auto py-1"
+        role="listbox"
+        aria-label={t('kimi.tabeleShell.leftRail.ariaLabel', 'Tabele outline')}
+      >
         {empty ? (
-          <li className="px-3 py-6 text-slate-500 dark:text-slate-400 text-xs italic flex items-center gap-2">
+          <li className="px-3 py-6 text-c-text-secondary text-xs italic flex items-center gap-2">
             <AlertTriangle size={14} />
-            {emptyLabel ?? 'No sections to display.'}
+            {emptyLabel ?? t('kimi.tabeleShell.leftRail.empty', 'No sections to display.')}
           </li>
         ) : (
           outline.map((item) => {
             const Icon = item.icon ?? FileText;
             const active = item.id === activeItemId;
+            const label = DEFAULT_OUTLINE_LABEL_KEY[item.id]
+              ? t(DEFAULT_OUTLINE_LABEL_KEY[item.id], item.label)
+              : item.label;
             return (
               <li key={item.id} role="option" aria-selected={active}>
                 <button
@@ -118,22 +136,25 @@ export const TabeleLeftRail: React.FC<TabeleLeftRailProps> = ({
                   disabled={item.disabled}
                   className={`w-full flex items-center gap-2 px-3 py-1.5 text-left transition-colors ${
                     active
-                      ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-300'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+                      ? 'bg-c-accent-soft text-c-accent'
+                      : 'text-c-text hover:bg-c-surface-raised'
                   } disabled:opacity-40 disabled:cursor-not-allowed`}
                   data-testid={`tabele-outline-${item.id}`}
                   data-active={active ? 'true' : 'false'}
                 >
                   <Icon size={14} aria-hidden="true" className="flex-shrink-0" />
-                  <span className="truncate flex-1">{item.label}</span>
+                  <span className="truncate flex-1">{label}</span>
                   {item.badge !== undefined && item.badge !== null ? (
                     <span
                       className={`text-[11px] tabular-nums px-1.5 py-0.5 rounded-md ${
                         item.tone && item.tone !== 'neutral'
-                          ? `${TONE_DOT[item.tone]} text-white`
-                          : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300'
+                          ? `${TONE_DOT[item.tone]} text-c-text`
+                          : 'bg-c-surface-raised text-c-text-secondary'
                       }`}
-                      aria-label={`${item.label} count`}
+                      aria-label={t('kimi.tabeleShell.leftRail.countAriaLabel', {
+                        defaultValue: '{{label}} count',
+                        label,
+                      })}
                     >
                       {item.badge}
                     </span>

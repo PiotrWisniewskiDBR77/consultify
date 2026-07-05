@@ -511,10 +511,10 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   };
 
   return (
-    <div className={cn('flex flex-col h-full w-[280px] bg-navy-950 dark:bg-navy-950', className)}>
+    <div className={cn('flex flex-col h-full w-[280px] bg-c-bg dark:bg-navy-950', className)}>
       {/* Header - Clean style (no icon, bold title) */}
       <div className="px-5 pt-5 pb-4">
-        <h1 className="text-lg font-bold text-white tracking-wide">
+        <h1 className="text-lg font-bold text-c-text tracking-wide">
           {t('admin.sidebar.title', 'ADMIN')}
         </h1>
         <p className="text-sm text-slate-400 dark:text-slate-500 mt-0.5">

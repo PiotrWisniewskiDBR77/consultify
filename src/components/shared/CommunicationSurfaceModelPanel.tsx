@@ -85,7 +85,7 @@ export const CommunicationSurfaceModelPanel: React.FC<CommunicationSurfaceModelP
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300">
-                        <Icon size={18} />
+                        <Icon size={16} />
                       </div>
                       {index < FLOWS.length - 1 ? (
                         <ArrowRight size={14} className="text-slate-600 dark:text-slate-400" />

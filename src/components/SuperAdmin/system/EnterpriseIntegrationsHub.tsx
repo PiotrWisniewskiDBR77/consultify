@@ -31,7 +31,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { LoadingState } from '@/components/shared/states';
+import { EmptyState, LoadingState } from '@/components/shared/states';
 
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
@@ -282,14 +282,14 @@ const WEBHOOK_MUTATION_UNAVAILABLE =
   'Webhook create, test, and delete actions are disabled until duplicate superadmin webhook routes are reconciled behind one audited backend workflow.';
 
 const STATUS_CONFIG = {
-  connected: { color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: CheckCircle },
+  connected: { color: 'text-c-success', bg: 'bg-c-success/20', icon: CheckCircle },
   disconnected: {
-    color: 'text-slate-600 dark:text-slate-500',
-    bg: 'bg-slate-500/20',
+    color: 'text-c-text-secondary',
+    bg: 'bg-c-text-muted/20',
     icon: Unlink,
   },
-  error: { color: 'text-danger-400', bg: 'bg-danger-500/20', icon: XCircle },
-  pending: { color: 'text-amber-400', bg: 'bg-amber-500/20', icon: Clock },
+  error: { color: 'text-c-danger', bg: 'bg-c-danger/20', icon: XCircle },
+  pending: { color: 'text-c-warning', bg: 'bg-c-warning/20', icon: Clock },
 };
 
 export const EnterpriseIntegrationsHub: React.FC = () => {
@@ -422,10 +422,10 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+          <h2 className="text-2xl font-semibold text-c-text">
             Integrations Hub
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 text-sm">
+          <p className="text-c-text-secondary text-sm">
             Connect Consultify with your existing tools and workflows
           </p>
         </div>
@@ -433,7 +433,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
 
       {/* Stats */}
       {loadErrors.integrations || loadErrors.webhooks ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+        <div className="rounded-xl border border-c-border bg-c-surface p-6">
           <DegradedState
             title="Integration overview unavailable"
             description={
@@ -443,27 +443,27 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-            <div className="text-sm text-slate-600 dark:text-slate-400">Connected</div>
-            <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+          <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+            <div className="text-sm text-c-text-secondary">Connected</div>
+            <div className="text-2xl font-semibold text-c-text">
               {integrations.filter((i) => normalizeStatus(i.status) === 'connected').length}
             </div>
           </div>
-          <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
-            <div className="text-sm text-slate-600 dark:text-slate-400">Active Webhooks</div>
-            <div className="text-2xl font-semibold text-emerald-700 dark:text-emerald-400">
+          <div className="p-4 bg-c-success/10 rounded-xl border border-c-success/30">
+            <div className="text-sm text-c-text-secondary">Active Webhooks</div>
+            <div className="text-2xl font-semibold text-c-success">
               {webhooks.filter((w) => Boolean(w.is_active)).length}
             </div>
           </div>
-          <div className="p-4 bg-danger-500/10 rounded-xl border border-danger-500/30">
-            <div className="text-sm text-slate-600 dark:text-slate-400">Errors</div>
-            <div className="text-2xl font-semibold text-danger-700 dark:text-danger-400">
+          <div className="p-4 bg-c-danger/10 rounded-xl border border-c-danger/30">
+            <div className="text-sm text-c-text-secondary">Errors</div>
+            <div className="text-2xl font-semibold text-c-danger">
               {integrations.filter((i) => normalizeStatus(i.status) === 'error').length}
             </div>
           </div>
-          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-            <div className="text-sm text-slate-600 dark:text-slate-400">Available</div>
-            <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+          <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+            <div className="text-sm text-c-text-secondary">Available</div>
+            <div className="text-2xl font-semibold text-c-text">
               {connectorCatalog.filter((c) => c.status === 'available').length}
             </div>
           </div>
@@ -477,7 +477,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1">
+      <div className="flex gap-2 border-b border-c-border-subtle pb-1">
         {[
           {
             id: 'integrations',
@@ -498,13 +498,13 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
             onClick={() => setActiveTab(id as 'integrations' | 'webhooks' | 'catalog')}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
               activeTab === id
-                ? 'bg-slate-50 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-primary-500'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                ? 'bg-c-surface-raised text-c-text border-b-2 border-c-accent'
+                : 'text-c-text-secondary hover:bg-c-surface-raised'
             }`}
           >
             <Icon className="w-4 h-4" />
             {label}
-            <span className="px-1.5 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded">
+            <span className="px-1.5 py-0.5 text-xs bg-c-surface-raised text-c-text-secondary rounded">
               {count}
             </span>
           </button>
@@ -519,12 +519,12 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
           {activeTab === 'integrations' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
+                <h3 className="text-lg font-medium text-c-text">
                   Connected Integrations
                 </h3>
                 <button
                   onClick={() => setActiveTab('catalog')}
-                  className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Add Integration
@@ -532,18 +532,19 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
               </div>
 
               {loadErrors.integrations ? (
-                <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+                <div className="rounded-xl border border-c-border bg-c-surface p-6">
                   <DegradedState
                     title="Connected integrations unavailable"
                     description={loadErrors.integrations}
                   />
                 </div>
               ) : integrations.length === 0 ? (
-                <div className="text-center py-12 text-slate-600 dark:text-slate-500">
-                  <Link className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No integrations connected</p>
-                  <p className="text-sm mt-1">Browse the catalog to add your first integration</p>
-                </div>
+                <EmptyState
+                  variant="new"
+                  icon={Link}
+                  title="No integrations connected"
+                  description="Browse the catalog to add your first integration."
+                />
               ) : (
                 <div className="space-y-2">
                   {integrations.map((integration) => {
@@ -555,14 +556,14 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                     return (
                       <div
                         key={integration.id}
-                        className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-colors"
+                        className="p-4 bg-c-surface rounded-xl border border-c-border hover:border-c-border-strong transition-colors"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             <div className="text-3xl">{connector?.icon || '🔗'}</div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-slate-900 dark:text-slate-100">
+                                <span className="font-medium text-c-text">
                                   {asText(integration.name, 'Unknown integration')}
                                 </span>
                                 <span
@@ -573,11 +574,11 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                                 </span>
                               </div>
                               {integration.description && (
-                                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                                <p className="text-sm text-c-text-secondary mt-1">
                                   {asText(integration.description, '')}
                                 </p>
                               )}
-                              <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400 mt-1">
+                              <div className="flex items-center gap-3 text-xs text-c-text-secondary mt-1">
                                 {integration.last_sync_at && (
                                   <span>Last sync: {formatDateTime(integration.last_sync_at)}</span>
                                 )}
@@ -586,7 +587,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                                 )}
                               </div>
                               {integration.error_message && (
-                                <div className="flex items-center gap-1 text-xs text-danger-400 mt-1">
+                                <div className="flex items-center gap-1 text-xs text-c-danger mt-1">
                                   <AlertTriangle className="w-3 h-3" />
                                   {asText(integration.error_message, 'Unknown integration error')}
                                 </div>
@@ -596,24 +597,24 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => handleSync(integration.type)}
-                              className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+                              className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors"
                               title="Sync now"
                             >
-                              <RefreshCw className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+                              <RefreshCw className="w-4 h-4 text-c-text-muted" />
                             </button>
                             <button
                               disabled
-                              className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+                              className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors"
                               title="Integration settings editing requires an audited configuration workflow"
                             >
-                              <Settings className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+                              <Settings className="w-4 h-4 text-c-text-muted" />
                             </button>
                             <button
                               onClick={() => handleDeleteIntegration(integration.type)}
-                              className="p-2 hover:bg-danger-500/20 rounded-lg transition-colors"
+                              className="p-2 hover:bg-c-danger/20 rounded-lg transition-colors"
                               title="Disconnect"
                             >
-                              <Unlink className="w-4 h-4 text-danger-400" />
+                              <Unlink className="w-4 h-4 text-c-danger" />
                             </button>
                           </div>
                         </div>
@@ -629,11 +630,11 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
           {activeTab === 'webhooks' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">Webhooks</h3>
+                <h3 className="text-lg font-medium text-c-text">Webhooks</h3>
                 <button
                   disabled
                   title={loadErrors.webhooks || WEBHOOK_MUTATION_UNAVAILABLE}
-                  className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Create Webhook
@@ -641,7 +642,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
               </div>
 
               {loadErrors.webhooks ? (
-                <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+                <div className="rounded-xl border border-c-border bg-c-surface p-6">
                   <DegradedState title="Webhooks unavailable" description={loadErrors.webhooks} />
                 </div>
               ) : (
@@ -652,51 +653,50 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                   />
 
                   {webhooks.length === 0 ? (
-                    <div className="text-center py-12 text-slate-600 dark:text-slate-500">
-                      <Webhook className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>No webhooks configured</p>
-                      <p className="text-sm mt-1">
-                        Existing webhook reads are available when the backend returns data.
-                      </p>
-                    </div>
+                    <EmptyState
+                      variant="new"
+                      icon={Webhook}
+                      title="No webhooks configured"
+                      description="Existing webhook reads are available when the backend returns data."
+                    />
                   ) : (
                     <div className="space-y-2">
                       {webhooks.map((webhook) => (
                         <div
                           key={webhook.id}
-                          className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-colors"
+                          className="p-4 bg-c-surface rounded-xl border border-c-border hover:border-c-border-strong transition-colors"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-slate-900 dark:text-slate-100">
+                                <span className="font-medium text-c-text">
                                   {asText(webhook.name, 'Unnamed webhook')}
                                 </span>
                                 {webhook.is_active ? (
-                                  <CheckCircle className="w-4 h-4 text-emerald-400" />
+                                  <CheckCircle className="w-4 h-4 text-c-success" />
                                 ) : (
-                                  <XCircle className="w-4 h-4 text-danger-400" />
+                                  <XCircle className="w-4 h-4 text-c-danger" />
                                 )}
                               </div>
-                              <div className="text-sm text-slate-600 dark:text-slate-400 mt-1 break-all">
+                              <div className="text-sm text-c-text-secondary mt-1 break-all">
                                 {asText(webhook.url, 'Unknown URL')}
                               </div>
                               <div className="flex flex-wrap gap-1 mt-2">
                                 {asArray<string>(webhook.events).map((event) => (
                                   <span
                                     key={event}
-                                    className="px-2 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded"
+                                    className="px-2 py-0.5 text-xs bg-c-surface-raised text-c-text-secondary rounded"
                                   >
                                     {WEBHOOK_EVENTS.find((e) => e.id === event)?.label ||
                                       asText(event, 'unknown')}
                                   </span>
                                 ))}
                               </div>
-                              <div className="flex items-center gap-4 text-xs text-slate-600 dark:text-slate-400 mt-2">
-                                <span className="text-emerald-400">
+                              <div className="flex items-center gap-4 text-xs text-c-text-secondary mt-2">
+                                <span className="text-c-success">
                                   ✓ {safeNumber(webhook.success_count)}
                                 </span>
-                                <span className="text-danger-400">
+                                <span className="text-c-danger">
                                   ✗ {safeNumber(webhook.failure_count)}
                                 </span>
                                 {webhook.last_triggered_at && (
@@ -710,21 +710,21 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                                 className="p-2 rounded-lg opacity-50 cursor-not-allowed"
                                 title={WEBHOOK_MUTATION_UNAVAILABLE}
                               >
-                                <Play className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+                                <Play className="w-4 h-4 text-c-text-muted" />
                               </button>
                               <button
                                 onClick={() => handleViewDeliveries(webhook)}
-                                className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+                                className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors"
                                 title="View deliveries"
                               >
-                                <Activity className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+                                <Activity className="w-4 h-4 text-c-text-muted" />
                               </button>
                               <button
                                 disabled
                                 className="p-2 rounded-lg opacity-50 cursor-not-allowed"
                                 title={WEBHOOK_MUTATION_UNAVAILABLE}
                               >
-                                <Trash2 className="w-4 h-4 text-danger-400" />
+                                <Trash2 className="w-4 h-4 text-c-danger" />
                               </button>
                             </div>
                           </div>
@@ -746,7 +746,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
               <div className="flex items-center gap-4">
                 <div className="flex-1 relative">
                   <Search
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 dark:text-slate-400"
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-c-text-muted"
                     size={16}
                   />
                   <input
@@ -754,13 +754,13 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                     placeholder="Search connectors..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
+                    className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border rounded-lg text-c-text"
                   />
                 </div>
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
+                  className="px-4 py-2 bg-c-surface border border-c-border rounded-lg text-c-text"
                 >
                   <option value="all">All Categories</option>
                   {categories.map((cat) => (
@@ -779,8 +779,8 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                       key={connector.id}
                       className={`p-4 rounded-xl border transition-colors ${
                         isConnected
-                          ? 'bg-emerald-500/10 border-emerald-500/30'
-                          : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                          ? 'bg-c-success/10 border-c-success/30'
+                          : 'bg-c-surface border-c-border hover:border-c-border-strong'
                       }`}
                     >
                       <div className="flex items-start justify-between mb-3">
@@ -788,32 +788,32 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                           <span className="text-3xl">{connector.icon}</span>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-slate-900 dark:text-slate-100">
+                              <span className="font-medium text-c-text">
                                 {connector.name}
                               </span>
                               {connector.status === 'beta' && (
-                                <span className="px-1.5 py-0.5 text-xs bg-amber-500/20 text-amber-400 rounded">
+                                <span className="px-1.5 py-0.5 text-xs bg-c-warning/20 text-c-warning rounded">
                                   Beta
                                 </span>
                               )}
                               {connector.status === 'coming_soon' && (
-                                <span className="px-1.5 py-0.5 text-xs bg-slate-200 dark:bg-navy-800/20 text-slate-600 dark:text-slate-500 rounded">
+                                <span className="px-1.5 py-0.5 text-xs bg-c-surface-raised text-c-text-secondary rounded">
                                   Planned
                                 </span>
                               )}
                             </div>
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                            <span className="text-xs text-c-text-muted">
                               {connector.category}
                             </span>
                           </div>
                         </div>
-                        {isConnected && <CheckCircle className="w-5 h-5 text-emerald-400" />}
+                        {isConnected && <CheckCircle className="w-5 h-5 text-c-success" />}
                       </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                      <p className="text-sm text-c-text-secondary mb-4">
                         {connector.description}
                       </p>
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center gap-1 text-xs text-c-text-muted">
                           <Lock className="w-3 h-3" />
                           {connector.auth_type === 'oauth'
                             ? 'OAuth'
@@ -827,8 +827,8 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                           <button
                             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                               isConnected
-                                ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-                                : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                                ? 'bg-c-surface  text-c-text-secondary '
+                                : 'bg-c-surface  text-c-text-muted  cursor-not-allowed'
                             }`}
                             disabled
                             title={isConnected ? 'Already connected' : CATALOG_CONNECT_UNAVAILABLE}
@@ -871,26 +871,26 @@ const DeliveriesModal: React.FC<{
   onClose: () => void;
 }> = ({ webhook, deliveries, loadError, onClose }) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto">
+    <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/10 p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Webhook Deliveries</h3>
-          <p className="text-sm text-slate-600 dark:text-slate-500">
+          <h3 className="text-xl font-bold text-c-text-secondary dark:text-white">Webhook Deliveries</h3>
+          <p className="text-sm text-c-text-secondary">
             {asText(webhook.name, 'Unnamed webhook')}
           </p>
         </div>
         <button
           onClick={onClose}
-          className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+          className="p-2 hover:bg-c-surface dark:hover:bg-c-surface/40 rounded-lg"
         >
-          <X className="w-5 h-5 text-slate-600 dark:text-slate-500" />
+          <X className="w-5 h-5 text-c-text-secondary" />
         </button>
       </div>
 
       {loadError ? (
         <DegradedState title="Webhook deliveries unavailable" description={loadError} />
       ) : deliveries.length === 0 ? (
-        <div className="text-center py-8 text-slate-600 dark:text-slate-500">
+        <div className="text-center py-8 text-c-text-secondary">
           <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No deliveries yet</p>
         </div>
@@ -899,7 +899,7 @@ const DeliveriesModal: React.FC<{
           {deliveries.map((delivery) => (
             <div
               key={delivery.id}
-              className="p-3 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-slate-200 dark:border-white/10"
+              className="p-3 bg-c-surface/30 rounded-lg border border-c-border-subtle dark:border-white/10"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -910,7 +910,7 @@ const DeliveriesModal: React.FC<{
                   ) : (
                     <Clock className="w-4 h-4 text-amber-400" />
                   )}
-                  <span className="text-sm text-slate-900 dark:text-white">
+                  <span className="text-sm text-c-text-secondary dark:text-white">
                     {asText(delivery.event_type, 'unknown')}
                   </span>
                   {delivery.response_code && (
@@ -923,7 +923,7 @@ const DeliveriesModal: React.FC<{
                     </span>
                   )}
                 </div>
-                <span className="text-xs text-slate-500 dark:text-slate-400">
+                <span className="text-xs text-c-text-muted">
                   {formatDateTime(delivery.created_at)}
                 </span>
               </div>

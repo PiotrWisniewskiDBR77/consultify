@@ -91,13 +91,13 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
       onDoubleClick={handleDoubleClick}
       className={`relative group rounded-lg transition-all ${
         isSelected
-          ? 'ring-2 ring-primary-400 bg-primary-500/5'
-          : 'hover:ring-1 hover:ring-slate-300 dark:hover:ring-navy-600'
+          ? 'ring-2 ring-c-focus bg-c-accent-soft0'
+          : 'hover:ring-1 hover:ring-c-border'
       }`}
     >
       {isSelected && (
-        <div className="absolute -top-8 left-0 flex items-center gap-1 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-lg px-1 py-0.5 z-20">
-          <button className="p-1 text-slate-600 cursor-grab hover:text-slate-600">
+        <div className="absolute -top-8 left-0 flex items-center gap-1 bg-c-surface border border-c-border-subtle rounded-lg shadow-lg px-1 py-0.5 z-20">
+          <button className="p-1 text-c-text-secondary cursor-grab hover:text-c-text-secondary">
             <GripVertical size={12} />
           </button>
           {block.is_refreshable && (
@@ -113,7 +113,7 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
             </button>
           )}
           {block.type === 'image' && (
-            <button className="p-1 text-slate-600 hover:text-slate-600" title="Replace image">
+            <button className="p-1 text-c-text-secondary hover:text-c-text-secondary" title="Replace image">
               <Image size={12} />
             </button>
           )}
@@ -122,7 +122,7 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
               e.stopPropagation();
               onDuplicate();
             }}
-            className="p-1 text-slate-600 hover:text-slate-600"
+            className="p-1 text-c-text-secondary hover:text-c-text-secondary"
             title="Duplicate"
           >
             <Copy size={12} />

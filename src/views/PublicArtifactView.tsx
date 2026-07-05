@@ -87,16 +87,16 @@ export const PublicArtifactView: React.FC = () => {
   const isMarkdownKind = data ? MARKDOWN_KINDS.has(data.kind) : false;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-navy-950">
-      <header className="border-b border-slate-200 dark:border-navy-800 bg-white/80 dark:bg-navy-900/60 backdrop-blur">
+    <div className="min-h-screen bg-c-bg">
+      <header className="border-b border-c-border bg-c-surface/80 backdrop-blur">
         <div className="mx-auto max-w-3xl px-4 py-3 flex items-center gap-2">
-          <FileText size={18} className="text-primary-600" />
-          <span className="text-sm font-semibold text-navy-900 dark:text-white">Consultify</span>
-          <span className="text-xs text-slate-500 dark:text-slate-400">
+          <FileText size={18} className="text-c-accent" />
+          <span className="text-sm font-semibold text-c-text">Consultify</span>
+          <span className="text-xs text-c-text-muted">
             {isPl ? '· udostępniony dokument' : '· shared document'}
           </span>
           {data?.orgBranding?.name && (
-            <span className="ml-auto text-xs text-slate-500 dark:text-slate-400">
+            <span className="ml-auto text-xs text-c-text-muted">
               {data.orgBranding.name}
             </span>
           )}
@@ -105,17 +105,17 @@ export const PublicArtifactView: React.FC = () => {
 
       <main className="mx-auto max-w-3xl px-4 py-8">
         {status === 'loading' && (
-          <div className="py-20 text-center text-sm text-slate-500">
+          <div className="py-20 text-center text-sm text-c-text-muted">
             {isPl ? 'Ładowanie…' : 'Loading…'}
           </div>
         )}
 
         {status === 'notfound' && (
           <div className="py-20 text-center">
-            <div className="text-lg font-semibold text-navy-900 dark:text-white">
+            <div className="text-lg font-semibold text-c-text">
               {isPl ? 'Ten link nie jest już dostępny' : 'This link is no longer available'}
             </div>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-c-text-muted">
               {isPl
                 ? 'Udostępniony dokument mógł zostać usunięty lub link został cofnięty.'
                 : 'The shared document may have been removed or the link was revoked.'}
@@ -125,10 +125,10 @@ export const PublicArtifactView: React.FC = () => {
 
         {status === 'expired' && (
           <div className="py-20 text-center">
-            <div className="text-lg font-semibold text-navy-900 dark:text-white">
+            <div className="text-lg font-semibold text-c-text">
               {isPl ? 'Link wygasł' : 'This link has expired'}
             </div>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-c-text-muted">
               {isPl
                 ? 'Poproś autora o wygenerowanie nowego linku do udostępniania.'
                 : 'Ask the author to generate a new share link.'}
@@ -137,7 +137,7 @@ export const PublicArtifactView: React.FC = () => {
         )}
 
         {status === 'error' && (
-          <div className="py-20 text-center text-sm text-danger-600">
+          <div className="py-20 text-center text-sm text-c-danger">
             {isPl
               ? 'Coś poszło nie tak podczas ładowania dokumentu.'
               : 'Something went wrong loading this document.'}
@@ -146,11 +146,11 @@ export const PublicArtifactView: React.FC = () => {
 
         {status === 'ok' && data && !isMarkdownKind && (
           <div className="py-20 text-center">
-            <Presentation size={28} className="mx-auto text-slate-400" />
-            <div className="mt-3 text-lg font-semibold text-navy-900 dark:text-white">
+            <Presentation size={28} className="mx-auto text-c-text-muted" />
+            <div className="mt-3 text-lg font-semibold text-c-text">
               {data.title}
             </div>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-c-text-muted">
               {isPl
                 ? 'Ten artefakt nie jest jeszcze dostępny publicznie.'
                 : 'This artifact is not publicly available yet.'}
@@ -160,17 +160,17 @@ export const PublicArtifactView: React.FC = () => {
 
         {status === 'ok' && data && isMarkdownKind && (
           <>
-            <h1 className="text-2xl font-semibold text-navy-900 dark:text-white">{data.title}</h1>
+            <h1 className="text-2xl font-semibold text-c-text">{data.title}</h1>
             {formattedUpdatedAt && (
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-sm text-c-text-muted">
                 {isPl ? 'Ostatnia aktualizacja: ' : 'Last updated: '}
                 {formattedUpdatedAt}
               </p>
             )}
-            <div className="mt-8 prose prose-sm dark:prose-invert max-w-none text-slate-700 dark:text-slate-200">
+            <div className="mt-8 prose prose-sm dark:prose-invert max-w-none text-c-text-secondary">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.contentMd || ''}</ReactMarkdown>
             </div>
-            <footer className="mt-16 border-t border-slate-200 dark:border-navy-800 pt-6 text-center text-xs text-slate-400">
+            <footer className="mt-16 border-t border-c-border pt-6 text-center text-xs text-c-text-muted">
               {isPl
                 ? 'Udostępnione przez Consultify — widok tylko do odczytu.'
                 : 'Shared with Consultify — read-only view.'}

@@ -342,7 +342,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
               onClick={() => triggerUpload(field)}
               className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 rounded-lg transition-opacity"
             >
-              <span className="text-white text-sm font-medium">Change</span>
+              <span className="text-c-text text-sm font-medium">Change</span>
             </button>
           </div>
         ) : (
@@ -405,7 +405,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
           <button
             onClick={saveBranding}
             disabled={!hasChanges || saving}
-            className="px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg flex items-center gap-2 transition-colors"
+            className="px-4 py-2 bg-c-text text-c-bg hover:bg-c-text-secondary disabled:bg-slate-300 dark:disabled:bg-slate-700 rounded-lg flex items-center gap-2 transition-colors"
           >
             <Save size={18} className={saving ? 'animate-spin' : ''} />
             {t('common.save', 'Save Changes')}
@@ -597,19 +597,19 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                   >
                     <div className="flex items-center gap-4 mb-4">
                       <button
-                        className="px-4 py-2 rounded-lg text-white font-medium"
+                        className="px-4 py-2 rounded-lg text-c-text font-medium"
                         style={{ backgroundColor: branding.primaryColor }}
                       >
                         Primary Button
                       </button>
                       <button
-                        className="px-4 py-2 rounded-lg text-white font-medium"
+                        className="px-4 py-2 rounded-lg text-c-text font-medium"
                         style={{ backgroundColor: branding.secondaryColor }}
                       >
                         Secondary
                       </button>
                       <span
-                        className="px-3 py-1 rounded-full text-sm text-white"
+                        className="px-3 py-1 rounded-full text-sm text-c-text"
                         style={{ backgroundColor: branding.accentColor }}
                       >
                         Accent Badge
@@ -670,7 +670,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                   <textarea
                     value={branding.customCss}
                     onChange={(e) => updateField('customCss', e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-900 text-green-400 font-mono text-sm border border-slate-700 rounded-lg"
+                    className="w-full px-3 py-2 bg-c-surface text-green-400 font-mono text-sm border border-c-border rounded-lg"
                     rows={6}
                     placeholder="/* Custom CSS overrides */"
                   />
@@ -846,7 +846,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                       {branding.emailHeaderLogo ? (
                         <img src={branding.emailHeaderLogo} alt="Logo" className="h-8 mx-auto" />
                       ) : (
-                        <span className="text-white font-bold">
+                        <span className="text-c-text font-bold">
                           {branding.emailFromName || 'Your Company'}
                         </span>
                       )}

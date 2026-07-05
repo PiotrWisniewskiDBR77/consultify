@@ -89,9 +89,9 @@ export const NotebookQuickCapture: React.FC<NotebookQuickCaptureProps> = ({
 
   return (
     <div
-      className={`flex items-center gap-2 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900/40 px-2.5 py-2 focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-500/15 ${className}`}
+      className={`flex items-center gap-2 rounded-xl border border-c-border bg-c-surface/40 px-2.5 py-2 focus-within:border-c-border-strong focus-within:ring-2 focus-within:ring-[var(--c-focus)] ${className}`}
     >
-      <span className="text-slate-400">
+      <span className="text-c-text-muted">
         {isUrl ? <Link2 size={15} /> : <Plus size={15} />}
       </span>
       <input
@@ -107,13 +107,13 @@ export const NotebookQuickCapture: React.FC<NotebookQuickCaptureProps> = ({
         placeholder={
           isPl ? 'Wrzuć myśl lub link…' : 'Drop a thought or a link…'
         }
-        className="min-w-0 flex-1 bg-transparent text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none"
+        className="min-w-0 flex-1 bg-transparent text-sm text-c-text placeholder:text-c-text-muted outline-none"
       />
       <button
         type="button"
         onClick={submit}
         disabled={busy || !value.trim()}
-        className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-slate-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-slate-700 disabled:opacity-40"
+        className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-c-accent px-3 py-1.5 text-xs font-medium text-white transition-colors hover:brightness-110 disabled:opacity-40"
       >
         {busy ? <Loader2 size={13} className="animate-spin" /> : null}
         {isPl ? 'Wrzuć' : 'Capture'}

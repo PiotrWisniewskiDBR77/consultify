@@ -45,7 +45,7 @@ export const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ isOpen, onClos
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[200] bg-navy-950/95 backdrop-blur-xl flex items-center justify-center p-4"
+          className="fixed inset-0 z-context-menu bg-navy-950/95 backdrop-blur-xl flex items-center justify-center p-4"
           onClick={onClose}
         >
           {/* Background effects */}

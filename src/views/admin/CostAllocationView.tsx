@@ -336,7 +336,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-medium text-white flex items-center gap-2">
+          <h2 className="text-lg font-medium text-c-text flex items-center gap-2">
             <Building2 size={18} className="text-c-text-muted" />
             {t('admin.billing.costAllocation', 'Cost Allocation')}
           </h2>
@@ -374,7 +374,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
               Total Budget
             </span>
           </div>
-          <p className="text-2xl font-semibold text-white">${totalBudget.toFixed(2)}</p>
+          <p className="text-2xl font-semibold text-c-text">${totalBudget.toFixed(2)}</p>
           <p className="text-xs text-c-text-muted">per month</p>
         </div>
 
@@ -385,7 +385,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
               Current Spend
             </span>
           </div>
-          <p className="text-2xl font-semibold text-white">${totalSpend.toFixed(2)}</p>
+          <p className="text-2xl font-semibold text-c-text">${totalSpend.toFixed(2)}</p>
           <p className="text-xs text-c-text-muted">
             {((totalSpend / totalBudget) * 100).toFixed(1)}% of budget
           </p>
@@ -398,7 +398,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
               Cost Centers
             </span>
           </div>
-          <p className="text-2xl font-semibold text-white">{costCenters.length}</p>
+          <p className="text-2xl font-semibold text-c-text">{costCenters.length}</p>
           <p className="text-xs text-c-text-muted">
             {costCenters.filter((cc) => cc.is_active).length} active
           </p>
@@ -411,7 +411,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
               Over Budget
             </span>
           </div>
-          <p className="text-2xl font-semibold text-white">
+          <p className="text-2xl font-semibold text-c-text">
             {costCenters.filter((cc) => cc.percentage_used >= 90).length}
           </p>
           <p className="text-xs text-c-text-muted">cost centers</p>
@@ -422,7 +422,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Pie Chart */}
         <div className="admin-card p-4">
-          <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+          <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
             <PieChart size={14} className="text-c-text-muted" />
             Spend Distribution
           </h3>
@@ -464,7 +464,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
 
         {/* Bar Chart */}
         <div className="admin-card p-4">
-          <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+          <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
             <TrendingUp size={14} className="text-c-text-muted" />
             Budget vs Spend
           </h3>
@@ -492,7 +492,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
 
       {/* Cost Centers Table */}
       <div className="admin-card p-4">
-        <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+        <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
           <Building2 size={14} className="text-c-text-muted" />
           Cost Centers
         </h3>
@@ -534,7 +534,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
                       {center.type === 'project' && (
                         <Briefcase size={14} className="text-c-text-muted" />
                       )}
-                      <span className="text-sm text-white">{center.name}</span>
+                      <span className="text-sm text-c-text">{center.name}</span>
                     </div>
                   </td>
                   <td className="py-3 px-4">
@@ -548,10 +548,10 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
                     </span>
                   </td>
                   <td className="py-3 px-4 text-right">
-                    <span className="text-sm text-white">${center.budget_monthly.toFixed(2)}</span>
+                    <span className="text-sm text-c-text">${center.budget_monthly.toFixed(2)}</span>
                   </td>
                   <td className="py-3 px-4 text-right">
-                    <span className="text-sm text-white">${center.current_spend.toFixed(2)}</span>
+                    <span className="text-sm text-c-text">${center.current_spend.toFixed(2)}</span>
                   </td>
                   <td className="py-3 px-4">
                     <div className="space-y-1">
@@ -591,7 +591,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
 
       {/* Recent Allocations */}
       <div className="admin-card p-4">
-        <h3 className="text-sm font-medium text-white mb-4 flex items-center gap-2">
+        <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
           <DollarSign size={14} className="text-c-text-muted" />
           Recent Allocations
         </h3>
@@ -602,17 +602,17 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
               className="flex items-center justify-between p-3 bg-c-surface/[0.02] rounded-lg"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-c-surface-raised flex items-center justify-center">
                   <DollarSign size={14} className="text-c-text-muted" />
                 </div>
                 <div>
-                  <p className="text-sm text-white">{allocation.cost_center_name}</p>
+                  <p className="text-sm text-c-text">{allocation.cost_center_name}</p>
                   <p className="text-xs text-c-text-muted">
                     {allocation.resource_type} • {allocation.date}
                   </p>
                 </div>
               </div>
-              <span className="text-sm font-medium text-white">
+              <span className="text-sm font-medium text-c-text">
                 ${allocation.amount.toFixed(2)}
               </span>
             </div>
@@ -631,7 +631,7 @@ export const CostAllocationView: React.FC<CostAllocationViewProps> = ({ classNam
               className="admin-card w-full max-w-md overflow-hidden"
             >
               <div className="p-6 border-b border-white/[0.05] flex items-center justify-between">
-                <h3 className="text-lg font-medium text-white">
+                <h3 className="text-lg font-medium text-c-text">
                   {editingCenter ? 'Edit Cost Center' : 'Add Cost Center'}
                 </h3>
                 <button

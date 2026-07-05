@@ -248,7 +248,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
 
         {/* Dropdown Menu */}
         {isOpen && allowedTransitions.length > 0 && (
-          <div className="absolute z-50 mt-1 w-48 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 shadow-lg overflow-hidden">
+          <div className="absolute z-overlay mt-1 w-48 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 shadow-lg overflow-hidden">
             <div className="py-1">
               <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 font-semibold">
                 Change Status To
@@ -290,7 +290,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
 
       {/* Reason Modal */}
       {showReasonModal && pendingStatus && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-toast flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
             <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-2">
               {pendingStatus === InitiativeStatus.BLOCKED
@@ -339,7 +339,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
 
       {/* Confirmation Modal */}
       {showConfirmModal && pendingStatus && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-toast flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
             <div className="flex items-center gap-3 mb-4">
               {pendingStatus === InitiativeStatus.DONE ? (

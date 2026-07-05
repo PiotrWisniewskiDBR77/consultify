@@ -41,20 +41,33 @@
      * Reversible: change values here to recolor the whole app.
      * ======================================================================== */
     --c-bg: #fafaf9; /* warm off-white — app background */
+    --c-bg-rgb: 250 250 249;
     --c-surface: #ffffff; /* cards / panels */
-    --c-surface-raised: #f8fafc; /* popovers / chips — slight tint so a chip reads off a white row */
+    --c-surface-rgb: 255 255 255;
+    --c-surface-raised: #f8fafc; /* popovers / chips — slight tint so a chip reads off a white row (demo/TRIADA approved value; union kept demo per visual doctrine) */
+    --c-surface-raised-rgb: 248 250 252;
     --c-border-subtle: #e6e9ed; /* hairlines */
+    --c-border-subtle-rgb: 230 233 237;
     --c-border: #cbd2da; /* default borders — strengthened so chip outline is visible on white (light mode) */
+    --c-border-rgb: 203 210 218;
     --c-border-strong: #9aa6b5; /* hover/active borders */
+    --c-border-strong-rgb: 154 166 181;
     --c-text: #0f172a; /* primary text */
+    --c-text-rgb: 15 23 42;
     --c-text-secondary: #475569; /* secondary text */
+    --c-text-secondary-rgb: 71 85 105;
     --c-text-muted: #64748b; /* muted / placeholder */
+    --c-text-muted-rgb: 100 116 139;
     --c-accent: #85182f; /* Harvard Crimson — SOLE brand accent */
+    --c-accent-rgb: 133 24 47;
     --c-accent-soft: rgba(133, 24, 47, 0.08); /* accent tint (selected bg) */
+    --c-accent-soft-rgb: 133 24 47;
     /* Focus ring is NEUTRAL BLUE, never crimson — crimson focus reads as a
      * validation error (VISUAL_STANDARD.md §2.2/§5.2, audit INPUT-01). */
     --c-focus: rgba(37, 99, 235, 0.4); /* focus ring — blue, distinct from error */
+    --c-focus-rgb: 37 99 235;
     --c-focus-solid: #2563eb; /* focus border color */
+    --c-focus-solid-rgb: 37 99 235;
     /* Status tokens — Harvard complementary anchors (light mode).
      * Each value is the DARK family member (HBS "1") so text-on-white is AA.
      * Approx contrast on #ffffff:
@@ -64,24 +77,70 @@
      *   info    #3B2883 ≈ 12.1:1 (AAA)
      */
     --c-success: #026833; /* was #059669 — HBS Green 1 */
+    --c-success-rgb: 2 104 51;
     --c-warning: #ae6429; /* was #d97706 — HBS Orange 1 */
+    --c-warning-rgb: 174 100 41;
     --c-danger: #e80538; /* was #dc2626 — HBS Red 2 */
+    --c-danger-rgb: 232 5 56;
     --c-info: #3b2883; /* was #2563eb — HBS Blue 1 */
+    --c-info-rgb: 59 40 131;
     /* Tag/identity palette (light) — MUTED, equal-weight hues for category/type/
      * source chips. Deliberately distinct from the signal tones above so a tag
      * NEVER reads as status/alarm. Used only as a thin left accent / dot. */
     --c-tag-1: #3b8ea5; /* cyan-blue */
+    --c-tag-1-rgb: 59 142 165;
     --c-tag-2: #6a74d8; /* periwinkle */
+    --c-tag-2-rgb: 106 116 216;
     --c-tag-3: #9d5bd2; /* violet */
+    --c-tag-3-rgb: 157 91 210;
     --c-tag-4: #c45b9c; /* magenta */
+    --c-tag-4-rgb: 196 91 156;
     --c-tag-5: #b06a4a; /* terracotta */
+    --c-tag-5-rgb: 176 106 74;
     --c-tag-6: #5a9367; /* sage */
+    --c-tag-6-rgb: 90 147 103;
     --c-tag-7: #8a8f3a; /* olive */
+    --c-tag-7-rgb: 138 143 58;
     --c-tag-8: #7b8794; /* slate */
+    --c-tag-8-rgb: 123 135 148;
     --c-tag-9: #b5783a; /* amber-brown */
+    --c-tag-9-rgb: 181 120 58;
     --c-tag-10: #5566b8; /* blue */
+    --c-tag-10-rgb: 85 102 184;
     --c-tag-11: #a0568f; /* plum */
+    --c-tag-11-rgb: 160 86 143;
     --c-tag-12: #4f9e6f; /* emerald-muted */
+    --c-tag-12-rgb: 79 158 111;
+    /* Foreground for text/icon placed ON a SATURATED tag/chart swatch used as a
+     * DOT/BAR/STROKE (graphic, ≥3:1) — NOT for body text on a filled chip. The tag
+     * hues are mid-tone: white clears AA-Large (≥3:1) as a graphic marker, but NOT
+     * AA body-text (4.5:1) on light fills. For a text CHIP use the soft-tint pattern
+     * (bg = hue @ ~12% alpha, text = the hue itself), never white-on-saturated-fill. */
+    --c-tag-foreground: #ffffff;
+    --c-tag-foreground-rgb: 255 255 255;
+    /* Chart-series palette (light) — ORDERED for line/bar legibility (blue-first,
+     * then green, amber, violet…). Distinct from the identity --c-tag ramp: tags
+     * are equal-weight category dots; charts are an ORDERED series ramp read in
+     * sequence (series 1,2,3…). NEVER red-first so a series is never mistaken for
+     * an alarm. Used as line/bar/area STROKES & FILLS (graphic contrast ≥3:1); each
+     * clears ≥3.4:1 on --c-surface #ffffff. Colorblind-aware: 1/2 (blue/green) and
+     * 3/4 (amber/violet) differ in luminance, not just hue. Ratios below = vs white. */
+    --c-chart-1: #2f6f95; /* deep blue    5.48:1 (AA text) */
+    --c-chart-1-rgb: 47 111 149;
+    --c-chart-2: #2f8f6b; /* teal-green   3.99:1 (AA-Large/graphic) */
+    --c-chart-2-rgb: 47 143 107;
+    --c-chart-3: #b5793a; /* amber-brown  3.65:1 (AA-Large/graphic) */
+    --c-chart-3-rgb: 181 121 58;
+    --c-chart-4: #7a56c8; /* violet       5.26:1 (AA text) */
+    --c-chart-4-rgb: 122 86 200;
+    --c-chart-5: #2a97a8; /* cyan         3.45:1 (AA-Large/graphic) */
+    --c-chart-5-rgb: 42 151 168;
+    --c-chart-6: #a8517f; /* plum-magenta 5.06:1 (AA text) */
+    --c-chart-6-rgb: 168 81 127;
+    --c-chart-7: #6e8a2f; /* olive        3.93:1 (AA-Large/graphic) */
+    --c-chart-7-rgb: 110 138 47;
+    --c-chart-8: #5f7488; /* slate        4.84:1 (AA text) */
+    --c-chart-8-rgb: 95 116 136;
   }
 
   .dark {
@@ -115,21 +174,34 @@
      * Mirrors :root --c-* tokens; crimson lifted for dark contrast.
      * ======================================================================== */
     --c-bg: #0a0f1e; /* DBR77 navy — app background (unified with --hig-bg-primary) */
+    --c-bg-rgb: 10 15 30;
     --c-surface: #0f172a; /* navy-900 — cards / panels */
+    --c-surface-rgb: 15 23 42;
     --c-surface-raised: #15213b; /* navy-800 — popovers / chips */
+    --c-surface-raised-rgb: 21 33 59;
     --c-border-subtle: rgba(148, 163, 184, 0.12); /* hairlines — lifted for visibility */
+    --c-border-subtle-rgb: 148 163 184;
     --c-border: rgba(148, 163, 184, 0.22); /* default borders — lifted for visibility */
+    --c-border-rgb: 148 163 184;
     --c-border-strong: rgba(148, 163, 184, 0.36); /* hover/active borders */
+    --c-border-strong-rgb: 148 163 184;
     /* Text scale — HARD CONTRAST FLOOR (VISUAL_STANDARD.md §1.3):
      * nothing informational below --c-text-muted (≈5.5:1 on --c-bg).
      * Previous secondary #94a3b8 / muted #64748b were too dark on navy. */
     --c-text: #f4f7fb; /* primary text ~16:1 */
+    --c-text-rgb: 244 247 251;
     --c-text-secondary: #b8c4d6; /* secondary text ~9:1 */
+    --c-text-secondary-rgb: 184 196 214;
     --c-text-muted: #8a99b0; /* muted / placeholder ~5.5:1 — the floor */
+    --c-text-muted-rgb: 138 153 176;
     --c-accent: #c8324a; /* crimson lifted for dark contrast */
+    --c-accent-rgb: 200 50 74;
     --c-accent-soft: rgba(200, 50, 74, 0.14); /* accent tint (selected bg) */
+    --c-accent-soft-rgb: 200 50 74;
     --c-focus: rgba(91, 141, 239, 0.45); /* focus ring — blue, distinct from error */
+    --c-focus-rgb: 91 141 239;
     --c-focus-solid: #5b8def; /* focus border color (lifted for dark) */
+    --c-focus-solid-rgb: 91 141 239;
     /* Status tokens — Harvard complementary lifted for dark backgrounds.
      * Each value is the LIGHT/mid family member so contrast on navy is good.
      *   success #9EC44D (HBS Green 3)  — lifted from #026833
@@ -142,22 +214,61 @@
      * as badge/progress accents on navy (audit BADGE/SPECIAL). Light mode keeps
      * the HBS anchors untouched. */
     --c-success: #3fb950; /* was #9ec44d (lime) */
+    --c-success-rgb: 63 185 80;
     --c-warning: #e8a33d; /* was #f7c76b (pale gold) */
+    --c-warning-rgb: 232 163 61;
     --c-danger: #ed5565; /* was #ed5541 */
+    --c-danger-rgb: 237 85 101;
     --c-info: #58a6ff; /* was #aac8eb (powder blue) */
+    --c-info-rgb: 88 166 255;
     /* Tag/identity palette (dark) — lifted for contrast on navy. */
     --c-tag-1: #5ab0c4;
+    --c-tag-1-rgb: 90 176 196;
     --c-tag-2: #8e96e6;
+    --c-tag-2-rgb: 142 150 230;
     --c-tag-3: #b97fe0;
+    --c-tag-3-rgb: 185 127 224;
     --c-tag-4: #d97fb5;
+    --c-tag-4-rgb: 217 127 181;
     --c-tag-5: #cc8a6e;
+    --c-tag-5-rgb: 204 138 110;
     --c-tag-6: #7fb88f;
+    --c-tag-6-rgb: 127 184 143;
     --c-tag-7: #aeb35f;
+    --c-tag-7-rgb: 174 179 95;
     --c-tag-8: #9aa4b2;
+    --c-tag-8-rgb: 154 164 178;
     --c-tag-9: #d29a5a;
+    --c-tag-9-rgb: 210 154 90;
     --c-tag-10: #7d8de0;
+    --c-tag-10-rgb: 125 141 224;
     --c-tag-11: #c47fb0;
+    --c-tag-11-rgb: 196 127 176;
     --c-tag-12: #6fc492;
+    --c-tag-12-rgb: 111 196 146;
+    /* On navy, tag/chart hues are lifted and read as bright DOTS/STROKES (graphic
+     * ≥3:1). White-on-fill is NOT AA body-text here — use soft-tint chips (see :root). */
+    --c-tag-foreground: #ffffff;
+    --c-tag-foreground-rgb: 255 255 255;
+    /* Chart-series palette (dark) — same ORDER as light, lifted for navy so each
+     * series stroke/fill clears ≥3:1 on --c-surface #0f172a. Blue-first, never
+     * red-first (a series is never an alarm). */
+    --c-chart-1: #5aa3d4; /* deep blue    */
+    --c-chart-1-rgb: 90 163 212;
+    --c-chart-2: #57c08c; /* teal-green   */
+    --c-chart-2-rgb: 87 192 140;
+    --c-chart-3: #d29a5a; /* amber-brown  */
+    --c-chart-3-rgb: 210 154 90;
+    --c-chart-4: #a98ae6; /* violet       */
+    --c-chart-4-rgb: 169 138 230;
+    --c-chart-5: #4fc2d4; /* cyan         */
+    --c-chart-5-rgb: 79 194 212;
+    --c-chart-6: #d287ae; /* plum-magenta */
+    --c-chart-6-rgb: 210 135 174;
+    --c-chart-7: #a8b35f; /* olive        */
+    --c-chart-7-rgb: 168 179 95;
+    --c-chart-8: #93a6bc; /* slate        */
+    --c-chart-8-rgb: 147 166 188;
   }
 }
 
@@ -579,18 +690,28 @@ body {
 /* High contrast: strengthen text + borders, remove low-opacity muting */
 html.high-contrast {
   --c-text: #000000;
+  --c-text-rgb: 0 0 0;
   --c-text-secondary: #1a1a1a;
+  --c-text-secondary-rgb: 26 26 26;
   --c-text-muted: #333333;
+  --c-text-muted-rgb: 51 51 51;
   --c-border: #000000;
+  --c-border-rgb: 0 0 0;
   --c-border-subtle: #444444;
+  --c-border-subtle-rgb: 68 68 68;
 }
 html.high-contrast.dark,
 html.dark.high-contrast {
   --c-text: #ffffff;
+  --c-text-rgb: 255 255 255;
   --c-text-secondary: #f1f5f9;
+  --c-text-secondary-rgb: 241 245 249;
   --c-text-muted: #cbd5e1;
+  --c-text-muted-rgb: 203 213 225;
   --c-border: #ffffff;
+  --c-border-rgb: 255 255 255;
   --c-border-subtle: #cbd5e1;
+  --c-border-subtle-rgb: 203 213 225;
 }
 html.high-contrast a {
   text-decoration: underline;

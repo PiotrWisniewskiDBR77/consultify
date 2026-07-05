@@ -6,6 +6,7 @@ import type {
 } from '@/store/useToolStore';
 
 import type { ToolAiPendingAction } from './dynamicSwot';
+import { pickW2SummaryFields } from './w2SummaryFields';
 
 interface NarrativeEngineActionHandlers {
   updateInputData: (data: Partial<NarrativeEngineData>) => void;
@@ -304,6 +305,7 @@ export function applyNarrativeEnginePendingAction({
     actions.updateInputData({
       summary: {
         proposalId: 'narrative-engine-summary',
+        ...pickW2SummaryFields(summaryObj),
         executiveSummary:
           typeof summaryObj?.executiveSummary === 'string'
             ? summaryObj.executiveSummary

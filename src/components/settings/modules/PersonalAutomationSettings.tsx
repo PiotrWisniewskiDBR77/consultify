@@ -261,11 +261,11 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
             <Zap size={28} className="text-amber-500" />
             {t('settings.personalAutomation.title', 'Personal Automations')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t('settings.personalAutomation.subtitle', 'Automate repetitive tasks and workflows')}
           </p>
         </div>
@@ -280,23 +280,23 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 text-center">
+          <p className="text-2xl font-bold text-c-text">
             {rulesLoadError ? '--' : rules.length}
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-c-text-muted">
             {t('settings.personalAutomation.stats.active', 'Active Automations')}
           </p>
         </div>
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 text-center">
+          <p className="text-2xl font-bold text-c-text">
             {rulesLoadError ? '--' : rules.reduce((sum, r) => sum + r.runCount, 0)}
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-c-text-muted">
             {t('settings.personalAutomation.stats.totalRuns', 'Total Runs')}
           </p>
         </div>
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-green-600">
             {logsLoadError
               ? '--'
@@ -306,14 +306,14 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
                     Date.now() - new Date(l.timestamp).getTime() < 24 * 60 * 60 * 1000
                 ).length}
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-c-text-muted">
             {t('settings.personalAutomation.stats.successful24h', 'Successful (24h)')}
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-200 dark:border-navy-700 pb-4">
+      <div className="flex gap-2 border-b border-c-border-subtle dark:border-navy-700 pb-4">
         {[
           {
             id: 'rules',
@@ -335,7 +335,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === tab.id
                   ? 'bg-amber-600 text-white'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                  : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-700'
               }`}
             >
               <Icon size={16} />
@@ -357,13 +357,13 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
               className={`p-4 rounded-xl border-2 transition-all ${
                 rule.enabled
                   ? 'border-amber-500/50 bg-amber-50 dark:bg-amber-500/5'
-                  : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 opacity-60'
+                  : 'border-c-border-subtle dark:border-navy-700 bg-c-surface opacity-60'
               }`}
             >
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h4 className="font-semibold text-slate-900 dark:text-white">{rule.name}</h4>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{rule.description}</p>
+                  <h4 className="font-semibold text-c-text">{rule.name}</h4>
+                  <p className="text-sm text-c-text-muted">{rule.description}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -371,14 +371,14 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
                     className={`p-2 rounded-lg transition-colors ${
                       rule.enabled
                         ? 'text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-500/20'
-                        : 'text-slate-600 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
+                        : 'text-c-text-secondary hover:bg-c-surface-raised'
                     }`}
                   >
                     {rule.enabled ? <Pause size={18} /> : <Play size={18} />}
                   </button>
                   <button
                     onClick={() => setEditingRule(rule)}
-                    className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+                    className="p-2 text-c-text-muted hover:bg-c-surface-raised rounded-lg"
                   >
                     <Edit2 size={18} />
                   </button>
@@ -392,17 +392,17 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
               </div>
 
               <div className="flex items-center gap-2 text-sm">
-                <span className="px-2 py-1 bg-slate-100 dark:bg-navy-800 rounded text-slate-600 dark:text-slate-400">
+                <span className="px-2 py-1 bg-c-surface-raised rounded text-c-text-secondary">
                   {getTriggerLabel(rule.trigger.type)}
                 </span>
-                <ArrowRight size={14} className="text-slate-600 dark:text-slate-500" />
-                <span className="px-2 py-1 bg-slate-100 dark:bg-navy-800 rounded text-slate-600 dark:text-slate-400">
+                <ArrowRight size={14} className="text-c-text-secondary" />
+                <span className="px-2 py-1 bg-c-surface-raised rounded text-c-text-secondary">
                   {getActionLabel(rule.actions[0]?.type)}
                 </span>
               </div>
 
               {rule.lastRun && (
-                <p className="text-xs text-slate-600 dark:text-slate-500 mt-3">
+                <p className="text-xs text-c-text-secondary mt-3">
                   {t('settings.personalAutomation.lastRun', {
                     defaultValue: 'Last run: {{date}} • {{count}} total runs',
                     date: new Date(rule.lastRun).toLocaleString(),
@@ -414,7 +414,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
           ))}
 
           {!rulesLoadError && rules.length === 0 && (
-            <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+            <div className="text-center py-12 text-c-text-muted">
               <Zap size={48} className="mx-auto mb-4 opacity-30" />
               <p>{t('settings.personalAutomation.empty', 'No automations yet')}</p>
               <button disabled className="mt-2 text-amber-600 hover:underline">
@@ -436,17 +436,17 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
             {templates.map((template) => (
               <div
                 key={template.id}
-                className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl"
+                className="p-4 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <span className="text-xs bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded">
+                    <span className="text-xs bg-c-surface-raised text-c-text-secondary px-2 py-0.5 rounded">
                       {getTemplateCategory(template.category)}
                     </span>
-                    <h4 className="font-semibold text-slate-900 dark:text-white mt-2">
+                    <h4 className="font-semibold text-c-text mt-2">
                       {getTemplateName(template)}
                     </h4>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-c-text-muted">
                       {getTemplateDescription(template)}
                     </p>
                   </div>
@@ -466,13 +466,13 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
 
       {/* Logs Tab */}
       {activeTab === 'logs' && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl overflow-hidden">
           {logsLoadError && (
             <div className="p-4">
               <DegradedState title="Automation history unavailable" description={logsLoadError} />
             </div>
           )}
-          <div className="divide-y divide-slate-200 dark:divide-white/5">
+          <div className="divide-y divide-c-border-subtle dark:divide-white/5">
             {!logsLoadError &&
               logs.map((log) => (
                 <div key={log.id} className="px-6 py-4 flex items-center justify-between">
@@ -483,11 +483,11 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
                       <AlertCircle size={18} className="text-danger-500" />
                     )}
                     <div>
-                      <p className="font-medium text-slate-900 dark:text-white">{log.ruleName}</p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">{log.details}</p>
+                      <p className="font-medium text-c-text">{log.ruleName}</p>
+                      <p className="text-sm text-c-text-muted">{log.details}</p>
                     </div>
                   </div>
-                  <span className="text-sm text-slate-600 dark:text-slate-500">
+                  <span className="text-sm text-c-text-secondary">
                     {new Date(log.timestamp).toLocaleString()}
                   </span>
                 </div>

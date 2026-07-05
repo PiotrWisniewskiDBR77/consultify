@@ -275,7 +275,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                   type="button"
                   onClick={() => setIsSidebarOpen(true)}
                   className="lg:hidden text-navy-700 dark:text-white mr-2"
-                  aria-label="Open menu"
+                  aria-label={t('layout.openMenu', 'Open menu')}
                 >
                   <Menu />
                 </button>
@@ -318,7 +318,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                       onClick={() => toggleChatCollapse()}
                       className={`hidden lg:flex w-9 h-9 items-center justify-center rounded-full transition-colors ${
                         isChatCollapsed
-                          ? 'bg-primary-500 text-white hover:bg-primary-600'
+                          ? 'bg-c-text text-c-bg hover:bg-c-text-secondary'
                           : 'bg-primary-500/15 text-primary-600 dark:text-primary-400 hover:bg-primary-500/25'
                       }`}
                       title={

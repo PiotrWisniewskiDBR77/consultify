@@ -1,3 +1,7 @@
+// VA0.5 - alpha-enabled token colors: solid = var(--c-X) (jak dotad), /NN = rgb(var(--c-X-rgb) / alpha)
+const cTok = (name) => ({ opacityValue }) =>
+  opacityValue === undefined ? 'var(--c-' + name + ')' : 'rgb(var(--c-' + name + '-rgb) / ' + opacityValue + ')';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -62,38 +66,64 @@ export default {
         // Apple/Google-class neutral surfaces + Harvard Crimson sole accent.
         // ========================================
         c: {
-          bg: 'var(--c-bg)',
-          surface: 'var(--c-surface)',
-          'surface-raised': 'var(--c-surface-raised)',
-          'border-subtle': 'var(--c-border-subtle)',
-          border: 'var(--c-border)',
-          'border-strong': 'var(--c-border-strong)',
-          text: 'var(--c-text)',
-          'text-secondary': 'var(--c-text-secondary)',
-          'text-muted': 'var(--c-text-muted)',
-          accent: 'var(--c-accent)',
-          'accent-soft': 'var(--c-accent-soft)',
-          focus: 'var(--c-focus)',
-          'focus-solid': 'var(--c-focus-solid)',
-          success: 'var(--c-success)',
-          warning: 'var(--c-warning)',
-          danger: 'var(--c-danger)',
-          info: 'var(--c-info)',
+          bg: cTok('bg'),
+          surface: cTok('surface'),
+          'surface-raised': cTok('surface-raised'),
+          'border-subtle': cTok('border-subtle'),
+          border: cTok('border'),
+          'border-strong': cTok('border-strong'),
+          text: cTok('text'),
+          'text-secondary': cTok('text-secondary'),
+          'text-muted': cTok('text-muted'),
+          accent: cTok('accent'),
+          'accent-soft': cTok('accent-soft'),
+          focus: cTok('focus'),
+          'focus-solid': cTok('focus-solid'),
+          success: cTok('success'),
+          warning: cTok('warning'),
+          danger: cTok('danger'),
+          info: cTok('info'),
           // Identity palette (12) — kolory DANYCH/kategorii/serii (NIGDY crimson jako dana).
           // Vars zdefiniowane w src/index.css (:root light + .dark). Reguła §15.1: ≤5 serii widocznych.
-          'tag-1': 'var(--c-tag-1)',
-          'tag-2': 'var(--c-tag-2)',
-          'tag-3': 'var(--c-tag-3)',
-          'tag-4': 'var(--c-tag-4)',
-          'tag-5': 'var(--c-tag-5)',
-          'tag-6': 'var(--c-tag-6)',
-          'tag-7': 'var(--c-tag-7)',
-          'tag-8': 'var(--c-tag-8)',
-          'tag-9': 'var(--c-tag-9)',
-          'tag-10': 'var(--c-tag-10)',
-          'tag-11': 'var(--c-tag-11)',
-          'tag-12': 'var(--c-tag-12)',
+          'tag-1': cTok('tag-1'),
+          'tag-2': cTok('tag-2'),
+          'tag-3': cTok('tag-3'),
+          'tag-4': cTok('tag-4'),
+          'tag-5': cTok('tag-5'),
+          'tag-6': cTok('tag-6'),
+          'tag-7': cTok('tag-7'),
+          'tag-8': cTok('tag-8'),
+          'tag-9': cTok('tag-9'),
+          'tag-10': cTok('tag-10'),
+          'tag-11': cTok('tag-11'),
+          'tag-12': cTok('tag-12'),
+          // Foreground for text/icon ON a filled tag or chart swatch (AA white in both themes).
+          'tag-foreground': cTok('tag-foreground'),
+          // ---- Chart-series ramp (8) — ORDERED series for line/bar/area charts. ----
+          // Distinct role from tag-*: tags = equal-weight category dots (any order);
+          // chart-* = an ordered sequence (series 1,2,3…), blue-first, NEVER red-first.
+          // Vars in src/index.css (:root light + .dark).
+          'chart-1': cTok('chart-1'),
+          'chart-2': cTok('chart-2'),
+          'chart-3': cTok('chart-3'),
+          'chart-4': cTok('chart-4'),
+          'chart-5': cTok('chart-5'),
+          'chart-6': cTok('chart-6'),
+          'chart-7': cTok('chart-7'),
+          'chart-8': cTok('chart-8'),
         },
+        // ========================================================================
+        // DATA-PALETTE DECISION GUIDE — kiedy c-tag vs c-chart vs c-accent (brand)?
+        //   • c-accent (crimson/brand): TYLKO brand/CTA/selected — NIGDY jako dana,
+        //     seria wykresu, ani kolor kategorii. Crimson w danych = dług (VA-B sweep).
+        //   • c-success/warning/danger/info: SYGNAŁ (status/alarm/kierunek), nie kategoria.
+        //   • c-tag-1..12: KATEGORIA/TYP/ŹRÓDŁO — równoważne, bezkolejnościowe „kropki"
+        //     (chipy statusu-jako-typ, etykiety, tagi). ≤5 widocznych serii (§15.1).
+        //   • c-chart-1..8: SERIE WYKRESU — kolejność ma znaczenie (seria 1,2,3…);
+        //     blue-first, nigdy red-first. Recharts/SVG: rozwiązuj hex przez
+        //     financeChartTokens.ts / assessmentChartTokens.ts (var() nie działa w fill).
+        //   • c-tag-foreground: biały tekst/ikona NA wypełnionym swatchu (AA oba tryby).
+        // ========================================================================
         // ========================================
         // DBR77 COLOR SYSTEM STANDARD
         // See: docs/00_foundation/COLOR_SYSTEM_STANDARD.md

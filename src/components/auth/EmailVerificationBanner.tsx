@@ -49,9 +49,7 @@ export const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = (
 
   if (variant === 'inline') {
     return (
-      <div
-        className={`flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400 ${className}`}
-      >
+      <div className={`flex items-center gap-2 text-sm text-c-warning ${className}`}>
         <AlertCircle className="w-4 h-4" />
         <span>{t('auth.verifyEmail', 'Please verify your email')}</span>
         <button
@@ -68,19 +66,19 @@ export const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = (
   if (variant === 'card') {
     return (
       <div
-        className={`bg-white dark:bg-navy-900 rounded-xl border border-amber-200 dark:border-amber-500/30 overflow-hidden ${className}`}
+        className={`bg-c-surface rounded-xl border border-c-warning/30 overflow-hidden ${className}`}
       >
-        <div className="h-1.5 bg-gradient-to-r from-amber-400 to-amber-400" />
+        <div className="h-1.5 bg-c-warning" />
         <div className="p-6">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center text-white flex-shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-c-warning flex items-center justify-center text-white flex-shrink-0">
               <Mail className="w-6 h-6" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-slate-900 dark:text-white">
+              <h3 className="font-semibold text-c-text">
                 {t('auth.verifyEmailTitle', 'Verify your email address')}
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-sm text-c-text-muted mt-1">
                 {t(
                   'auth.verifyEmailDescription',
                   'We sent a verification link to {{email}}. Please check your inbox and click the link to verify.',
@@ -91,7 +89,7 @@ export const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = (
                 <button
                   onClick={handleResendVerification}
                   disabled={isSending || sent}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-500 text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+                  className="px-4 py-2 rounded-lg bg-c-warning text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
                 >
                   {isSending ? (
                     <>
@@ -121,18 +119,18 @@ export const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = (
   // Default: banner variant
   return (
     <div
-      className={`relative overflow-hidden rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-900/20 ${className}`}
+      className={`relative overflow-hidden rounded-xl border border-c-warning/30 bg-c-warning/10 ${className}`}
     >
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-            <Mail className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+          <div className="w-10 h-10 rounded-lg bg-c-warning/20 flex items-center justify-center">
+            <Mail className="w-5 h-5 text-c-warning" />
           </div>
           <div>
-            <p className="font-medium text-amber-900 dark:text-amber-200">
+            <p className="font-medium text-c-warning">
               {t('auth.verifyEmailTitle', 'Verify your email address')}
             </p>
-            <p className="text-sm text-amber-700 dark:text-amber-400">
+            <p className="text-sm text-c-warning">
               {t('auth.checkInbox', 'Check your inbox for the verification link')}
             </p>
           </div>
@@ -141,7 +139,7 @@ export const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = (
           <button
             onClick={handleResendVerification}
             disabled={isSending || sent}
-            className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 rounded-lg bg-c-warning hover:opacity-90 text-white text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             {isSending ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -154,9 +152,9 @@ export const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = (
           </button>
           <button
             onClick={handleDismiss}
-            className="p-2 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-800/30 transition-colors"
+            className="p-2 rounded-lg hover:bg-c-warning/20 transition-colors"
           >
-            <X className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+            <X className="w-4 h-4 text-c-warning" />
           </button>
         </div>
       </div>

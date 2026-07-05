@@ -273,9 +273,9 @@ function renderCoverPage(
           {title}
         </h1>
         {subtitle && (
-          <p className="text-lg text-slate-500 dark:text-slate-400 mb-8 max-w-2xl">{subtitle}</p>
+          <p className="text-lg text-c-text-secondary mb-8 max-w-2xl">{subtitle}</p>
         )}
-        <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-sm mt-4">
+        <div className="flex items-center gap-3 text-c-text-secondary text-sm mt-4">
           {company && <span className="font-medium">{company}</span>}
           {company && date && <span>·</span>}
           {date && <span>{date}</span>}
@@ -314,20 +314,20 @@ const SmartContentRenderer: React.FC<{
           <div className="not-prose">
             <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full text-sm border-collapse">
               <thead>
-                <tr className="border-b-2 border-slate-200 dark:border-slate-700">
-                  <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">
+                <tr className="border-b-2 border-c-border-subtle">
+                  <th className="text-left py-3 px-4 font-semibold text-c-text">
                     Axis
                   </th>
-                  <th className="text-center py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">
+                  <th className="text-center py-3 px-4 font-semibold text-c-text">
                     Score
                   </th>
-                  <th className="text-center py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">
+                  <th className="text-center py-3 px-4 font-semibold text-c-text">
                     Max
                   </th>
-                  <th className="text-center py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">
+                  <th className="text-center py-3 px-4 font-semibold text-c-text">
                     Gap
                   </th>
-                  <th className="text-left py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 w-40">
+                  <th className="text-left py-3 px-4 font-semibold text-c-text w-40">
                     Progress
                   </th>
                 </tr>
@@ -340,9 +340,9 @@ const SmartContentRenderer: React.FC<{
                   return (
                     <tr
                       key={axis.axisId || i}
-                      className="border-b border-slate-200 dark:border-slate-800"
+                      className="border-b border-c-border-subtle"
                     >
-                      <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">
+                      <td className="py-3 px-4 font-medium text-c-text">
                         {axis.axisName}
                       </td>
                       <td
@@ -351,7 +351,7 @@ const SmartContentRenderer: React.FC<{
                       >
                         {axis.score}
                       </td>
-                      <td className="py-3 px-4 text-center text-slate-500">
+                      <td className="py-3 px-4 text-center text-c-text-secondary">
                         {axis.maxScore || parsed.scaleMax}
                       </td>
                       <td className="py-3 px-4 text-center">
@@ -362,7 +362,7 @@ const SmartContentRenderer: React.FC<{
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                        <div className="w-full bg-c-border-subtle rounded-full h-2">
                           <div
                             className="h-2 rounded-full transition-all"
                             style={{
@@ -421,29 +421,29 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
           : 'font-sans';
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-white dark:bg-slate-950">
+    <div className="fixed inset-0 z-[100] flex flex-col bg-c-surface">
       {/* Preview Header */}
-      <header className="h-12 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 flex-shrink-0 print:hidden">
+      <header className="h-12 bg-c-surface-raised border-b border-c-border-subtle flex items-center justify-between px-6 flex-shrink-0 print:hidden">
         <div className="flex items-center gap-3">
-          <Eye className="w-4 h-4 text-slate-500" />
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <Eye className="w-4 h-4 text-c-text-secondary" />
+          <span className="text-sm font-medium text-c-text">
             {isPl ? 'Podgląd raportu' : 'Report Preview'}
           </span>
-          <span className="text-xs text-slate-600 ml-2">
+          <span className="text-xs text-c-text-secondary ml-2">
             {enabledBlocks.length} {isPl ? 'sekcji' : 'sections'}
           </span>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => window.print()}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
           >
             <Download className="w-4 h-4" />
             {isPl ? 'Drukuj / PDF' : 'Print / PDF'}
           </button>
           <button
             onClick={onClose}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700 rounded-lg"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-c-border-subtle text-c-text hover:bg-c-border rounded-lg"
           >
             <X className="w-4 h-4" />
             {isPl ? 'Zamknij' : 'Close'}
@@ -452,9 +452,9 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
       </header>
 
       {/* Preview Body */}
-      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-950 print:bg-white">
+      <div className="flex-1 overflow-y-auto bg-c-surface-raised print:bg-c-surface">
         <div
-          className={`max-w-4xl mx-auto my-8 bg-white dark:bg-slate-900 shadow-xl rounded-lg print:shadow-none print:rounded-none print:my-0 print:max-w-none ${fontClass}`}
+          className={`max-w-4xl mx-auto my-8 bg-c-surface shadow-xl rounded-lg print:shadow-none print:rounded-none print:my-0 print:max-w-none ${fontClass}`}
         >
           {enabledBlocks.map((block, idx) => {
             const content = block.content || '';
@@ -464,7 +464,7 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
             return (
               <section
                 key={block.id}
-                className={`${idx > 0 ? 'border-t border-slate-200 dark:border-slate-800' : ''} ${isCover ? '' : 'px-12 py-10 md:px-16 md:py-12'}`}
+                className={`${idx > 0 ? 'border-t border-c-border-subtle' : ''} ${isCover ? '' : 'px-12 py-10 md:px-16 md:py-12'}`}
                 style={{ pageBreakBefore: idx > 0 ? 'always' : undefined }}
               >
                 {isCover && hasContent ? (
@@ -494,7 +494,7 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
                         />
                       </div>
                     ) : (
-                      <div className="text-center py-12 text-slate-600">
+                      <div className="text-center py-12 text-c-text-secondary">
                         <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-40" />
                         <p className="text-sm italic">
                           {isPl
@@ -511,7 +511,7 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
 
           {/* Footer */}
           {styling.showBranding && (
-            <div className="border-t border-slate-200 dark:border-slate-800 px-12 py-6 text-center text-xs text-slate-600 print:text-slate-500">
+            <div className="border-t border-c-border-subtle px-12 py-6 text-center text-xs text-c-text-secondary print:text-c-text-secondary">
               {isPl ? 'Utworzono w' : 'Created with'} Consultify
             </div>
           )}
@@ -891,7 +891,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       }))}
     />
   ) : (
-    <div className="text-sm text-slate-500 dark:text-slate-400">
+    <div className="text-sm text-c-text-secondary">
       {isPl
         ? 'Zapisz raport, aby odblokować eksport i udostępnianie.'
         : 'Save the report to enable export and sharing.'}
@@ -918,7 +918,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         viewModes={['list']}
       >
         {reportBacklinks.length === 0 && !reportBacklinksLoading ? (
-          <div className="text-xs text-slate-500 dark:text-slate-400">
+          <div className="text-xs text-c-text-secondary">
             {isPl ? 'Brak powiązań' : 'No links yet'}
           </div>
         ) : (
@@ -926,13 +926,13 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             {reportBacklinks.slice(0, 8).map((bl) => (
               <div
                 key={bl.id}
-                className="flex items-center justify-between gap-2 rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.03] px-3 py-2"
+                className="flex items-center justify-between gap-2 rounded-lg border border-c-border-subtle/[0.08] bg-c-surface/[0.03] px-3 py-2"
               >
                 <div className="min-w-0">
-                  <div className="truncate text-xs font-medium text-slate-800 dark:text-slate-200">
+                  <div className="truncate text-xs font-medium text-c-text">
                     {getSourceDisplayLabel(bl.sourceType, isPl)}
                   </div>
-                  <div className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="truncate text-[11px] text-c-text-secondary">
                     {bl.sourceId}
                   </div>
                 </div>
@@ -960,7 +960,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       </EmbeddedView>
     </>
   ) : (
-    <div className="text-sm text-slate-500 dark:text-slate-400">
+    <div className="text-sm text-c-text-secondary">
       {isPl
         ? 'Zapisz raport, aby włączyć workflow recenzji.'
         : 'Save the report to enable review workflow.'}
@@ -2250,28 +2250,28 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   // Loading state
   if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+      <div className="h-screen flex items-center justify-center bg-c-surface-raised">
         <div className="text-center">
           <Loader2 className="w-10 h-10 text-blue-500 animate-spin mx-auto mb-4" />
-          <p className="text-slate-500">{isPl ? 'Ładowanie...' : 'Loading...'}</p>
+          <p className="text-c-text-secondary">{isPl ? 'Ładowanie...' : 'Loading...'}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-slate-100 dark:bg-slate-950">
+    <div className="h-screen flex flex-col bg-c-surface-raised">
       {/* Top Bar */}
-      <header className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 flex-shrink-0">
+      <header className="h-14 bg-c-surface border-b border-c-border-subtle flex items-center justify-between px-4 flex-shrink-0">
         <div className="flex items-center gap-4">
           <button
             onClick={onClose}
-            className="p-2 text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+            className="p-2 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
 
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" />
+          <div className="h-6 w-px bg-c-border-subtle" />
 
           <input
             type="text"
@@ -2295,7 +2295,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   ? 'Tytuł raportu...'
                   : 'Report title...'
             }
-            className="text-lg font-semibold bg-transparent border-none outline-none text-slate-900 dark:text-white placeholder-slate-400 w-80 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded px-2 py-0.5 -ml-2 transition-colors focus:bg-slate-50 dark:focus:bg-slate-800/50"
+            className="text-lg font-semibold bg-transparent border-none outline-none text-c-text placeholder:text-c-text-muted w-80 hover:bg-c-surface-raised rounded px-2 py-0.5 -ml-2 transition-colors focus:bg-c-surface-raised"
           />
 
           {/* Unsaved dot indicator (no text) */}
@@ -2315,7 +2315,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             className={`inline-flex items-center gap-1.5 h-8 px-3.5 text-[13px] font-medium rounded-full border transition-all ${
               hasUnsavedChanges
                 ? 'border-blue-500/40 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
-                : 'border-slate-600/40 bg-slate-800/40 text-slate-600 hover:bg-slate-700/60 hover:text-slate-300'
+                : 'border-c-border-strong bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text-secondary'
             }`}
             title={
               hasUnsavedChanges
@@ -2341,7 +2341,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               <button
                 onClick={() => handleGenerate('new_only')}
                 disabled={isGenerating}
-                className="inline-flex items-center gap-1.5 h-8 px-3.5 text-[13px] font-medium rounded-full border border-primary-500/40 bg-primary-500/15 text-primary-400 hover:bg-primary-500/25 transition-all disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 h-8 px-3.5 text-[13px] font-medium rounded-full border border-c-accent bg-c-accent-soft0 text-c-accent hover:bg-c-accent-soft0 transition-all disabled:opacity-50"
               >
                 {isGenerating ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -2351,18 +2351,18 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 {isPl ? 'Generuj' : 'Generate'}
                 <ChevronDown className="w-3 h-3 opacity-60" />
               </button>
-              <div className="absolute right-0 top-full mt-1.5 w-52 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1 overflow-hidden">
+              <div className="absolute right-0 top-full mt-1.5 w-52 bg-c-surface border border-c-border rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1 overflow-hidden">
                 <button
                   onClick={() => handleGenerate('new_only')}
                   disabled={isGenerating}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-600 hover:bg-slate-700/60 transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                 >
-                  <Zap className="w-3.5 h-3.5 text-primary-400 flex-shrink-0" />
+                  <Zap className="w-3.5 h-3.5 text-c-accent flex-shrink-0" />
                   <div className="text-left">
                     <div className="text-xs font-medium">
                       {isPl ? 'Generuj nowe' : 'Generate new'}
                     </div>
-                    <div className="text-[10px] text-slate-500">
+                    <div className="text-[10px] text-c-text-secondary">
                       {isPl ? 'Tylko puste sekcje' : 'Empty sections only'}
                     </div>
                   </div>
@@ -2370,30 +2370,30 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 <button
                   onClick={() => handleGenerate('modified')}
                   disabled={isGenerating}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-600 hover:bg-slate-700/60 transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                 >
                   <RefreshCw className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
                   <div className="text-left">
                     <div className="text-xs font-medium">
                       {isPl ? 'Odśwież zmienione' : 'Refresh modified'}
                     </div>
-                    <div className="text-[10px] text-slate-500">
+                    <div className="text-[10px] text-c-text-secondary">
                       {isPl ? 'Sekcje wymagające aktualizacji' : 'Sections needing update'}
                     </div>
                   </div>
                 </button>
-                <div className="border-t border-slate-700 my-1" />
+                <div className="border-t border-c-border my-1" />
                 <button
                   onClick={() => handleGenerate('all')}
                   disabled={isGenerating}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-600 hover:bg-slate-700/60 transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
                   <div className="text-left">
                     <div className="text-xs font-medium">
                       {isPl ? 'Regeneruj wszystko' : 'Regenerate all'}
                     </div>
-                    <div className="text-[10px] text-slate-500">
+                    <div className="text-[10px] text-c-text-secondary">
                       {isPl ? 'Nadpisz wszystkie sekcje' : 'Overwrite all sections'}
                     </div>
                   </div>
@@ -2408,8 +2408,8 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               onClick={() => setShowAgentChat((p) => !p)}
               className={`inline-flex items-center gap-1.5 h-8 px-3.5 text-[13px] font-medium rounded-full border transition-all ${
                 showAgentChat
-                  ? 'border-primary-500/60 bg-primary-500/20 text-primary-300'
-                  : 'border-slate-600/40 bg-slate-800/40 text-slate-600 hover:bg-slate-700/60 hover:text-slate-300'
+                  ? 'border-c-accent bg-c-accent-soft0 text-c-accent'
+                  : 'border-c-border-strong bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text-secondary'
               }`}
               title={isPl ? 'Asystent raportu' : 'Report Agent'}
             >
@@ -2440,68 +2440,68 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                     : 'View'}
                 <ChevronDown className="w-3 h-3 opacity-60" />
               </button>
-              <div className="absolute right-0 top-full mt-1.5 w-52 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1 overflow-hidden">
+              <div className="absolute right-0 top-full mt-1.5 w-52 bg-c-surface border border-c-border rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1 overflow-hidden">
                 <button
                   onClick={() => handleViewExport('web')}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-600 hover:bg-slate-700/60 transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                 >
                   <Monitor className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
                   <div className="text-left">
                     <div className="text-xs font-medium">
                       {isPl ? 'Podgląd Web' : 'Web Preview'}
                     </div>
-                    <div className="text-[10px] text-slate-500">
+                    <div className="text-[10px] text-c-text-secondary">
                       {isPl ? 'Podgląd w przeglądarce' : 'Preview in browser'}
                     </div>
                   </div>
                 </button>
-                <div className="border-t border-slate-700 my-1" />
+                <div className="border-t border-c-border my-1" />
                 <div className="px-3.5 py-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-c-text-secondary">
                     {isPl ? 'Eksport i zapis do wersji' : 'Export & save to versions'}
                   </span>
                 </div>
                 <button
                   onClick={() => handleViewExport('pdf')}
                   disabled={!!isExporting}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-600 hover:bg-slate-700/60 transition-colors disabled:opacity-50"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50"
                 >
                   <FileText className="w-3.5 h-3.5 text-danger-400 flex-shrink-0" />
                   <div className="text-left">
                     <div className="text-xs font-medium">PDF</div>
-                    <div className="text-[10px] text-slate-500">
+                    <div className="text-[10px] text-c-text-secondary">
                       {isPl ? 'Dokument PDF' : 'PDF document'}
                     </div>
                   </div>
-                  <Download className="w-3 h-3 text-slate-500 ml-auto" />
+                  <Download className="w-3 h-3 text-c-text-secondary ml-auto" />
                 </button>
                 <button
                   onClick={() => handleViewExport('pptx')}
                   disabled={!!isExporting}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-600 hover:bg-slate-700/60 transition-colors disabled:opacity-50"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50"
                 >
                   <Presentation className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
                   <div className="text-left">
                     <div className="text-xs font-medium">PPTX</div>
-                    <div className="text-[10px] text-slate-500">
+                    <div className="text-[10px] text-c-text-secondary">
                       {isPl ? 'Prezentacja PowerPoint' : 'PowerPoint presentation'}
                     </div>
                   </div>
-                  <Download className="w-3 h-3 text-slate-500 ml-auto" />
+                  <Download className="w-3 h-3 text-c-text-secondary ml-auto" />
                 </button>
                 <button
                   onClick={() => handleViewExport('docx')}
                   disabled={!!isExporting}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-600 hover:bg-slate-700/60 transition-colors disabled:opacity-50"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50"
                 >
                   <Globe className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
                   <div className="text-left">
                     <div className="text-xs font-medium">Word</div>
-                    <div className="text-[10px] text-slate-500">
+                    <div className="text-[10px] text-c-text-secondary">
                       {isPl ? 'Dokument Word (.docx)' : 'Word document (.docx)'}
                     </div>
                   </div>
-                  <Download className="w-3 h-3 text-slate-500 ml-auto" />
+                  <Download className="w-3 h-3 text-c-text-secondary ml-auto" />
                 </button>
               </div>
             </div>
@@ -2533,7 +2533,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           <div className="max-w-3xl mx-auto space-y-4">
             {/* Source Info */}
             {!isTemplateMode && sourceName && (
-              <div className="flex items-center gap-2 text-sm text-slate-500 mb-6">
+              <div className="flex items-center gap-2 text-sm text-c-text-secondary mb-6">
                 <Layers className="w-4 h-4" />
                 <span>
                   {isPl ? 'Źródło:' : 'Source:'} {sourceName}
@@ -2558,14 +2558,14 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   <div key={chapter.key} className="space-y-4">
                     {/* Chapter Header */}
                     {chapter.key !== '__ungrouped__' && (
-                      <div className="flex items-center gap-3 pt-6 pb-2 border-b-2 border-slate-300 dark:border-slate-600">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-crimson-500 to-primary-600 flex items-center justify-center text-white text-sm font-bold">
+                      <div className="flex items-center gap-3 pt-6 pb-2 border-b-2 border-c-border">
+                        <div className="w-8 h-8 rounded-lg bg-c-accent flex items-center justify-center text-c-text text-sm font-bold">
                           {chapters.filter((c) => c.key !== '__ungrouped__').indexOf(chapter) + 1}
                         </div>
-                        <h2 className="text-lg font-bold text-slate-800 dark:text-white flex-1">
+                        <h2 className="text-lg font-bold text-c-text flex-1">
                           {chapter.title}
                         </h2>
-                        <span className="text-xs text-slate-600">
+                        <span className="text-xs text-c-text-secondary">
                           {chapter.blocks.filter((b) => b.enabled).length}{' '}
                           {isPl ? 'bloków' : 'blocks'}
                         </span>
@@ -2695,7 +2695,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             {/* Add Block Button */}
             <button
               onClick={() => setShowBlockPalette(true)}
-              className="w-full py-4 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-slate-500 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all flex items-center justify-center gap-2"
+              className="w-full py-4 border-2 border-dashed border-c-border rounded-xl text-c-text-secondary hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all flex items-center justify-center gap-2"
             >
               <Plus className="w-5 h-5" />
               {isPl ? 'Dodaj blok' : 'Add block'}
@@ -2704,20 +2704,20 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             {/* Empty State */}
             {blocks.length === 0 && (
               <div className="text-center py-16">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-primary-100 dark:from-blue-900/30 dark:to-primary-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 bg-c-accent dark:from-blue-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
                   <Layers className="w-10 h-10 text-blue-500" />
                 </div>
-                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+                <h3 className="text-xl font-semibold text-c-text mb-2">
                   {isPl ? 'Zacznij budować raport' : 'Start building your report'}
                 </h3>
-                <p className="text-slate-500 max-w-md mx-auto mb-6">
+                <p className="text-c-text-secondary max-w-md mx-auto mb-6">
                   {isPl
                     ? 'Dodaj bloki, aby zdefiniować strukturę raportu. Każdy blok może zawierać tekst, dane, wykresy lub wizualizacje.'
                     : 'Add blocks to define your report structure. Each block can contain text, data, charts, or visualizations.'}
                 </p>
                 <button
                   onClick={() => setShowBlockPalette(true)}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-c-text rounded-xl hover:bg-blue-700 font-medium"
                 >
                   <Plus className="w-5 h-5" />
                   {isPl ? 'Dodaj pierwszy blok' : 'Add first block'}

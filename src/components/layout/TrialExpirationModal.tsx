@@ -25,7 +25,7 @@ const TrialExpirationModal: React.FC<TrialExpirationModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onDismiss} />
 
@@ -99,7 +99,7 @@ const TrialExpirationModal: React.FC<TrialExpirationModalProps> = ({
           <div className="flex flex-col gap-3">
             <button
               onClick={onUpgradeClick}
-              className="w-full py-3 px-4 bg-primary-500 hover:bg-primary-600 text-white font-semibold rounded-lg transition-colors"
+              className="w-full py-3 px-4 bg-c-text hover:bg-c-text-secondary text-c-bg font-semibold rounded-lg transition-colors"
             >
               {t('trialExpired.upgrade', 'Upgrade Now')}
             </button>

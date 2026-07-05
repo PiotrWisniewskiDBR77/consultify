@@ -241,7 +241,7 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full">
-        <Loader2 className="animate-spin text-primary-600" />
+        <Loader2 className="animate-spin text-c-accent" />
       </div>
     );
   }
@@ -251,10 +251,10 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
   }
 
   return (
-    <div className="flex h-full bg-gray-50 dark:bg-navy-950">
+    <div className="flex h-full bg-c-surface-raised">
       {/* Sidebar / Outline - Simplified for MVP */}
-      <div className="w-64  border-slate-200 dark:border-navy-700 p-4 bg-white dark:bg-navy-900 hidden md:block overflow-y-auto">
-        <h3 className="font-bold text-slate-700 dark:text-slate-200 mb-4">Report Outline</h3>
+      <div className="w-64  border-c-border-subtle p-4 bg-c-surface hidden md:block overflow-y-auto">
+        <h3 className="font-bold text-c-text mb-4">Report Outline</h3>
         <div className="space-y-2">
           {report.blockOrder.map((id, index: number) => {
             const block = report.blocks[id];
@@ -262,7 +262,7 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
             return (
               <div
                 key={id}
-                className="text-sm p-2 bg-slate-100 dark:bg-navy-800 rounded truncate hover:bg-slate-200 dark:hover:bg-navy-700 cursor-pointer"
+                className="text-sm p-2 bg-c-surface-raised rounded truncate hover:bg-c-border-subtle cursor-pointer"
               >
                 {index + 1}. {block.title || block.type}
               </div>
@@ -271,7 +271,7 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
         </div>
 
         <div className="mt-8 border-t pt-4">
-          <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
+          <h4 className="text-xs font-semibold text-c-text-secondary uppercase mb-2">
             Add Block
           </h4>
           <div className="grid grid-cols-2 gap-2">
@@ -279,7 +279,7 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
               <button
                 key={type}
                 onClick={() => handleAddBlock(type)}
-                className="text-xs flex items-center gap-1 p-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded hover:border-primary-500 transition-colors"
+                className="text-xs flex items-center gap-1 p-2 bg-c-surface-raised border border-c-border-subtle rounded hover:border-c-accent transition-colors"
                 disabled={isSaving}
               >
                 <Plus size={12} /> {type}
@@ -293,8 +293,8 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
       <div className="flex-1 overflow-y-auto p-4 md:p-8">
         <div className="max-w-4xl mx-auto space-y-6 pb-20">
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-slate-800 dark:text-white">{report.title}</h1>
-            <div className="text-sm text-slate-500 dark:text-slate-400">
+            <h1 className="text-3xl font-bold text-c-text">{report.title}</h1>
+            <div className="text-sm text-c-text-secondary">
               v{report.version} • {report.status}
             </div>
           </div>
@@ -324,13 +324,13 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
           </DndContext>
 
           {report.blockOrder.length === 0 && (
-            <div className="border-2 border-dashed border-slate-300 dark:border-navy-700 rounded-xl p-12 text-center">
-              <p className="text-slate-500 dark:text-slate-400 mb-4">
+            <div className="border-2 border-dashed border-c-border rounded-xl p-12 text-center">
+              <p className="text-c-text-secondary mb-4">
                 No blocks yet. Add one to start.
               </p>
               <button
                 onClick={() => handleAddBlock('text')}
-                className="bg-navy-900 text-white px-4 py-2 rounded-lg hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
+                className="bg-c-text text-c-bg px-4 py-2 rounded-lg hover:opacity-90"
               >
                 Add Text Block
               </button>

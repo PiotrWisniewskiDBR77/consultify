@@ -39,7 +39,7 @@ const ROW_TEMPLATES: RowTemplate[] = [
     labelPl: 'Pusty wiersz',
     descEn: 'Empty row to fill manually',
     descPl: 'Pusty wiersz do ręcznego wypełnienia',
-    color: '#94a3b8',
+    color: 'var(--c-tag-8)',
     defaults: {},
   },
   {
@@ -49,7 +49,7 @@ const ROW_TEMPLATES: RowTemplate[] = [
     labelPl: 'Pomysł',
     descEn: 'New idea with impact & effort',
     descPl: 'Nowy pomysł z wpływem i wysiłkiem',
-    color: '#f59e0b',
+    color: 'var(--c-tag-9)',
     defaults: { type: 'idea', status: 'To Do', priority: 'Medium' },
   },
   {
@@ -59,7 +59,7 @@ const ROW_TEMPLATES: RowTemplate[] = [
     labelPl: 'Zadanie',
     descEn: 'Actionable task with owner & deadline',
     descPl: 'Zadanie z właścicielem i terminem',
-    color: '#3b82f6',
+    color: 'var(--c-tag-1)',
     defaults: { type: 'action', status: 'To Do', priority: 'High' },
   },
   {
@@ -69,7 +69,7 @@ const ROW_TEMPLATES: RowTemplate[] = [
     labelPl: 'Ryzyko',
     descEn: 'Risk item with probability & impact',
     descPl: 'Ryzyko z prawdopodobieństwem i wpływem',
-    color: '#f43f5e',
+    color: 'var(--c-tag-4)',
     defaults: { type: 'risk', status: 'To Do', priority: 'High' },
   },
   {
@@ -79,7 +79,7 @@ const ROW_TEMPLATES: RowTemplate[] = [
     labelPl: 'Interesariusz',
     descEn: 'Person or group with influence & interest',
     descPl: 'Osoba lub grupa z wpływem i zainteresowaniem',
-    color: '#6366f1',
+    color: 'var(--c-tag-2)',
     defaults: { type: 'stakeholder', status: 'In Progress' },
   },
   {
@@ -89,7 +89,7 @@ const ROW_TEMPLATES: RowTemplate[] = [
     labelPl: 'Szansa',
     descEn: 'Business opportunity to explore',
     descPl: 'Szansa biznesowa do zbadania',
-    color: '#10b981',
+    color: 'var(--c-tag-12)',
     defaults: { type: 'opportunity', status: 'To Do', priority: 'Medium' },
   },
   {
@@ -99,7 +99,7 @@ const ROW_TEMPLATES: RowTemplate[] = [
     labelPl: 'Decyzja',
     descEn: 'Decision to be made with options',
     descPl: 'Decyzja do podjęcia z opcjami',
-    color: '#3b82f6',
+    color: 'var(--c-tag-10)',
     defaults: { type: 'decision', status: 'To Do' },
   },
   {
@@ -109,7 +109,7 @@ const ROW_TEMPLATES: RowTemplate[] = [
     labelPl: 'Wymaganie',
     descEn: 'Business or technical requirement',
     descPl: 'Wymaganie biznesowe lub techniczne',
-    color: '#ec4899',
+    color: 'var(--c-tag-11)',
     defaults: { type: 'requirement', status: 'To Do', priority: 'Medium' },
   },
   {
@@ -119,7 +119,7 @@ const ROW_TEMPLATES: RowTemplate[] = [
     labelPl: 'KPI / Metryka',
     descEn: 'Key performance indicator to track',
     descPl: 'Kluczowy wskaźnik do śledzenia',
-    color: '#f59e0b',
+    color: 'var(--c-tag-5)',
     defaults: { type: 'kpi' },
   },
   {
@@ -129,7 +129,7 @@ const ROW_TEMPLATES: RowTemplate[] = [
     labelPl: 'Ograniczenie',
     descEn: 'Limitation or boundary condition',
     descPl: 'Ograniczenie lub warunek brzegowy',
-    color: '#64748b',
+    color: 'var(--c-tag-8)',
     defaults: { type: 'constraint', status: 'To Do' },
   },
 ];
@@ -179,18 +179,18 @@ export const RowTemplatePicker: React.FC<RowTemplatePickerProps> = ({
     <div className="fixed inset-0 z-[150]" onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-[280px] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden"
+        className="w-[280px] rounded-2xl border border-c-border bg-c-surface shadow-2xl overflow-hidden"
         style={style}
       >
-        <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200/60 dark:border-navy-700/60">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
             {isPl ? 'Szablon wiersza' : 'Row Template'}
           </span>
           <button
             onClick={onClose}
-            className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="p-0.5 rounded hover:bg-c-surface-raised"
           >
-            <X size={11} className="text-slate-600" />
+            <X size={11} className="text-c-text-muted" />
           </button>
         </div>
         <div className="max-h-[360px] overflow-auto p-1.5">
@@ -200,19 +200,19 @@ export const RowTemplatePicker: React.FC<RowTemplatePickerProps> = ({
               <button
                 key={tpl.id}
                 onClick={() => handleSelect(tpl)}
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors text-left"
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-c-surface-raised transition-colors text-left"
               >
                 <div
                   className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: `${tpl.color}15` }}
+                  style={{ backgroundColor: `color-mix(in srgb, ${tpl.color} 15%, transparent)` }}
                 >
                   <Icon size={13} style={{ color: tpl.color }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                  <div className="text-[11px] font-bold text-c-text-secondary">
                     {isPl ? tpl.labelPl : tpl.labelEn}
                   </div>
-                  <div className="text-[9px] text-slate-600 dark:text-slate-500 truncate">
+                  <div className="text-[9px] text-c-text-muted truncate">
                     {isPl ? tpl.descPl : tpl.descEn}
                   </div>
                 </div>

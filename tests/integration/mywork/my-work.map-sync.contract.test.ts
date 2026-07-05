@@ -181,7 +181,7 @@ describe('M05 L-08 — Ideas workspace persistence contracts (S2/S3/S6)', () => 
     it('POST /map/sync (new map, no baseVersion) → 200 success', async () => {
       // Idea exists
       mockQueryOne
-        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Test', user_id: USER_ID, organization_id: ORG_ID })
+        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Test', ownerUserId: USER_ID, user_id: USER_ID, organization_id: ORG_ID })
         // No existing map (first sync)
         .mockResolvedValueOnce(null);
 
@@ -197,7 +197,7 @@ describe('M05 L-08 — Ideas workspace persistence contracts (S2/S3/S6)', () => 
     it('POST /map/sync with matching baseVersion → 200 and incremented version', async () => {
       // Idea exists
       mockQueryOne
-        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Test' })
+        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Test', ownerUserId: USER_ID })
         // Existing map at version 2
         .mockResolvedValueOnce(EXISTING_MAP_V2);
 
@@ -237,7 +237,7 @@ describe('M05 L-08 — Ideas workspace persistence contracts (S2/S3/S6)', () => 
     it('stale baseVersion → 409 with conflict payload (not silent overwrite)', async () => {
       // Idea exists
       mockQueryOne
-        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Test' })
+        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Test', ownerUserId: USER_ID })
         // Existing map at version 2; client sends baseVersion=1 (stale)
         .mockResolvedValueOnce(EXISTING_MAP_V2);
 
@@ -252,7 +252,7 @@ describe('M05 L-08 — Ideas workspace persistence contracts (S2/S3/S6)', () => 
 
     it('409 body includes server map so client can rehydrate', async () => {
       mockQueryOne
-        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Test' })
+        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Test', ownerUserId: USER_ID })
         .mockResolvedValueOnce(EXISTING_MAP_V2);
 
       const res = await request(buildApp())
@@ -267,7 +267,7 @@ describe('M05 L-08 — Ideas workspace persistence contracts (S2/S3/S6)', () => 
 
     it('correct baseVersion after conflict → 200 (can recover)', async () => {
       mockQueryOne
-        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Test' })
+        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Test', ownerUserId: USER_ID })
         .mockResolvedValueOnce(EXISTING_MAP_V2); // version 2 — matches baseVersion=2
 
       const res = await request(buildApp())
@@ -298,7 +298,7 @@ describe('M05 L-08 — Ideas workspace persistence contracts (S2/S3/S6)', () => 
 
     it('empty save from a DIFFERENT tool over a populated board → 409 EMPTY_RESET_BLOCKED (data preserved)', async () => {
       mockQueryOne
-        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Test' })
+        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Test', ownerUserId: USER_ID })
         .mockResolvedValueOnce(EXISTING_WHITEBOARD_MAP_V2);
 
       const res = await request(buildApp())
@@ -319,7 +319,7 @@ describe('M05 L-08 — Ideas workspace persistence contracts (S2/S3/S6)', () => 
 
     it('empty save from the SAME tool (delete-all) is allowed → 200', async () => {
       mockQueryOne
-        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Test' })
+        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Test', ownerUserId: USER_ID })
         .mockResolvedValueOnce(EXISTING_WHITEBOARD_MAP_V2);
 
       const res = await request(buildApp())

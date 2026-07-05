@@ -209,7 +209,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
         </div>
         <button
           onClick={exportAuditTrail}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white dark:bg-primary-600 rounded-lg hover:opacity-90 transition-opacity"
+          className="flex items-center gap-2 px-4 py-2 bg-c-text text-c-bg dark:bg-c-text rounded-lg hover:opacity-90 transition-opacity"
         >
           <Download size={16} />
           Export Report

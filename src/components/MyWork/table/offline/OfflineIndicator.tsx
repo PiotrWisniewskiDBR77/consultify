@@ -66,12 +66,12 @@ export const OfflineIndicator: React.FC = () => {
     <div
       className={`fixed bottom-4 right-4 flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg text-sm font-medium z-50 max-w-[90vw] ${
         isOnline
-          ? 'bg-yellow-50 text-yellow-800 border border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-200 dark:border-yellow-700'
-          : 'bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-900/30 dark:text-rose-200 dark:border-rose-700'
+          ? 'bg-c-warning text-c-warning border border-c-warning bg-c-warning text-c-warning border-c-warning'
+          : 'bg-c-danger text-c-danger border border-c-danger bg-c-danger text-c-danger border-c-danger'
       }`}
     >
       <div
-        className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'bg-yellow-500' : 'bg-rose-500 animate-pulse'}`}
+        className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'bg-c-warning' : 'bg-c-danger animate-pulse'}`}
       />
       {!isOnline && <span>Offline</span>}
       {pendingCount > 0 && (
@@ -83,7 +83,7 @@ export const OfflineIndicator: React.FC = () => {
             <button
               onClick={handleSync}
               disabled={syncing}
-              className="ml-1 px-2 py-0.5 bg-yellow-600 text-white rounded text-xs hover:bg-yellow-700 disabled:opacity-50 transition-colors whitespace-nowrap"
+              className="ml-1 px-2 py-0.5 bg-c-warning text-c-text rounded text-xs hover:bg-c-warning disabled:opacity-50 transition-colors whitespace-nowrap"
             >
               {syncing ? 'Syncing...' : 'Sync now'}
             </button>

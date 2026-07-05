@@ -35,9 +35,9 @@ const ringOrder: Record<RadarMegatrend['ring'], number> = {
 
 // Colours and emojis per type
 const typeColors: Record<RadarMegatrend['type'], { bg: string; border: string; emoji: string }> = {
-  Technology: { bg: 'bg-blue-500', border: 'border-blue-700', emoji: '🔵' },
-  Business: { bg: 'bg-navy-900', border: 'border-primary-700', emoji: '🟣' },
-  Societal: { bg: 'bg-amber-500', border: 'border-amber-700', emoji: '🟠' },
+  Technology: { bg: 'bg-c-tag-1', border: 'border-c-tag-1', emoji: '🔵' },
+  Business: { bg: 'bg-c-tag-3', border: 'border-c-tag-3', emoji: '🟣' },
+  Societal: { bg: 'bg-c-tag-9', border: 'border-c-tag-9', emoji: '🟠' },
 };
 
 interface TrendRadarCardProps {
@@ -111,15 +111,15 @@ export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({
 
   return (
     <div
-      className="bg-white dark:bg-gray-900 rounded-xl shadow-lg p-6 space-y-4"
+      className="bg-c-surface rounded-xl shadow-lg p-6 space-y-4"
       ref={containerRef}
     >
-      <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">Trend Radar Map</h2>
+      <h2 className="text-2xl font-semibold text-c-text">Trend Radar Map</h2>
 
       {loading && (
-        <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
+        <div className="flex items-center space-x-2 text-c-text-secondary">
           <svg
-            className="animate-spin h-5 w-5 text-indigo-600"
+            className="animate-spin h-5 w-5 text-c-accent"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -154,7 +154,7 @@ export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({
         {/* Tooltip */}
         {tooltip && (
           <div
-            className="absolute bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap shadow-lg"
+            className="absolute bg-c-text text-c-bg text-xs rounded py-1 px-2 whitespace-nowrap shadow-lg"
             style={{ left: tooltip.x - 50, top: tooltip.y - 40 }}
           >
             {tooltip.text}
@@ -163,7 +163,7 @@ export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({
       </div>
 
       {/* Legend */}
-      <div className="flex justify-center space-x-6 mt-4 text-sm text-gray-600 dark:text-gray-300">
+      <div className="flex justify-center space-x-6 mt-4 text-sm text-c-text-secondary">
         {Object.entries(typeColors).map(([type, { emoji }]) => (
           <div key={type} className="flex items-center space-x-1">
             <span>{emoji}</span>
@@ -171,7 +171,7 @@ export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({
           </div>
         ))}
         <div className="flex items-center space-x-1">
-          <span className="inline-block w-3 h-3 bg-gray-50 dark:bg-navy-8000 rounded-full"></span>
+          <span className="inline-block w-3 h-3 bg-c-surface-raised rounded-full"></span>
           <span>Impact size (larger = stronger)</span>
         </div>
       </div>

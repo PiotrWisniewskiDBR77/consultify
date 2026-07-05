@@ -4,9 +4,11 @@
  * Groups events by time window (Today, Yesterday, This week, Earlier),
  * supports compact/expanded modes, and polls for real-time updates.
  */
-import { Activity, ChevronRight, Clock, Edit3, Loader2, Plus, Trash2, X } from 'lucide-react';
+import { Activity, ChevronRight, Clock, Edit3, Plus, Trash2, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { EmptyState, LoadingState } from '@/components/shared/states';
 
 import { Api } from '../../../services/api';
 
@@ -100,17 +102,17 @@ const EventItem = React.memo(function EventItem({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-start gap-2 px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors group"
+      className="w-full flex items-start gap-2 px-3 py-2 text-left hover:bg-c-surface-raised transition-colors group"
     >
-      <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center flex-shrink-0 mt-0.5">
+      <div className="w-6 h-6 rounded-full bg-c-surface-raised flex items-center justify-center flex-shrink-0 mt-0.5">
         {eventIcon(event.eventType)}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] text-slate-700 dark:text-slate-200 leading-snug truncate">
+        <p className="text-[11px] text-c-text leading-snug truncate">
           {eventLabel(event, isPl)}
         </p>
         {!compact && (
-          <span className="text-[10px] text-slate-600 dark:text-slate-500 flex items-center gap-1 mt-0.5">
+          <span className="text-[10px] text-c-text-secondary flex items-center gap-1 mt-0.5">
             <Clock size={9} />
             {relativeTime(event.timestamp, isPl)}
           </span>
@@ -119,7 +121,7 @@ const EventItem = React.memo(function EventItem({
       {onClick && (
         <ChevronRight
           size={12}
-          className="text-slate-600 dark:text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity mt-1 flex-shrink-0"
+          className="text-c-text-secondary opacity-0 group-hover:opacity-100 transition-opacity mt-1 flex-shrink-0"
         />
       )}
     </button>
@@ -211,17 +213,17 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   return (
     <div
-      className={`${compact ? 'w-64' : 'w-80'} border-l border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900 flex flex-col h-full overflow-hidden flex-shrink-0`}
+      className={`${compact ? 'w-64' : 'w-80'} border-l border-c-border-subtle bg-c-surface flex flex-col h-full overflow-hidden flex-shrink-0`}
     >
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-200/60 dark:border-navy-700/60">
-        <Activity size={14} className="text-slate-500 dark:text-slate-400" />
-        <span className="text-xs font-bold text-slate-700 dark:text-slate-200 flex-1">
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-c-border-subtle">
+        <Activity size={14} className="text-c-text-muted" />
+        <span className="text-xs font-bold text-c-text flex-1">
           {isPl ? 'Aktywność' : 'Activity'}
         </span>
         <button
           onClick={onClose}
-          className="p-1 rounded text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+          className="p-1 rounded text-c-text-secondary hover:text-c-text-secondary transition-colors"
         >
           <X size={14} />
         </button>
@@ -230,21 +232,26 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {loading && events.length === 0 ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 size={20} className="animate-spin text-slate-600" />
-          </div>
+          <LoadingState template="list" rows={5} />
         ) : events.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-slate-600 dark:text-slate-500 px-4 text-center">
-            <Activity size={20} className="mb-2 opacity-40" />
-            <span className="text-[11px]">{isPl ? 'Brak aktywności' : 'No activity yet'}</span>
-          </div>
+          <EmptyState
+            variant="new"
+            icon={Activity}
+            compact
+            title={isPl ? 'Brak aktywności' : 'No activity yet'}
+            description={
+              isPl
+                ? 'Zmiany w tabeli pojawią się tutaj, gdy zaczniesz pracować.'
+                : 'Table changes will appear here as you start working.'
+            }
+          />
         ) : (
           TIME_GROUP_ORDER.map((group) => {
             const items = grouped.get(group);
             if (!items || items.length === 0) return null;
             return (
               <div key={group}>
-                <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-500 bg-slate-50/50 dark:bg-navy-800/50 sticky top-0 z-[1]">
+                <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary bg-c-surface-raised sticky top-0 z-[1]">
                   {timeGroupLabel(group, isPl)}
                 </div>
                 {items.map((ev) => (

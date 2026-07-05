@@ -114,6 +114,7 @@ export const ROUTES = {
   MEETING: '/meeting',
   KPI_OKR: '/kpi-okr',
   BENEFITS: '/benefits',
+  CONCLUSIONS: '/conclusions',
   MCP_IRIS: '/mcp/iris',
   MCP_MARKETPLACE: '/mcp/marketplace',
 
@@ -360,6 +361,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.PORTFOLIO_ROADMAP]: ROUTES.PORTFOLIO,
   [AppView.INITIATIVE_MANAGEMENT]: ROUTES.PORTFOLIO,
   [AppView.BENEFITS_REALIZATION]: ROUTES.BENEFITS,
+  [AppView.CONCLUSIONS]: ROUTES.CONCLUSIONS,
   [AppView.MCP_IRIS_COMING_SOON]: ROUTES.MCP_IRIS,
   [AppView.MCP_MARKETPLACE_COMING_SOON]: ROUTES.MCP_MARKETPLACE,
 
@@ -676,6 +678,7 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.EXECUTION)) return AppView.FULL_STEP5_EXECUTION;
   if (normalized.startsWith(ROUTES.ROLLOUT)) return AppView.FULL_ROLLOUT;
   if (normalized.startsWith(ROUTES.BENEFITS)) return AppView.BENEFITS_REALIZATION;
+  if (normalized.startsWith(ROUTES.CONCLUSIONS)) return AppView.CONCLUSIONS;
 
   if (normalized.startsWith(ROUTES.SETTINGS.ROOT)) return AppView.SETTINGS_PROFILE_MODULE;
   if (normalized.startsWith(ROUTES.ADMIN.ROOT)) return AppView.ADMIN_DASHBOARD;

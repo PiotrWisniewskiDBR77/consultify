@@ -948,7 +948,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[80] bg-slate-900/40 backdrop-blur-[1px] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[80] bg-black/40 backdrop-blur-[1px] flex items-center justify-center p-4"
       onClick={onClose}
     >
       <motion.div
@@ -956,7 +956,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 8, scale: 0.98 }}
         transition={{ duration: 0.16 }}
-        className="w-full max-w-2xl rounded-2xl border border-c-border dark:border-navy-700/60 bg-white/95 dark:bg-navy-900/95 shadow-xl overflow-hidden"
+        className="w-full max-w-2xl rounded-2xl border border-c-border bg-c-surface shadow-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 space-y-4">
@@ -982,7 +982,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     <button
                       key={at.type}
                       onClick={() => handleSelectType(at.type)}
-                      className="flex items-start gap-2.5 p-3 rounded-xl border border-slate-200/60 dark:border-navy-700/60 hover:border-blue-500/40 hover:bg-blue-500/5 transition-all text-left group"
+                      className="flex items-start gap-2.5 p-3 rounded-xl border border-c-border-subtle hover:border-c-border-strong hover:bg-c-surface-raised transition-all text-left group"
                     >
                       <Icon size={16} className={`${meta.color} mt-0.5 flex-shrink-0`} />
                       <div className="min-w-0">
@@ -1610,7 +1610,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                               setName(isPolish ? preset.labelPl : preset.label);
                             }
                           }}
-                          className="px-2 py-1 rounded-lg text-[10px] font-medium text-c-text-muted hover:text-c-text border border-slate-200/70 dark:border-navy-700/70 hover:border-c-border-strong transition-colors"
+                          className="px-2 py-1 rounded-lg text-[10px] font-medium text-c-text-muted hover:text-c-text border border-c-border-subtle hover:border-c-border-strong transition-colors"
                         >
                           {isPolish ? preset.labelPl : preset.label}
                         </button>
@@ -2233,7 +2233,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
       transition={{ duration: 0.15 }}
       className="overflow-hidden border-b border-blue-500/20"
     >
-      <div className="bg-white/95 dark:bg-navy-900/95 p-4 space-y-3">
+      <div className="bg-c-surface p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Icon size={14} className={meta.color} />
@@ -2806,7 +2806,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                         setName(isPolish ? preset.labelPl : preset.label);
                       }
                     }}
-                    className="px-2 py-1 rounded-lg text-[10px] font-medium text-c-text-muted hover:text-c-text border border-slate-200/70 dark:border-navy-700/70 hover:border-c-border-strong transition-colors"
+                    className="px-2 py-1 rounded-lg text-[10px] font-medium text-c-text-muted hover:text-c-text border border-c-border-subtle hover:border-c-border-strong transition-colors"
                   >
                     {isPolish ? preset.labelPl : preset.label}
                   </button>
@@ -3219,9 +3219,9 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
     type === 'escalation';
 
   return (
-    <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 overflow-hidden">
+    <div className="rounded-2xl border border-c-border-subtle bg-c-surface overflow-hidden">
       {/* Header */}
-      <div className="grid grid-cols-[52px_28px_1fr_82px_82px_42px_50px_70px_30px] gap-0 text-[10px] uppercase tracking-wide text-c-text-muted border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/40">
+      <div className="grid grid-cols-[52px_28px_1fr_82px_82px_42px_50px_70px_30px] gap-0 text-[10px] uppercase tracking-wide text-c-text-muted border-b border-c-border-subtle bg-c-surface-raised">
         <div className="px-1 py-2.5 text-center">#</div>
         <div className="px-0.5 py-2.5 text-center">Typ</div>
         <div className="px-2 py-2.5">{t('initiatives.timelinePlanner.name')}</div>
@@ -3274,8 +3274,8 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               setDraggingId(null);
               setDragOverId(null);
             }}
-            className={`grid grid-cols-[52px_28px_1fr_82px_82px_42px_50px_70px_30px] gap-0 items-center border-b border-slate-200/30 dark:border-navy-700/30 group transition-colors ${
-              meta.bgTint || 'hover:bg-slate-50/50 dark:hover:bg-navy-800/30'
+            className={`grid grid-cols-[52px_28px_1fr_82px_82px_42px_50px_70px_30px] gap-0 items-center border-b border-c-border-subtle group transition-colors ${
+              meta.bgTint || 'hover:bg-c-surface-raised'
             } ${draggingId === row.id ? 'opacity-60' : ''} ${
               dragOverId === row.id ? 'ring-1 ring-blue-500/40' : ''
             } ${row.isCriticalPath ? 'border-l-2 border-fuchsia-400/80 bg-fuchsia-500/5' : ''}`}
@@ -3523,7 +3523,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                 )}
               </div>
               {canEdit && startMenuOpenId === row.id && (
-                <div className="absolute left-1 top-6 z-20 w-[200px] rounded-lg border border-c-border dark:border-navy-700/60 bg-c-surface shadow-lg p-2 space-y-2 text-left">
+                <div className="absolute left-1 top-6 z-20 w-[200px] rounded-lg border border-c-border bg-c-surface shadow-lg p-2 space-y-2 text-left">
                   <div className="text-[10px] text-c-text-muted">
                     {t('initiatives.timelinePlanner.howToDetermineStart')}
                   </div>
@@ -3757,7 +3757,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                     <MoreVertical size={13} />
                   </button>
                   {menuOpenId === row.id && (
-                    <div className="absolute right-1 top-8 z-20 min-w-[126px] rounded-lg border border-c-border dark:border-navy-700/60 bg-c-surface shadow-lg overflow-hidden">
+                    <div className="absolute right-1 top-8 z-20 min-w-[126px] rounded-lg border border-c-border bg-c-surface shadow-lg overflow-hidden">
                       <button
                         onClick={() => {
                           setEditingRowId(row.id);
@@ -3806,9 +3806,9 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[80] bg-slate-900/40 backdrop-blur-[1px] flex items-center justify-center p-4"
+            className="fixed inset-0 z-[80] bg-black/40 backdrop-blur-[1px] flex items-center justify-center p-4"
           >
-            <div className="w-full max-w-xl rounded-2xl border border-c-border dark:border-navy-700/60 bg-white/95 dark:bg-navy-900/95 shadow-xl overflow-hidden">
+            <div className="w-full max-w-xl rounded-2xl border border-c-border bg-c-surface shadow-xl overflow-hidden">
               <EditRowPanel
                 row={editingRow}
                 rows={rows}
@@ -3895,11 +3895,11 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 overflow-hidden">
+    <div className="rounded-2xl border border-c-border-subtle bg-c-surface overflow-hidden">
       <div className="flex">
         {/* Left: labels */}
-        <div className="flex-shrink-0 w-[180px] border-r border-slate-200/40 dark:border-navy-700/40">
-          <div className="h-7 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/40 flex items-center px-2">
+        <div className="flex-shrink-0 w-[180px] border-r border-c-border-subtle">
+          <div className="h-7 border-b border-c-border-subtle bg-c-surface-raised flex items-center px-2">
             <span className="text-[10px] uppercase tracking-wide text-c-text-muted">
               {t('initiatives.timelinePlanner.name')}
             </span>
@@ -3910,7 +3910,7 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
             return (
               <div
                 key={row.id}
-                className="h-9 flex items-center gap-1.5 px-2 border-b border-slate-200/20 dark:border-navy-700/20"
+                className="h-9 flex items-center gap-1.5 px-2 border-b border-c-border-subtle"
               >
                 <Icon size={11} className={meta.color} />
                 <span className="text-[10px] text-c-text-muted truncate">
@@ -3923,14 +3923,14 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
 
         {/* Right: bars */}
         <div className="flex-1 min-w-0 overflow-x-auto">
-          <div className="h-7 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/40 relative">
+          <div className="h-7 border-b border-c-border-subtle bg-c-surface-raised relative">
             {months.map((m) => (
               <div
                 key={m.label}
                 className="absolute top-0 h-full flex items-end pb-0.5"
                 style={{ left: `${m.pct}%` }}
               >
-                <div className="w-px h-full bg-slate-200/40 dark:bg-navy-700/40" />
+                <div className="w-px h-full bg-c-border-subtle" />
                 <span className="text-[8px] text-c-text-secondary pl-1 whitespace-nowrap">{m.label}</span>
               </div>
             ))}
@@ -3940,7 +3940,7 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
             {months.map((m) => (
               <div
                 key={`g-${m.label}`}
-                className="absolute top-0 bottom-0 w-px bg-slate-200/20 dark:bg-navy-700/20"
+                className="absolute top-0 bottom-0 w-px bg-c-border-subtle"
                 style={{ left: `${m.pct}%` }}
               />
             ))}
@@ -4178,7 +4178,7 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
   return (
     <div className="space-y-4">
       {/* View Toggle */}
-      <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100/80 dark:bg-navy-800/60 w-fit">
+      <div className="flex items-center gap-1 p-1 rounded-xl bg-c-surface-raised w-fit">
         <button
           onClick={() => setView('table')}
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${

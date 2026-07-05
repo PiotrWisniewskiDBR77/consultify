@@ -441,7 +441,7 @@ const PermissionsMatrixView: React.FC = () => {
           <button
             onClick={loadData}
             disabled={loading}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-c-surface-raised hover:bg-slate-600 rounded-lg transition-colors"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -541,7 +541,7 @@ const PermissionsMatrixView: React.FC = () => {
                                   className={`p-1 rounded-lg transition-all ${
                                     isEnabled
                                       ? 'bg-emerald-500/20 hover:bg-emerald-500/30'
-                                      : 'bg-slate-700/50 hover:bg-slate-700'
+                                      : 'bg-c-surface-raised/50 hover:bg-c-surface-raised'
                                   }`}
                                   title={`${isEnabled ? 'Revoke' : 'Grant'} ${perm.key} for ${roleName}`}
                                 >
@@ -708,7 +708,7 @@ const PermissionsMatrixView: React.FC = () => {
                   setEditingPermission(null);
                   setFormData({ key: '', description: '', category: 'general' });
                 }}
-                className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg"
+                className="px-4 py-2 text-sm bg-c-surface-raised hover:bg-slate-600 rounded-lg"
               >
                 Cancel
               </button>
@@ -790,7 +790,7 @@ const PermissionsMatrixView: React.FC = () => {
                   setShowCopyModal(false);
                   setCopyFormData({ sourceRole: '', targetRole: '' });
                 }}
-                className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg"
+                className="px-4 py-2 text-sm bg-c-surface-raised hover:bg-slate-600 rounded-lg"
               >
                 Cancel
               </button>

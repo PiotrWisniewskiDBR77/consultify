@@ -282,7 +282,7 @@ export const AdminTokenPackages = () => {
               <div className="space-y-3 mb-6">
                 <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
                   <span className="text-c-text-secondary">Tokens</span>
-                  <span className="text-white font-mono">{pkg.tokens.toLocaleString()}</span>
+                  <span className="text-c-text font-mono">{pkg.tokens.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
                   <span className="text-c-text-secondary">Total Value</span>

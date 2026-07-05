@@ -162,7 +162,7 @@ export const BackupConfigPanel: React.FC = () => {
         <select
           value={selectedOrgId}
           onChange={(e) => setSelectedOrgId(e.target.value)}
-          className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none min-w-[200px]"
+          className="px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none min-w-[200px]"
         >
           <option value="" disabled>
             Select Organization
@@ -177,7 +177,7 @@ export const BackupConfigPanel: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={fetchConfig}
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+            className="p-2.5 bg-c-surface-raised hover:bg-c-surface-raised rounded-lg transition-colors"
           >
             <RefreshCw
               size={18}
@@ -225,13 +225,13 @@ export const BackupConfigPanel: React.FC = () => {
         config && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Configuration */}
-            <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
+            <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-lg bg-primary-500/20 flex items-center justify-center">
                   <Settings size={20} className="text-primary-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-white">Backup Configuration</h3>
+                  <h3 className="font-semibold text-c-text">Backup Configuration</h3>
                   <p className="text-sm text-slate-600 dark:text-slate-500">
                     Configure automatic backups
                   </p>
@@ -241,7 +241,7 @@ export const BackupConfigPanel: React.FC = () => {
               <div className="space-y-6">
                 <label className="flex items-center justify-between cursor-pointer group">
                   <div>
-                    <span className="text-white font-medium">Enable Automatic Backups</span>
+                    <span className="text-c-text font-medium">Enable Automatic Backups</span>
                     <p className="text-sm text-slate-600 dark:text-slate-500">
                       Automatically backup organization data
                     </p>
@@ -254,7 +254,7 @@ export const BackupConfigPanel: React.FC = () => {
                       className="sr-only"
                     />
                     <div
-                      className={`w-12 h-6 rounded-full transition-colors ${config.enabled ? 'bg-navy-900' : 'bg-slate-700'}`}
+                      className={`w-12 h-6 rounded-full transition-colors ${config.enabled ? 'bg-c-surface' : 'bg-c-surface-raised'}`}
                     >
                       <div
                         className={`w-5 h-5 rounded-full bg-white dark:bg-navy-900 shadow transform transition-transform ${config.enabled ? 'translate-x-6' : 'translate-x-0.5'} mt-0.5`}
@@ -271,7 +271,7 @@ export const BackupConfigPanel: React.FC = () => {
                     value={config.frequency}
                     onChange={(e) => updateConfig('frequency', e.target.value)}
                     disabled={!config.enabled}
-                    className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none disabled:opacity-50"
+                    className="w-full px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none disabled:opacity-50"
                   >
                     <option value="hourly">Hourly</option>
                     <option value="daily">Daily</option>
@@ -291,7 +291,7 @@ export const BackupConfigPanel: React.FC = () => {
                     value={config.retention_days}
                     onChange={(e) => updateConfig('retention_days', parseInt(e.target.value))}
                     disabled={!config.enabled}
-                    className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none disabled:opacity-50"
+                    className="w-full px-4 py-2.5 bg-c-surface/50 border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none disabled:opacity-50"
                   />
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Backups older than this will be deleted
@@ -305,7 +305,7 @@ export const BackupConfigPanel: React.FC = () => {
                       checked={config.include_attachments}
                       onChange={(e) => updateConfig('include_attachments', e.target.checked)}
                       disabled={!config.enabled}
-                      className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-primary-500 disabled:opacity-50"
+                      className="w-5 h-5 rounded border-slate-600 bg-c-surface-raised text-primary-500 disabled:opacity-50"
                     />
                     <div>
                       <span className="text-slate-600 group-hover:text-white">
@@ -323,7 +323,7 @@ export const BackupConfigPanel: React.FC = () => {
                       checked={config.include_audit_logs}
                       onChange={(e) => updateConfig('include_audit_logs', e.target.checked)}
                       disabled={!config.enabled}
-                      className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-primary-500 disabled:opacity-50"
+                      className="w-5 h-5 rounded border-slate-600 bg-c-surface-raised text-primary-500 disabled:opacity-50"
                     />
                     <div>
                       <span className="text-slate-600 group-hover:text-white">
@@ -341,13 +341,13 @@ export const BackupConfigPanel: React.FC = () => {
             {/* Status & History */}
             <div className="space-y-6">
               {/* Current Status */}
-              <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
+              <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-6">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
                     <Database size={20} className="text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white">Backup Status</h3>
+                    <h3 className="font-semibold text-c-text">Backup Status</h3>
                     <p className="text-sm text-slate-600 dark:text-slate-500">
                       Current backup information
                     </p>
@@ -355,9 +355,9 @@ export const BackupConfigPanel: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-slate-900/50 rounded-lg">
+                  <div className="p-4 bg-c-surface/50 rounded-lg">
                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Last Backup</p>
-                    <p className="text-white font-medium">
+                    <p className="text-c-text font-medium">
                       {config.last_backup_at
                         ? new Date(config.last_backup_at).toLocaleString()
                         : 'Never'}
@@ -380,20 +380,20 @@ export const BackupConfigPanel: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="p-4 bg-slate-900/50 rounded-lg">
+                  <div className="p-4 bg-c-surface/50 rounded-lg">
                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
                       Last Backup Size
                     </p>
-                    <p className="text-white font-medium">
+                    <p className="text-c-text font-medium">
                       {formatFileSize(config.last_backup_size)}
                     </p>
                   </div>
 
-                  <div className="p-4 bg-slate-900/50 rounded-lg col-span-2">
+                  <div className="p-4 bg-c-surface/50 rounded-lg col-span-2">
                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
                       Next Scheduled Backup
                     </p>
-                    <p className="text-white font-medium flex items-center gap-2">
+                    <p className="text-c-text font-medium flex items-center gap-2">
                       <Clock size={14} className="text-primary-400" />
                       {getNextBackupTime()}
                     </p>
@@ -402,13 +402,13 @@ export const BackupConfigPanel: React.FC = () => {
               </div>
 
               {/* Backup History */}
-              <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
+              <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-6">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
                     <History size={20} className="text-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white">Recent Backups</h3>
+                    <h3 className="font-semibold text-c-text">Recent Backups</h3>
                     <p className="text-sm text-slate-600 dark:text-slate-500">Backup history</p>
                   </div>
                 </div>
@@ -422,7 +422,7 @@ export const BackupConfigPanel: React.FC = () => {
                     {history.map((item) => (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg"
+                        className="flex items-center justify-between p-3 bg-c-surface/50 rounded-lg"
                       >
                         <div className="flex items-center gap-3">
                           {item.status === 'success' ? (
@@ -431,7 +431,7 @@ export const BackupConfigPanel: React.FC = () => {
                             <XCircle size={16} className="text-danger-400" />
                           )}
                           <div>
-                            <p className="text-sm text-white">
+                            <p className="text-sm text-c-text">
                               {new Date(item.timestamp).toLocaleString()}
                             </p>
                             <p className="text-xs text-slate-500 dark:text-slate-400">

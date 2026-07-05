@@ -46,12 +46,12 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
   return (
     <div className="relative inline-block">
       <div
-        className={`${sizeClasses[size]} rounded-full overflow-hidden bg-gray-200 dark:bg-slate-700 flex items-center justify-center`}
+        className={`${sizeClasses[size]} rounded-full overflow-hidden bg-c-surface-raised flex items-center justify-center`}
       >
         {currentAvatar ? (
           <img src={currentAvatar} alt="Avatar" className="w-full h-full object-cover" />
         ) : (
-          <Camera className="w-8 h-8 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+          <Camera className="w-8 h-8 text-c-text-muted" />
         )}
       </div>
       <button

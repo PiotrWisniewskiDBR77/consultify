@@ -431,7 +431,7 @@ export const AccessLimitsTab: React.FC = () => {
                   <div className="flex items-center gap-3 mb-3">
                     <Icon size={16} className="text-slate-600 dark:text-slate-500" />
                     <div>
-                      <h4 className="text-sm font-medium text-white">{tier.name}</h4>
+                      <h4 className="text-sm font-medium text-c-text">{tier.name}</h4>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         {tier.description}
                       </p>
@@ -464,7 +464,7 @@ export const AccessLimitsTab: React.FC = () => {
 
           {/* Auto Tier Assignment Settings */}
           <div className="admin-card p-4 mb-6">
-            <h3 className="font-semibold text-white flex items-center gap-2 mb-4">
+            <h3 className="font-semibold text-c-text flex items-center gap-2 mb-4">
               <TrendingUp size={18} className="text-emerald-400" />
               Automatic Tier Assignment
             </h3>
@@ -490,7 +490,7 @@ export const AccessLimitsTab: React.FC = () => {
                   <select
                     value={(settings as any)?.autoTierDirection || 'both'}
                     onChange={(e) => updateSetting('autoTierDirection' as any, e.target.value)}
-                    className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white"
+                    className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text"
                   >
                     <option value="up">Promote Only</option>
                     <option value="down">Demote Only</option>
@@ -505,7 +505,7 @@ export const AccessLimitsTab: React.FC = () => {
                   <select
                     value={(settings as any)?.autoTierMaxTier || 'PREMIUM'}
                     onChange={(e) => updateSetting('autoTierMaxTier' as any, e.target.value)}
-                    className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white"
+                    className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text"
                   >
                     <option value="BUDGET">Budget Only</option>
                     <option value="STANDARD">Up to Standard</option>
@@ -519,7 +519,7 @@ export const AccessLimitsTab: React.FC = () => {
               </div>
 
               <div className="bg-black/20 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-white mb-3">Token Thresholds</h4>
+                <h4 className="text-sm font-medium text-c-text mb-3">Token Thresholds</h4>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between items-center py-2 border-b border-white/5">
                     <span className="text-emerald-400">Budget</span>
@@ -547,7 +547,7 @@ export const AccessLimitsTab: React.FC = () => {
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t border-white/5">
-                  <button className="w-full px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-600 text-sm rounded-lg transition-colors">
+                  <button className="w-full px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised text-slate-600 text-sm rounded-lg transition-colors">
                     Preview Changes
                   </button>
                 </div>
@@ -567,7 +567,7 @@ export const AccessLimitsTab: React.FC = () => {
           {/* User Tier Assignments */}
           <div className="admin-card overflow-hidden">
             <div className="px-4 py-3 border-b border-[var(--admin-border)]">
-              <h3 className="text-sm font-medium text-white flex items-center gap-2">
+              <h3 className="text-sm font-medium text-c-text flex items-center gap-2">
                 <UserCheck size={14} className="text-slate-500 dark:text-slate-400" />
                 User Tier Assignments
               </h3>
@@ -591,7 +591,7 @@ export const AccessLimitsTab: React.FC = () => {
                     <tr key={user.userId} className="hover:bg-white/5">
                       <td className="px-6 py-4">
                         <div>
-                          <p className="font-medium text-white">{user.userName}</p>
+                          <p className="font-medium text-c-text">{user.userName}</p>
                           <p className="text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
                         </div>
                       </td>
@@ -599,7 +599,7 @@ export const AccessLimitsTab: React.FC = () => {
                         <select
                           value={user.currentTier}
                           onChange={() => {}}
-                          className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white text-sm"
+                          className="bg-c-surface-raised border border-c-border rounded px-2 py-1 text-c-text text-sm"
                         >
                           {USER_TIERS.map((t) => (
                             <option key={t.id} value={t.id}>
@@ -633,26 +633,26 @@ export const AccessLimitsTab: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="admin-metric">
               <p className="admin-metric-label">Total Spend (7d)</p>
-              <p className="text-2xl font-semibold text-white mt-1">$27.15</p>
+              <p className="text-2xl font-semibold text-c-text mt-1">$27.15</p>
             </div>
             <div className="admin-metric">
               <p className="admin-metric-label">Avg Cost/Request</p>
-              <p className="text-2xl font-semibold text-white mt-1">$0.034</p>
+              <p className="text-2xl font-semibold text-c-text mt-1">$0.034</p>
             </div>
             <div className="admin-metric">
               <p className="admin-metric-label">Total Requests</p>
-              <p className="text-2xl font-semibold text-white mt-1">821</p>
+              <p className="text-2xl font-semibold text-c-text mt-1">821</p>
             </div>
             <div className="admin-metric">
               <p className="admin-metric-label">Total Tokens</p>
-              <p className="text-2xl font-semibold text-white mt-1">291k</p>
+              <p className="text-2xl font-semibold text-c-text mt-1">291k</p>
             </div>
           </div>
 
           {/* Cost Attribution Table */}
           <div className="admin-card overflow-hidden">
             <div className="px-4 py-3 border-b border-[var(--admin-border)]">
-              <h3 className="text-sm font-medium text-white flex items-center gap-2">
+              <h3 className="text-sm font-medium text-c-text flex items-center gap-2">
                 <Percent size={14} className="text-slate-500 dark:text-slate-400" />
                 Cost Attribution
               </h3>
@@ -675,7 +675,7 @@ export const AccessLimitsTab: React.FC = () => {
                 <tbody className="divide-y divide-white/5">
                   {costAttribution.map((item, idx) => (
                     <tr key={idx} className="hover:bg-white/5">
-                      <td className="px-6 py-4 font-medium text-white">{item.entityName}</td>
+                      <td className="px-6 py-4 font-medium text-c-text">{item.entityName}</td>
                       <td className="px-6 py-4">
                         <span
                           className={`px-2 py-0.5 rounded text-xs ${
@@ -694,9 +694,9 @@ export const AccessLimitsTab: React.FC = () => {
                       <td className="px-6 py-4 text-slate-600">${item.cost.toFixed(2)}</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <div className="w-16 h-2 bg-slate-700 rounded-full overflow-hidden">
+                          <div className="w-16 h-2 bg-c-surface-raised rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-navy-900 rounded-full"
+                              className="h-full bg-c-surface rounded-full"
                               style={{ width: `${item.percentage}%` }}
                             />
                           </div>

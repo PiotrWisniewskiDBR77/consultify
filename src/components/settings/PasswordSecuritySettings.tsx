@@ -327,24 +327,24 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
 
   // Styles
   const sectionClass =
-    'bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden';
+    'bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden';
   const sectionHeaderClass =
-    'p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors';
+    'p-4 flex items-center justify-between cursor-pointer hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors';
   const inputClass =
-    'w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all';
+    'w-full px-4 py-3 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all';
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-          <ShieldCheck className="w-6 h-6 text-slate-900 dark:text-white" />
+          <ShieldCheck className="w-6 h-6 text-c-text" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+          <h2 className="text-xl font-bold text-c-text">
             {t('settings.security.title', 'Password & Security')}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-c-text-muted">
             {t('settings.security.subtitle', 'Manage your password, 2FA, and account security')}
           </p>
         </div>
@@ -354,34 +354,34 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
       <div className={sectionClass}>
         <button onClick={() => toggleSection('password')} className={sectionHeaderClass}>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary-100 dark:bg-primary-500/20 rounded-lg">
-              <Key className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+            <div className="p-2 bg-c-accent-soft dark:bg-c-accent-soft rounded-lg">
+              <Key className="w-5 h-5 text-c-accent" />
             </div>
             <div className="text-left">
-              <h3 className="font-semibold text-slate-900 dark:text-white">
+              <h3 className="font-semibold text-c-text">
                 {t('settings.security.changePassword', 'Change Password')}
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t('settings.security.changePasswordDescription', 'Update your password regularly')}
               </p>
             </div>
           </div>
           {expandedSections.password ? (
-            <ChevronDown className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+            <ChevronDown className="w-5 h-5 text-c-text-muted" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+            <ChevronRight className="w-5 h-5 text-c-text-muted" />
           )}
         </button>
 
         {expandedSections.password && (
-          <div className="p-6 border-t border-slate-200 dark:border-navy-700 space-y-4">
+          <div className="p-6 border-t border-c-border-subtle dark:border-navy-700 space-y-4">
             {/* Current Password */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 {t('settings.security.currentPassword', 'Current Password')}
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-c-text-muted" />
                 <input
                   type={showCurrentPassword ? 'text' : 'password'}
                   value={currentPassword}
@@ -392,7 +392,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                 <button
                   type="button"
                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-400"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-c-text-muted hover:text-c-text-secondary"
                 >
                   {showCurrentPassword ? (
                     <EyeOff className="w-5 h-5" />
@@ -405,11 +405,11 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
 
             {/* New Password */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 {t('settings.security.newPassword', 'New Password')}
               </label>
               <div className="relative">
-                <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+                <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-c-text-muted" />
                 <input
                   type={showNewPassword ? 'text' : 'password'}
                   value={newPassword}
@@ -420,7 +420,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-400"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-c-text-muted hover:text-c-text-secondary"
                 >
                   {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -440,7 +440,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                               : passwordStrength <= 4
                                 ? 'bg-yellow-500'
                                 : 'bg-emerald-500'
-                            : 'bg-slate-200 dark:bg-white/10'
+                            : 'bg-c-surface-raised'
                         }`}
                       />
                     ))}
@@ -457,13 +457,13 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                         {passwordRequirements[key as keyof typeof passwordRequirements] ? (
                           <CheckCircle className="w-4 h-4 text-emerald-500" />
                         ) : (
-                          <div className="w-4 h-4 rounded-full border-2 border-slate-300 dark:border-slate-600" />
+                          <div className="w-4 h-4 rounded-full border-2 border-c-border" />
                         )}
                         <span
                           className={
                             passwordRequirements[key as keyof typeof passwordRequirements]
                               ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-slate-500 dark:text-slate-400'
+                              : 'text-c-text-muted'
                           }
                         >
                           {label}
@@ -477,11 +477,11 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
 
             {/* Confirm Password */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 {t('settings.security.confirmPassword', 'Confirm New Password')}
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-c-text-muted" />
                 <input
                   type="password"
                   value={confirmPassword}
@@ -543,15 +543,15 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
         <button onClick={() => toggleSection('mfa')} className={sectionHeaderClass}>
           <div className="flex items-center gap-3">
             <div
-              className={`p-2 rounded-lg ${currentUser.mfaEnabled ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-slate-100 dark:bg-white/10'}`}
+              className={`p-2 rounded-lg ${currentUser.mfaEnabled ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-c-surface-raised'}`}
             >
               <Shield
-                className={`w-5 h-5 ${currentUser.mfaEnabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}
+                className={`w-5 h-5 ${currentUser.mfaEnabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-c-text-muted'}`}
               />
             </div>
             <div className="text-left">
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-slate-900 dark:text-white">
+                <h3 className="font-semibold text-c-text">
                   {t('settings.security.twoFactor', 'Two-Factor Authentication')}
                 </h3>
                 {currentUser.mfaEnabled ? (
@@ -560,20 +560,20 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                   <StatusChip tone="warning" label="Not enabled" />
                 )}
               </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 Add an extra layer of security to your account
               </p>
             </div>
           </div>
           {expandedSections.mfa ? (
-            <ChevronDown className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+            <ChevronDown className="w-5 h-5 text-c-text-muted" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+            <ChevronRight className="w-5 h-5 text-c-text-muted" />
           )}
         </button>
 
         {expandedSections.mfa && (
-          <div className="p-6 border-t border-slate-200 dark:border-navy-700">
+          <div className="p-6 border-t border-c-border-subtle dark:border-navy-700">
             <MFASetup
               isEnabled={!!currentUser.mfaEnabled}
               onUpdate={() => window.location.reload()}
@@ -590,25 +590,25 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
               <Globe className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="text-left">
-              <h3 className="font-semibold text-slate-900 dark:text-white">
+              <h3 className="font-semibold text-c-text">
                 {t('settings.security.activeSessions', 'Active Sessions')}
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {sessions.length} active session{sessions.length !== 1 ? 's' : ''}
               </p>
             </div>
           </div>
           {expandedSections.sessions ? (
-            <ChevronDown className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+            <ChevronDown className="w-5 h-5 text-c-text-muted" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+            <ChevronRight className="w-5 h-5 text-c-text-muted" />
           )}
         </button>
 
         {expandedSections.sessions && (
-          <div className="border-t border-slate-200 dark:border-navy-700">
+          <div className="border-t border-c-border-subtle dark:border-navy-700">
             {sessions.length > 1 && (
-              <div className="p-4 border-b border-slate-200 dark:border-navy-700 flex justify-end">
+              <div className="p-4 border-b border-c-border-subtle dark:border-navy-700 flex justify-end">
                 <button
                   onClick={handleRevokeAllSessions}
                   className="px-4 py-2 text-sm font-medium text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors flex items-center gap-2"
@@ -618,13 +618,13 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                 </button>
               </div>
             )}
-            <div className="divide-y divide-slate-200 dark:divide-white/5">
+            <div className="divide-y divide-c-border-subtle dark:divide-white/5">
               {isLoadingSessions ? (
                 <div className="p-8 flex items-center justify-center">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+                  <Loader2 className="w-6 h-6 animate-spin text-c-accent" />
                 </div>
               ) : sessions.length === 0 ? (
-                <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+                <div className="p-8 text-center text-c-text-muted">
                   No active sessions found
                 </div>
               ) : (
@@ -633,12 +633,12 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                   return (
                     <div key={session.id} className="p-4 flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-navy-800 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                        <div className="w-10 h-10 rounded-lg bg-c-surface-raised flex items-center justify-center text-c-text-muted">
                           <DeviceIcon className="w-5 h-5" />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className="font-medium text-slate-900 dark:text-white">
+                            <p className="font-medium text-c-text">
                               {session.deviceInfo || session.device || 'Unknown Device'}
                               {session.browser && ` - ${session.browser}`}
                             </p>
@@ -646,7 +646,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                               <StatusChip tone="success" label="Current" />
                             )}
                           </div>
-                          <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                          <div className="flex items-center gap-3 text-sm text-c-text-muted mt-0.5">
                             <span className="flex items-center gap-1">
                               <MapPin className="w-3 h-3" />
                               {session.location || session.ipAddress || session.ip || 'Unknown'}
@@ -690,23 +690,23 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
               <Key className="w-5 h-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div className="text-left">
-              <h3 className="font-semibold text-slate-900 dark:text-white">
+              <h3 className="font-semibold text-c-text">
                 {t('settings.security.recoveryOptions', 'Recovery Options')}
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 Backup methods to recover your account
               </p>
             </div>
           </div>
           {expandedSections.recovery ? (
-            <ChevronDown className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+            <ChevronDown className="w-5 h-5 text-c-text-muted" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+            <ChevronRight className="w-5 h-5 text-c-text-muted" />
           )}
         </button>
 
         {expandedSections.recovery && (
-          <div className="p-6 border-t border-slate-200 dark:border-navy-700 space-y-4">
+          <div className="p-6 border-t border-c-border-subtle dark:border-navy-700 space-y-4">
             {recoveryLoadError ? (
               <div
                 role="alert"
@@ -717,14 +717,14 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
             ) : !editingRecovery ? (
               <>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
                     <div className="flex items-center gap-3">
-                      <Mail className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                      <Mail className="w-5 h-5 text-c-text-muted" />
                       <div>
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        <p className="text-sm font-medium text-c-text-secondary">
                           Recovery Email
                         </p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                        <p className="text-sm text-c-text-muted">
                           {recoveryOptions.recoveryEmail || 'Not set'}
                         </p>
                       </div>
@@ -736,14 +736,14 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
                     <div className="flex items-center gap-3">
-                      <Phone className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                      <Phone className="w-5 h-5 text-c-text-muted" />
                       <div>
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        <p className="text-sm font-medium text-c-text-secondary">
                           Recovery Phone
                         </p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                        <p className="text-sm text-c-text-muted">
                           {recoveryOptions.recoveryPhone || 'Not set'}
                         </p>
                       </div>
@@ -755,14 +755,14 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
                     <div className="flex items-center gap-3">
-                      <Download className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                      <Download className="w-5 h-5 text-c-text-muted" />
                       <div>
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        <p className="text-sm font-medium text-c-text-secondary">
                           Backup Codes
                         </p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                        <p className="text-sm text-c-text-muted">
                           {recoveryOptions.backupCodesCount > 0
                             ? `${recoveryOptions.backupCodesCount} codes remaining`
                             : 'Generate via 2FA settings'}
@@ -774,7 +774,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
 
                 <button
                   onClick={() => setEditingRecovery(true)}
-                  className="w-full py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors"
+                  className="w-full py-2 text-sm font-medium text-c-accent hover:bg-c-accent-soft dark:hover:bg-c-accent-soft rounded-lg transition-colors"
                 >
                   Edit Recovery Options
                 </button>
@@ -791,7 +791,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-2">
                     Recovery Email
                   </label>
                   <input
@@ -801,13 +801,13 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                     placeholder="backup@example.com"
                     className={inputClass}
                   />
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-xs text-c-text-muted mt-1">
                     Use a different email than your primary account email
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-2">
                     Recovery Phone
                   </label>
                   <input
@@ -834,7 +834,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                   </button>
                   <button
                     onClick={() => setEditingRecovery(false)}
-                    className="px-6 py-2 bg-slate-200 dark:bg-navy-800 hover:bg-slate-300 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors"
+                    className="px-6 py-2 bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-navy-700 text-c-text-secondary rounded-lg font-medium transition-colors"
                   >
                     Cancel
                   </button>
@@ -849,37 +849,37 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
       <div className={sectionClass}>
         <button onClick={() => toggleSection('events')} className={sectionHeaderClass}>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-slate-100 dark:bg-white/10 rounded-lg">
-              <Activity className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+            <div className="p-2 bg-c-surface-raised rounded-lg">
+              <Activity className="w-5 h-5 text-c-text-secondary" />
             </div>
             <div className="text-left">
-              <h3 className="font-semibold text-slate-900 dark:text-white">
+              <h3 className="font-semibold text-c-text">
                 {t('settings.security.recentActivity', 'Security Events')}
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 Recent security-related activity on your account
               </p>
             </div>
           </div>
           {expandedSections.events ? (
-            <ChevronDown className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+            <ChevronDown className="w-5 h-5 text-c-text-muted" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+            <ChevronRight className="w-5 h-5 text-c-text-muted" />
           )}
         </button>
 
         {expandedSections.events && (
-          <div className="border-t border-slate-200 dark:border-navy-700">
+          <div className="border-t border-c-border-subtle dark:border-navy-700">
             {loadingEvents ? (
               <div className="p-8 flex items-center justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+                <Loader2 className="w-6 h-6 animate-spin text-c-accent" />
               </div>
             ) : securityEvents.length === 0 ? (
-              <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+              <div className="p-8 text-center text-c-text-muted">
                 No recent security events
               </div>
             ) : (
-              <div className="divide-y divide-slate-200 dark:divide-white/5">
+              <div className="divide-y divide-c-border-subtle dark:divide-white/5">
                 {securityEvents.map((event) => (
                   <div key={event.id} className="p-4 flex items-start gap-4">
                     <div
@@ -900,10 +900,10 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-slate-900 dark:text-white">
+                      <p className="font-medium text-c-text">
                         {event.description}
                       </p>
-                      <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mt-1">
+                      <div className="flex items-center gap-3 text-sm text-c-text-muted mt-1">
                         <span className="flex items-center gap-1">
                           <MapPin className="w-3 h-3" />
                           {event.location || event.ipAddress}

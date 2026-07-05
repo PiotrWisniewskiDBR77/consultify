@@ -7,6 +7,7 @@ import type {
 } from '@/store/useToolStore';
 
 import type { ToolAiPendingAction } from './dynamicSwot';
+import { pickW2SummaryFields } from './w2SummaryFields';
 
 interface PortfolioActionHandlers {
   updateInputData: (data: Partial<PortfolioPriorityData>) => void;
@@ -294,6 +295,7 @@ export function applyPortfolioPendingAction({
     actions.updateInputData({
       summary: {
         proposalId: 'portfolio-summary',
+        ...pickW2SummaryFields(summaryObj),
         executiveSummary:
           typeof summaryObj?.executiveSummary === 'string'
             ? summaryObj.executiveSummary

@@ -43,7 +43,7 @@ export const InterviewAssignmentPreviewBody: React.FC<InterviewAssignmentPreview
     },
     {
       label: `${isPolish ? 'Postęp' : 'Progress'}: ${progress}%`,
-      className: 'bg-slate-500/10 text-slate-600 dark:text-slate-300',
+      className: 'bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)]',
     },
     ...(daysToDue
       ? [
@@ -60,7 +60,7 @@ export const InterviewAssignmentPreviewBody: React.FC<InterviewAssignmentPreview
       <PreviewMetaCard pills={pills}>
         {assignment.assignee?.name || assignment.assignee?.email ? (
           <div
-            className="mt-2 text-xs text-slate-600 dark:text-slate-300 truncate"
+            className="mt-2 text-xs text-[var(--c-text-secondary)] truncate"
             title={assignment.assignee?.name || assignment.assignee?.email}
           >
             {isPolish ? 'Przydzielony do' : 'Assignee'}:{' '}
@@ -161,7 +161,7 @@ export const InterviewAssignmentPreviewFooter: React.FC<InterviewAssignmentPrevi
   return (
     // canon §7.3: space-y-2.5, NO border-t dividers between footer cards
     <div className="space-y-2.5">
-      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+      <div className="rounded-token-md border border-[var(--c-border-subtle)] bg-[var(--c-surface-raised)] p-2.5">
         <PreviewAIHintStrip
           hints={aiHints}
           loading={aiLoading}

@@ -258,11 +258,11 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
       <InfoButton cardId="settings-export-import" position="top-right" />
 
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+        <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
           <FileJson size={28} className="text-emerald-500" />
           {t('settings.importExport.title', 'Settings Export & Import')}
         </h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+        <p className="text-c-text-muted text-sm mt-1">
           {t('settings.importExport.subtitle', 'Backup and restore your settings configuration')}
         </p>
       </div>
@@ -270,17 +270,17 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
       {actionError && <Banner variant="danger" title={actionError} />}
 
       {/* Export Section */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-lg">
               <Download size={20} className="text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 dark:text-white">
+              <h3 className="font-semibold text-c-text">
                 {t('settings.importExport.exportTitle', 'Export Settings')}
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t('settings.importExport.exportDesc', 'Download your settings as JSON file')}
               </p>
             </div>
@@ -296,15 +296,15 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
         </div>
 
         <div className="space-y-3">
-          <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-navy-950 rounded-lg">
-            <span className="font-medium text-slate-700 dark:text-slate-300">
+          <div className="flex items-center justify-between p-2 bg-c-surface-raised rounded-lg">
+            <span className="font-medium text-c-text-secondary">
               {t('settings.importExport.selectAll', 'Select All')}
             </span>
             <input
               type="checkbox"
               checked={Object.values(exportConfig).every(Boolean)}
               onChange={(e) => toggleAll(e.target.checked)}
-              className="w-5 h-5 rounded border-slate-300 dark:border-navy-700 text-emerald-600 focus:ring-emerald-500"
+              className="w-5 h-5 rounded border-c-border dark:border-navy-700 text-emerald-600 focus:ring-emerald-500"
             />
           </div>
 
@@ -312,10 +312,10 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
             {categories.map((cat) => (
               <label
                 key={cat.key}
-                className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-navy-800"
+                className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg cursor-pointer hover:bg-c-surface-raised dark:hover:bg-navy-800"
               >
                 <div className="flex items-center gap-3">
-                  <span className="font-medium text-slate-700 dark:text-slate-300">
+                  <span className="font-medium text-c-text-secondary">
                     {cat.label}
                   </span>
                 </div>
@@ -325,7 +325,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
                   onChange={(e) =>
                     setExportConfig({ ...exportConfig, [cat.key]: e.target.checked })
                   }
-                  className="w-5 h-5 rounded border-slate-300 dark:border-navy-700 text-emerald-600 focus:ring-emerald-500"
+                  className="w-5 h-5 rounded border-c-border dark:border-navy-700 text-emerald-600 focus:ring-emerald-500"
                 />
               </label>
             ))}
@@ -334,28 +334,28 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
       </div>
 
       {/* Import Section */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 bg-blue-100 dark:bg-blue-500/20 rounded-lg">
             <Upload size={20} className="text-blue-600 dark:text-blue-400" />
           </div>
           <div>
-            <h3 className="font-semibold text-slate-900 dark:text-white">
+            <h3 className="font-semibold text-c-text">
               {t('settings.importExport.importTitle', 'Import Settings')}
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t('settings.importExport.importDesc', 'Restore settings from a JSON file')}
             </p>
           </div>
         </div>
 
         {!importFile ? (
-          <label className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-300 dark:border-white/20 rounded-xl cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/5 transition-colors">
-            <FileText size={48} className="text-slate-600 dark:text-slate-500 mb-3" />
-            <p className="font-medium text-slate-700 dark:text-slate-300">
+          <label className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-c-border rounded-xl cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/5 transition-colors">
+            <FileText size={48} className="text-c-text-secondary mb-3" />
+            <p className="font-medium text-c-text-secondary">
               {t('settings.importExport.dropFile', 'Drop settings file here or click to browse')}
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-c-text-muted mt-1">
               {t(
                 'settings.importExport.acceptsJson',
                 'Accepts .json files exported from Consultify'
@@ -365,12 +365,12 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
           </label>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
               <div className="flex items-center gap-3">
                 <FileJson size={24} className="text-blue-500" />
                 <div>
-                  <p className="font-medium text-slate-900 dark:text-white">{importFile.name}</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="font-medium text-c-text">{importFile.name}</p>
+                  <p className="text-sm text-c-text-muted">
                     {importPreview?.exportedAt && (
                       <>
                         {t('settings.importExport.exportedAt', 'Exported')}:{' '}
@@ -385,7 +385,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
                   setImportFile(null);
                   setImportPreview(null);
                 }}
-                className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400"
+                className="p-2 text-c-text-secondary hover:text-c-text-secondary"
               >
                 ×
               </button>
@@ -433,8 +433,8 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
 
             {/* Preview */}
             {importPreview?.settings && (
-              <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <div className="p-4 bg-c-surface-raised rounded-lg">
+                <p className="text-sm font-medium text-c-text-secondary mb-2">
                   {t('settings.importExport.settingsToImport', 'Settings to import:')}
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -478,11 +478,11 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
       )}
 
       {/* Info */}
-      <div className="bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-        <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-2">
+      <div className="bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-xl p-4">
+        <h4 className="font-medium text-c-text-secondary mb-2">
           {t('settings.importExport.tipsTitle', 'Tips')}
         </h4>
-        <ul className="text-sm text-slate-500 dark:text-slate-400 space-y-1">
+        <ul className="text-sm text-c-text-muted space-y-1">
           <li>
             {t('settings.importExport.tipBackup', 'Export settings before making major changes')}
           </li>

@@ -70,7 +70,7 @@ function getPrecision(fieldOptions?: Record<string, unknown>): number {
 // ── Sub-renderers ────────────────────────────────────────────────────────────
 
 const TextDisplay: React.FC<{ value: unknown }> = ({ value }) => (
-  <span className="text-xs text-slate-800 dark:text-slate-200 truncate block px-1">
+  <span className="text-xs text-c-text truncate block px-1">
     {String(value ?? '')}
   </span>
 );
@@ -80,14 +80,14 @@ const NumberDisplay: React.FC<{ value: unknown; precision?: number }> = ({
   precision = 2,
 }) => {
   if (value == null || value === '') {
-    return <span className="text-xs text-slate-600 px-1">—</span>;
+    return <span className="text-xs text-c-text-secondary px-1">—</span>;
   }
   const num = Number(value);
   const formatted = Number.isFinite(num)
     ? num.toLocaleString(undefined, { maximumFractionDigits: precision })
     : '—';
   return (
-    <span className="text-xs text-slate-800 dark:text-slate-200 tabular-nums text-right block px-1">
+    <span className="text-xs text-c-text tabular-nums text-right block px-1">
       {formatted}
     </span>
   );
@@ -98,7 +98,7 @@ const CurrencyDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, 
   fieldOptions,
 }) => {
   if (value == null || value === '') {
-    return <span className="text-xs text-slate-600 px-1">—</span>;
+    return <span className="text-xs text-c-text-secondary px-1">—</span>;
   }
   const num = Number(value);
   const symbol = getCurrencySymbol(fieldOptions);
@@ -107,7 +107,7 @@ const CurrencyDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, 
     ? `${symbol}${num.toLocaleString(undefined, { minimumFractionDigits: precision, maximumFractionDigits: precision })}`
     : '—';
   return (
-    <span className="text-xs text-slate-800 dark:text-slate-200 tabular-nums text-right block px-1">
+    <span className="text-xs text-c-text tabular-nums text-right block px-1">
       {formatted}
     </span>
   );
@@ -118,7 +118,7 @@ const PercentDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, u
   fieldOptions,
 }) => {
   if (value == null || value === '') {
-    return <span className="text-xs text-slate-600 px-1">—</span>;
+    return <span className="text-xs text-c-text-secondary px-1">—</span>;
   }
   const num = Number(value);
   const precision = getPrecision(fieldOptions);
@@ -126,7 +126,7 @@ const PercentDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, u
     ? `${num.toLocaleString(undefined, { maximumFractionDigits: precision })}%`
     : '—';
   return (
-    <span className="text-xs text-slate-800 dark:text-slate-200 tabular-nums text-right block px-1">
+    <span className="text-xs text-c-text tabular-nums text-right block px-1">
       {formatted}
     </span>
   );
@@ -147,8 +147,8 @@ const CheckboxDisplay: React.FC<{ value: unknown; onChange?: (v: unknown) => voi
         }}
         className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
           checked
-            ? 'bg-navy-900 border-navy-900 text-white'
-            : 'border-slate-300 dark:border-navy-600 hover:border-primary-400'
+            ? 'bg-c-text border-c-text text-c-bg'
+            : 'border-c-border hover:border-c-accent'
         }`}
       >
         {checked && <Check size={12} />}
@@ -158,11 +158,11 @@ const CheckboxDisplay: React.FC<{ value: unknown; onChange?: (v: unknown) => voi
 };
 
 const DateDisplay: React.FC<{ value: unknown }> = ({ value }) => {
-  if (!value) return <span className="text-xs text-slate-600 px-1">—</span>;
+  if (!value) return <span className="text-xs text-c-text-secondary px-1">—</span>;
   const d = new Date(String(value));
   const str = Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString();
   return (
-    <span className="text-xs text-slate-800 dark:text-slate-200 tabular-nums px-1">{str}</span>
+    <span className="text-xs text-c-text tabular-nums px-1">{str}</span>
   );
 };
 
@@ -170,7 +170,7 @@ const SingleSelectDisplay: React.FC<{ value: unknown; fieldOptions?: Record<stri
   value,
   fieldOptions,
 }) => {
-  if (!value) return <span className="text-xs text-slate-600 px-1">—</span>;
+  if (!value) return <span className="text-xs text-c-text-secondary px-1">—</span>;
   const options = getSelectOptions(fieldOptions);
   const color = getOptionColor(String(value), options);
   return (
@@ -188,7 +188,7 @@ const MultiSelectDisplay: React.FC<{ value: unknown; fieldOptions?: Record<strin
   fieldOptions,
 }) => {
   const items: string[] = Array.isArray(value) ? value.map(String) : value ? [String(value)] : [];
-  if (items.length === 0) return <span className="text-xs text-slate-600 px-1">—</span>;
+  if (items.length === 0) return <span className="text-xs text-c-text-secondary px-1">—</span>;
   const options = getSelectOptions(fieldOptions);
   return (
     <div className="flex items-center gap-0.5 flex-wrap">
@@ -206,7 +206,7 @@ const MultiSelectDisplay: React.FC<{ value: unknown; fieldOptions?: Record<strin
 };
 
 const UrlDisplay: React.FC<{ value: unknown }> = ({ value }) => {
-  if (!value) return <span className="text-xs text-slate-600 px-1">—</span>;
+  if (!value) return <span className="text-xs text-c-text-secondary px-1">—</span>;
   const url = String(value);
   return (
     <a
@@ -223,7 +223,7 @@ const UrlDisplay: React.FC<{ value: unknown }> = ({ value }) => {
 };
 
 const EmailDisplay: React.FC<{ value: unknown }> = ({ value }) => {
-  if (!value) return <span className="text-xs text-slate-600 px-1">—</span>;
+  if (!value) return <span className="text-xs text-c-text-secondary px-1">—</span>;
   const email = String(value);
   return (
     <a
@@ -238,10 +238,10 @@ const EmailDisplay: React.FC<{ value: unknown }> = ({ value }) => {
 };
 
 const PhoneDisplay: React.FC<{ value: unknown }> = ({ value }) => {
-  if (!value) return <span className="text-xs text-slate-600 px-1">—</span>;
+  if (!value) return <span className="text-xs text-c-text-secondary px-1">—</span>;
   return (
-    <span className="inline-flex items-center gap-1 text-xs text-slate-800 dark:text-slate-200 px-1">
-      <Phone size={10} className="text-slate-600 flex-shrink-0" />
+    <span className="inline-flex items-center gap-1 text-xs text-c-text px-1">
+      <Phone size={10} className="text-c-text-secondary flex-shrink-0" />
       {String(value)}
     </span>
   );
@@ -249,7 +249,7 @@ const PhoneDisplay: React.FC<{ value: unknown }> = ({ value }) => {
 
 const LinkedRecordDisplay: React.FC<{ value: unknown }> = ({ value }) => {
   const items: string[] = Array.isArray(value) ? value.map(String) : value ? [String(value)] : [];
-  if (items.length === 0) return <span className="text-xs text-slate-600 px-1">—</span>;
+  if (items.length === 0) return <span className="text-xs text-c-text-secondary px-1">—</span>;
   return (
     <div className="flex items-center gap-0.5 flex-wrap">
       {items.map((item) => (
@@ -267,11 +267,11 @@ const LinkedRecordDisplay: React.FC<{ value: unknown }> = ({ value }) => {
 
 const AttachmentDisplay: React.FC<{ value: unknown }> = ({ value }) => {
   const items: unknown[] = Array.isArray(value) ? value : value ? [value] : [];
-  if (items.length === 0) return <span className="text-xs text-slate-600 px-1">—</span>;
+  if (items.length === 0) return <span className="text-xs text-c-text-secondary px-1">—</span>;
   return (
-    <span className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300 px-1">
-      <FileText size={12} className="text-slate-600" />
-      <span className="bg-slate-100 dark:bg-navy-700 text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+    <span className="inline-flex items-center gap-1 text-xs text-c-text-secondary px-1">
+      <FileText size={12} className="text-c-text-secondary" />
+      <span className="bg-c-surface-raised text-[9px] font-bold px-1.5 py-0.5 rounded-full">
         {items.length}
       </span>
     </span>
@@ -302,7 +302,7 @@ const ButtonDisplay: React.FC<{ fieldOptions?: Record<string, unknown> }> = ({ f
           }).catch(() => {});
         }
       }}
-      className="px-2 py-0.5 rounded bg-primary-100 dark:bg-primary-800/30 text-primary-700 dark:text-primary-300 text-xs font-medium hover:bg-primary-200 dark:hover:bg-primary-800/50 transition-colors"
+      className="px-2 py-0.5 rounded bg-c-accent-soft text-c-accent text-xs font-medium hover:bg-c-accent transition-colors"
     >
       {opts?.label || 'Action'}
     </button>
@@ -314,7 +314,7 @@ const FormulaDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, u
   fieldOptions,
 }) => {
   if (value == null || value === '') {
-    return <span className="text-xs text-slate-600 px-1">—</span>;
+    return <span className="text-xs text-c-text-secondary px-1">—</span>;
   }
 
   const resultType = (fieldOptions as { resultType?: string })?.resultType;
@@ -333,8 +333,8 @@ const FormulaDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, u
   }
 
   return (
-    <span className="inline-flex items-center gap-1 text-xs text-slate-800 dark:text-slate-200 px-1">
-      <FunctionSquare size={10} className="text-primary-400 dark:text-primary-500 flex-shrink-0" />
+    <span className="inline-flex items-center gap-1 text-xs text-c-text px-1">
+      <FunctionSquare size={10} className="text-c-accent flex-shrink-0" />
       <span className={resultType === 'number' ? 'tabular-nums text-right' : 'truncate'}>
         {formatted}
       </span>
@@ -355,7 +355,7 @@ const RatingDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, un
           key={i}
           size={12}
           className={
-            i < rating ? 'text-amber-400 fill-amber-400' : 'text-slate-600 dark:text-navy-600'
+            i < rating ? 'text-amber-400 fill-amber-400' : 'text-c-text-secondary'
           }
         />
       ))}
@@ -365,7 +365,7 @@ const RatingDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, un
 
 const DurationDisplay: React.FC<{ value: unknown }> = ({ value }) => {
   if (value == null || value === '') {
-    return <span className="text-xs text-slate-600 px-1">—</span>;
+    return <span className="text-xs text-c-text-secondary px-1">—</span>;
   }
   const totalSeconds = Math.max(0, Math.round(Number(value) || 0));
   const h = Math.floor(totalSeconds / 3600);
@@ -373,17 +373,17 @@ const DurationDisplay: React.FC<{ value: unknown }> = ({ value }) => {
   const s = totalSeconds % 60;
   const formatted = `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   return (
-    <span className="text-xs text-slate-800 dark:text-slate-200 tabular-nums px-1">
+    <span className="text-xs text-c-text tabular-nums px-1">
       {formatted}
     </span>
   );
 };
 
 const BarcodeDisplay: React.FC<{ value: unknown }> = ({ value }) => {
-  if (!value) return <span className="text-xs text-slate-600 px-1">—</span>;
+  if (!value) return <span className="text-xs text-c-text-secondary px-1">—</span>;
   return (
-    <span className="inline-flex items-center gap-1 text-xs text-slate-800 dark:text-slate-200 px-1">
-      <Barcode size={12} className="text-slate-600 flex-shrink-0" />
+    <span className="inline-flex items-center gap-1 text-xs text-c-text px-1">
+      <Barcode size={12} className="text-c-text-secondary flex-shrink-0" />
       <span className="font-mono truncate">{String(value)}</span>
     </span>
   );
@@ -393,7 +393,7 @@ const CreatedByDisplay: React.FC<PlatformCellRendererProps> = ({ value, record }
   const name = record?.data?.__created_by_name || record?.data?.__created_by || value || '—';
   return (
     <div className="flex items-center gap-1.5 text-xs px-1">
-      <div className="w-5 h-5 rounded-full bg-primary-100 dark:bg-primary-800/30 flex items-center justify-center text-[10px] font-medium text-primary-700 dark:text-primary-300">
+      <div className="w-5 h-5 rounded-full bg-c-accent-soft flex items-center justify-center text-[10px] font-medium text-c-accent">
         {String(name).charAt(0).toUpperCase()}
       </div>
       <span className="truncate">{String(name)}</span>
@@ -423,7 +423,7 @@ const RENDERERS: Partial<Record<FieldType, React.FC<PlatformCellRendererProps>>>
     if (isHtml) {
       return (
         <div
-          className="text-xs text-slate-800 dark:text-slate-200 truncate px-1"
+          className="text-xs text-c-text truncate px-1"
           dangerouslySetInnerHTML={{ __html: htmlContent }}
         />
       );

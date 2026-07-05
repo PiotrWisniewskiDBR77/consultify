@@ -31,7 +31,13 @@ vi.mock('@/store/useAppStore', () => ({
 }));
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (_k: string, d?: string) => d ?? _k, i18n: { language: 'en' } }),
+  useTranslation: () => ({
+    // Support both t(key, 'default') and t(key, { defaultValue }) — the shared
+    // EmptyState (canonical states) uses the options-object form.
+    t: (_k: string, d?: string | { defaultValue?: string }) =>
+      typeof d === 'string' ? d : (d?.defaultValue ?? _k),
+    i18n: { language: 'en' },
+  }),
 }));
 
 vi.mock('react-hot-toast', () => ({
@@ -99,6 +105,6 @@ describe('NotebookLibraryContent', () => {
   it('shows a retry affordance when loading fails', async () => {
     getNotebooks.mockRejectedValue(new Error('boom'));
     render(<NotebookLibraryContent onOpenNotebook={vi.fn()} />);
-    await waitFor(() => expect(screen.getByText('Retry')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Try again')).toBeTruthy());
   });
 });

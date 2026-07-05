@@ -2,13 +2,13 @@
  * InitiativeDraftJourney
  *
  * M13 flow redesign (2026-07-02): a DRAFT initiative document opens with a
- * clear "co dalej" journey strip — the consultant-grade guidance the owner
- * asked for ("czy konsultant tak prowadziłby klienta?").
+ * clear "what next" journey strip — the consultant-grade guidance the owner
+ * asked for ("would a consultant guide the client this way?").
  *
  * Three steps, state-aware:
- *  1. Treść dokumentu  — fill the document sections (AI-assisted),
- *  2. Plan i zadania   — add tasks / generate a plan (feeds the Gantt),
- *  3. Dalej w procesie — explicit gate action (Send to review → ... → Start
+ *  1. Document content — fill the document sections (AI-assisted),
+ *  2. Plan and tasks   — add tasks / generate a plan (feeds the Gantt),
+ *  3. Advance in the process — explicit gate action (Send to review → ... → Start
  *     Execution), driven by the backend gate-readiness transitions.
  *
  * Pure presentational; step computation is exported for unit tests.
@@ -94,16 +94,16 @@ export const InitiativeDraftJourney: React.FC<InitiativeDraftJourneyProps> = ({
 
   const stepCopy: Record<DraftJourneyStepId, { title: string; cta: string }> = {
     content: {
-      title: t('initiatives.draftJourney.contentTitle', 'Treść dokumentu'),
-      cta: t('initiatives.draftJourney.contentCta', 'Wypełnij z AI'),
+      title: t('initiatives.draftJourney.contentTitle', 'Document content'),
+      cta: t('initiatives.draftJourney.contentCta', 'Fill in with AI'),
     },
     plan: {
-      title: t('initiatives.draftJourney.planTitle', 'Plan i zadania'),
-      cta: t('initiatives.draftJourney.planCta', 'Zaplanuj zadania'),
+      title: t('initiatives.draftJourney.planTitle', 'Plan and tasks'),
+      cta: t('initiatives.draftJourney.planCta', 'Plan tasks'),
     },
     advance: {
-      title: t('initiatives.draftJourney.advanceTitle', 'Dalej w procesie'),
-      cta: advanceActionLabel || t('initiatives.draftJourney.advanceCta', 'Prześlij do przeglądu'),
+      title: t('initiatives.draftJourney.advanceTitle', 'Advance in the process'),
+      cta: advanceActionLabel || t('initiatives.draftJourney.advanceCta', 'Submit for review'),
     },
   };
 

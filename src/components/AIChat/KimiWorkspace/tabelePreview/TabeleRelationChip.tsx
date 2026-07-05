@@ -98,20 +98,20 @@ export function TabeleRelationChip({
         onMouseEnter={openTooltip}
         onMouseLeave={closeTooltip}
         onClick={openTooltip}
-        className="inline-flex items-center gap-2 rounded-hig-full border border-slate-300/80 bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-800 transition-colors hover:border-sky-300 hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-500/30 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-100 dark:hover:border-sky-300/[0.35] dark:hover:bg-sky-300/[0.10]"
+        className="inline-flex items-center gap-2 rounded-hig-full border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-medium text-c-text transition-colors hover:border-sky-300 hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-500/30/[0.11]/[0.075] dark:hover:border-sky-300/[0.35] dark:hover:bg-sky-300/[0.10]"
       >
         <span className="font-mono">{relation.fieldName}</span>
-        <span aria-hidden="true" className="text-slate-600 dark:text-slate-500">
+        <span aria-hidden="true" className="text-c-text-secondary">
           {'->'}
         </span>
         <span>{relation.targetTableName}</span>
-        <span className="rounded-hig-full bg-white px-1.5 py-0.5 text-[10px] text-slate-500 dark:bg-navy-800 dark:text-slate-300">
+        <span className="rounded-hig-full bg-c-surface px-1.5 py-0.5 text-[10px] text-c-text-secondary">
           {relation.targetCount}
         </span>
         {loading ? (
-          <Loader2 size={13} className="animate-spin text-slate-500" aria-hidden="true" />
+          <Loader2 size={13} className="animate-spin text-c-text-secondary" aria-hidden="true" />
         ) : (
-          <Info size={13} className="text-slate-500" aria-hidden="true" />
+          <Info size={13} className="text-c-text-secondary" aria-hidden="true" />
         )}
       </button>
 
@@ -120,14 +120,14 @@ export function TabeleRelationChip({
           ref={tooltipRef}
           id={tooltipId}
           role="tooltip"
-          className="fixed z-50 w-72 rounded-hig-md border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-700 shadow-xl dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300"
+          className="fixed z-50 w-72 rounded-hig-md border border-c-border-subtle bg-c-surface p-3 text-xs leading-relaxed text-c-text shadow-xl"
         >
-          <div ref={arrowRef} className="absolute h-2 w-2 rotate-45 bg-white dark:bg-navy-900" />
-          <p className="font-semibold text-slate-900 dark:text-slate-100">
+          <div ref={arrowRef} className="absolute h-2 w-2 rotate-45 bg-c-surface" />
+          <p className="font-semibold text-c-text">
             {t('kimi.tabele.relations.tooltipTitle', { defaultValue: 'Relation explainability' })}
           </p>
           <p className="mt-1">{tooltipBody}</p>
-          <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-[11px] text-c-text-secondary">
             {t('kimi.tabele.relations.tooltipSource', {
               defaultValue: 'Source: ACL-filtered table relation metadata',
             })}

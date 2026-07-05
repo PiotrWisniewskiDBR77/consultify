@@ -363,12 +363,12 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
             placeholder={t('common.search', 'Search reports...')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
           />
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as any)}
-            className="px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
           >
             <option value="date">{t('common.sortByDate', 'Sort by Date')}</option>
             <option value="title">{t('common.sortByTitle', 'Sort by Title')}</option>

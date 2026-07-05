@@ -56,7 +56,7 @@ export const ApiManagementPanel: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2">API Keys</h2>
+          <h2 className="text-2xl font-bold text-c-text mb-2">API Keys</h2>
           <p className="text-slate-400 dark:text-slate-500 text-sm">
             Manage API keys for machine-to-machine access
           </p>
@@ -85,7 +85,7 @@ export const ApiManagementPanel: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-white font-medium">{key.name || 'Unnamed Key'}</span>
+                    <span className="text-c-text font-medium">{key.name || 'Unnamed Key'}</span>
                     <span className="px-2 py-1 text-xs bg-blue-500/20 text-blue-400 rounded">
                       {key.key_prefix}...
                     </span>

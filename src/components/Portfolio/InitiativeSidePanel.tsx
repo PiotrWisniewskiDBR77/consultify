@@ -994,7 +994,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
         )}
 
         {showGateRequest && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/50">
             <div className="bg-white dark:bg-navy-900 rounded-xl shadow-xl w-full max-w-md p-6 border border-slate-200 dark:border-navy-700">
               <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-4">
                 Request Gate Decision
@@ -1095,7 +1095,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/30 z-40 transition-opacity ${
+        className={`fixed inset-0 bg-black/30 z-dropdown transition-opacity ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}
@@ -1103,7 +1103,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
 
       {/* Panel */}
       <div
-        className={`fixed top-0 right-0 h-full w-full max-w-lg bg-white dark:bg-navy-900 shadow-2xl z-50 transform transition-transform duration-300 ease-out ${
+        className={`fixed top-0 right-0 h-full w-full max-w-lg bg-white dark:bg-navy-900 shadow-2xl z-overlay transform transition-transform duration-300 ease-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >

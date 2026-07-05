@@ -565,7 +565,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting || !selectedTemplateId}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-c-text hover:bg-c-text-secondary text-c-bg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>

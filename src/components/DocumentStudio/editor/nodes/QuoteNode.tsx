@@ -24,17 +24,17 @@ const QuoteNodeComponent: React.FC<{
   return (
     <NodeViewWrapper
       data-doc-block="quote"
-      className={`my-3 ${selected ? 'ring-1 ring-primary-500/40 rounded' : ''}`}
+      className={`my-3 ${selected ? 'ring-1 ring-c-focus rounded' : ''}`}
     >
       {text !== null ? (
-        <blockquote className="border-l-4 border-primary-500/50 bg-primary-500/5 px-4 py-2 italic text-slate-700 dark:text-slate-300">
+        <blockquote className="border-l-4 border-c-accent bg-c-accent-soft0 px-4 py-2 italic text-c-text">
           {text}
           {payload?.cite ? (
-            <cite className="mt-1 block text-xs not-italic text-slate-500">— {payload.cite}</cite>
+            <cite className="mt-1 block text-xs not-italic text-c-text-secondary">— {payload.cite}</cite>
           ) : null}
         </blockquote>
       ) : (
-        <pre className="whitespace-pre-wrap text-xs text-slate-500">
+        <pre className="whitespace-pre-wrap text-xs text-c-text-secondary">
           {JSON.stringify(payload, null, 2)}
         </pre>
       )}

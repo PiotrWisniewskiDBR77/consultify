@@ -5,9 +5,9 @@ import { Handle, Position } from 'reactflow';
 import { DEFAULT_LANE_COLOR } from '../FlowNodeComponent';
 
 const STATUS_COLORS: Record<string, string> = {
-  todo: 'bg-slate-300',
-  in_progress: 'bg-blue-500',
-  done: 'bg-green-500',
+  todo: "bg-c-border-strong",
+  in_progress: 'bg-c-info',
+  done: 'bg-success-500',
   blocked: 'bg-danger-500',
 };
 
@@ -30,8 +30,8 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-center min-w-[120px] min-h-[56px] px-3 py-2 rounded-xl border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 shadow-sm transition-shadow ${
-        selected ? 'ring-2 ring-slate-500/60 dark:ring-white/30' : ''
+      className={`relative flex flex-col items-center justify-center min-w-[120px] min-h-[56px] px-3 py-2 rounded-xl border border-c-border bg-c-surface shadow-sm transition-shadow ${
+        selected ? 'ring-2 ring-c-border-strong' : ''
       }`}
       style={{
         borderLeftColor: laneColor,
@@ -49,7 +49,7 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
         }
       }}
     >
-      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />
+      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-c-border-strong" />
 
       {data?.status && data.status !== 'todo' && (
         <div
@@ -61,10 +61,10 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
         <div
           className={`absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-black ${
             data.automationPotential === 'high'
-              ? 'bg-emerald-500 text-white'
+              ? 'bg-success-500 text-white'
               : data.automationPotential === 'medium'
-                ? 'bg-amber-500 text-white'
-                : 'bg-slate-400 text-white'
+                ? 'bg-warning-500 text-white'
+                : 'bg-c-text-muted text-white'
           }`}
           title={`Automation: ${data.automationPotential || 'low'}`}
         >
@@ -82,10 +82,10 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
             if (e.key === 'Enter') commitEdit();
             if (e.key === 'Escape') setEditing(false);
           }}
-          className="bg-transparent text-xs font-medium text-slate-800 dark:text-slate-200 text-center outline-none border-b border-primary-400 w-full"
+          className="bg-transparent text-xs font-medium text-c-text text-center outline-none border-b border-c-accent w-full"
         />
       ) : (
-        <div className="text-xs font-medium text-slate-800 dark:text-slate-200 text-center">
+        <div className="text-xs font-medium text-c-text text-center">
           {data?.label || 'Activity'}
         </div>
       )}
@@ -93,25 +93,28 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
       {hasMetrics && (
         <div className="flex items-center gap-1 mt-1">
           {data?.duration && (
-            <span className="px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-[8px] font-bold text-blue-700 dark:text-blue-300">
+            <span
+              className="px-1.5 py-0.5 rounded-full text-[8px] font-bold text-c-info"
+              style={{ backgroundColor: 'color-mix(in srgb, var(--c-info) 16%, transparent)' }}
+            >
               {data.duration}
               {data.durationUnit || 'h'}
             </span>
           )}
           {data?.cost && (
-            <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-[8px] font-bold text-emerald-700 dark:text-emerald-300">
+            <span className="px-1.5 py-0.5 rounded-full bg-success-100 dark:bg-success-900/40 text-[8px] font-bold text-success-700 dark:text-success-300">
               ${data.cost}
             </span>
           )}
           {data?.fteCount && (
-            <span className="px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/40 text-[8px] font-bold text-primary-700 dark:text-primary-300">
+            <span className="px-1.5 py-0.5 rounded-full bg-c-accent-soft text-[8px] font-bold text-c-accent">
               {data.fteCount} FTE
             </span>
           )}
         </div>
       )}
 
-      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-slate-400" />
+      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-c-border-strong" />
     </div>
   );
 };

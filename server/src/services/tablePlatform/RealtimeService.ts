@@ -2,10 +2,29 @@
  * Table Platform Realtime Service
  * WebSocket layer for real-time collaboration: presence, cell cursors, live CRUD broadcasts.
  * Non-blocking — if WebSocket fails, CRUD operations still succeed.
+ *
+ * Security (#101 Grupa 0 — WS org-context):
+ * - connections require a verified JWT (socketAuthMiddleware); the client-sent
+ *   `auth.userId` is IGNORED — identity comes from the token.
+ * - `join:table` is gated on the table's org (tp_tables → tp_bases) matching
+ *   the user's ACTIVE org (demo-aware via resolveWsOrgContext, same contract
+ *   as ideaCollabWs), so a demo session cannot subscribe/relay into real-org
+ *   tables and vice versa.
+ * - `cell:update` (the only client→peers write relay) requires prior room
+ *   membership and a fresh org context; a demo↔real org switch mid-connection
+ *   disconnects the stale socket. Rejections are logged + surfaced via
+ *   `realtime:error`, never silently dropped.
  */
 
-import { Server as SocketIOServer, Socket } from 'socket.io';
+import type { Server as SocketIOServer } from 'socket.io';
 
+import { getDatabase } from '../../database/Database.js';
+import { socketAuthMiddleware } from '../../realtime/socketAuth.js';
+import {
+  isWsOrgContextFresh,
+  resolveWsOrgContext,
+  type WsOrgContext,
+} from '../../realtime/wsOrgContext.js';
 import logger from '../../utils/Logger.js';
 
 export interface CellUpdate {
@@ -50,8 +69,14 @@ export class TablePlatformRealtimeService {
 
     const tpNamespace = io.of('/table-platform');
 
+    // #101 Grupa 0: verified JWT required — anonymous / client-claimed
+    // identities used to be accepted here.
+    (tpNamespace as any).use(socketAuthMiddleware);
+
     tpNamespace.on('connection', (socket: any) => {
-      const userId = socket.handshake?.auth?.userId as string | undefined;
+      // Identity from the VERIFIED token; auth.userName stays cosmetic.
+      const userId = socket.data?.user?.id as string | undefined;
+      const jwtOrgId = String(socket.data?.user?.organizationId || '');
       const userName = socket.handshake?.auth?.userName as string | undefined;
 
       if (!userId) {
@@ -66,7 +91,22 @@ export class TablePlatformRealtimeService {
 
       logger.info('[TablePlatformRealtime] User connected', { userId, socketId: socket.id });
 
-      socket.on('join:table', (tableId: string) => {
+      socket.on('join:table', async (rawTableId: unknown) => {
+        const tableId = typeof rawTableId === 'string' ? rawTableId.trim() : '';
+        if (!tableId) return;
+        const ctx = await this.ensureFreshOrgContext(socket, userId, jwtOrgId);
+        if (!ctx) return;
+        const inOrg = await this.tableBelongsToOrg(tableId, ctx.organizationId);
+        if (!inOrg) {
+          logger.warn('[TablePlatformRealtime] join:table rejected — table not in active org', {
+            userId,
+            tableId,
+            activeOrg: ctx.organizationId,
+            demoMode: ctx.demoMode,
+          });
+          socket.emit('realtime:error', { code: 'TABLE_ORG_FORBIDDEN', tableId });
+          return;
+        }
         socket.join(`table:${tableId}`);
         this.updatePresence(userId, userName ?? 'Anonymous', tableId);
         this.broadcastPresence(tableId);
@@ -79,6 +119,14 @@ export class TablePlatformRealtimeService {
       });
 
       socket.on('focus:cell', (data: { tableId: string; recordId: string; fieldId: string }) => {
+        if (!this.isInTableRoom(socket, data?.tableId)) {
+          logger.warn('[TablePlatformRealtime] focus:cell rejected — not joined to table', {
+            userId,
+            tableId: data?.tableId,
+          });
+          socket.emit('realtime:error', { code: 'TABLE_NOT_JOINED', tableId: data?.tableId });
+          return;
+        }
         this.updatePresence(
           userId,
           userName ?? 'Anonymous',
@@ -91,7 +139,28 @@ export class TablePlatformRealtimeService {
           .emit('presence:update', this.getTablePresence(data.tableId));
       });
 
-      socket.on('cell:update', (data: CellUpdate) => {
+      socket.on('cell:update', async (data: CellUpdate) => {
+        // Write relay: room membership (org-validated at join) + fresh org
+        // context + write permission (demo shared org is read-only).
+        if (!this.isInTableRoom(socket, data?.tableId)) {
+          logger.warn('[TablePlatformRealtime] cell:update rejected — not joined to table', {
+            userId,
+            tableId: data?.tableId,
+          });
+          socket.emit('realtime:error', { code: 'TABLE_NOT_JOINED', tableId: data?.tableId });
+          return;
+        }
+        const ctx = await this.ensureFreshOrgContext(socket, userId, jwtOrgId);
+        if (!ctx) return;
+        if (!ctx.writeAllowed) {
+          logger.warn('[TablePlatformRealtime] cell:update rejected — read-only demo context', {
+            userId,
+            tableId: data?.tableId,
+            org: ctx.organizationId,
+          });
+          socket.emit('realtime:error', { code: 'DEMO_READ_ONLY', tableId: data?.tableId });
+          return;
+        }
         socket.to(`table:${data.tableId}`).emit('cell:updated', {
           ...data,
           userId,
@@ -165,6 +234,76 @@ export class TablePlatformRealtimeService {
         tableId,
         error: (err as Error).message,
       });
+    }
+  }
+
+  /** Room-membership check for write/focus relays (join already org-gated). */
+  private isInTableRoom(socket: any, tableId: unknown): boolean {
+    const id = typeof tableId === 'string' ? tableId.trim() : '';
+    if (!id) return false;
+    try {
+      return Boolean(socket?.rooms?.has?.(`table:${id}`));
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Resolve (with per-socket TTL cache) the user's ACTIVE org context — demo
+   * aware. When the active org changes mid-connection (demo↔real switch) the
+   * stale socket is disconnected so it cannot keep relaying into old-org
+   * rooms. Fail-closed: resolver errors also disconnect. Returns null when the
+   * caller must NOT proceed.
+   */
+  private async ensureFreshOrgContext(
+    socket: any,
+    userId: string,
+    jwtOrgId: string
+  ): Promise<WsOrgContext | null> {
+    const cached = socket.data?.orgCtx as WsOrgContext | undefined;
+    if (cached && isWsOrgContextFresh(cached)) return cached;
+    try {
+      const fresh = await resolveWsOrgContext(getDatabase(), userId, jwtOrgId);
+      if (cached && fresh.organizationId !== cached.organizationId) {
+        logger.warn(
+          '[TablePlatformRealtime] Org context changed mid-connection — disconnecting stale socket',
+          { userId, boundOrg: cached.organizationId, activeOrg: fresh.organizationId }
+        );
+        socket.emit('realtime:error', { code: 'ORG_CONTEXT_CHANGED' });
+        socket.disconnect(true);
+        return null;
+      }
+      if (socket.data) socket.data.orgCtx = fresh;
+      return fresh;
+    } catch (err) {
+      logger.warn('[TablePlatformRealtime] Org-context resolution failed — fail-closed', {
+        userId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      socket.emit('realtime:error', { code: 'ORG_CONTEXT_UNAVAILABLE' });
+      socket.disconnect(true);
+      return null;
+    }
+  }
+
+  /** Table → org lookup (tp_tables → tp_bases). Fail-closed on errors. */
+  private async tableBelongsToOrg(tableId: string, organizationId: string): Promise<boolean> {
+    if (!organizationId) return false;
+    try {
+      const row = await getDatabase().get<{ org_id?: unknown }>(
+        `SELECT b.organization_id AS org_id
+         FROM tp_tables t
+         JOIN tp_bases b ON t.base_id = b.id
+         WHERE t.id = ?`,
+        [tableId]
+      );
+      return Boolean(row) && String((row as any)?.org_id || '') === organizationId;
+    } catch (err) {
+      logger.warn('[TablePlatformRealtime] table org lookup failed — fail-closed', {
+        tableId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return false;
     }
   }
 

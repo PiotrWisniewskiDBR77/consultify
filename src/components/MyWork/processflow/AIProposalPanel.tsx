@@ -13,25 +13,11 @@ import {
 import React, { useEffect, useState } from 'react';
 
 import TeresaMark from '../../shared/TeresaMark';
-export interface AIProposalOp {
-  action: 'create' | 'delete' | 'connect' | 'move' | 'update_label';
-  target_id?: string;
-  params?: Record<string, unknown>;
-}
+// M07 F2: the view-model is owned by the hook (single source of truth) —
+// the panel re-exports it so existing importers keep working.
+import type { AIProposal, AIProposalOp } from './useProcessFlowAIProposal';
 
-export interface AIProposal {
-  id: string;
-  status: 'pending' | 'accepted' | 'rejected';
-  prompt: string;
-  summary: string;
-  operations: AIProposalOp[];
-  risk_flags: string[];
-  validation_before: { valid: boolean; issue_count: number };
-  validation_after: { valid: boolean; issue_count: number };
-  readback_before: string;
-  readback_after: string;
-  created_at: string;
-}
+export type { AIProposal, AIProposalOp } from './useProcessFlowAIProposal';
 
 export interface AIProposalPanelProps {
   proposal: AIProposal | null;
@@ -46,7 +32,7 @@ export interface AIProposalPanelProps {
 }
 
 const panelShell =
-  'rounded-xl border border-slate-200/70 dark:border-navy-700 bg-white/70 dark:bg-navy-900/50 p-3';
+  'rounded-xl border border-c-border-subtle bg-c-surface p-3';
 
 function opIcon(action: AIProposalOp['action']) {
   switch (action) {
@@ -114,13 +100,13 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
     <div className={`flex flex-col gap-3 ${panelShell}`}>
       <div className="flex items-start justify-between gap-2">
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
             {t.title}
           </div>
-          <div className="mt-0.5 text-xs font-semibold text-slate-900 dark:text-slate-100">
+          <div className="mt-0.5 text-xs font-semibold text-c-text">
             {isPl ? 'Cykl życia propozycji' : 'Proposal lifecycle'}
           </div>
-          <div className="mt-1 flex items-center gap-1 text-[9px] text-emerald-600 dark:text-emerald-400">
+          <div className="mt-1 flex items-center gap-1 text-[9px] text-success-600 dark:text-success-400">
             <Building2 size={10} />
             {isPl ? 'Kontekst organizacji aktywny' : 'Organization context active'}
           </div>
@@ -128,7 +114,7 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
         <button
           type="button"
           onClick={onDismiss}
-          className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-navy-800 transition-colors"
+          className="rounded-lg p-1.5 text-c-text-muted hover:bg-c-surface-raised transition-colors"
           title={t.dismiss}
           aria-label={t.dismiss}
         >
@@ -141,21 +127,21 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
       ) : null}
 
       {isGenerating ? (
-        <div className="flex flex-col items-center justify-center gap-2 py-8 text-slate-600 dark:text-slate-300">
-          <TeresaMark size={28} className="animate-spin text-primary-600 dark:text-primary-400" />
+        <div className="flex flex-col items-center justify-center gap-2 py-8 text-c-text-secondary">
+          <TeresaMark size={28} className="animate-spin text-c-accent" />
           <span className="text-xs font-medium">{t.generating}</span>
         </div>
       ) : proposal ? (
         <div className="flex flex-col gap-3">
-          <div className="rounded-lg border border-primary-200/80 bg-primary-50/80 px-3 py-2.5 text-xs text-slate-800 dark:border-primary-500/25 dark:bg-primary-900/15 dark:text-slate-100">
-            <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-primary-700 dark:text-primary-300">
+          <div className="rounded-lg border border-c-accent bg-c-accent-soft px-3 py-2.5 text-xs text-c-text">
+            <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-c-accent">
               {t.summary}
             </div>
             <p className="whitespace-pre-wrap leading-relaxed">{proposal.summary}</p>
           </div>
 
           <div>
-            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
               {t.ops}
             </div>
             <ul className="flex flex-col gap-1">
@@ -164,14 +150,18 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
                 return (
                   <li
                     key={`${op.action}-${op.target_id ?? i}`}
-                    className="flex items-center gap-2 rounded-lg border border-slate-200/60 bg-slate-50/80 px-2 py-1.5 text-[11px] dark:border-navy-700 dark:bg-navy-900/40"
+                    className="flex items-center gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-[11px]"
                   >
-                    <Icon size={14} className="shrink-0 text-slate-600 dark:text-slate-300" />
-                    <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
+                    <Icon size={14} className="shrink-0 text-c-text-secondary" />
+                    <span className="font-mono text-[10px] text-c-text-muted">
                       {op.action}
                     </span>
-                    {op.target_id ? (
-                      <span className="truncate text-slate-600 dark:text-slate-300">
+                    {typeof op.params?.label === 'string' && op.params.label ? (
+                      <span className="truncate text-c-text-secondary">
+                        {op.params.label}
+                      </span>
+                    ) : op.target_id ? (
+                      <span className="truncate text-c-text-secondary">
                         {op.target_id}
                       </span>
                     ) : null}
@@ -181,65 +171,67 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
             </ul>
           </div>
 
-          <div>
-            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-              {t.risks}
+          {proposal.risk_flags.length > 0 || destructiveCount(proposal.operations) > 0 ? (
+            <div>
+              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
+                {t.risks}
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {proposal.risk_flags.map((flag) => (
+                  <span
+                    key={flag}
+                    className="inline-flex items-center gap-1 rounded-full bg-warning-500/15 px-2 py-0.5 text-[10px] font-semibold text-warning-800 dark:text-warning-200"
+                  >
+                    <AlertTriangle size={11} />
+                    {flag}
+                  </span>
+                ))}
+                {destructiveCount(proposal.operations) > 0 ? (
+                  <span className="inline-flex items-center rounded-full bg-danger-500/15 px-2 py-0.5 text-[10px] font-bold text-danger-700 dark:text-danger-300">
+                    {t.destructive}: {destructiveCount(proposal.operations)}
+                  </span>
+                ) : null}
+              </div>
             </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {proposal.risk_flags.map((flag) => (
-                <span
-                  key={flag}
-                  className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-800 dark:text-amber-200"
-                >
-                  <AlertTriangle size={11} />
-                  {flag}
-                </span>
-              ))}
-              {destructiveCount(proposal.operations) > 0 ? (
-                <span className="inline-flex items-center rounded-full bg-danger-500/15 px-2 py-0.5 text-[10px] font-bold text-danger-700 dark:text-danger-300">
-                  {t.destructive}: {destructiveCount(proposal.operations)}
-                </span>
-              ) : null}
-            </div>
-          </div>
+          ) : null}
 
           <div>
-            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
               {t.before} / {t.after}
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-lg border border-slate-200/70 bg-white/90 p-2 dark:border-navy-700 dark:bg-navy-900/50">
-                <div className="mb-1 text-[9px] font-bold uppercase text-slate-600">{t.before}</div>
-                <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-snug text-slate-700 dark:text-slate-200">
+              <div className="rounded-lg border border-c-border-subtle bg-c-surface p-2">
+                <div className="mb-1 text-[9px] font-bold uppercase text-c-text-secondary">{t.before}</div>
+                <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-snug text-c-text-secondary">
                   {proposal.readback_before}
                 </pre>
               </div>
-              <div className="rounded-lg border border-slate-200/70 bg-white/90 p-2 dark:border-navy-700 dark:bg-navy-900/50">
-                <div className="mb-1 text-[9px] font-bold uppercase text-slate-600">{t.after}</div>
-                <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-snug text-slate-700 dark:text-slate-200">
+              <div className="rounded-lg border border-c-border-subtle bg-c-surface p-2">
+                <div className="mb-1 text-[9px] font-bold uppercase text-c-text-secondary">{t.after}</div>
+                <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-snug text-c-text-secondary">
                   {proposal.readback_after}
                 </pre>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200/60 px-2.5 py-2 text-[11px] dark:border-navy-700">
-            <span className="text-slate-600 dark:text-slate-300">{t.validation}:</span>
-            <span className="font-medium text-slate-800 dark:text-slate-100">
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-c-border-subtle px-2.5 py-2 text-[11px]">
+            <span className="text-c-text-secondary">{t.validation}:</span>
+            <span className="font-medium text-c-text">
               {t.issues(proposal.validation_before.issue_count)}
             </span>
-            <span className="text-slate-600">→</span>
+            <span className="text-c-text-secondary">→</span>
             <span
               className={`font-semibold ${
                 improved
-                  ? 'text-emerald-600 dark:text-emerald-400'
-                  : 'text-slate-800 dark:text-slate-100'
+                  ? 'text-success-600 dark:text-success-400'
+                  : 'text-c-text'
               }`}
             >
               {t.issues(proposal.validation_after.issue_count)}
             </span>
             {improved ? (
-              <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+              <span className="text-[10px] font-semibold text-success-600 dark:text-success-400">
                 ({t.improved})
               </span>
             ) : null}
@@ -250,7 +242,7 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
               type="button"
               disabled={!pending}
               onClick={onAccept}
-              className="inline-flex flex-1 min-w-[100px] items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+              className="inline-flex flex-1 min-w-[100px] items-center justify-center gap-1.5 rounded-xl bg-success-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-success-700 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-success-600 dark:hover:bg-success-500"
             >
               <Check size={14} />
               {t.accept}
@@ -267,7 +259,7 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
             <button
               type="button"
               onClick={() => onEditPrompt(proposal.prompt)}
-              className="inline-flex flex-1 min-w-[100px] items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/[0.08] dark:bg-navy-900/60 dark:text-slate-200 dark:hover:bg-navy-800"
+              className="inline-flex flex-1 min-w-[100px] items-center justify-center gap-1.5 rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs font-semibold text-c-text-secondary hover:bg-c-surface-raised"
             >
               <Pencil size={14} />
               {t.editPrompt}
@@ -276,21 +268,21 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+          <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
             {t.promptLabel}
           </label>
           <textarea
             value={draftPrompt}
             onChange={(e) => setDraftPrompt(e.target.value)}
             rows={5}
-            className="w-full resize-y rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-xs text-slate-900 outline-none ring-blue-500/30 placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 dark:border-white/[0.08] dark:bg-navy-900/50 dark:text-slate-100 dark:placeholder:text-slate-500"
+            className="w-full resize-y rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none ring-c-info placeholder:text-c-text-muted focus:border-c-info focus:ring-2 dark:placeholder:text-c-text-muted"
             placeholder={isPl ? 'Opisz zmiany w procesie…' : 'Describe the process changes…'}
           />
           <button
             type="button"
             onClick={() => onGenerate(draftPrompt)}
             disabled={!draftPrompt.trim() || isGenerating}
-            className="inline-flex items-center justify-center gap-1.5 self-start rounded-xl bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-primary-500 dark:hover:bg-primary-400"
+            className="inline-flex items-center justify-center gap-1.5 self-start rounded-xl bg-c-accent px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-c-accent disabled:cursor-not-allowed disabled:opacity-40 dark:bg-c-accent-soft0 dark:hover:bg-c-accent"
           >
             <TeresaMark size={14} />
             {t.generate}

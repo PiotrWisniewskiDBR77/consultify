@@ -163,7 +163,7 @@ export interface FilterBuilderProps {
 // ── Value Input Components ───────────────────────────────────────────────────
 
 const inputCls =
-  'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30';
+  'w-full rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30';
 
 interface ValueInputProps {
   field: TablePlatformField;
@@ -211,7 +211,7 @@ const DateValueInput: React.FC<ValueInputProps> = ({ value, operator, onChange, 
   }
   return (
     <div className="flex items-center gap-1">
-      <Calendar size={11} className="text-slate-600 flex-shrink-0" />
+      <Calendar size={11} className="text-c-text-secondary flex-shrink-0" />
       <input
         type="date"
         value={value ? String(value).slice(0, 10) : ''}
@@ -308,10 +308,10 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
         <span className="truncate">
           {selected.length > 0 ? selected.join(', ') : isPl ? 'Wybierz…' : 'Select…'}
         </span>
-        <ChevronDown size={10} className="text-slate-600 flex-shrink-0" />
+        <ChevronDown size={10} className="text-c-text-secondary flex-shrink-0" />
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-1 max-h-48 overflow-auto">
+        <div className="absolute left-0 top-full mt-1 z-50 w-full rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-1 max-h-48 overflow-auto">
           {options.map((opt) => {
             const val = opt.name ?? opt.id;
             const isSelected = selected.includes(val);
@@ -320,13 +320,13 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                 key={opt.id}
                 type="button"
                 onClick={() => toggle(val)}
-                className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-2"
+                className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-c-surface-raised transition-colors flex items-center gap-2"
               >
                 <span
                   className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center flex-shrink-0 ${
                     isSelected
-                      ? 'bg-navy-900 border-navy-900'
-                      : 'border-slate-300 dark:border-navy-600'
+                      ? 'bg-c-surface border-c-border'
+                      : 'border-c-border'
                   }`}
                 >
                   {isSelected && <Check size={9} className="text-white" />}
@@ -439,18 +439,18 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
   if (!open) return null;
 
   return (
-    <div className="absolute left-0 top-full mt-1 z-50 w-[480px] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl">
+    <div className="absolute left-0 top-full mt-1 z-50 w-[480px] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200/60 dark:border-navy-700/60">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+          <span className="text-xs font-bold text-c-text">
             {isPl ? 'Filtry' : 'Filters'}
           </span>
           {filters.rules.length > 1 && (
             <button
               type="button"
               onClick={toggleLogic}
-              className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+              className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-c-accent-soft text-c-accent hover:bg-c-accent-soft transition-colors"
             >
               {filters.logic.toUpperCase()}
             </button>
@@ -461,7 +461,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
             <button
               type="button"
               onClick={clearAll}
-              className="text-[10px] text-slate-600 hover:text-danger-500 transition-colors px-1"
+              className="text-[10px] text-c-text-secondary hover:text-danger-500 transition-colors px-1"
             >
               {isPl ? 'Wyczyść' : 'Clear all'}
             </button>
@@ -469,9 +469,9 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1 rounded-lg hover:bg-c-surface-raised transition-colors"
           >
-            <X size={14} className="text-slate-600" />
+            <X size={14} className="text-c-text-secondary" />
           </button>
         </div>
       </div>
@@ -479,7 +479,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
       {/* Rules */}
       <div className="px-4 py-3 space-y-2 max-h-[360px] overflow-auto">
         {filters.rules.length === 0 && (
-          <p className="text-[11px] text-slate-600 text-center py-4">
+          <p className="text-[11px] text-c-text-secondary text-center py-4">
             {isPl ? 'Brak filtrów. Dodaj pierwszy.' : 'No filters. Add one.'}
           </p>
         )}
@@ -494,7 +494,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
             <div key={`${rule.fieldId}-${idx}`} className="flex items-start gap-1.5">
               {/* Logic label */}
               {idx > 0 ? (
-                <span className="text-[9px] font-bold text-slate-600 w-8 text-center flex-shrink-0 pt-2">
+                <span className="text-[9px] font-bold text-c-text-secondary w-8 text-center flex-shrink-0 pt-2">
                   {filters.logic === 'and' ? (isPl ? 'I' : 'AND') : isPl ? 'LUB' : 'OR'}
                 </span>
               ) : (
@@ -506,7 +506,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
                 <select
                   value={rule.fieldId}
                   onChange={(e) => handleFieldChange(idx, e.target.value)}
-                  className="flex-1 min-w-[100px] rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+                  className="flex-1 min-w-[100px] rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
                 >
                   {filterableFields.map((f) => (
                     <option key={f.id} value={f.id}>
@@ -519,7 +519,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
                 <select
                   value={rule.operator}
                   onChange={(e) => handleOperatorChange(idx, e.target.value, fieldType)}
-                  className="w-32 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+                  className="w-32 rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
                 >
                   {operators.map((op) => (
                     <option key={op.value} value={op.value}>
@@ -546,7 +546,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
               <button
                 type="button"
                 onClick={() => removeRule(idx)}
-                className="p-1 rounded-lg text-slate-600 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors flex-shrink-0 mt-0.5"
+                className="p-1 rounded-lg text-c-text-secondary hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors flex-shrink-0 mt-0.5"
               >
                 <Trash2 size={12} />
               </button>
@@ -556,11 +556,11 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-slate-200/60 dark:border-navy-700/60">
+      <div className="px-4 py-3 border-t border-c-border-subtle">
         <button
           type="button"
           onClick={addRule}
-          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 px-2 py-1.5 rounded-lg transition-colors"
+          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-c-accent hover:bg-c-accent-soft px-2 py-1.5 rounded-lg transition-colors"
         >
           <Plus size={12} />
           {isPl ? 'Dodaj filtr' : 'Add filter'}

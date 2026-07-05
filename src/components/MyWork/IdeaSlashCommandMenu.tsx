@@ -289,7 +289,7 @@ export const IdeaSlashCommandMenu: React.FC<IdeaSlashCommandMenuProps> = ({
   return (
     <div
       ref={menuRef}
-      className="fixed z-[100] bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-2xl shadow-2xl w-[320px] max-h-[400px] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150"
+      className="fixed z-toast bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-2xl shadow-2xl w-[320px] max-h-[400px] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150"
       style={style}
     >
       <div className="px-3 py-2 border-b border-slate-200/30 dark:border-white/[0.04]">

@@ -16,6 +16,24 @@ export interface SidekickContext {
   focusBranchKey?: string;
 }
 
+/**
+ * Payload dispatched on `idea-mindmap-sidekick-context` (window CustomEvent).
+ * Extends the pure `SidekickContext` (intent/prompt-hint, computed by
+ * `detectMindmapIntent`) with the minimal entity handle needed by chat
+ * consumers to build/reuse an entity-scoped conversation — M06 Fala 2 §2.1.
+ *
+ * Decision: carry `ideaId`/`ideaTitle` only, NOT the serialized graph. The
+ * graph still flows exclusively through `ideaMapToMarkdown` at the
+ * "Discuss with Teresa" call site (IdeaMapWorkspace.handleDiscussWithTeresa).
+ * Duplicating the graph into this high-frequency event (fires on every
+ * node/edge/selection change) would be wasteful; entity-context consumers
+ * only need to know WHICH idea is active, not its full contents.
+ */
+export interface SidekickContextEventDetail extends SidekickContext {
+  ideaId?: string;
+  ideaTitle?: string;
+}
+
 interface DetectParams {
   nodes: Array<{ id: string; data: any; type?: string }>;
   edges: Array<{ source: string; target: string }>;

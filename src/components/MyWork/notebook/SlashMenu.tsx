@@ -265,7 +265,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'AI: Zapytaj',
     description: "Ask AI about your note's context",
     descriptionPl: 'Zapytaj AI o kontekst notatki',
-    icon: <MessageCircle size={ICON_SIZE} className="text-slate-500" />,
+    icon: <MessageCircle size={ICON_SIZE} className="text-c-text-muted" />,
     keywords: ['ask', 'ai', 'question', 'pytanie', 'zapytaj'],
     action: () => {},
     aiCommand: 'ask',
@@ -276,7 +276,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'AI: Rozwiń',
     description: 'AI expands and elaborates on your content',
     descriptionPl: 'AI rozwija i wzbogaca Twoją treść',
-    icon: <Sparkles size={ICON_SIZE} className="text-slate-500" />,
+    icon: <Sparkles size={ICON_SIZE} className="text-c-text-muted" />,
     keywords: ['expand', 'ai', 'elaborate', 'rozwin', 'wzbogac'],
     action: () => {},
     aiCommand: 'expand',
@@ -287,7 +287,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'AI: Podważ',
     description: 'AI asks critical questions about your content',
     descriptionPl: 'AI zadaje krytyczne pytania o Twoją treść',
-    icon: <ShieldQuestion size={ICON_SIZE} className="text-slate-500" />,
+    icon: <ShieldQuestion size={ICON_SIZE} className="text-c-text-muted" />,
     keywords: ['challenge', 'ai', 'critical', 'question', 'podwaz', 'krytyczne'],
     action: () => {},
     aiCommand: 'challenge',
@@ -298,7 +298,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'AI: Następne kroki',
     description: 'AI proposes concrete next steps',
     descriptionPl: 'AI proponuje konkretne następne kroki',
-    icon: <Zap size={ICON_SIZE} className="text-slate-500" />,
+    icon: <Zap size={ICON_SIZE} className="text-c-text-muted" />,
     keywords: ['action', 'ai', 'next', 'steps', 'kroki', 'plan'],
     action: () => {},
     aiCommand: 'action',
@@ -310,7 +310,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'Utwórz zadanie',
     description: 'Create a task from the current context',
     descriptionPl: 'Utwórz zadanie z bieżącego kontekstu',
-    icon: <CheckSquare size={ICON_SIZE} className="text-emerald-500" />,
+    icon: <CheckSquare size={ICON_SIZE} className="text-c-success" />,
     keywords: ['task', 'todo', 'zadanie', 'create', 'utworz'],
     action: (editor) => {
       const sel = editor.state.selection;
@@ -326,7 +326,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'Utwórz decyzję',
     description: 'Create a decision from the current context',
     descriptionPl: 'Utwórz decyzję z bieżącego kontekstu',
-    icon: <Scale size={ICON_SIZE} className="text-amber-500" />,
+    icon: <Scale size={ICON_SIZE} className="text-c-warning" />,
     keywords: ['decision', 'decyzja', 'decide', 'decide'],
     action: (editor) => {
       const sel = editor.state.selection;
@@ -342,7 +342,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'Zapisz jako pomysł',
     description: 'Save selected text as a new idea',
     descriptionPl: 'Zapisz zaznaczony tekst jako nowy pomysł',
-    icon: <Lightbulb size={ICON_SIZE} className="text-yellow-500" />,
+    icon: <Lightbulb size={ICON_SIZE} className="text-c-warning" />,
     keywords: ['idea', 'pomysl', 'save', 'zapisz'],
     action: (editor) => {
       const sel = editor.state.selection;
@@ -496,7 +496,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
   return (
     <div
       ref={menuRef}
-      className="absolute z-50 w-72 max-h-80 overflow-y-auto rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1"
+      className="absolute z-50 w-72 max-h-80 overflow-y-auto rounded-xl border border-c-border bg-c-surface shadow-lg py-1"
       style={{ top, left }}
     >
       {SLASH_GROUP_ORDER.map((groupId) => {
@@ -505,7 +505,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
         const groupLabel = SLASH_GROUP_LABELS[groupId];
         return (
           <div key={groupId} className="px-1">
-            <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+            <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
               {isPolish ? groupLabel.pl : groupLabel.en}
             </div>
             {groupItems.map((cmd) => {
@@ -521,29 +521,29 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
                   onMouseEnter={() => setSelectedIdx(idx)}
                   className={`w-full flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors ${
                     isActive
-                      ? 'bg-slate-100 dark:bg-navy-800'
-                      : 'hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+                      ? 'bg-c-surface-raised'
+                      : 'hover:bg-c-surface-raised'
                   }`}
                 >
                   <span
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${
                       cmd.aiCommand
-                        ? 'border-slate-200 bg-slate-50 text-slate-600 dark:border-navy-700 dark:bg-navy-800 dark:text-slate-300'
-                        : 'border-slate-200 bg-white text-slate-500 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-400'
+                        ? 'border-c-border bg-c-surface-raised text-c-text-secondary'
+                        : 'border-c-border bg-c-surface text-c-text-muted'
                     }`}
                   >
                     {cmd.icon}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium text-[13px] text-slate-700 dark:text-slate-200">
+                    <span className="block truncate font-medium text-[13px] text-c-text">
                       {isPolish ? cmd.labelPl : cmd.label}
                     </span>
-                    <span className="block truncate text-[11px] text-slate-400 dark:text-slate-500">
+                    <span className="block truncate text-[11px] text-c-text-muted">
                       {isPolish ? cmd.descriptionPl : cmd.description}
                     </span>
                   </span>
                   {cmd.aiCommand ? (
-                    <span className="ml-auto shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-slate-500 dark:bg-navy-800 dark:text-slate-400">
+                    <span className="ml-auto shrink-0 rounded bg-c-surface-raised px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-c-text-muted">
                       AI
                     </span>
                   ) : null}

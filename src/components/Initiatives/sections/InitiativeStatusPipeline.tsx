@@ -190,7 +190,7 @@ export const InitiativeStatusPipeline: React.FC = () => {
                     isDone
                       ? 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                       : isCurrent
-                        ? 'bg-primary-500 text-white ring-2 ring-primary-500/30'
+                        ? 'bg-c-text text-c-bg ring-2 ring-c-focus'
                         : 'bg-slate-200/70 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
                   }`}
                 >

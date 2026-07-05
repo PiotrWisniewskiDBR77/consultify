@@ -100,7 +100,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
     ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="w-full max-w-md bg-c-surface border border-c-border rounded-xl shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">

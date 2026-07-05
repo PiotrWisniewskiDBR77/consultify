@@ -226,11 +226,11 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <TeresaMark size={28} className="text-primary-500" />
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
+            <TeresaMark size={28} className="text-c-accent" />
             {t('settings.ai.models.title', 'AI Model Selection')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t(
               'settings.ai.models.description',
               'Choose and configure AI models for different use cases'
@@ -248,22 +248,22 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
       </div>
 
       {/* Cost Estimate Card */}
-      <div className="bg-gradient-to-r from-primary-500/10 to-primary-500/10 border border-primary-200 dark:border-primary-500/30 rounded-xl p-4">
+      <div className="bg-gradient-to-r from-c-accent-soft to-c-accent-soft border border-c-accent dark:border-c-accent rounded-xl p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <DollarSign size={20} className="text-primary-600" />
+            <DollarSign size={20} className="text-c-accent" />
             <div>
-              <p className="font-medium text-slate-900 dark:text-white">Estimated Monthly Cost</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="font-medium text-c-text">Estimated Monthly Cost</p>
+              <p className="text-sm text-c-text-muted">
                 Based on average usage patterns
               </p>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-primary-600">
+            <p className="text-2xl font-bold text-c-accent">
               ${costEstimate.monthly.toFixed(2)}
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               ${costEstimate.daily.toFixed(2)}/day
             </p>
           </div>
@@ -271,7 +271,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-200 dark:border-navy-700 pb-4">
+      <div className="flex gap-2 border-b border-c-border-subtle dark:border-navy-700 pb-4">
         {[
           { id: 'models', label: 'Default Model', icon: Bot },
           { id: 'usecases', label: 'By Use Case', icon: Zap },
@@ -285,7 +285,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === tab.id
                   ? 'bg-navy-900 text-white'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                  : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-700'
               }`}
             >
               <Icon size={16} />
@@ -297,8 +297,8 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
 
       {/* Default Model Tab */}
       {activeTab === 'models' && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+          <h3 className="text-lg font-semibold text-c-text">
             Select Default AI Model
           </h3>
 
@@ -309,23 +309,23 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                 onClick={() => setSettings({ ...settings, defaultModel: model.id })}
                 className={`p-4 rounded-xl border-2 text-left transition-all ${
                   settings.defaultModel === model.id
-                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
+                    ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+                    : 'border-c-border-subtle dark:border-navy-700 hover:border-c-accent'
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{model.icon}</span>
                     <div>
-                      <p className="font-semibold text-slate-900 dark:text-white">{model.name}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{model.provider}</p>
+                      <p className="font-semibold text-c-text">{model.name}</p>
+                      <p className="text-xs text-c-text-muted">{model.provider}</p>
                     </div>
                   </div>
                   {settings.defaultModel === model.id && (
-                    <CheckCircle size={20} className="text-primary-600" />
+                    <CheckCircle size={20} className="text-c-accent" />
                   )}
                 </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
+                <p className="text-sm text-c-text-secondary mt-2">
                   {model.description}
                 </p>
                 <div className="flex items-center gap-4 mt-3 text-xs">
@@ -341,7 +341,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                     <Clock size={10} className="inline mr-1" />
                     {model.speed}
                   </span>
-                  <span className="text-slate-500 dark:text-slate-400">
+                  <span className="text-c-text-muted">
                     ${model.costPer1kTokens}/1K tokens
                   </span>
                 </div>
@@ -353,11 +353,11 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
 
       {/* Use Cases Tab */}
       {activeTab === 'usecases' && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+          <h3 className="text-lg font-semibold text-c-text">
             Model per Use Case
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-c-text-muted">
             Select different models for specific tasks
           </p>
 
@@ -366,14 +366,14 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
             const settingKey = `${useCase.id}Model` as keyof ModelSettings;
 
             return (
-              <div key={useCase.id} className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
+              <div key={useCase.id} className="p-4 bg-c-surface-raised rounded-lg">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-white dark:bg-navy-900 rounded-lg">
-                    <Icon size={18} className="text-primary-600" />
+                  <div className="p-2 bg-c-surface rounded-lg">
+                    <Icon size={18} className="text-c-accent" />
                   </div>
                   <div>
-                    <p className="font-medium text-slate-900 dark:text-white">{useCase.label}</p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="font-medium text-c-text">{useCase.label}</p>
+                    <p className="text-sm text-c-text-muted">
                       {useCase.description}
                     </p>
                   </div>
@@ -381,7 +381,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                 <select
                   value={settings[settingKey] as string}
                   onChange={(e) => setSettings({ ...settings, [settingKey]: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
                 >
                   <option value="">Use Default Model</option>
                   {availableModels
@@ -400,8 +400,8 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
 
       {/* Advanced Tab */}
       {activeTab === 'advanced' && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+          <h3 className="text-lg font-semibold text-c-text">
             Advanced Settings
           </h3>
 
@@ -409,14 +409,14 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <label className="font-medium text-slate-900 dark:text-white">
+                <label className="font-medium text-c-text">
                   Temperature / Creativity
                 </label>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-c-text-muted">
                   Higher = more creative, Lower = more focused
                 </p>
               </div>
-              <span className="text-lg font-mono text-primary-600">
+              <span className="text-lg font-mono text-c-accent">
                 {settings.temperature.toFixed(1)}
               </span>
             </div>
@@ -429,9 +429,9 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
               onChange={(e) =>
                 setSettings({ ...settings, temperature: parseFloat(e.target.value) })
               }
-              className="w-full h-2 bg-slate-200 dark:bg-navy-800 rounded-lg appearance-none cursor-pointer accent-primary-600"
+              className="w-full h-2 bg-c-surface-raised rounded-lg appearance-none cursor-pointer accent-c-accent"
             />
-            <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex justify-between text-xs text-c-text-muted">
               <span>Precise</span>
               <span>Balanced</span>
               <span>Creative</span>
@@ -442,14 +442,14 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <label className="font-medium text-slate-900 dark:text-white">
+                <label className="font-medium text-c-text">
                   Max Response Tokens
                 </label>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-c-text-muted">
                   Maximum length of AI responses
                 </p>
               </div>
-              <span className="text-lg font-mono text-primary-600">
+              <span className="text-lg font-mono text-c-accent">
                 {settings.maxTokens.toLocaleString()}
               </span>
             </div>
@@ -460,9 +460,9 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
               step="256"
               value={settings.maxTokens}
               onChange={(e) => setSettings({ ...settings, maxTokens: parseInt(e.target.value) })}
-              className="w-full h-2 bg-slate-200 dark:bg-navy-800 rounded-lg appearance-none cursor-pointer accent-primary-600"
+              className="w-full h-2 bg-c-surface-raised rounded-lg appearance-none cursor-pointer accent-c-accent"
             />
-            <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex justify-between text-xs text-c-text-muted">
               <span>Short (256)</span>
               <span>Medium (4K)</span>
               <span>Long (16K)</span>
@@ -470,21 +470,21 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
           </div>
 
           {/* Stream Response */}
-          <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
             <div>
-              <label className="font-medium text-slate-900 dark:text-white">Stream Responses</label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <label className="font-medium text-c-text">Stream Responses</label>
+              <p className="text-sm text-c-text-muted">
                 Show responses as they're generated
               </p>
             </div>
             <button
               onClick={() => setSettings({ ...settings, streamResponse: !settings.streamResponse })}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                settings.streamResponse ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
+                settings.streamResponse ? 'bg-navy-900' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+                className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                   settings.streamResponse ? 'left-7' : 'left-1'
                 }`}
               />

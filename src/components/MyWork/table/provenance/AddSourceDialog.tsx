@@ -105,7 +105,8 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-overlay flex items-center justify-center backdrop-blur-sm p-4"
+      style={{ backgroundColor: 'color-mix(in srgb, var(--c-bg) 60%, transparent)' }}
       role="dialog"
       aria-modal="true"
       aria-labelledby={`${testId}-title`}
@@ -121,12 +122,12 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
         onSubmit={(e) => {
           void handleSubmit(e);
         }}
-        className="w-[420px] max-w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl"
+        className="w-[420px] max-w-full rounded-xl border border-c-border bg-c-surface shadow-2xl"
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-c-border">
           <h2
             id={`${testId}-title`}
-            className="text-sm font-semibold text-slate-800 dark:text-slate-100"
+            className="text-sm font-semibold text-c-text"
           >
             {isPl ? 'Dodaj źródło' : 'Add source'}
           </h2>
@@ -138,7 +139,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
                 onClose();
               }
             }}
-            className="text-slate-600 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-400 rounded p-1"
+            className="text-c-text-secondary hover:text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-c-focus rounded p-1"
             aria-label={isPl ? 'Zamknij' : 'Close'}
             data-testid={`${testId}-close`}
           >
@@ -148,13 +149,13 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
 
         <div className="px-4 py-3 space-y-3">
           <label className="block">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
               {isPl ? 'Typ źródła' : 'Source type'}
             </span>
             <select
               value={type}
               onChange={(e) => setType(e.target.value as SourceType)}
-              className="mt-1 w-full rounded-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2 py-1.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-400"
+              className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
               data-testid={`${testId}-type`}
             >
               {SOURCE_TYPE_OPTIONS.map((opt) => (
@@ -166,7 +167,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
           </label>
 
           <label className="block">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
               {isPl ? 'URI / link (opcjonalnie)' : 'URI / link (optional)'}
             </span>
             <input
@@ -174,13 +175,13 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
               value={uri}
               onChange={(e) => setUri(e.target.value)}
               placeholder="https://…"
-              className="mt-1 w-full rounded-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2 py-1.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-400"
+              className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
               data-testid={`${testId}-uri`}
             />
           </label>
 
           <label className="block">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
               {isPl
                 ? 'Wkład w pewność (0–1, opcjonalnie)'
                 : 'Confidence contribution (0–1, optional)'}
@@ -193,27 +194,27 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
               value={contribution}
               onChange={(e) => setContribution(e.target.value)}
               placeholder="0.80"
-              className="mt-1 w-full rounded-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2 py-1.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-400"
+              className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
               data-testid={`${testId}-contribution`}
             />
           </label>
 
           <label className="block">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
               {isPl ? 'Notatka (opcjonalnie)' : 'Note (optional)'}
             </span>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={2}
-              className="mt-1 w-full rounded-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2 py-1.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-400 resize-none"
+              className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus resize-none"
               data-testid={`${testId}-note`}
             />
           </label>
 
           {error && (
             <p
-              className="text-[12px] text-danger-600 dark:text-danger-300"
+              className="text-[12px] text-c-danger"
               role="alert"
               data-testid={`${testId}-error`}
             >
@@ -222,7 +223,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-200 dark:border-navy-700">
+        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-c-border">
           <button
             type="button"
             onClick={() => {
@@ -231,14 +232,14 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
                 onClose();
               }
             }}
-            className="px-3 py-1.5 rounded-md text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="px-3 py-1.5 rounded-md text-sm text-c-text-muted hover:bg-c-surface-raised"
           >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
           <button
             type="submit"
             disabled={submitting}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold bg-c-accent hover:opacity-90 text-white disabled:opacity-60"
             data-testid={`${testId}-submit`}
           >
             {submitting && <Loader2 size={14} className="animate-spin" aria-hidden />}

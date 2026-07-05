@@ -188,8 +188,9 @@ describe('A3 engine — bridges', () => {
     expect(prompt).toContain('A3 READINESS');
     expect(prompt).toContain('W2 COUNTERMEASURE SEQUENCE');
     expect(prompt).toContain('rejected variant');
-    expect(prompt).toContain('"rejectedVariant"');
-    expect(prompt).toContain('"tradeOff"');
+    expect(prompt).toContain('"initiatives"');
+    expect(prompt).toContain('"verdict"');
+    expect(prompt).toContain('"tradeoffs"');
   });
 
   it('synthesizeA3 returns a consistent readiness + sequence', () => {

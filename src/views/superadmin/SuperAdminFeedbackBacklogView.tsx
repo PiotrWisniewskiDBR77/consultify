@@ -361,7 +361,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
                               type="button"
                               onClick={() => void saveTask(item)}
                               disabled={savingId === item.id}
-                              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+                              className="inline-flex items-center gap-2 rounded-lg bg-c-text text-c-bg px-3 py-1.5 text-xs font-medium hover:bg-c-text-secondary disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {savingId === item.id && (
                                 <Loader2 size={12} className="animate-spin" />

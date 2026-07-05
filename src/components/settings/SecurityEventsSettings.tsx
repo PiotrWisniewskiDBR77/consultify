@@ -193,7 +193,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
         ? 'text-rose-500'
         : severity === 'warning'
           ? 'text-amber-500'
-          : 'text-slate-500 dark:text-slate-400';
+          : 'text-c-text-muted';
 
     switch (type) {
       case 'login':
@@ -257,14 +257,14 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-crimson-600 flex items-center justify-center shadow-lg shadow-primary-500/25">
-            <Activity className="w-6 h-6 text-slate-900 dark:text-white" />
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-c-accent-soft to-c-accent flex items-center justify-center shadow-lg shadow-c-accent">
+            <Activity className="w-6 h-6 text-c-text" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+            <h3 className="text-lg font-semibold text-c-text">
               {t('security.events.title', 'Security Events')}
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t('security.events.description', 'Your personal security audit log')}
             </p>
           </div>
@@ -272,7 +272,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowAlertSettings(!showAlertSettings)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg transition-colors"
           >
             <Bell className="w-4 h-4" />
             {t('security.events.alerts', 'Alerts')}
@@ -281,7 +281,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
             <button
               onClick={() => handleExport('csv')}
               disabled={exporting}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg transition-colors disabled:opacity-50"
             >
               {exporting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -296,15 +296,15 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
 
       {/* Alert Settings Panel */}
       {showAlertSettings && (
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6 animate-in slide-in-from-top-2 duration-300">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6 animate-in slide-in-from-top-2 duration-300">
           <div className="flex items-center justify-between mb-4">
-            <h4 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <Bell className="w-5 h-5 text-primary-500" />
+            <h4 className="font-semibold text-c-text flex items-center gap-2">
+              <Bell className="w-5 h-5 text-c-accent" />
               {t('security.events.alertSettings', 'Security Alert Settings')}
             </h4>
             <button
               onClick={() => setShowAlertSettings(false)}
-              className="text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+              className="text-c-text-muted hover:text-c-text-secondary"
             >
               <XCircle className="w-5 h-5" />
             </button>
@@ -363,7 +363,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
             <button
               onClick={handleSaveAlertSettings}
               disabled={savingAlerts}
-              className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {savingAlerts ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -379,28 +379,28 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
       {/* Search & Filter */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-c-text-muted" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('security.events.search', 'Search events...')}
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text placeholder-c-text-muted focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
           />
         </div>
         <div className="relative">
           <button
             onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg hover:border-c-accent dark:hover:border-c-accent transition-colors"
           >
-            <Filter className="w-4 h-4 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            <Filter className="w-4 h-4 text-c-text-muted" />
+            <span className="text-sm font-medium text-c-text-secondary">
               {EVENT_TYPES.find((t) => t.value === filter)?.label}
             </span>
-            <ChevronDown className="w-4 h-4 text-slate-500 dark:text-slate-400 dark:text-slate-500" />
+            <ChevronDown className="w-4 h-4 text-c-text-muted" />
           </button>
           {showFilterDropdown && (
-            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-lg z-10">
+            <div className="absolute right-0 mt-2 w-48 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg shadow-lg z-10">
               {EVENT_TYPES.map((type) => (
                 <button
                   key={type.value}
@@ -408,10 +408,10 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                     setFilter(type.value);
                     setShowFilterDropdown(false);
                   }}
-                  className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors first:rounded-t-lg last:rounded-b-lg ${
+                  className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors first:rounded-t-lg last:rounded-b-lg ${
                     filter === type.value
-                      ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10'
-                      : 'text-slate-700 dark:text-slate-300'
+                      ? 'text-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+                      : 'text-c-text-secondary'
                   }`}
                 >
                   {type.icon}
@@ -423,7 +423,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
         </div>
         <button
           onClick={fetchEvents}
-          className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+          className="p-2 text-c-text-muted hover:text-c-text-secondary rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
         >
           <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
         </button>
@@ -447,12 +447,12 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
           }
         />
       ) : (
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-          <div className="divide-y divide-slate-200 dark:divide-white/5">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
+          <div className="divide-y divide-c-border-subtle dark:divide-white/5">
             {filteredEvents.map((event) => (
               <div
                 key={event.id}
-                className={`p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors ${
+                className={`p-4 hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors ${
                   event.severity === 'critical'
                     ? 'bg-rose-50/50 dark:bg-rose-500/5'
                     : event.severity === 'warning'
@@ -467,20 +467,20 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
                         ? 'bg-rose-100 dark:bg-rose-500/20'
                         : event.severity === 'warning'
                           ? 'bg-amber-100 dark:bg-amber-500/20'
-                          : 'bg-slate-100 dark:bg-white/10'
+                          : 'bg-c-surface-raised'
                     }`}
                   >
                     {getEventIcon(event.type, event.severity)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium text-slate-900 dark:text-white">{event.title}</h4>
+                      <h4 className="font-medium text-c-text">{event.title}</h4>
                       {getSeverityBadge(event.severity)}
                     </div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+                    <p className="text-sm text-c-text-secondary mb-2">
                       {event.description}
                     </p>
-                    <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-4 text-xs text-c-text-muted">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {formatTimestamp(event.timestamp)}
@@ -509,7 +509,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
       {/* Load More */}
       {filteredEvents.length >= 50 && (
         <div className="text-center">
-          <button className="px-6 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors">
+          <button className="px-6 py-2 text-sm font-medium text-c-accent hover:bg-c-accent-soft dark:hover:bg-c-accent-soft rounded-lg transition-colors">
             {t('common.loadMore', 'Load More')}
           </button>
         </div>
@@ -535,22 +535,22 @@ const AlertToggle: React.FC<AlertToggleProps> = ({
   onChange,
 }) => {
   return (
-    <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
+    <div className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg">
       <div className="flex items-center gap-3">
-        <div className="text-slate-500 dark:text-slate-400">{icon}</div>
+        <div className="text-c-text-muted">{icon}</div>
         <div>
-          <p className="font-medium text-slate-900 dark:text-white text-sm">{title}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>
+          <p className="font-medium text-c-text text-sm">{title}</p>
+          <p className="text-xs text-c-text-muted">{description}</p>
         </div>
       </div>
       <button
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-          checked ? 'bg-primary-600' : 'bg-slate-200 dark:bg-slate-700'
+          checked ? 'bg-c-accent' : 'bg-c-surface-raised'
         }`}
       >
         <span
-          className={`${checked ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+          className={`${checked ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
         />
       </button>
     </div>

@@ -56,6 +56,9 @@ jobs:
 
       - name: Run TypeScript check
         run: npm run type-check
+
+      - name: Hardcoded-color ratchet gate (VEGAS V7.7)
+        run: npm run check:colors
       - name: Job duration
         if: always()
         run: |
@@ -788,6 +791,71 @@ jobs:
           dur=$((end - JOB_START))
           echo "Job duration: ${dur}s" >> "$GITHUB_STEP_SUMMARY"
 
+  # ═══════════════════════════════════════════════════════════════
+  # E2E M06 MIND MAP GATE (Playwright, deterministic subset)
+  # 5 critical specs: routing → canvas, fit-to-view, Tab=create-node
+  # + POST /map/sync contract (baseVersion), repeated create,
+  # reload persistence. Full deterministic M06 subset runs nightly
+  # (e2e-nightly.yml → m06-mindmap). Same deferral model as
+  # e2e-tests, so PR wall-time is unaffected.
+  # ═══════════════════════════════════════════════════════════════
+  e2e-m06-gate:
+    name: 🧠 E2E M06 Mind Map Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [unit-tests, component-tests]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deferred outside main/develop
+        if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        run: |
+          echo "E2E M06 gate deferred (run on main/develop or via workflow_dispatch)." >> "$GITHUB_STEP_SUMMARY"
+      - name: Capture job start
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: Setup Node.js
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        run: npm ci
+
+      - name: Install Playwright browsers
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        run: npx playwright install --with-deps chromium
+
+      - name: Run M06 gate specs
+        # Base playwright.config.ts webServer builds the frontend itself
+        # (npm run build && vite preview) — no separate build step needed.
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+        run: npm run test:e2e:m06:gate
+        env:
+          CI: true
+          NODE_ENV: test
+          TEST_SUPPORT_KEY: local-test-support-key-change-me
+
+      - name: Upload M06 gate artifacts
+        if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-m06-gate-report
+          path: |
+            e2e-results.xml
+            test-results/
+            tests/e2e/screenshots/m06/
+          retention-days: 30
+      - name: Job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          dur=$((end - JOB_START))
+          echo "Job duration: ${dur}s" >> "$GITHUB_STEP_SUMMARY"
+
   readiness-paths:
     name: 🧭 Readiness Smoke Scope
     runs-on: ubuntu-latest
@@ -1240,6 +1308,7 @@ jobs:
         colocated-tests,
         security-integrity,
         e2e-tests,
+        e2e-m06-gate,
         readiness-smoke,
         patch-coverage,
         initiatives-tests,
@@ -1258,6 +1327,7 @@ jobs:
           COLOCATED: ${{ needs.colocated-tests.result }}
           SECURITY_INTEGRITY: ${{ needs.security-integrity.result }}
           E2E_TIER0: ${{ needs.e2e-tests.result }}
+          E2E_M06_GATE: ${{ needs.e2e-m06-gate.result }}
           READINESS: ${{ needs.readiness-smoke.result }}
           PATCH_COVERAGE: ${{ needs.patch-coverage.result }}
         run: |
@@ -1272,6 +1342,7 @@ jobs:
           echo "  colocated-tests=$COLOCATED"
           echo "  security-integrity=$SECURITY_INTEGRITY"
           echo "  e2e-tests=$E2E_TIER0"
+          echo "  e2e-m06-gate=$E2E_M06_GATE"
           echo "  readiness-smoke=$READINESS"
           echo "  patch-coverage=$PATCH_COVERAGE"
 
@@ -1306,6 +1377,7 @@ jobs:
           req_ok "colocated-tests" "$COLOCATED"
           req_ok "security-integrity" "$SECURITY_INTEGRITY"
           req_ok "e2e-tests" "$E2E_TIER0"
+          req_ok "e2e-m06-gate" "$E2E_M06_GATE"
           req_ok_or_skipped "readiness-smoke" "$READINESS"
           req_ok "patch-coverage" "$PATCH_COVERAGE"
 

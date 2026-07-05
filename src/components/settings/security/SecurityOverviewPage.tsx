@@ -313,7 +313,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
       case 'suspicious':
         return <AlertTriangle size={16} className="text-amber-500" />;
       default:
-        return <CheckCircle size={16} className="text-slate-600 dark:text-slate-400" />;
+        return <CheckCircle size={16} className="text-c-text-secondary" />;
     }
   };
 
@@ -324,7 +324,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
 
   const colorMap = {
     violet: {
-      icon: 'bg-primary-500/10 text-primary-400',
+      icon: 'bg-c-accent-soft text-c-accent',
       statusOk: 'text-emerald-400',
       statusBad: 'text-amber-400',
     },
@@ -336,7 +336,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
     emerald: {
       icon: 'bg-emerald-500/10 text-emerald-400',
       statusOk: 'text-emerald-400',
-      statusBad: 'text-slate-600 dark:text-slate-400',
+      statusBad: 'text-c-text-secondary',
     },
     amber: {
       icon: 'bg-amber-500/10 text-amber-400',
@@ -421,7 +421,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                 {scoreLabel}
               </h4>
             </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            <p className="text-xs text-c-text-secondary leading-relaxed">
               {scorePercentage >= 80
                 ? t(
                     'settings.securityOverview.scoreExcellentDesc',
@@ -442,8 +442,8 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
 
         {/* Status Cards Grid */}
         <div>
-          <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4">
-            <Shield size={14} className="text-primary-400" />
+          <h4 className="text-xs font-bold text-c-text-secondary uppercase tracking-wider flex items-center gap-2 mb-4">
+            <Shield size={14} className="text-c-accent" />
             {t('settings.securityOverview.protectionStatus', 'Protection Status')}
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -454,7 +454,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                 <button
                   key={card.id}
                   onClick={card.action}
-                  className="bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg p-4 text-left hover:border-primary-500/30 hover:bg-primary-600/5 transition-all group"
+                  className="bg-c-surface-raised border border-c-border-subtle rounded-lg p-4 text-left hover:border-c-accent hover:bg-c-accent-soft transition-all group"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
@@ -475,10 +475,10 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                     </div>
                     <ArrowRight
                       size={16}
-                      className="text-slate-600 dark:text-slate-400 group-hover:text-primary-400 transition-colors mt-1"
+                      className="text-c-text-secondary group-hover:text-c-accent transition-colors mt-1"
                     />
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{card.description}</p>
+                  <p className="text-xs text-c-text-muted leading-relaxed">{card.description}</p>
                 </button>
               );
             })}
@@ -490,7 +490,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
           <>
             <SettingsDivider />
             <div>
-              <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4">
+              <h4 className="text-xs font-bold text-c-text-secondary uppercase tracking-wider flex items-center gap-2 mb-4">
                 <AlertTriangle size={14} className="text-amber-400" />
                 {t('settings.securityOverview.recommendations', 'Recommendations')}
               </h4>
@@ -506,7 +506,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                           ? 'bg-danger-500/5 border-danger-500/15'
                           : rec.priority === 'medium'
                             ? 'bg-amber-500/5 border-amber-500/15'
-                            : 'bg-white/[0.02] border-white/5'
+                            : 'bg-c-surface/[0.02] border-white/5'
                       )}
                     >
                       <RecIcon
@@ -517,10 +517,10 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                             ? 'text-danger-400'
                             : rec.priority === 'medium'
                               ? 'text-amber-400'
-                              : 'text-slate-500 dark:text-slate-400'
+                              : 'text-c-text-muted'
                         )}
                       />
-                      <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{rec.text}</p>
+                      <p className="text-xs text-c-text-secondary leading-relaxed">{rec.text}</p>
                     </div>
                   );
                 })}
@@ -533,13 +533,13 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
         <SettingsDivider />
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <History size={14} className="text-primary-400" />
+            <h4 className="text-xs font-bold text-c-text-secondary uppercase tracking-wider flex items-center gap-2">
+              <History size={14} className="text-c-accent" />
               {t('settings.securityOverview.recentActivity', 'Recent Activity')}
             </h4>
             <button
               onClick={() => navigateTo('auth-access')}
-              className="text-xs text-primary-400 hover:text-primary-300 transition-colors flex items-center gap-1"
+              className="text-xs text-c-accent hover:text-c-accent transition-colors flex items-center gap-1"
             >
               {t('settings.securityOverview.viewFullHistory', 'View full history')}
               <ArrowRight size={12} />
@@ -551,18 +551,18 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
               {recentEvents.map((event) => (
                 <div
                   key={event.id}
-                  className="flex items-center justify-between p-3 bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-c-surface-raised border border-c-border-subtle rounded-lg"
                 >
                   <div className="flex items-center gap-3">
                     {getStatusIcon(event.status)}
                     <div>
                       <p className="text-sm text-white">{event.device || 'Unknown Device'}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <p className="text-xs text-c-text-muted">
                         {event.location || 'Unknown'} · {event.ip || ''}
                       </p>
                     </div>
                   </div>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                  <span className="text-xs text-c-text-muted">
                     {event.timestamp ? formatTimestamp(event.timestamp) : ''}
                   </span>
                 </div>
@@ -570,13 +570,13 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <div className="p-3 bg-white/5 rounded-full mb-3">
-                <History size={20} className="text-slate-500 dark:text-slate-400" />
+              <div className="p-3 bg-c-surface-raised rounded-full mb-3">
+                <History size={20} className="text-c-text-muted" />
               </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t('settings.securityOverview.noEvents', 'No recent security events')}
               </p>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+              <p className="text-xs text-c-text-secondary mt-1">
                 {t(
                   'settings.securityOverview.noEventsDesc',
                   'Login attempts and security events will appear here'

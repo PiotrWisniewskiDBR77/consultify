@@ -179,13 +179,13 @@ export const LoginAttemptsPanel: React.FC = () => {
 
     return (
       <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <Shield size={18} className="text-primary-400" />
             <span className="text-sm text-slate-600 dark:text-slate-500">Success Rate</span>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-white">
+            <span className="text-2xl font-bold text-c-text">
               {stats.loginAttempts.successRate}%
             </span>
             {stats.loginAttempts.successRate >= 95 ? (
@@ -196,30 +196,30 @@ export const LoginAttemptsPanel: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle2 size={18} className="text-emerald-400" />
             <span className="text-sm text-slate-600 dark:text-slate-500">Successful</span>
           </div>
-          <span className="text-2xl font-bold text-white">{stats.loginAttempts.successful}</span>
+          <span className="text-2xl font-bold text-c-text">{stats.loginAttempts.successful}</span>
           <span className="text-sm text-slate-500 dark:text-slate-400 ml-2">/ 7 days</span>
         </div>
 
-        <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <XCircle size={18} className="text-danger-400" />
             <span className="text-sm text-slate-600 dark:text-slate-500">Failed</span>
           </div>
-          <span className="text-2xl font-bold text-white">{stats.loginAttempts.failed}</span>
+          <span className="text-2xl font-bold text-c-text">{stats.loginAttempts.failed}</span>
           <span className="text-sm text-slate-500 dark:text-slate-400 ml-2">/ 7 days</span>
         </div>
 
-        <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle size={18} className="text-amber-400" />
             <span className="text-sm text-slate-600 dark:text-slate-500">Active Lockouts</span>
           </div>
-          <span className="text-2xl font-bold text-white">{stats.activeLockouts}</span>
+          <span className="text-2xl font-bold text-c-text">{stats.activeLockouts}</span>
         </div>
       </div>
     );
@@ -232,7 +232,7 @@ export const LoginAttemptsPanel: React.FC = () => {
       <div className="bg-danger-500/10 border border-danger-500/20 rounded-xl p-4 mb-6">
         <div className="flex items-center gap-2 mb-4">
           <AlertTriangle size={20} className="text-danger-400" />
-          <h3 className="font-semibold text-white">Active Account Lockouts</h3>
+          <h3 className="font-semibold text-c-text">Active Account Lockouts</h3>
           <span className="px-2 py-0.5 bg-danger-500/20 text-danger-400 rounded text-sm">
             {lockouts.length}
           </span>
@@ -242,14 +242,14 @@ export const LoginAttemptsPanel: React.FC = () => {
           {lockouts.map((lockout) => (
             <div
               key={lockout.id}
-              className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg"
+              className="flex items-center justify-between p-3 bg-c-surface/50 rounded-lg"
             >
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-danger-500/20 flex items-center justify-center">
                   <User size={18} className="text-danger-400" />
                 </div>
                 <div>
-                  <p className="font-medium text-white">
+                  <p className="font-medium text-c-text">
                     {lockout.firstName} {lockout.lastName || lockout.user_email}
                   </p>
                   <p className="text-sm text-slate-600 dark:text-slate-500">
@@ -309,18 +309,18 @@ export const LoginAttemptsPanel: React.FC = () => {
               placeholder="Search by email or IP..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none w-64"
+              className="pl-10 pr-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none w-64"
             />
           </div>
 
-          <div className="flex bg-slate-800 rounded-lg p-1">
+          <div className="flex bg-c-surface-raised rounded-lg p-1">
             {(['all', 'success', 'failed'] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => setFilterStatus(status)}
                 className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
                   filterStatus === status
-                    ? 'bg-navy-900 text-white'
+                    ? 'bg-c-text text-c-bg'
                     : 'text-slate-600 dark:text-slate-500 hover:text-white'
                 }`}
               >
@@ -332,7 +332,7 @@ export const LoginAttemptsPanel: React.FC = () => {
 
         <button
           onClick={fetchData}
-          className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+          className="p-2.5 bg-c-surface-raised hover:bg-c-surface-raised rounded-lg transition-colors"
           title="Refresh"
         >
           <RefreshCw
@@ -353,7 +353,7 @@ export const LoginAttemptsPanel: React.FC = () => {
           <p>No login attempts found</p>
         </div>
       ) : (
-        <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl overflow-hidden">
+        <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl overflow-hidden">
           <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full">
             <thead>
               <tr className="border-b border-white/[0.06]">
@@ -379,7 +379,7 @@ export const LoginAttemptsPanel: React.FC = () => {
             </thead>
             <tbody>
               {filteredAttempts.map((attempt) => (
-                <tr key={attempt.id} className="border-b border-white/[0.04] hover:bg-slate-800/50">
+                <tr key={attempt.id} className="border-b border-white/[0.04] hover:bg-c-surface-raised/50">
                   <td className="p-4">
                     {attempt.success ? (
                       <div className="flex items-center gap-2 text-emerald-400">
@@ -401,10 +401,10 @@ export const LoginAttemptsPanel: React.FC = () => {
                     )}
                   </td>
                   <td className="p-4">
-                    <span className="text-white">{attempt.user_email}</span>
+                    <span className="text-c-text">{attempt.user_email}</span>
                   </td>
                   <td className="p-4">
-                    <span className="px-2 py-1 bg-slate-900/50 rounded text-xs text-slate-600">
+                    <span className="px-2 py-1 bg-c-surface/50 rounded text-xs text-slate-600">
                       {attempt.auth_method || 'password'}
                     </span>
                   </td>

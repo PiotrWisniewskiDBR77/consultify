@@ -91,22 +91,22 @@ const TRUST_STYLES: Record<
   { bg: string; color: string; icon: React.ReactNode; label: string; labelPl: string }
 > = {
   certified: {
-    bg: '#dcfce7',
-    color: '#166534',
+    bg: 'color-mix(in srgb, var(--c-success) 15%, transparent)',
+    color: 'var(--c-success)',
     icon: <BadgeCheck size={10} />,
     label: 'Certified',
     labelPl: 'Certyfikowany',
   },
   unverified: {
-    bg: '#fef3c7',
-    color: '#92400e',
+    bg: 'color-mix(in srgb, var(--c-warning) 15%, transparent)',
+    color: 'var(--c-warning)',
     icon: <AlertTriangle size={10} />,
     label: 'Unverified',
     labelPl: 'Niezweryfikowany',
   },
   deprecated: {
-    bg: '#fee2e2',
-    color: '#991b1b',
+    bg: 'color-mix(in srgb, var(--c-danger) 15%, transparent)',
+    color: 'var(--c-danger)',
     icon: <AlertTriangle size={10} />,
     label: 'Deprecated',
     labelPl: 'Wycofany',
@@ -154,8 +154,12 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
         }}
         className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium transition-colors hover:opacity-80"
         style={{
-          backgroundColor: manuallyOverridden ? '#fef3c7' : trustStyle ? trustStyle.bg : '#e0f2fe',
-          color: manuallyOverridden ? '#92400e' : trustStyle ? trustStyle.color : '#0369a1',
+          backgroundColor: manuallyOverridden
+            ? 'color-mix(in srgb, var(--c-warning) 15%, transparent)'
+            : trustStyle
+              ? trustStyle.bg
+              : 'color-mix(in srgb, var(--c-info) 15%, transparent)',
+          color: manuallyOverridden ? 'var(--c-warning)' : trustStyle ? trustStyle.color : 'var(--c-info)',
           cursor: hasChain ? 'pointer' : 'default',
         }}
         title={titleParts.join(' \u2022 ')}
@@ -168,7 +172,7 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
 
         {/* Legacy trust icon for backward compat */}
         {!trustStyle && trusted !== undefined && (
-          <ShieldCheck size={10} style={{ color: trusted ? '#16a34a' : '#d97706' }} />
+          <ShieldCheck size={10} style={{ color: trusted ? 'var(--c-success)' : 'var(--c-warning)' }} />
         )}
 
         {manuallyOverridden && <span className="text-[9px]">&#9998;</span>}
@@ -195,16 +199,16 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
       {/* Provenance chain popover */}
       {showChain && hasChain && (
         <div
-          className="absolute left-0 top-full mt-1 z-50 w-64 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl"
+          className="absolute left-0 top-full mt-1 z-50 w-64 rounded-lg border border-c-border bg-c-surface shadow-xl"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-navy-700">
-            <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-c-border">
+            <span className="text-[10px] font-semibold text-c-text-muted uppercase tracking-wider">
               {isPl ? 'Łańcuch pochodzenia' : 'Provenance Chain'}
             </span>
             <button
               onClick={() => setShowChain(false)}
-              className="text-slate-600 hover:text-slate-600"
+              className="text-c-text-secondary hover:text-c-text-secondary"
             >
               <X size={10} />
             </button>
@@ -214,20 +218,20 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
               <div key={idx} className="flex items-start gap-2">
                 <div className="flex flex-col items-center">
                   <div
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-white shrink-0"
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-c-text shrink-0"
                     style={{
                       backgroundColor:
                         step.type === 'connector'
-                          ? '#6366f1'
+                          ? 'var(--c-tag-2)'
                           : step.type === 'run'
-                            ? '#3b82f6'
+                            ? 'var(--c-tag-1)'
                             : step.type === 'import'
-                              ? '#10b981'
+                              ? 'var(--c-tag-6)'
                               : step.type === 'form'
-                                ? '#f59e0b'
+                                ? 'var(--c-tag-9)'
                                 : step.type === 'manual'
-                                  ? '#94a3b8'
-                                  : '#6366f1',
+                                  ? 'var(--c-tag-8)'
+                                  : 'var(--c-tag-2)',
                     }}
                   >
                     {step.type === 'connector' && <Link2 size={9} />}
@@ -238,18 +242,18 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
                     {step.type === 'manual' && <Database size={9} />}
                   </div>
                   {idx < provenanceChain!.length - 1 && (
-                    <div className="w-px h-3 bg-slate-200 dark:bg-navy-600" />
+                    <div className="w-px h-3 bg-c-surface-raised" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0 pb-1">
-                  <p className="text-[10px] font-medium text-slate-700 dark:text-slate-200 truncate">
+                  <p className="text-[10px] font-medium text-c-text truncate">
                     {step.label}
                   </p>
                   {step.detail && (
-                    <p className="text-[9px] text-slate-600 truncate">{step.detail}</p>
+                    <p className="text-[9px] text-c-text-secondary truncate">{step.detail}</p>
                   )}
                   {step.timestamp && (
-                    <p className="text-[9px] text-slate-600">
+                    <p className="text-[9px] text-c-text-secondary">
                       {formatTimeAgo(new Date(step.timestamp))}
                     </p>
                   )}
@@ -258,7 +262,7 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
             ))}
           </div>
           {(connectorRunId || recordId) && (
-            <div className="px-3 py-1.5 border-t border-slate-200 dark:border-navy-700 text-[9px] text-slate-600 space-y-0.5">
+            <div className="px-3 py-1.5 border-t border-c-border text-[9px] text-c-text-secondary space-y-0.5">
               {connectorRunId && <p>Run: {connectorRunId.slice(0, 12)}…</p>}
               {recordId && <p>Record: {recordId.slice(0, 12)}…</p>}
             </div>

@@ -29,7 +29,7 @@ type Theme = 'light' | 'dark' | 'system';
 type Density = 'compact' | 'comfortable' | 'spacious';
 
 const ACCENT_COLORS = [
-  { key: 'crimson', name: 'Crimson', value: '#A51C30', class: 'bg-primary-500' },
+  { key: 'crimson', name: 'Crimson', value: '#A51C30', class: 'bg-c-accent' },
   { key: 'blue', name: 'Blue', value: '#3b82f6', class: 'bg-blue-500' },
   { key: 'emerald', name: 'Emerald', value: '#10b981', class: 'bg-emerald-500' },
   { key: 'rose', name: 'Rose', value: '#f43f5e', class: 'bg-danger-500' },
@@ -200,21 +200,21 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
       icon: Sun,
       label: t('settings.appearance.light', 'Light'),
       description: t('settings.appearance.lightDesc', 'Bright theme for daytime'),
-      preview: 'bg-white border-slate-200 dark:border-navy-700',
+      preview: 'bg-c-surface border-c-border-subtle dark:border-navy-700',
     },
     {
       id: 'dark' as Theme,
       icon: Moon,
       label: t('settings.appearance.dark', 'Dark'),
       description: t('settings.appearance.darkDesc', 'Easy on the eyes'),
-      preview: 'bg-slate-900 border-slate-700',
+      preview: 'bg-c-surface border-c-border-strong',
     },
     {
       id: 'system' as Theme,
       icon: Monitor,
       label: t('settings.appearance.system', 'System'),
       description: t('settings.appearance.systemDesc', 'Match your device'),
-      preview: 'bg-gradient-to-r from-white to-slate-900 border-slate-300 dark:border-navy-700',
+      preview: 'bg-gradient-to-r from-white to-c-surface border-c-border dark:border-navy-700',
     },
   ];
 
@@ -260,8 +260,8 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       'relative p-4 rounded-xl border-2 transition-all duration-200',
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
-                        ? 'border-slate-700 bg-slate-50 dark:border-white/30 dark:bg-white/[0.08]'
-                        : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-navy-800/50'
+                        ? 'border-c-border-strong bg-c-surface-raised'
+                        : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20 bg-c-surface-raised'
                     )}
                   >
                     <div
@@ -272,21 +272,21 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                         size={18}
                         className={cn(
                           'transition-colors',
-                          isSelected ? 'text-primary-400' : 'text-slate-600'
+                          isSelected ? 'text-c-accent' : 'text-c-text-secondary'
                         )}
                       />
                       <span
                         className={cn(
                           'font-medium transition-colors',
-                          isSelected ? 'text-primary-300' : 'text-slate-600'
+                          isSelected ? 'text-c-accent' : 'text-c-text-secondary'
                         )}
                       >
                         {label}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-1 text-center">{description}</p>
+                    <p className="text-xs text-c-text-muted mt-1 text-center">{description}</p>
                     {isSelected && (
-                      <div className="absolute top-2 right-2 p-1 bg-navy-900 rounded-full dark:bg-white">
+                      <div className="absolute top-2 right-2 p-1 bg-navy-900 rounded-full dark:bg-c-surface">
                         <Check size={12} className="text-white" />
                       </div>
                     )}
@@ -331,12 +331,12 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
               })}
 
               <label
-                className="relative w-12 h-12 rounded-xl bg-navy-700 border border-dashed border-white/20
-                           cursor-pointer hover:border-white/40 transition-all duration-200
+                className="relative w-12 h-12 rounded-xl bg-c-surface-raised border border-dashed border-c-border
+                           cursor-pointer hover:border-c-border-strong transition-all duration-200
                            flex items-center justify-center"
                 title={t('settings.appearance.customColor', 'Custom color')}
               >
-                <Sparkles size={18} className="text-slate-500" />
+                <Sparkles size={18} className="text-c-text-muted" />
                 <input
                   type="color"
                   value={accentColor}
@@ -346,11 +346,11 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
               </label>
             </div>
 
-            <div className="flex items-center gap-3 mt-4 p-3 bg-navy-700/50 rounded-lg">
+            <div className="flex items-center gap-3 mt-4 p-3 bg-c-surface-raised rounded-lg">
               <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: accentColor }} />
               <div>
-                <span className="text-sm text-white font-mono">{accentColor.toUpperCase()}</span>
-                <p className="text-xs text-slate-500">
+                <span className="text-sm text-c-text font-mono">{accentColor.toUpperCase()}</span>
+                <p className="text-xs text-c-text-muted">
                   {t('settings.appearance.currentAccent', 'Current accent color')}
                 </p>
               </div>
@@ -400,19 +400,19 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       'relative p-4 rounded-xl border-2 transition-all duration-200',
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
-                        ? 'border-slate-700 bg-slate-50 dark:border-white/30 dark:bg-white/[0.08]'
-                        : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-navy-800/50'
+                        ? 'border-c-border-strong bg-c-surface-raised'
+                        : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20 bg-c-surface-raised'
                     )}
                   >
                     {/* Mini density preview */}
-                    <div className="w-full h-14 rounded-lg bg-slate-100 dark:bg-navy-900/60 mb-3 flex flex-col justify-center px-2 gap-[3px]">
+                    <div className="w-full h-14 rounded-lg bg-c-surface-raised mb-3 flex flex-col justify-center px-2 gap-[3px]">
                       {Array.from({ length: opt.lines }).map((_, i) => {
                         const widths = [85, 70, 90, 65, 78];
                         return (
                           <div
                             key={i}
                             className={cn(
-                              'rounded-sm bg-white/10',
+                              'rounded-sm bg-c-surface-raised',
                               opt.id === 'compact'
                                 ? 'h-1.5'
                                 : opt.id === 'comfortable'
@@ -428,15 +428,15 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       <span
                         className={cn(
                           'text-sm font-medium',
-                          isSelected ? 'text-primary-300' : 'text-slate-600'
+                          isSelected ? 'text-c-accent' : 'text-c-text-secondary'
                         )}
                       >
                         {opt.label}
                       </span>
-                      <p className="text-xs text-slate-500 mt-0.5">{opt.desc}</p>
+                      <p className="text-xs text-c-text-muted mt-0.5">{opt.desc}</p>
                     </div>
                     {isSelected && (
-                      <div className="absolute top-2 right-2 p-1 bg-navy-900 rounded-full dark:bg-white">
+                      <div className="absolute top-2 right-2 p-1 bg-navy-900 rounded-full dark:bg-c-surface">
                         <Check size={12} className="text-white" />
                       </div>
                     )}
@@ -447,9 +447,9 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
           </SettingsFormRow>
 
           {/* Preview Note */}
-          <div className="p-4 bg-navy-700/30 rounded-lg text-center">
-            <p className="text-sm text-slate-500">
-              <Sparkles size={14} className="inline mr-2 text-primary-400" />
+          <div className="p-4 bg-c-surface-raised rounded-lg text-center">
+            <p className="text-sm text-c-text-muted">
+              <Sparkles size={14} className="inline mr-2 text-c-accent" />
               {t(
                 'settings.appearance.previewNote',
                 'Changes are previewed instantly and saved to your account'

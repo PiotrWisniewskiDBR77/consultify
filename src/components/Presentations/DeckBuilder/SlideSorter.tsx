@@ -59,22 +59,22 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
   };
 
   return (
-    <div className="w-[180px] flex-shrink-0 border-r border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex flex-col overflow-hidden">
+    <div className="w-[180px] flex-shrink-0 border-r border-c-border-subtle bg-c-surface flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-navy-800">
-        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
+        <span className="text-[10px] font-semibold text-c-text-secondary uppercase">
           {t('presentations.builder.slideSorter', 'Slides')}
         </span>
         <div className="flex gap-1">
           <button
             onClick={() => setViewMode('cards')}
-            className={`p-1 rounded ${viewMode === 'cards' ? 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-white' : 'text-slate-600'}`}
+            className={`p-1 rounded ${viewMode === 'cards' ? 'bg-c-surface-raised text-c-text' : 'text-c-text-secondary'}`}
           >
             <LayoutGrid size={12} />
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`p-1 rounded ${viewMode === 'list' ? 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-white' : 'text-slate-600'}`}
+            className={`p-1 rounded ${viewMode === 'list' ? 'bg-c-surface-raised text-c-text' : 'text-c-text-secondary'}`}
           >
             <List size={12} />
           </button>
@@ -99,8 +99,8 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
               }}
               className={`relative group cursor-pointer rounded-lg transition-all ${
                 index === activeIndex
-                  ? 'ring-2 ring-primary-500'
-                  : 'hover:ring-1 hover:ring-slate-300 dark:hover:ring-navy-600'
+                  ? 'ring-2 ring-c-focus'
+                  : 'hover:ring-1 hover:ring-c-border'
               } ${dragIndex === index ? 'opacity-50' : ''}`}
             >
               {viewMode === 'cards' ? (
@@ -111,9 +111,9 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                   <div className="absolute top-1 left-1 flex items-center gap-0.5">
                     <GripVertical
                       size={10}
-                      className="text-white/70 cursor-grab opacity-0 group-hover:opacity-100"
+                      className="text-c-text cursor-grab opacity-0 group-hover:opacity-100"
                     />
-                    <span className="text-[9px] font-bold text-white bg-black/40 rounded px-1">
+                    <span className="text-[9px] font-bold text-c-text bg-black/40 rounded px-1">
                       {index + 1}
                     </span>
                   </div>
@@ -121,7 +121,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                   {/* Outdated data badge */}
                   {outdated && (
                     <div
-                      className="absolute bottom-1 left-1 flex items-center gap-0.5 px-1 py-0.5 rounded bg-amber-500/90 text-white text-[7px] font-bold"
+                      className="absolute bottom-1 left-1 flex items-center gap-0.5 px-1 py-0.5 rounded bg-amber-500/90 text-c-text text-[7px] font-bold"
                       title={t(
                         'presentations.builder.dataRefresh.outdated',
                         'Data may be outdated'
@@ -138,7 +138,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                       e.stopPropagation();
                       setContextMenuIndex(contextMenuIndex === index ? null : index);
                     }}
-                    className="absolute top-1 right-1 p-0.5 rounded bg-black/30 text-white opacity-0 group-hover:opacity-100"
+                    className="absolute top-1 right-1 p-0.5 rounded bg-black/30 text-c-text opacity-0 group-hover:opacity-100"
                   >
                     <MoreVertical size={10} />
                   </button>
@@ -147,16 +147,16 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                 <div
                   className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs ${
                     index === activeIndex
-                      ? 'bg-primary-50 dark:bg-primary-500/10'
-                      : 'hover:bg-slate-50 dark:hover:bg-navy-800'
+                      ? 'bg-c-accent-soft'
+                      : 'hover:bg-c-surface-raised'
                   }`}
                 >
-                  <GripVertical size={10} className="text-slate-600 cursor-grab" />
-                  <span className="font-bold text-slate-600 w-4 text-right">{index + 1}</span>
+                  <GripVertical size={10} className="text-c-text-secondary cursor-grab" />
+                  <span className="font-bold text-c-text-secondary w-4 text-right">{index + 1}</span>
                   <span
-                    className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${INTENT_COLORS[card.intent] || 'bg-slate-400'}`}
+                    className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${INTENT_COLORS[card.intent] || 'bg-c-text-muted'}`}
                   />
-                  <span className="text-slate-700 dark:text-slate-300 truncate flex-1">
+                  <span className="text-c-text truncate flex-1">
                     {card.title}
                   </span>
                   {outdated && <RefreshCw size={10} className="text-amber-500 flex-shrink-0" />}
@@ -165,7 +165,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                       e.stopPropagation();
                       setContextMenuIndex(contextMenuIndex === index ? null : index);
                     }}
-                    className="text-slate-600 opacity-0 group-hover:opacity-100"
+                    className="text-c-text-secondary opacity-0 group-hover:opacity-100"
                   >
                     <MoreVertical size={12} />
                   </button>
@@ -174,16 +174,16 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
 
               {/* Context Menu */}
               {contextMenuIndex === index && (
-                <div className="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-xl z-50 py-1">
+                <div className="absolute right-0 top-full mt-1 w-36 bg-c-surface border border-c-border-subtle rounded-lg shadow-xl z-50 py-1">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onDuplicate(index);
                       setContextMenuIndex(null);
                     }}
-                    className="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300"
+                    className="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-c-surface-raised text-c-text"
                   >
-                    <Copy size={12} /> Duplicate
+                    <Copy size={12} /> {t('presentations.builder.duplicate')}
                   </button>
                   <button
                     onClick={(e) => {
@@ -193,7 +193,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                     }}
                     className="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-danger-50 dark:hover:bg-danger-500/10 text-danger-500"
                   >
-                    <Trash2 size={12} /> Delete
+                    <Trash2 size={12} /> {t('presentations.builder.delete')}
                   </button>
                 </div>
               )}
@@ -203,10 +203,10 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
       </div>
 
       {/* Add button */}
-      <div className="p-2 border-t border-slate-200 dark:border-navy-800">
+      <div className="p-2 border-t border-c-border-subtle">
         <button
           onClick={onAddCard}
-          className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-slate-300 dark:border-navy-600 text-xs text-slate-500 hover:border-primary-400 hover:text-primary-500 transition-colors"
+          className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-c-border text-xs text-c-text-secondary hover:border-c-accent hover:text-c-accent transition-colors"
         >
           <Plus size={12} /> {t('presentations.builder.addBlank', 'New slide')}
         </button>

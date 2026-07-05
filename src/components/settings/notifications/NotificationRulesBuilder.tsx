@@ -243,11 +243,11 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
             <Bell size={28} className="text-amber-500" />
             {t('settings.notifications.rules.title', 'Notification Rules')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t(
               'settings.notifications.rules.description',
               'Configure advanced notification preferences'
@@ -265,7 +265,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-navy-700 pb-4">
+      <div className="flex flex-wrap gap-2 border-b border-c-border-subtle dark:border-navy-700 pb-4">
         {[
           { id: 'rules', label: 'Custom Rules', icon: Filter },
           { id: 'quiet', label: 'Quiet Hours', icon: BellOff },
@@ -281,7 +281,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === tab.id
                   ? 'bg-amber-600 text-white'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                  : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-700'
               }`}
             >
               <Icon size={16} />
@@ -293,9 +293,9 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 
       {/* Custom Rules Tab */}
       {activeTab === 'rules' && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+            <h3 className="text-lg font-semibold text-c-text">
               Custom Notification Rules
             </h3>
             <button
@@ -314,7 +314,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 className={`border rounded-lg transition-all ${
                   rule.enabled
                     ? 'border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/5'
-                    : 'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 opacity-60'
+                    : 'border-c-border-subtle dark:border-navy-700 bg-c-surface-raised opacity-60'
                 }`}
               >
                 <div
@@ -335,7 +335,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                         updateRule(rule.id, { name: e.target.value });
                       }}
                       onClick={(e) => e.stopPropagation()}
-                      className="font-medium text-slate-900 dark:text-white bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-amber-500 rounded px-2 py-1"
+                      className="font-medium text-c-text bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-amber-500 rounded px-2 py-1"
                     />
                   </div>
                   <div className="flex items-center gap-2">
@@ -347,7 +347,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                       className={`p-2 rounded-lg transition-colors ${
                         rule.enabled
                           ? 'text-amber-600 hover:bg-amber-100'
-                          : 'text-slate-600 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/30'
+                          : 'text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-800/30'
                       }`}
                     >
                       {rule.enabled ? <Play size={16} /> : <Pause size={16} />}
@@ -365,9 +365,9 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 </div>
 
                 {expandedRule === rule.id && (
-                  <div className="px-4 pb-4 space-y-4 border-t border-slate-200 dark:border-navy-700 pt-4">
+                  <div className="px-4 pb-4 space-y-4 border-t border-c-border-subtle dark:border-navy-700 pt-4">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      <label className="block text-sm font-medium text-c-text-secondary mb-2">
                         When notification type is:
                       </label>
                       <select
@@ -377,7 +377,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                             conditions: [{ ...rule.conditions[0], value: e.target.value }],
                           })
                         }
-                        className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                        className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
                       >
                         {notificationTypes.map((type) => (
                           <option key={type.id} value={type.id}>
@@ -387,7 +387,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      <label className="block text-sm font-medium text-c-text-secondary mb-2">
                         Then:
                       </label>
                       <select
@@ -397,7 +397,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                             actions: [{ ...rule.actions[0], channel: e.target.value }],
                           })
                         }
-                        className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                        className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
                       >
                         <option value="all">Notify on all channels</option>
                         <option value="desktop">Desktop only</option>
@@ -412,7 +412,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
             ))}
 
             {rules.length === 0 && (
-              <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+              <div className="text-center py-8 text-c-text-muted">
                 <Bell size={32} className="mx-auto mb-2 opacity-30" />
                 <p>No custom rules configured</p>
                 <button onClick={addRule} className="mt-2 text-amber-600 hover:underline text-sm">
@@ -426,20 +426,20 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 
       {/* Quiet Hours Tab */}
       {activeTab === 'quiet' && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <BellOff size={20} className="text-slate-500 dark:text-slate-400" />
+            <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
+              <BellOff size={20} className="text-c-text-muted" />
               Quiet Hours
             </h3>
             <button
               onClick={() => setQuietHours({ ...quietHours, enabled: !quietHours.enabled })}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                quietHours.enabled ? 'bg-amber-600' : 'bg-slate-300 dark:bg-slate-600'
+                quietHours.enabled ? 'bg-amber-600' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+                className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                   quietHours.enabled ? 'left-7' : 'left-1'
                 }`}
               />
@@ -450,31 +450,31 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-2">
                     Start Time
                   </label>
                   <input
                     type="time"
                     value={quietHours.startTime}
                     onChange={(e) => setQuietHours({ ...quietHours, startTime: e.target.value })}
-                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                    className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-2">
                     End Time
                   </label>
                   <input
                     type="time"
                     value={quietHours.endTime}
                     onChange={(e) => setQuietHours({ ...quietHours, endTime: e.target.value })}
-                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                    className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-c-text-secondary mb-2">
                   Active Days
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -490,7 +490,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                       className={`px-3 py-1.5 rounded-lg text-sm font-medium capitalize transition-all ${
                         quietHours.days.includes(day)
                           ? 'bg-amber-600 text-white'
-                          : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                          : 'bg-c-surface-raised text-c-text-secondary'
                       }`}
                     >
                       {day.slice(0, 3)}
@@ -499,7 +499,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 </div>
               </div>
 
-              <label className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-navy-950 rounded-lg cursor-pointer">
+              <label className="flex items-center gap-3 p-4 bg-c-surface-raised rounded-lg cursor-pointer">
                 <input
                   type="checkbox"
                   checked={quietHours.allowUrgent}
@@ -507,10 +507,10 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                   className="rounded"
                 />
                 <div>
-                  <p className="font-medium text-slate-900 dark:text-white">
+                  <p className="font-medium text-c-text">
                     Allow Urgent Notifications
                   </p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-c-text-muted">
                     Still receive critical notifications during quiet hours
                   </p>
                 </div>
@@ -522,9 +522,9 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 
       {/* Sounds Tab */}
       {activeTab === 'sounds' && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
               <Volume2 size={20} className="text-blue-500" />
               Sound Settings
             </h3>
@@ -533,11 +533,11 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 setSoundSettings({ ...soundSettings, enabled: !soundSettings.enabled })
               }
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                soundSettings.enabled ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-600'
+                soundSettings.enabled ? 'bg-blue-600' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+                className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                   soundSettings.enabled ? 'left-7' : 'left-1'
                 }`}
               />
@@ -548,7 +548,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <label className="text-sm font-medium text-c-text-secondary">
                     Volume
                   </label>
                   <span className="text-sm text-blue-600">{soundSettings.volume}%</span>
@@ -561,20 +561,20 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                   onChange={(e) =>
                     setSoundSettings({ ...soundSettings, volume: parseInt(e.target.value) })
                   }
-                  className="w-full h-2 bg-slate-200 dark:bg-navy-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                  className="w-full h-2 bg-c-surface-raised rounded-lg appearance-none cursor-pointer accent-blue-600"
                 />
               </div>
 
               <div className="space-y-3">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                <label className="block text-sm font-medium text-c-text-secondary">
                   Sound per Notification Type
                 </label>
                 {notificationTypes.slice(0, 5).map((type) => (
                   <div
                     key={type.id}
-                    className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg"
                   >
-                    <span className="text-sm text-slate-900 dark:text-white">{type.label}</span>
+                    <span className="text-sm text-c-text">{type.label}</span>
                     <select
                       value={soundSettings.sounds[type.id] || 'default'}
                       onChange={(e) =>
@@ -583,7 +583,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                           sounds: { ...soundSettings.sounds, [type.id]: e.target.value },
                         })
                       }
-                      className="px-3 py-1.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm"
+                      className="px-3 py-1.5 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg text-sm"
                     >
                       {soundOptions.map((sound) => (
                         <option key={sound.id} value={sound.id}>
@@ -603,10 +603,10 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
       {activeTab === 'devices' && (
         <div className="space-y-4">
           {/* Desktop */}
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
+          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                <Monitor size={20} className="text-primary-500" />
+              <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
+                <Monitor size={20} className="text-c-accent" />
                 Desktop Notifications
               </h3>
               <button
@@ -622,11 +622,11 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 className={`relative w-12 h-6 rounded-full transition-colors ${
                   deviceSettings.desktop.enabled
                     ? 'bg-navy-900'
-                    : 'bg-slate-300 dark:bg-slate-600'
+                    : 'bg-c-surface-raised'
                 }`}
               >
                 <span
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                     deviceSettings.desktop.enabled ? 'left-7' : 'left-1'
                   }`}
                 />
@@ -646,13 +646,13 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 ].map((item) => (
                   <label
                     key={item.key}
-                    className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg cursor-pointer"
+                    className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg cursor-pointer"
                   >
                     <div>
-                      <p className="font-medium text-slate-900 dark:text-white text-sm">
+                      <p className="font-medium text-c-text text-sm">
                         {item.label}
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{item.desc}</p>
+                      <p className="text-xs text-c-text-muted">{item.desc}</p>
                     </div>
                     <input
                       type="checkbox"
@@ -675,9 +675,9 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
           </div>
 
           {/* Mobile */}
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
+          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
                 <Smartphone size={20} className="text-green-500" />
                 Mobile Notifications
               </h3>
@@ -689,11 +689,11 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                   })
                 }
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  deviceSettings.mobile.enabled ? 'bg-green-600' : 'bg-slate-300 dark:bg-slate-600'
+                  deviceSettings.mobile.enabled ? 'bg-green-600' : 'bg-c-surface-raised'
                 }`}
               >
                 <span
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                     deviceSettings.mobile.enabled ? 'left-7' : 'left-1'
                   }`}
                 />
@@ -713,13 +713,13 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 ].map((item) => (
                   <label
                     key={item.key}
-                    className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg cursor-pointer"
+                    className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg cursor-pointer"
                   >
                     <div>
-                      <p className="font-medium text-slate-900 dark:text-white text-sm">
+                      <p className="font-medium text-c-text text-sm">
                         {item.label}
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{item.desc}</p>
+                      <p className="text-xs text-c-text-muted">{item.desc}</p>
                     </div>
                     <input
                       type="checkbox"
@@ -742,9 +742,9 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 
       {/* Digest Tab */}
       {activeTab === 'digest' && (
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
               <Layers size={20} className="text-amber-500" />
               Notification Digest
             </h3>
@@ -753,11 +753,11 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 setDigestSettings({ ...digestSettings, enabled: !digestSettings.enabled })
               }
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                digestSettings.enabled ? 'bg-amber-600' : 'bg-slate-300 dark:bg-slate-600'
+                digestSettings.enabled ? 'bg-amber-600' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+                className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                   digestSettings.enabled ? 'left-7' : 'left-1'
                 }`}
               />
@@ -766,13 +766,13 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 
           {digestSettings.enabled && (
             <div className="space-y-4">
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 Group notifications together and receive them as a summary
               </p>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-2">
                     Frequency
                   </label>
                   <select
@@ -780,7 +780,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                     onChange={(e) =>
                       setDigestSettings({ ...digestSettings, frequency: e.target.value as any })
                     }
-                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                    className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
                   >
                     <option value="hourly">Hourly</option>
                     <option value="daily">Daily</option>
@@ -788,27 +788,27 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-2">
                     Delivery Time
                   </label>
                   <input
                     type="time"
                     value={digestSettings.time}
                     onChange={(e) => setDigestSettings({ ...digestSettings, time: e.target.value })}
-                    className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                    className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-c-text-secondary mb-2">
                   Include in Digest
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   {notificationTypes.map((type) => (
                     <label
                       key={type.id}
-                      className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-navy-950 rounded-lg cursor-pointer"
+                      className="flex items-center gap-2 p-2 bg-c-surface-raised rounded-lg cursor-pointer"
                     >
                       <input
                         type="checkbox"

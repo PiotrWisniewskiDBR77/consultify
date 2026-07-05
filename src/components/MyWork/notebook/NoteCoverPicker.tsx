@@ -53,15 +53,15 @@ export const IconPickerButton: React.FC<IconPickerButtonProps> = ({
         type="button"
         onClick={() => setOpen((v) => !v)}
         title={isPolish ? 'Zmień ikonę strony' : 'Change page icon'}
-        className="rounded-lg p-0.5 text-3xl leading-none transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+        className="rounded-lg p-0.5 text-3xl leading-none transition-colors hover:bg-c-surface-raised"
       >
         {value && /\p{Emoji}/u.test(value) ? value : fallback}
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-lg dark:border-navy-700 dark:bg-navy-900">
+        <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-xl border border-c-border bg-c-surface p-2 shadow-lg dark:border-navy-700 dark:bg-navy-900">
           <div className="mb-1.5 flex items-center justify-between px-1">
-            <span className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+            <span className="flex items-center gap-1.5 text-[11px] font-medium text-c-text-muted">
               <Smile size={12} />
               {isPolish ? 'Ikona' : 'Icon'}
             </span>
@@ -72,7 +72,7 @@ export const IconPickerButton: React.FC<IconPickerButtonProps> = ({
                   onChange(null);
                   setOpen(false);
                 }}
-                className="text-[11px] text-slate-500 transition-colors hover:text-danger-500 dark:text-slate-400"
+                className="text-[11px] text-c-text-muted transition-colors hover:text-c-danger dark:text-c-text-muted"
               >
                 {isPolish ? 'Usuń' : 'Remove'}
               </button>
@@ -87,8 +87,8 @@ export const IconPickerButton: React.FC<IconPickerButtonProps> = ({
                   onChange(emoji);
                   setOpen(false);
                 }}
-                className={`flex h-8 w-8 items-center justify-center rounded-lg text-xl transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.06] ${
-                  value === emoji ? 'bg-slate-500/10' : ''
+                className={`flex h-8 w-8 items-center justify-center rounded-lg text-xl transition-colors hover:bg-c-surface-raised ${
+                  value === emoji ? 'bg-c-surface-raised' : ''
                 }`}
               >
                 {emoji}
@@ -120,7 +120,7 @@ export const CoverImageBar: React.FC<CoverImageBarProps> = ({
       <button
         type="button"
         onClick={onPick}
-        className="mb-3 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-medium text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-white/[0.06] dark:hover:text-slate-300"
+        className="mb-3 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-medium text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text dark:text-c-text-muted dark:hover:bg-white/[0.06] dark:hover:text-c-text"
       >
         <ImagePlus size={13} />
         {isPolish ? 'Dodaj okładkę' : 'Add cover'}
@@ -182,14 +182,14 @@ export const CoverUrlModal: React.FC<{
       onMouseDown={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-4 shadow-xl dark:border-navy-700 dark:bg-navy-900"
+        className="w-full max-w-sm rounded-2xl border border-c-border bg-c-surface p-4 shadow-xl dark:border-navy-700 dark:bg-navy-900"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+          <h3 className="text-sm font-semibold text-c-text">
             {isPolish ? 'Okładka z adresu URL' : 'Cover from URL'}
           </h3>
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600">
+          <button type="button" onClick={onClose} className="text-c-text-muted hover:text-c-text">
             <X size={16} />
           </button>
         </div>
@@ -199,20 +199,20 @@ export const CoverUrlModal: React.FC<{
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && submit()}
           placeholder="https://…"
-          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-navy-400 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
+          className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text outline-none focus:border-[var(--c-focus-solid)] dark:border-navy-700 dark:bg-navy-800 dark:text-c-text"
         />
         <div className="mt-3 flex justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-3 py-1.5 text-sm text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/[0.06]"
+            className="rounded-lg px-3 py-1.5 text-sm text-c-text-secondary transition-colors hover:bg-c-surface-raised dark:text-c-text-secondary dark:hover:bg-white/[0.06]"
           >
             {isPolish ? 'Anuluj' : 'Cancel'}
           </button>
           <button
             type="button"
             onClick={submit}
-            className="rounded-lg bg-slate-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-slate-700"
+            className="rounded-lg bg-c-accent px-3 py-1.5 text-sm font-medium text-white transition-colors hover:brightness-110"
           >
             {isPolish ? 'Ustaw' : 'Set'}
           </button>

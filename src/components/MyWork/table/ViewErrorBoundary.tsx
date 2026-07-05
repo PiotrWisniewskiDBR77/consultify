@@ -51,12 +51,12 @@ export class ViewErrorBoundary extends React.Component<
     return (
       <div
         role="alert"
-        className="flex flex-1 min-h-[200px] flex-col items-center justify-center gap-4 rounded-xl border border-slate-200/80 bg-white px-6 py-10 text-center dark:border-navy-700/80 dark:bg-navy-900"
+        className="flex flex-1 min-h-[200px] flex-col items-center justify-center gap-4 rounded-xl border border-c-border-subtle bg-c-surface px-6 py-10 text-center"
       >
         <div className="max-w-md space-y-2">
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">{title}</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            The <span className="font-medium text-slate-700 dark:text-slate-200">{viewName}</span>{' '}
+          <h3 className="text-sm font-semibold text-c-text">{title}</h3>
+          <p className="text-xs text-c-text-muted">
+            The <span className="font-medium text-c-text-secondary">{viewName}</span>{' '}
             layout hit an unexpected error. Runtime details are hidden for safety.
           </p>
         </div>
@@ -64,14 +64,14 @@ export class ViewErrorBoundary extends React.Component<
           <button
             type="button"
             onClick={this.handleRetry}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:hover:bg-navy-700"
+            className="rounded-xl border border-c-border bg-c-surface px-4 py-2 text-xs font-semibold text-c-text shadow-sm transition hover:bg-c-surface-raised"
           >
             {retryLabel}
           </button>
           <button
             type="button"
             onClick={onSwitchToGrid}
-            className="rounded-xl bg-primary-500 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-primary-600"
+            className="rounded-xl bg-c-accent px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:brightness-95"
           >
             {switchLabel}
           </button>

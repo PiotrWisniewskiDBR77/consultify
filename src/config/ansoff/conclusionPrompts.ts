@@ -83,6 +83,13 @@ ${seqLines}
 Rules:
 ${rules.map((r) => `- ${r}`).join('\n')}
 
+QUALITY BARS:
+- Each comparison "insight" is answer-first — a thesis about the growth decision, not a description of a quadrant.
+- Zero filler and zero AI meta-phrases ("As an AI", "Based on the provided data", "In conclusion") — write like a partner signing the work with their name.
+- Numbers exclusively from the facts above; do not compute or invent new ones.
+- Every sentence falsifiable: with opposite facts it would read differently.
+- Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
+
 Return JSON:
 {
   "comparisons": [{"title":"...","insight":"...","linkedQuadrants":["marketPenetration"],"recommendation":"...","priority":"high|medium|low","confidence":4}],

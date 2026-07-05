@@ -73,6 +73,24 @@ export interface UnifiedSlide {
    * renderer treats `undefined`/empty arrays as "no marker".
    */
   auditFlags?: string[];
+  /**
+   * STEP 1b — per-slide composition plan carried from B1
+   * (`presentationLayoutDirectorService.SlideComposition`). Additive +
+   * back-compatible: legacy callers leave it unset, and the persisted
+   * `unifiedJson` simply omits it, so the FE renderer keeps its pure
+   * heuristic (today's behaviour). When present, it flows through the
+   * persisted deck to the FE (`deckFromUnifiedJson` → `DeckCard.composition`)
+   * where `layoutVariantId`/`regions` drive layout selection.
+   *
+   * Typed structurally (not against `SlideComposition`) to avoid a circular
+   * import between PPTX types ← generator ← layout director. The FE
+   * `normalizeSlideComposition` re-validates before use.
+   */
+  composition?: {
+    layoutVariantId?: string;
+    regions?: { area: string; blockTypes?: string[] }[];
+    emphasis?: string;
+  } | null;
 }
 
 export interface UnifiedReportJSON {
@@ -404,6 +422,23 @@ export interface LayoutResult {
   masterName: string;
   elements: RenderedElement[];
   slideOptions?: Record<string, any>;
+}
+
+/**
+ * P13 — ekran = eksport parity. The on-screen deck editor resolves each slide's
+ * layout template (honouring `composition.layoutVariantId` + W7 guard-split) via
+ * the FE `LayoutEngine`. The PPTX pipeline computes the SAME decision through
+ * `deckLayoutDecision.resolveDeckLayoutTemplateId(slide)` and passes it to the
+ * intent-bound layout function as this OPTIONAL context, so a layout that has
+ * more than one composition variant (e.g. Cover: centered vs left-image vs
+ * bottom-strip) renders the same shape the screen shows. Layouts that don't read
+ * it are unaffected (fully back-compatible).
+ */
+export interface LayoutContext {
+  /** Canonical `LAYOUT_TEMPLATES` id the FE would render for this slide. */
+  resolvedLayoutTemplateId: string;
+  /** Coarse topology of that template (stacked / split / kpi_grid / image_split / three_col). */
+  topology: 'stacked' | 'split' | 'kpi_grid' | 'image_split' | 'three_col';
 }
 
 export interface LayoutDefinition {

@@ -209,11 +209,11 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
 
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
             <Layout size={28} className="text-indigo-500" />
             {t('settings.templates.title', 'Settings Templates')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t('settings.templates.subtitle', 'Apply predefined configurations or save your own')}
           </p>
         </div>
@@ -243,7 +243,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
       {/* System Templates */}
       {!loadError && (
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
             <Zap size={18} className="text-amber-500" />
             {t('settings.templates.systemTemplates', 'System Templates')}
           </h3>
@@ -251,14 +251,14 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
             {templates.map((template) => (
               <div
                 key={template.id}
-                className={`bg-white dark:bg-navy-900 border rounded-xl p-4 hover:shadow-md transition-shadow ${template.isRecommended ? 'border-indigo-300 dark:border-indigo-500/50' : 'border-slate-200 dark:border-navy-700'}`}
+                className={`bg-c-surface border rounded-xl p-4 hover:shadow-md transition-shadow ${template.isRecommended ? 'border-indigo-300 dark:border-indigo-500/50' : 'border-c-border-subtle dark:border-navy-700'}`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <span className="text-3xl">{template.icon}</span>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-slate-900 dark:text-white">
+                        <h4 className="font-semibold text-c-text">
                           {getTemplateLabel(template, 'name')}
                         </h4>
                         {template.isRecommended && (
@@ -267,7 +267,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                      <p className="text-sm text-c-text-muted mt-1">
                         {getTemplateLabel(template, 'description')}
                       </p>
                     </div>
@@ -278,7 +278,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
                   {template.categories.map((cat) => (
                     <span
                       key={cat}
-                      className="px-2 py-0.5 bg-slate-100 dark:bg-navy-800 rounded text-xs text-slate-600 dark:text-slate-400"
+                      className="px-2 py-0.5 bg-c-surface-raised rounded text-xs text-c-text-secondary"
                     >
                       {getCategoryLabel(cat)}
                     </span>
@@ -310,17 +310,17 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
       {/* Custom Templates */}
       {!loadError && (
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
             <Star size={18} className="text-amber-500" />
             {t('settings.templates.myTemplates', 'My Templates')}
           </h3>
           {customTemplates.length === 0 ? (
-            <div className="bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl p-8 text-center">
-              <Layout size={48} className="mx-auto mb-3 text-slate-600 dark:text-slate-400" />
-              <p className="text-slate-500 dark:text-slate-400">
+            <div className="bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-xl p-8 text-center">
+              <Layout size={48} className="mx-auto mb-3 text-c-text-secondary" />
+              <p className="text-c-text-muted">
                 {t('settings.templates.noCustomTemplates', 'No custom templates yet')}
               </p>
-              <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
+              <p className="text-sm text-c-text-secondary mt-1">
                 {t(
                   'settings.templates.noCustomTemplatesHint',
                   'Save your current settings as a template to use later'
@@ -332,15 +332,15 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
               {customTemplates.map((template) => (
                 <div
                   key={template.id}
-                  className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 flex items-center justify-between"
+                  className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{template.icon}</span>
                     <div>
-                      <h4 className="font-semibold text-slate-900 dark:text-white">
+                      <h4 className="font-semibold text-c-text">
                         {template.name}
                       </h4>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                      <p className="text-sm text-c-text-muted">
                         {template.description}
                       </p>
                     </div>
@@ -355,7 +355,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
                     </button>
                     <button
                       onClick={() => handleDeleteTemplate(template.id)}
-                      className="p-2 text-slate-600 dark:text-slate-500 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg"
+                      className="p-2 text-c-text-secondary hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -370,8 +370,8 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
       {/* Create Template Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-navy-900 rounded-xl p-6 w-full max-w-md mx-4 animate-in zoom-in-95">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+          <div className="bg-c-surface rounded-xl p-6 w-full max-w-md mx-4 animate-in zoom-in-95">
+            <h3 className="text-lg font-semibold text-c-text mb-4">
               {t('settings.templates.saveAsTemplate', 'Save as Template')}
             </h3>
 
@@ -386,7 +386,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
               )}
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   {t('settings.templates.templateName', 'Template Name')}
                 </label>
                 <input
@@ -394,12 +394,12 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
                   value={newTemplateName}
                   onChange={(e) => setNewTemplateName(e.target.value)}
                   placeholder={t('settings.templates.namePlaceholder', 'My Settings Template')}
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   {t('settings.templates.descriptionOptional', 'Description (optional)')}
                 </label>
                 <textarea
@@ -410,7 +410,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
                     'Describe this template...'
                   )}
                   rows={3}
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
@@ -418,7 +418,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg"
+                className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-800 rounded-lg"
               >
                 {t('common.cancel', 'Cancel')}
               </button>

@@ -3,7 +3,8 @@
     "aiPanel": {
       "open": "Open AI panel",
       "close": "Close AI panel"
-    }
+    },
+    "openMenu": "Open menu"
   },
   "landing": {
     "hero": {
@@ -1448,7 +1449,16 @@
     "none": "none",
     "runNow": "Run now",
     "organization": "Organization",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "clear": "Clear",
+    "bulk": {
+      "selectedCount": "{{count}} selected",
+      "done": "{{count}} {{noun}}",
+      "processedNoun": "processed",
+      "partial": "{{success}} done, {{failed}} failed"
+    },
+    "export": "Export",
+    "decision": "Decision"
   },
   "superadmin": {
     "confirm": {
@@ -1783,7 +1793,33 @@
     "targetScore": "Target score",
     "gap": "Gap",
     "evidenceCount": "Evidence",
-    "recommendationsCount": "Recommendations"
+    "recommendationsCount": "Recommendations",
+    "confidence": "Confidence",
+    "statuses": {
+      "draft": "Draft",
+      "review": "In review",
+      "approved": "Approved",
+      "generated": "Generated",
+      "completed": "Completed"
+    },
+    "resume": "Resume",
+    "requestReview": "Request review",
+    "approve": "Approve",
+    "sendBack": "Send back",
+    "generateInitiatives": "Generate initiatives",
+    "aiHints": {
+      "execBrief": "Executive brief",
+      "keyRisks": "Key risks",
+      "initiativeAngles": "Initiative angles"
+    },
+    "noRelations": "No relations",
+    "loadingRelations": "Loading relations…",
+    "aiUnavailable": "AI unavailable",
+    "aiTimedOut": "AI timed out",
+    "copyAsMarkdown": "Copy as Markdown",
+    "copyForSlack": "Copy for Slack",
+    "approvalSnapshot": "Approval snapshot",
+    "useAiHints": "Use AI hints in the footer to generate a brief."
   },
   "sidebar": {
     "module3_1": "Initiatives",
@@ -1833,7 +1869,9 @@
     },
     "realization": "Execution",
     "expand": "Expand",
-    "finance": "Finance"
+    "finance": "Finance",
+    "mainNavigation": "Main navigation",
+    "conclusions": "Conclusions"
   },
   "widgets": {
     "help": {
@@ -2291,7 +2329,11 @@
         "rejectedAll": "Rejected all AI proposals",
         "generated": "AI generated proposal",
         "proposalApplied": "Proposal applied",
-        "allProposalsApplied": "All proposals applied"
+        "allProposalsApplied": "All proposals applied",
+        "generating": "AI is analyzing the board…",
+        "generateFailed": "AI generation failed",
+        "noProposals": "AI returned no proposals for this board",
+        "needsElements": "Add elements to the board first"
       },
       "errors": {
         "saveFailed": "Save failed",
@@ -2308,7 +2350,11 @@
         "voteSyncFailed": "Vote sync failed",
         "missingSessionId": "Missing sessionId",
         "voteSaveFailed": "Failed to save vote",
-        "selectAtLeastTwo": "Select at least 2 elements"
+        "selectAtLeastTwo": "Select at least 2 elements",
+        "imageTooLarge": "Image too large (max 10MB)",
+        "imageUploadFallback": "Image saved locally (offline) — storage upload unavailable",
+        "objectLimitWarning": "You are approaching the object limit (200 objects). Consider archiving objects.",
+        "objectLimitReached": "Object limit reached (500 maximum). Please delete some objects or split into multiple whiteboards."
       },
       "drawingsCleared": "Drawings cleared",
       "boardMode": "Board mode",
@@ -2950,6 +2996,11 @@
     },
     "glossary": {
       "title": "Consulting Glossary"
+    },
+    "bulk": {
+      "confirmDeleteTitle": "Delete selected items?",
+      "confirmDeleteDesc": "You will permanently delete {{count}} item(s). This cannot be undone.",
+      "deletedNoun": "deleted"
     }
   },
   "initiatives": {
@@ -5031,6 +5082,24 @@
       "planCta": "Plan the tasks",
       "advanceTitle": "Next in the process",
       "advanceCta": "Submit for review"
+    },
+    "status": {
+      "pendingReview": "Pending review",
+      "promoted": "Promoted",
+      "planning": "Planning",
+      "scheduled": "Scheduled",
+      "executing": "Executing",
+      "blocked": "Blocked",
+      "done": "Done",
+      "tracking": "Tracking",
+      "cancelled": "Cancelled",
+      "archived": "Archived"
+    },
+    "priorityLevels": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
     }
   },
   "execution": {
@@ -5979,7 +6048,9 @@
       "version": "version",
       "author": "Author",
       "period": "Period",
-      "immutable": "Immutable version"
+      "immutable": "Immutable version",
+      "startReview": "Start review",
+      "customType": "Custom"
     },
     "toast": {
       "chatOpened": "Chat opened",
@@ -8522,7 +8593,8 @@
       "desc": "Manage your conversation history and data retention.",
       "export": "Export History",
       "clear": "Clear All History"
-    }
+    },
+    "sectionNotFoundHint": "This settings section does not exist. Pick another from the sidebar."
   },
   "showcase": {
     "common": {
@@ -9145,7 +9217,8 @@
       },
       "mentions": {
         "empty": "No presentations yet."
-      }
+      },
+      "removeAttachment": "Remove attachment"
     },
     "voice": {
       "startVoice": "Start by voice",
@@ -10261,6 +10334,106 @@
     },
     "tabs": {
       "templates": "Templates"
+    },
+    "membersRoles": {
+      "title": "Members & Roles",
+      "subtitle": "Canonical P32 surface for membership, role changes, and ownership safeguards.",
+      "loadFailed": "Failed to load members",
+      "loading": "Loading members…",
+      "empty": "No members found for this workspace.",
+      "unknownMember": "Unknown member",
+      "roles": {
+        "owner": "Owner",
+        "admin": "Admin",
+        "member": "Member",
+        "guest": "Guest"
+      },
+      "columns": {
+        "member": "Member",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status"
+      },
+      "guidance": {
+        "owner": {
+          "description": "Full workspace control, ownership transfer, and owner-only safeguards.",
+          "denial": "Only an owner can assign or remove another owner."
+        },
+        "admin": {
+          "description": "Can manage team members, member roles, and team invite codes.",
+          "denial": "Cannot change owner membership or bypass owner protections."
+        },
+        "member": {
+          "description": "Standard workspace access without team administration permissions.",
+          "denial": "Cannot open Team Admin or change membership."
+        },
+        "guest": {
+          "description": "Restricted collaborator role with no admin access.",
+          "denial": "Guests cannot access admin tools."
+        }
+      },
+      "invite": {
+        "cta": "Add member",
+        "placeholder": "member@company.com",
+        "emailLabel": "Member email",
+        "noOrg": "No active organization — reload the page and try again.",
+        "denied": "Only a team owner or admin can add members.",
+        "ownerFlow": "Owner changes must use the ownership transfer flow.",
+        "emptyEmail": "Enter an email address before adding a member.",
+        "invalidEmail": "Enter a valid email address (e.g. member@company.com).",
+        "added": "{{email}} added to the workspace.",
+        "addedToast": "Member added to workspace",
+        "notFound": "No account exists for that email yet. Use the Team Invite Code below so they can self-register, or create the account first.",
+        "failed": "Failed to add member."
+      },
+      "role": {
+        "denied": "Only a team owner or admin can change member roles",
+        "ownerFlow": "Owner changes must use the ownership transfer flow",
+        "updated": "Member role updated",
+        "updateFailed": "Failed to update role"
+      },
+      "remove": {
+        "action": "Remove",
+        "removed": "Member removed",
+        "failed": "Failed to remove member"
+      },
+      "code": {
+        "title": "Team Invite Code",
+        "subtitle": "Generate one shared code for team onboarding. The default limit is set to 50 members and you can copy the ready registration link below.",
+        "note": "Team members register with email and password after opening the invite link. Phone number remains optional.",
+        "cta": "Generate code",
+        "maxUsesLabel": "Maximum team registrations",
+        "noCode": "Code was not returned by the server",
+        "generated": "Access code generated",
+        "generateFailed": "Failed to generate access code",
+        "ready": "Ready for team onboarding",
+        "accessCode": "Access code",
+        "copyCode": "Copy code",
+        "codeCopied": "Access code copied",
+        "regLink": "Registration link",
+        "copyLink": "Copy link",
+        "linkCopied": "Registration link copied",
+        "copyFailed": "Failed to copy to clipboard"
+      }
+    },
+    "operations": {
+      "title": "Organization Operations",
+      "subtitle": "Tenant-critical organization operations are available from P32, while deeper business profile editing still remains accessible in the Organization workspace.",
+      "openProfile": "Open organization profile",
+      "tabs": {
+        "domains": {
+          "label": "Domains",
+          "desc": "Tenant domain verification and routing"
+        },
+        "branding": {
+          "label": "Branding",
+          "desc": "Identity, locale, and trust posture"
+        },
+        "competencies": {
+          "label": "Competencies",
+          "desc": "Capability catalog used across the tenant"
+        }
+      }
     }
   },
   "access": {
@@ -10571,7 +10744,8 @@
         "columns": {
           "status": "Status"
         }
-      }
+      },
+      "loadingSessions": "Loading tool sessions…"
     },
     "integrations": {
       "syncHub": {
@@ -10650,6 +10824,9 @@
         "ready": "Ready"
       },
       "next": "next"
+    },
+    "session": {
+      "notLoadedYet": "Session is still loading — try again in a moment"
     }
   },
   "aiAuthoring": {
@@ -10804,7 +10981,20 @@
       "regenerating": "Regenerating…",
       "rewritePlaceholder": "Rewrite this slide…",
       "rewriteSlide": "Rewrite",
-      "notesPlaceholder": "Speaker notes for this slide..."
+      "notesPlaceholder": "Speaker notes for this slide...",
+      "toolbar": {
+        "orgLibrary": "Organization Library",
+        "orgLibraryDescription": "Browse your org images",
+        "aiGenerate": "AI Generate",
+        "aiGenerating": "Generating…",
+        "aiGenerateDescription": "Regenerate this slide with an AI image",
+        "aiGenerateInstruction": "Add a relevant AI-generated image to this slide.",
+        "upload": "Upload",
+        "uploadDescription": "Upload an image from your device"
+      },
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "slideSorter": "Slides"
     },
     "governance": {
       "loading": "Loading…",
@@ -10878,6 +11068,14 @@
     },
     "outline": {
       "keyMessagePlaceholder": "Key message for this slide..."
+    },
+    "versionConflictDetected": "This deck was changed in another session. Choose how to resolve it.",
+    "versionConflictReloaded": "Reloaded the latest version of this deck.",
+    "versionConflictKeptMine": "Keeping your version — it will be saved over the other changes.",
+    "bulk": {
+      "confirmDeleteTitle": "Delete selected presentations?",
+      "confirmDeleteDesc": "You will permanently delete {{count}} presentation(s). This cannot be undone.",
+      "deletedNoun": "deleted"
     }
   },
   "finance": {
@@ -12678,7 +12876,8 @@
       "source": "Source",
       "slides": "Slides",
       "reportType": "Type",
-      "mode": "Tryb"
+      "mode": "Tryb",
+      "quality": "Quality"
     },
     "filters": {
       "type": "Type",
@@ -12949,6 +13148,14 @@
     "breadcrumb": {
       "presentationWizard": "Presentation Wizard",
       "deckBuilder": "Deck Builder"
+    },
+    "bulk": {
+      "confirmArchiveTitle": "Archive selected outputs?",
+      "confirmArchiveDesc": "You will archive {{count}} item(s). This is reversible.",
+      "confirmArchiveReportsTitle": "Archive selected reports?",
+      "confirmArchiveReportsDesc": "You will archive {{count}} report(s). This is reversible.",
+      "confirmArchiveDecksTitle": "Archive selected presentations?",
+      "confirmArchiveDecksDesc": "You will archive {{count}} presentation(s). This is reversible."
     }
   },
   "rbHub": {
@@ -13440,6 +13647,252 @@
       "filter": {
         "ariaLabel": "Template status filter"
       }
+    },
+    "shell": {
+      "lane": {
+        "wordy": "Wordy",
+        "excele": "Excele",
+        "prezentacje": "Prezentacje",
+        "tabele": "Table Studio"
+      },
+      "inputPlaceholder": {
+        "wordy": "Describe the document you want to create...",
+        "excele": "Upload a spreadsheet to work with or create from scratch",
+        "prezentacje": "Describe the presentation you want to create...",
+        "tabele": "Describe the operational table you want to build..."
+      }
+    },
+    "tabeleShell": {
+      "aiEditor": {
+        "ariaLabel": "Tabele AI Editor",
+        "title": "AI Editor",
+        "budgetLabel": "{{used}} / {{total}} tokens",
+        "levelRadioGroup": "AI Editor level",
+        "requiresSuperAdmin": "{{label}} requires super-admin role",
+        "levelTitle": "{{label}} — {{description}}",
+        "promptLabel": "{{label}} prompt",
+        "disclaimer": "AI never executes. You always review the diff and approve.",
+        "propose": "Propose",
+        "promptRequired": "Prompt is required",
+        "softWarnBudget": "Soft warning: AI budget at 70 %.",
+        "proposeFailed": "Failed to propose: {{reason}}",
+        "applied": "Applied: {{reason}}",
+        "ok": "ok",
+        "applyFailed": "Apply failed: {{reason}}",
+        "rejected": "Proposal rejected",
+        "rejectFailed": "Reject failed: {{reason}}",
+        "unknownError": "unknown error",
+        "handlerLive": "live",
+        "handlerStub": "stub",
+        "softWarnDetail": "AI token budget approaching daily limit (soft warn).",
+        "promptSection": "Prompt",
+        "proposedOperations": "Proposed operations",
+        "noOperationsPreview": "No operations preview available. Use the workspace audit log for full diff.",
+        "opFallback": "op",
+        "moreOperations": "+{{count}} more",
+        "reject": "Reject",
+        "apply": "Apply",
+        "level": {
+          "cell": {
+            "label": "Cell",
+            "description": "Refine a single cell value."
+          },
+          "record": {
+            "label": "Record",
+            "description": "Fill missing fields on one record."
+          },
+          "column": {
+            "label": "Column",
+            "description": "Bulk-fill one column across visible records."
+          },
+          "structure": {
+            "label": "Structure",
+            "description": "Add, rename, retype, or drop fields."
+          },
+          "view": {
+            "label": "View",
+            "description": "Create or update a saved view config."
+          },
+          "relational": {
+            "label": "Relations",
+            "description": "Propose new linked-record relations."
+          },
+          "methodological": {
+            "label": "Methodology",
+            "description": "Flag deviations from governance rules."
+          },
+          "source": {
+            "label": "Sources",
+            "description": "Suggest sources for records that lack them."
+          }
+        }
+      },
+      "leftRail": {
+        "ariaLabel": "Tabele outline",
+        "empty": "No sections to display.",
+        "countAriaLabel": "{{label}} count",
+        "cover": "Cover",
+        "kpi": "KPI",
+        "schema": "Schema",
+        "records": "Records",
+        "relations": "Relations",
+        "rationale": "Rationale"
+      },
+      "qa": {
+        "ariaLabel": "Tabele QA report",
+        "title": "QA Report",
+        "recomputeAriaLabel": "Recompute QA report",
+        "recompute": "Recompute",
+        "suggestions": "Suggestions",
+        "loadFailed": "Failed to load QA report: {{reason}}",
+        "unknownError": "unknown error",
+        "refreshed": "QA report refreshed",
+        "recomputeFailed": "Failed to recompute: {{reason}}",
+        "dismissed": "Suggestion marked not applicable",
+        "dismissFailed": "Failed to dismiss: {{reason}}",
+        "health": "Health",
+        "noReportYet": "No QA report yet — run a recompute.",
+        "overallScoreAriaLabel": "Overall QA score {{pct}} percent",
+        "axis": {
+          "completeness": "Completeness",
+          "freshness": "Freshness",
+          "sourceCoverage": "Source coverage",
+          "methodology": "Methodology",
+          "formulaConsistency": "Formula consistency"
+        },
+        "band": {
+          "green": "green",
+          "amber": "amber",
+          "red": "red"
+        },
+        "noSuggestions": "No actionable suggestions. Table is in great shape.",
+        "severityAriaLabel": "severity {{severity}}",
+        "severity": {
+          "high": "high",
+          "medium": "medium",
+          "low": "low"
+        },
+        "axisShort": {
+          "completeness": "completeness",
+          "freshness": "freshness",
+          "sourceCoverage": "sources",
+          "methodology": "methodology",
+          "formulaConsistency": "formula"
+        },
+        "level": {
+          "cell": "cell",
+          "record": "record",
+          "column": "column",
+          "structure": "structure",
+          "view": "view",
+          "relational": "relations",
+          "methodological": "methodology",
+          "source": "sources"
+        },
+        "openInAiEditor": "Open in AI Editor",
+        "markNotApplicable": "Mark not applicable"
+      },
+      "share": {
+        "ariaLabel": "Tabele share and conversions",
+        "title": "Share",
+        "refreshAriaLabel": "Refresh share panel",
+        "refresh": "Refresh",
+        "convertTo": "Convert to",
+        "conversionTargetAriaLabel": "Conversion target",
+        "targetDocument": "Document",
+        "targetDocumentDescription": "Open in Wordy with section outline",
+        "targetPresentation": "Presentation",
+        "targetPresentationDescription": "Open in Prezentacje with slide outline",
+        "statusDone": "Done",
+        "statusFailed": "Failed",
+        "statusRunning": "Running",
+        "statusQueued": "Queued",
+        "statusCancelled": "Cancelled",
+        "listPacksFailed": "Failed to list packs: {{reason}}",
+        "listConversionsFailed": "Failed to list conversions: {{reason}}",
+        "unknownError": "unknown",
+        "titleTooLong": "Title must be {{max}} characters or fewer",
+        "conversionFailed": "Conversion failed. See recent conversions for details.",
+        "convertedTo": "Converted to {{target}}",
+        "conversionStatus": "Conversion {{status}}",
+        "convertFailed": "Failed to convert: {{reason}}",
+        "titleLabel": "Title (optional)",
+        "titlePlaceholder": "e.g. {{example}}",
+        "titlePlaceholderDoc": "Initiative briefing",
+        "titlePlaceholderDeck": "Initiative deck",
+        "titleAriaLabel": "Conversion title",
+        "sourceSnapshot": "Source snapshot",
+        "liveRecords": "Live records",
+        "liveRecordsHint": "Capture a fresh snapshot at conversion time",
+        "loadingPacks": "Loading saved packs…",
+        "noPacksYet": "No saved source packs for this table yet.",
+        "packMeta": "{{count}} records · used {{used}}x",
+        "convertAriaLabel": "Convert table",
+        "converting": "Converting…",
+        "convertSubmit": "Convert to {{target}}",
+        "recentConversions": "Recent conversions",
+        "loading": "Loading…",
+        "noConversionsYet": "No conversions yet.",
+        "statusAriaLabel": "Status: {{status}}",
+        "conversionFallbackTitle": "{{target}} — {{id}}",
+        "openConversionResult": "Open conversion result"
+      },
+      "sourcePack": {
+        "recencyAny": "Any time",
+        "recency7": "Last 7 days",
+        "recency30": "Last 30 days",
+        "recency90": "Last 90 days",
+        "searchFailed": "Failed to search records: {{reason}}",
+        "unknownError": "unknown",
+        "listPacksFailed": "Failed to list packs: {{reason}}",
+        "packLimit": "A pack can hold at most {{max}} records",
+        "nameRequired": "Pack name is required",
+        "atLeastOneRecord": "Add at least one record to the pack",
+        "saved": "Pack \"{{name}}\" saved ({{count}} records)",
+        "saveFailed": "Failed to save pack: {{reason}}",
+        "ariaLabel": "Tabele source pack builder",
+        "title": "Source Pack",
+        "refreshAriaLabel": "Refresh candidate search",
+        "refresh": "Refresh",
+        "searchPlaceholder": "Search records by content",
+        "searchAriaLabel": "Search records",
+        "verifiedOnly": "verified only",
+        "recencyAriaLabel": "Recency filter",
+        "selectedCount": "{{count}} / {{max}} selected",
+        "searching": "Searching…",
+        "noCandidates": "No candidate records match your filters.",
+        "savePack": "Save pack",
+        "packNamePlaceholder": "Pack name",
+        "packNameAriaLabel": "Pack name",
+        "descriptionPlaceholder": "Optional description",
+        "descriptionAriaLabel": "Pack description",
+        "savedPacks": "Saved packs",
+        "loading": "Loading…",
+        "noSavedPacks": "No saved packs yet.",
+        "packMeta": "{{count}} records · used {{used}}×",
+        "useInAiEditorAriaLabel": "Use pack in AI Editor",
+        "use": "Use",
+        "score": "score {{score}}",
+        "hasVerifiedSource": "has verified source",
+        "status": {
+          "verified": "verified",
+          "inReview": "in review",
+          "unverified": "unverified",
+          "rejected": "rejected"
+        },
+        "removeFromPack": "Remove from pack",
+        "addToPack": "Add to pack",
+        "added": "Added",
+        "add": "Add",
+        "relative": {
+          "today": "today",
+          "yesterday": "yesterday",
+          "daysAgo": "{{count}}d ago",
+          "weeksAgo": "{{count}}w ago",
+          "monthsAgo": "{{count}}mo ago",
+          "yearsAgo": "{{count}}y ago"
+        }
+      }
     }
   },
   "tabele": {
@@ -13874,6 +14327,11 @@
     "operatorBriefError": "Could not load the operator brief.",
     "emptyState": {
       "description": "Schedule your first meeting to start tracking agendas and follow-ups."
+    },
+    "bulk": {
+      "confirmDeleteTitle": "Delete selected meetings?",
+      "confirmDeleteDesc": "You will permanently delete {{count}} meeting(s). This cannot be undone.",
+      "deletedNoun": "deleted"
     }
   },
   "manager": {
@@ -14634,7 +15092,9 @@
       "toolbar": {
         "insertTable": "Insert table",
         "insertLink": "Insert link"
-      }
+      },
+      "stop": "Stop",
+      "startTypingPlaceholder": "Start typing or press / for commands..."
     },
     "versionHistory": {
       "justNow": "just now",
@@ -14759,7 +15219,234 @@
       "newCanvas": "New Canvas",
       "menuAria": "Canvas menu",
       "save": "Save",
-      "companyAiChat": "Company AI Chat"
+      "companyAiChat": "Company AI Chat",
+      "materialized": {
+        "idea": "Idea",
+        "note": "Note",
+        "initiative": "Initiative",
+        "decision": "Decision",
+        "task": "Task"
+      },
+      "lifecycle": {
+        "inReview": "In review",
+        "approved": "Approved",
+        "draft": "Draft"
+      },
+      "projection": {
+        "stale": "Projection stale",
+        "failed": "Projection failed",
+        "missing": "Projection missing",
+        "synced": "Projection synced",
+        "refreshing": "Projection refreshing"
+      },
+      "saveState": {
+        "saving": "Saving",
+        "failed": "Save failed",
+        "unsaved": "Unsaved changes",
+        "saved": "Saved"
+      },
+      "capability": {
+        "real": "Real",
+        "partial": "Partial",
+        "scaffold": "Scaffold",
+        "missing": "Missing",
+        "outOfScope": "Out of scope"
+      },
+      "comingSoon": "Coming soon",
+      "dismiss": "Dismiss",
+      "markdownActions": "Markdown actions",
+      "saveMarkdown": "Save Markdown",
+      "downloadMarkdown": "Download Markdown",
+      "downloadCsv": "Download CSV",
+      "copyMarkdown": "Copy Markdown",
+      "downloadPdf": "Download PDF",
+      "sendingToDocumentStudio": "Sending to Document Studio…",
+      "sendToDocumentStudio": "Send to Document Studio",
+      "sendToTableStudioTitle": "Send the current table to Table Studio",
+      "sendToTableStudioDisabledTitle": "Table Studio handoff requires a Canvas with kind=table.",
+      "sendingToTableStudio": "Sending to Table Studio…",
+      "sendToTableStudio": "Send to Table Studio",
+      "downloadWord": "Download Word (.docx)",
+      "downloadExcelTitle": "Download as Excel spreadsheet",
+      "downloadExcelDisabledTitle": "Excel export is available only for Canvas tables (kind=table).",
+      "downloadExcel": "Download Excel (.xlsx)",
+      "downloadPowerpoint": "Download PowerPoint (.pptx)",
+      "exportMetadata": "Export metadata",
+      "uploadDataset": "Upload dataset",
+      "diagnostics": {
+        "format": "Format",
+        "markdownCanonical": "Markdown canonical",
+        "save": "Save",
+        "projection": "Projection",
+        "lifecycle": "Lifecycle",
+        "action": "Action",
+        "running": "Running",
+        "idle": "Idle",
+        "capability": "Capability",
+        "researchSession": "ResearchSession"
+      },
+      "workflowTemplate": "Workflow template"
+    },
+    "aiStream": {
+      "resolvePendingSuggestion": "Resolve the previous AI suggestion (accept or reject) before starting a new edit.",
+      "streamRequestFailed": "Stream request failed",
+      "streamError": "Stream error",
+      "streamFailed": "Stream failed"
+    },
+    "toolbar": {
+      "undo": "Undo (Ctrl+Z)",
+      "redo": "Redo (Ctrl+Shift+Z)",
+      "bold": "Bold (Ctrl+B)",
+      "italic": "Italic (Ctrl+I)",
+      "underline": "Underline (Ctrl+U)",
+      "strikethrough": "Strikethrough",
+      "inlineCode": "Inline code",
+      "highlight": "Highlight",
+      "heading1": "Heading 1",
+      "heading2": "Heading 2",
+      "heading3": "Heading 3",
+      "bulletList": "Bullet list",
+      "numberedList": "Numbered list",
+      "taskList": "Task list",
+      "blockquote": "Blockquote",
+      "insertTable": "Insert table",
+      "insertLink": "Insert link",
+      "linkPrompt": "Link URL:"
+    },
+    "workShell": {
+      "quickPromptNote": "Turn this conversation into a short note on the right.",
+      "quickPromptTable": "Turn this into a priority table.",
+      "quickPromptChecklist": "Prepare an action checklist.",
+      "quickPromptResearch": "Run deeper research and show the evidence.",
+      "untitledCanvas": "Untitled work canvas",
+      "currentConversation": "Current conversation",
+      "startNote": "Start a company work note",
+      "workCanvas": "Work Canvas",
+      "newWorkCanvas": "New work canvas",
+      "chatTitle": "Company AI Chat",
+      "closeChat": "Close chat",
+      "chat": "Chat",
+      "noActiveCanvas": "No active canvas",
+      "saveArtifact": "Save artifact",
+      "versionLabel": "Version {{version}}",
+      "draftVersion": "Draft version",
+      "versionHistoryPending": "Version history will load from artifact history in a later runtime step.",
+      "prev": "Prev",
+      "next": "Next",
+      "saveLabel": "Save",
+      "lifecycleLabel": "Lifecycle",
+      "statusLabel": "Status",
+      "preview": "Preview",
+      "source": "Source",
+      "copy": "Copy",
+      "download": "Download",
+      "highlight": "Highlight",
+      "improve": "Improve",
+      "emptyTitle": "Start working with AI",
+      "emptyHint": "Ask the chat to create a note, table, checklist or research brief.",
+      "governancePreview": "Governance preview",
+      "governanceHint": "Lightweight chips stay simple in UI, but every durable conversion is treated as a preview/proposal before it becomes a business mutation.",
+      "dismissProposal": "Dismiss proposal",
+      "approveProposal": "Approve proposal",
+      "reject": "Reject",
+      "selectTargetHint": "Select Idea, Initiative, Task or Brief to create a proposal preview.",
+      "artifactReadBack": "Artifact read-back",
+      "artifactRuntime": "Artifact runtime",
+      "artifactRuntimeHint": "Use the existing V8 runtime for governed document/sheet/presentation materialization.",
+      "saved": "Saved",
+      "draft": "Draft",
+      "sources": "Sources",
+      "confidence": "Confidence",
+      "notSet": "not set",
+      "kimiLaneBanner": "This lane now uses the shared split screen: chat on the left, canvas preview on the right. Native KIMI export remains available through the dedicated lane runtime.",
+      "sheetCanvas": "Sheet canvas",
+      "deckCanvas": "Deck canvas",
+      "documentCanvas": "Document canvas",
+      "sheetHelper": "Use the left chat to shape rows, assumptions and formulas. This right side stays the governed canvas preview.",
+      "deckHelper": "Use the left chat to shape the storyline and slide outline. This right side stays the governed canvas preview.",
+      "documentHelper": "Use the left chat to shape the document. This right side stays the governed canvas preview.",
+      "researchMission": "Deep research mission",
+      "researchQuestions": "Research questions",
+      "governedResearchRuntime": "Governed research runtime",
+      "linkedSession": "Linked session",
+      "recommendation": "Recommendation",
+      "options": "Options",
+      "assumptionsRisks": "Assumptions and risks",
+      "improveQueued": "Improve is queued as an AI proposal action; no canvas content was changed without approval.",
+      "highlightQueued": "Highlight mode is queued as a review action; assumptions and missing sources will be marked after approval.",
+      "errCapabilityRequired": "You do not have the required capability for this canvas action.",
+      "errProjectScope": "This canvas requires project membership.",
+      "errStaleProposal": "The proposal is stale because the canvas changed after it was created. Generate the proposal again.",
+      "errArtifactSaveFailed": "The V8 artifact runtime did not materialize the result. The canvas was marked as failed.",
+      "errActorRequired": "The proposal cannot be approved without a valid user context.",
+      "errDraftLoad": "Canvas draft load failed.",
+      "errDraftListRefresh": "Could not refresh the canvas draft list.",
+      "errDraftPersist": "Canvas draft could not be persisted.",
+      "errSaveArtifact": "Save as artifact failed.",
+      "errConversionProposal": "Conversion proposal failed.",
+      "errProposalApprove": "Proposal approve failed.",
+      "errProposalReject": "Proposal reject failed.",
+      "errChangesSave": "Canvas changes could not be saved.",
+      "errResearchLink": "Research session link could not be saved.",
+      "kind": {
+        "markdown": "markdown",
+        "table": "table",
+        "checklist": "checklist",
+        "research": "research",
+        "decision": "decision",
+        "document": "document",
+        "sheet": "sheet",
+        "deck": "deck"
+      },
+      "target": {
+        "idea": "Idea",
+        "initiative": "Initiative",
+        "task": "Task",
+        "project_brief": "Brief",
+        "decision": "Decision",
+        "research_report": "Research Report",
+        "client_deliverable": "Client Deliverable"
+      },
+      "readBack": {
+        "target": "Target",
+        "targetId": "Target id",
+        "status": "Status",
+        "entityStatus": "Entity status",
+        "project": "Project",
+        "owner": "Owner",
+        "assignee": "Assignee",
+        "artifact": "Artifact",
+        "run": "Run",
+        "audit": "Audit"
+      },
+      "seed": {
+        "newTopic": "New working topic",
+        "colArea": "Area",
+        "colQuestion": "Question",
+        "colNextStep": "Next step",
+        "rowContext": "Context",
+        "rowContextStep": "Clarify scope and owner.",
+        "rowEvidence": "Evidence",
+        "rowEvidenceQuestion": "Which sources confirm the direction?",
+        "rowEvidenceStep": "Add sources or run deep research.",
+        "checkScope": "Clarify the goal and scope of the work.",
+        "checkSources": "Add sources, assumptions and constraints.",
+        "checkDecision": "Decide whether the result should become an idea, initiative or task.",
+        "questionFacts": "Which facts are already confirmed?",
+        "questionAssumptions": "Which assumptions need validation?",
+        "questionDecisions": "Which decisions should the research drive?",
+        "optionProceed": "Proceed with a small governed proposal",
+        "optionDiscovery": "Run more discovery first",
+        "assumptionConversation": "Decision is based on the current conversation until sources are attached.",
+        "riskConfidence": "Missing source confidence can block trusted/final state.",
+        "kimiIntro": "This is a right-side Work Canvas draft. Keep the chat open on the left and shape this output here before saving, approving or exporting it through governed actions.",
+        "requestHeading": "Request",
+        "workingNoteHeading": "Working Note",
+        "nextQuestionsHeading": "Next Questions",
+        "nextQuestionDecision": "What decision should this support?",
+        "nextQuestionSources": "Which sources or company context should be attached?",
+        "nextQuestionTarget": "Should this become an idea, initiative, task or project brief?"
+      }
     }
   },
   "chatProposal": {
@@ -15894,7 +16581,8 @@
       "presenceSources": "{{count}} sources",
       "presenceAssumptions": "{{count}} assumptions",
       "diffBaselinePicker": "Compare against snapshot",
-      "diffBaselineLatest": "Latest snapshot"
+      "diffBaselineLatest": "Latest snapshot",
+      "exportPending": "{{format}} export is pending finalization. Markdown is available now."
     },
     "generationWarnings": {
       "summary_one": "Generated with limitations ({{count}})",
@@ -16232,5 +16920,396 @@
       "artifact": "Output",
       "assessment": "Assessment"
     }
+  },
+  "conclusions": {
+    "title": "Conclusions",
+    "subtitle": "Governed conclusions from your tools and assessments — verdict, rationale and evidence in one place.",
+    "verdict": "Verdict",
+    "nextAction": "Recommended next action",
+    "evidence": "Evidence",
+    "evidenceCount": "{{count}} evidence",
+    "noEvidence": "No evidence attached to this conclusion yet.",
+    "limits": "Limits & caveats",
+    "sources": "Sources",
+    "viewSource": "Source",
+    "context": "Captured context",
+    "conversions": "Generated from this conclusion",
+    "backToList": "All conclusions",
+    "source": {
+      "tool": "Discovery tool",
+      "assessment": "Assessment",
+      "siri": "SIRI assessment",
+      "adma": "ADMA assessment",
+      "interview": "Interview",
+      "readout": "Readout",
+      "other": "Other"
+    },
+    "confidence": {
+      "high": "High confidence",
+      "medium": "Medium confidence",
+      "low": "Low confidence",
+      "insufficient": "Insufficient evidence",
+      "contradicted": "Contradicted"
+    },
+    "status": {
+      "candidate": "Candidate",
+      "needs_evidence": "Needs evidence",
+      "needs_review": "Needs review",
+      "ready_for_readout": "Ready for readout",
+      "published": "Published",
+      "converted": "Converted",
+      "rejected": "Rejected"
+    },
+    "filter": {
+      "all": "All",
+      "clear": "Show all"
+    },
+    "empty": {
+      "title": "No conclusions yet",
+      "description": "Run a discovery tool or an assessment — its verdict lands here as a governed conclusion.",
+      "cta": "Open Tools",
+      "ctaAssessment": "Open Assessment"
+    },
+    "filterEmpty": {
+      "title": "No conclusions match this filter",
+      "description": "Clear the filter to see all conclusions."
+    },
+    "listError": {
+      "title": "Could not load conclusions",
+      "description": "Something went wrong. Check your connection and try again."
+    },
+    "detailError": {
+      "title": "Could not load this conclusion",
+      "description": "Something went wrong loading the readout. Try again."
+    }
+  },
+  "superAdmin": {
+    "signalCenter": {
+      "loading": "Loading signals…",
+      "empty": "No active signals in this category.",
+      "loadFailed": "Could not load signals.",
+      "dismissFailed": "Could not dismiss the signal. Please try again."
+    },
+    "integrations": {
+      "loadFailed": "Could not load integrations."
+    }
+  },
+  "notificationDropdown": {
+    "title": "Inbox",
+    "new": "New",
+    "inbox": "Inbox",
+    "center": "Center",
+    "openInbox": "Open Inbox (Action Queue)",
+    "openCenter": "Open Notification Center",
+    "markAllRead": "Mark all as read",
+    "markAllReadShort": "Mark all read",
+    "open": "Open",
+    "openChat": "Open chat",
+    "snooze": "Snooze",
+    "markAsRead": "Mark as read",
+    "clearRead": "Clear read",
+    "clearReadFull": "Clear read notifications",
+    "clearAll": "Clear all",
+    "deleteAllFull": "Delete all notifications",
+    "countLabel": "{{count}} notifications",
+    "countLabel_one": "{{count}} notification",
+    "countLabel_other": "{{count}} notifications",
+    "snoozedLabel": "{{count}} snoozed",
+    "snoozedLabel_one": "{{count}} snoozed",
+    "snoozedLabel_other": "{{count}} snoozed",
+    "time": {
+      "justNow": "Just now",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    },
+    "snoozePreset": {
+      "1h": "1 hour",
+      "4h": "4 hours",
+      "1d": "1 day",
+      "3d": "3 days"
+    },
+    "toast": {
+      "markReadFailed": "Failed to mark as read",
+      "allMarkedRead": "All marked as read",
+      "actionFailed": "Action failed",
+      "deleteFailed": "Failed to delete",
+      "allDeleted": "All notifications deleted",
+      "deleteAllFailed": "Failed to delete all notifications",
+      "readCleared": "Read notifications cleared",
+      "clearReadFailed": "Failed to clear read notifications",
+      "chatOpened": "Chat opened",
+      "snoozedFor": "Notification snoozed for {{duration}}"
+    },
+    "snoozeDuration": {
+      "1h": "1 hour",
+      "4h": "4 hours",
+      "1d": "1 day",
+      "3d": "3 days"
+    }
+  },
+  "statusChangeToast": {
+    "updatedTo": "Status updated to {{status}}",
+    "viewIn": "View in {{module}}"
+  },
+  "aiFreezeBanner": {
+    "title": "AI FREEZE ACTIVE:",
+    "message": "Budget hard limit reached ({{scope}}). AI functionality is temporarily restricted.",
+    "scopeGlobal": "Global",
+    "protocol": "Budget Control Protocol",
+    "increaseBudget": "Increase Budget"
+  },
+  "mindmap": {
+    "nodeModel": {
+      "myIdea": "My idea",
+      "clickToEdit": "Click to edit"
+    },
+    "persistence": {
+      "myIdea": "My idea",
+      "clickToEdit": "Click to edit",
+      "branchProblem": "Problem",
+      "branchOptions": "Options",
+      "branchEvidence": "Evidence",
+      "branchRisks": "Risks",
+      "branchExperiments": "Experiments",
+      "selectBranchHint": "Select branch and press Tab",
+      "myIdeaAccented": "My idea",
+      "clickToEditAccented": "Click to edit",
+      "backendNeedsRestart": "Backend needs restart (map route not active).",
+      "mapTableMissing": "Map table missing — run DB migrations.",
+      "failedToLoadMap": "Failed to load map",
+      "conflictDetected": "Change conflict detected. Refreshing map from server.",
+      "failedToSaveMap": "Failed to save map"
+    },
+    "quickActions": {
+      "viewLevel": "Showing level {{level}}",
+      "allExpanded": "All expanded",
+      "selectNodeToAttach": "Select a node to attach to",
+      "labelKnowledge": "Knowledge",
+      "labelNote": "Note",
+      "labelEvidence": "Evidence",
+      "exportFailedPng": "PNG export failed",
+      "exportFailedSvg": "SVG export failed",
+      "exportFailedJson": "JSON export failed",
+      "csvExported": "CSV exported",
+      "exportFailedCsv": "CSV export failed",
+      "markdownCopied": "Markdown copied to clipboard",
+      "exportFailedMarkdown": "Markdown export failed",
+      "mapRootMissing": "Map root is missing",
+      "selectAtLeast2Nodes": "Select at least 2 nodes",
+      "labelGroup": "Group",
+      "groupedCount": "Grouped {{count}} nodes",
+      "labelFrame": "Frame",
+      "promptSuggestBranches": "Suggest new branches for the map \"{{ideaTitle}}\". Provide 5-7 proposals with reasoning.",
+      "promptGapAnalysis": "Analyze gaps in the map \"{{ideaTitle}}\". Current nodes: {{nodeLabels}}. What's missing?",
+      "notEnoughUngroupedNodes": "Not enough ungrouped nodes to cluster",
+      "allNodesFitOneGroup": "All nodes fit in one group",
+      "autoClusteredHint": "Auto-clustered",
+      "createdClusters": "Created {{clusterCount}} clusters from {{nodeCount}} nodes",
+      "promptSummarizeMap": "Summarize the map \"{{ideaTitle}}\" with {{nodeCount}} nodes: {{nodeLabels}}",
+      "promptAutoConnect": "Suggest cross-links between branches in the map \"{{ideaTitle}}\". What connections should exist?",
+      "promptDeepen": "Deepen the topic \"{{nodeLabel}}\" in the context of map \"{{ideaTitle}}\".{{ctxSuffix}} Provide detailed analysis.",
+      "promptDeepenCtxSuffix": " Context: {{ctx}}.",
+      "selectBranchFirst": "Select a branch first",
+      "promptChatAboutNode": "Let's discuss the node \"{{nodeLabel}}\" in map \"{{ideaTitle}}\".{{ctxSuffix}}",
+      "promptChatAboutNodeCtxSuffix": " Context: {{ctx}}",
+      "selectNodeFirst": "Select a node first",
+      "noNotebookPages": "No notebook pages found",
+      "labelNoteFallback": "Note",
+      "insertedNotebookPages": "Inserted {{count}} notebook pages",
+      "failedToFetchNotebook": "Failed to fetch notebook",
+      "importedNodes": "Imported {{count}} nodes",
+      "unsupportedImportFile": "Unsupported file. Use a Consultify JSON export.",
+      "couldNotReadJsonFile": "Could not read JSON file",
+      "urlImportNotAvailable": "URL import is not yet available. Use Import → Document or XMind/FreeMind.",
+      "featureUnderDevelopment": "This feature is under development",
+      "layoutChanged": "Layout: {{mode}}",
+      "structureChanged": "Structure: {{label}}",
+      "linkCopied": "Link copied!",
+      "copyFailed": "Copy failed",
+      "embedCodeCopied": "Embed code copied!"
+    },
+    "nodes": {
+      "mapLimitReached": "Map reached {{limit}} node limit",
+      "selectNode": "Select a node",
+      "newIdea": "New idea",
+      "childAdded": "Child added",
+      "cannotAddSiblingToRoot": "Cannot add sibling to root",
+      "siblingAdded": "Sibling added",
+      "subtreeDeleteConfirm_one": "This will also delete {{count}} child node. Continue?",
+      "subtreeDeleteConfirm_other": "This will also delete {{count}} child nodes. Continue?",
+      "actionDelete": "Delete",
+      "actionCancel": "Cancel",
+      "deletedCount_one": "Deleted {{count}} node",
+      "deletedCount_other": "Deleted {{count}} nodes",
+      "cannotMoveUnderOwnDescendant": "Cannot move under own descendant",
+      "movedUnder": "Moved under {{parentLabel}}",
+      "alreadyAtTopLevel": "Already at top level",
+      "noSiblingToDemoteUnder": "No sibling to demote under",
+      "mapRootMissing": "Map root is missing",
+      "selectNodesToCopy": "Select nodes to copy",
+      "selectNodesToCut": "Select nodes to cut",
+      "clipboardEmpty": "Clipboard is empty",
+      "copiedCount_one": "Copied {{count}} node",
+      "copiedCount_other": "Copied {{count}} nodes",
+      "cutCount_one": "Cut {{count}} node",
+      "cutCount_other": "Cut {{count}} nodes",
+      "pastedCount_one": "Pasted {{count}} node",
+      "pastedCount_other": "Pasted {{count}} nodes",
+      "subtreeDeleteConfirm": "This will also delete {{count}} child nodes. Continue?",
+      "deletedCount": "Deleted {{count}} nodes",
+      "copiedCount": "Copied {{count}} nodes",
+      "cutCount": "Cut {{count}} nodes",
+      "pastedCount": "Pasted {{count}} nodes"
+    },
+    "acceptedProposalsCount_one": "Accepted {{count}} proposal",
+    "acceptedProposalsCount_other": "Accepted {{count}} proposals",
+    "transformingSelectionTo": "Transforming selection to: {{targetTool}}",
+    "linkSuggestionsFoundCount_one": "Found {{count}} link suggestion",
+    "linkSuggestionsFoundCount_other": "Found {{count}} link suggestions",
+    "appliedThemeName": "Applied theme: {{themeId}}",
+    "activeKitName": "Active kit: {{semantic}}",
+    "savedReviewStatusName": "Saved review status: {{nextStatus}}",
+    "importedDiagramFormat": "Imported diagram ({{sourceFormat}})",
+    "discussMindMapKickoff": "Here is the mind map \"{{mapTitle}}\". Let's discuss it and propose next steps:\n\n{{outline}}",
+    "startWorkspaceKickoffPrompt": "Start building the workspace for \"{{ideaTitle}}\". Preferred initial system: {{requestedSystem}}. Prepare the first proposed structure based on:\n\n{{promptSeed}}",
+    "attachedRefTitle": "Attached: {{title}}",
+    "taskCreatedFromMindmapNode": "Task created from mindmap (node: {{nodeId}})",
+    "startWorkspaceIntentPrompt": "Start building the workspace based on the intent: \"{{label}}\". Preferred system: {{preferredSystem}}.\n\n{{seedText}}",
+    "savedSecondsAgo": "Saved {{count}}s ago",
+    "focusedOnTool": "Focused: {{activeToolLabel}}",
+    "summarizeIdeaCardPrompt": "Summarize the idea card for \"{{title}}\" — problem, opportunities, risks, next steps.",
+    "convertedToTarget": "Converted to: {{target}}",
+    "deleteSubtreeWarning_one": "This will also delete {{count}} child node. This cannot be undone after sync.",
+    "deleteSubtreeWarning_other": "This will also delete {{count}} child nodes. This cannot be undone after sync.",
+    "movedUnderTarget": "Moved under \"{{label}}\"",
+    "relationTypePrompt": "Relation type ({{relations}}):",
+    "appliedAiProposalsCount": "Applied AI proposals ({{count}} added)",
+    "duplicatedBranchCount": "Duplicated branch ({{count}} nodes)",
+    "summarizeBranchPrompt": "Summarize the branch \"{{label}}\":\n{{branchList}}",
+    "convertingBranchTo": "Converting branch to {{target}}",
+    "assignedName": "Assigned: {{name}}",
+    "changeConflictDetectedRefreshingMapFrom": "Change conflict detected. Refreshing map from server.",
+    "failedToApplyChanges": "Failed to apply changes",
+    "selectAnObjectOnTheCanvas": "Select an object on the canvas first",
+    "noMatchingArtifactsFound": "No matching artifacts found",
+    "failedToFindLinks": "Failed to find links",
+    "switchedToProcessFlow": "Switched to Process Flow",
+    "templateNotFound": "Template not found",
+    "templateApplied": "Template applied",
+    "failedToApplyTemplate": "Failed to apply template",
+    "aiReturnedNoProposalsToReview": "AI returned no proposals to review",
+    "failedToRunAi": "Failed to run AI",
+    "failedToSaveReview": "Failed to save review",
+    "importFailed": "Import failed",
+    "newChallenge": "New challenge",
+    "failedToLoad": "Failed to load",
+    "switchToolMindMapWhiteboardProcess": "Switch tool (Mind Map / Whiteboard / Process Flow / Table)",
+    "searchThisIdea": "Search this idea",
+    "zoomToFit": "Zoom to fit",
+    "workspaceTool": "Workspace tool",
+    "openTemplateGallery": "Open template gallery",
+    "export": "Export…",
+    "keyboardShortcuts": "Keyboard shortcuts",
+    "challenge": "Challenge",
+    "theMapIsEmpty": "The map is empty",
+    "mindMap": "Mind map",
+    "saved": "Saved",
+    "failedToSave": "Failed to save",
+    "describeTheChallengeFirst": "Describe the challenge first.",
+    "challengeAccepted": "Challenge accepted",
+    "failed": "Failed",
+    "thisConversionTargetIsNotYet": "This conversion target is not yet supported",
+    "thisConversionIsComingSoon": "This conversion is coming soon",
+    "doneOutputAvailableInTargetModule": "Done — output available in target module",
+    "failedToAttach": "Failed to attach",
+    "aiProposedChangesToTheMap": "AI proposed changes to the map",
+    "noProjectContext": "No project context",
+    "failedToCreateTask": "Failed to create task",
+    "interviewEvidenceAttached": "Interview evidence attached",
+    "saving": "Saving…",
+    "refineTheCurrentSelectionInTools": "Refine the current selection in Tools or expand it on the active canvas.",
+    "openTheToolsPanelToGive": "Open the Tools panel to give this idea a concrete next move.",
+    "startWithTheCoreProblemAnd": "Start with the core problem and add the first recommendation branch.",
+    "sketchOptionsAndClusterTheStrongest": "Sketch options and cluster the strongest direction.",
+    "mapTheMainStepsOwnersAnd": "Map the main steps, owners, and blockers in the flow.",
+    "translateTheIdeaIntoStructuredRows": "Translate the idea into structured rows to prepare the next decisions.",
+    "giveThisIdeaTheNextConcrete": "Give this idea the next concrete move.",
+    "ideaMapWorkspace": "Idea map workspace",
+    "ideaCanvasAndMapTools": "Idea canvas and map tools",
+    "rootMap": "Root map",
+    "objectFocus": "Object focus",
+    "fullCanvas": "← Full canvas",
+    "ideas": "Ideas",
+    "untitled": "Untitled",
+    "recommendationMap": "Recommendation map",
+    "failedToChangeStage": "Failed to change stage",
+    "thisNodeIsBeingEditedBy": "This node is being edited by another collaborator",
+    "openNodeProperties": "Open node properties",
+    "addChildTab": "Add child (Tab)",
+    "addSiblingShiftEnter": "Add sibling (Shift+Enter)",
+    "type": "Type…",
+    "clickToType": "Click to type…",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "evidence": "evidence",
+    "selectionMovedBranchCollapsed": "Selection moved — branch collapsed",
+    "deleteNodes": "Delete nodes?",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "expanded": "Expanded",
+    "collapsed": "Collapsed",
+    "you": "You",
+    "thisNodeIsCurrentlyLockedBy": "This node is currently locked by another collaborator",
+    "renamed": "Renamed",
+    "insertedIntoMap": "Inserted into map",
+    "allExpanded": "All expanded",
+    "connectionRemoved": "Connection removed",
+    "connectionLabel": "Connection label:",
+    "directionReversed": "Direction reversed",
+    "acceptTheChallengeFirst": "Accept the challenge first.",
+    "noSelectedChanges": "No selected changes",
+    "aiExpandBranch": "AI expand branch",
+    "failedToApplyProposals": "Failed to apply proposals",
+    "aiRequiresBackend": "AI requires backend.",
+    "noNewSuggestions": "No new suggestions",
+    "aiFailed": "AI failed",
+    "branchDetached": "Branch detached",
+    "thisNodeHasNoLinkedArtifacts": "This node has no linked artifacts yet",
+    "selectAnotherNodeToCreateA": "Select another node to create a connection",
+    "styleCopied": "Style copied",
+    "linkCopied": "Link copied!",
+    "copyLink": "Copy link:",
+    "newTopic": "New topic",
+    "showingLevel0": "Showing level 0",
+    "showingLevel1": "Showing level 1",
+    "showingLevel2": "Showing level 2",
+    "backendRestartRequired": "Backend restart required",
+    "mapTableMissing": "Map table missing",
+    "offlineNotSaving": "Offline - not saving",
+    "saving2": "Saving...",
+    "notSavedYet": "Not saved yet",
+    "modePan": "Mode: pan",
+    "modeConnect": "Mode: connect",
+    "modeSelect": "Mode: select",
+    "artifactDetached": "Artifact detached",
+    "failedToDetachArtifact": "Failed to detach artifact",
+    "closeMap": "Close map",
+    "mapReached500NodeLimitAdding": "Map reached 500 node limit. Adding blocked.",
+    "ideaRecommendationMapArrowNavigationEnte": "Idea recommendation map — arrow navigation, Enter/Tab add nodes",
+    "describeYourChallenge": "Describe your challenge",
+    "fillInTheTitleAndDescription": "Fill in the title and description in the Tools panel on the right, then accept.",
+    "openPanelStart": "Open panel & start",
+    "selectABranchAndPressTab": "Select a branch and press Tab to add the first node",
+    "versionRestored": "Version restored",
+    "exportFormat": "Export format",
+    "markdownOutline": "Markdown outline",
+    "markdownCopiedToClipboard": "Markdown copied to clipboard",
+    "artifactAttached": "Artifact attached",
+    "failedToAttachArtifact": "Failed to attach artifact",
+    "imageAdded": "Image added",
+    "acceptedProposalsCount": "Accepted {{count}} proposals",
+    "linkSuggestionsFoundCount": "Found {{count}} link suggestions",
+    "deleteSubtreeWarning": "This will also delete {{count}} child nodes. This cannot be undone after sync."
   }
 }

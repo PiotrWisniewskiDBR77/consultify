@@ -201,11 +201,11 @@ export const IPAccessRulesPanel: React.FC = () => {
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <code className="px-2 py-0.5 bg-slate-800 rounded font-mono text-white">
+            <code className="px-2 py-0.5 bg-c-surface-raised rounded font-mono text-c-text">
               {rule.ip_address}
             </code>
             {!rule.is_active && (
-              <span className="px-2 py-0.5 bg-slate-700 rounded text-xs text-slate-600 dark:text-slate-500">
+              <span className="px-2 py-0.5 bg-c-surface-raised rounded text-xs text-slate-600 dark:text-slate-500">
                 Disabled
               </span>
             )}
@@ -238,7 +238,7 @@ export const IPAccessRulesPanel: React.FC = () => {
           onClick={() => handleToggleRule(rule)}
           className={`p-2 rounded-lg transition-colors ${
             rule.is_active
-              ? 'bg-slate-800 hover:bg-slate-700 text-slate-600 dark:text-slate-500'
+              ? 'bg-c-surface-raised hover:bg-c-surface-raised text-slate-600 dark:text-slate-500'
               : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400'
           }`}
           title={rule.is_active ? 'Disable' : 'Enable'}
@@ -269,7 +269,7 @@ export const IPAccessRulesPanel: React.FC = () => {
           <select
             value={selectedOrgId}
             onChange={(e) => setSelectedOrgId(e.target.value)}
-            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none min-w-[200px]"
+            className="px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none min-w-[200px]"
           >
             <option value="" disabled>
               Select Organization
@@ -285,7 +285,7 @@ export const IPAccessRulesPanel: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={fetchRules}
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+            className="p-2.5 bg-c-surface-raised hover:bg-c-surface-raised rounded-lg transition-colors"
             title="Refresh"
           >
             <RefreshCw
@@ -325,9 +325,9 @@ export const IPAccessRulesPanel: React.FC = () => {
 
       {/* Add Rule Modal */}
       {showAddForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-white/10 rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-white mb-6">Add IP Rule</h3>
+        <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-c-surface border border-white/10 rounded-xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-c-text mb-6">Add IP Rule</h3>
 
             <div className="space-y-4">
               <div>
@@ -339,7 +339,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                   value={addForm.ipAddress}
                   onChange={(e) => setAddForm((prev) => ({ ...prev, ipAddress: e.target.value }))}
                   placeholder="192.168.1.1 or 192.168.0.0/24"
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none font-mono"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none font-mono"
                 />
               </div>
 
@@ -352,7 +352,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border transition-colors ${
                       addForm.ruleType === 'allow'
                         ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
-                        : 'bg-slate-800 border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/20'
+                        : 'bg-c-surface-raised border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/20'
                     }`}
                   >
                     <Shield size={18} />
@@ -364,7 +364,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border transition-colors ${
                       addForm.ruleType === 'block'
                         ? 'bg-danger-500/20 border-danger-500/50 text-danger-400'
-                        : 'bg-slate-800 border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/20'
+                        : 'bg-c-surface-raised border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/20'
                     }`}
                   >
                     <ShieldOff size={18} />
@@ -382,7 +382,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                   value={addForm.description}
                   onChange={(e) => setAddForm((prev) => ({ ...prev, description: e.target.value }))}
                   placeholder="e.g., Office network, VPN"
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none"
                 />
               </div>
 
@@ -394,7 +394,7 @@ export const IPAccessRulesPanel: React.FC = () => {
                   type="datetime-local"
                   value={addForm.expiresAt}
                   onChange={(e) => setAddForm((prev) => ({ ...prev, expiresAt: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
+                  className="w-full px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
                 />
               </div>
             </div>
@@ -402,7 +402,7 @@ export const IPAccessRulesPanel: React.FC = () => {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowAddForm(false)}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-600 transition-colors"
+                className="px-4 py-2.5 bg-c-surface-raised hover:bg-c-surface-raised rounded-lg text-slate-600 transition-colors"
               >
                 Cancel
               </button>
@@ -432,13 +432,13 @@ export const IPAccessRulesPanel: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Blocklist */}
-          <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
+          <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-lg bg-danger-500/20 flex items-center justify-center">
                 <ShieldOff size={20} className="text-danger-400" />
               </div>
               <div>
-                <h3 className="font-semibold text-white">Blocklist</h3>
+                <h3 className="font-semibold text-c-text">Blocklist</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-500">
                   {blockRules.length} blocked IPs
                 </p>
@@ -457,13 +457,13 @@ export const IPAccessRulesPanel: React.FC = () => {
           </div>
 
           {/* Allowlist */}
-          <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-6">
+          <div className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
                 <Shield size={20} className="text-emerald-400" />
               </div>
               <div>
-                <h3 className="font-semibold text-white">Allowlist</h3>
+                <h3 className="font-semibold text-c-text">Allowlist</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-500">
                   {allowRules.length === 0
                     ? 'All IPs allowed (except blocked)'

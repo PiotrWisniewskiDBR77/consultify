@@ -36,6 +36,7 @@ import { toast } from 'react-hot-toast';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
+import { EmptyState, LoadingState } from '../../shared/states';
 
 interface ApiKey {
   id: string;
@@ -223,9 +224,9 @@ const AVAILABLE_SCOPES: Scope[] = [
 ];
 
 const KEY_TYPE_CONFIG = {
-  org: { label: 'Organization', color: 'bg-primary-500/20 text-primary-400' },
-  user: { label: 'User', color: 'bg-blue-500/20 text-blue-400' },
-  service: { label: 'Service', color: 'bg-emerald-500/20 text-emerald-400' },
+  org: { label: 'Organization', color: 'bg-c-accent-soft text-c-accent' },
+  user: { label: 'User', color: 'bg-c-info/20 text-c-info' },
+  service: { label: 'Service', color: 'bg-c-success/20 text-c-success' },
 };
 
 export const EnterpriseApiManagement: React.FC = () => {
@@ -460,8 +461,8 @@ export const EnterpriseApiManagement: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">API Management</h2>
-          <p className="text-slate-600 dark:text-slate-500 text-sm">
+          <h2 className="text-2xl font-bold text-c-text">API Management</h2>
+          <p className="text-c-text-secondary text-sm">
             Manage API keys, view usage analytics, and access documentation
           </p>
         </div>
@@ -469,7 +470,7 @@ export const EnterpriseApiManagement: React.FC = () => {
           onClick={() => setShowCreateModal(true)}
           disabled={!!loadError || !!organizationsLoadError || organizations.length === 0}
           title={loadError || organizationsLoadError || undefined}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="w-4 h-4" />
           Create API Key
@@ -479,7 +480,7 @@ export const EnterpriseApiManagement: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-danger-500/30 bg-danger-500/5 p-4 text-sm text-danger-600 dark:text-danger-300"
+          className="rounded-xl border border-c-danger/30 bg-c-danger/5 p-4 text-sm text-c-danger"
         >
           {actionError}
         </div>
@@ -487,27 +488,27 @@ export const EnterpriseApiManagement: React.FC = () => {
 
       {/* New Key Alert */}
       {newKeyVisible && (
-        <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+        <div className="p-4 bg-c-success/10 border border-c-success/30 rounded-xl">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
-              <Key className="w-5 h-5 text-emerald-400 mt-0.5" />
+              <Key className="w-5 h-5 text-c-success mt-0.5" />
               <div>
-                <h4 className="font-medium text-emerald-400">API Key Created Successfully</h4>
-                <p className="text-sm text-slate-600 dark:text-slate-500 mt-1 mb-3">
+                <h4 className="font-medium text-c-success">API Key Created Successfully</h4>
+                <p className="text-sm text-c-text-secondary mt-1 mb-3">
                   Save this key now - it won't be shown again!
                 </p>
-                <div className="flex items-center gap-2 p-3 bg-slate-900 rounded-lg">
-                  <code className="text-sm text-white font-mono flex-1 break-all">
+                <div className="flex items-center gap-2 p-3 bg-c-surface-raised rounded-lg">
+                  <code className="text-sm text-c-text font-mono flex-1 break-all">
                     {newKeyVisible.key}
                   </code>
                   <button
                     onClick={() => handleCopyKey(newKeyVisible.key)}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded"
+                    className="p-2 hover:bg-c-surface-raised rounded"
                   >
                     {copiedKey === newKeyVisible.key ? (
-                      <Check className="w-4 h-4 text-emerald-400" />
+                      <Check className="w-4 h-4 text-c-success" />
                     ) : (
-                      <Copy className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+                      <Copy className="w-4 h-4 text-c-text-secondary" />
                     )}
                   </button>
                 </div>
@@ -515,16 +516,16 @@ export const EnterpriseApiManagement: React.FC = () => {
             </div>
             <button
               onClick={() => setNewKeyVisible(null)}
-              className="p-1 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded"
+              className="p-1 hover:bg-c-surface-raised rounded"
             >
-              <X className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+              <X className="w-4 h-4 text-c-text-secondary" />
             </button>
           </div>
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1">
+      <div className="flex gap-2 border-b border-c-border-subtle pb-1">
         {[
           { id: 'keys', label: 'API Keys', icon: Key },
           { id: 'usage', label: 'Usage Analytics', icon: BarChart3 },
@@ -535,8 +536,8 @@ export const EnterpriseApiManagement: React.FC = () => {
             onClick={() => setActiveTab(id as 'keys' | 'usage' | 'docs')}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
               activeTab === id
-                ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-primary-500'
-                : 'text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                ? 'bg-c-surface-raised text-c-text border-b-2 border-c-accent'
+                : 'text-c-text-secondary hover:bg-c-surface-raised'
             }`}
           >
             <Icon className="w-4 h-4" />
@@ -551,7 +552,7 @@ export const EnterpriseApiManagement: React.FC = () => {
           {/* Search */}
           <div className="relative">
             <Search
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 dark:text-slate-400"
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-c-text-muted"
               size={16}
             />
             <input
@@ -560,25 +561,24 @@ export const EnterpriseApiManagement: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               disabled={!!loadError}
-              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border rounded-lg text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </div>
 
           {/* Keys List */}
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
-            </div>
+            <LoadingState template="list" />
           ) : loadError ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+            <div className="rounded-xl border border-c-border bg-c-surface p-6">
               <DegradedState title="API keys unavailable" description={loadError} />
             </div>
           ) : filteredKeys.length === 0 ? (
-            <div className="text-center py-12 text-slate-600 dark:text-slate-500">
-              <Key className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No API keys found</p>
-              <p className="text-sm mt-1">Create your first API key to get started</p>
-            </div>
+            <EmptyState
+              variant="new"
+              icon={Key}
+              title="No API keys found"
+              description="Create your first API key to get started."
+            />
           ) : (
             <div className="space-y-2">
               {filteredKeys.map((key) => (
@@ -586,27 +586,27 @@ export const EnterpriseApiManagement: React.FC = () => {
                   key={key.id}
                   className={`p-4 rounded-xl border transition-colors ${
                     key.revoked_at
-                      ? 'bg-danger-500/5 border-danger-500/20 opacity-60'
-                      : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                      ? 'bg-c-danger/5 border-c-danger/20 opacity-60'
+                      : 'bg-c-surface border-c-border hover:border-c-border-strong'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div
-                        className={`p-2 rounded-lg ${key.revoked_at ? 'bg-danger-500/20' : 'bg-primary-500/20'}`}
+                        className={`p-2 rounded-lg ${key.revoked_at ? 'bg-c-danger/20' : 'bg-c-accent-soft'}`}
                       >
                         {key.revoked_at ? (
-                          <Lock className="w-5 h-5 text-danger-400" />
+                          <Lock className="w-5 h-5 text-c-danger" />
                         ) : (
-                          <Key className="w-5 h-5 text-primary-400" />
+                          <Key className="w-5 h-5 text-c-accent" />
                         )}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-slate-900 dark:text-slate-100">
+                          <span className="font-medium text-c-text">
                             {key.name}
                           </span>
-                          <code className="px-2 py-0.5 text-xs bg-slate-800 text-slate-600 rounded font-mono">
+                          <code className="px-2 py-0.5 text-xs bg-c-surface-raised text-c-text-secondary rounded font-mono">
                             {key.key_prefix}...
                           </code>
                           <span
@@ -615,12 +615,12 @@ export const EnterpriseApiManagement: React.FC = () => {
                             {KEY_TYPE_CONFIG[key.key_type].label}
                           </span>
                           {key.revoked_at && (
-                            <span className="px-2 py-0.5 text-xs bg-danger-500/20 text-danger-400 rounded">
+                            <span className="px-2 py-0.5 text-xs bg-c-danger/20 text-c-danger rounded">
                               Revoked
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        <div className="flex items-center gap-3 text-xs text-c-text-muted mt-1">
                           <span>{key.scopes.length} scopes</span>
                           <span>•</span>
                           {key.organizationName && (
@@ -647,24 +647,24 @@ export const EnterpriseApiManagement: React.FC = () => {
                         <>
                           <button
                             onClick={() => handleViewUsage(key)}
-                            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+                            className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors"
                             title="View Usage"
                           >
-                            <BarChart3 className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+                            <BarChart3 className="w-4 h-4 text-c-text-secondary" />
                           </button>
                           <button
                             disabled
                             className="p-2 rounded-lg opacity-50 cursor-not-allowed"
                             title="API key editing requires an audited superadmin update workflow."
                           >
-                            <Edit className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+                            <Edit className="w-4 h-4 text-c-text-secondary" />
                           </button>
                           <button
                             onClick={() => handleRevokeKey(key.id)}
-                            className="p-2 hover:bg-danger-500/20 rounded-lg transition-colors"
+                            className="p-2 hover:bg-c-danger/20 rounded-lg transition-colors"
                             title="Revoke"
                           >
-                            <Trash2 className="w-4 h-4 text-danger-400" />
+                            <Trash2 className="w-4 h-4 text-c-danger" />
                           </button>
                         </>
                       )}
@@ -672,18 +672,18 @@ export const EnterpriseApiManagement: React.FC = () => {
                   </div>
 
                   {/* Scopes Preview */}
-                  <div className="mt-3 pt-3 border-t border-white/5">
+                  <div className="mt-3 pt-3 border-t border-c-border-subtle">
                     <div className="flex flex-wrap gap-1">
                       {key.scopes.slice(0, 5).map((scope) => (
                         <span
                           key={scope}
-                          className="px-2 py-0.5 text-xs bg-slate-800 text-slate-600 dark:text-slate-500 rounded"
+                          className="px-2 py-0.5 text-xs bg-c-surface-raised text-c-text-secondary rounded"
                         >
                           {scope}
                         </span>
                       ))}
                       {key.scopes.length > 5 && (
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <span className="text-xs text-c-text-muted">
                           +{key.scopes.length - 5} more
                         </span>
                       )}
@@ -700,14 +700,14 @@ export const EnterpriseApiManagement: React.FC = () => {
       {activeTab === 'usage' && (
         <div className="space-y-6">
           {loadError ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+            <div className="rounded-xl border border-c-border bg-c-surface p-6">
               <DegradedState
                 title="API key usage unavailable"
                 description="API key usage cannot be inspected because the API key list did not load."
               />
             </div>
           ) : usageLoadError ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+            <div className="rounded-xl border border-c-border bg-c-surface p-6">
               <DegradedState title="API key usage unavailable" description={usageLoadError} />
             </div>
           ) : selectedKeyUsage ? (
@@ -716,13 +716,13 @@ export const EnterpriseApiManagement: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setSelectedKeyUsage(null)}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+                    className="p-2 hover:bg-c-surface-raised rounded-lg"
                   >
-                    <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-500 rotate-180" />
+                    <ChevronRight className="w-4 h-4 text-c-text-secondary rotate-180" />
                   </button>
                   <div>
-                    <h3 className="text-lg font-medium text-white">{selectedKeyUsage.key.name}</h3>
-                    <code className="text-sm text-slate-500 dark:text-slate-400">
+                    <h3 className="text-lg font-medium text-c-text">{selectedKeyUsage.key.name}</h3>
+                    <code className="text-sm text-c-text-muted">
                       {selectedKeyUsage.key.key_prefix}...
                     </code>
                   </div>
@@ -731,23 +731,23 @@ export const EnterpriseApiManagement: React.FC = () => {
 
               {/* Usage Stats */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-                  <div className="text-sm text-slate-600 dark:text-slate-500">Total Requests</div>
-                  <div className="text-2xl font-bold text-white">
+                <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+                  <div className="text-sm text-c-text-secondary">Total Requests</div>
+                  <div className="text-2xl font-bold text-c-text">
                     {selectedKeyUsage.usage.totals?.total_requests?.toLocaleString() || 0}
                   </div>
                 </div>
-                <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-                  <div className="text-sm text-slate-600 dark:text-slate-500">
+                <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+                  <div className="text-sm text-c-text-secondary">
                     Avg Response Time
                   </div>
-                  <div className="text-2xl font-bold text-white">
+                  <div className="text-2xl font-bold text-c-text">
                     {Math.round(selectedKeyUsage.usage.totals?.avg_response_time || 0)}ms
                   </div>
                 </div>
-                <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-                  <div className="text-sm text-slate-600 dark:text-slate-500">Error Rate</div>
-                  <div className="text-2xl font-bold text-white">
+                <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+                  <div className="text-sm text-c-text-secondary">Error Rate</div>
+                  <div className="text-2xl font-bold text-c-text">
                     {selectedKeyUsage.usage.totals?.total_requests
                       ? (
                           (selectedKeyUsage.usage.totals.total_errors /
@@ -758,34 +758,34 @@ export const EnterpriseApiManagement: React.FC = () => {
                     %
                   </div>
                 </div>
-                <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-                  <div className="text-sm text-slate-600 dark:text-slate-500">Total Errors</div>
-                  <div className="text-2xl font-bold text-danger-400">
+                <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+                  <div className="text-sm text-c-text-secondary">Total Errors</div>
+                  <div className="text-2xl font-bold text-c-danger">
                     {selectedKeyUsage.usage.totals?.total_errors || 0}
                   </div>
                 </div>
               </div>
 
               {/* Usage Chart */}
-              <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-                <h4 className="text-sm font-medium text-white mb-4">Requests Over Time</h4>
+              <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+                <h4 className="text-sm font-medium text-c-text mb-4">Requests Over Time</h4>
                 <div className="flex items-end gap-2 h-32">
                   {selectedKeyUsage.usage.usage?.length > 0 ? (
                     selectedKeyUsage.usage.usage.map((day, i) => (
                       <div key={i} className="flex-1 flex flex-col items-center">
                         <div
-                          className="w-full bg-gradient-to-t from-primary-500 to-primary-400 rounded-t-sm"
+                          className="w-full bg-c-accent rounded-t-sm"
                           style={{
                             height: `${Math.max(5, (day.requests / Math.max(1, ...selectedKeyUsage.usage.usage.map((d) => d.requests))) * 100)}%`,
                           }}
                         />
-                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                        <div className="text-xs text-c-text-muted mt-2">
                           {formatDate(day.date)}
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className="w-full text-center text-slate-600 dark:text-slate-500">
+                    <div className="w-full text-center text-c-text-secondary">
                       No usage data
                     </div>
                   )}
@@ -794,31 +794,31 @@ export const EnterpriseApiManagement: React.FC = () => {
 
               {/* Top Endpoints */}
               {selectedKeyUsage.usage.endpoints?.length > 0 && (
-                <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-                  <h4 className="text-sm font-medium text-white mb-4">Top Endpoints</h4>
+                <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+                  <h4 className="text-sm font-medium text-c-text mb-4">Top Endpoints</h4>
                   <div className="space-y-2">
                     {selectedKeyUsage.usage.endpoints.map((endpoint, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between p-2 bg-slate-800/50 rounded-lg"
+                        className="flex items-center justify-between p-2 bg-c-surface rounded-lg"
                       >
                         <div className="flex items-center gap-3">
                           <span
                             className={`px-2 py-0.5 text-xs font-mono rounded ${
                               endpoint.method === 'GET'
-                                ? 'bg-blue-500/20 text-blue-400'
+                                ? 'bg-c-info/20 text-c-info'
                                 : endpoint.method === 'POST'
-                                  ? 'bg-emerald-500/20 text-emerald-400'
+                                  ? 'bg-c-success/20 text-c-success'
                                   : endpoint.method === 'PUT'
-                                    ? 'bg-amber-500/20 text-amber-400'
-                                    : 'bg-danger-500/20 text-danger-400'
+                                    ? 'bg-c-warning/20 text-c-warning'
+                                    : 'bg-c-danger/20 text-c-danger'
                             }`}
                           >
                             {endpoint.method}
                           </span>
-                          <code className="text-sm text-slate-600">{endpoint.endpoint}</code>
+                          <code className="text-sm text-c-text-secondary">{endpoint.endpoint}</code>
                         </div>
-                        <span className="text-sm text-slate-600 dark:text-slate-500">
+                        <span className="text-sm text-c-text-secondary">
                           {endpoint.count.toLocaleString()}
                         </span>
                       </div>
@@ -828,12 +828,12 @@ export const EnterpriseApiManagement: React.FC = () => {
               )}
             </>
           ) : (
-            <div className="text-center py-12 text-slate-600 dark:text-slate-500">
+            <div className="text-center py-12 text-c-text-secondary">
               <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>Select an API key to view usage analytics</p>
               <button
                 onClick={() => setActiveTab('keys')}
-                className="mt-4 px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 text-white rounded-lg transition-colors"
+                className="mt-4 px-4 py-2 bg-c-surface-raised hover:bg-c-surface text-c-text rounded-lg transition-colors"
               >
                 Go to API Keys
               </button>
@@ -845,9 +845,9 @@ export const EnterpriseApiManagement: React.FC = () => {
       {/* Documentation Tab */}
       {activeTab === 'docs' && (
         <div className="space-y-6">
-          <div className="p-6 bg-gradient-to-br from-primary-500/10 to-blue-500/10 rounded-xl border border-primary-500/20">
-            <h3 className="text-xl font-bold text-white mb-2">Consultify API</h3>
-            <p className="text-slate-600 dark:text-slate-500 mb-4">
+          <div className="p-6 bg-c-accent-soft rounded-xl border border-c-accent/20">
+            <h3 className="text-xl font-bold text-c-text mb-2">Consultify API</h3>
+            <p className="text-c-text-secondary mb-4">
               Build powerful integrations with the Consultify REST API. Access projects,
               assessments, reports, and more.
             </p>
@@ -856,7 +856,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                 href="/api/docs"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
               >
                 <FileText className="w-4 h-4" />
                 View API Docs
@@ -866,7 +866,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                 href="/api/openapi.json"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 text-white rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-c-surface-raised hover:bg-c-surface text-c-text rounded-lg transition-colors"
               >
                 <Code className="w-4 h-4" />
                 OpenAPI Spec
@@ -875,62 +875,62 @@ export const EnterpriseApiManagement: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-              <h4 className="font-medium text-white mb-3 flex items-center gap-2">
-                <Shield className="w-4 h-4 text-primary-400" />
+            <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+              <h4 className="font-medium text-c-text mb-3 flex items-center gap-2">
+                <Shield className="w-4 h-4 text-c-accent" />
                 Authentication
               </h4>
-              <p className="text-sm text-slate-600 dark:text-slate-500 mb-3">
+              <p className="text-sm text-c-text-secondary mb-3">
                 All API requests require authentication using an API key in the Authorization
                 header.
               </p>
-              <div className="p-3 bg-slate-900 rounded-lg">
-                <code className="text-sm text-blue-400">Authorization: Bearer ck_live_xxx...</code>
+              <div className="p-3 bg-c-surface rounded-lg">
+                <code className="text-sm text-c-info">Authorization: Bearer ck_live_xxx...</code>
               </div>
             </div>
 
-            <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-              <h4 className="font-medium text-white mb-3 flex items-center gap-2">
-                <Zap className="w-4 h-4 text-amber-400" />
+            <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+              <h4 className="font-medium text-c-text mb-3 flex items-center gap-2">
+                <Zap className="w-4 h-4 text-c-warning" />
                 Rate Limits
               </h4>
-              <p className="text-sm text-slate-600 dark:text-slate-500 mb-3">
+              <p className="text-sm text-c-text-secondary mb-3">
                 API requests are rate limited based on your key configuration.
               </p>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-slate-600 dark:text-slate-500">Default per minute:</span>
-                  <span className="text-white">60 requests</span>
+                  <span className="text-c-text-secondary">Default per minute:</span>
+                  <span className="text-c-text">60 requests</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-600 dark:text-slate-500">Default per day:</span>
-                  <span className="text-white">10,000 requests</span>
+                  <span className="text-c-text-secondary">Default per day:</span>
+                  <span className="text-c-text">10,000 requests</span>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-              <h4 className="font-medium text-white mb-3 flex items-center gap-2">
-                <Globe className="w-4 h-4 text-emerald-400" />
+            <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+              <h4 className="font-medium text-c-text mb-3 flex items-center gap-2">
+                <Globe className="w-4 h-4 text-c-success" />
                 Base URL
               </h4>
-              <div className="p-3 bg-slate-900 rounded-lg">
-                <code className="text-sm text-emerald-400">
+              <div className="p-3 bg-c-surface rounded-lg">
+                <code className="text-sm text-c-success">
                   {typeof window !== 'undefined' ? window.location.origin : ''}/api/v1
                 </code>
               </div>
             </div>
 
-            <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-              <h4 className="font-medium text-white mb-3 flex items-center gap-2">
-                <Activity className="w-4 h-4 text-blue-400" />
+            <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+              <h4 className="font-medium text-c-text mb-3 flex items-center gap-2">
+                <Activity className="w-4 h-4 text-c-info" />
                 Response Format
               </h4>
-              <p className="text-sm text-slate-600 dark:text-slate-500 mb-3">
+              <p className="text-sm text-c-text-secondary mb-3">
                 All responses are returned in JSON format.
               </p>
-              <div className="p-3 bg-slate-900 rounded-lg">
-                <pre className="text-sm text-blue-400">
+              <div className="p-3 bg-c-surface rounded-lg">
+                <pre className="text-sm text-c-info">
                   {`{
   "success": true,
   "data": { ... }
@@ -940,18 +940,18 @@ export const EnterpriseApiManagement: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-white/10">
-            <h4 className="font-medium text-white mb-4">Available Scopes</h4>
+          <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+            <h4 className="font-medium text-c-text mb-4">Available Scopes</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
               {AVAILABLE_SCOPES.map((scope) => (
-                <div key={scope.id} className="p-3 bg-slate-800/50 rounded-lg">
+                <div key={scope.id} className="p-3 bg-c-surface rounded-lg">
                   <div className="flex items-center justify-between mb-1">
-                    <code className="text-sm text-blue-400">{scope.id}</code>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                    <code className="text-sm text-c-info">{scope.id}</code>
+                    <span className="text-xs text-c-text-muted">
                       {scope.category}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-500">{scope.description}</p>
+                  <p className="text-xs text-c-text-secondary">{scope.description}</p>
                 </div>
               ))}
             </div>
@@ -1034,28 +1034,28 @@ const ApiKeyModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-navy-900 rounded-xl border border-white/10 p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-c-surface rounded-xl border border-c-border p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-white">
+          <h3 className="text-xl font-bold text-c-text">
             {editKey ? 'Edit API Key' : 'Create API Key'}
           </h3>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+            className="p-2 hover:bg-c-surface-raised rounded-lg"
           >
-            <X className="w-5 h-5 text-slate-600 dark:text-slate-500" />
+            <X className="w-5 h-5 text-c-text-secondary" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Organization *</label>
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">Organization *</label>
             <select
               required
               value={formData.organizationId}
               disabled={!!editKey}
               onChange={(e) => setFormData({ ...formData, organizationId: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
             >
               {organizations.map((org) => (
                 <option key={org.id} value={org.id}>
@@ -1066,23 +1066,23 @@ const ApiKeyModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Name *</label>
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">Name *</label>
             <input
               type="text"
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
               placeholder="My API Key"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Description</label>
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">Description</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
               rows={2}
               placeholder="Optional description"
             />
@@ -1090,13 +1090,13 @@ const ApiKeyModal: React.FC<{
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-600 mb-1">Key Type</label>
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">Key Type</label>
               <select
                 value={formData.key_type}
                 onChange={(e) =>
                   setFormData({ ...formData, key_type: e.target.value as ApiKey['key_type'] })
                 }
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
               >
                 <option value="org">Organization</option>
                 <option value="user">User</option>
@@ -1104,19 +1104,19 @@ const ApiKeyModal: React.FC<{
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-600 mb-1">Expires</label>
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">Expires</label>
               <input
                 type="date"
                 value={formData.expires_at}
                 onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-600 mb-1">
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">
                 Rate Limit (per minute)
               </label>
               <input
@@ -1125,11 +1125,11 @@ const ApiKeyModal: React.FC<{
                 onChange={(e) =>
                   setFormData({ ...formData, rate_limit_per_minute: parseInt(e.target.value) })
                 }
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-600 mb-1">
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">
                 Rate Limit (per day)
               </label>
               <input
@@ -1138,30 +1138,30 @@ const ApiKeyModal: React.FC<{
                 onChange={(e) =>
                   setFormData({ ...formData, rate_limit_per_day: parseInt(e.target.value) })
                 }
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               Allowed IPs (comma separated)
             </label>
             <input
               type="text"
               value={formData.allowed_ips}
               onChange={(e) => setFormData({ ...formData, allowed_ips: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
               placeholder="Leave empty for all IPs"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-600 mb-2">Scopes</label>
-            <div className="space-y-4 max-h-60 overflow-y-auto p-2 bg-slate-800/50 rounded-lg">
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">Scopes</label>
+            <div className="space-y-4 max-h-60 overflow-y-auto p-2 bg-c-surface-raised rounded-lg">
               {Object.entries(scopesByCategory).map(([category, scopes]) => (
                 <div key={category}>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">{category}</div>
+                  <div className="text-xs text-c-text-muted mb-2">{category}</div>
                   <div className="flex flex-wrap gap-2">
                     {scopes.map((scope) => (
                       <button
@@ -1170,8 +1170,8 @@ const ApiKeyModal: React.FC<{
                         onClick={() => toggleScope(scope.id)}
                         className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
                           formData.scopes.includes(scope.id)
-                            ? 'bg-navy-900 text-white'
-                            : 'bg-slate-700 text-slate-600 hover:bg-slate-600'
+                            ? 'bg-c-surface text-c-text'
+                            : 'bg-c-surface text-c-text-secondary hover:bg-c-surface-raised'
                         }`}
                       >
                         {scope.name}
@@ -1187,14 +1187,14 @@ const ApiKeyModal: React.FC<{
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
+              className="px-4 py-2 text-c-text-secondary hover:text-c-text transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               {editKey ? 'Update' : 'Create'}

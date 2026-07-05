@@ -287,7 +287,7 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
       <button
         onClick={handleSave}
         disabled={isSaving}
-        className="w-full py-3 bg-primary-600 hover:bg-primary-500 disabled:bg-slate-400 text-white rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+        className="w-full py-3 bg-c-text text-c-bg hover:bg-c-text-secondary disabled:bg-slate-400 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
       >
         {isSaving ? (
           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

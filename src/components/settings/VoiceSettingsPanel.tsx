@@ -257,14 +257,14 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-primary-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-c-accent-soft flex items-center justify-center">
             <Mic className="text-white" size={20} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
+            <h3 className="text-lg font-semibold text-navy-900">
               {t('voiceSettings.title', 'Voice Settings')}
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t('voiceSettings.subtitle', 'Configure voice conversation preferences')}
             </p>
           </div>
@@ -273,7 +273,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
         <button
           onClick={testVoiceSystem}
           disabled={isTesting || !!loadError}
-          className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-white/10 rounded-lg hover:bg-slate-200 dark:hover:bg-white/20 text-sm font-medium text-slate-700 dark:text-slate-300 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 bg-c-surface-raised rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised text-sm font-medium text-c-text-secondary transition-colors"
         >
           {isTesting ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
           {t('voiceSettings.test', 'Test')}
@@ -284,16 +284,16 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
 
       {/* Test Results */}
       {!loadError && (testResults.stt !== null || testResults.tts !== null) && (
-        <div className="flex gap-4 p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
+        <div className="flex gap-4 p-3 bg-c-surface-raised rounded-lg">
           <div className="flex items-center gap-2">
             {testResults.stt === true && <CheckCircle size={16} className="text-green-500" />}
             {testResults.stt === false && <XCircle size={16} className="text-rose-500" />}
-            <span className="text-sm text-slate-600 dark:text-slate-400">STT</span>
+            <span className="text-sm text-c-text-secondary">STT</span>
           </div>
           <div className="flex items-center gap-2">
             {testResults.tts === true && <CheckCircle size={16} className="text-green-500" />}
             {testResults.tts === false && <XCircle size={16} className="text-rose-500" />}
-            <span className="text-sm text-slate-600 dark:text-slate-400">TTS</span>
+            <span className="text-sm text-c-text-secondary">TTS</span>
           </div>
         </div>
       )}
@@ -311,7 +311,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
       {!loadError && (
         <>
           <div className="space-y-3">
-            <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+            <label className="flex items-center gap-2 text-sm font-medium text-c-text-secondary">
               <Mic size={16} />
               {t('voiceSettings.inputMode', 'Input Mode')}
             </label>
@@ -325,8 +325,8 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
                                 px-3 py-2 rounded-lg border text-sm font-medium transition-all
                                 ${
                                   settings.inputMode === mode
-                                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
-                                    : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/20'
+                                    ? 'border-c-accent bg-c-accent-soft text-c-accent'
+                                    : 'border-c-border-subtle dark:border-navy-700 text-c-text-secondary hover:border-c-border dark:hover:border-white/20'
                                 }
                             `}
                   >
@@ -339,14 +339,14 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
 
           {/* Auto-send Delay */}
           <div className="space-y-3">
-            <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+            <label className="flex items-center gap-2 text-sm font-medium text-c-text-secondary">
               <Settings2 size={16} />
               {t('voiceSettings.autoSendDelay', 'Auto-send after silence')}
             </label>
             <select
               value={settings.autoSendDelay}
               onChange={(e) => updateSetting('autoSendDelay', parseFloat(e.target.value))}
-              className="w-full px-3 py-2 border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-300"
+              className="w-full px-3 py-2 border border-c-border-subtle dark:border-navy-700 rounded-lg bg-c-surface text-c-text-secondary"
             >
               {DELAY_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -359,13 +359,13 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
           {/* TTS Voice */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+              <label className="flex items-center gap-2 text-sm font-medium text-c-text-secondary">
                 <Volume2 size={16} />
                 {t('voiceSettings.ttsVoice', 'AI Voice')}
               </label>
               <button
                 onClick={previewVoice}
-                className="flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400 hover:underline"
+                className="flex items-center gap-1 text-xs text-c-accent hover:underline"
               >
                 <Play size={12} />
                 {t('voiceSettings.preview', 'Preview')}
@@ -380,15 +380,15 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
                                 p-3 rounded-lg border text-left transition-all
                                 ${
                                   settings.ttsVoice === voice.id
-                                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                                    : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
+                                    ? 'border-c-accent bg-c-accent-soft'
+                                    : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-white/20'
                                 }
                             `}
                 >
-                  <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <div className="text-sm font-medium text-c-text-secondary">
                     {voice.name}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                  <div className="text-xs text-c-text-muted">
                     {voice.description}
                   </div>
                 </button>
@@ -398,13 +398,13 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
 
           {/* Speech Speed */}
           <div className="space-y-3">
-            <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+            <label className="flex items-center gap-2 text-sm font-medium text-c-text-secondary">
               {t('voiceSettings.speechSpeed', 'Speech Speed')}
             </label>
             <select
               value={settings.ttsSpeed}
               onChange={(e) => updateSetting('ttsSpeed', parseFloat(e.target.value))}
-              className="w-full px-3 py-2 border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-300"
+              className="w-full px-3 py-2 border border-c-border-subtle dark:border-navy-700 rounded-lg bg-c-surface text-c-text-secondary"
             >
               {SPEED_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -418,19 +418,19 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
           <div className="space-y-4">
             {/* Auto-speak responses */}
             <label className="flex items-center justify-between">
-              <span className="text-sm text-slate-700 dark:text-slate-300">
+              <span className="text-sm text-c-text-secondary">
                 {t('voiceSettings.autoSpeak', 'Auto-speak AI responses')}
               </span>
               <button
                 onClick={() => updateSetting('autoSpeakResponses', !settings.autoSpeakResponses)}
                 className={`
                             relative w-11 h-6 rounded-full transition-colors
-                            ${settings.autoSpeakResponses ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'}
+                            ${settings.autoSpeakResponses ? 'bg-c-accent' : 'bg-c-surface-raised'}
                         `}
               >
                 <span
                   className={`
-                                absolute top-0.5 w-5 h-5 bg-white dark:bg-navy-900 rounded-full shadow transition-transform
+                                absolute top-0.5 w-5 h-5 bg-c-surface rounded-full shadow transition-transform
                                 ${settings.autoSpeakResponses ? 'translate-x-5.5' : 'translate-x-0.5'}
                             `}
                 />
@@ -439,19 +439,19 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
 
             {/* Show live transcript */}
             <label className="flex items-center justify-between">
-              <span className="text-sm text-slate-700 dark:text-slate-300">
+              <span className="text-sm text-c-text-secondary">
                 {t('voiceSettings.showTranscript', 'Show live transcript')}
               </span>
               <button
                 onClick={() => updateSetting('showLiveTranscript', !settings.showLiveTranscript)}
                 className={`
                             relative w-11 h-6 rounded-full transition-colors
-                            ${settings.showLiveTranscript ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'}
+                            ${settings.showLiveTranscript ? 'bg-c-accent' : 'bg-c-surface-raised'}
                         `}
               >
                 <span
                   className={`
-                                absolute top-0.5 w-5 h-5 bg-white dark:bg-navy-900 rounded-full shadow transition-transform
+                                absolute top-0.5 w-5 h-5 bg-c-surface rounded-full shadow transition-transform
                                 ${settings.showLiveTranscript ? 'translate-x-5.5' : 'translate-x-0.5'}
                             `}
                 />
@@ -460,7 +460,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
           </div>
 
           {/* Save Button */}
-          <div className="pt-4 border-t border-slate-200 dark:border-navy-700">
+          <div className="pt-4 border-t border-c-border-subtle dark:border-navy-700">
             {saveError && (
               <div
                 role="alert"
@@ -472,7 +472,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
             <button
               onClick={saveSettings}
               disabled={isSaving}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg font-medium transition-colors disabled:opacity-50"
             >
               {isSaving ? (
                 <Loader2 size={16} className="animate-spin" />

@@ -64,7 +64,7 @@ export const DemoLoadingOverlay: React.FC<DemoLoadingOverlayProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="fixed inset-0 z-[300] bg-navy-950 flex items-center justify-center"
+          className="fixed inset-0 z-context-menu bg-navy-950 flex items-center justify-center"
         >
           {/* Background Effects */}
           <div className="absolute inset-0 overflow-hidden">

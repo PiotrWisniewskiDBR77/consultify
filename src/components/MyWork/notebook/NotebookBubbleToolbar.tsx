@@ -50,8 +50,8 @@ const MarkBtn: React.FC<MarkBtnProps> = ({ icon: Icon, onClick, isActive, title,
     }}
     className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
       isActive
-        ? 'bg-slate-200 text-slate-900 dark:bg-navy-700 dark:text-white'
-        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/[0.06]'
+        ? 'bg-c-surface-raised text-c-text'
+        : 'text-c-text-secondary hover:bg-c-surface-raised dark:text-c-text-secondary dark:hover:bg-white/[0.06]'
     }`}
   >
     <Icon size={15} />
@@ -89,7 +89,7 @@ export const NotebookBubbleToolbar: React.FC<NotebookBubbleToolbarProps> = ({ ed
         const text = state.doc.textBetween(from, to, ' ').trim();
         return text.length > 0;
       }}
-      className="flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white p-1 shadow-lg dark:border-navy-700 dark:bg-navy-900"
+      className="flex items-center gap-0.5 rounded-lg border border-c-border bg-c-surface p-1 shadow-lg dark:border-navy-700 dark:bg-navy-900"
     >
       <MarkBtn
         icon={Bold}
@@ -119,7 +119,7 @@ export const NotebookBubbleToolbar: React.FC<NotebookBubbleToolbarProps> = ({ ed
         title={t('Strikethrough', 'Przekreślenie')}
         ariaLabel={t('Strikethrough', 'Przekreślenie')}
       />
-      <div className="mx-0.5 h-5 w-px bg-slate-200 dark:bg-navy-700" />
+      <div className="mx-0.5 h-5 w-px bg-c-surface-raised" />
       <MarkBtn
         icon={CodeIcon}
         onClick={() => editor.chain().focus().toggleCode().run()}

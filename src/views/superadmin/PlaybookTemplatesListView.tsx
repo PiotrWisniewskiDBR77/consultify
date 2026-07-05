@@ -290,7 +290,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
         </div>
         <button
           onClick={() => setStatusFilter('')}
-          className={`px-3 py-1.5 text-sm rounded-lg border transition ${!statusFilter ? 'bg-slate-100 dark:bg-white/[0.08] text-[var(--c-info)] border-[var(--c-info)]/30' : 'bg-white text-slate-600 dark:bg-white/5 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'}`}
+          className={`px-3 py-1.5 text-sm rounded-lg border transition ${!statusFilter ? 'bg-slate-100 dark:bg-white/[0.08] text-[var(--c-info)] border-c-info/30' : 'bg-white text-slate-600 dark:bg-white/5 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'}`}
         >
           {t('superadmin.playbookTemplates.filters.all')}
         </button>

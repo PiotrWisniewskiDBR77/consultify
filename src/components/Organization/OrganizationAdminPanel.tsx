@@ -124,14 +124,14 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
       label: t('organization.members.name', 'Name'),
       width: '200px',
       render: (row) => (
-        <span className="font-medium text-slate-900 dark:text-white">{row.name}</span>
+        <span className="font-medium text-c-text">{row.name}</span>
       ),
     },
     {
       id: 'email',
       label: t('organization.members.emailCol', 'Email'),
       width: '220px',
-      render: (row) => <span className="text-slate-600 dark:text-slate-400">{row.email}</span>,
+      render: (row) => <span className="text-c-text-secondary">{row.email}</span>,
     },
     {
       id: 'role',
@@ -144,7 +144,7 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
       label: t('organization.members.status', 'Status'),
       width: '140px',
       render: (row) => (
-        <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+        <span className="flex items-center gap-1 text-xs text-c-success">
           <CheckCircle size={12} /> {row.memberStatus}
         </span>
       ),
@@ -172,14 +172,14 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
+      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-5">
         <div className="flex items-start gap-3">
-          <Users size={18} className="text-slate-600 mt-0.5" strokeWidth={1.5} />
+          <Users size={18} className="text-c-text-secondary mt-0.5" strokeWidth={1.5} />
           <div className="flex-1">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+            <h3 className="text-sm font-semibold text-c-text">
               {t('organization.members.title', 'Team Members')}
             </h3>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-c-text-muted mt-1">
               {t('organization.members.desc', '{{count}} members in this organization', {
                 count: members.length,
               })}
@@ -187,15 +187,15 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
           </div>
           <button
             onClick={() => setShowInviteForm(!showInviteForm)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] transition-colors"
           >
             {t('organization.members.invite', 'Invite')}
           </button>
         </div>
         {showInviteForm && (
-          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700/60 flex items-end gap-3">
+          <div className="mt-4 pt-4 border-t border-c-border-subtle flex items-end gap-3">
             <div className="flex-1">
-              <label className="block text-xs font-medium text-slate-500 mb-1">
+              <label className="block text-xs font-medium text-c-text-muted mb-1">
                 {t('organization.members.email', 'Email')}
               </label>
               <input
@@ -203,17 +203,17 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="colleague@company.com"
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white placeholder:text-slate-400"
+                className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-sm text-c-text placeholder:text-c-text-muted"
               />
             </div>
             <div className="w-32">
-              <label className="block text-xs font-medium text-slate-500 mb-1">
+              <label className="block text-xs font-medium text-c-text-muted mb-1">
                 {t('organization.members.role', 'Role')}
               </label>
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
+                className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-sm text-c-text"
               >
                 <option value="MEMBER">Member</option>
                 <option value="ADMIN">Admin</option>
@@ -223,7 +223,7 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
             <button
               onClick={handleInvite}
               disabled={inviting || !inviteEmail.trim()}
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-50 transition-colors"
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-50 transition-colors"
             >
               {inviting ? (
                 <Loader2 size={14} className="animate-spin" />
@@ -274,17 +274,17 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
+      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-5">
         <div className="flex items-start gap-3">
-          <CreditCard size={18} className="text-slate-600 mt-0.5" strokeWidth={1.5} />
+          <CreditCard size={18} className="text-c-text-secondary mt-0.5" strokeWidth={1.5} />
           <div className="flex-1">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+            <h3 className="text-sm font-semibold text-c-text">
               {t('organization.billing.planTitle', 'Current Plan')}
             </h3>
-            <p className="text-2xl font-bold mt-1 text-slate-900 dark:text-white capitalize">
+            <p className="text-2xl font-bold mt-1 text-c-text capitalize">
               {plan}
             </p>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-c-text-muted mt-1">
               {isTrialPlan
                 ? t(
                     'organization.billing.trialDesc',
@@ -313,7 +313,7 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                 'organization.billing.managedByDbr77',
                 'Billing is managed by DBR77 — contact your account manager to upgrade.'
               )}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700 cursor-help transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-c-surface-raised text-c-text-secondary border border-c-border-subtle cursor-help transition-colors"
             >
               {t('organization.billing.managedByDbr77Short', 'Managed by DBR77')}
               <ExternalLink size={12} />
@@ -321,7 +321,7 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
           )}
         </div>
         {isTrialPlan && (
-          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-3 text-xs text-c-text-muted">
             {t(
               'organization.billing.managedByDbr77',
               'Billing is managed by DBR77 — contact your account manager to upgrade.'
@@ -329,26 +329,26 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
           </p>
         )}
       </div>
-      <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-          <Gauge size={16} className="text-slate-600" strokeWidth={1.5} />
+      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-5">
+        <h3 className="text-sm font-semibold text-c-text flex items-center gap-2">
+          <Gauge size={16} className="text-c-text-secondary" strokeWidth={1.5} />
           {t('organization.billing.tokensTitle', 'Token Balance')}
         </h3>
         <div className="mt-3 flex items-end gap-3">
-          <span className="text-3xl font-bold text-slate-900 dark:text-white">
+          <span className="text-3xl font-bold text-c-text">
             {tokens.toLocaleString()}
           </span>
-          <span className="text-sm text-slate-500 pb-1">
+          <span className="text-sm text-c-text-muted pb-1">
             / {tokenLimit.toLocaleString()} {t('organization.billing.tokensUnit', 'tokens')}
           </span>
         </div>
-        <div className="mt-3 h-2 rounded-full bg-slate-100 dark:bg-navy-800 overflow-hidden">
+        <div className="mt-3 h-2 rounded-full bg-c-surface-raised overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all ${usagePercent > 95 ? 'bg-danger-500' : usagePercent > 80 ? 'bg-amber-500' : 'bg-slate-400'}`}
+            className={`h-full rounded-full transition-all ${usagePercent > 95 ? 'bg-danger-500' : usagePercent > 80 ? 'bg-c-warning' : 'bg-c-border-strong'}`}
             style={{ width: `${Math.min(usagePercent, 100)}%` }}
           />
         </div>
-        <p className="mt-2 text-xs text-slate-600">
+        <p className="mt-2 text-xs text-c-text-secondary">
           {usagePercent}% {t('organization.billing.used', 'used')}
         </p>
       </div>
@@ -454,7 +454,7 @@ const LimitsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
 
   if (error || !snapshot) {
     return (
-      <div className="max-w-4xl rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40">
+      <div className="max-w-4xl rounded-xl border border-c-border-subtle bg-c-surface">
         <ErrorState
           message={t('organization.limits.loadFailed', 'Could not load plan limits.')}
           retry={() => void reload()}
@@ -465,10 +465,10 @@ const LimitsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
+      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Gauge size={16} className="text-slate-600" strokeWidth={1.5} />
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+          <Gauge size={16} className="text-c-text-secondary" strokeWidth={1.5} />
+          <h3 className="text-sm font-semibold text-c-text">
             {t('organization.limits.title', 'Plan Limits & Current Usage')}
           </h3>
         </div>
@@ -480,14 +480,14 @@ const LimitsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
             return (
               <div key={l.key}>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-slate-700 dark:text-slate-300">{l.label}</span>
-                  <span className="text-slate-500">
+                  <span className="text-c-text-secondary">{l.label}</span>
+                  <span className="text-c-text-muted">
                     {l.current} / {l.max}
                   </span>
                 </div>
-                <div className="h-1.5 rounded-full bg-slate-100 dark:bg-navy-800 overflow-hidden">
+                <div className="h-1.5 rounded-full bg-c-surface-raised overflow-hidden">
                   <div
-                    className={`h-full rounded-full ${isCrit ? 'bg-danger-500' : isWarn ? 'bg-amber-500' : 'bg-slate-400'}`}
+                    className={`h-full rounded-full ${isCrit ? 'bg-danger-500' : isWarn ? 'bg-c-warning' : 'bg-c-border-strong'}`}
                     style={{ width: `${Math.min(pct, 100)}%` }}
                   />
                 </div>
@@ -496,8 +496,8 @@ const LimitsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
           })}
         </div>
       </div>
-      <div className="rounded-xl border border-dashed border-slate-200 dark:border-navy-700 p-5 text-center">
-        <p className="text-sm text-slate-500">
+      <div className="rounded-xl border border-dashed border-c-border-subtle p-5 text-center">
+        <p className="text-sm text-c-text-muted">
           {t(
             'organization.limits.managedByDbr77Hint',
             'Plans and limits are managed by DBR77. Contact your account manager to adjust them.'
@@ -520,7 +520,7 @@ const LimitsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
             'organization.limits.managedByDbr77Hint',
             'Plans and limits are managed by DBR77. Contact your account manager to adjust them.'
           )}
-          className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700 cursor-help transition-colors"
+          className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-c-surface-raised text-c-text-secondary border border-c-border-subtle cursor-help transition-colors"
         >
           {t('organization.billing.managedByDbr77Short', 'Managed by DBR77')}
           <ExternalLink size={12} />
@@ -690,21 +690,21 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
           {domainActionError}
         </div>
       )}
-      <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
+      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-5">
         <div className="flex items-start gap-3">
-          <Globe size={18} className="text-slate-600 mt-0.5" strokeWidth={1.5} />
+          <Globe size={18} className="text-c-text-secondary mt-0.5" strokeWidth={1.5} />
           <div className="flex-1">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+            <h3 className="text-sm font-semibold text-c-text">
               {t('organization.domains.title', 'Custom Domain')}
             </h3>
             <div className="mt-2 space-y-3">
               {customDomain ? (
                 <div className="flex items-center gap-2">
-                  <code className="text-sm bg-slate-100 dark:bg-navy-800 px-2 py-1 rounded text-slate-800 dark:text-slate-200">
+                  <code className="text-sm bg-c-surface-raised px-2 py-1 rounded text-c-text">
                     {customDomain}
                   </code>
                   <span
-                    className={`flex items-center gap-1 text-xs font-medium ${customDomainVerified ? 'text-green-600' : 'text-amber-500'}`}
+                    className={`flex items-center gap-1 text-xs font-medium ${customDomainVerified ? 'text-c-success' : 'text-c-warning'}`}
                   >
                     {customDomainVerified ? (
                       <>
@@ -719,7 +719,7 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                   </span>
                 </div>
               ) : (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-c-text-muted">
                   {t('organization.domains.noDomain', 'No custom domain configured.')}
                 </p>
               )}
@@ -729,20 +729,20 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                   value={customDomainDraft}
                   onChange={(event) => setCustomDomainDraft(event.target.value)}
                   placeholder="app.company.com"
-                  className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+                  className="flex-1 rounded-lg border border-c-border bg-c-surface-raised px-3 py-2 text-sm text-c-text"
                 />
                 <button
                   type="button"
                   onClick={() => void handleSaveCustomDomain()}
                   disabled={savingCustomDomain}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-300"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-c-border px-3 py-2 text-sm text-c-text-secondary disabled:opacity-50"
                 >
                   {savingCustomDomain
                     ? t('common.saving', 'Saving...')
                     : t('organization.domains.saveCustomDomain', 'Save domain')}
                 </button>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-c-text-muted">
                 DNS verification remains a separate operator step before the domain can be marked
                 verified.
               </p>
@@ -750,11 +750,11 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
           </div>
         </div>
       </div>
-      <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-5">
+        <h3 className="text-sm font-semibold text-c-text mb-3">
           {t('organization.domains.approvedTitle', 'Approved Email Domains')}
         </h3>
-        <p className="text-sm text-slate-500 mb-3">
+        <p className="text-sm text-c-text-muted mb-3">
           {t(
             'organization.domains.approvedDesc',
             'Users with these email domains can auto-join your organization.'
@@ -766,13 +766,13 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
             value={newApprovedDomain}
             onChange={(event) => setNewApprovedDomain(event.target.value)}
             placeholder="company.com"
-            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
+            className="flex-1 rounded-lg border border-c-border bg-c-surface-raised px-3 py-2 text-sm text-c-text"
           />
           <button
             type="button"
             onClick={() => void handleAddApprovedDomain()}
             disabled={savingDomain}
-            className="rounded-lg bg-slate-900 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-50 transition-colors"
+            className="rounded-lg bg-navy-900 dark:bg-[#F4F7FB] px-4 py-2 text-sm font-medium text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-50 transition-colors"
           >
             {savingDomain ? t('common.saving', 'Saving...') : t('common.add', 'Add')}
           </button>
@@ -782,7 +782,7 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
             approvedDomains.map((d) => (
               <span
                 key={d.id || d.domain}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-c-surface-raised text-c-text-secondary"
               >
                 @{d.domain}
                 <button
@@ -792,14 +792,14 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                   }}
                   disabled={!d.id}
                   title={!d.id ? 'Cannot remove a domain without a server id' : undefined}
-                  className="text-slate-600 hover:text-danger-500"
+                  className="text-c-text-secondary hover:text-c-danger"
                 >
                   <Trash2 size={12} />
                 </button>
               </span>
             ))
           ) : (
-            <p className="text-sm text-slate-600 italic">
+            <p className="text-sm text-c-text-secondary italic">
               {t('organization.domains.noApproved', 'No approved domains set.')}
             </p>
           )}
@@ -886,23 +886,23 @@ const BrandingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
+      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Palette size={16} className="text-slate-600" strokeWidth={1.5} />
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+          <Palette size={16} className="text-c-text-secondary" strokeWidth={1.5} />
+          <h3 className="text-sm font-semibold text-c-text">
             {t('organization.branding.visualTitle', 'Visual Identity')}
           </h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-2">
+            <label className="block text-xs font-medium text-c-text-muted mb-2">
               {t('organization.branding.logo', 'Logo')}
             </label>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadingLogo}
-              className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-200 dark:border-navy-700 flex items-center justify-center text-slate-600 hover:border-slate-300 transition-colors cursor-pointer disabled:opacity-50"
+              className="w-24 h-24 rounded-xl border-2 border-dashed border-c-border-subtle flex items-center justify-center text-c-text-secondary hover:border-c-border-strong transition-colors cursor-pointer disabled:opacity-50"
             >
               {uploadingLogo ? (
                 <Loader2 size={24} className="animate-spin" />
@@ -925,7 +925,7 @@ const BrandingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-2">
+            <label className="block text-xs font-medium text-c-text-muted mb-2">
               {t('organization.branding.primaryColor', 'Primary Color')}
             </label>
             <div className="flex items-center gap-3">
@@ -934,17 +934,17 @@ const BrandingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                 value={primaryColor}
                 disabled={savingColor}
                 onChange={(event) => void savePrimaryColor(event.target.value)}
-                className="h-10 w-10 cursor-pointer rounded-lg border border-slate-200 bg-transparent p-0 dark:border-navy-700 disabled:opacity-50"
+                className="h-10 w-10 cursor-pointer rounded-lg border border-c-border bg-transparent p-0 disabled:opacity-50"
               />
-              <code className="text-sm text-slate-600 dark:text-slate-400">{primaryColor}</code>
+              <code className="text-sm text-c-text-secondary">{primaryColor}</code>
             </div>
           </div>
         </div>
       </div>
-      <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
+      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Globe size={16} className="text-slate-600" strokeWidth={1.5} />
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+          <Globe size={16} className="text-c-text-secondary" strokeWidth={1.5} />
+          <h3 className="text-sm font-semibold text-c-text">
             {t('organization.branding.regionalTitle', 'Regional Settings')}
           </h3>
         </div>
@@ -973,7 +973,7 @@ const BrandingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
 
 const InfoRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div>
-    <dt className="text-xs font-medium text-slate-500">{label}</dt>
-    <dd className="mt-1 text-sm font-medium text-slate-900 dark:text-white">{value}</dd>
+    <dt className="text-xs font-medium text-c-text-muted">{label}</dt>
+    <dd className="mt-1 text-sm font-medium text-c-text">{value}</dd>
   </div>
 );

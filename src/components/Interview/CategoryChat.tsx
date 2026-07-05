@@ -167,23 +167,23 @@ Be professional and concise.
           >
             <div
               className={`
-                w-7 h-7 rounded-full flex items-center justify-center shrink-0
-                ${message.role === 'user' ? 'bg-slate-200 dark:bg-slate-700' : 'bg-navy-900'}
+                w-7 h-7 rounded-token-pill flex items-center justify-center shrink-0
+                ${message.role === 'user' ? 'bg-[var(--c-surface-raised)]' : 'bg-[var(--c-text)]'}
               `}
             >
               {message.role === 'user' ? (
-                <User size={12} className="text-slate-600 dark:text-slate-300" />
+                <User size={12} className="text-[var(--c-text-secondary)]" />
               ) : (
-                <TeresaMark size={12} className="text-white" />
+                <TeresaMark size={12} className="text-[var(--c-surface)]" />
               )}
             </div>
             <div
               className={`
-                max-w-[85%] px-3 py-2 rounded-lg text-sm
+                max-w-[85%] px-3 py-2 rounded-token-md text-sm
                 ${
                   message.role === 'user'
-                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200'
-                    : 'bg-primary-50 dark:bg-primary-900/20 text-slate-800 dark:text-slate-200'
+                    ? 'bg-[var(--c-surface-raised)] text-[var(--c-text)]'
+                    : 'bg-[var(--c-surface-raised)] border border-[var(--c-border-subtle)] text-[var(--c-text)]'
                 }
               `}
             >
@@ -194,11 +194,11 @@ Be professional and concise.
 
         {isLoading && (
           <div className="flex gap-2">
-            <div className="w-7 h-7 rounded-full bg-navy-900 flex items-center justify-center shrink-0">
-              <TeresaMark size={12} className="text-white" />
+            <div className="w-7 h-7 rounded-token-pill bg-[var(--c-text)] flex items-center justify-center shrink-0">
+              <TeresaMark size={12} className="text-[var(--c-surface)]" />
             </div>
-            <div className="px-3 py-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-              <Loader2 size={14} className="text-primary-500 animate-spin" />
+            <div className="px-3 py-2 bg-[var(--c-surface-raised)] border border-[var(--c-border-subtle)] rounded-token-md">
+              <Loader2 size={14} className="text-[var(--c-accent)] animate-spin" />
             </div>
           </div>
         )}
@@ -207,7 +207,7 @@ Be professional and concise.
       </div>
 
       {/* Input */}
-      <div className="shrink-0 p-3 border-t border-slate-200 dark:border-navy-700">
+      <div className="shrink-0 p-3 border-t border-[var(--c-border-subtle)]">
         <div className="flex gap-2">
           <input
             ref={inputRef}
@@ -216,13 +216,13 @@ Be professional and concise.
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Type your answer..."
-            className="flex-1 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white"
+            className="flex-1 bg-[var(--c-surface)] border border-[var(--c-border)] rounded-token-md px-3 py-2 text-sm text-[var(--c-text)] placeholder:text-[var(--c-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--c-focus)]"
             disabled={isLoading}
           />
           <button
             onClick={handleSend}
             disabled={!inputValue.trim() || isLoading}
-            className="px-3 bg-primary-500 hover:bg-primary-600 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg transition-colors"
+            className="px-3 bg-[var(--c-text)] text-[var(--c-surface)] hover:brightness-110 disabled:opacity-50 rounded-token-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
           >
             <Send size={16} />
           </button>

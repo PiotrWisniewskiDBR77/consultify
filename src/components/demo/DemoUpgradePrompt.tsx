@@ -42,7 +42,7 @@ export const DemoUpgradePrompt: React.FC<DemoUpgradePromptProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.3 }}
-            className="fixed bottom-6 right-6 z-50 max-w-sm"
+            className="fixed bottom-6 right-6 z-overlay max-w-sm"
           >
             <div className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden">
               {/* Gradient accent */}
@@ -129,7 +129,7 @@ export const DemoUpgradePrompt: React.FC<DemoUpgradePromptProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] bg-navy-950/90 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-toast bg-navy-950/90 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={onClose}
         >
           <motion.div

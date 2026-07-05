@@ -262,15 +262,15 @@ PODEJŚCIE:
   ];
 
   return (
-    <div className="h-full flex flex-col bg-slate-950">
+    <div className="h-full flex flex-col bg-c-bg">
       {/* Header */}
       <div className="shrink-0 px-6 py-4 border-b border-white/10 bg-gradient-to-r from-primary-900/20 to-blue-900/20">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500 to-blue-500">
-            <Brain className="text-white" size={24} />
+            <Brain className="text-c-text" size={24} />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white">AI Hub</h1>
+            <h1 className="text-xl font-bold text-c-text">AI Hub</h1>
             <p className="text-sm text-slate-400 dark:text-slate-500">
               Centralne zarządzanie zachowaniem AI
             </p>
@@ -320,10 +320,10 @@ PODEJŚCIE:
                       }`}
                     >
                       <div className={`p-2 rounded-lg bg-gradient-to-br ${cap.color}`}>
-                        <Icon size={18} className="text-white" />
+                        <Icon size={18} className="text-c-text" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-white text-sm truncate">{cap.name}</div>
+                        <div className="font-medium text-c-text text-sm truncate">{cap.name}</div>
                         <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
                           {cap.description}
                         </div>
@@ -347,7 +347,7 @@ PODEJŚCIE:
                 <>
                   <div className="shrink-0 p-4 border-b border-white/5 flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold text-white">
+                      <h3 className="font-semibold text-c-text">
                         Instrukcje dla:{' '}
                         {AI_CAPABILITIES.find((c) => c.id === selectedCapability)?.name}
                       </h3>
@@ -376,7 +376,7 @@ PODEJŚCIE:
                       value={editingPrompt}
                       onChange={(e) => setEditingPrompt(e.target.value)}
                       placeholder="Wpisz instrukcje dla AI..."
-                      className="w-full h-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white text-sm font-mono resize-none focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20"
+                      className="w-full h-full bg-c-text text-c-bg border border-white/10 rounded-xl p-4 text-sm font-mono resize-none focus:outline-none focus:border-c-accent/50 focus:ring-1 focus:ring-primary-500/20"
                     />
                   </div>
                   <div className="shrink-0 p-4 border-t border-white/5 text-xs text-slate-500 dark:text-slate-400">
@@ -404,12 +404,12 @@ PODEJŚCIE:
               {providers.map((provider) => (
                 <div
                   key={provider.id}
-                  className="bg-slate-900 border border-white/10 rounded-xl p-4"
+                  className="bg-c-surface border border-white/10 rounded-xl p-4"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`p-2 rounded-lg ${provider.is_active ? 'bg-emerald-500/20' : 'bg-slate-700'}`}
+                        className={`p-2 rounded-lg ${provider.is_active ? 'bg-emerald-500/20' : 'bg-c-surface-raised'}`}
                       >
                         <Cpu
                           size={18}
@@ -421,7 +421,7 @@ PODEJŚCIE:
                         />
                       </div>
                       <div>
-                        <div className="font-medium text-white">{provider.name}</div>
+                        <div className="font-medium text-c-text">{provider.name}</div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
                           {provider.provider}
                         </div>
@@ -457,8 +457,8 @@ PODEJŚCIE:
         {activeTab === 'routing' && (
           <div className="p-6 overflow-y-auto h-full">
             <div className="max-w-2xl mx-auto">
-              <div className="bg-slate-900 border border-white/10 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Model Routing per Tier</h3>
+              <div className="bg-c-surface border border-white/10 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-c-text mb-4">Model Routing per Tier</h3>
                 <p className="text-sm text-slate-400 dark:text-slate-500 mb-6">
                   Określ, który model LLM ma być używany dla różnych poziomów złożoności zadań.
                 </p>
@@ -492,15 +492,15 @@ PODEJŚCIE:
                   ].map((item) => (
                     <div
                       key={item.tier}
-                      className="flex items-center gap-4 p-4 bg-slate-800/50 rounded-lg"
+                      className="flex items-center gap-4 p-4 bg-c-surface-raised/50 rounded-lg"
                     >
                       <div className="flex-1">
-                        <div className="font-medium text-white">{item.label}</div>
+                        <div className="font-medium text-c-text">{item.label}</div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
                           {item.desc}
                         </div>
                       </div>
-                      <select className="bg-slate-700 border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
+                      <select className="bg-c-surface-raised border border-white/10 rounded-lg px-3 py-2 text-sm text-c-text">
                         <option>{item.default}</option>
                         {providers
                           .filter((p) => p.is_active)
@@ -548,13 +548,13 @@ PODEJŚCIE:
             </div>
 
             {costStats?.byModel && costStats.byModel.length > 0 && (
-              <div className="bg-slate-900 border border-white/10 rounded-xl p-6 mb-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Koszty per Model</h3>
+              <div className="bg-c-surface border border-white/10 rounded-xl p-6 mb-6">
+                <h3 className="text-lg font-semibold text-c-text mb-4">Koszty per Model</h3>
                 <div className="space-y-3">
                   {costStats.byModel.map((m: any) => (
                     <div key={m.model} className="flex items-center gap-4">
                       <div className="flex-1">
-                        <div className="text-sm text-white">{m.model}</div>
+                        <div className="text-sm text-c-text">{m.model}</div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
                           {m.requests} requestów
                         </div>
@@ -577,9 +577,9 @@ PODEJŚCIE:
           <div className="p-6 overflow-y-auto h-full">
             <div className="max-w-2xl mx-auto">
               {/* System Status */}
-              <div className="bg-slate-900 border border-white/10 rounded-xl p-6 mb-6">
+              <div className="bg-c-surface border border-white/10 rounded-xl p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-white">Status Systemu AI</h3>
+                  <h3 className="text-lg font-semibold text-c-text">Status Systemu AI</h3>
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium ${
                       healthStatus?.status === 'OK'
@@ -615,8 +615,8 @@ PODEJŚCIE:
               </div>
 
               {/* AI Capabilities Health */}
-              <div className="bg-slate-900 border border-white/10 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Test Capabilities</h3>
+              <div className="bg-c-surface border border-white/10 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-c-text mb-4">Test Capabilities</h3>
                 <div className="grid grid-cols-2 gap-4">
                   {[
                     { id: 'connection', icon: Zap, label: 'Connection' },
@@ -626,10 +626,10 @@ PODEJŚCIE:
                   ].map((cap) => (
                     <button
                       key={cap.id}
-                      className="flex items-center gap-3 p-4 bg-slate-800/50 rounded-lg hover:bg-slate-800 transition-colors"
+                      className="flex items-center gap-3 p-4 bg-c-surface-raised/50 rounded-lg hover:bg-c-surface-raised transition-colors"
                     >
                       <cap.icon size={20} className="text-primary-400" />
-                      <span className="text-sm text-white">{cap.label}</span>
+                      <span className="text-sm text-c-text">{cap.label}</span>
                     </button>
                   ))}
                 </div>
@@ -652,14 +652,14 @@ const StatCard: React.FC<{ icon: any; label: string; value: string; color: strin
   value,
   color,
 }) => (
-  <div className="bg-slate-900 border border-white/10 rounded-xl p-4">
+  <div className="bg-c-surface border border-white/10 rounded-xl p-4">
     <div className="flex items-center gap-3 mb-2">
       <Icon size={18} className={color} />
       <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
         {label}
       </span>
     </div>
-    <div className="text-2xl font-bold text-white">{value}</div>
+    <div className="text-2xl font-bold text-c-text">{value}</div>
   </div>
 );
 

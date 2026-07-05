@@ -54,6 +54,8 @@ interface CanvasLeftToolbarProps {
   ideaId?: string;
   canUndo?: boolean;
   canRedo?: boolean;
+  /** DP-5: enables heuristic AI actions in the AI popover (mindmapHeuristicAiOverlays flag). */
+  heuristicAiEnabled?: boolean;
   onAction: (action: string) => void;
   onOpenChat: () => void;
   onApplyTemplate: (templateId: string) => void;
@@ -225,6 +227,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   isAccepted,
   canUndo = true,
   canRedo = true,
+  heuristicAiEnabled = false,
   onAction,
   onOpenChat,
   onApplyTemplate,
@@ -313,12 +316,12 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
             onClick={handlePointerToggle}
             title={pointerTooltip}
             aria-label={pointerTooltip}
-            className="flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 bg-slate-200/70 dark:bg-navy-800 text-slate-900 dark:text-slate-100"
+            className="flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text"
           >
             <PointerIcon size={15} />
           </button>
           <div className="absolute left-[calc(100%+6px)] top-1/2 -translate-y-1/2 pointer-events-none">
-            <span className="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider whitespace-nowrap bg-slate-200/70 dark:bg-navy-800 text-slate-700 dark:text-slate-200">
+            <span className="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider whitespace-nowrap bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text">
               {interactionMode === 'pan'
                 ? 'PAN'
                 : interactionMode === 'connect'
@@ -363,8 +366,8 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
           aria-label={slotTitle}
           className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${
             isActive
-              ? 'bg-slate-200/70 dark:bg-navy-800 text-slate-900 dark:text-slate-100'
-              : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04]'
+              ? 'bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text'
+              : 'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
           }`}
         >
           <Icon size={15} />
@@ -407,6 +410,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
               <AIActionsPopover
                 isPl={!!isPl}
                 selection={selection}
+                heuristicAiEnabled={heuristicAiEnabled}
                 onAction={handlePopoverAction}
                 onOpenChat={onOpenChat}
                 onClose={closePopover}
@@ -424,22 +428,22 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   const toolbarNode = (
     <div
       ref={toolbarRef}
-      className={`fixed top-1/2 -translate-y-1/2 z-[9999] pointer-events-auto flex flex-col items-center gap-0.5 rounded-hig-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border border-slate-200/60 dark:border-navy-700/60 shadow-hig-xl px-1 py-1.5 canvas-left-toolbar-enter${
+      className={`fixed top-1/2 -translate-y-1/2 z-[9999] pointer-events-auto flex flex-col items-center gap-0.5 rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border shadow-hig-xl px-1 py-1.5 canvas-left-toolbar-enter${
         railLeftPx == null ? ' left-3' : ''
       }`}
       style={railLeftPx == null ? undefined : { left: `${railLeftPx}px` }}
     >
       {SHARED_TOP.map(renderSlot)}
 
-      <div className="w-5 border-t border-slate-200/40 dark:border-white/[0.04] my-0.5" />
+      <div className="w-5 border-t border-c-border-subtle dark:border-c-border my-0.5" />
 
       {contextSlots.map(renderSlot)}
 
-      <div className="w-5 border-t border-slate-200/40 dark:border-white/[0.04] my-0.5" />
+      <div className="w-5 border-t border-c-border-subtle dark:border-c-border my-0.5" />
 
       {SHARED_BOTTOM.map(renderSlot)}
 
-      <div className="w-5 border-t border-slate-200/40 dark:border-white/[0.04] my-0.5" />
+      <div className="w-5 border-t border-c-border-subtle dark:border-c-border my-0.5" />
 
       {getUndoRedoSlots(activeTool).map((slot, idx) => {
         const isDisabled = (slot.id === 'undo' && !canUndo) || (slot.id === 'redo' && !canRedo);
@@ -453,8 +457,8 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
               aria-label={isPl ? slot.labelPl : slot.labelEn}
               className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${
                 isDisabled
-                  ? 'opacity-40 cursor-not-allowed text-slate-600 dark:text-slate-400'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04]'
+                  ? 'opacity-40 cursor-not-allowed text-c-text-secondary dark:text-c-text-muted'
+                  : 'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
               }`}
             >
               <Icon size={15} />

@@ -178,7 +178,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
       {/* Tooltip */}
       <div
         ref={tooltipRef}
-        className="fixed z-modal w-80 bg-white dark:bg-navy-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+        className="fixed z-modal w-80 bg-c-surface-raised rounded-xl shadow-2xl border border-c-border-subtle overflow-hidden"
         style={{
           top: tooltipPosition?.top ?? -9999,
           left: tooltipPosition?.left ?? -9999,
@@ -194,12 +194,12 @@ export const Tooltip: React.FC<TooltipProps> = ({
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-100 dark:border-primary-800/30">
-          <h3 className="font-semibold text-navy-900 dark:text-white text-sm">{title}</h3>
+        <div className="flex items-center justify-between px-4 py-3 bg-c-accent-soft border-b border-c-border-subtle">
+          <h3 className="font-semibold text-c-text text-sm">{title}</h3>
           {onDismiss && (
             <button
               onClick={onDismiss}
-              className="text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 transition-colors"
+              className="text-c-text-secondary hover:text-c-text-secondary dark:text-c-text-muted dark:hover:text-c-text-muted transition-colors"
             >
               <X size={16} />
             </button>
@@ -208,14 +208,14 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
         {/* Content */}
         <div className="px-4 py-3">
-          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{content}</p>
+          <p className="text-sm text-c-text-secondary dark:text-c-text-muted leading-relaxed">{content}</p>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-navy-900 border-t border-slate-200 dark:border-slate-800">
+        <div className="flex items-center justify-between px-4 py-3 bg-c-surface-raised dark:bg-c-surface border-t border-c-border-subtle">
           {/* Step indicator */}
           {step && (
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+            <span className="text-xs text-c-text-muted">
               {step.current} / {step.total}
             </span>
           )}
@@ -225,7 +225,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
             {onPrev && step && step.current > 1 && (
               <button
                 onClick={onPrev}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                className="flex items-center gap-1 px-3 py-1.5 text-xs text-c-text-secondary dark:text-c-text-muted hover:text-c-text dark:hover:text-c-text transition-colors"
               >
                 <ChevronLeft size={14} />
                 Wstecz
@@ -234,7 +234,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
             {onNext && (
               <button
                 onClick={onNext}
-                className="flex items-center gap-1 px-4 py-1.5 text-xs font-medium text-white bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
+ className="flex items-center gap-1 px-4 py-1.5 text-xs font-medium bg-c-text text-c-surface hover:opacity-90 rounded-lg transition-colors"
               >
                 {step && step.current === step.total ? 'Zakończ' : 'Dalej'}
                 {step && step.current !== step.total && <ChevronRight size={14} />}

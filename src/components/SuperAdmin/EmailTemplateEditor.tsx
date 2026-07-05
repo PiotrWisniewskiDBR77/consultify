@@ -257,18 +257,18 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950 z-50 flex flex-col">
+    <div className="fixed inset-0 bg-c-bg z-50 flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm">
+      <header className="flex items-center justify-between px-6 py-4 border-b border-c-border bg-c-surface/80 backdrop-blur-sm">
         <div className="flex items-center gap-4">
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-2 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-c-surface-raised rounded-lg transition-colors"
           >
             <X size={20} />
           </button>
           <div>
-            <h1 className="text-lg font-semibold text-white">
+            <h1 className="text-lg font-semibold text-c-text">
               {isNew ? 'Create Email Template' : `Edit: ${template.name}`}
             </h1>
             {!isNew && (
@@ -283,7 +283,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
           {!isNew && (
             <button
               onClick={() => setShowTestSend(true)}
-              className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-white border border-slate-700 rounded-lg hover:bg-slate-800 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-white border border-c-border rounded-lg hover:bg-c-surface-raised transition-colors"
             >
               <Send size={16} />
               Test Send
@@ -322,7 +322,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Panel - Form */}
-        <div className="w-96  border-slate-800 flex flex-col overflow-hidden">
+        <div className="w-96 border-c-border flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {/* Basic Info */}
             <div className="space-y-4">
@@ -344,7 +344,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                     }))
                   }
                   placeholder="welcome-email"
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 font-mono text-sm"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 font-mono text-sm"
                   disabled={!isNew}
                 />
               </div>
@@ -356,7 +356,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                   value={formData.name}
                   onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="Welcome Email"
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                 />
               </div>
 
@@ -371,7 +371,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                   }
                   placeholder="Brief description of this template..."
                   rows={2}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 resize-none"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 resize-none"
                 />
               </div>
             </div>
@@ -391,7 +391,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                   value={formData.subject}
                   onChange={(e) => setFormData((prev) => ({ ...prev, subject: e.target.value }))}
                   placeholder="Welcome to {{organizationName}}, {{firstName}}!"
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                 />
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                   Use {'{{variableName}}'} for dynamic content
@@ -403,7 +403,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                 <select
                   value={formData.categoryId}
                   onChange={(e) => setFormData((prev) => ({ ...prev, categoryId: e.target.value }))}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                 >
                   <option value="">No category</option>
                   {categories.map((cat) => (
@@ -421,7 +421,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, languageCode: e.target.value }))
                   }
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                 >
                   <option value="en">English</option>
                   <option value="pl">Polish</option>
@@ -457,12 +457,12 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                   value={newVariable}
                   onChange={(e) => setNewVariable(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))}
                   placeholder="Add variable..."
-                  className="flex-1 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 text-sm font-mono"
+                  className="flex-1 px-3 py-1.5 bg-c-text text-c-bg border border-c-border rounded-lg placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 text-sm font-mono"
                 />
                 <button
                   onClick={addVariable}
                   disabled={!newVariable.trim()}
-                  className="px-3 py-1.5 bg-slate-800 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-50"
+                  className="px-3 py-1.5 bg-c-surface-raised border border-c-border text-slate-300 rounded-lg hover:bg-c-surface-raised transition-colors disabled:opacity-50"
                 >
                   <Plus size={16} />
                 </button>
@@ -490,7 +490,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                           [varName]: e.target.value,
                         }))
                       }
-                      className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                      className="w-full px-2.5 py-1.5 bg-c-text text-c-bg border border-c-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                     />
                   </div>
                 ))}
@@ -502,8 +502,8 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
         {/* Right Panel - Editor/Preview */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* View Tabs */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/50">
-            <div className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-1">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-c-border bg-c-surface/50">
+            <div className="flex items-center gap-1 bg-c-surface-raised/50 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('html')}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
@@ -540,7 +540,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
             </div>
 
             {viewMode === 'preview' && (
-              <div className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-1">
+              <div className="flex items-center gap-1 bg-c-surface-raised/50 rounded-lg p-1">
                 <button
                   onClick={() => setPreviewDevice('desktop')}
                   className={`p-2 rounded-md transition-colors ${
@@ -588,7 +588,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, htmlContent: e.target.value }))
                   }
-                  className="flex-1 w-full p-4 bg-slate-950 text-slate-300 font-mono text-sm resize-none focus:outline-none"
+                  className="flex-1 w-full p-4 bg-c-bg text-slate-300 font-mono text-sm resize-none focus:outline-none"
                   placeholder="Enter your HTML email content here..."
                   spellCheck={false}
                 />
@@ -618,7 +618,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
             )}
 
             {viewMode === 'code' && (
-              <div className="h-full overflow-auto p-4 bg-slate-950">
+              <div className="h-full overflow-auto p-4 bg-c-bg">
                 <pre className="text-sm text-slate-300 font-mono whitespace-pre-wrap">
                   {formData.htmlContent}
                 </pre>
@@ -627,7 +627,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
           </div>
 
           {/* Plain Text (optional) */}
-          <div className="border-t border-slate-800">
+          <div className="border-t border-c-border">
             <details className="group">
               <summary className="px-4 py-3 text-sm font-medium text-slate-400 dark:text-slate-500 cursor-pointer hover:text-white flex items-center gap-2">
                 <ChevronDown size={14} className="group-open:rotate-180 transition-transform" />
@@ -639,7 +639,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, textContent: e.target.value }))
                   }
-                  className="w-full h-32 p-3 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                  className="w-full h-32 p-3 bg-c-text text-c-bg border border-c-border rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                   placeholder="Plain text fallback for email clients that don't support HTML..."
                 />
               </div>
@@ -651,8 +651,8 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
       {/* Test Send Modal */}
       {showTestSend && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-md p-6 shadow-2xl">
-            <h2 className="text-lg font-semibold text-white mb-4">Send Test Email</h2>
+          <div className="bg-c-surface border border-c-border rounded-xl w-full max-w-md p-6 shadow-2xl">
+            <h2 className="text-lg font-semibold text-c-text mb-4">Send Test Email</h2>
 
             <div className="space-y-4">
               <div>
@@ -664,7 +664,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
                   onChange={(e) => setTestEmails(e.target.value)}
                   placeholder="Enter email addresses (comma-separated)"
                   rows={3}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                 />
               </div>
 

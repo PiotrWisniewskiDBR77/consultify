@@ -244,6 +244,19 @@ export function useIdeaMapSync({
   // version, so the deferred (newest) payload saves cleanly instead of racing.
   const inFlightRef = useRef(false);
   const conflictRetryRef = useRef(0);
+  // Anti-wipe guard state (shared by every sync path that funnels through
+  // flushNow — the workspace runtime capture/flush AND any direct caller). A
+  // mind/idea map always carries at least the non-deletable root node, so a
+  // 0-node payload is never a legitimate user state (26a2a896ef class bug).
+  // `hydratedRef` flips true the first time the server version is primed
+  // (primeServerVersion runs at the end of the GET /map hydration); before that
+  // the local graph is still the empty bootstrap and MUST NOT be flushed —
+  // that empty-before-hydrate POST is exactly the wipe captured in the live
+  // repro (baseVersion 63, nodes:[]). `lastKnownNodeCountRef` remembers the
+  // largest legitimate node count we have seen so a later 0-node payload is
+  // refused even after hydration.
+  const hydratedRef = useRef(false);
+  const lastKnownNodeCountRef = useRef(0);
   const flushNowRef = useRef<((p?: IdeaMapSyncPayload | null, o?: FlushSyncOpts) => Promise<any>) | null>(
     null
   );
@@ -268,6 +281,31 @@ export function useIdeaMapSync({
       if (!open || locked) return null;
       const payload = payloadOverride || queuedPayloadRef.current;
       if (!payload) return null;
+      // Anti-wipe guard (26a2a896ef class). A 0-node payload is only ever
+      // legitimate before the map has hydrated for the very first time (a truly
+      // brand-new idea that has never been saved) — and even then we have no
+      // non-empty baseline to protect, so blocking is harmless. Refuse to POST
+      // an empty graph when EITHER (a) hydration has not completed yet (the
+      // GET /map result has not primed the version — the local graph is still
+      // the empty bootstrap, so this flush would clobber the real server map)
+      // or (b) we have previously accepted a non-empty graph. This is the flush
+      // path the live repro wiped through (canvas/useIdeaMapSync → syncMyIdeaMap
+      // with nodes:[], baseVersion:63) — the scheduleSave guard does not cover
+      // it because the workspace runtime captures/flushes here directly.
+      const payloadNodeCount = Array.isArray(payload.nodes) ? payload.nodes.length : 0;
+      if (payloadNodeCount === 0 && (!hydratedRef.current || lastKnownNodeCountRef.current > 0)) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[idea-map-sync] anti-wipe guard: refusing to flush 0 nodes ` +
+            `(hydrated=${hydratedRef.current}, last known ${lastKnownNodeCountRef.current}). ` +
+            'Likely a pre-hydration flush or hydration/remount defect — map preserved on server.'
+        );
+        // Drop this poisoned payload so a deferred re-flush from the finally
+        // block does not resurrect it; the next legitimate change re-queues.
+        if (queuedPayloadRef.current === payload) queuedPayloadRef.current = null;
+        return null;
+      }
+      if (payloadNodeCount > 0) lastKnownNodeCountRef.current = payloadNodeCount;
       // A sync is already in flight — defer this one. It re-runs from the finally block once the
       // current flush resolves (and bumps serverVersionRef), so it saves with the correct
       // baseVersion instead of racing into a 409 that would drop its payload.
@@ -342,7 +380,10 @@ export function useIdeaMapSync({
         const pending = queuedPayloadRef.current;
         if (pending && flushNowRef.current) {
           queuedPayloadRef.current = null;
-          void flushNowRef.current(pending, opts);
+          // Fire-and-forget re-flush (draft timers / conflict self-heal already surface
+          // failures via syncState); swallow here so a rejected retry (e.g. repeated 409)
+          // doesn't escape as an unhandled promise rejection.
+          void flushNowRef.current(pending, opts).catch(() => null);
         }
       }
     },
@@ -383,10 +424,46 @@ export function useIdeaMapSync({
     [draftMs, flushNow, idleMs, locked, open, persistDraft]
   );
 
+  // DP-3 (T6): `graph_version` — the WS gateway persisted a graph_patch into
+  // the canonical row and broadcast the new version to the whole room (author
+  // included). Adopt it SILENTLY, refs only: our canvas already carries the
+  // corresponding live patch, so the next POST /map/sync must send the fresh
+  // baseVersion instead of tripping a spurious 409. No state updates here —
+  // this must never re-render, re-hydrate, or remount the canvas (26a2a896ef).
+  // Flag OFF ⇒ the server never emits graph_version ⇒ exactly today's behavior.
+  useEffect(() => {
+    if (!hasWindow()) return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail) return;
+      if (detail.ideaId && detail.ideaId !== ideaId) return;
+      const version = Number(detail.version || 0);
+      if (!Number.isFinite(version) || version <= serverVersionRef.current) return;
+      serverVersionRef.current = version;
+      globalIdeaVersions.set(ideaId, version); // L-03
+    };
+    window.addEventListener('idea-collab-graph-version', handler);
+    return () => window.removeEventListener('idea-collab-graph-version', handler);
+  }, [ideaId]);
+
   const primeServerVersion = useCallback(
-    (version: number | null | undefined) => {
+    (version: number | null | undefined, hydratedNodeCount?: number) => {
       serverVersionRef.current = Math.max(1, Number(version || 1));
       globalIdeaVersions.set(ideaId, serverVersionRef.current); // L-03
+      // Hydration has completed (the GET /map result is priming the version).
+      // From now on the anti-wipe guard only blocks 0-node payloads that would
+      // clobber a non-empty graph; a genuinely empty brand-new map can still be
+      // seeded on its first real edit.
+      hydratedRef.current = true;
+      // Seed the anti-wipe baseline with the just-hydrated server node count so
+      // a spurious 0-node flush is refused even before the first user edit has
+      // captured a payload (closes the window right after a non-empty hydrate).
+      if (typeof hydratedNodeCount === 'number' && hydratedNodeCount > 0) {
+        lastKnownNodeCountRef.current = Math.max(
+          lastKnownNodeCountRef.current,
+          hydratedNodeCount
+        );
+      }
       const draft = readIdeaMapDraft(ideaId);
       if (draft?.pending) {
         queuedPayloadRef.current = draft.payload;
@@ -410,11 +487,14 @@ export function useIdeaMapSync({
     if (!open) return;
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden' && queuedPayloadRef.current) {
-        // M07 reload-race fix (2026-06-24): persist the draft SYNCHRONOUSLY first.
-        // The keepalive POST below is best-effort and can be dropped under load; a
-        // synchronous localStorage write always survives teardown, so the next mount
-        // recovers the latest nodes via resolveIdeaMapHydration even if the POST never
-        // lands. Without this, edits made <draftMs before backgrounding were lost.
+        // M07 reload-race fix (2026-06-24, re-pinned DP-3 T7 2026-07-04): persist the
+        // draft SYNCHRONOUSLY first. The keepalive POST below is best-effort and can be
+        // dropped under load (or never settle at all); a synchronous localStorage write
+        // always survives teardown, so the next mount recovers the latest nodes via
+        // resolveIdeaMapHydration even if the POST never lands. Without this, edits made
+        // <draftMs before backgrounding/reload were lost — flushNow only calls
+        // persistDraft from its own async catch block, which never runs if the request
+        // is still in flight when the page unloads.
         persistDraft(queuedPayloadRef.current, true);
         // M06 L-05: page may be backgrounded/closed — keepalive so the flush lands.
         void flushNow(null, { reason: 'draft', keepalive: true }).catch(() => null);
@@ -427,12 +507,8 @@ export function useIdeaMapSync({
     };
     const handleBeforeUnload = () => {
       if (queuedPayloadRef.current) {
-        // M07 reload-race fix (2026-06-24): synchronous draft write BEFORE the keepalive
-        // POST. On a hard reload (F5) the React unmount cleanup does NOT run, and the
-        // keepalive flush can be dropped under load — so without this the user's most
-        // recent nodes (added <draftMs before reload) were gone after the reload. The
-        // localStorage write is synchronous and completes before navigation; the next
-        // mount recovers them via resolveIdeaMapHydration.
+        // M07 reload-race fix (2026-06-24, re-pinned DP-3 T7 2026-07-04): synchronous
+        // draft write BEFORE the keepalive POST — see handleVisibilityChange above.
         persistDraft(queuedPayloadRef.current, true);
         // M06 L-05: document is unloading — a plain fetch would be cancelled; keepalive survives.
         void flushNow(null, { reason: 'draft', keepalive: true }).catch(() => null);
@@ -486,6 +562,12 @@ export function useIdeaMapSync({
     [lastSavedAt, syncState]
   );
 
+  // DP-3 (T7 Part C): expose the freshest in-memory pending payload (updated
+  // synchronously on every queueSync — up to draftMs/800ms fresher than the
+  // localStorage draft) so a degraded→online reconnect can soft-merge it on
+  // top of the canonical GET instead of discarding it outright.
+  const getQueuedPayload = useCallback(() => queuedPayloadRef.current, []);
+
   return {
     saving,
     lastSavedAt,
@@ -497,6 +579,7 @@ export function useIdeaMapSync({
     flushNow,
     primeServerVersion,
     clearLocalDraft,
+    getQueuedPayload,
     currentVersionRef: serverVersionRef,
   };
 }

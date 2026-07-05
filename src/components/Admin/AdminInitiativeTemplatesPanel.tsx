@@ -275,7 +275,7 @@ const getTypeBadgeConfig = (isSystem: boolean) => {
     bg: 'bg-primary-500/20',
     label: 'ORG',
     icon: Building2,
-    dot: 'bg-navy-900',
+    dot: 'bg-c-accent',
   };
 };
 
@@ -672,9 +672,9 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                       onClick={() => handleSelectAll(!allSelected)}
                       className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
                         allSelected
-                          ? 'bg-navy-900 border-navy-900 text-white'
+                          ? 'bg-c-text text-c-bg border-c-border'
                           : someSelected
-                            ? 'bg-primary-500/50 border-primary-500 text-white'
+                            ? 'bg-c-accent/10 border-c-accent'
                             : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-500 dark:hover:text-slate-400'
                       }`}
                     >
@@ -865,7 +865,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                               }}
                               className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
                                 selectedIds.has(template.id)
-                                  ? 'bg-navy-900 border-navy-900 text-white'
+                                  ? 'bg-c-text text-c-bg border-c-border'
                                   : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
                               }`}
                             >

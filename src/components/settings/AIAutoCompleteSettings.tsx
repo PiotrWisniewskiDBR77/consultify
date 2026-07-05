@@ -164,13 +164,13 @@ export const AIAutoCompleteSettings: React.FC<{ className?: string }> = ({ class
                       step="0.1"
                       value={preferences.sensitivity}
                       onChange={(e) => update('sensitivity', Number(e.target.value))}
-                      className="flex-1 accent-primary-500"
+                      className="flex-1 accent-c-accent"
                     />
                     <span className="text-sm font-mono text-white w-12 text-right">
                       {Math.round(preferences.sensitivity * 100)}%
                     </span>
                   </div>
-                  <div className="flex justify-between text-[10px] text-slate-500">
+                  <div className="flex justify-between text-[10px] text-c-text-muted">
                     <span>{t('settings.ai.lessFrequent', 'Less Frequent')}</span>
                     <span>{t('settings.ai.moreFrequent', 'More Frequent')}</span>
                   </div>

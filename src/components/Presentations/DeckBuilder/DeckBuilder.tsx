@@ -31,6 +31,9 @@ import { isMelsDeckBuilderEnabled } from '@/utils/melsDeckBuilderFlag';
 
 import type { CardBlock, Deck, DeckCard } from '../wizard/types';
 import { AgentActivityPanel } from './AgentActivityPanel';
+// STEP 1b — reuse the canonical composition normalizer so this builder's local
+// unifiedJson→Deck converter honours B1's composition identically to deckData.ts.
+import { normalizeSlideComposition } from './deckData';
 import { BlockToolbar } from './BlockToolbar';
 import { CardCanvas } from './CardCanvas';
 import { CommandPalette, useCommandPaletteShortcut } from './CommandPalette';
@@ -39,6 +42,7 @@ import { DeckBuilderBottomBar } from './DeckBuilderBottomBar';
 import type { DeckBuilderTopBarChipsState } from './DeckBuilderMelsChips';
 import { DeckBuilderMelsView } from './DeckBuilderMelsView';
 import { DeckBuilderTopBar } from './DeckBuilderTopBar';
+import { DeckPresenceStack } from './DeckPresenceStack';
 import { DeckGovernanceCardModal } from './DeckGovernanceCardModal';
 import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
 import type { BrandKit } from './DeckThemeContext';
@@ -46,9 +50,11 @@ import { DeckThemeProvider } from './DeckThemeContext';
 import { MediaLibraryBrowser } from './MediaLibraryBrowser';
 import { PresentMode } from './PresentMode';
 import { ShareAnalyticsPanel } from './ShareAnalyticsPanel';
+import { ConflictBanner } from './ConflictBanner';
 import { ShareModal } from './ShareModal';
 import { SlideSorter } from './SlideSorter';
 import { ThemeSwitcher } from './ThemeSwitcher';
+import { useCollaboration } from './useCollaboration';
 import { useDataRefresh } from './useDataRefresh';
 import { useDeckState } from './useDeckState';
 import { useVersionHistory } from './useVersionHistory';
@@ -217,17 +223,29 @@ function deckFromUnifiedJson(params: {
 
     const hasRefreshable = blocks.some((b) => b.is_refreshable);
 
+    // STEP 1b — honour B1's per-slide composition when present. The renderer
+    // resolves `layout_id` (an archetype id) to a template and prefers the AI's
+    // region plan. Absent/malformed composition → the prior hardcoded
+    // intent→layout choice (byte-identical back-compat).
+    const composition = normalizeSlideComposition((slide as any)?.composition);
+    const heuristicLayoutId =
+      intent === 'cover'
+        ? 'cover_centered'
+        : intent === 'performance_overview'
+          ? 'data_grid'
+          : 'content_full';
+    const layoutId =
+      composition?.layoutVariantId && composition.layoutVariantId.trim()
+        ? composition.layoutVariantId.trim()
+        : heuristicLayoutId;
+
     return {
       card_id: cardId,
       deck_id: params.deckId,
       order_index: idx,
       intent,
-      layout_id:
-        intent === 'cover'
-          ? 'cover_centered'
-          : intent === 'performance_overview'
-            ? 'data_grid'
-            : 'content_full',
+      layout_id: layoutId,
+      composition: composition ?? null,
       title: String(headingText || 'Slide'),
       blocks,
       source_refs: [],
@@ -291,6 +309,30 @@ export const DeckBuilder: React.FC = () => {
     canRedo,
   } = useDeckState(null);
 
+  // P3.3 — live presence (behind VITE_ENABLE_DECK_COLLABORATE). Fail-open:
+  // resolving the current user or connecting the WS is entirely best-effort;
+  // when the flag is off or anything fails, `collab.connectedUsers` stays empty
+  // and the presence stack renders nothing — the editor is never blocked.
+  const collaborateEnabled = import.meta.env.VITE_ENABLE_DECK_COLLABORATE === 'true';
+  const currentUser = useMemo(() => {
+    if (!collaborateEnabled) return null;
+    try {
+      const raw = localStorage.getItem('user');
+      if (!raw) return null;
+      const u = JSON.parse(raw);
+      const userId = u?.id || u?.userId;
+      if (!userId) return null;
+      return {
+        userId: String(userId),
+        name: u?.name || u?.email || 'User',
+        avatarUrl: u?.avatarUrl || u?.avatar_url,
+      };
+    } catch {
+      return null;
+    }
+  }, [collaborateEnabled]);
+  const collab = useCollaboration(deckId, currentUser, collaborateEnabled);
+
   const [loadingDeck, setLoadingDeck] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [deckReloadKey, setDeckReloadKey] = useState(0);
@@ -302,12 +344,24 @@ export const DeckBuilder: React.FC = () => {
   const [showNotes, setShowNotes] = useState(false);
   const [presentMode, setPresentMode] = useState<'off' | 'fullscreen' | 'presenter'>('off');
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  // P3.1 — visible conflict state when autosave returns 409 (another session
+  // saved the deck). Instead of silently overwriting the local (possibly
+  // unsaved) edits with the server copy, we surface a banner and let the user
+  // choose: reload the latest, or keep their version (which force-saves on top,
+  // last-write-wins). `pendingServer` holds the freshly-fetched server deck so
+  // "Reload latest" is instant.
+  const [conflict, setConflict] = useState<{
+    serverVersion: number | null;
+    pendingServer: { deckJson: any; title: string } | null;
+  } | null>(null);
   const [themeSwitcherOpen, setThemeSwitcherOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
   // R4 — animations toggle UI removed; deck animations stay on by default.
   const [animationsEnabled] = useState(true);
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
+  // P2.2 — "AI Generate" button in BlockToolbar's Images panel is in flight.
+  const [generatingAiImage, setGeneratingAiImage] = useState(false);
   const [qualityGatesOpen, setQualityGatesOpen] = useState(false);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [auditLogOpen, setAuditLogOpen] = useState(() => {
@@ -542,6 +596,10 @@ export const DeckBuilder: React.FC = () => {
   useEffect(() => {
     if (!deckForAutosave) return;
     if (!hasLoadedInitialRef.current) return;
+    // P3.1 — pause autosave while an unresolved version conflict is on screen.
+    // Autosaving again would just re-trigger the same 409 loop; the user must
+    // pick "Reload latest" or "Keep my version" first.
+    if (conflict) return;
 
     if (autosaveTimerRef.current) {
       clearTimeout(autosaveTimerRef.current);
@@ -559,32 +617,37 @@ export const DeckBuilder: React.FC = () => {
           body: JSON.stringify(deckForAutosave.deck),
         });
         if (res.status === 409) {
+          // P3.1 — another session advanced the deck's version. DO NOT silently
+          // clobber the local (unsaved) edits with the server copy. Fetch the
+          // latest so we can offer an instant reload, then raise a visible
+          // conflict banner and stop autosaving until the user resolves it.
           const conflictPayload = await res.json().catch(() => ({}));
-          if (typeof conflictPayload?.serverVersion === 'number') {
-            serverVersionRef.current = conflictPayload.serverVersion;
+          let serverVersion: number | null =
+            typeof conflictPayload?.serverVersion === 'number'
+              ? conflictPayload.serverVersion
+              : null;
+          let pendingServer: { deckJson: any; title: string } | null = null;
+          try {
+            const latest = (await Api.get(`/presentations/decks/${deckForAutosave.deckId}`)) as any;
+            const latestPayload =
+              latest?.data && typeof latest.data === 'object' && 'data' in latest.data
+                ? latest.data.data
+                : latest?.data;
+            if (typeof latestPayload?.version === 'number') {
+              serverVersion = latestPayload.version;
+            }
+            const latestDeckJson = safeJsonParse<any>(latestPayload?.deck_json, null);
+            if (latestDeckJson && Array.isArray(latestDeckJson.cards)) {
+              pendingServer = {
+                deckJson: latestDeckJson,
+                title: String(latestPayload?.title || latestDeckJson.title || 'Untitled'),
+              };
+            }
+          } catch {
+            /* keep whatever the 409 body told us */
           }
-          toast.error(
-            t('presentations.versionConflictDetectedRefreshingDeckTo')
-          );
-          const latest = (await Api.get(`/presentations/decks/${deckForAutosave.deckId}`)) as any;
-          const latestPayload =
-            latest?.data && typeof latest.data === 'object' && 'data' in latest.data
-              ? latest.data.data
-              : latest?.data;
-          if (typeof latestPayload?.version === 'number') {
-            serverVersionRef.current = latestPayload.version;
-          }
-          const latestDeckJson = safeJsonParse<any>(latestPayload?.deck_json, null);
-          if (latestDeckJson && Array.isArray(latestDeckJson.cards)) {
-            setDeck((prev) => ({
-              ...(prev || {}),
-              ...latestDeckJson,
-              deck_id: deckForAutosave.deckId,
-              title: String(
-                latestPayload?.title || latestDeckJson.title || prev?.title || 'Untitled'
-              ),
-            }));
-          }
+          setConflict({ serverVersion, pendingServer });
+          toast.error(t('presentations.versionConflictDetected'));
           return;
         }
         const payload = await res.json().catch(() => ({}));
@@ -599,7 +662,41 @@ export const DeckBuilder: React.FC = () => {
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [deckForAutosave]);
+  }, [deckForAutosave, conflict]);
+
+  // P3.1 — conflict resolution handlers. "Reload latest" adopts the server's
+  // deck (discarding local edits); "Keep my version" bumps our version pointer
+  // to the server's and clears the banner so the next autosave force-wins
+  // (last-write-wins, but now an explicit, visible choice — no silent loss).
+  const resolveConflictReload = useCallback(() => {
+    setConflict((current) => {
+      if (current?.serverVersion != null) {
+        serverVersionRef.current = current.serverVersion;
+      }
+      if (current?.pendingServer && Array.isArray(current.pendingServer.deckJson?.cards)) {
+        setDeck((prev) => ({
+          ...(prev || {}),
+          ...current.pendingServer!.deckJson,
+          deck_id: deckId,
+          title: String(current.pendingServer!.title || prev?.title || 'Untitled'),
+        }));
+      }
+      return null;
+    });
+    toast.success(t('presentations.versionConflictReloaded'));
+  }, [deckId, setDeck, t]);
+
+  const resolveConflictKeepMine = useCallback(() => {
+    setConflict((current) => {
+      if (current?.serverVersion != null) {
+        // Adopt the server's version number so our next autosave's
+        // compare-and-swap matches and overwrites (last-write-wins).
+        serverVersionRef.current = current.serverVersion;
+      }
+      return null;
+    });
+    toast(t('presentations.versionConflictKeptMine'));
+  }, [t]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -889,10 +986,30 @@ export const DeckBuilder: React.FC = () => {
     [deckId, deck, updateCard, t]
   );
 
+  // P2.2 — BlockToolbar "AI Generate" button (Images panel). No dedicated
+  // single-block image-generation endpoint exists, so this reuses the R4
+  // per-slide rewrite mechanism (handleRewriteCard → regenerateSlide) with
+  // an image-focused instruction, targeting the currently active card.
+  const handleGenerateAiImage = useCallback(async () => {
+    if (activeCardIndex == null || activeCardIndex < 0) return;
+    setGeneratingAiImage(true);
+    try {
+      await handleRewriteCard(
+        activeCardIndex,
+        t(
+          'presentations.builder.toolbar.aiGenerateInstruction',
+          'Add a relevant AI-generated image to this slide.'
+        )
+      );
+    } finally {
+      setGeneratingAiImage(false);
+    }
+  }, [activeCardIndex, handleRewriteCard, t]);
+
   if (loadingDeck || !deck) {
     if (!loadingDeck && loadError) {
       return (
-        <div className="h-screen flex items-center justify-center bg-white dark:bg-navy-950 px-6">
+        <div className="h-screen flex items-center justify-center bg-c-surface px-6">
           <ErrorState
             title={t('presentations.builder.loadFailed', 'Failed to load deck')}
             message={loadError}
@@ -903,7 +1020,7 @@ export const DeckBuilder: React.FC = () => {
     }
 
     return (
-      <div className="h-screen flex items-center justify-center bg-white dark:bg-navy-950">
+      <div className="h-screen flex items-center justify-center bg-c-surface">
         <LoadingState
           variant="spinner"
           label={t('presentations.builder.loading', 'Loading deck...')}
@@ -975,6 +1092,9 @@ export const DeckBuilder: React.FC = () => {
               <BlockToolbar
                 onInsertBlock={handleInsertBlock}
                 onOpenMediaLibrary={() => setMediaLibraryOpen(true)}
+                onGenerateAiImage={handleGenerateAiImage}
+                isGeneratingAiImage={generatingAiImage}
+                onUpload={() => setMediaLibraryOpen(true)}
               />
             ),
             activity: (
@@ -1015,7 +1135,7 @@ export const DeckBuilder: React.FC = () => {
           }
           teresaSlot={
             teresaOpen ? (
-              <aside className="w-[360px] min-w-[320px] max-w-[420px] flex-shrink-0 border-r border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
+              <aside className="w-[360px] min-w-[320px] max-w-[420px] flex-shrink-0 border-r border-c-border-subtle bg-c-surface-raised">
                 <UnifiedChatPanel
                   mode="split"
                   title={t('presentations.builder.teresa.title', 'Teresa')}
@@ -1038,14 +1158,14 @@ export const DeckBuilder: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleAcceptAgentEdit}
-                  className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors"
+                  className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-c-text hover:bg-green-700 transition-colors"
                 >
                   {t('presentations.accept')}
                 </button>
                 <button
                   type="button"
                   onClick={handleRejectAgentEdit}
-                  className="rounded-lg bg-slate-200 dark:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                  className="rounded-lg bg-c-border-subtle px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-border transition-colors"
                 >
                   {t('presentations.reject')}
                 </button>
@@ -1139,7 +1259,7 @@ export const DeckBuilder: React.FC = () => {
       initialColorSetId={deck.color_set_id || 'midnight_navy'}
       initialBrandKit={brandKit}
     >
-      <div className="h-screen flex flex-col bg-white dark:bg-navy-950 overflow-hidden">
+      <div className="h-screen flex flex-col bg-c-surface overflow-hidden">
         {/* Top Bar */}
         <div className="relative">
           <DeckBuilderTopBar
@@ -1168,9 +1288,26 @@ export const DeckBuilder: React.FC = () => {
             lastAgentActivityAt={lastAgentActivityAt}
           />
           <ThemeSwitcher isOpen={themeSwitcherOpen} onClose={() => setThemeSwitcherOpen(false)} />
+          {collaborateEnabled && (
+            <div className="absolute top-1/2 -translate-y-1/2 right-40 z-sticky pointer-events-none">
+              <DeckPresenceStack
+                users={collab.connectedUsers}
+                localUserId={collab.localUser?.userId}
+                connectionStatus={collab.connectionStatus}
+              />
+            </div>
+          )}
         </div>
 
-        <div className="border-b border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/40 px-4 py-2">
+        {conflict && (
+          <ConflictBanner
+            serverVersion={conflict.serverVersion}
+            onReload={resolveConflictReload}
+            onKeepMine={resolveConflictKeepMine}
+          />
+        )}
+
+        <div className="border-b border-c-border-subtle bg-c-surface-raised px-4 py-2">
           <EmbeddedView
             title={t('presentations.builder.usedIn', 'Used in (backlinks)')}
             count={deckBacklinks.length}
@@ -1179,7 +1316,7 @@ export const DeckBuilder: React.FC = () => {
             viewModes={['list']}
           >
             {deckBacklinks.length === 0 && !deckBacklinksLoading ? (
-              <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="text-xs text-c-text-secondary">
                 {t('presentations.noLinksYet')}
               </div>
             ) : (
@@ -1199,7 +1336,7 @@ export const DeckBuilder: React.FC = () => {
                         })
                       )
                     }
-                    className="rounded-full border border-slate-200 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:border-blue-400 dark:hover:border-blue-500/50"
+                    className="rounded-full border border-c-border-subtle/[0.08] bg-c-surface/[0.04] px-3 py-1 text-[11px] font-medium text-c-text hover:border-blue-400 dark:hover:border-blue-500/50"
                   >
                     {getSourceDisplayLabel(bl.sourceType, i18n.language === 'pl')}: {bl.sourceId}
                   </button>
@@ -1232,14 +1369,14 @@ export const DeckBuilder: React.FC = () => {
             <button
               type="button"
               onClick={handleAcceptAgentEdit}
-              className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors"
+              className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-c-text hover:bg-green-700 transition-colors"
             >
               {t('presentations.accept')}
             </button>
             <button
               type="button"
               onClick={handleRejectAgentEdit}
-              className="rounded-lg bg-slate-200 dark:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+              className="rounded-lg bg-c-border-subtle px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-border transition-colors"
             >
               {t('presentations.reject')}
             </button>
@@ -1249,7 +1386,7 @@ export const DeckBuilder: React.FC = () => {
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden relative">
           {teresaOpen && (
-            <aside className="w-[360px] min-w-[320px] max-w-[420px] flex-shrink-0 border-r border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
+            <aside className="w-[360px] min-w-[320px] max-w-[420px] flex-shrink-0 border-r border-c-border-subtle bg-c-surface-raised">
               <UnifiedChatPanel
                 mode="split"
                 title={t('presentations.builder.teresa.title', 'Teresa')}
@@ -1294,6 +1431,9 @@ export const DeckBuilder: React.FC = () => {
           <BlockToolbar
             onInsertBlock={handleInsertBlock}
             onOpenMediaLibrary={() => setMediaLibraryOpen(true)}
+            onGenerateAiImage={handleGenerateAiImage}
+            isGeneratingAiImage={generatingAiImage}
+            onUpload={() => setMediaLibraryOpen(true)}
           />
 
           {/* Passive AI Activity Panel — runtime telemetry feed */}

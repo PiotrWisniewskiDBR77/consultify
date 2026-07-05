@@ -88,7 +88,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
   const variantClass =
     variant === 'danger'
       ? 'text-navy-500 dark:text-navy-400 hover:text-danger-600 dark:hover:text-danger-400 hover:bg-danger-500/10'
-      : 'text-navy-500 dark:text-navy-400 hover:text-navy-900 dark:hover:text-white hover:bg-navy-100 dark:hover:bg-white/[0.04]';
+      : 'text-navy-500 dark:text-navy-400 hover:text-navy-900 dark:hover:text-white hover:bg-c-surface-raised dark:hover:bg-white/[0.04]';
 
   return (
     <button

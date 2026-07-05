@@ -357,7 +357,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
         <div
           className={`${sz} rounded-full bg-emerald-500/90 flex items-center justify-center flex-shrink-0`}
         >
-          <Check className={`${icsz} text-white`} strokeWidth={3} />
+          <Check className={`${icsz} text-c-text`} strokeWidth={3} />
         </div>
       );
     if (state === 'active')
@@ -373,14 +373,14 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
         <div
           className={`${sz} rounded-full bg-danger-500/80 flex items-center justify-center flex-shrink-0`}
         >
-          <Lock className="w-2 h-2 text-white" />
+          <Lock className="w-2 h-2 text-c-text" />
         </div>
       );
-    return <div className={`${sz} rounded-full border border-slate-600 flex-shrink-0`} />;
+    return <div className={`${sz} rounded-full border border-c-border-strong flex-shrink-0`} />;
   };
 
   const Line: React.FC<{ done: boolean }> = ({ done }) => (
-    <div className={`w-[1.5px] h-3 ml-[6px] ${done ? 'bg-emerald-500/60' : 'bg-slate-700/60'}`} />
+    <div className={`w-[1.5px] h-3 ml-[6px] ${done ? 'bg-emerald-500/60' : 'bg-c-surface-raised'}`} />
   );
 
   const renderSteps = (steps: WStep[], overrideAllDone = false) => (
@@ -398,7 +398,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
           action = (
             <button
               onClick={() => setShowReviewerPicker(true)}
-              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
+              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-blue-600 text-c-text rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
             >
               <Send className="w-2.5 h-2.5" /> {isPolish ? 'Do recenzji' : 'Review'}
             </button>
@@ -409,7 +409,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
             <button
               onClick={doApprove}
               disabled={isSubmitting}
-              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-50 transition-colors flex items-center gap-1"
+              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-emerald-600 text-c-text rounded hover:bg-emerald-700 disabled:opacity-50 transition-colors flex items-center gap-1"
             >
               {isSubmitting ? (
                 <Loader2 className="w-2.5 h-2.5 animate-spin" />
@@ -426,7 +426,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
             <button
               onClick={doSendInt}
               disabled={isSubmitting}
-              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center gap-1"
+              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-indigo-600 text-c-text rounded hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center gap-1"
             >
               {isSubmitting ? (
                 <Loader2 className="w-2.5 h-2.5 animate-spin" />
@@ -442,7 +442,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
             <button
               onClick={doSendExt}
               disabled={isSubmitting}
-              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded hover:bg-navy-800 disabled:opacity-50 transition-colors flex items-center gap-1"
+              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-c-text text-c-bg rounded hover:opacity-90 disabled:opacity-50 transition-colors flex items-center gap-1"
             >
               {isSubmitting ? (
                 <Loader2 className="w-2.5 h-2.5 animate-spin" />
@@ -458,7 +458,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
             <button
               onClick={doUtilize}
               disabled={isSubmitting}
-              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-50 transition-colors flex items-center gap-1"
+              className="ml-auto px-2 py-0.5 text-[9px] font-semibold bg-emerald-600 text-c-text rounded hover:bg-emerald-700 disabled:opacity-50 transition-colors flex items-center gap-1"
             >
               {isSubmitting ? (
                 <Loader2 className="w-2.5 h-2.5 animate-spin" />
@@ -482,7 +482,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                       ? 'text-amber-300'
                       : st === 'blocked'
                         ? 'text-danger-400/80'
-                        : 'text-slate-500/70'
+                        : 'text-c-text-secondary'
                 }`}
               >
                 {isPolish ? step.pl : step.en}
@@ -509,16 +509,16 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
   return (
     <div className="space-y-3">
       {/* ===== WORKFLOW ===== */}
-      <div className="p-3 bg-slate-800/40 rounded-lg border border-slate-700/50">
-        <div className="text-[8px] font-bold text-slate-500 uppercase tracking-[0.15em] mb-2.5">
+      <div className="p-3 bg-c-surface rounded-lg border border-c-border">
+        <div className="text-[8px] font-bold text-c-text-secondary uppercase tracking-[0.15em] mb-2.5">
           {isPolish ? 'Workflow' : 'Workflow'}
         </div>
         {renderSteps(STEPS, isPost)}
 
         {/* Distribution */}
         {(reportStatus === 'APPROVED' || isPost) && (
-          <div className="mt-3 pt-2.5 border-t border-slate-700/40">
-            <div className="text-[8px] font-bold text-slate-600 uppercase tracking-[0.15em] mb-2">
+          <div className="mt-3 pt-2.5 border-t border-c-border">
+            <div className="text-[8px] font-bold text-c-text-secondary uppercase tracking-[0.15em] mb-2">
               {isPolish ? 'Dystrybucja' : 'Distribution'}
             </div>
             {renderSteps(DIST_STEPS)}
@@ -532,7 +532,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
           <button
             onClick={doSendBack}
             disabled={isSubmitting}
-            className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium text-slate-600 border border-slate-700/60 rounded-md hover:bg-slate-800 hover:text-slate-200 transition-all"
+            className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium text-c-text-secondary border border-c-border rounded-md hover:bg-c-surface hover:text-c-text transition-all"
           >
             <ArrowLeft className="w-3 h-3" /> {isPolish ? 'Popraw' : 'Revise'}
           </button>
@@ -588,7 +588,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
             value={reviewerSearch}
             onChange={(e) => setReviewerSearch(e.target.value)}
             placeholder={isPolish ? 'Szukaj...' : 'Search...'}
-            className="w-full px-2 py-1 text-[11px] border border-blue-800/40 rounded bg-slate-900 text-white outline-none focus:ring-1 focus:ring-blue-500 placeholder-slate-600"
+            className="w-full px-2 py-1 text-[11px] border border-blue-800/40 rounded bg-c-bg text-c-text outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-c-text-muted"
           />
 
           {selectedReviewers.length > 0 && (
@@ -601,7 +601,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                     className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-900/40 text-blue-300 rounded text-[9px] font-medium"
                   >
                     {u ? userName(u) : uid}
-                    <button onClick={() => toggleReviewer(uid)} className="hover:text-white">
+                    <button onClick={() => toggleReviewer(uid)} className="hover:text-c-text">
                       <X className="w-2 h-2" />
                     </button>
                   </span>
@@ -617,9 +617,9 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                 <button
                   key={u.id}
                   onClick={() => toggleReviewer(u.id)}
-                  className={`w-full flex items-center gap-2 px-2 py-1 rounded text-[10px] transition-colors ${sel ? 'bg-blue-900/40 text-blue-300' : 'hover:bg-slate-800 text-slate-600'}`}
+                  className={`w-full flex items-center gap-2 px-2 py-1 rounded text-[10px] transition-colors ${sel ? 'bg-blue-900/40 text-blue-300' : 'hover:bg-c-text text-c-bg-secondary'}`}
                 >
-                  <div className="w-4 h-4 rounded-full bg-gradient-to-br from-crimson-500 to-primary-600 flex items-center justify-center text-white text-[7px] font-bold flex-shrink-0">
+                  <div className="w-4 h-4 rounded-full bg-c-accent flex items-center justify-center text-c-text text-[7px] font-bold flex-shrink-0">
                     {userName(u).charAt(0).toUpperCase()}
                   </div>
                   <span className="truncate flex-1">{userName(u)}</span>
@@ -634,13 +634,13 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
             onChange={(e) => setReviewMessage(e.target.value)}
             placeholder={isPolish ? 'Wiadomość...' : 'Message...'}
             rows={2}
-            className="w-full px-2 py-1 text-[10px] border border-blue-800/40 rounded bg-slate-900 text-white outline-none resize-none placeholder-slate-600"
+            className="w-full px-2 py-1 text-[10px] border border-blue-800/40 rounded bg-c-bg text-c-text outline-none resize-none placeholder:text-c-text-muted"
           />
 
           <button
             onClick={doFinalize}
             disabled={isSubmitting}
-            className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 text-[10px] font-semibold transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-blue-600 text-c-text rounded hover:bg-blue-700 disabled:opacity-50 text-[10px] font-semibold transition-colors"
           >
             {isSubmitting ? (
               <Loader2 className="w-3 h-3 animate-spin" />
@@ -662,7 +662,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
           onClick={() => setCommentsOpen((v) => !v)}
           className="w-full flex items-center justify-between py-1 group"
         >
-          <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+          <span className="text-[9px] font-bold text-c-text-secondary uppercase tracking-wider flex items-center gap-1.5">
             <MessageSquare className="w-3 h-3" />
             {isPolish ? 'Komentarze' : 'Comments'}
             {summary && (
@@ -670,7 +670,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                 className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${
                   openCount > 0
                     ? 'bg-amber-900/30 text-amber-400'
-                    : 'bg-slate-800/60 text-slate-500'
+                    : 'bg-c-text text-c-bg-secondary'
                 }`}
               >
                 {openCount > 0 ? openCount : summary.total}
@@ -688,9 +688,9 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
               {showAddComment ? <X className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
             </button>
             {commentsOpen ? (
-              <ChevronDown className="w-3 h-3 text-slate-600" />
+              <ChevronDown className="w-3 h-3 text-c-text-secondary" />
             ) : (
-              <ChevronRight className="w-3 h-3 text-slate-600" />
+              <ChevronRight className="w-3 h-3 text-c-text-secondary" />
             )}
           </div>
         </button>
@@ -698,7 +698,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
         {commentsOpen && (
           <div className="mt-1 space-y-1.5">
             {showAddComment && (
-              <div className="p-2 bg-slate-800/40 rounded border border-slate-700/40 space-y-1.5">
+              <div className="p-2 bg-c-surface rounded border border-c-border space-y-1.5">
                 <div className="flex gap-1">
                   {[
                     { v: 'GENERAL' as const, l: isPolish ? 'Ogólny' : 'General' },
@@ -709,7 +709,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                     <button
                       key={t.v}
                       onClick={() => setNewCommentType(t.v)}
-                      className={`px-1.5 py-0.5 text-[8px] rounded font-semibold ${newCommentType === t.v ? 'bg-blue-600 text-white' : 'bg-slate-700/60 text-slate-500 hover:text-slate-300'}`}
+                      className={`px-1.5 py-0.5 text-[8px] rounded font-semibold ${newCommentType === t.v ? 'bg-blue-600 text-c-text' : 'bg-c-surface-raised text-c-text-secondary hover:text-c-text-secondary'}`}
                     >
                       {t.l}
                     </button>
@@ -720,7 +720,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                   onChange={(e) => setNewCommentContent(e.target.value)}
                   placeholder={isPolish ? 'Komentarz...' : 'Comment...'}
                   rows={2}
-                  className="w-full px-2 py-1 text-[10px] border border-slate-700/40 rounded bg-slate-900 text-white resize-none outline-none placeholder-slate-600"
+                  className="w-full px-2 py-1 text-[10px] border border-c-border rounded bg-c-bg text-c-text resize-none outline-none placeholder:text-c-text-muted"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleAddComment();
                   }}
@@ -728,7 +728,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                 <button
                   onClick={handleAddComment}
                   disabled={isSubmitting || !newCommentContent.trim()}
-                  className="w-full py-1 bg-blue-600 text-white rounded text-[9px] font-semibold disabled:opacity-40 hover:bg-blue-700"
+                  className="w-full py-1 bg-blue-600 text-c-text rounded text-[9px] font-semibold disabled:opacity-40 hover:bg-blue-700"
                 >
                   {isPolish ? 'Dodaj' : 'Add'}
                 </button>
@@ -737,12 +737,12 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
 
             {isLoading ? (
               <div className="flex justify-center py-3">
-                <Loader2 className="w-4 h-4 animate-spin text-slate-600" />
+                <Loader2 className="w-4 h-4 animate-spin text-c-text-secondary" />
               </div>
             ) : comments.length === 0 ? (
               <div className="text-center py-3">
-                <MessageSquare className="w-5 h-5 text-slate-700/60 mx-auto mb-0.5" />
-                <p className="text-[9px] text-slate-600">
+                <MessageSquare className="w-5 h-5 text-c-text mx-auto mb-0.5" />
+                <p className="text-[9px] text-c-text-secondary">
                   {isPolish ? 'Brak komentarzy' : 'No comments yet'}
                 </p>
               </div>
@@ -754,14 +754,14 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                   const tc: Record<string, string> = {
                     ISSUE: 'text-danger-400 bg-danger-900/20',
                     QUESTION: 'text-blue-400 bg-blue-900/20',
-                    SUGGESTION: 'text-primary-400 bg-primary-900/20',
-                    GENERAL: 'text-slate-600 bg-slate-700/40',
+                    SUGGESTION: 'text-c-accent bg-c-accent-soft',
+                    GENERAL: 'text-c-text-secondary bg-c-surface-raised',
                     APPROVAL: 'text-emerald-400 bg-emerald-900/20',
                   };
                   return (
                     <div
                       key={c.id}
-                      className={`p-1.5 rounded border ${open ? 'bg-slate-800/50 border-slate-700/40' : 'bg-slate-800/20 border-slate-700/20 opacity-50'}`}
+                      className={`p-1.5 rounded border ${open ? 'bg-c-surface border-c-border' : 'bg-c-surface border-c-border opacity-50'}`}
                     >
                       <div className="flex items-start gap-1">
                         <button
@@ -779,7 +779,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                             )}
                           </div>
                           <p
-                            className={`text-[10px] text-slate-600 mt-0.5 leading-snug ${!exp ? 'line-clamp-1' : ''}`}
+                            className={`text-[10px] text-c-text-secondary mt-0.5 leading-snug ${!exp ? 'line-clamp-1' : ''}`}
                           >
                             {c.content}
                           </p>
@@ -795,14 +795,14 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                           )}
                           <button
                             onClick={() => deleteComment(c.id)}
-                            className="p-0.5 text-slate-600 hover:text-danger-400 rounded"
+                            className="p-0.5 text-c-text-secondary hover:text-danger-400 rounded"
                           >
                             <Trash2 className="w-2 h-2" />
                           </button>
                         </div>
                       </div>
                       {exp && (
-                        <div className="mt-1 text-[8px] text-slate-600 flex items-center gap-1">
+                        <div className="mt-1 text-[8px] text-c-text-secondary flex items-center gap-1">
                           <Clock className="w-2 h-2" />
                           {new Date(c.createdAt).toLocaleString()}
                           {c.authorName && ` · ${c.authorName}`}

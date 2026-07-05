@@ -186,7 +186,7 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({
         );
       case 'expired':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-slate-100 dark:bg-navy-800/40 text-slate-700 dark:bg-slate-800 dark:text-slate-400">
+          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-c-surface-raised text-c-text-secondary">
             <AlertCircle className="w-3 h-3" />
             {t('settings.export.statusExpired', 'Expired')}
           </span>
@@ -231,8 +231,8 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
-              <FileArchive className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+            <div className="p-2 bg-c-accent-soft rounded-lg">
+              <FileArchive className="w-5 h-5 text-c-accent" />
             </div>
             <div>
               <CardTitle>{t('settings.export.title', 'Export Your Data')}</CardTitle>
@@ -244,7 +244,7 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+            <p className="text-sm text-c-text-secondary">
               {t(
                 'settings.export.info',
                 'Your export will include your profile information, settings, activity history, and other personal data. Processing typically takes 24-48 hours.'
@@ -281,20 +281,20 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({
               {exportRequests.map((request) => (
                 <div
                   key={request.id}
-                  className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-800/50 rounded-lg"
+                  className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="p-2 bg-white dark:bg-navy-700 rounded-lg shadow-sm">
-                      <FileArchive className="w-5 h-5 text-slate-600 dark:text-slate-500" />
+                    <div className="p-2 bg-c-surface rounded-lg shadow-sm">
+                      <FileArchive className="w-5 h-5 text-c-text-secondary" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-slate-900 dark:text-white">
+                        <span className="font-medium text-c-text">
                           {t('settings.export.dataExport', 'Data Export')}
                         </span>
                         {getStatusBadge(request.status)}
                       </div>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-3 mt-1 text-xs text-c-text-muted">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           {new Date(request.requestedAt).toLocaleDateString()}
@@ -341,12 +341,12 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({
               { icon: HardDrive, title: 'Documents & Files', desc: 'Uploaded files and documents' },
             ].map((item, index) => (
               <div key={index} className="flex items-start gap-3">
-                <div className="p-2 bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-800 rounded-lg">
-                  <item.icon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                <div className="p-2 bg-c-surface-raised rounded-lg">
+                  <item.icon className="w-4 h-4 text-c-text-muted" />
                 </div>
                 <div>
-                  <p className="font-medium text-sm text-slate-900 dark:text-white">{item.title}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{item.desc}</p>
+                  <p className="font-medium text-sm text-c-text">{item.title}</p>
+                  <p className="text-xs text-c-text-muted">{item.desc}</p>
                 </div>
               </div>
             ))}

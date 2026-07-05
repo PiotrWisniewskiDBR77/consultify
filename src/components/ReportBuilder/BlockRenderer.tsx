@@ -31,7 +31,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
         return <CalloutBlock block={block} onUpdate={onUpdate} />;
       default:
         return (
-          <div className="p-4 text-gray-600 dark:text-gray-500 dark:text-gray-400 italic">
+          <div className="p-4 text-c-text-secondary italic">
             Unsupported block type: {block.type}
           </div>
         );
@@ -50,18 +50,18 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
 
   return (
     <div
-      className={`group relative bg-white dark:bg-navy-800 rounded-xl border transition-all ${
+      className={`group relative bg-c-surface rounded-xl border transition-all ${
         block.locked
           ? 'border-amber-200 dark:border-amber-900/30'
-          : 'border-slate-200 dark:border-navy-700 hover:border-primary-200 dark:hover:border-primary-500/30'
+          : 'border-c-border-subtle hover:border-c-accent'
       } shadow-sm`}
     >
       {/* Block Header / Controls - Visible on Hover */}
-      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 dark:bg-navy-800/80 p-1 rounded backdrop-blur z-10">
+      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-c-surface p-1 rounded backdrop-blur z-10">
         {/* Toggle Lock */}
         <button
           onClick={() => onUpdate({ locked: !block.locked })}
-          className={`p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/5 ${block.locked ? 'text-amber-500' : 'text-slate-600 dark:text-slate-500'}`}
+          className={`p-1.5 rounded hover:bg-c-surface-raised ${block.locked ? 'text-amber-500' : 'text-c-text-secondary'}`}
           title={block.locked ? 'Unlock' : 'Lock'}
         >
           {block.locked ? <Lock size={14} /> : <Unlock size={14} />}
@@ -72,7 +72,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
             {/* AI Action */}
             <button
               onClick={handleAiClick}
-              className="p-1.5 rounded hover:bg-primary-100 dark:hover:bg-primary-900/30 text-primary-500"
+              className="p-1.5 rounded hover:bg-c-accent-soft text-c-accent"
               title="AI Rewrite"
             >
               <Wand2 size={14} />
@@ -81,7 +81,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
             {/* Delete */}
             <button
               onClick={onDelete}
-              className="p-1.5 rounded hover:bg-danger-100 dark:hover:bg-danger-900/30 text-slate-600 dark:text-slate-500 hover:text-danger-500"
+              className="p-1.5 rounded hover:bg-danger-100 dark:hover:bg-danger-900/30 text-c-text-secondary hover:text-danger-500"
               title="Delete"
             >
               <Trash2 size={14} />
@@ -94,7 +94,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       {!block.locked && (
         <div
           {...dragHandleProps}
-          className="absolute top-1/2 -translate-y-1/2 -left-3 p-1.5 text-slate-600 hover:text-slate-500 dark:text-slate-400 cursor-move opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute top-1/2 -translate-y-1/2 -left-3 p-1.5 text-c-text-secondary hover:text-c-text-secondary cursor-move opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <GripVertical size={16} />
         </div>

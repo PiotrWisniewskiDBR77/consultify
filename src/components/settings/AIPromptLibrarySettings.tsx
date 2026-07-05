@@ -96,7 +96,7 @@ const CATEGORY_COLORS: Record<SavedPrompt['category'], string> = {
   interview: 'bg-blue-500/20 text-blue-400',
   analysis: 'bg-emerald-500/20 text-emerald-400',
   report: 'bg-amber-500/20 text-amber-400',
-  general: 'bg-primary-500/20 text-primary-400',
+  general: 'bg-c-accent-soft text-c-accent',
 };
 
 const getCategoryLabel = (t: TFunction, category: SavedPrompt['category']) =>
@@ -344,7 +344,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                       'px-3 py-1 text-xs rounded-md transition-colors',
                       filterCategory === cat
                         ? 'bg-navy-900 text-white'
-                        : 'bg-white/5 text-slate-600 hover:text-white hover:bg-white/10'
+                        : 'bg-c-surface-raised text-c-text-secondary hover:text-white hover:bg-c-surface-raised'
                     )}
                   >
                     {cat === 'all'
@@ -366,12 +366,12 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                   filteredPrompts.map((prompt) => (
                     <div
                       key={prompt.id}
-                      className="p-3 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/5 rounded-lg hover:border-slate-300 dark:hover:border-white/10 transition-colors group"
+                      className="p-3 bg-c-surface-raised border border-c-border-subtle rounded-lg hover:border-c-border dark:hover:border-white/10 transition-colors group"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-medium text-slate-900 dark:text-white">{prompt.name}</span>
+                            <span className="text-sm font-medium text-c-text">{prompt.name}</span>
                             <span
                               className={cn(
                                 'px-1.5 py-0.5 text-[10px] font-medium rounded',
@@ -381,24 +381,24 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                               {getCategoryLabel(t, prompt.category)}
                             </span>
                             {prompt.id.startsWith('builtin-') && (
-                              <span className="px-1.5 py-0.5 text-[10px] font-medium bg-white/5 text-slate-500 rounded">
+                              <span className="px-1.5 py-0.5 text-[10px] font-medium bg-c-surface-raised text-c-text-muted rounded">
                                 {t('settings.ai.builtIn', 'Built-in')}
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-slate-500 line-clamp-2">{prompt.prompt}</p>
+                          <p className="text-xs text-c-text-muted line-clamp-2">{prompt.prompt}</p>
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                           <button
                             onClick={() => copyPrompt(prompt.prompt)}
-                            className="p-1.5 text-slate-500 hover:text-white rounded transition-colors"
+                            className="p-1.5 text-c-text-muted hover:text-white rounded transition-colors"
                             title={t('common.copy', 'Copy')}
                           >
                             <Copy size={14} />
                           </button>
                           <button
                             onClick={() => openEditor(prompt)}
-                            className="p-1.5 text-slate-500 hover:text-white rounded transition-colors"
+                            className="p-1.5 text-c-text-muted hover:text-white rounded transition-colors"
                             title={t('common.edit', 'Edit')}
                           >
                             <Edit3 size={14} />
@@ -406,7 +406,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                           {!prompt.id.startsWith('builtin-') && (
                             <button
                               onClick={() => deletePrompt(prompt.id)}
-                              className="p-1.5 text-slate-500 hover:text-danger-400 rounded transition-colors"
+                              className="p-1.5 text-c-text-muted hover:text-danger-400 rounded transition-colors"
                               title={t('common.delete', 'Delete')}
                             >
                               <Trash2 size={14} />
@@ -423,16 +423,16 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
               {showEditor && (
                 <>
                   <SettingsDivider />
-                  <div className="p-4 bg-white dark:bg-navy-900/80 border border-primary-200 dark:border-primary-500/20 rounded-lg space-y-4">
+                  <div className="p-4 bg-c-surface-raised border border-c-accent dark:border-c-accent rounded-lg space-y-4">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                      <h4 className="text-sm font-semibold text-c-text">
                         {editingPrompt
                           ? t('settings.ai.editPrompt', 'Edit Prompt')
                           : t('settings.ai.createPrompt', 'Create Prompt')}
                       </h4>
                       <button
                         onClick={closeEditor}
-                        className="p-1 text-slate-500 hover:text-white transition-colors"
+                        className="p-1 text-c-text-muted hover:text-white transition-colors"
                       >
                         <X size={16} />
                       </button>
@@ -472,7 +472,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                         rows={4}
                         maxLength={2000}
                       />
-                      <div className="text-right text-xs text-slate-500 mt-1">
+                      <div className="text-right text-xs text-c-text-muted mt-1">
                         {editorPrompt.length}/2000
                       </div>
                     </SettingsFormRow>
@@ -480,7 +480,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={closeEditor}
-                        className="px-3 py-1.5 text-sm text-slate-600 hover:text-white transition-colors"
+                        className="px-3 py-1.5 text-sm text-c-text-secondary hover:text-white transition-colors"
                       >
                         {t('common.cancel', 'Cancel')}
                       </button>

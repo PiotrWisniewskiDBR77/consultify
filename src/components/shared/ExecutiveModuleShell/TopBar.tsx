@@ -103,7 +103,7 @@ const Chip: React.FC<{ descriptor: TopBarChipDescriptor; menuItem?: boolean }> =
   if (kind === 'primary') {
     // Primary tier — prominent accent button (only 1-4 per module).
     stateClasses =
-      'bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed';
+      'bg-c-text text-c-bg hover:bg-c-text-secondary disabled:opacity-50 disabled:cursor-not-allowed';
   } else if (active) {
     stateClasses =
       'text-primary-600 dark:text-primary-300 bg-primary-50 dark:bg-primary-500/10 hover:bg-primary-100 dark:hover:bg-primary-500/15';

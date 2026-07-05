@@ -4953,7 +4953,7 @@ Please return:
         /transport safeguard|auth loop guard/i.test(initiativesLoadError || '');
       return (
         <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-          <AlertTriangle className="mb-4 h-12 w-12 text-danger-500" />
+          <AlertTriangle className="mb-4 h-12 w-12 text-c-danger" />
           <h3 className="mb-2 text-lg font-semibold text-c-text">
             {isTransportBlock
               ? t('execution.hub.transportBlockedTitle', 'Requests temporarily blocked')
@@ -4973,7 +4973,7 @@ Please return:
               setIsLoading(true);
               queueExecutionTruthRefresh();
             }}
-            className="inline-flex items-center gap-2 rounded-md bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
+            className="inline-flex items-center gap-2 rounded-token-md bg-c-text px-4 py-2 text-sm font-medium text-c-surface transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-[var(--c-surface)]"
           >
             <RefreshCw className="h-4 w-4" />
             {t('common.retry', 'Retry')}

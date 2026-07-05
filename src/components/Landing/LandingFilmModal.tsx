@@ -49,7 +49,7 @@ export const LandingFilmModal: React.FC<LandingFilmModalProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-black/85 backdrop-blur-sm z-overlay"
           />
 
           <motion.div
@@ -57,7 +57,7 @@ export const LandingFilmModal: React.FC<LandingFilmModalProps> = ({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
             transition={{ type: 'spring', damping: 26, stiffness: 260 }}
-            className="fixed inset-0 z-50 flex items-center justify-center"
+            className="fixed inset-0 z-overlay flex items-center justify-center"
           >
             <div className="absolute inset-0" />
             <div className="relative w-full h-full bg-black">
