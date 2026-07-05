@@ -10,6 +10,7 @@ import type { IDatabase } from '../database/IDatabase.js';
 import { ORG_TYPES } from '../services/access/AccessTypes.js';
 import mfaService from '../services/MFAService.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
+import { recordFailedLogin } from '../services/securityAlerts.js';
 import { setAuthCookies } from '../utils/cookieAuth.js';
 import logger from '../utils/Logger.js';
 import type { LoginRequest } from '../validators/auth.validators.js';
@@ -163,6 +164,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     if (!user) {
       logger.info('[Auth] User not found.');
+      void recordFailedLogin(normalizedEmail, req.ip);
       res.status(401).json({ error: 'Invalid email or password' });
       return;
     }
@@ -202,6 +204,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const passwordIsValid = await comparePassword(dependencies.bcrypt, password, user.password);
     logger.info(`[Auth] Password valid: ${passwordIsValid}`);
     if (!passwordIsValid) {
+      void recordFailedLogin(normalizedEmail, req.ip);
       res.status(401).json({ error: 'Invalid email or password' });
       return;
     }

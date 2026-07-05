@@ -8,6 +8,7 @@ import auditEventsService from '../services/AuditEventsService.js';
 import { hasColumn } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
+import { alertPrivilegeEscalation } from '../services/securityAlerts.js';
 import { buildSeedExclusion, isSeedRequested } from '../utils/superadminSeedFilter.js';
 import * as customerCtrl from './superadmin/customerController.js';
 import {
@@ -567,6 +568,17 @@ const updateUser = catchAsync(async (req, res, next) => {
   const updates: string[] = [];
   const params: any[] = [];
 
+  // Snapshot the target's current role/email BEFORE the update so a privilege
+  // escalation (→ SUPER_ADMIN/OWNER) can be alerted with old→new context.
+  let priorUser: { role?: string; email?: string } | null = null;
+  if (role !== undefined) {
+    priorUser = await new Promise((resolve) => {
+      deps.db.get('SELECT role, email FROM users WHERE id = ?', [id], (err, row) =>
+        resolve((err ? null : (row as { role?: string; email?: string })) || null)
+      );
+    });
+  }
+
   if (organizationId !== undefined) {
     const targetOrganization = await new Promise((resolve, reject) => {
       deps.db.get('SELECT id FROM organizations WHERE id = ?', [organizationId], (err, row) => {
@@ -704,6 +716,17 @@ const updateUser = catchAsync(async (req, res, next) => {
           projectRole,
         },
       });
+
+      // Security signal: page when this update granted a privileged role.
+      if (role !== undefined) {
+        void alertPrivilegeEscalation({
+          actorEmail: req.user?.email,
+          targetEmail: email ?? priorUser?.email,
+          targetUserId: id,
+          oldRole: priorUser?.role,
+          newRole: role,
+        });
+      }
 
       res.json({ message: 'User updated successfully' });
     });
