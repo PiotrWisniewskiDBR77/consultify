@@ -432,7 +432,13 @@ scheduleStartupTask(async () => {
       './services/tablePlatform/SSOService.js'
     );
     tablePlatformSsoService.setSignatureVerifier(verifySAMLSignature);
-    logger.info('[Server] ✅ SAML signature verifier registered (xml-crypto)');
+
+    const { setSAMLSignatureVerifier } = await import('./services/ssoService.js');
+    setSAMLSignatureVerifier(verifySAMLSignature);
+
+    logger.info(
+      '[Server] ✅ SAML signature verifier registered (xml-crypto) — tablePlatform SSOService + legacy ssoService'
+    );
   } catch (err: any) {
     logger.error('[Server] SAML signature verifier registration failed:', err?.message || err);
   }
