@@ -202,7 +202,7 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
 
   // Styles
   const cardClass =
-    'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6';
+    'bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6';
 
   if (loading) {
     return <LoadingState variant="spinner" />;
@@ -215,18 +215,18 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Palette size={28} className="text-primary-500" />
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
+            <Palette size={28} className="text-c-accent" />
             {t('settings.appearance.title', 'Appearance')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t('settings.appearance.description', 'Customize how Consultify looks and feels')}
           </p>
         </div>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {saving ? t('common.saving', 'Saving...') : t('common.saveChanges', 'Save Changes')}
@@ -235,11 +235,11 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
 
       {/* Theme Selection */}
       <div className={cardClass}>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Sun size={20} className="text-amber-500" />
           {t('settings.appearance.theme', 'Theme')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+        <p className="text-sm text-c-text-muted mb-4">
           {t('settings.appearance.themeDescription', 'Choose your preferred color scheme')}
         </p>
 
@@ -249,20 +249,20 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
               value: 'light',
               label: t('settings.appearance.light', 'Light'),
               icon: Sun,
-              colors: 'bg-white border-slate-200 dark:border-navy-700',
+              colors: 'bg-c-surface border-c-border-subtle dark:border-navy-700',
             },
             {
               value: 'dark',
               label: t('settings.appearance.dark', 'Dark'),
               icon: Moon,
-              colors: 'bg-slate-900 border-slate-700',
+              colors: 'bg-c-surface border-c-border-strong',
             },
             {
               value: 'system',
               label: t('settings.appearance.system', 'System'),
               icon: Monitor,
               colors:
-                'bg-gradient-to-r from-white to-slate-900 border-slate-300 dark:border-navy-700',
+                'bg-gradient-to-r from-white to-c-surface border-c-border dark:border-navy-700',
             },
           ].map((option) => {
             const isSelected = theme === option.value;
@@ -273,8 +273,8 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
                 onClick={() => toggleTheme(option.value as 'light' | 'dark' | 'system')}
                 className={`p-4 rounded-xl border-2 transition-all ${
                   isSelected
-                    ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07]'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-slate-400 dark:hover:border-white/30'
+                    ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+                    : 'border-c-border-subtle dark:border-navy-700 hover:border-c-accent dark:hover:border-c-accent'
                 }`}
               >
                 <div className={`w-full h-16 rounded-lg border mb-3 ${option.colors}`} />
@@ -282,11 +282,11 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
                   <Icon
                     size={16}
                     className={
-                      isSelected ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500'
+                      isSelected ? 'text-c-accent' : 'text-c-text-muted'
                     }
                   />
                   <span
-                    className={`font-medium ${isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}
+                    className={`font-medium ${isSelected ? 'text-c-accent' : 'text-c-text-secondary'}`}
                   >
                     {option.label}
                   </span>
@@ -299,11 +299,11 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
 
       {/* UI Density */}
       <div className={cardClass}>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Layout size={20} className="text-blue-500" />
           {t('settings.appearance.uiDensity', 'UI Density')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+        <p className="text-sm text-c-text-muted mb-4">
           {t(
             'settings.appearance.uiDensityDescription',
             'Control spacing and padding throughout the interface'
@@ -322,7 +322,7 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
                 className={`w-full p-4 rounded-xl border-2 flex items-center justify-between transition-all ${
                   isSelected
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-blue-300 dark:hover:border-blue-500/50'
+                    : 'border-c-border-subtle dark:border-navy-700 hover:border-blue-300 dark:hover:border-blue-500/50'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -330,20 +330,20 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
                     className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                       isSelected
                         ? 'border-blue-500 bg-blue-500'
-                        : 'border-slate-300 dark:border-slate-600'
+                        : 'border-c-border'
                     }`}
                   >
                     {isSelected && (
-                      <div className="w-2 h-2 rounded-full bg-white dark:bg-navy-900" />
+                      <div className="w-2 h-2 rounded-full bg-c-surface" />
                     )}
                   </div>
                   <div className="text-left">
                     <span
-                      className={`font-medium ${isSelected ? 'text-blue-700 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}
+                      className={`font-medium ${isSelected ? 'text-blue-700 dark:text-blue-400' : 'text-c-text-secondary'}`}
                     >
                       {t(`settings.appearance.uiDensityOptions.${option.value}`, option.label)}
                     </span>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-c-text-muted">
                       {t(
                         `settings.appearance.uiDensityOptions.${option.value}Desc`,
                         option.description
@@ -356,13 +356,13 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
                   className={`flex flex-col gap-${option.value === 'compact' ? '0.5' : option.value === 'comfortable' ? '1' : '2'}`}
                 >
                   <div
-                    className={`h-2 rounded bg-slate-300 dark:bg-slate-600 ${option.value === 'compact' ? 'w-16' : option.value === 'comfortable' ? 'w-20' : 'w-24'}`}
+                    className={`h-2 rounded bg-c-surface-raised ${option.value === 'compact' ? 'w-16' : option.value === 'comfortable' ? 'w-20' : 'w-24'}`}
                   />
                   <div
-                    className={`h-2 rounded bg-slate-200 dark:bg-slate-700 ${option.value === 'compact' ? 'w-12' : option.value === 'comfortable' ? 'w-16' : 'w-20'}`}
+                    className={`h-2 rounded bg-c-surface-raised ${option.value === 'compact' ? 'w-12' : option.value === 'comfortable' ? 'w-16' : 'w-20'}`}
                   />
                   <div
-                    className={`h-2 rounded bg-slate-300 dark:bg-slate-600 ${option.value === 'compact' ? 'w-14' : option.value === 'comfortable' ? 'w-18' : 'w-22'}`}
+                    className={`h-2 rounded bg-c-surface-raised ${option.value === 'compact' ? 'w-14' : option.value === 'comfortable' ? 'w-18' : 'w-22'}`}
                   />
                 </div>
               </button>
@@ -373,11 +373,11 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
 
       {/* Start Page */}
       <div className={cardClass}>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Home size={20} className="text-emerald-500" />
           {t('settings.appearance.startPage', 'Start Page')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+        <p className="text-sm text-c-text-muted mb-4">
           {t(
             'settings.appearance.startPageDescription',
             'Choose which page to show when you open Consultify'
@@ -397,30 +397,30 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
                 className={`p-4 rounded-xl border-2 flex items-center gap-4 transition-all ${
                   isSelected
                     ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-emerald-300 dark:hover:border-emerald-500/50'
+                    : 'border-c-border-subtle dark:border-navy-700 hover:border-emerald-300 dark:hover:border-emerald-500/50'
                 }`}
               >
                 <div
                   className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                     isSelected
                       ? 'bg-emerald-100 dark:bg-emerald-500/20'
-                      : 'bg-slate-100 dark:bg-white/10'
+                      : 'bg-c-surface-raised'
                   }`}
                 >
                   <Icon
                     size={20}
                     className={
-                      isSelected ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'
+                      isSelected ? 'text-emerald-600 dark:text-emerald-400' : 'text-c-text-muted'
                     }
                   />
                 </div>
                 <div className="text-left">
                   <span
-                    className={`font-medium ${isSelected ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}`}
+                    className={`font-medium ${isSelected ? 'text-emerald-700 dark:text-emerald-400' : 'text-c-text-secondary'}`}
                   >
                     {t(`settings.appearance.startPageOptions.${option.value}`, option.label)}
                   </span>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-c-text-muted">
                     {t(
                       `settings.appearance.startPageOptions.${option.value}Desc`,
                       option.description
@@ -435,11 +435,11 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
 
       {/* Font Scale */}
       <div className={cardClass}>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Type size={20} className="text-indigo-500" />
           {t('settings.appearance.fontScale', 'Font Scale')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+        <p className="text-sm text-c-text-muted mb-4">
           {t(
             'settings.appearance.fontScaleDescription',
             'Adjust the overall text size throughout the application'
@@ -459,7 +459,7 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
                 }
               }}
               disabled={preferences.fontScale === 90}
-              className="p-2 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded-lg bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Minus size={16} />
             </button>
@@ -475,7 +475,7 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
                       className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
                         isSelected
                           ? 'bg-indigo-500 text-white'
-                          : 'text-slate-500 hover:text-slate-700 dark:text-slate-300'
+                          : 'text-c-text-muted hover:text-c-text-secondary'
                       }`}
                     >
                       {option.value}%
@@ -484,10 +484,10 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
                 })}
               </div>
               {/* Progress bar */}
-              <div className="h-2 bg-slate-200 dark:bg-navy-800 rounded-full">
+              <div className="h-2 bg-c-surface-raised rounded-full">
                 <div
-                  className="h-full rounded-full transition-all"
-                  style={{ width: `${((preferences.fontScale - 90) / 30) * 100}%`, backgroundColor: 'var(--c-info)' }}
+                  className="h-full bg-indigo-500 rounded-full transition-all"
+                  style={{ width: `${((preferences.fontScale - 90) / 30) * 100}%` }}
                 />
               </div>
             </div>
@@ -502,19 +502,19 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
                 }
               }}
               disabled={preferences.fontScale === 120}
-              className="p-2 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded-lg bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus size={16} />
             </button>
           </div>
 
           {/* Preview */}
-          <div className="p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg border border-slate-200 dark:border-navy-700">
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
+          <div className="p-4 bg-c-surface-raised rounded-lg border border-c-border-subtle dark:border-navy-700">
+            <p className="text-sm text-c-text-muted mb-2">
               {t('settings.appearance.preview', 'Preview:')}
             </p>
             <p
-              className="text-slate-900 dark:text-white font-medium"
+              className="text-c-text font-medium"
               style={{ fontSize: `${16 * (preferences.fontScale / 100)}px` }}
             >
               {t(
@@ -523,7 +523,7 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
               )}
             </p>
             <p
-              className="text-slate-600 dark:text-slate-400 mt-1"
+              className="text-c-text-secondary mt-1"
               style={{ fontSize: `${14 * (preferences.fontScale / 100)}px` }}
             >
               {t(
@@ -538,10 +538,10 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
 
       {/* Language */}
       <div className={cardClass}>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+        <h3 className="text-lg font-semibold text-c-text mb-4">
           {t('settings.appearance.language', 'Language')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+        <p className="text-sm text-c-text-muted mb-4">
           {t('settings.appearance.languageDescription', 'Select your preferred interface language')}
         </p>
 
@@ -575,8 +575,8 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
                 onClick={() => changeLanguage(lang.code)}
                 className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
                   isSelected
-                    ? 'bg-slate-200/80 dark:bg-white/[0.1] text-slate-900 dark:text-white border-2 border-slate-500 dark:border-white/40'
-                    : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 border-2 border-transparent hover:border-slate-400'
+                    ? 'bg-c-accent-soft dark:bg-c-accent-soft text-c-accent border-2 border-c-accent'
+                    : 'bg-c-surface-raised text-c-text-secondary border-2 border-transparent hover:border-c-accent'
                 }`}
               >
                 <span>{lang.flag}</span>

@@ -15,7 +15,19 @@
  * @version 2.0.0
  */
 
-import { ArrowUp, AudioLines, Loader2, Mic, MicOff, Pen, Square, StopCircle } from 'lucide-react';
+import {
+  ArrowUp,
+  AudioLines,
+  Link2,
+  Loader2,
+  Mic,
+  MicOff,
+  Paperclip,
+  Pen,
+  Square,
+  StopCircle,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -1016,21 +1028,24 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               : (att as { name?: string; url?: string }).name ||
                 (att as { url?: string }).url ||
                 'attachment';
-            const badge = isUrlAttachment ? 'Link' : 'File';
             return (
               <div
                 key={idx}
-                className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-navy-800 rounded text-xs text-slate-600 dark:text-slate-400"
+                className="group/chip flex items-center gap-1.5 pl-2 pr-1.5 py-1 bg-c-surface-raised border border-c-border rounded-lg text-xs text-c-text-secondary"
+                title={label}
               >
-                <span className="inline-flex items-center gap-1">
-                  <span>{badge}:</span>
-                  <span className="max-w-[220px] truncate">{label}</span>
-                </span>
+                {isUrlAttachment ? (
+                  <Link2 size={13} className="shrink-0 text-c-text-muted" />
+                ) : (
+                  <Paperclip size={13} className="shrink-0 text-c-text-muted" />
+                )}
+                <span className="max-w-[220px] truncate font-medium text-c-text">{label}</span>
                 <button
                   onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
-                  className="ml-1 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+                  className="ml-0.5 flex h-4 w-4 items-center justify-center rounded text-c-text-muted transition-colors hover:bg-c-border-subtle hover:text-c-text"
+                  aria-label={t('aiChat.composer.removeAttachment', 'Remove attachment')}
                 >
-                  ×
+                  <X size={12} />
                 </button>
               </div>
             );
@@ -1059,13 +1074,13 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             {isVoiceConversationVal ? 'Voice Conversation' : 'Dictation'}
           </span>
 
-          <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+          <span className="text-xs text-c-text-muted tabular-nums">
             {Math.floor(currentRecordingDuration / 60)}:
             {(currentRecordingDuration % 60).toString().padStart(2, '0')}
           </span>
 
           {currentInterimTranscript && (
-            <span className="flex-1 text-xs text-slate-600 dark:text-slate-400 italic truncate">
+            <span className="flex-1 text-xs text-c-text-secondary italic truncate">
               "{currentInterimTranscript}"
             </span>
           )}
@@ -1076,9 +1091,9 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
       <div
         className={`
                 relative
-                bg-white dark:bg-navy-900 rounded-xl border transition-all duration-200
-                ${isFocused ? 'border-c-focus-solid' : 'border-slate-200 dark:border-navy-700'}
-                ${isRecordingAny ? 'ring-2 ring-blue-500/50' : ''}
+                bg-c-surface rounded-xl border transition-all duration-200
+                ${isFocused ? 'border-c-focus-solid' : 'border-c-border'}
+                ${isRecordingAny ? 'ring-2 ring-c-focus' : ''}
                 ${isDisabled ? 'opacity-60' : ''}
             `}
       >
@@ -1172,8 +1187,8 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           rows={variant === 'compact' ? 3 : 2}
           data-testid="chat-input"
           className={`
-                        w-full bg-transparent text-navy-900 dark:text-white
-                        placeholder-slate-400 dark:placeholder-slate-500
+                        w-full bg-transparent text-c-text
+                        placeholder:text-c-text-muted
                         px-4 ${variant === 'compact' ? 'pt-4 pb-2' : 'pt-4 pb-2'} resize-none focus:outline-none text-[15px]
                     `}
         />
@@ -1266,7 +1281,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                   ${
                     teresaVoiceMuted
                       ? 'bg-danger-500/80 text-white shadow-lg shadow-danger-500/30'
-                      : 'text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                      : 'text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised'
                   }
                   ${teresaVoiceStatus !== 'live' ? 'cursor-not-allowed opacity-50' : ''}
                 `}
@@ -1288,7 +1303,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                   ${
                     isDictating
                       ? 'bg-danger-500 text-white shadow-lg shadow-danger-500/30'
-                      : 'text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                      : 'text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised'
                   }
                   ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}
                 `}
@@ -1317,7 +1332,8 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               <button
                 onClick={handleSend}
                 disabled={isDisabled}
-                className="p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-lg shadow-primary-500/25"
+                data-testid="chat-send-btn"
+                className="p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center bg-c-text text-c-bg hover:opacity-90 shadow-lg shadow-primary-500/25"
                 title={t('aiChat.send', 'Send')}
                 aria-label={t('aiChat.send', 'Send') as string}
               >
@@ -1327,10 +1343,10 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               <button
                 onClick={() => onTeresaVoiceToggle?.()}
                 disabled={isDisabled}
-                className={`relative p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center text-white shadow-lg ${
+                className={`relative p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center shadow-lg ${
                   teresaVoiceStatus === 'live'
-                    ? 'bg-danger-600 hover:bg-danger-500 shadow-danger-500/25'
-                    : 'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-primary-500/25'
+                    ? 'bg-danger-600 hover:bg-danger-500 text-white shadow-danger-500/25'
+                    : 'bg-c-text text-c-bg hover:opacity-90 shadow-primary-500/25'
                 }`}
                 title={t('aiChat.stopVoiceConversation', 'Stop voice conversation')}
               >
@@ -1347,10 +1363,10 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               <button
                 onClick={() => onTeresaVoiceToggle?.()}
                 disabled={isDisabled || !teresaVoiceAvailable}
-                className={`p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center text-white shadow-lg group ${
+                className={`p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center shadow-lg group ${
                   teresaVoiceAvailable
-                    ? 'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-primary-500/25'
-                    : 'bg-primary-600/40 cursor-not-allowed shadow-none'
+                    ? 'bg-c-text text-c-bg hover:opacity-90 shadow-primary-500/25'
+                    : 'bg-c-text text-c-bg cursor-not-allowed shadow-none'
                 }`}
                 title={
                   teresaVoiceAvailable

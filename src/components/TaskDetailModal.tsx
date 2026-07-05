@@ -122,49 +122,49 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
         case 'low':
           return 'text-green-500 bg-green-500/10 border-green-500/20';
         default:
-          return 'text-slate-600 dark:text-slate-500 bg-slate-400/10';
+          return 'text-c-text-secondary bg-c-surface-raised';
       }
     };
 
     const TASK_TYPES: string[] = ['task', 'bug', 'story', 'epic', 'subtask', 'pilot'];
 
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 dark:bg-navy-950/90 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col h-[85vh]">
+      <div className="fixed inset-0 z-overlay flex items-center justify-center bg-slate-900/50 dark:bg-navy-950/90 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="bg-c-surface border border-c-border rounded-xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col h-[85vh]">
           {/* Initiative Context Banner */}
           {initiative && (
-            <div className="px-4 py-2.5 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-blue-50 via-primary-50/50 to-transparent dark:from-blue-900/20 dark:via-primary-900/10 dark:to-transparent flex items-center gap-3 shrink-0">
+            <div className="px-4 py-2.5 border-b border-c-border bg-c-surface-raised flex items-center gap-3 shrink-0">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded bg-blue-600 flex items-center justify-center">
-                  <Target size={12} className="text-slate-900 dark:text-white" />
+                  <Target size={12} className="text-white" />
                 </div>
-                <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                <span className="text-xs font-medium text-c-text-secondary">
                   Initiative:
                 </span>
-                <span className="text-sm font-bold text-navy-900 dark:text-white">
+                <span className="text-sm font-bold text-c-text">
                   {initiative.name}
                 </span>
               </div>
               <div className="flex-1" />
               <EntityStatusChip status={initiative.status} />
-              <span className="text-xs text-slate-500 dark:text-slate-500">
+              <span className="text-xs text-c-text-muted">
                 {initiative.priority} Priority • {initiative.axis}
               </span>
             </div>
           )}
 
           {/* Header */}
-          <div className="p-4 border-b border-slate-200 dark:border-navy-700 flex justify-between items-start bg-slate-50 dark:bg-navy-950 shrink-0">
+          <div className="p-4 border-b border-c-border flex justify-between items-start bg-c-surface-raised shrink-0">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-c-text-muted">
                   {task.projectId
                     ? 'Project Task'
                     : initiative
                       ? 'Initiative Task'
                       : 'Standalone Task'}
                 </span>
-                <div className="h-4 w-[1px] bg-slate-300 dark:bg-white/10"></div>
+                <div className="h-4 w-[1px] bg-c-border"></div>
                 <select
                   value={task.taskType}
                   onChange={(e) => setTask({ ...task, taskType: e.target.value as TaskType })}
@@ -174,7 +174,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                     <option
                       key={t}
                       value={t}
-                      className="bg-white dark:bg-navy-900 text-navy-900 dark:text-white"
+                      className="bg-c-surface text-c-text"
                     >
                       {t}
                     </option>
@@ -184,17 +184,17 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
               <input
                 value={task.title}
                 onChange={(e) => setTask({ ...task, title: e.target.value })}
-                className="bg-transparent text-2xl font-bold text-navy-900 dark:text-white w-full outline-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                className="bg-transparent text-2xl font-bold text-c-text w-full outline-none placeholder:text-c-text-muted"
                 placeholder="Enter task title..."
               />
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-white dark:bg-navy-950/50 p-1 rounded border border-slate-200 dark:border-navy-700 shadow-sm dark:shadow-none">
+              <div className="flex items-center gap-2 bg-c-surface p-1 rounded border border-c-border shadow-sm dark:shadow-none">
                 <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-600 flex items-center justify-center text-xs font-bold text-blue-700 dark:text-white uppercase">
                   {task.assignee?.firstName?.[0] || '?'}
                 </div>
                 <select
-                  className="bg-transparent text-sm text-navy-900 dark:text-slate-300 outline-none w-32"
+                  className="bg-transparent text-sm text-c-text outline-none w-32"
                   value={task.assigneeId || ''}
                   onChange={(e) => setTask({ ...task, assigneeId: e.target.value })}
                 >
@@ -209,7 +209,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
 
               <button
                 onClick={onClose}
-                className="text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors"
+                className="text-c-text-muted hover:text-c-text p-2 hover:bg-c-surface-raised rounded-full transition-colors"
               >
                 <X size={20} />
               </button>
@@ -219,7 +219,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
           {/* Main Content Layout */}
           <div className="flex flex-1 overflow-hidden">
             {/* LEFT COLUMN: Sidebar Navigation & Metadata */}
-            <div className="w-64 bg-slate-50 dark:bg-navy-950/50  border-slate-200 dark:border-navy-700 flex flex-col shrink-0">
+            <div className="w-64 bg-c-surface-raised  border-c-border flex flex-col shrink-0">
               <nav className="p-2 space-y-1">
                 {[
                   { id: 'strategy', label: 'Strategic Context', icon: Target },
@@ -234,7 +234,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-all ${
                       activeTab === item.id
                         ? 'bg-blue-100 dark:bg-blue-600/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/5 hover:text-navy-900 dark:hover:text-slate-200'
+                        : 'text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text'
                     }`}
                   >
                     <item.icon size={16} />
@@ -243,43 +243,43 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                 ))}
               </nav>
 
-              <div className="mt-auto p-4 space-y-4 border-t border-slate-200 dark:border-navy-700">
+              <div className="mt-auto p-4 space-y-4 border-t border-c-border">
                 {/* AI Insight Card (Mini) */}
-                <div className="bg-gradient-to-br from-primary-100 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 border border-primary-200 dark:border-navy-700 rounded p-3">
+                <div className="bg-c-surface-raised border border-c-border rounded p-3">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1">
+                    <span className="text-xs font-bold text-c-info flex items-center gap-1">
                       <Sparkles size={12} /> AI Insight
                     </span>
                     <button
                       onClick={generateAiInsight}
                       disabled={aiLoading}
-                      className="text-[10px] bg-white dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/20 px-2 py-0.5 rounded text-primary-600 dark:text-white transition-colors border border-primary-100 dark:border-transparent"
+                      className="text-[10px] bg-c-surface hover:bg-c-surface-raised px-2 py-0.5 rounded text-c-info transition-colors border border-c-border"
                     >
                       {aiLoading ? 'Thinking...' : 'Refresh'}
                     </button>
                   </div>
                   {task.aiInsight ? (
                     <div className="space-y-2">
-                      <div className="flex justify-between text-[10px] text-slate-500 dark:text-slate-400">
+                      <div className="flex justify-between text-[10px] text-c-text-muted">
                         <span>
                           Relevance:{' '}
-                          <span className="text-navy-900 dark:text-white">
+                          <span className="text-c-text">
                             {task.aiInsight.strategicRelevance}
                           </span>
                         </span>
                         <span>
                           Risk:{' '}
-                          <span className="text-navy-900 dark:text-white">
+                          <span className="text-c-text">
                             {task.aiInsight.executionRisk}
                           </span>
                         </span>
                       </div>
-                      <p className="text-[10px] text-slate-600 dark:text-slate-300 leading-relaxed italic">
+                      <p className="text-[10px] text-c-text-secondary leading-relaxed italic">
                         "{task.aiInsight.summary}"
                       </p>
                     </div>
                   ) : (
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 italic">
+                    <p className="text-[10px] text-c-text-muted italic">
                       No insight generated yet.
                     </p>
                   )}
@@ -288,25 +288,25 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                 {/* Metadata Grid */}
                 <div className="space-y-3">
                   <div>
-                    <label className="text-[10px] items-center gap-1 font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 flex">
+                    <label className="text-[10px] items-center gap-1 font-bold text-c-text-muted uppercase mb-1 flex">
                       <Calendar size={10} /> Due Date
                     </label>
                     <input
                       type="date"
                       value={task.dueDate ? task.dueDate.split('T')[0] : ''}
                       onChange={(e) => setTask({ ...task, dueDate: e.target.value })}
-                      className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded px-2 py-1.5 text-xs text-navy-900 dark:text-slate-300"
+                      className="w-full bg-c-surface border border-c-border rounded px-2 py-1.5 text-xs text-c-text"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">
+                      <label className="text-[10px] font-bold text-c-text-muted uppercase mb-1">
                         Status
                       </label>
                       <select
                         value={task.status}
                         onChange={(e) => setTask({ ...task, status: e.target.value as TaskStatus })}
-                        className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded px-1 py-1.5 text-xs text-navy-900 dark:text-slate-300"
+                        className="w-full bg-c-surface border border-c-border rounded px-1 py-1.5 text-xs text-c-text"
                       >
                         {['todo', 'in_progress', 'review', 'done', 'blocked'].map((s) => (
                           <option key={s} value={s}>
@@ -316,13 +316,13 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">
+                      <label className="text-[10px] font-bold text-c-text-muted uppercase mb-1">
                         Priority
                       </label>
                       <select
                         value={task.priority}
                         onChange={(e) => setTask({ ...task, priority: e.target.value as any })}
-                        className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded px-1 py-1.5 text-xs text-navy-900 dark:text-slate-300"
+                        className="w-full bg-c-surface border border-c-border rounded px-1 py-1.5 text-xs text-c-text"
                       >
                         {['low', 'medium', 'high', 'urgent'].map((p: any) => (
                           <option key={p} value={p}>
@@ -337,33 +337,33 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
             </div>
 
             {/* RIGHT COLUMN: Content Area */}
-            <div className="flex-1 bg-white dark:bg-navy-900 overflow-y-auto p-6">
+            <div className="flex-1 bg-c-surface overflow-y-auto p-6">
               {activeTab === 'strategy' && (
                 <div className="space-y-6 max-w-3xl animate-in slide-in-from-right-4 duration-300">
                   <div>
-                    <h3 className="text-sm font-bold text-navy-900 dark:text-white mb-1 flex items-center gap-2">
-                      <Target size={16} className="text-primary-600 dark:text-primary-400" />{' '}
+                    <h3 className="text-sm font-bold text-c-text mb-1 flex items-center gap-2">
+                      <Target size={16} className="text-c-info" />{' '}
                       Expected Strategic Outcome
                     </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                    <p className="text-xs text-c-text-muted mb-2">
                       What specifically will change in the business once this task is done?
                     </p>
                     <textarea
                       value={task.expectedOutcome || ''}
                       onChange={(e) => setTask({ ...task, expectedOutcome: e.target.value })}
-                      className="w-full h-24 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg p-3 text-sm text-navy-900 dark:text-slate-300 focus:border-primary-500/50 outline-none resize-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                      className="w-full h-24 bg-c-surface border border-c-border rounded-lg p-3 text-sm text-c-text focus:border-c-focus-solid outline-none resize-none transition-all placeholder:text-c-text-muted"
                       placeholder="e.g., Reduce customer onboarding time by 20%..."
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-6">
-                    <div className="p-4 rounded-lg bg-slate-50 dark:bg-navy-950/30 border border-slate-200 dark:border-navy-700">
-                      <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-3">
+                    <div className="p-4 rounded-lg bg-c-surface-raised border border-c-border">
+                      <h4 className="text-xs font-bold text-c-text-muted uppercase mb-3">
                         Decision Impact
                       </h4>
                       <div className="space-y-3">
                         <div>
-                          <label className="text-[10px] text-slate-500 dark:text-slate-400 block mb-1">
+                          <label className="text-[10px] text-c-text-muted block mb-1">
                             Decision Type
                           </label>
                           <select
@@ -378,7 +378,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                                 },
                               })
                             }
-                            className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded px-2 py-1.5 text-xs text-navy-900 dark:text-white"
+                            className="w-full bg-c-surface border border-c-border rounded px-2 py-1.5 text-xs text-c-text"
                           >
                             {[
                               'CONTINUE',
@@ -394,7 +394,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                           </select>
                         </div>
                         <div>
-                          <label className="text-[10px] text-slate-500 dark:text-slate-400 block mb-1">
+                          <label className="text-[10px] text-c-text-muted block mb-1">
                             Decision Statement
                           </label>
                           <input
@@ -409,7 +409,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                                 },
                               })
                             }
-                            className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded px-2 py-1.5 text-xs text-navy-900 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                            className="w-full bg-c-surface border border-c-border rounded px-2 py-1.5 text-xs text-c-text placeholder:text-c-text-muted"
                             placeholder="If successful, we will..."
                           />
                         </div>
@@ -424,29 +424,29 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
               {activeTab === 'execution' && (
                 <div className="space-y-6 max-w-3xl animate-in slide-in-from-right-4 duration-300">
                   <div>
-                    <h3 className="text-sm font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-c-text mb-2 flex items-center gap-2">
                       <FileText size={16} className="text-blue-600 dark:text-blue-400" /> Detailed
                       Description
                     </h3>
                     <textarea
                       value={task.description || ''}
                       onChange={(e) => setTask({ ...task, description: e.target.value })}
-                      className="w-full h-64 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg p-4 text-sm text-navy-900 dark:text-slate-300 focus:border-blue-500/50 outline-none resize-none font-mono leading-relaxed placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                      className="w-full h-64 bg-c-surface border border-c-border rounded-lg p-4 text-sm text-c-text focus:border-blue-500/50 outline-none resize-none font-mono leading-relaxed placeholder:text-c-text-muted"
                       placeholder="Use markdown for detailed execution steps..."
                     />
                   </div>
 
                   {/* Task Weight for Progress Calculation */}
-                  <div className="p-4 rounded-lg bg-primary-50 dark:bg-primary-900/10 border border-primary-200 dark:border-primary-500/20">
+                  <div className="p-4 rounded-lg bg-c-surface-raised border border-c-border">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-xs font-bold text-primary-700 dark:text-primary-400 flex items-center gap-2">
+                      <h3 className="text-xs font-bold text-c-info flex items-center gap-2">
                         <Target size={14} /> Task Weight (Progress Impact)
                       </h3>
-                      <span className="text-lg font-bold text-primary-600 dark:text-primary-400">
+                      <span className="text-lg font-bold text-c-info">
                         {task.weight || 1}x
                       </span>
                     </div>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-3">
+                    <p className="text-[10px] text-c-text-muted mb-3">
                       Higher weight = more contribution to initiative progress when completed
                     </p>
                     <div className="flex gap-2">
@@ -457,7 +457,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                           className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
                             (task.weight || 1) === w
                               ? 'bg-navy-900 text-white shadow-sm dark:bg-white dark:text-navy-950'
-                              : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
+                              : 'bg-c-surface text-c-text-secondary border border-c-border hover:border-c-border-strong'
                           }`}
                         >
                           {w}x
@@ -468,7 +468,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                       type="text"
                       value={task.weightReason || ''}
                       onChange={(e) => setTask({ ...task, weightReason: e.target.value })}
-                      className="mt-3 w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-xs text-navy-900 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:border-primary-500/30"
+                      className="mt-3 w-full bg-c-surface border border-c-border rounded-lg px-3 py-2 text-xs text-c-text placeholder:text-c-text-muted outline-none focus:border-c-focus-solid"
                       placeholder="Reason for weight (e.g., Critical path item, High risk...)"
                     />
                   </div>
@@ -480,7 +480,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                     <textarea
                       value={task.blockingIssues || ''}
                       onChange={(e) => setTask({ ...task, blockingIssues: e.target.value })}
-                      className="w-full h-20 bg-transparent border-none text-sm text-navy-900 dark:text-slate-300 placeholder:text-danger-400/50 dark:placeholder:text-danger-500/30 outline-none resize-none"
+                      className="w-full h-20 bg-transparent border-none text-sm text-c-text placeholder:text-danger-400/50 dark:placeholder:text-danger-500/30 outline-none resize-none"
                       placeholder="Describe any critical blockers..."
                     />
                   </div>
@@ -490,15 +490,15 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
               {activeTab === 'evidence' && (
                 <div className="space-y-6 max-w-3xl animate-in slide-in-from-right-4 duration-300">
                   <div className="flex justify-between items-center">
-                    <h3 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-c-text flex items-center gap-2">
                       <Shield size={16} className="text-green-600 dark:text-green-400" /> Evidence
                       of Done
                     </h3>
                   </div>
 
                   {/* Evidence Requirements */}
-                  <div className="p-4 rounded-lg bg-slate-50 dark:bg-navy-950/30 border border-slate-200 dark:border-navy-700 space-y-4">
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <div className="p-4 rounded-lg bg-c-surface-raised border border-c-border space-y-4">
+                    <p className="text-xs text-c-text-muted">
                       Select required evidence types to mark this task as "Verified Done".
                     </p>
                     <div className="flex gap-4">
@@ -527,7 +527,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                             Array.isArray(task.evidenceRequired) &&
                             task.evidenceRequired.includes(type as any)
                               ? 'bg-green-100 dark:bg-green-500/20 border-green-500 dark:border-green-500/50 text-green-700 dark:text-green-400'
-                              : 'bg-white dark:bg-transparent border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/30'
+                              : 'bg-white dark:bg-transparent border-c-border text-c-text-muted hover:border-c-border-strong'
                           }`}
                         >
                           {type}
@@ -538,7 +538,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
 
                   {/* Acceptance Criteria */}
                   <div>
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 block">
+                    <label className="text-xs font-bold text-c-text-muted uppercase mb-2 block">
                       Detailed Acceptance Criteria
                     </label>
                     <textarea
@@ -550,7 +550,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                       onChange={(e) =>
                         setTask({ ...task, acceptanceCriteria: e.target.value.split('\n') })
                       }
-                      className="w-full h-40 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg p-3 text-sm text-navy-900 dark:text-slate-300 focus:border-green-500/30 outline-none resize-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                      className="w-full h-40 bg-c-surface border border-c-border rounded-lg p-3 text-sm text-c-text focus:border-green-500/30 outline-none resize-none placeholder:text-c-text-muted"
                       placeholder="- [ ] Metric A > 50%&#10;- [ ] User Flow Tested"
                     />
                   </div>
@@ -565,7 +565,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
+                        <h4 className="text-sm font-bold text-c-text flex items-center gap-2">
                           {task.signedOff ? (
                             <>
                               <CheckSquare size={16} className="text-green-600" />
@@ -579,7 +579,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                           )}
                         </h4>
                         {task.signedOff && task.signedOffAt && (
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          <p className="text-xs text-c-text-muted mt-1">
                             Signed by{' '}
                             {users.find((u) => u.id === task.signedOffBy)?.firstName || 'Unknown'}{' '}
                             {users.find((u) => u.id === task.signedOffBy)?.lastName || ''} on{' '}
@@ -587,7 +587,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                           </p>
                         )}
                         {!task.signedOff && (
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          <p className="text-xs text-c-text-muted mt-1">
                             I confirm all required evidence has been collected and criteria met.
                           </p>
                         )}
@@ -614,7 +614,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                         }}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                           task.signedOff
-                            ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-danger-100 dark:hover:bg-danger-500/20 hover:text-danger-600'
+                            ? 'bg-c-surface-raised text-c-text-secondary hover:bg-danger-100 dark:hover:bg-danger-500/20 hover:text-danger-600'
                             : 'bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-500/30'
                         }`}
                       >
@@ -626,13 +626,13 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
               )}
 
               {activeTab === 'dependencies' && (
-                <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-slate-400 space-y-4 animate-in fade-in">
+                <div className="flex flex-col items-center justify-center h-full text-c-text-muted space-y-4 animate-in fade-in">
                   <Link size={48} className="opacity-20" />
                   <div className="text-center">
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-500">
+                    <p className="text-sm font-medium text-c-text-secondary">
                       Dependency Management
                     </p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 max-w-xs mx-auto">
+                    <p className="text-xs text-c-text-secondary mt-1 max-w-xs mx-auto">
                       This module will allow visual linking between tasks (Blocks / Blocked By).
                       Coming in Phase 2.
                     </p>
@@ -642,30 +642,30 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
 
               {activeTab === 'history' && (
                 <div className="space-y-4 animate-in fade-in">
-                  <h3 className="text-sm font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-                    <History size={16} className="text-slate-600 dark:text-slate-500" /> Change Log
+                  <h3 className="text-sm font-bold text-c-text mb-4 flex items-center gap-2">
+                    <History size={16} className="text-c-text-secondary" /> Change Log
                   </h3>
                   <div className="space-y-3">
                     {task.changeLog && task.changeLog.length > 0 ? (
                       task.changeLog.map((log, i: number) => (
                         <div
                           key={i}
-                          className="flex gap-3 text-xs p-3 rounded bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-navy-700"
+                          className="flex gap-3 text-xs p-3 rounded bg-c-surface-raised border border-c-border"
                         >
                           <div className="mt-0.5">
-                            <GitCommit size={14} className="text-slate-500 dark:text-slate-400" />
+                            <GitCommit size={14} className="text-c-text-muted" />
                           </div>
                           <div>
-                            <div className="text-navy-900 dark:text-slate-300">
+                            <div className="text-c-text">
                               <span className="font-bold text-blue-600 dark:text-blue-400">
                                 {log.changedBy}
                               </span>{' '}
                               changed{' '}
-                              <span className="font-mono text-slate-500 dark:text-slate-400">
+                              <span className="font-mono text-c-text-muted">
                                 {log.field}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2 mt-1 text-slate-500 dark:text-slate-400">
+                            <div className="flex items-center gap-2 mt-1 text-c-text-muted">
                               <span className="line-through opacity-50">
                                 {String(log.oldValue || 'empty').substring(0, 20)}
                               </span>
@@ -674,14 +674,14 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                                 {String(log.newValue || 'empty').substring(0, 20)}
                               </span>
                             </div>
-                            <div className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">
+                            <div className="mt-1 text-[10px] text-c-text-muted">
                               {new Date(log.changedAt).toLocaleString()}
                             </div>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <p className="text-xs text-slate-600 dark:text-slate-400 italic">
+                      <p className="text-xs text-c-text-secondary italic">
                         No history available.
                       </p>
                     )}
@@ -692,14 +692,14 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 flex justify-between items-center shrink-0">
-            <div className="text-[10px] text-slate-500 dark:text-slate-400">
+          <div className="p-4 border-t border-c-border bg-c-surface-raised flex justify-between items-center shrink-0">
+            <div className="text-[10px] text-c-text-muted">
               {task.updatedAt ? `Last updated: ${new Date(task.updatedAt).toLocaleString()}` : ''}
             </div>
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white text-sm transition-colors"
+                className="px-4 py-2 text-c-text-muted hover:text-c-text text-sm transition-colors"
               >
                 Cancel
               </button>

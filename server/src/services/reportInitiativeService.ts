@@ -9,6 +9,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import logger from '../utils/Logger.js';
+import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 
 // ============================================
 // TYPES
@@ -653,34 +654,69 @@ class ReportInitiativeService {
 
     for (const initiative of initiatives) {
       try {
-        await this.db.run(
-          `INSERT INTO initiatives (
-            id, project_id, organization_id, title, description,
-            priority, status, type, estimated_effort, estimated_cost,
-            estimated_duration, technologies, kpis, metadata,
-            created_by, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            initiative.id,
-            projectId,
+        // Uspójnienie F1.9 — przez kanoniczny lejek (DRAFT + name/title + lineage).
+        if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+          const __r = await funnelCreateInitiative(
             organizationId,
-            initiative.title,
-            initiative.description,
-            initiative.priority,
-            initiative.status,
-            initiative.type,
-            initiative.estimatedEffort,
-            initiative.estimatedCost,
-            initiative.estimatedDuration,
-            JSON.stringify(initiative.technologies),
-            JSON.stringify(initiative.kpis),
-            JSON.stringify(initiative.metadata),
-            userId,
-            initiative.createdAt,
-          ]
-        );
-
-        savedIds.push(initiative.id);
+            {
+              title: initiative.title,
+              projectId,
+              description: initiative.description,
+              priority: initiative.priority,
+              sourceType: 'report',
+              sourceId: projectId,
+            },
+            { validate: false, actor: { id: userId } }
+          );
+          // Funnel nie zna report-specyficznych kolumn — dośpiewujemy.
+          await this.db.run(
+            `UPDATE initiatives SET
+              type = ?, estimated_effort = ?, estimated_cost = ?, estimated_duration = ?,
+              technologies = ?, kpis = ?, metadata = ?, created_by = ?
+             WHERE id = ? AND organization_id = ?`,
+            [
+              initiative.type,
+              initiative.estimatedEffort,
+              initiative.estimatedCost,
+              initiative.estimatedDuration,
+              JSON.stringify(initiative.technologies),
+              JSON.stringify(initiative.kpis),
+              JSON.stringify(initiative.metadata),
+              userId,
+              __r.id,
+              organizationId,
+            ]
+          );
+          savedIds.push(__r.id);
+        } else {
+          await this.db.run(
+            `INSERT INTO initiatives (
+              id, project_id, organization_id, title, description,
+              priority, status, type, estimated_effort, estimated_cost,
+              estimated_duration, technologies, kpis, metadata,
+              created_by, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              initiative.id,
+              projectId,
+              organizationId,
+              initiative.title,
+              initiative.description,
+              initiative.priority,
+              initiative.status,
+              initiative.type,
+              initiative.estimatedEffort,
+              initiative.estimatedCost,
+              initiative.estimatedDuration,
+              JSON.stringify(initiative.technologies),
+              JSON.stringify(initiative.kpis),
+              JSON.stringify(initiative.metadata),
+              userId,
+              initiative.createdAt,
+            ]
+          );
+          savedIds.push(initiative.id);
+        }
       } catch (error) {
         logger.error(`Failed to save initiative ${initiative.id}:`, error);
       }

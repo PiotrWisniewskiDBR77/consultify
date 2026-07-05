@@ -7,6 +7,21 @@ import { z } from 'zod';
 
 import { aiLogger } from './logger.js';
 
+/**
+ * M06 Fala 2 · zadanie 2.3 — deliverable `mindmap` behind ENABLE_TERESA_MINDMAP.
+ * The enum below is built once at module load; when the flag is OFF the enum
+ * stays exactly `['document','sheet','presentation']` (today's behavior) so the
+ * model can never request a mind map. When ON, `'mindmap'` becomes a valid
+ * deliverable target and the handler (generateDeliverable) routes it to the
+ * Ideas mind-map mount. The handler ALSO self-gates on the flag, so an enum that
+ * somehow includes mindmap while the flag is off would still be rejected with
+ * `feature_disabled` — defense in depth.
+ */
+const DELIVERABLE_TYPES: [string, ...string[]] =
+  process.env.ENABLE_TERESA_MINDMAP === 'true'
+    ? ['document', 'sheet', 'presentation', 'mindmap']
+    : ['document', 'sheet', 'presentation'];
+
 export const TOOL_TYPE = {
   READ: 'READ',
   MUTATION: 'MUTATION',
@@ -109,15 +124,17 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
   generate_deliverable: {
     name: 'generate_deliverable',
     description:
-      'Create a deliverable artifact (document, spreadsheet, or presentation) from the user request and open it in the canvas on the right. ' +
-      'Use this WHENEVER the user wants something written, drafted, generated, prepared, turned into a document/sheet/deck, or shown/saved in the canvas — including loose phrasings like "I want this in the canvas", "show it on the side", "put this together for me". ' +
+      'Create a deliverable artifact (document, spreadsheet, presentation, or mind map) from the user request and open it on the right. ' +
+      'Use this WHENEVER the user wants something written, drafted, generated, prepared, turned into a document/sheet/deck/mind map, or shown/saved in the canvas — including loose phrasings like "I want this in the canvas", "show it on the side", "put this together for me". ' +
+      'For "zrób mapę myśli o X" / "make a mind map of X" use type="mindmap" (only available when mind-map generation is enabled; if the type is rejected, fall back to a document). ' +
+      'DO NOT use this when the user asks to create/start/draft an INITIATIVE (a PMO entity) — e.g. "stwórz/zrób/załóż inicjatywę", "create an initiative" — even when that initiative is about planning a plan, transformation, or strategy. Those go to generate_initiative, not here. This tool is only for a document/sheet/deck/mind map the user wants as output. ' +
       'After the tool returns, briefly confirm what was created in one sentence. Do NOT claim you created anything unless this tool returned ok:true.',
     type: TOOL_TYPE.READ,
     parameters: z.object({
       type: z
-        .enum(['document', 'sheet', 'presentation'])
+        .enum(DELIVERABLE_TYPES)
         .describe(
-          'The artifact kind: "document" for prose/report/memo/brief, "sheet" for a table/spreadsheet, "presentation" for slides/deck.'
+          'The artifact kind: "document" for prose/report/memo/brief, "sheet" for a table/spreadsheet, "presentation" for slides/deck, "mindmap" for an idea/mind map (when enabled).'
         ),
       intent: z
         .string()
@@ -144,8 +161,9 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
   generate_initiative: {
     name: 'generate_initiative',
     description:
-      'Create a new DRAFT initiative from the user request. ' +
-      'Use this whenever the user wants to create/start/draft an initiative (e.g. "create an initiative for X", "stwórz inicjatywę ..."). ' +
+      'Create a new DRAFT initiative (a real PMO entity — the initiative backbone) from the user request. ' +
+      'Use this whenever the user wants to create/start/draft/found an initiative (e.g. "create an initiative for X", "stwórz/zrób/załóż inicjatywę ...") — INCLUDING when the initiative is about planning a plan, transformation, roadmap or strategy (e.g. "zrób inicjatywę polegającą na zaplanowaniu planu transformacji"). ' +
+      'An initiative is an entity, NOT a document about a plan — prefer this over generate_deliverable for any "create an initiative" request; words like "plan", "transformation" or "strategy" do not make it a deliverable. ' +
       'It only creates a reversible DRAFT — it never promotes or approves. After it returns ok:true, confirm in one sentence. Do NOT claim you created an initiative unless this tool returned ok:true.',
     type: TOOL_TYPE.READ,
     parameters: z.object({
@@ -230,6 +248,33 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
       ),
       truncated: z.boolean(),
       notFound: z.boolean().optional(),
+    }),
+  },
+  // ── Teresa mind-map retrieval (ff_teresaMindmap / ENABLE_TERESA_MINDMAP) ──
+  search_org_mindmaps: {
+    name: 'search_org_mindmaps',
+    description:
+      'Search the organization idea maps (mind maps) by topic. Org-scoped. ' +
+      'Use when the user references a mind map by subject, e.g. "znajdź mapę myśli o transformacji". ' +
+      'Returns each map title plus a markdown outline of its nodes.',
+    type: TOOL_TYPE.READ,
+    parameters: z.object({
+      query: z
+        .string()
+        .describe('Topic or phrase to search mind maps for (user language is fine)'),
+      limit: z.number().optional().default(5).describe('Max results to return (1-10)'),
+    }),
+    returns: z.object({
+      results: z.array(
+        z.object({
+          mapId: z.string(),
+          ideaId: z.string(),
+          title: z.string(),
+          outline: z.string(),
+          updatedAt: z.string().nullable(),
+        })
+      ),
+      truncated: z.boolean(),
     }),
   },
   update_assessment_score: {

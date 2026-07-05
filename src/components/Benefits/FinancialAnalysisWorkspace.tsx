@@ -1,7 +1,9 @@
-import { Loader2, Plus, X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/shared/states';
 
 import { Api } from '../../services/api';
 import { shouldFallbackToLegacyFinance, V8FinanceApi } from '../../services/api/v8/finance';
@@ -306,8 +308,8 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+      <div className="h-full p-6">
+        <LoadingState template="panel" />
       </div>
     );
   }
@@ -441,7 +443,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
               </button>
               <button
                 onClick={() => void handleCreate()}
-                className="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+                className="rounded-xl bg-c-text px-4 py-2 text-sm font-medium text-c-bg transition hover:bg-c-text-secondary"
               >
                 {t('common.create', 'Create')}
               </button>

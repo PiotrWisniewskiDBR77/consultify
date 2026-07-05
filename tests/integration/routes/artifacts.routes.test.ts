@@ -184,6 +184,72 @@ describe('artifacts access routes (HTTP contract; artifactRegistryService mocked
     );
   });
 
+  // ── S6.3: M17 junk filter — draft visibility + dedupe param forwarding ──
+  it('defaults to excluding drafts and enabling dedupe (M17 junk filter)', async () => {
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'user-1', organizationId: 'org-1', role: 'USER' };
+    });
+    listArtifactsForUserMock.mockResolvedValue([]);
+
+    const res = await request(app).get('/api/artifacts?limit=80');
+
+    expect(res.status).toBe(200);
+    expect(listArtifactsForUserMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filters: expect.objectContaining({ drafts: 'exclude', dedupe: true }),
+      })
+    );
+  });
+
+  it('forwards drafts=include for ?include=drafts (Robocze mixed view)', async () => {
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'user-1', organizationId: 'org-1', role: 'USER' };
+    });
+    listArtifactsForUserMock.mockResolvedValue([]);
+
+    const res = await request(app).get('/api/artifacts?include=drafts');
+
+    expect(res.status).toBe(200);
+    expect(listArtifactsForUserMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filters: expect.objectContaining({ drafts: 'include' }),
+      })
+    );
+  });
+
+  it('forwards drafts=only for ?view=drafts and ?drafts=only', async () => {
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'user-1', organizationId: 'org-1', role: 'USER' };
+    });
+    listArtifactsForUserMock.mockResolvedValue([]);
+
+    await request(app).get('/api/artifacts?view=drafts');
+    expect(listArtifactsForUserMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ filters: expect.objectContaining({ drafts: 'only' }) })
+    );
+
+    await request(app).get('/api/artifacts?drafts=only');
+    expect(listArtifactsForUserMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ filters: expect.objectContaining({ drafts: 'only' }) })
+    );
+  });
+
+  it('forwards dedupe=false to disable presentational dedup', async () => {
+    verifyTokenMock.mockImplementation((req: any) => {
+      req.user = { id: 'user-1', organizationId: 'org-1', role: 'USER' };
+    });
+    listArtifactsForUserMock.mockResolvedValue([]);
+
+    const res = await request(app).get('/api/artifacts?dedupe=false');
+
+    expect(res.status).toBe(200);
+    expect(listArtifactsForUserMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filters: expect.objectContaining({ dedupe: false }),
+      })
+    );
+  });
+
   it('returns action metadata on canonical list rows', async () => {
     verifyTokenMock.mockImplementation((req: any) => {
       req.user = { id: 'user-1', organizationId: 'org-1', role: 'USER' };

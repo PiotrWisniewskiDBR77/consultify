@@ -111,7 +111,8 @@ describe('Initiatives routes: POST /generate-section (REAL integration)', () => 
       'overview',
       expect.objectContaining({ initiativeName: 'X', language: 'en' }),
       'org-1',
-      expect.objectContaining({ withReview: false })
+      // F3.8 — reviewer §B4 defaults ON; route enables withReview unless body sends `false`.
+      expect.objectContaining({ withReview: true })
     );
   });
 
@@ -128,7 +129,8 @@ describe('Initiatives routes: POST /generate-section (REAL integration)', () => 
       'overview',
       expect.objectContaining({ language: 'pl' }),
       'org-2',
-      expect.objectContaining({ withReview: false })
+      // F3.8 — reviewer §B4 defaults ON; route enables withReview unless body sends `false`.
+      expect.objectContaining({ withReview: true })
     );
   });
 

@@ -58,8 +58,8 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
         whileHover={{ x: 4 }}
         className={`
                     inline-flex items-center gap-2
-                    text-primary-600 dark:text-primary-400
-                    hover:text-primary-500 dark:hover:text-primary-300
+                    text-c-accent
+                    hover:text-c-accent
                     font-semibold text-sm
                     transition-colors duration-200
                     group
@@ -85,7 +85,7 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
         className={`
                     flex flex-col items-center gap-2 p-4
                     bg-white/5 backdrop-blur-sm
-                    border border-white/10 hover:border-primary-500/50
+                    border border-white/10 hover:border-c-accent
                     rounded-xl
                     transition-all duration-300
                     group
@@ -94,7 +94,7 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
       >
         <span className="text-3xl">{regionData.flag}</span>
         <span className="text-sm font-bold text-white">{regionData.name}</span>
-        <span className="text-xs text-primary-400 group-hover:text-primary-300 flex items-center gap-1">
+        <span className="text-xs text-c-accent group-hover:text-c-accent flex items-center gap-1">
           {t('landing.demo.scheduleShort', 'Schedule')}{' '}
           <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
         </span>
@@ -112,21 +112,21 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
         whileHover={{ y: -2 }}
         className={`
                     inline-flex items-center gap-3 px-6 py-4
-                    border-2 border-primary-500/50 hover:border-primary-500
+                    border-2 border-c-accent hover:border-c-accent
                     rounded-xl
-                    bg-primary-500/5 hover:bg-primary-500/10
+                    bg-c-accent-soft hover:bg-c-accent-soft
                     transition-all duration-300
                     group
                     ${className}
                 `}
       >
         <span className="text-lg font-black text-white">{t('landing.demo.getA', 'Get a')}</span>
-        <span className="text-lg font-black bg-gradient-to-r from-primary-400 to-primary-300 bg-clip-text text-transparent">
+        <span className="text-lg font-black text-c-accent">
           {t('landing.demo.word', 'Demo')}
         </span>
         <ArrowRight
           size={20}
-          className="text-primary-400 group-hover:translate-x-1 transition-transform"
+          className="text-c-accent group-hover:translate-x-1 transition-transform"
         />
       </motion.a>
     );
@@ -146,15 +146,15 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
                     ${className}
                 `}
       >
-        <span className="text-xl font-black text-navy-950 dark:text-white">
+        <span className="text-xl font-black text-c-text">
           {t('landing.demo.getA', 'Get a')}
         </span>
-        <span className="text-xl font-black bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
+        <span className="text-xl font-black text-c-accent">
           {t('landing.demo.word', 'Demo')}
         </span>
         <ArrowRight
           size={20}
-          className="text-primary-500 group-hover:translate-x-1 transition-transform"
+          className="text-c-accent group-hover:translate-x-1 transition-transform"
         />
       </motion.a>
     );
@@ -175,18 +175,18 @@ export const DemoButton: React.FC<DemoButtonProps> = ({
     >
       <div className="flex flex-col items-start gap-1">
         <div className="flex items-center gap-2">
-          <span className="text-2xl font-black text-navy-950 dark:text-white tracking-tight">
+          <span className="text-2xl font-black text-c-text tracking-tight">
             {t('landing.demo.bookA', 'Book a')}
           </span>
-          <span className="text-2xl font-black bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent tracking-tight">
+          <span className="text-2xl font-black text-c-accent tracking-tight">
             {t('landing.demo.word', 'Demo')}
           </span>
           <ArrowRight
             size={22}
-            className="text-primary-500 group-hover:translate-x-2 transition-transform duration-300"
+            className="text-c-accent group-hover:translate-x-2 transition-transform duration-300"
           />
         </div>
-        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+        <span className="text-xs text-c-text-muted font-medium">
           {t('landing.demo.subtext', 'Free 30-min call • See Consultify in action')}
         </span>
       </div>

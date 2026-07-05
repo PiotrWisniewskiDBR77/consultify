@@ -206,17 +206,17 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
   const isAdmin = isAdminOrSuperAdminRole(currentUser?.role);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
+      <div className="bg-white dark:bg-navy-800 rounded-xl shadow-xl max-w-md w-full mx-4">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Invite User</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Invite User</h2>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-600 hover:text-gray-600 dark:text-gray-400 transition-colors"
+            className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -226,7 +226,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Seat Limit Warning */}
           {seatsAreFull && (
-            <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 dark:bg-amber-900/25 dark:border-amber-900/50 dark:text-amber-200 px-4 py-3 rounded-lg text-sm">
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
@@ -267,7 +267,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
           {error && (
             <div
               role="alert"
-              className="bg-danger-50 border border-danger-200 text-danger-700 px-4 py-3 rounded-lg flex items-center gap-2 text-sm"
+              className="bg-danger-50 border border-danger-200 text-danger-700 dark:bg-danger-900/30 dark:border-danger-900/60 dark:text-danger-300 px-4 py-3 rounded-lg flex items-center gap-2 text-sm"
             >
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               <div className="min-w-0">
@@ -275,7 +275,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                 {errorCode ? (
                   <div
                     data-testid="invite-user-error-code"
-                    className="mt-1 text-[11px] font-medium text-red-700/90"
+                    className="mt-1 text-[11px] font-medium text-danger-700/90 dark:text-danger-300/90"
                   >
                     Code: {errorCode}
                   </div>
@@ -293,14 +293,14 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
               Email Address *
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-600 dark:text-gray-400" />
               <input
                 type="email"
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="colleague@company.com"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 required
               />
             </div>
@@ -319,7 +319,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                   className={`flex-1 py-2 px-4 rounded-lg border text-sm font-medium transition-colors ${
                     !isProjectInvite
                       ? 'bg-navy-900 text-white border-navy-900'
-                      : 'bg-white text-gray-700 dark:text-gray-300 border-gray-300 hover:bg-gray-50 dark:bg-navy-800'
+                      : 'bg-white dark:bg-navy-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-navy-700 hover:bg-gray-50 dark:hover:bg-navy-700'
                   }`}
                 >
                   Organization
@@ -330,7 +330,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                   className={`flex-1 py-2 px-4 rounded-lg border text-sm font-medium transition-colors ${
                     isProjectInvite
                       ? 'bg-navy-900 text-white border-navy-900'
-                      : 'bg-white text-gray-700 dark:text-gray-300 border-gray-300 hover:bg-gray-50 dark:bg-navy-800'
+                      : 'bg-white dark:bg-navy-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-navy-700 hover:bg-gray-50 dark:hover:bg-navy-700'
                   }`}
                 >
                   Project
@@ -352,7 +352,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
                 id="project"
                 value={selectedProject}
                 onChange={(e) => setSelectedProject(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 bg-white dark:bg-navy-900 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 required
               >
                 <option value="">Select a project</option>
@@ -377,7 +377,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
               id="role"
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 bg-white dark:bg-navy-900 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             >
               <option value="USER">User</option>
               {isAdmin && <option value="ADMIN">Admin</option>}
@@ -421,7 +421,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
           )}
 
           {/* Preview */}
-          <div className="bg-gray-50 dark:bg-navy-800 rounded-lg p-4 border border-gray-200">
+          <div className="bg-gray-50 dark:bg-navy-800 rounded-lg p-4 border border-gray-200 dark:border-navy-700">
             <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Invitation Preview
             </h4>
@@ -447,7 +447,7 @@ const InviteUserModal: React.FC<InviteUserModalProps> = ({ onClose, onSuccess, p
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-gray-100 dark:bg-navy-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              className="flex-1 px-4 py-2 bg-gray-100 dark:bg-navy-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-navy-700 transition-colors font-medium"
             >
               Cancel
             </button>

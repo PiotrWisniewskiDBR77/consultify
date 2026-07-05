@@ -193,14 +193,14 @@ export const SessionManagementPanel: React.FC = () => {
               placeholder="Search sessions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none w-64"
+              className="pl-10 pr-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text placeholder:text-slate-500 dark:text-slate-400 focus:border-primary-500/50 outline-none w-64"
             />
           </div>
 
           <select
             value={selectedOrgId}
             onChange={(e) => setSelectedOrgId(e.target.value)}
-            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
+            className="px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           >
             <option value="all">All Organizations</option>
             {organizations.map((org) => (
@@ -212,13 +212,13 @@ export const SessionManagementPanel: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-2 bg-slate-800/50 rounded-lg">
+          <div className="flex items-center gap-2 px-3 py-2 bg-c-surface-raised/50 rounded-lg">
             <Activity size={16} className="text-emerald-400" />
             <span className="text-sm text-slate-600">{sessions.length} Active</span>
           </div>
           <button
             onClick={fetchSessions}
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+            className="p-2.5 bg-c-surface-raised hover:bg-c-surface-raised rounded-lg transition-colors"
             title="Refresh"
           >
             <RefreshCw
@@ -246,16 +246,16 @@ export const SessionManagementPanel: React.FC = () => {
             return (
               <div
                 key={userId}
-                className="bg-slate-800/50 border border-white/[0.06] rounded-xl overflow-hidden"
+                className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl overflow-hidden"
               >
                 {/* User Header */}
-                <div className="flex items-center justify-between p-4 bg-slate-900/30">
+                <div className="flex items-center justify-between p-4 bg-c-surface/30">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-crimson-700 flex items-center justify-center text-white font-semibold">
                       {firstSession.user_first_name?.[0] || firstSession.user_email?.[0] || 'U'}
                     </div>
                     <div>
-                      <p className="font-medium text-white">
+                      <p className="font-medium text-c-text">
                         {firstSession.user_first_name}{' '}
                         {firstSession.user_last_name || firstSession.user_email}
                       </p>
@@ -264,7 +264,7 @@ export const SessionManagementPanel: React.FC = () => {
                       </p>
                     </div>
                     {firstSession.organization_name && (
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800 rounded-full">
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-c-surface-raised rounded-full">
                         <Building2 size={12} className="text-slate-600 dark:text-slate-500" />
                         <span className="text-xs text-slate-600">
                           {firstSession.organization_name}
@@ -295,15 +295,15 @@ export const SessionManagementPanel: React.FC = () => {
                   {userSessions.map((session) => (
                     <div
                       key={session.id}
-                      className="flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors"
+                      className="flex items-center justify-between p-4 hover:bg-c-surface-raised/50 transition-colors"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-slate-900/50 flex items-center justify-center text-slate-600 dark:text-slate-500">
+                        <div className="w-10 h-10 rounded-lg bg-c-surface/50 flex items-center justify-center text-slate-600 dark:text-slate-500">
                           {getDeviceIcon(session.device_type)}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-white">
+                            <span className="font-medium text-c-text">
                               {session.browser || 'Unknown Browser'}
                             </span>
                             <span className="text-slate-500 dark:text-slate-400">•</span>

@@ -120,6 +120,8 @@ export const ArtifactRunsApi = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(params),
+      // Planning involves LLM + org-context snapshot; can exceed 20s default.
+      timeoutMs: 120000,
     });
     const json = await handleResponse<{ data: ArtifactRunPlanningEnvelope }>(
       res,
@@ -178,6 +180,8 @@ export const ArtifactRunsApi = {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(params),
+        // Deck/report assembly + persist legitimately exceeds the 20s default.
+        timeoutMs: 120000,
       }
     );
     const json = await handleResponse<{ data: ArtifactRunRecord }>(
@@ -207,6 +211,8 @@ export const ArtifactRunsApi = {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({}),
+        // Preflight runs LLM generation per stage; can exceed 20s default.
+        timeoutMs: 120000,
       }
     );
     const json = await handleResponse<{ data: ArtifactRunRecord }>(

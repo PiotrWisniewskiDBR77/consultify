@@ -13,10 +13,12 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  EmptyState as SharedEmptyState,
+  LoadingState as SharedLoadingState,
+} from '@/components/shared/states';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
-import { EmptyState } from '../ui/composed/EmptyState';
-import { LoadingState } from '../ui/primitives';
 
 interface AssessmentReport {
   id: string;
@@ -361,12 +363,12 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
             placeholder={t('common.search', 'Search reports...')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="flex-1 px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
           />
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as any)}
-            className="px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
           >
             <option value="date">{t('common.sortByDate', 'Sort by Date')}</option>
             <option value="title">{t('common.sortByTitle', 'Sort by Title')}</option>
@@ -389,28 +391,35 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
 
       <div className="flex-1 overflow-y-auto p-6">
         {!currentProjectId ? (
-          <div className="flex flex-col items-center justify-center h-48 text-center">
-            <AlertCircle className="text-amber-400 dark:text-amber-500 mb-3" size={48} />
-            <p className="text-slate-600 dark:text-slate-300 text-sm font-medium">
-              {t('assessment.reports.noProjectSelected', 'No project selected')}
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 mt-1">
-              {t(
-                'assessment.reports.selectProjectHint',
-                'Please select a project from the sidebar to view assessment reports'
-              )}
-            </p>
-          </div>
+          <SharedEmptyState
+            variant="new"
+            icon={AlertCircle}
+            title={t('assessment.reports.noProjectSelected', 'No project selected')}
+            description={t(
+              'assessment.reports.selectProjectHint',
+              'Please select a project from the sidebar to view assessment reports'
+            )}
+          />
         ) : loading ? (
-          <LoadingState variant="spinner" className="h-48" />
+          <SharedLoadingState template="list" rows={5} />
         ) : reports.length === 0 ? (
-          <EmptyState
-            icon={<AlertCircle />}
+          <SharedEmptyState
+            variant="new"
+            icon={FileText}
             title={t('assessment.reports.noReports', 'No reports generated yet')}
             description={t(
               'assessment.reports.noReportsHint',
               'Click "New Assessment" to create your first assessment report'
             )}
+            primaryAction={
+              onStartNewAssessment
+                ? {
+                    label: t('assessment.reports.newAssessment', 'New Assessment'),
+                    onClick: () => onStartNewAssessment(),
+                    icon: Plus,
+                  }
+                : undefined
+            }
           />
         ) : (
           <div className="grid gap-3">

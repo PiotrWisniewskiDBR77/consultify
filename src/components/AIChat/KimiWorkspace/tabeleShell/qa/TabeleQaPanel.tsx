@@ -21,6 +21,7 @@
 import { Loader2, RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import {
   dismissQaSuggestion,
@@ -49,6 +50,7 @@ export const TabeleQaPanel: React.FC<TabeleQaPanelProps> = ({
   onOpenInAiEditor,
   testInitialReport,
 }) => {
+  const { t } = useTranslation();
   const [report, setReport] = useState<QaReport | null>(testInitialReport ?? null);
   const [loading, setLoading] = useState(testInitialReport === undefined);
   const [computing, setComputing] = useState(false);
@@ -61,11 +63,16 @@ export const TabeleQaPanel: React.FC<TabeleQaPanelProps> = ({
       const latest = await getLatestQaReport(tableId);
       setReport(latest);
     } catch (e) {
-      toast.error(`Failed to load QA report: ${(e as Error)?.message ?? 'unknown error'}`);
+      toast.error(
+        t('kimi.tabeleShell.qa.loadFailed', {
+          defaultValue: 'Failed to load QA report: {{reason}}',
+          reason: (e as Error)?.message ?? t('kimi.tabeleShell.qa.unknownError', 'unknown error'),
+        })
+      );
     } finally {
       setLoading(false);
     }
-  }, [tableId]);
+  }, [tableId, t]);
 
   useEffect(() => {
     if (testInitialReport !== undefined) return;
@@ -79,13 +86,18 @@ export const TabeleQaPanel: React.FC<TabeleQaPanelProps> = ({
       const fresh = await recomputeQaReport(tableId, 'on_demand');
       setReport(fresh);
       setOptimisticDismissed(new Set());
-      toast.success('QA report refreshed');
+      toast.success(t('kimi.tabeleShell.qa.refreshed', 'QA report refreshed'));
     } catch (e) {
-      toast.error(`Failed to recompute: ${(e as Error)?.message ?? 'unknown error'}`);
+      toast.error(
+        t('kimi.tabeleShell.qa.recomputeFailed', {
+          defaultValue: 'Failed to recompute: {{reason}}',
+          reason: (e as Error)?.message ?? t('kimi.tabeleShell.qa.unknownError', 'unknown error'),
+        })
+      );
     } finally {
       setComputing(false);
     }
-  }, [tableId]);
+  }, [tableId, t]);
 
   const handleDismiss = useCallback(
     async (s: QaSuggestion) => {
@@ -97,7 +109,7 @@ export const TabeleQaPanel: React.FC<TabeleQaPanelProps> = ({
           return next;
         });
         await dismissQaSuggestion(tableId, s.id, s.fingerprint);
-        toast.success('Suggestion marked not applicable');
+        toast.success(t('kimi.tabeleShell.qa.dismissed', 'Suggestion marked not applicable'));
       } catch (e) {
         // Rollback on error.
         setOptimisticDismissed((prev) => {
@@ -105,10 +117,15 @@ export const TabeleQaPanel: React.FC<TabeleQaPanelProps> = ({
           next.delete(s.fingerprint);
           return next;
         });
-        toast.error(`Failed to dismiss: ${(e as Error)?.message ?? 'unknown error'}`);
+        toast.error(
+          t('kimi.tabeleShell.qa.dismissFailed', {
+            defaultValue: 'Failed to dismiss: {{reason}}',
+            reason: (e as Error)?.message ?? t('kimi.tabeleShell.qa.unknownError', 'unknown error'),
+          })
+        );
       }
     },
-    [tableId]
+    [tableId, t]
   );
 
   const visibleSuggestions = (report?.suggestions ?? []).filter(
@@ -119,24 +136,26 @@ export const TabeleQaPanel: React.FC<TabeleQaPanelProps> = ({
     <section
       className="flex h-full flex-col gap-3 p-3"
       data-testid="tabele-qa-panel"
-      aria-label="Tabele QA report"
+      aria-label={t('kimi.tabeleShell.qa.ariaLabel', 'Tabele QA report')}
     >
       <header className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">QA Report</h3>
+        <h3 className="text-sm font-semibold text-c-text">
+          {t('kimi.tabeleShell.qa.title', 'QA Report')}
+        </h3>
         <button
           type="button"
           onClick={handleRecompute}
           disabled={computing || !tableId}
-          className="inline-flex items-center gap-1 rounded-md border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-2 py-1 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md border border-c-border bg-c-surface-raised px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised disabled:opacity-50"
           data-testid="qa-recompute-button"
-          aria-label="Recompute QA report"
+          aria-label={t('kimi.tabeleShell.qa.recomputeAriaLabel', 'Recompute QA report')}
         >
           {computing ? (
             <Loader2 className="h-3 w-3 animate-spin" />
           ) : (
             <RefreshCw className="h-3 w-3" />
           )}
-          Recompute
+          {t('kimi.tabeleShell.qa.recompute', 'Recompute')}
         </button>
       </header>
 
@@ -153,8 +172,8 @@ export const TabeleQaPanel: React.FC<TabeleQaPanelProps> = ({
       )}
 
       <div>
-        <h4 className="mb-1.5 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          Suggestions
+        <h4 className="mb-1.5 text-[11px] uppercase tracking-wide text-c-text-secondary">
+          {t('kimi.tabeleShell.qa.suggestions', 'Suggestions')}
         </h4>
         <QaSuggestionList
           suggestions={visibleSuggestions}

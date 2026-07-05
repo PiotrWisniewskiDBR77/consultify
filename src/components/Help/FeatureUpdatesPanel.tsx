@@ -380,10 +380,10 @@ export const FeatureUpdatesPanel: React.FC<{ onClose?: () => void }> = ({ onClos
       {showComposer && (
         <>
           <div
-            className="fixed inset-0 bg-black/40 z-[9998]"
+            className="fixed inset-0 bg-black/40 z-overlay"
             onClick={() => (publishing ? null : setShowComposer(false))}
           />
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-modal flex items-center justify-center p-4">
             <div className="w-full max-w-2xl bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden">
               <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
                 <div className="text-sm font-bold text-slate-900 dark:text-white">

@@ -44,7 +44,7 @@ export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({ config, fiel
   return (
     <div className="space-y-3">
       <div>
-        <label className="text-xs font-medium text-gray-500">Title</label>
+        <label className="text-xs font-medium text-c-text-muted">Title</label>
         <input
           type="text"
           value={config.title || ''}
@@ -55,7 +55,7 @@ export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({ config, fiel
       </div>
 
       <div>
-        <label className="text-xs font-medium text-gray-500">Chart Type</label>
+        <label className="text-xs font-medium text-c-text-muted">Chart Type</label>
         <div className="grid grid-cols-4 gap-1 mt-1">
           {CHART_TYPES.map((ct) => (
             <button
@@ -63,8 +63,8 @@ export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({ config, fiel
               onClick={() => update('chartType', ct.value)}
               className={`px-2 py-1.5 text-xs rounded border transition-colors ${
                 config.chartType === ct.value
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-700 border-gray-200 hover:border-blue-300'
+                  ? 'bg-c-info text-c-text border-c-info'
+                  : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:border-c-info'
               }`}
             >
               {ct.label}
@@ -74,7 +74,7 @@ export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({ config, fiel
       </div>
 
       <div>
-        <label className="text-xs font-medium text-gray-500">X-Axis Field</label>
+        <label className="text-xs font-medium text-c-text-muted">X-Axis Field</label>
         <select
           value={config.xFieldId}
           onChange={(e) => update('xFieldId', e.target.value)}
@@ -90,8 +90,8 @@ export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({ config, fiel
       </div>
 
       <div>
-        <label className="text-xs font-medium text-gray-500">
-          Y-Axis Field <span className="text-gray-600">(numeric, optional)</span>
+        <label className="text-xs font-medium text-c-text-muted">
+          Y-Axis Field <span className="text-c-text-secondary">(numeric, optional)</span>
         </label>
         <select
           value={config.yFieldId || ''}
@@ -108,7 +108,7 @@ export const ChartConfigPanel: React.FC<ChartConfigPanelProps> = ({ config, fiel
       </div>
 
       <div>
-        <label className="text-xs font-medium text-gray-500">Aggregation</label>
+        <label className="text-xs font-medium text-c-text-muted">Aggregation</label>
         <select
           value={config.aggregation}
           onChange={(e) => update('aggregation', e.target.value as Aggregation)}

@@ -9,6 +9,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { QaAxisName, QaBand, QaReport } from '@/services/api/tablePlatform.api';
 
@@ -40,6 +41,34 @@ const AXIS_WEIGHTS_DISPLAY: Record<QaAxisName, number> = {
   formulaConsistency: 0.15,
 };
 
+const AXIS_LABEL_KEY: Record<QaAxisName, string> = {
+  completeness: 'kimi.tabeleShell.qa.axis.completeness',
+  freshness: 'kimi.tabeleShell.qa.axis.freshness',
+  sourceCoverage: 'kimi.tabeleShell.qa.axis.sourceCoverage',
+  methodology: 'kimi.tabeleShell.qa.axis.methodology',
+  formulaConsistency: 'kimi.tabeleShell.qa.axis.formulaConsistency',
+};
+
+const AXIS_LABEL_EN: Record<QaAxisName, string> = {
+  completeness: 'Completeness',
+  freshness: 'Freshness',
+  sourceCoverage: 'Source coverage',
+  methodology: 'Methodology',
+  formulaConsistency: 'Formula consistency',
+};
+
+const BAND_LABEL_KEY: Record<QaBand, string> = {
+  green: 'kimi.tabeleShell.qa.band.green',
+  amber: 'kimi.tabeleShell.qa.band.amber',
+  red: 'kimi.tabeleShell.qa.band.red',
+};
+
+const BAND_LABEL_EN: Record<QaBand, string> = {
+  green: 'green',
+  amber: 'amber',
+  red: 'red',
+};
+
 export interface QaHealthBarProps {
   report: QaReport | null;
   computing?: boolean;
@@ -52,25 +81,26 @@ function bandFromScore(score: number): QaBand {
 }
 
 export const QaHealthBar: React.FC<QaHealthBarProps> = ({ report, computing }) => {
+  const { t } = useTranslation();
   if (computing && !report) {
     return (
       <div
-        className="h-12 rounded-md bg-slate-100 dark:bg-slate-800 animate-pulse"
+        className="h-12 rounded-md bg-c-surface-raised animate-pulse"
         data-testid="qa-health-bar-loading"
       />
     );
   }
   if (!report) {
     return (
-      <div className="text-xs text-slate-500 dark:text-slate-400">
-        No QA report yet — run a recompute.
+      <div className="text-xs text-c-text-secondary">
+        {t('kimi.tabeleShell.qa.noReportYet', 'No QA report yet — run a recompute.')}
       </div>
     );
   }
   const overallBand = bandFromScore(report.overallScore);
   return (
     <div
-      className="rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3"
+      className="rounded-md border border-c-border-subtle bg-c-surface p-3"
       data-testid="qa-health-bar"
     >
       <div className="flex items-center justify-between gap-3">
@@ -79,22 +109,27 @@ export const QaHealthBar: React.FC<QaHealthBarProps> = ({ report, computing }) =
             className={`inline-block h-2.5 w-2.5 rounded-full ${BAND_COLORS[overallBand]}`}
             aria-hidden
           />
-          <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Health
+          <span className="text-xs uppercase tracking-wide text-c-text-secondary">
+            {t('kimi.tabeleShell.qa.health', 'Health')}
           </span>
           <span className={`text-sm font-semibold ${BAND_TEXT[overallBand]}`}>
             {Math.round(report.overallScore * 100)}%
           </span>
-          <span className="text-xs text-slate-500 dark:text-slate-400">{overallBand}</span>
+          <span className="text-xs text-c-text-secondary">
+            {t(BAND_LABEL_KEY[overallBand], BAND_LABEL_EN[overallBand])}
+          </span>
         </div>
-        <span className="text-[10px] text-slate-600 dark:text-slate-500">
+        <span className="text-[10px] text-c-text-secondary">
           {new Date(report.computedAt).toLocaleString()}
         </span>
       </div>
       <div
-        className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-slate-800/70"
+        className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-c-border-subtle"
         role="img"
-        aria-label={`Overall QA score ${Math.round(report.overallScore * 100)} percent`}
+        aria-label={t('kimi.tabeleShell.qa.overallScoreAriaLabel', {
+          defaultValue: 'Overall QA score {{pct}} percent',
+          pct: Math.round(report.overallScore * 100),
+        })}
       >
         {AXIS_ORDER.map((axis) => {
           const detail = report.axes[axis];
@@ -105,7 +140,7 @@ export const QaHealthBar: React.FC<QaHealthBarProps> = ({ report, computing }) =
               key={axis}
               style={{ width: `${widthPct}%` }}
               className={`${BAND_COLORS[band]} h-full`}
-              title={`${axis}: ${detail ? Math.round(detail.score * 100) : 0}%`}
+              title={`${t(AXIS_LABEL_KEY[axis], AXIS_LABEL_EN[axis])}: ${detail ? Math.round(detail.score * 100) : 0}%`}
             />
           );
         })}

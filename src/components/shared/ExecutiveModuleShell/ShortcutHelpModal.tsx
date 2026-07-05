@@ -59,7 +59,7 @@ export const ShortcutHelpModal: React.FC<ShortcutHelpModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 dark:bg-navy-950/70"
+      className="fixed inset-0 z-overlay flex items-center justify-center bg-slate-900/50 dark:bg-navy-950/70"
       data-testid={testId ?? 'mels-shortcut-help-backdrop'}
       onClick={onClose}
       role="presentation"

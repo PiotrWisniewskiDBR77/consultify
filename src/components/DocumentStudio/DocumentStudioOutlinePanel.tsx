@@ -7,6 +7,7 @@
 
 import { ChevronLeft, Loader2 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import Button from '@/components/ui/primitives/Button';
 
@@ -27,22 +28,27 @@ export const DocumentStudioOutlinePanel: React.FC<DocumentStudioOutlinePanelProp
   generating,
   error,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto p-6">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-navy-900 dark:text-white">{outline.title}</h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Type: <span className="font-medium">{outline.documentType}</span> · Density:{' '}
-            <span className="font-medium">{outline.recommendedDensity}</span> · Register:{' '}
-            <span className="font-medium">{outline.recommendedRegister}</span> · Style:{' '}
+          <h2 className="text-lg font-semibold text-c-text">{outline.title}</h2>
+          <p className="mt-1 text-sm text-c-text-muted">
+            {t('documentStudio.outline.type', 'Type')}:{' '}
+            <span className="font-medium">{outline.documentType}</span> ·{' '}
+            {t('documentStudio.outline.density', 'Density')}:{' '}
+            <span className="font-medium">{outline.recommendedDensity}</span> ·{' '}
+            {t('documentStudio.outline.register', 'Register')}:{' '}
+            <span className="font-medium">{outline.recommendedRegister}</span> ·{' '}
+            {t('documentStudio.outline.style', 'Style')}:{' '}
             <span className="font-medium">{outline.recommendedLanguageStyle}</span>
           </p>
         </div>
         <Button type="button" variant="ghost" size="sm" onClick={onBack} disabled={generating}>
           <span className="inline-flex items-center gap-1">
             <ChevronLeft className="h-4 w-4" />
-            Back
+            {t('documentStudio.outline.back', 'Back')}
           </span>
         </Button>
       </div>
@@ -51,17 +57,17 @@ export const DocumentStudioOutlinePanel: React.FC<DocumentStudioOutlinePanelProp
         {outline.sections.map((section, idx) => (
           <li
             key={`${section.title}-${idx}`}
-            className="rounded-lg border border-slate-200 bg-white p-3 text-sm dark:border-navy-700 dark:bg-navy-900"
+            className="rounded-lg border border-c-border bg-c-surface p-3 text-sm"
           >
             <div className="flex items-baseline justify-between gap-2">
-              <span className="font-medium text-navy-900 dark:text-white">
+              <span className="font-medium text-c-text">
                 {idx + 1}. {section.title}
               </span>
-              <span className="text-xs uppercase tracking-wide text-slate-600">
+              <span className="text-xs uppercase tracking-wide text-c-text-secondary">
                 {section.expectedLengthHint}
               </span>
             </div>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{section.purpose}</p>
+            <p className="mt-1 text-xs text-c-text-muted">{section.purpose}</p>
           </li>
         ))}
       </ol>
@@ -80,10 +86,10 @@ export const DocumentStudioOutlinePanel: React.FC<DocumentStudioOutlinePanelProp
           {generating ? (
             <span className="inline-flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Generating…
+              {t('documentStudio.outline.generating', 'Generating…')}
             </span>
           ) : (
-            'Generate document'
+            t('documentStudio.outline.generate', 'Generate document')
           )}
         </Button>
       </div>

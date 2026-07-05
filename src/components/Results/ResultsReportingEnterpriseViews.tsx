@@ -65,7 +65,7 @@ const ScheduleApprovalChip: React.FC<{ approval: string }> = ({ approval }) => {
 
   if (normalized === 'auto' || !normalized) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
+      <span className="inline-flex items-center gap-1 rounded-full bg-c-surface-raised px-2 py-0.5 text-xs font-medium text-c-text-muted">
         {t('results.reportingSchedules.approvalAuto', 'Auto')}
       </span>
     );
@@ -107,17 +107,17 @@ const WorkspaceStatCard: React.FC<{
   helper: string;
   icon: React.ReactNode;
 }> = ({ label, value, helper, icon }) => (
-  <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/90 dark:bg-white/[0.03] px-4 py-3">
+  <div className="rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3">
     <div className="flex items-start justify-between gap-3">
       <div>
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
           {label}
         </div>
-        <div className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">{value}</div>
+        <div className="mt-1 text-xl font-semibold text-c-text">{value}</div>
       </div>
-      <div className="text-slate-600 dark:text-slate-300">{icon}</div>
+      <div className="text-c-text-secondary">{icon}</div>
     </div>
-    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{helper}</div>
+    <div className="mt-1 text-xs text-c-text-muted">{helper}</div>
   </div>
 );
 
@@ -126,7 +126,7 @@ const FieldShell: React.FC<{ label: string; children: React.ReactNode }> = ({
   children,
 }) => (
   <label className="space-y-1.5">
-    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+    <span className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
       {label}
     </span>
     {children}
@@ -134,7 +134,7 @@ const FieldShell: React.FC<{ label: string; children: React.ReactNode }> = ({
 );
 
 const INPUT_CLASS =
-  'w-full rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-2 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30';
+  'w-full rounded-xl border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus';
 
 const TEXTAREA_CLASS = `${INPUT_CLASS} min-h-[88px]`;
 
@@ -193,29 +193,29 @@ const KpiMultiSelect: React.FC<{
   };
 
   return (
-    <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.03] p-3">
+    <div className="rounded-xl border border-c-border-subtle bg-c-surface p-3">
       <div className="max-h-44 overflow-y-auto space-y-2">
         {options.length === 0 ? (
-          <div className="text-sm text-slate-500 dark:text-slate-400">
+          <div className="text-sm text-c-text-muted">
             No KPI available in current scope.
           </div>
         ) : (
           options.map((option) => (
             <label
               key={option.id}
-              className="flex items-start gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-white/[0.04] cursor-pointer"
+              className="flex items-start gap-2 rounded-lg px-2 py-1.5 hover:bg-c-surface-raised cursor-pointer"
             >
               <input
                 type="checkbox"
                 checked={selectedIds.includes(option.id)}
                 onChange={() => toggle(option.id)}
-                className="mt-0.5 rounded border-slate-300 dark:border-white/[0.1]"
+                className="mt-0.5 rounded border-c-border-strong"
               />
               <span className="min-w-0">
-                <span className="block text-sm text-slate-700 dark:text-slate-200">
+                <span className="block text-sm text-c-text-secondary">
                   {option.name}
                 </span>
-                <span className="block text-xs text-slate-500 dark:text-slate-400">
+                <span className="block text-xs text-c-text-muted">
                   {option.initiativeName || 'Standalone KPI'}
                 </span>
               </span>
@@ -335,10 +335,10 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
           const item = row._raw as ScheduleItem;
           return (
             <div>
-              <div className="text-sm font-medium text-slate-900 dark:text-white">
+              <div className="text-sm font-medium text-c-text">
                 {item.reportName}
               </div>
-              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              <div className="mt-1 text-xs text-c-text-muted">
                 {item.kpiIds.length} KPI · {item.sendAt || 'No send time'}
               </div>
             </div>
@@ -512,13 +512,13 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
       </div>
 
       {createOpen && (
-        <div className="rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/95 dark:bg-navy-900/95 p-5 shadow-sm">
+        <div className="rounded-2xl border border-c-border bg-c-surface p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+              <h3 className="text-base font-semibold text-c-text">
                 {t('results.reportingSchedules.createTitle', 'Create recurring KPI schedule')}
               </h3>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-sm text-c-text-muted">
                 {t(
                   'results.reportingSchedules.createHint',
                   'Scheduled delivery consumes governed KPI truth and keeps review cadence explicit.'
@@ -528,7 +528,7 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
             <button
               type="button"
               onClick={() => setCreateOpen(false)}
-              className="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
+              className="text-sm text-c-text-muted hover:text-c-text"
             >
               {t('common.close', 'Close')}
             </button>
@@ -585,12 +585,12 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
                 className={INPUT_CLASS}
               />
             </FieldShell>
-            <label className="flex items-center gap-2 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.03] px-3 py-2 text-sm text-slate-700 dark:text-slate-200">
+            <label className="flex items-center gap-2 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm text-c-text-secondary">
               <input
                 type="checkbox"
                 checked={approvalRequired}
                 onChange={(event) => setApprovalRequired(event.target.checked)}
-                className="rounded border-slate-300 dark:border-white/[0.1]"
+                className="rounded border-c-border-strong"
               />
               <span>
                 {t('results.kpiReports.approvalRequired', 'Approval required before send')}
@@ -612,7 +612,7 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
             <button
               type="button"
               onClick={() => setCreateOpen(false)}
-              className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] px-4 py-2 text-sm text-slate-600 dark:text-slate-300"
+              className="rounded-xl border border-c-border px-4 py-2 text-sm text-c-text-secondary"
             >
               {t('common.cancel', 'Cancel')}
             </button>
@@ -620,7 +620,7 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
               type="button"
               disabled={creating}
               onClick={() => void handleCreate()}
-              className="rounded-xl bg-navy-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 hover:bg-navy-800"
+              className="rounded-xl bg-c-text px-4 py-2 text-sm font-medium text-c-bg disabled:opacity-60 hover:opacity-90"
             >
               {creating ? t('common.loading', 'Loading...') : t('common.create', 'Create')}
             </button>
@@ -768,8 +768,8 @@ export const ResultsWallboardsView: React.FC<WorkspaceViewProps> = ({
           const item = row._raw as WallboardItem;
           return (
             <div>
-              <div className="text-sm font-medium text-slate-900 dark:text-white">{item.name}</div>
-              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              <div className="text-sm font-medium text-c-text">{item.name}</div>
+              <div className="mt-1 text-xs text-c-text-muted">
                 {item.kpiIds.length} KPI · {Object.keys(item.alertThresholds || {}).length} alert
                 cues
               </div>
@@ -881,13 +881,13 @@ export const ResultsWallboardsView: React.FC<WorkspaceViewProps> = ({
       </div>
 
       {createOpen && (
-        <div className="rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/95 dark:bg-navy-900/95 p-5 shadow-sm">
+        <div className="rounded-2xl border border-c-border bg-c-surface p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+              <h3 className="text-base font-semibold text-c-text">
                 {t('results.wallboards.createTitle', 'Create wallboard')}
               </h3>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-sm text-c-text-muted">
                 {t(
                   'results.wallboards.createHint',
                   'Wallboards should amplify governed KPI truth for TV and operational visibility.'
@@ -897,7 +897,7 @@ export const ResultsWallboardsView: React.FC<WorkspaceViewProps> = ({
             <button
               type="button"
               onClick={() => setCreateOpen(false)}
-              className="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
+              className="text-sm text-c-text-muted hover:text-c-text"
             >
               {t('common.close', 'Close')}
             </button>
@@ -950,7 +950,7 @@ export const ResultsWallboardsView: React.FC<WorkspaceViewProps> = ({
             <button
               type="button"
               onClick={() => setCreateOpen(false)}
-              className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] px-4 py-2 text-sm text-slate-600 dark:text-slate-300"
+              className="rounded-xl border border-c-border px-4 py-2 text-sm text-c-text-secondary"
             >
               {t('common.cancel', 'Cancel')}
             </button>
@@ -958,7 +958,7 @@ export const ResultsWallboardsView: React.FC<WorkspaceViewProps> = ({
               type="button"
               disabled={creating}
               onClick={() => void handleCreate()}
-              className="rounded-xl bg-navy-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 hover:bg-navy-800"
+              className="rounded-xl bg-c-text px-4 py-2 text-sm font-medium text-c-bg disabled:opacity-60 hover:opacity-90"
             >
               {creating ? t('common.loading', 'Loading...') : t('common.create', 'Create')}
             </button>
@@ -1109,10 +1109,10 @@ export const ResultsKpiConnectorsView: React.FC<WorkspaceViewProps> = ({
           const item = row._raw as ConnectorItem;
           return (
             <div>
-              <div className="text-sm font-medium text-slate-900 dark:text-white">
+              <div className="text-sm font-medium text-c-text">
                 {item.connectorName}
               </div>
-              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              <div className="mt-1 text-xs text-c-text-muted">
                 {item.targetKpiIds.length} KPI · {item.connectorType}
               </div>
             </div>
@@ -1239,13 +1239,13 @@ export const ResultsKpiConnectorsView: React.FC<WorkspaceViewProps> = ({
       </div>
 
       {createOpen && (
-        <div className="rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/95 dark:bg-navy-900/95 p-5 shadow-sm">
+        <div className="rounded-2xl border border-c-border bg-c-surface p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+              <h3 className="text-base font-semibold text-c-text">
                 {t('results.connectors.createTitle', 'Create KPI connector')}
               </h3>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-sm text-c-text-muted">
                 {t(
                   'results.connectors.createHint',
                   'Connectors expose source posture and cadence, but they do not redefine KPI truth.'
@@ -1255,7 +1255,7 @@ export const ResultsKpiConnectorsView: React.FC<WorkspaceViewProps> = ({
             <button
               type="button"
               onClick={() => setCreateOpen(false)}
-              className="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
+              className="text-sm text-c-text-muted hover:text-c-text"
             >
               {t('common.close', 'Close')}
             </button>
@@ -1328,7 +1328,7 @@ export const ResultsKpiConnectorsView: React.FC<WorkspaceViewProps> = ({
             <button
               type="button"
               onClick={() => setCreateOpen(false)}
-              className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] px-4 py-2 text-sm text-slate-600 dark:text-slate-300"
+              className="rounded-xl border border-c-border px-4 py-2 text-sm text-c-text-secondary"
             >
               {t('common.cancel', 'Cancel')}
             </button>
@@ -1336,7 +1336,7 @@ export const ResultsKpiConnectorsView: React.FC<WorkspaceViewProps> = ({
               type="button"
               disabled={creating}
               onClick={() => void handleCreate()}
-              className="rounded-xl bg-navy-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 hover:bg-navy-800"
+              className="rounded-xl bg-c-text px-4 py-2 text-sm font-medium text-c-bg disabled:opacity-60 hover:opacity-90"
             >
               {creating ? t('common.loading', 'Loading...') : t('common.create', 'Create')}
             </button>

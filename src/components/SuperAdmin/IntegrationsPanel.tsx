@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 
@@ -37,8 +38,10 @@ export const IntegrationsPanel: React.FC = () => {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [webhooks, setWebhooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [activeTab, setActiveTab] = useState<'integrations' | 'webhooks'>('integrations');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetchData();
@@ -46,6 +49,7 @@ export const IntegrationsPanel: React.FC = () => {
 
   const fetchData = async () => {
     setLoading(true);
+    setError(false);
     try {
       if (activeTab === 'integrations') {
         const data = await Api.getSystemIntegrations();
@@ -64,8 +68,9 @@ export const IntegrationsPanel: React.FC = () => {
             : [];
         setWebhooks(list || []);
       }
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
+    } catch (err) {
+      console.error('Failed to fetch data:', err);
+      setError(true);
       toast.error('Failed to load data');
     } finally {
       setLoading(false);
@@ -154,7 +159,21 @@ export const IntegrationsPanel: React.FC = () => {
       </div>
 
       {/* Content */}
-      {activeTab === 'integrations' ? (
+      {error ? (
+        <div className="text-center py-12">
+          <XCircle size={40} className="mx-auto mb-3 text-danger-500 opacity-80" />
+          <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">
+            {t('superAdmin.integrations.loadFailed')}
+          </p>
+          <button
+            onClick={() => fetchData()}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+          >
+            <RefreshCw size={14} />
+            {t('common.retry')}
+          </button>
+        </div>
+      ) : activeTab === 'integrations' ? (
         <div className="space-y-2">
           {integrations.length === 0 ? (
             <div className="text-center py-12 text-slate-400 dark:text-slate-500">

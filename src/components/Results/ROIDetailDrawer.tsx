@@ -273,8 +273,8 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-navy-950/40" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-navy-900 border-l border-navy-700 shadow-2xl flex flex-col overflow-hidden">
+      <div className="fixed inset-0 z-dropdown bg-navy-950/40" onClick={onClose} />
+      <div className="fixed inset-y-0 right-0 z-overlay w-full max-w-lg bg-navy-900 border-l border-navy-700 shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-navy-700 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
@@ -338,35 +338,66 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
                   {t('results.roi.chartTitle', 'Plan vs Realized per Period')}
                 </h3>
                 {chartData.length > 0 ? (
-                  <div className="relative h-40 flex items-end gap-1">
-                    {chartData.map((d) => {
-                      const planPct = (d.plan / maxVal) * 100;
-                      const realPct = (d.realized / maxVal) * 100;
-                      return (
-                        <div
-                          key={d.period}
-                          className="flex-1 min-w-[20px] flex flex-col items-center gap-0.5"
-                          title={`${d.period}: Plan ${d.plan.toFixed(0)} / Realized ${d.realized.toFixed(0)}`}
-                        >
+                  <>
+                    {/* Grouped bars: plan and realized sit side-by-side per period
+                        (previously stacked in a flex-col, which collapsed the chart).
+                        Heights are % of the shared maxVal so both series are
+                        comparable; series colors use c-tag tokens (H2.6). */}
+                    <div className="relative h-40 flex items-end gap-1.5">
+                      {chartData.map((d) => {
+                        const planPct = (d.plan / maxVal) * 100;
+                        const realPct = (d.realized / maxVal) * 100;
+                        return (
                           <div
-                            className="w-full rounded-t bg-primary-500/80"
-                            style={{ height: `${Math.max(planPct, 2)}%` }}
-                          />
-                          <div
-                            className={`w-full rounded-t ${
-                              d.isAbove ? 'bg-emerald-500' : 'bg-danger-500'
-                            }`}
-                            style={{ height: `${Math.max(realPct, 2)}%` }}
-                          />
-                          <span className="text-[9px] text-slate-500 truncate max-w-full">
-                            {d.period.slice(0, 7)}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                            key={d.period}
+                            className="flex-1 min-w-[20px] h-full flex flex-col items-center justify-end gap-0.5"
+                            title={`${d.period}: Plan ${d.plan.toFixed(0)} / Realized ${d.realized.toFixed(0)}`}
+                          >
+                            <div className="w-full h-full flex items-end justify-center gap-0.5">
+                              <div
+                                className="w-1/2 rounded-t transition-all"
+                                style={{
+                                  height: `${Math.max(planPct, 2)}%`,
+                                  backgroundColor: 'var(--c-tag-1)',
+                                }}
+                              />
+                              <div
+                                className="w-1/2 rounded-t transition-all"
+                                style={{
+                                  height: `${Math.max(realPct, 2)}%`,
+                                  backgroundColor: d.isAbove
+                                    ? 'var(--c-tag-12)'
+                                    : 'var(--c-tag-4)',
+                                }}
+                              />
+                            </div>
+                            <span className="text-[9px] text-slate-500 dark:text-c-text-muted truncate max-w-full">
+                              {d.period.slice(0, 7)}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* Legend */}
+                    <div className="mt-2 flex items-center gap-4 text-[10px] text-slate-500 dark:text-c-text-muted">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span
+                          className="h-2 w-2 rounded-sm"
+                          style={{ backgroundColor: 'var(--c-tag-1)' }}
+                        />
+                        {t('results.roi.legendPlan', 'Plan')}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <span
+                          className="h-2 w-2 rounded-sm"
+                          style={{ backgroundColor: 'var(--c-tag-12)' }}
+                        />
+                        {t('results.roi.legendRealized', 'Realized')}
+                      </span>
+                    </div>
+                  </>
                 ) : (
-                  <div className="h-40 flex items-center justify-center text-sm text-slate-500 bg-navy-800 rounded-lg border border-navy-700">
+                  <div className="h-40 flex items-center justify-center text-sm text-slate-500 dark:text-c-text-muted bg-slate-50 dark:bg-c-surface-raised rounded-lg border border-slate-200 dark:border-c-border">
                     {t('results.roi.noRealizedData', 'No realized data yet')}
                   </div>
                 )}
@@ -425,7 +456,7 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
                     <button
                       type="submit"
                       disabled={!newAmount || submitting}
-                      className="w-full h-9 text-sm font-medium rounded-full bg-primary-500 text-white hover:bg-primary-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="w-full h-9 text-sm font-medium rounded-full bg-c-text text-c-bg hover:bg-c-text-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       {submitting
                         ? t('common.saving', 'Saving...')

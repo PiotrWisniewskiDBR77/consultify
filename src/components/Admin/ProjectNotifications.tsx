@@ -180,7 +180,7 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
             <button
               onClick={() => handleToggle(key)}
               className={`w-12 h-6 rounded-full transition-colors relative ${
-                settings[key] ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
+                settings[key] ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
               }`}
             >
               <div
@@ -210,7 +210,7 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
           <button
             onClick={() => handleToggle('escalation_enabled')}
             className={`w-12 h-6 rounded-full transition-colors relative ${
-              settings.escalation_enabled ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
+              settings.escalation_enabled ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
             }`}
           >
             <div
@@ -251,7 +251,7 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
           <button
             onClick={() => handleToggle('in_app_notifications')}
             className={`w-12 h-6 rounded-full transition-colors relative ${
-              settings.in_app_notifications ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
+              settings.in_app_notifications ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
             }`}
           >
             <div
@@ -271,7 +271,7 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
           <button
             onClick={() => handleToggle('email_notifications')}
             className={`w-12 h-6 rounded-full transition-colors relative ${
-              settings.email_notifications ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
+              settings.email_notifications ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600'
             }`}
           >
             <div
@@ -287,7 +287,7 @@ export const ProjectNotifications: React.FC<ProjectNotificationsProps> = ({
       <button
         onClick={handleSave}
         disabled={isSaving}
-        className="w-full py-3 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+        className="w-full py-3 bg-c-text text-c-bg hover:bg-c-text-secondary disabled:bg-slate-400 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
       >
         {isSaving ? (
           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

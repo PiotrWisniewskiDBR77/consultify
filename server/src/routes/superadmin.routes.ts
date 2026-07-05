@@ -1901,31 +1901,40 @@ const ensureAlertsTable = async () => {
 router.get(
   '/system-health/alerts',
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    await ensureAlertsTable();
-    const rows =
-      (await dbAll(`SELECT * FROM system_health_alerts ORDER BY created_at DESC`, [], {
-        fallback: false,
-      })) || [];
-    const alerts = rows.map((r: any) => ({
-      id: r.id,
-      name: r.name,
-      metric: r.metric,
-      operator: r.condition,
-      threshold: r.threshold,
-      severity: r.severity || 'warning',
-      channels: (() => {
-        try {
-          return JSON.parse(r.channels || '[]');
-        } catch {
-          return [];
-        }
-      })(),
-      enabled: !!r.is_enabled,
-      lastTriggeredAt: r.last_triggered_at || null,
-      createdAt: r.created_at,
-      updatedAt: r.updated_at,
-    }));
-    return res.json(alerts);
+    // Fail-soft: lazy DDL must not surface as a bare 500 on a read.
+    try {
+      await ensureAlertsTable();
+      const rows =
+        (await dbAll(`SELECT * FROM system_health_alerts ORDER BY created_at DESC`, [], {
+          fallback: false,
+        })) || [];
+      const alerts = rows.map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        metric: r.metric,
+        operator: r.condition,
+        threshold: r.threshold,
+        severity: r.severity || 'warning',
+        channels: (() => {
+          try {
+            return JSON.parse(r.channels || '[]');
+          } catch {
+            return [];
+          }
+        })(),
+        enabled: !!r.is_enabled,
+        lastTriggeredAt: r.last_triggered_at || null,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      }));
+      return res.json(alerts);
+    } catch (err) {
+      console.error(
+        '[superadmin] GET /system-health/alerts failed (fail-soft, returning empty):',
+        err
+      );
+      return res.json([]);
+    }
   })
 );
 

@@ -16,14 +16,14 @@ interface HealthMetric {
 }
 
 function scoreColor(score: number): string {
-  if (score >= 80) return 'text-emerald-600 dark:text-emerald-400';
-  if (score >= 50) return 'text-amber-600 dark:text-amber-400';
+  if (score >= 80) return 'text-success-600 dark:text-success-400';
+  if (score >= 50) return 'text-warning-600 dark:text-warning-400';
   return 'text-danger-500 dark:text-danger-400';
 }
 
 function scoreBg(score: number): string {
-  if (score >= 80) return 'bg-emerald-500';
-  if (score >= 50) return 'bg-amber-500';
+  if (score >= 80) return 'bg-success-500';
+  if (score >= 50) return 'bg-warning-500';
   return 'bg-danger-500';
 }
 
@@ -164,13 +164,13 @@ export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center justify-between px-1 py-0.5 rounded hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+        className="w-full flex items-center justify-between px-1 py-0.5 rounded hover:bg-c-surface-raised transition-colors"
       >
         <div className="flex items-center gap-2">
           <div className={`text-lg font-bold tabular-nums ${scoreColor(overallScore)}`}>
             {overallScore}%
           </div>
-          <div className="h-1.5 w-20 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+          <div className="h-1.5 w-20 rounded-full bg-c-surface-raised overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${scoreBg(overallScore)}`}
               style={{ width: `${overallScore}%` }}
@@ -178,9 +178,9 @@ export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
           </div>
         </div>
         {expanded ? (
-          <ChevronUp size={14} className="text-slate-600" />
+          <ChevronUp size={14} className="text-c-text-secondary" />
         ) : (
-          <ChevronDown size={14} className="text-slate-600" />
+          <ChevronDown size={14} className="text-c-text-secondary" />
         )}
       </button>
 
@@ -189,17 +189,17 @@ export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
           {metrics.map((m) => (
             <div key={m.key} className="flex items-center gap-2">
               {m.score >= 80 ? (
-                <CheckCircle2 size={12} className="text-emerald-500 flex-shrink-0" />
+                <CheckCircle2 size={12} className="text-success-500 flex-shrink-0" />
               ) : m.score >= 50 ? (
-                <Activity size={12} className="text-amber-500 flex-shrink-0" />
+                <Activity size={12} className="text-warning-500 flex-shrink-0" />
               ) : (
                 <AlertTriangle size={12} className="text-danger-500 flex-shrink-0" />
               )}
               <div className="flex-1 min-w-0">
-                <div className="text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate">
+                <div className="text-[10px] font-medium text-c-text-secondary truncate">
                   {isPl ? m.labelPl : m.labelEn}
                 </div>
-                <div className="text-[9px] text-slate-500 dark:text-slate-400 truncate">
+                <div className="text-[9px] text-c-text-muted truncate">
                   {m.detail}
                 </div>
               </div>

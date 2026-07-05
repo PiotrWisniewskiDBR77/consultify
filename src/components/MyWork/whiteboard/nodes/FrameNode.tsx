@@ -37,7 +37,7 @@ export const FrameNode: React.FC<NodeProps> = ({ data, selected }) => {
         minHeight={120}
       />
       <div
-        className={`relative p-3 rounded-2xl border-2 transition-all ${selected ? 'ring-2 ring-slate-500/60 border-slate-400/80 shadow-lg' : 'border-slate-300/80 dark:border-slate-600/40'} shadow-xl shadow-slate-300/25 dark:shadow-[0_0_20px_rgba(0,0,0,0.15)]`}
+        className={`relative p-3 rounded-2xl border-2 transition-all ${selected ? 'ring-2 ring-c-border-strong border-c-border-strong shadow-lg' : 'border-c-border'} shadow-xl dark:shadow-[0_0_20px_rgba(0,0,0,0.15)]`}
         style={{
           width: collapsed ? data?.width || 400 : '100%',
           height: collapsed ? 'auto' : '100%',
@@ -47,7 +47,7 @@ export const FrameNode: React.FC<NodeProps> = ({ data, selected }) => {
       >
         <div className="flex items-center gap-1.5 mb-2">
           {data?.semanticLabel && (
-            <span className="px-1.5 py-0.5 rounded-full bg-white/70 dark:bg-navy-800/60 text-[9px] font-bold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+            <span className="px-1.5 py-0.5 rounded-full bg-c-surface text-[9px] font-bold uppercase tracking-[0.12em] text-c-text-muted">
               {String(data.semanticLabel)}
             </span>
           )}
@@ -55,12 +55,12 @@ export const FrameNode: React.FC<NodeProps> = ({ data, selected }) => {
             <button
               type="button"
               onClick={toggleCollapse}
-              className="flex items-center justify-center w-5 h-5 rounded hover:bg-slate-200/60 dark:hover:bg-navy-700/60 transition-colors shrink-0"
+              className="flex items-center justify-center w-5 h-5 rounded hover:bg-c-surface-raised transition-colors shrink-0"
             >
               {collapsed ? (
-                <ChevronRight size={12} className="text-slate-500 dark:text-slate-400" />
+                <ChevronRight size={12} className="text-c-text-muted" />
               ) : (
-                <ChevronDown size={12} className="text-slate-500 dark:text-slate-400" />
+                <ChevronDown size={12} className="text-c-text-muted" />
               )}
             </button>
           )}
@@ -83,22 +83,22 @@ export const FrameNode: React.FC<NodeProps> = ({ data, selected }) => {
                   if (e.key === 'Enter') commitEdit();
                   if (e.key === 'Escape') setEditing(false);
                 }}
-                className="w-full bg-transparent text-xs font-bold text-slate-700 dark:text-slate-200 outline-none border-b border-slate-400 dark:border-slate-500 uppercase tracking-wider"
+                className="w-full bg-transparent text-xs font-bold text-c-text-secondary outline-none border-b border-c-border-strong uppercase tracking-wider"
               />
             ) : (
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 truncate">
+              <div className="text-xs font-bold uppercase tracking-wider text-c-text-secondary truncate">
                 {data?.label || 'Frame'}
               </div>
             )}
           </div>
           {collapsed && childCount > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-slate-200 dark:bg-navy-700 text-[9px] font-semibold text-slate-600 dark:text-slate-300 px-1 shrink-0">
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-c-surface-raised text-[9px] font-semibold text-c-text-secondary px-1 shrink-0">
               {childCount}
             </span>
           )}
         </div>
         {collapsed && (
-          <div className="text-[10px] text-slate-600 dark:text-slate-500 italic">
+          <div className="text-[10px] text-c-text-secondary italic">
             {childCount > 0 ? `${childCount} item${childCount !== 1 ? 's' : ''} hidden` : 'Empty'}
           </div>
         )}

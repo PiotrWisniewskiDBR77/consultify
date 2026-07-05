@@ -151,3 +151,101 @@ R1 wejścia (karta+INV_E+uwaga #1+weryfikacja override) · R2 zero sierot · R3 
 - **Media Library Browser** — przeglądarka mediów — `MediaLibraryBrowser.tsx`
 - **Source Traceability** — śledzenie źródeł — `SourceTraceability.tsx`
 - **Presence Indicators** — wskaźniki obecności (collaboration) — `PresenceIndicators.tsx`
+
+---
+
+## Generatory Deliverable — premium DECK (B1 Layout Director + warianty)
+
+> **APPEND 2026-06-23.** Sekcja NOWA i ROZŁĄCZNA z resztą teczki. Powyżej = istniejący DeckBuilder (pipeline V8, wersjonowanie, share, eksport, quality-gates). Tutaj = **premium warstwa generatora prezentacji** z programu „Generatory Deliverable" (fale W2/W4/W5), która do tej teczki nie wchodziła.
+> **SSOT:** `docs/product/DELIVERABLES_GENERATORS_SPEC.md` (wiersze R4/B1/B2/X1) · plany testów `docs/qa/deliverables/test-plan/{R,B,X}-series.md` · scenariusze `docs/qa/deliverables/scenarios/M19_DECKS.md` (30 deck quality) · run dowodowy `docs/qa/deliverables/runs/2026-06-22-VTS-generated.md` + `…-live-pilot-sonnet46.json`.
+> **Testy manualne:** `Harvard/Testy manualne/TESTY_M19_PREZENTACJE.md` → sekcja „Testy manualne — Generatory Deliverable (premium DECK quality)".
+
+### A* · INTENCJA (premium deck)
+- **Job-to-be-done:** z intentu + listy slajdów wytworzyć deck **klasy Gamma** — bez ręcznego doboru layoutu/palety/obrazów. Mózg premium (LLM) sam dobiera **layout intent** z 17-katalogu na każdy slajd, **jedną paletę** z 13-katalogu na cały deck oraz **image-brief + reasoning** per slajd. Mniej kontrolek = wyższa jakość („fewer controls, AI-driven").
+- **Persony:** konsultant generujący deck zarządczy z czatu/Studio; odbiorca = zarząd / klient (board-grade).
+- **Zakres warstwy:** R4 (Deck Gamma-flow: regenerateSlide AI, mniej kontrolek) · B1 (AI Layout Director) · B2 (warianty/remix slajdu) · X1 (parytet eksportu HTML→PDF/PNG). **POZA:** wpięcie w żywe UI deck-buildera (dziś za flagą OFF — patrz status).
+
+### B* · UX docelowe (premium deck)
+- **R4 Gamma-flow:** `DeckBuilderMelsView` (root `data-testid="deck-builder-mels-root"`) z odchudzonym setem kontrolek; regeneracja slajdu przez pole „Przerób ten slajd…" (`presentations.builder.regenerateSlide`); zmiana motywu, present mode, branding, undo.
+- **B1 efekt na ekranie:** każdy slajd ma rozpoznawalny layout (cover / executive_summary / key_messages / comparison / root_cause / recommendation_portfolio / roadmap / risk_management / next_steps / …), spójną paletę i miejsce na obraz wg briefu.
+- **B2 remix:** regeneracja 1 slajdu w N wariantach (różne layouty/ujęcia) z zachowaniem treści; wybór wariantu persystuje; undo wraca do poprzedniego.
+
+### C* · DANE + KONTRAKT (premium deck)
+- **Generator:** `server/src/services/.../presentationLayoutDirectorService.ts` (B1) — `planDeckLayout`. Katalog 17 `SlideIntent` (`:37`), katalog 13 palet `CURATED_COLOR_SETS` (harvard/ocean/slate/forest/ember/midnight/arctic/sand/indigo/graphite/olive/burgundy/teal).
+- **Tier/flaga:** `server/src/services/deliverableGenerationTier.ts` — `ENABLE_DELIVERABLES_PREMIUM` (default **OFF** `:13`, fail-open → STANDARD). ON → `tierUsed='PREMIUM'`, `source='llm'`, `fallbackUsed=false`. D1 = mózg premium Anthropic Sonnet.
+- **Kontrakt (Zod):** layouty ∈ 17-katalog, palety ∈ 13-katalog (enum nie przepuszcza śmieci); `plans.length ∈ [minSlides,maxSlides]`. Każdy plan niesie realny `title`/`key_message` (fix pomiaru 2026-06-22 — patrz Log) + `imageBrief` + `reasoning`.
+- **Eksport (X1):** `server/src/services/playwrightPdfRenderer.ts` (`renderHtmlToPdf`/`renderHtmlToPng`, NIGDY nie rzucają; typed-result; PNG viewport default 1920×1080). Parytet = wyeksportowany plik zawiera realnie obrazy/kolory/ramki, nie sam tekst (FT-4).
+
+### D* · AI / mózg premium
+- B1 = LLM-driven layout director (premium tier). Runner pomiarowy: `scripts/deliverables/live-pilot-ft6.mts` (plain-node, klucz ze stagingu Railway, `DOTENV_IGNORE_LOCAL=1` → nie dotyka PROD centerbeam, bez DB). Scoring: `scoreDeck` (`tests/integration/deliverables/scoring/deckScoring.ts`).
+
+### E* · INTEGRACJE
+- Wejście: czat→canvas→Studio (SPEC_01 Tryb A `generate_deliverable(type:presentation)`). **Dziś nie wpięte w żywy pipeline UI dla premium** (warstwa 2 / Manual-UI = BLOCKED do wpięcia+deployu). Wyjście: eksport PPTX/PDF/PNG/HTML; rejestr Outputs (X6).
+
+### F* · EPIKI → STORIES (traceable do R4/B1/B2/X1)
+
+- **EPIK G-1 — AI Layout Director (B1):** deck premium klasy Gamma z mózgu LLM.
+  - Story G-1.1: jako konsultant chcę, by generator sam dobrał **różnorodne layouty** — deck ≥8 slajdów → **≥8 distinct layout intents**. *Gherkin: dany intent „pełna diagnoza ~12 slajdów" · gdy premium ON · wtedy `distinctLayouts ≥ 8` ORAZ `noTripleRun = 0`.* [→ B1-S01, scenariusz M19_DECKS S16; test manualny MD-01]
+  - Story G-1.2: **jedna paleta na cały deck** z 13-katalogu. *Gherkin: gdy deck wygenerowany · wtedy `distinct paletteId = 1` ∈ catalog13.* [→ B1-S02; MD-01]
+  - Story G-1.3: **image-brief na każdym slajdzie** (≥10 znaków). *Gherkin: gdy deck wygenerowany · wtedy każdy slajd ma nonempty `imageBrief` + `reasoning`.* [→ B1-S03; MD-01]
+  - Story G-1.4: **brak >2 identycznych layoutów pod rząd** (no triple-run). [→ B1-S01, M19_DECKS S07/S21; MD-01]
+  - Story G-1.5: layout dopasowany do tematu (KPI→performance_overview, harmonogram→roadmap, ryzyko→risk_management). [→ B1-S04/S05; MD-02]
+  - Story G-1.6: **fallback gdy AI OFF** = podłoga deterministyczna (`fallbackUsed=true`, `tierUsed='STANDARD'`, schema nadal waliduje, brak crasha). [→ B1-S06; MD-06]
+- **EPIK G-2 — Gamma-flow editor (R4):** odchudzony builder z AI-regeneracją.
+  - Story G-2.1: regeneracja slajdu AI (`regenerateSlide`) zmienia treść slajdu; status „Regenerating…". [→ R4-S02; MD-03]
+  - Story G-2.2: zmiana motywu / present mode / branding / undo działają w Gamma-flow. [→ R4-S03..S06; MD-03]
+- **EPIK G-3 — Warianty / remix (B2):** N wariantów slajdu, treść zachowana, wybór persystuje, undo cofa.
+  - Story G-3.1: remix slajdu → ≥2 distinct layout intents, każdy waliduje schema. [→ B2-S01; MD-04]
+  - Story G-3.2: `key_message` zachowany w wariantach; paleta deck nie dryfuje. [→ B2-S02/S03; MD-04]
+  - Story G-3.3: wybór wariantu persystuje po reload; undo wraca do poprzedniego. [→ B2-S04/S05; MD-04, Manual-UI ⚠ po wpięciu]
+- **EPIK G-4 — Parytet eksportu (X1):** PDF/PNG = realnie obrazy/kolory/ramki.
+  - Story G-4.1: deck→PDF wierny ekranowi (układ, fonty, kolory marki). [→ X1-M01/M06; MD-05]
+  - Story G-4.2: PNG slajdu ostry (deviceScaleFactor, viewport 1920×1080). [→ X1-M03; MD-05]
+- **EPIK G-5 — Head-to-head vs Gamma:** ocena ekspercka jakości.
+  - Story G-5.1: ten sam intent (VTS golden) nasz vs Gamma, ocena 1–5 w 4 osiach (layout-fit / hierarchia / motyw / „gotowe do klienta"); mediana ≥4/5, brak osi <3. [→ B1-S08; MD-07]
+
+### G* · DoD / jakość (premium deck)
+
+**7 globalnych kryteriów programu (FT) — stan dla premium DECK:**
+
+| # | Kryterium (FT) | Stan premium DECK | Dowód |
+|---|---|---|---|
+| 1 | FT-1 feature działa / kontrakt schema (Zod) | ✅ MET (code-side) | layouty/palety ∈ catalog; `plans.length` w zakresie; pilot S01–S16 |
+| 2 | FT-2 golden output stabilny | ✅ MET (code-side) | golden S01/S06/S16; VTS deck 11 slajdów `…/runs/2026-06-22-VTS-generated.md` |
+| 3 | FT-3 dark/light spójny | ⏳ PENDING | Manual-UI ⚠ — wymaga wpięcia premium do UI + dark render (B1-S09) |
+| 4 | FT-6 jakość vs rubric (scoring + head-to-head) | ✅ MET code-side (~100% FT-6 Sonnet 4.6: S01/S06/S16=100%) / ⏳ head-to-head ekspercki PENDING | pilot + VTS golden; ocena ekspercka 4-osiowa do wykonania (MD-07) |
+| 5 | FT-7 manualne przejście przez UI | ⏳ PENDING (BLOCKED) | premium niewpięty w żywy pipeline UI — Manual-UI po deployu |
+| 6 | FT-8 fallback / fail-open (AI OFF = podłoga) | ✅ MET (code-side) | `deliverableGenerationTier.ts:13` default OFF=STANDARD, fail-open; B1-S06 |
+| 7 | FT-4 parytet wyeksportowanego pliku | ✅ MET deterministycznie (X-series) / ⏳ real-chromium + manual PENDING | `playwrightHtmlToPng.test.ts` (PNG magic, viewport); X1-M manual po wpięciu |
+
+**Bramka jakości deck FT-6 (Q1 = ≥85%) — co MET / co PENDING:**
+
+| Reguła FT-6 (deck) | Próg | Stan | Dowód |
+|---|---|---|---|
+| Avg `scorePct` deck | Q1 ≥85% (cel); gate fali ≥75% + żaden golden <65% | ✅ MET — FT-6 Sonnet 4.6 **~100%** (S01/S06/S16 wszystkie 100%, PREMIUM, brak fallbacku) | `…/runs/2026-06-22-live-pilot-sonnet46.json` (re-run po fix pomiaru) |
+| ≥8 distinct layouts (gdy ≥8 slajdów) | hard | ✅ MET | VTS golden = 11 slajdów / **11 distinct layoutów** |
+| Single palette / deck | hard | ✅ MET | VTS golden = paleta `midnight` na całym decku |
+| Image brief per slide | hard | ✅ MET | VTS golden = brief + reasoning na KAŻDYM z 11 slajdów |
+| No >2 consecutive identical (no triple-run) | hard | ✅ MET | `noTripleRun=0` w golden; VTS = 11 różnych = brak runów |
+| `source='llm'` + `fallbackUsed=false` gdy premium ON | hard | ✅ MET | `tierUsed='PREMIUM'`, `source='llm'` w runie |
+| Jakość vs Gamma (head-to-head, ekspercka) | mediana ≥4/5, brak osi <3 | ⏳ PENDING | wymaga oceny ręcznej (MD-07) — render artefaktu do PNG/PDF + porównanie |
+
+**Uwaga pomiarowa (NIE zmiana jakości):** 2026-06-22 `planDeckLayout` zaczął nieść realny `title`/`key_message` slajdu do planu, więc scoring sprawdza **prawdziwy tytuł**, a nie proxy z `reasoning`. To **korekta wierności pomiaru**, nie podniesienie jakości decka.
+
+### Status premium DECK (uczciwie)
+- **Jakość premium UDOWODNIONA code-side ~100%** (FT-6 Sonnet 4.6: S01/S06/S16 = 100%, PREMIUM, bez fallbacku; VTS golden 11/11 distinct layoutów, jedna paleta, brief+reasoning na każdym slajdzie). Gamma-class potwierdzony na próbce golden.
+- **NIE wpięte w żywe UI** (`ENABLE_DELIVERABLES_PREMIUM` default OFF, generatory premium niewpięte w pipeline chat→canvas→studio). Jakość mierzona przez **harness/flagę** (warstwa 1 Scoring-auto), NIE przez żywy deck builder.
+- **Decyzje jakości:** Q1 = ≥85% deck quality · Q3 = golden VTS · Q5 = Unsplash (stock images).
+- **PENDING do domknięcia:** (a) wpięcie premium do UI + flaga na Railway + deploy → odblokowuje FT-3/FT-5/FT-7 Manual-UI; (b) head-to-head ekspercki vs Gamma (FT-6 G-5.1); (c) B2 remix przez UI (persystencja/undo).
+
+### H* · GOVERNANCE (premium deck) — Rejestr luk warstwy
+| ID | Opis | Klasa | Faza | Status | Dowód |
+|----|------|-------|------|--------|-------|
+| GL-01 | Premium deck quality (B1) | jakość | W4 | **UDOWODNIONA code-side ~100%** (FT-6 Sonnet 4.6) | `…/runs/2026-06-22-live-pilot-sonnet46.json`, VTS golden |
+| GL-02 | Premium niewpięty w żywe UI (flaga OFF) | wpięcie | — | **OTWARTA** — wymaga flagi Railway + wiring + deploy | `deliverableGenerationTier.ts:13` |
+| GL-03 | Head-to-head vs Gamma (ekspercki) | jakość | W4 | **OTWARTA** — ocena ręczna do wykonania | B1-S08, MD-07 |
+| GL-04 | B2 remix przez UI (persyst/undo) | feature | W4 | **OTWARTA** — Manual-UI po wpięciu | B2-S04/S05 |
+| GL-05 | Parytet eksportu real-chromium + manual | eksport | W5 | **CZĘŚCIOWO** (deterministyczny MET; real+manual PENDING) | X1-S07, X1-M |
+
+### Log (premium deck) — 2026-06-23
+APPEND warstwy „Generatory Deliverable — premium DECK". Źródła: SSOT DELIVERABLES_GENERATORS_SPEC.md (R4/B1/B2/X1), test-plan R/B/X-series, scenariusze M19_DECKS (30), run VTS golden + pilot Sonnet 4.6. Stan: premium quality UDOWODNIONA code-side (~100% FT-6, VTS 11/11 distinct), NIE wpięta w żywe UI (flaga OFF). Korekta pomiaru `planDeckLayout` (real title/keyMessage) = wierność, nie jakość. PENDING: wpięcie UI + deploy, head-to-head Gamma, B2 remix UI.

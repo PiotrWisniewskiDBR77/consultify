@@ -127,6 +127,30 @@ export interface ToolStep {
 }
 
 // SWOT-specific types
+export interface SWOTInsightStaircase {
+  /** K1 — observable fact from the session (never invented by the LLM). */
+  fact: string;
+  /** Signal ids / fact keys backing the fact. Empty = declared, unconfirmed. */
+  factRefs: string[];
+  /** K2 — what the fact means for THIS organization. */
+  interpretation: string;
+  /** K3 seed — what follows for the decision (feeds tensions/moves). */
+  implication: string;
+}
+
+export interface SWOTDecomposition {
+  dimension: 'process' | 'tools' | 'skills' | 'incentives';
+  finding: string;
+}
+
+export type SWOTItemEvidenceStatus = 'confirmed' | 'declared' | 'missing';
+
+export type SWOTStrengthClassification =
+  | 'core-competency'
+  | 'niche-strength'
+  | 'claimed-strength'
+  | 'table-stakes';
+
 export interface SWOTItem {
   id: string;
   text: string;
@@ -138,6 +162,18 @@ export interface SWOTItem {
   linkedSignalIds?: string[];
   proposalStatus?: ProposalStatus;
   userComment?: string;
+  /** Insight staircase: fact -> interpretation -> implication (CONCLUSION_LAYER K1-K3). */
+  staircase?: SWOTInsightStaircase;
+  /** Umbrella claims (e.g. "lack of agility") decomposed into actionable roots. */
+  decomposition?: SWOTDecomposition[];
+  /** Stamped on accept by the evidence gate (confirmed vs declared-unconfirmed). */
+  evidenceStatus?: SWOTItemEvidenceStatus;
+  /** Free-text evidence note when no signal is linked. */
+  evidenceNote?: string;
+  /** Strengths only — outcome of the laddered q-bank (niche vs core competency). */
+  classification?: SWOTStrengthClassification;
+  /** Answers captured while walking the laddered question bank. */
+  ladderAnswers?: { questionId: string; answerKey: string; note?: string }[];
 }
 
 export interface SWOTCorrelation {
@@ -177,6 +213,14 @@ export interface SWOTMove {
   firstStep?: string;
   proposalStatus?: ProposalStatus;
   userComment?: string;
+  /** W2 mandatory trade-off: what we choose / what we defer / at what cost. */
+  tradeoff?: { chosen: string; deferred: string; cost: string };
+  /** W2 mandatory rejected alternative with the reason it was dropped. */
+  rejectedAlternative?: { option: string; reason: string };
+  /** Ordering justification ("first X, because it blocks Y"). */
+  whyFirst?: string;
+  /** Accountable role for the first step (K3 owner, never "the organization"). */
+  ownerRole?: string;
 }
 
 export interface SWOTOutputCandidate extends ConsultingOutputCandidateBase {
@@ -200,6 +244,14 @@ export interface SWOTData {
     proposalStatus?: ProposalStatus;
     userComment?: string;
     recommendedInitiatives: InitiativeDraft[];
+    /** W2 answer-first verdict (1-2 sentences): what this analysis means for the decision. */
+    verdict?: string;
+    /** W2 rationale with references to session element ids (traceability). */
+    verdictRationale?: { text: string; factRefs: string[] };
+    /** W2 mandatory trade-offs at the recommendation level (>= 1). */
+    tradeoffs?: { chosen: string; rejected: string; why: string }[];
+    /** K4 — expected effect with an explicit time horizon. */
+    expectedEffect?: { text: string; horizon: string };
   };
 }
 
@@ -211,6 +263,27 @@ export type PorterForceId =
   | 'buyerPower'
   | 'supplierPower';
 
+/** K1/K2/K3 staircase for a single Porter force (see config/porter/porterInsightStaircase). */
+export interface PorterForceStaircaseData {
+  fact: string;
+  factRefs: string[];
+  interpretation: string;
+  implication: string;
+}
+
+/** Structural driver behind a force intensity (see config/porter/porterInsightStaircase). */
+export interface PorterForceDriverData {
+  dimension: 'concentration' | 'switching-costs' | 'barriers' | 'scale-economics';
+  finding: string;
+}
+
+/** One laddered answer captured while walking the Porter question bank. */
+export interface PorterForceLadderAnswerData {
+  questionId: string;
+  answerKey: string;
+  note?: string;
+}
+
 export interface ForceData {
   id: string;
   name: string;
@@ -221,6 +294,14 @@ export interface ForceData {
   evidence?: string[];
   implication?: string;
   confidence?: number;
+  /** Deterministic intensity verdict synthesized from the ladder (config/porter). */
+  intensity?: 'low' | 'medium' | 'high';
+  /** K1/K2/K3 staircase backing the intensity verdict. */
+  staircase?: PorterForceStaircaseData;
+  /** Dominant structural driver(s) — required for high/medium forces. */
+  structuralDrivers?: PorterForceDriverData[];
+  evidenceStatus?: 'confirmed' | 'declared';
+  ladderAnswers?: PorterForceLadderAnswerData[];
   proposalStatus?: ProposalStatus;
   userComment?: string;
 }
@@ -264,8 +345,19 @@ export interface PorterMove {
   riskLevel: 'high' | 'medium' | 'low';
   confidence?: number;
   firstStep?: string;
+  /** CONCLUSION_LAYER W2: mandatory trade-off (chosen / deferred / cost). */
+  tradeoff?: { chosen: string; deferred: string; cost: string };
+  /** CONCLUSION_LAYER W2: the alternative considered and why it was dropped. */
+  rejectedAlternative?: { option: string; reason: string };
   proposalStatus?: ProposalStatus;
   userComment?: string;
+}
+
+/** Synthesized industry-attractiveness verdict (see config/porter/porterSynthesisEngine). */
+export interface PorterProfitabilityMap {
+  attractiveness: 'structurally-unattractive' | 'mixed' | 'structurally-attractive';
+  dominantForces: PorterForceId[];
+  verdict: string;
 }
 
 export interface PorterOutputCandidate extends ConsultingOutputCandidateBase {
@@ -301,6 +393,532 @@ export interface PorterData {
   recommendedMoves: PorterMove[];
   outputCandidates: PorterOutputCandidate[];
   overallAttractiveness?: number;
+  /** Deterministic industry-attractiveness synthesis (config/porter/porterSynthesisEngine). */
+  profitabilityMap?: PorterProfitabilityMap;
+  summary?: ConsultingSummarySnapshot & {
+    proposalId?: string;
+    proposalStatus?: ProposalStatus;
+    userComment?: string;
+    keyInsights: string[];
+    recommendedInitiatives: InitiativeDraft[];
+  };
+}
+
+// ==================== Value Chain (Porter) types ====================
+// 9 canonical activities: 5 primary + 4 support. Each is scored on cost
+// contribution, value contribution, and margin role — the methodology spine.
+export type ValueActivityId =
+  | 'inboundLogistics'
+  | 'operations'
+  | 'outboundLogistics'
+  | 'marketingSales'
+  | 'service'
+  | 'infrastructure'
+  | 'hrManagement'
+  | 'technology'
+  | 'procurement';
+
+export type ValueActivityKind = 'primary' | 'support';
+
+export interface ValueActivity {
+  id: ValueActivityId;
+  name: string;
+  kind: ValueActivityKind;
+  costContribution: 'high' | 'medium' | 'low'; // share of total cost
+  valueContribution: 'high' | 'medium' | 'low'; // contribution to differentiation / willingness-to-pay
+  marginRole: 'creator' | 'neutral' | 'drain'; // does this activity create or erode margin
+  maturity?: 'strong' | 'adequate' | 'weak'; // current capability strength
+  drivers: string[];
+  evidence?: string[];
+  implication?: string;
+  confidence?: number;
+  /**
+   * Deepening insight staircase (config/valuechain/valueChainInsightStaircase):
+   * surface -> cost/value proof -> benchmark -> potential. Optional for
+   * backward compatibility with sessions scored before the ladder existed.
+   */
+  staircase?: {
+    surface: string;
+    costValueProof: string;
+    proofRefs: string[];
+    benchmark: string;
+    potential: string;
+  };
+  /** 'confirmed' only when the cost-value proof cites session evidence. */
+  evidenceStatus?: 'confirmed' | 'declared' | 'missing';
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface ValueChainSignal {
+  id: string;
+  type: 'interview' | 'file' | 'link' | 'ai' | 'benchmark';
+  content: string;
+  sourceLabel: string;
+  confidence?: number;
+  tags?: string[];
+  evidenceType?: SWOTEvidenceType;
+  state?: SWOTSignalState;
+  provenance?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+// A margin lever — the synthesized "where to act and why" unit.
+export interface ValueLever {
+  id: string;
+  title: string;
+  activityIds: ValueActivityId[];
+  insight: string;
+  leverType:
+    | 'cost-reduction'
+    | 'value-enhancement'
+    | 'linkage-optimization'
+    | 'outsource'
+    | 'integrate';
+  marginImpact: 'high' | 'medium' | 'low';
+  urgency: 'high' | 'medium' | 'low';
+  recommendation: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface ValueChainMove {
+  id: string;
+  title: string;
+  category:
+    | 'cost-advantage'
+    | 'differentiation'
+    | 'linkage-optimization'
+    | 'capability-build'
+    | 'restructure';
+  rationale: string;
+  linkedLeverIds: string[];
+  linkedActivityIds: ValueActivityId[];
+  /** CONCLUSION_LAYER_STANDARD W2 — mandatory in new moves, optional in legacy ones. */
+  tradeoff?: { chosen: string; deferred: string; cost: string };
+  rejectedAlternative?: { option: string; reason: string };
+  expectedImpact: 'high' | 'medium' | 'low';
+  estimatedEffort: 'high' | 'medium' | 'low';
+  riskLevel: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface ValueChainOutputCandidate extends ConsultingOutputCandidateBase {
+  linkedMoveIds: string[];
+  linkedActivityIds: ValueActivityId[];
+  readiness?: SWOTOutputReadiness;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface ValueChainData {
+  context: {
+    industry: string;
+    valueChainScope: string;
+    position: 'cost-leader' | 'differentiator' | 'hybrid' | 'undefined';
+    goal?: string;
+    scope?: string;
+    successSignal?: string;
+    timeframe?: 'short' | 'medium' | 'long';
+    constraints?: string;
+    assumptions?: string;
+    kpiTarget?: string;
+  };
+  signals: ValueChainSignal[];
+  activities: Record<ValueActivityId, ValueActivity>;
+  levers: ValueLever[];
+  recommendedMoves: ValueChainMove[];
+  outputCandidates: ValueChainOutputCandidate[];
+  positioningVerdict?: {
+    positioning: 'cost-advantage' | 'differentiation' | 'stuck-in-the-middle';
+    summary: string;
+  };
+  summary?: ConsultingSummarySnapshot & {
+    proposalId?: string;
+    proposalStatus?: ProposalStatus;
+    userComment?: string;
+    keyInsights: string[];
+    recommendedInitiatives: InitiativeDraft[];
+  };
+}
+
+// ==================== Capability Mapper types ====================
+// Dynamic list of organizational capabilities scored on current vs target
+// maturity and strategic importance → gaps → build/buy/partner moves.
+export interface CapabilitySignal {
+  id: string;
+  type: 'interview' | 'file' | 'link' | 'ai' | 'benchmark';
+  content: string;
+  sourceLabel: string;
+  confidence?: number;
+  tags?: string[];
+  evidenceType?: SWOTEvidenceType;
+  state?: SWOTSignalState;
+  provenance?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface Capability {
+  id: string;
+  name: string;
+  domain: string; // e.g. technology, talent, processes, data, partnerships
+  currentMaturity: number; // 1-5
+  targetMaturity: number; // 1-5
+  importance: 'high' | 'medium' | 'low'; // strategic importance
+  gapSize?: 'critical' | 'moderate' | 'minor'; // derived from target-current × importance
+  sourcing?: 'build' | 'buy' | 'partner' | 'sustain';
+  drivers: string[];
+  evidence?: string[];
+  implication?: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+// Synthesized capability gap/priority — the "where to act and why" unit.
+export interface CapabilityGap {
+  id: string;
+  title: string;
+  capabilityIds: string[];
+  insight: string;
+  priority: 'high' | 'medium' | 'low';
+  urgency: 'high' | 'medium' | 'low';
+  recommendation: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface CapabilityMove {
+  id: string;
+  title: string;
+  category: 'build' | 'buy' | 'partner' | 'reskill' | 'restructure';
+  rationale: string;
+  linkedGapIds: string[];
+  linkedCapabilityIds: string[];
+  expectedImpact: 'high' | 'medium' | 'low';
+  estimatedEffort: 'high' | 'medium' | 'low';
+  riskLevel: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface CapabilityOutputCandidate extends ConsultingOutputCandidateBase {
+  linkedMoveIds: string[];
+  linkedCapabilityIds: string[];
+  readiness?: SWOTOutputReadiness;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface CapabilityMapperData {
+  context: {
+    industry: string;
+    capabilityDomains: string;
+    strategicPriorities?: string;
+    goal?: string;
+    scope?: string;
+    successSignal?: string;
+    timeframe?: 'short' | 'medium' | 'long';
+    constraints?: string;
+    assumptions?: string;
+    kpiTarget?: string;
+  };
+  signals: CapabilitySignal[];
+  capabilities: Capability[];
+  gaps: CapabilityGap[];
+  recommendedMoves: CapabilityMove[];
+  outputCandidates: CapabilityOutputCandidate[];
+  summary?: ConsultingSummarySnapshot & {
+    proposalId?: string;
+    proposalStatus?: ProposalStatus;
+    userComment?: string;
+    keyInsights: string[];
+    recommendedInitiatives: InitiativeDraft[];
+  };
+}
+
+// ==================== Ambition Decomposer types ====================
+// Cascade a big ambition into strategic themes → measurable targets → moves.
+export interface AmbitionSignal {
+  id: string;
+  type: 'interview' | 'file' | 'link' | 'ai' | 'benchmark';
+  content: string;
+  sourceLabel: string;
+  confidence?: number;
+  tags?: string[];
+  evidenceType?: SWOTEvidenceType;
+  state?: SWOTSignalState;
+  provenance?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface AmbitionTheme {
+  id: string;
+  title: string;
+  description: string;
+  targetMetric: string; // what to measure
+  targetValue: string; // the goal value
+  horizon: 'short' | 'medium' | 'long';
+  importance: 'high' | 'medium' | 'low';
+  drivers: string[];
+  evidence?: string[];
+  implication?: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface AmbitionPriority {
+  id: string;
+  title: string;
+  themeIds: string[];
+  insight: string;
+  priority: 'high' | 'medium' | 'low';
+  urgency: 'high' | 'medium' | 'low';
+  recommendation: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface AmbitionMove {
+  id: string;
+  title: string;
+  category: 'foundation' | 'accelerator' | 'bet' | 'enabler' | 'quick-win';
+  rationale: string;
+  linkedPriorityIds: string[];
+  linkedThemeIds: string[];
+  expectedImpact: 'high' | 'medium' | 'low';
+  estimatedEffort: 'high' | 'medium' | 'low';
+  riskLevel: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface AmbitionOutputCandidate extends ConsultingOutputCandidateBase {
+  linkedMoveIds: string[];
+  linkedThemeIds: string[];
+  readiness?: SWOTOutputReadiness;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface AmbitionDecomposerData {
+  context: {
+    ambitionStatement: string;
+    scope: string;
+    goal?: string;
+    successSignal?: string;
+    timeframe?: 'short' | 'medium' | 'long';
+    constraints?: string;
+    assumptions?: string;
+    kpiTarget?: string;
+  };
+  signals: AmbitionSignal[];
+  themes: AmbitionTheme[];
+  priorities: AmbitionPriority[];
+  recommendedMoves: AmbitionMove[];
+  outputCandidates: AmbitionOutputCandidate[];
+  summary?: ConsultingSummarySnapshot & {
+    proposalId?: string;
+    proposalStatus?: ProposalStatus;
+    userComment?: string;
+    keyInsights: string[];
+    recommendedInitiatives: InitiativeDraft[];
+  };
+}
+
+// ==================== Focus & Trade-offs types ====================
+// Score competing priorities on value/effort/fit → trade-offs → focus decision.
+export interface FocusSignal {
+  id: string;
+  type: 'interview' | 'file' | 'link' | 'ai' | 'benchmark';
+  content: string;
+  sourceLabel: string;
+  confidence?: number;
+  tags?: string[];
+  evidenceType?: SWOTEvidenceType;
+  state?: SWOTSignalState;
+  provenance?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface FocusPriority {
+  id: string;
+  title: string;
+  description: string;
+  valueScore: number; // 1-5 strategic value
+  effortScore: number; // 1-5 effort/cost
+  strategicFit: number; // 1-5 fit with strategy
+  recommendation: 'pursue' | 'defer' | 'drop';
+  drivers: string[];
+  evidence?: string[];
+  implication?: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface FocusTradeoff {
+  id: string;
+  title: string;
+  priorityIds: string[];
+  insight: string;
+  priority: 'high' | 'medium' | 'low';
+  urgency: 'high' | 'medium' | 'low';
+  recommendation: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface FocusMove {
+  id: string;
+  title: string;
+  category: 'commit' | 'sequence' | 'cut' | 'rebalance' | 'experiment';
+  rationale: string;
+  linkedTradeoffIds: string[];
+  linkedPriorityIds: string[];
+  expectedImpact: 'high' | 'medium' | 'low';
+  estimatedEffort: 'high' | 'medium' | 'low';
+  riskLevel: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface FocusOutputCandidate extends ConsultingOutputCandidateBase {
+  linkedMoveIds: string[];
+  linkedPriorityIds: string[];
+  readiness?: SWOTOutputReadiness;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface FocusTradeoffData {
+  context: {
+    competingPriorities: string;
+    decisionCriteria: string;
+    goal?: string;
+    scope?: string;
+    successSignal?: string;
+    timeframe?: 'short' | 'medium' | 'long';
+    constraints?: string;
+    assumptions?: string;
+    kpiTarget?: string;
+  };
+  signals: FocusSignal[];
+  priorities: FocusPriority[];
+  tradeoffs: FocusTradeoff[];
+  recommendedMoves: FocusMove[];
+  outputCandidates: FocusOutputCandidate[];
+  summary?: ConsultingSummarySnapshot & {
+    proposalId?: string;
+    proposalStatus?: ProposalStatus;
+    userComment?: string;
+    keyInsights: string[];
+    recommendedInitiatives: InitiativeDraft[];
+  };
+}
+
+// ==================== Narrative Engine types ====================
+// Build a persuasive narrative: audience + core message → pillars with proof → arc.
+export interface NarrativeSignal {
+  id: string;
+  type: 'interview' | 'file' | 'link' | 'ai' | 'benchmark';
+  content: string;
+  sourceLabel: string;
+  confidence?: number;
+  tags?: string[];
+  evidenceType?: SWOTEvidenceType;
+  state?: SWOTSignalState;
+  provenance?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface NarrativePillar {
+  id: string;
+  title: string;
+  message: string; // the claim this pillar makes
+  proofPoints: string[]; // evidence backing the claim
+  audienceResonance: 'high' | 'medium' | 'low';
+  drivers: string[];
+  evidence?: string[];
+  implication?: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface NarrativeThread {
+  id: string;
+  title: string;
+  pillarIds: string[];
+  insight: string;
+  priority: 'high' | 'medium' | 'low';
+  urgency: 'high' | 'medium' | 'low';
+  recommendation: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface NarrativeMove {
+  id: string;
+  title: string;
+  category: 'open' | 'build' | 'prove' | 'cta' | 'reframe';
+  rationale: string;
+  linkedThreadIds: string[];
+  linkedPillarIds: string[];
+  expectedImpact: 'high' | 'medium' | 'low';
+  estimatedEffort: 'high' | 'medium' | 'low';
+  riskLevel: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface NarrativeOutputCandidate extends ConsultingOutputCandidateBase {
+  linkedMoveIds: string[];
+  linkedPillarIds: string[];
+  readiness?: SWOTOutputReadiness;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface NarrativeEngineData {
+  context: {
+    audience: string;
+    coreMessage: string;
+    goal?: string;
+    scope?: string;
+    successSignal?: string;
+    timeframe?: 'short' | 'medium' | 'long';
+    constraints?: string;
+    assumptions?: string;
+    kpiTarget?: string;
+  };
+  signals: NarrativeSignal[];
+  pillars: NarrativePillar[];
+  threads: NarrativeThread[];
+  recommendedMoves: NarrativeMove[];
+  outputCandidates: NarrativeOutputCandidate[];
   summary?: ConsultingSummarySnapshot & {
     proposalId?: string;
     proposalStatus?: ProposalStatus;
@@ -702,6 +1320,11 @@ export interface ToolSession {
   inputData:
     | SWOTData
     | PorterData
+    | ValueChainData
+    | CapabilityMapperData
+    | AmbitionDecomposerData
+    | FocusTradeoffData
+    | NarrativeEngineData
     | GrowthPathsData
     | PortfolioPriorityData
     | RiskUncertaintyData
@@ -817,6 +1440,247 @@ export const PORTER_STEPS: StepDefinition[] = [
     namePl: 'Outputs & Actions',
     description: 'Prepare the final source summary and generate downstream outputs and initiatives',
     descriptionPl: 'Przygotuj final source summary oraz wygeneruj outputy i inicjatywy',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
+export const VALUE_CHAIN_STEPS: StepDefinition[] = [
+  {
+    id: 'mission',
+    name: 'Mission & Scope',
+    namePl: 'Misja i zakres',
+    description: 'Define the business, value chain scope, strategic positioning, and success signal',
+    descriptionPl: 'Zdefiniuj biznes, zakres łańcucha wartości, pozycjonowanie i sygnał sukcesu',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'input',
+    name: 'Input & Exploration',
+    namePl: 'Wejście i eksploracja',
+    description: 'Capture cost, operations, and differentiation signals from context and interviews',
+    descriptionPl: 'Zbierz sygnały kosztu, operacji i różnicowania z kontekstu i wywiadów',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'activities',
+    name: 'Value Chain Build',
+    namePl: 'Budowa łańcucha wartości',
+    description:
+      'Map the 9 activities with cost contribution, value contribution, and margin role',
+    descriptionPl: 'Zmapuj 9 aktywności wg kontrybucji kosztu, wartości i roli w marży',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'insights',
+    name: 'Margin Levers & Moves',
+    namePl: 'Dźwignie marży i ruchy',
+    description: 'Synthesize the chain into margin levers, a positioning verdict, and strategic moves',
+    descriptionPl: 'Przekształć łańcuch w dźwignie marży, werdykt pozycjonowania i ruchy strategiczne',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'outputs',
+    name: 'Outputs & Actions',
+    namePl: 'Wyniki i działania',
+    description: 'Prepare the final source summary and generate downstream outputs and initiatives',
+    descriptionPl: 'Przygotuj final source summary oraz wygeneruj wyniki i inicjatywy',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
+export const CAPABILITY_MAPPER_STEPS: StepDefinition[] = [
+  {
+    id: 'mission',
+    name: 'Mission & Scope',
+    namePl: 'Misja i zakres',
+    description: 'Define the strategic priorities, capability domains, and success signal',
+    descriptionPl: 'Zdefiniuj priorytety strategiczne, domeny zdolności i sygnał sukcesu',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'input',
+    name: 'Input & Exploration',
+    namePl: 'Wejście i eksploracja',
+    description: 'Capture capability signals from context, interviews, and benchmarks',
+    descriptionPl: 'Zbierz sygnały o zdolnościach z kontekstu, wywiadów i benchmarków',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'capabilities',
+    name: 'Capability Map',
+    namePl: 'Mapa zdolności',
+    description: 'Score capabilities on current vs target maturity and strategic importance',
+    descriptionPl: 'Oceń zdolności wg dojrzałości obecnej/docelowej i ważności strategicznej',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'insights',
+    name: 'Gaps & Moves',
+    namePl: 'Luki i ruchy',
+    description: 'Synthesize maturity gaps into priorities and build/buy/partner moves',
+    descriptionPl: 'Przekształć luki dojrzałości w priorytety i ruchy build/buy/partner',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'outputs',
+    name: 'Outputs & Actions',
+    namePl: 'Wyniki i działania',
+    description: 'Prepare the final source summary and generate downstream outputs and initiatives',
+    descriptionPl: 'Przygotuj final source summary oraz wygeneruj wyniki i inicjatywy',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
+export const AMBITION_DECOMPOSER_STEPS: StepDefinition[] = [
+  {
+    id: 'mission',
+    name: 'Ambition & Scope',
+    namePl: 'Ambicja i zakres',
+    description: 'State the ambition, scope, time horizon, and success signal',
+    descriptionPl: 'Określ ambicję, zakres, horyzont czasowy i sygnał sukcesu',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'input',
+    name: 'Input & Exploration',
+    namePl: 'Wejście i eksploracja',
+    description: 'Capture signals that inform how the ambition can be decomposed',
+    descriptionPl: 'Zbierz sygnały, jak rozłożyć ambicję na czynniki',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'themes',
+    name: 'Strategic Themes',
+    namePl: 'Tematy strategiczne',
+    description: 'Decompose the ambition into strategic themes with measurable targets',
+    descriptionPl: 'Rozłóż ambicję na tematy strategiczne z mierzalnymi celami',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'insights',
+    name: 'Priorities & Moves',
+    namePl: 'Priorytety i ruchy',
+    description: 'Sequence themes into priorities and enabling strategic moves',
+    descriptionPl: 'Ułóż tematy w priorytety i wspierające ruchy strategiczne',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'outputs',
+    name: 'Outputs & Actions',
+    namePl: 'Wyniki i działania',
+    description: 'Prepare the final source summary and generate downstream outputs and initiatives',
+    descriptionPl: 'Przygotuj final source summary oraz wygeneruj wyniki i inicjatywy',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
+export const FOCUS_TRADEOFF_STEPS: StepDefinition[] = [
+  {
+    id: 'mission',
+    name: 'Focus Question & Criteria',
+    namePl: 'Pytanie i kryteria',
+    description: 'Frame the competing priorities, decision criteria, and success signal',
+    descriptionPl: 'Określ konkurujące priorytety, kryteria decyzji i sygnał sukcesu',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'input',
+    name: 'Input & Exploration',
+    namePl: 'Wejście i eksploracja',
+    description: 'Capture signals about the competing options and what matters',
+    descriptionPl: 'Zbierz sygnały o konkurujących opcjach i tym, co się liczy',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'priorities',
+    name: 'Score Priorities',
+    namePl: 'Ocena priorytetów',
+    description: 'Score competing priorities on value, effort, and strategic fit',
+    descriptionPl: 'Oceń konkurujące priorytety wg wartości, wysiłku i dopasowania',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'insights',
+    name: 'Trade-offs & Decision',
+    namePl: 'Kompromisy i decyzja',
+    description: 'Expose trade-offs and decide what to commit, sequence, or cut',
+    descriptionPl: 'Pokaż kompromisy i zdecyduj, co podjąć, ułożyć w czasie lub odrzucić',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'outputs',
+    name: 'Outputs & Actions',
+    namePl: 'Wyniki i działania',
+    description: 'Prepare the final source summary and generate downstream outputs and initiatives',
+    descriptionPl: 'Przygotuj final source summary oraz wygeneruj wyniki i inicjatywy',
+    required: true,
+    aiAssisted: true,
+  },
+];
+
+export const NARRATIVE_ENGINE_STEPS: StepDefinition[] = [
+  {
+    id: 'mission',
+    name: 'Audience & Core Message',
+    namePl: 'Audytorium i przekaz',
+    description: 'Define the audience, the core message, and the success signal',
+    descriptionPl: 'Określ audytorium, główny przekaz i sygnał sukcesu',
+    required: true,
+    aiAssisted: false,
+  },
+  {
+    id: 'input',
+    name: 'Input & Exploration',
+    namePl: 'Wejście i eksploracja',
+    description: 'Capture proof points, audience insights, and supporting evidence',
+    descriptionPl: 'Zbierz dowody, insighty o audytorium i materiał wspierający',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'pillars',
+    name: 'Narrative Pillars',
+    namePl: 'Filary narracji',
+    description: 'Build message pillars, each with proof points and audience resonance',
+    descriptionPl: 'Zbuduj filary przekazu z dowodami i rezonansem u audytorium',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'insights',
+    name: 'Storyline & Moves',
+    namePl: 'Narracja i ruchy',
+    description: 'Weave pillars into a storyline arc and decide delivery moves',
+    descriptionPl: 'Ułóż filary w łuk narracyjny i zdecyduj o ruchach przekazu',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'outputs',
+    name: 'Outputs & Actions',
+    namePl: 'Wyniki i działania',
+    description: 'Prepare the final source summary and generate downstream outputs and initiatives',
+    descriptionPl: 'Przygotuj final source summary oraz wygeneruj wyniki i inicjatywy',
     required: true,
     aiAssisted: true,
   },
@@ -1529,6 +2393,11 @@ interface ToolStoreState {
     data: Partial<
       | SWOTData
       | PorterData
+      | ValueChainData
+      | CapabilityMapperData
+      | AmbitionDecomposerData
+      | FocusTradeoffData
+      | NarrativeEngineData
       | GrowthPathsData
       | PortfolioPriorityData
       | RiskUncertaintyData
@@ -1620,6 +2489,127 @@ const createInitialPorterData = (): PorterData => ({
     },
   },
   implications: [],
+  recommendedMoves: [],
+  outputCandidates: [],
+});
+
+const makeValueActivity = (
+  id: ValueActivityId,
+  name: string,
+  kind: ValueActivityKind
+): ValueActivity => ({
+  id,
+  name,
+  kind,
+  costContribution: 'medium',
+  valueContribution: 'medium',
+  marginRole: 'neutral',
+  drivers: [],
+  evidence: [],
+});
+
+const createInitialValueChainData = (): ValueChainData => ({
+  context: {
+    industry: '',
+    valueChainScope: '',
+    position: 'undefined',
+    goal: '',
+    scope: '',
+    successSignal: '',
+    timeframe: 'medium',
+    constraints: '',
+    assumptions: '',
+    kpiTarget: '',
+  },
+  signals: [],
+  activities: {
+    inboundLogistics: makeValueActivity('inboundLogistics', 'Inbound Logistics', 'primary'),
+    operations: makeValueActivity('operations', 'Operations', 'primary'),
+    outboundLogistics: makeValueActivity('outboundLogistics', 'Outbound Logistics', 'primary'),
+    marketingSales: makeValueActivity('marketingSales', 'Marketing & Sales', 'primary'),
+    service: makeValueActivity('service', 'Service', 'primary'),
+    infrastructure: makeValueActivity('infrastructure', 'Firm Infrastructure', 'support'),
+    hrManagement: makeValueActivity('hrManagement', 'HR Management', 'support'),
+    technology: makeValueActivity('technology', 'Technology Development', 'support'),
+    procurement: makeValueActivity('procurement', 'Procurement', 'support'),
+  },
+  levers: [],
+  recommendedMoves: [],
+  outputCandidates: [],
+});
+
+const createInitialNarrativeEngineData = (): NarrativeEngineData => ({
+  context: {
+    audience: '',
+    coreMessage: '',
+    goal: '',
+    scope: '',
+    successSignal: '',
+    timeframe: 'medium',
+    constraints: '',
+    assumptions: '',
+    kpiTarget: '',
+  },
+  signals: [],
+  pillars: [],
+  threads: [],
+  recommendedMoves: [],
+  outputCandidates: [],
+});
+
+const createInitialFocusTradeoffData = (): FocusTradeoffData => ({
+  context: {
+    competingPriorities: '',
+    decisionCriteria: '',
+    goal: '',
+    scope: '',
+    successSignal: '',
+    timeframe: 'medium',
+    constraints: '',
+    assumptions: '',
+    kpiTarget: '',
+  },
+  signals: [],
+  priorities: [],
+  tradeoffs: [],
+  recommendedMoves: [],
+  outputCandidates: [],
+});
+
+const createInitialAmbitionDecomposerData = (): AmbitionDecomposerData => ({
+  context: {
+    ambitionStatement: '',
+    scope: '',
+    goal: '',
+    successSignal: '',
+    timeframe: 'medium',
+    constraints: '',
+    assumptions: '',
+    kpiTarget: '',
+  },
+  signals: [],
+  themes: [],
+  priorities: [],
+  recommendedMoves: [],
+  outputCandidates: [],
+});
+
+const createInitialCapabilityMapperData = (): CapabilityMapperData => ({
+  context: {
+    industry: '',
+    capabilityDomains: '',
+    strategicPriorities: '',
+    goal: '',
+    scope: '',
+    successSignal: '',
+    timeframe: 'medium',
+    constraints: '',
+    assumptions: '',
+    kpiTarget: '',
+  },
+  signals: [],
+  capabilities: [],
+  gaps: [],
   recommendedMoves: [],
   outputCandidates: [],
 });
@@ -1733,13 +2723,13 @@ const TOOL_STEP_DEFINITIONS: Record<ToolType, StepDefinition[]> = {
   'dynamic-swot': SWOT_STEPS,
   'market-forces': PORTER_STEPS,
   'growth-paths': GROWTH_PATHS_STEPS,
-  'value-chain': PORTER_STEPS,
+  'value-chain': VALUE_CHAIN_STEPS,
   'portfolio-priority': PORTFOLIO_PRIORITY_STEPS,
-  'ambition-decomposer': PORTER_STEPS,
-  'focus-tradeoff': PORTER_STEPS,
+  'ambition-decomposer': AMBITION_DECOMPOSER_STEPS,
+  'focus-tradeoff': FOCUS_TRADEOFF_STEPS,
   'risk-uncertainty': RISK_UNCERTAINTY_STEPS,
-  'capability-mapper': PORTER_STEPS,
-  'narrative-engine': PORTER_STEPS,
+  'capability-mapper': CAPABILITY_MAPPER_STEPS,
+  'narrative-engine': NARRATIVE_ENGINE_STEPS,
   'sop-builder': SOP_STEPS,
   'a3-problem-solving': A3_STEPS,
   'smed-planner': SMED_STEPS,
@@ -1767,6 +2757,11 @@ const TOOL_INITIAL_DATA: Record<
   ToolType,
   | SWOTData
   | PorterData
+  | ValueChainData
+  | CapabilityMapperData
+  | AmbitionDecomposerData
+  | FocusTradeoffData
+  | NarrativeEngineData
   | GrowthPathsData
   | PortfolioPriorityData
   | RiskUncertaintyData
@@ -1776,13 +2771,13 @@ const TOOL_INITIAL_DATA: Record<
   'dynamic-swot': createInitialSWOTData(),
   'market-forces': createInitialPorterData(),
   'growth-paths': createInitialGrowthPathsData(),
-  'value-chain': createInitialPorterData(),
+  'value-chain': createInitialValueChainData(),
   'portfolio-priority': createInitialPortfolioPriorityData(),
-  'ambition-decomposer': createInitialPorterData(),
-  'focus-tradeoff': createInitialPorterData(),
+  'ambition-decomposer': createInitialAmbitionDecomposerData(),
+  'focus-tradeoff': createInitialFocusTradeoffData(),
   'risk-uncertainty': createInitialRiskUncertaintyData(),
-  'capability-mapper': createInitialPorterData(),
-  'narrative-engine': createInitialPorterData(),
+  'capability-mapper': createInitialCapabilityMapperData(),
+  'narrative-engine': createInitialNarrativeEngineData(),
   'sop-builder': createInitialOperationalData(SOP_STEPS),
   'a3-problem-solving': createInitialOperationalData(A3_STEPS),
   'smed-planner': createInitialOperationalData(SMED_STEPS),
@@ -2254,6 +3249,11 @@ const mergeToolAnswersWithInitialData = (
 ):
   | SWOTData
   | PorterData
+  | ValueChainData
+  | CapabilityMapperData
+  | AmbitionDecomposerData
+  | FocusTradeoffData
+  | NarrativeEngineData
   | GrowthPathsData
   | PortfolioPriorityData
   | RiskUncertaintyData
@@ -3056,6 +4056,11 @@ export const useToolStore = create<ToolStoreState>()(
           const data = currentSession.inputData as
             | SWOTData
             | PorterData
+            | ValueChainData
+            | CapabilityMapperData
+            | AmbitionDecomposerData
+            | FocusTradeoffData
+            | NarrativeEngineData
             | GrowthPathsData
             | PortfolioPriorityData
             | RiskUncertaintyData
@@ -3500,8 +4505,25 @@ export const useToolStore = create<ToolStoreState>()(
           );
         const updated: Partial<SWOTData> = {};
         if (cardType === 'signal') updated.signals = update(swotData.signals);
-        else if (cardType === 'item') updated.items = update(swotData.items);
-        else if (cardType === 'tension') updated.tensions = update(swotData.tensions);
+        else if (cardType === 'item') {
+          // Evidence gate (OXFORD O3): accepting an item stamps its evidence status —
+          // linked signals / evidence note / staircase factRefs => confirmed, otherwise
+          // explicitly 'declared' ("Deklaracja — niepotwierdzone"). Honest, never blocking.
+          updated.items = swotData.items.map((item) =>
+            item.id === cardId
+              ? {
+                  ...item,
+                  proposalStatus: 'accepted' as ProposalStatus,
+                  evidenceStatus:
+                    (item.linkedSignalIds && item.linkedSignalIds.length > 0) ||
+                    (item.evidenceNote && item.evidenceNote.trim().length > 0) ||
+                    (item.staircase?.factRefs && item.staircase.factRefs.length > 0)
+                      ? ('confirmed' as SWOTItemEvidenceStatus)
+                      : ('declared' as SWOTItemEvidenceStatus),
+                }
+              : item
+          );
+        } else if (cardType === 'tension') updated.tensions = update(swotData.tensions);
         else if (cardType === 'move') updated.recommendedMoves = update(swotData.recommendedMoves);
         else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
         else if ((cardType as ProposalCardType) === 'output-candidate')

@@ -32,6 +32,17 @@ import {
   SIRI_PRIORITISATION_AREAS,
 } from '../../../../services/siriStructure';
 import { SIRIAssessmentData } from '../../../../types';
+import { buildSIRIConclusionModel } from '../../../../services/report/siriConclusion';
+import {
+  buildSiriConclusionPayload,
+  pushReportConclusion,
+  type ReportConclusionSource,
+} from '../../../../services/report/conclusionPush';
+import {
+  ConclusionExecutiveSummary,
+  ConclusionGapCards,
+} from '../ConclusionSummary';
+import { MaturityPathwaySection } from '../MaturityPathwaySection';
 
 // ============================================
 // COLOR CLASSES HELPER (Tailwind requires full class names)
@@ -130,6 +141,12 @@ interface SIRIReportTemplateProps {
   organizationName?: string;
   assessmentDate?: string;
   showLegalNotice?: boolean;
+  /**
+   * CONCLUSION_LAYER bridge: when provided, the W1 conclusion model built for
+   * this report is persisted as a Conclusion candidate (fail-safe push via
+   * POST /api/conclusions — a failure never affects rendering).
+   */
+  conclusionSource?: ReportConclusionSource;
 }
 
 export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
@@ -137,6 +154,7 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
   organizationName = 'Organization',
   assessmentDate,
   showLegalNotice = true,
+  conclusionSource,
 }) => {
   // Calculate building block scores
   const blockScores = ['PROCESS', 'TECHNOLOGY', 'ORGANIZATION'].map((block) => ({
@@ -165,6 +183,35 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
     ...a,
     score: Number((data.prioritisationMatrix || {})[a.id] || 0),
   })).sort((a, b) => (b.score || 0) - (a.score || 0));
+
+  // Conclusion layer (WNIOSKOWA) — deterministic, engine-grounded (OXFORD O2.2).
+  const conclusion = buildSIRIConclusionModel(data, 'pl');
+
+  // CONCLUSION_LAYER bridge: persist the W1 verdict as a Conclusion candidate
+  // when the caller identifies the source assessment. Fail-safe by contract.
+  React.useEffect(() => {
+    if (!conclusionSource?.assessmentId) return;
+    void pushReportConclusion(buildSiriConclusionPayload(conclusion, conclusionSource));
+    // Re-push only when the source identity changes — the model is deterministic per data.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conclusionSource?.assessmentId]);
+  const execVM = {
+    headline: conclusion.executiveSummary.headline,
+    k1_state: conclusion.executiveSummary.k1_state,
+    k2_meaning: conclusion.executiveSummary.k2_meaning,
+    k3_threeGaps: conclusion.executiveSummary.k3_threeGaps,
+    k4_whatFirst: conclusion.executiveSummary.k4_whatFirst,
+    k5_effect: conclusion.executiveSummary.k5_effect,
+    confidence: conclusion.executiveSummary.confidence,
+  };
+  const gapCardVMs = conclusion.gapCards.map((c) => ({
+    title: `${c.dimensionName} (${c.buildingBlockName})`,
+    badge: `${c.current} → ${c.target} · luka ${c.gap}`,
+    whatIs: c.whatIs,
+    whatItMeans: c.whatItMeans,
+    whatToDo: c.whatToDo,
+    effect: c.effect,
+  }));
 
   return (
     <div className="bg-white dark:bg-navy-950 min-h-full p-8 print:p-0">
@@ -203,11 +250,31 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
         </div>
       )}
 
-      {/* Executive Summary */}
+      {/* Executive Summary — WNIOSKOWA (answer-first verdict, K1→K2→K3→K4) */}
       <section className="mb-8">
         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
           <Target size={20} />
           Podsumowanie Wykonawcze
+        </h2>
+        <ConclusionExecutiveSummary vm={execVM} language="pl" />
+      </section>
+
+      {/* Key Gaps — co jest → co znaczy → co robić → efekt */}
+      {gapCardVMs.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+            <TrendingUp size={20} />
+            Kluczowe Luki — Priorytety
+          </h2>
+          <ConclusionGapCards cards={gapCardVMs} language="pl" />
+        </section>
+      )}
+
+      {/* Score Snapshot (supporting evidence for the verdict above) */}
+      <section className="mb-8">
+        <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+          <BarChart3 size={20} />
+          Wyniki (dowód)
         </h2>
         <div className="grid grid-cols-4 gap-4">
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 text-center">
@@ -475,6 +542,17 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
             ))}
         </div>
       </section>
+
+      {/* Maturity Pathway (N → N+1) — co zrobić, by przejść wyżej */}
+      <MaturityPathwaySection
+        framework="siri"
+        language="pl"
+        dimensions={dimensionsWithGaps.map((d) => ({
+          dimensionId: d.id,
+          currentLevel: d.current,
+          targetLevel: d.target,
+        }))}
+      />
 
       {/* Key Strengths */}
       {(() => {

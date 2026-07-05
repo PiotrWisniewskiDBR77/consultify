@@ -35,6 +35,7 @@ import { Api } from '../../../services/api';
 import { ADMIN_UI_COPY } from '../../../utils/adminUiCopy';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState, ReadOnlyState } from '../../Admin/AdminState';
+import { EmptyState, LoadingState } from '../../shared/states';
 
 interface Backup {
   id: string;
@@ -111,22 +112,22 @@ const normalizeSchedules = (payload: unknown): BackupSchedule[] => {
 };
 
 const BACKUP_TYPE_CONFIG = {
-  full: { color: 'bg-primary-500/20 text-primary-400', label: 'Full' },
-  incremental: { color: 'bg-blue-500/20 text-blue-400', label: 'Incremental' },
-  differential: { color: 'bg-blue-500/20 text-blue-400', label: 'Differential' },
+  full: { color: 'bg-c-accent-soft text-c-accent', label: 'Full' },
+  incremental: { color: 'bg-c-info/20 text-c-info', label: 'Incremental' },
+  differential: { color: 'bg-c-info/20 text-c-info', label: 'Differential' },
 };
 
 const STATUS_CONFIG = {
-  pending: { color: 'bg-slate-500', text: 'text-slate-600 dark:text-slate-500', icon: Clock },
-  in_progress: { color: 'bg-amber-500', text: 'text-amber-400', icon: RefreshCw },
-  completed: { color: 'bg-emerald-500', text: 'text-emerald-400', icon: CheckCircle },
-  failed: { color: 'bg-danger-500', text: 'text-danger-400', icon: XCircle },
+  pending: { color: 'bg-c-text-muted', text: 'text-c-text-secondary', icon: Clock },
+  in_progress: { color: 'bg-c-warning', text: 'text-c-warning', icon: RefreshCw },
+  completed: { color: 'bg-c-success', text: 'text-c-success', icon: CheckCircle },
+  failed: { color: 'bg-c-danger', text: 'text-c-danger', icon: XCircle },
 };
 
-const fallbackBackupTypeConfig = { color: 'bg-slate-500/20 text-slate-600', label: 'Unknown' };
+const fallbackBackupTypeConfig = { color: 'bg-c-text-muted/20 text-c-text-secondary', label: 'Unknown' };
 const fallbackStatusConfig = {
-  color: 'bg-slate-500',
-  text: 'text-slate-600 dark:text-slate-500',
+  color: 'bg-c-text-muted',
+  text: 'text-c-text-secondary',
   icon: Clock,
 };
 
@@ -279,10 +280,10 @@ export const EnterpriseBackupPanel: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+          <h2 className="text-2xl font-semibold text-c-text">
             Backup & Recovery
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 text-sm">
+          <p className="text-c-text-secondary text-sm">
             Manage database backups and disaster recovery procedures
           </p>
         </div>
@@ -290,7 +291,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
           onClick={() => setShowCreateModal(true)}
           disabled={creating || Boolean(backupLoadError)}
           title={backupLoadError || undefined}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50"
         >
           {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
           Create Backup
@@ -300,7 +301,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="rounded-xl border border-danger-500/30 bg-danger-500/5 p-4 text-sm text-danger-600 dark:text-danger-300"
+          className="rounded-xl border border-c-danger/30 bg-c-danger/5 p-4 text-sm text-c-danger"
         >
           {actionError}
         </div>
@@ -308,7 +309,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
 
       {/* Stats */}
       {hasBackupDataError ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+        <div className="rounded-xl border border-c-border bg-c-surface p-6">
           <DegradedState
             title="Backup overview unavailable"
             description={backupLoadError || scheduleLoadError || 'Backup data is unavailable.'}
@@ -316,27 +317,27 @@ export const EnterpriseBackupPanel: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-            <div className="text-sm text-slate-600 dark:text-slate-400">Total Backups</div>
-            <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+          <div className="p-4 bg-c-surface rounded-xl border border-c-border">
+            <div className="text-sm text-c-text-secondary">Total Backups</div>
+            <div className="text-2xl font-semibold text-c-text">
               {backups.length}
             </div>
           </div>
-          <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-            <div className="text-sm text-slate-600 dark:text-slate-400">Storage Used</div>
-            <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+          <div className="p-4 bg-c-surface rounded-xl border border-c-border">
+            <div className="text-sm text-c-text-secondary">Storage Used</div>
+            <div className="text-2xl font-semibold text-c-text">
               {formatBytes(getTotalBackupSize())}
             </div>
           </div>
-          <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
-            <div className="text-sm text-slate-600 dark:text-slate-400">Last Backup</div>
-            <div className="text-lg font-semibold text-emerald-700 dark:text-emerald-400">
+          <div className="p-4 bg-c-success/10 rounded-xl border border-c-success/30">
+            <div className="text-sm text-c-text-secondary">Last Backup</div>
+            <div className="text-lg font-semibold text-c-success">
               {formatDate(backups[0]?.createdAt)}
             </div>
           </div>
-          <div className="p-4 bg-primary-500/10 rounded-xl border border-primary-500/30">
-            <div className="text-sm text-slate-600 dark:text-slate-400">Active Schedules</div>
-            <div className="text-2xl font-semibold text-primary-700 dark:text-primary-300">
+          <div className="p-4 bg-c-accent-soft rounded-xl border border-c-accent/30">
+            <div className="text-sm text-c-text-secondary">Active Schedules</div>
+            <div className="text-2xl font-semibold text-c-accent">
               {schedules.filter((s) => s.enabled).length}
             </div>
           </div>
@@ -344,7 +345,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1">
+      <div className="flex gap-2 border-b border-c-border-subtle pb-1">
         {[
           { id: 'backups', label: 'Backups', icon: HardDrive },
           { id: 'schedules', label: 'Schedules', icon: Calendar },
@@ -356,8 +357,8 @@ export const EnterpriseBackupPanel: React.FC = () => {
             onClick={() => setActiveTab(id as typeof activeTab)}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
               activeTab === id
-                ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-primary-500'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                ? 'bg-c-surface-raised text-c-text border-b-2 border-c-accent'
+                : 'text-c-text-secondary hover:bg-c-surface-raised'
             }`}
           >
             <Icon className="w-4 h-4" />
@@ -367,9 +368,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
-        </div>
+        <LoadingState template="list" />
       ) : (
         <>
           {/* Backups Tab */}
@@ -378,11 +377,12 @@ export const EnterpriseBackupPanel: React.FC = () => {
               {backupLoadError ? (
                 <DegradedState title="Backup service unavailable" description={backupLoadError} />
               ) : backups.length === 0 ? (
-                <div className="text-center py-12 text-slate-600 dark:text-slate-400">
-                  <HardDrive className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No backups available</p>
-                  <p className="text-sm mt-1">Create your first backup to get started</p>
-                </div>
+                <EmptyState
+                  variant="new"
+                  icon={HardDrive}
+                  title="No backups available"
+                  description="Create your first backup to get started"
+                />
               ) : (
                 backups.map((backup) => {
                   const typeConfig = BACKUP_TYPE_CONFIG[backup.type] || fallbackBackupTypeConfig;
@@ -392,7 +392,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                   return (
                     <div
                       key={backup.id}
-                      className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-colors"
+                      className="p-4 bg-c-surface rounded-xl border border-c-border hover:border-c-border-strong transition-colors"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -408,13 +408,13 @@ export const EnterpriseBackupPanel: React.FC = () => {
                               <span className={`px-2 py-0.5 text-xs rounded ${typeConfig.color}`}>
                                 {typeConfig.label}
                               </span>
-                              <code className="text-sm text-slate-900 dark:text-slate-100 font-mono">
+                              <code className="text-sm text-c-text font-mono">
                                 {backup.filename}
                               </code>
-                              {backup.encrypted && <Lock className="w-3 h-3 text-emerald-400" />}
-                              {backup.hasS3 && <Cloud className="w-3 h-3 text-blue-400" />}
+                              {backup.encrypted && <Lock className="w-3 h-3 text-c-success" />}
+                              {backup.hasS3 && <Cloud className="w-3 h-3 text-c-info" />}
                             </div>
-                            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            <div className="flex items-center gap-3 text-xs text-c-text-muted mt-1">
                               <span>{formatBytes(backup.sizeBytes)}</span>
                               <span>•</span>
                               <span>Created: {formatDateTime(backup.createdAt)}</span>
@@ -438,14 +438,14 @@ export const EnterpriseBackupPanel: React.FC = () => {
                                 className="p-2 rounded-lg opacity-50 cursor-not-allowed"
                                 title={destructiveBackupActionReason}
                               >
-                                <Upload className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+                                <Upload className="w-4 h-4 text-c-text-secondary" />
                               </button>
                               <button
                                 disabled
                                 className="p-2 rounded-lg opacity-50 cursor-not-allowed"
                                 title={destructiveBackupActionReason}
                               >
-                                <Download className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+                                <Download className="w-4 h-4 text-c-text-secondary" />
                               </button>
                             </>
                           )}
@@ -454,7 +454,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                             className="p-2 rounded-lg opacity-50 cursor-not-allowed"
                             title={destructiveBackupActionReason}
                           >
-                            <Trash2 className="w-4 h-4 text-danger-400" />
+                            <Trash2 className="w-4 h-4 text-c-danger" />
                           </button>
                         </div>
                       </div>
@@ -469,13 +469,13 @@ export const EnterpriseBackupPanel: React.FC = () => {
           {activeTab === 'schedules' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
+                <h3 className="text-lg font-medium text-c-text">
                   Backup Schedules
                 </h3>
                 <button
                   disabled
                   title={destructiveBackupActionReason}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-100 text-sm rounded-lg opacity-50 cursor-not-allowed"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-c-surface border border-c-border text-c-text text-sm rounded-lg opacity-50 cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                   Add Schedule
@@ -489,31 +489,30 @@ export const EnterpriseBackupPanel: React.FC = () => {
                     description={scheduleLoadError}
                   />
                 ) : schedules.length === 0 ? (
-                  <div className="text-center py-12 text-slate-600 dark:text-slate-400">
-                    <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No backup schedules configured</p>
-                    <p className="text-sm mt-1">
-                      Schedules can be enabled after backend workflow setup.
-                    </p>
-                  </div>
+                  <EmptyState
+                    variant="new"
+                    icon={Calendar}
+                    title="No backup schedules configured"
+                    description="Schedules can be enabled after backend workflow setup."
+                  />
                 ) : (
                   schedules.map((schedule) => (
                     <div
                       key={schedule.id}
-                      className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10"
+                      className="p-4 bg-c-surface rounded-xl border border-c-border"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <div
-                            className={`p-2 rounded-lg ${schedule.enabled ? 'bg-emerald-500/20' : 'bg-slate-100 dark:bg-slate-700'}`}
+                            className={`p-2 rounded-lg ${schedule.enabled ? 'bg-c-success/20' : 'bg-c-surface-raised'}`}
                           >
                             <Calendar
-                              className={`w-5 h-5 ${schedule.enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400'}`}
+                              className={`w-5 h-5 ${schedule.enabled ? 'text-c-success' : 'text-c-text-secondary'}`}
                             />
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-slate-900 dark:text-slate-100">
+                              <span className="font-medium text-c-text">
                                 {schedule.name}
                               </span>
                               <span
@@ -522,7 +521,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                                 {BACKUP_TYPE_CONFIG[schedule.type].label}
                               </span>
                             </div>
-                            <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400 mt-1">
+                            <div className="flex items-center gap-3 text-xs text-c-text-secondary mt-1">
                               <span className="capitalize">
                                 {schedule.frequency} at {schedule.time}
                               </span>
@@ -542,8 +541,8 @@ export const EnterpriseBackupPanel: React.FC = () => {
                             onClick={() => handleToggleSchedule(schedule.id, !schedule.enabled)}
                             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                               schedule.enabled
-                                ? 'bg-emerald-500/20 text-emerald-400'
-                                : 'bg-slate-700 text-slate-600 dark:text-slate-500'
+                                ? 'bg-c-success/20 text-c-success'
+                                : 'bg-c-surface-raised text-c-text-secondary'
                             }`}
                           >
                             {schedule.enabled ? 'Enabled' : 'Disabled'}
@@ -553,7 +552,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                             title="Schedule editing requires an audited schedule editor workflow."
                             className="p-2 rounded-lg opacity-50 cursor-not-allowed"
                           >
-                            <Settings className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+                            <Settings className="w-4 h-4 text-c-text-secondary" />
                           </button>
                         </div>
                       </div>
@@ -572,15 +571,15 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 description="Retention, encryption, and cloud storage settings are displayed as local defaults until a persisted backup configuration endpoint is connected."
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                  <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-4">
+                <div className="p-4 bg-c-surface rounded-xl border border-c-border">
+                  <h4 className="font-medium text-c-text mb-4">
                     Retention Policy
                   </h4>
                   <div className="space-y-4">
                     <div>
                       <label
                         htmlFor="backup-retention-days"
-                        className="block text-sm text-slate-600 dark:text-slate-400 mb-1"
+                        className="block text-sm text-c-text-secondary mb-1"
                       >
                         Retention Days
                       </label>
@@ -592,13 +591,13 @@ export const EnterpriseBackupPanel: React.FC = () => {
                         onChange={(e) =>
                           setConfig({ ...config, retention_days: parseInt(e.target.value) })
                         }
-                        className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
+                        className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
                       />
                     </div>
                     <div>
                       <label
                         htmlFor="backup-max-local-backups"
-                        className="block text-sm text-slate-600 dark:text-slate-400 mb-1"
+                        className="block text-sm text-c-text-secondary mb-1"
                       >
                         Max Local Backups
                       </label>
@@ -613,17 +612,17 @@ export const EnterpriseBackupPanel: React.FC = () => {
                             max_local_backups: parseInt(e.target.value),
                           })
                         }
-                        className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
+                        className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                  <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-4">Security</h4>
+                <div className="p-4 bg-c-surface rounded-xl border border-c-border">
+                  <h4 className="font-medium text-c-text mb-4">Security</h4>
                   <div className="space-y-4">
                     <label className="flex items-center justify-between">
-                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                      <span className="text-sm text-c-text-secondary">
                         Encrypt backups at rest
                       </span>
                       <input
@@ -633,11 +632,11 @@ export const EnterpriseBackupPanel: React.FC = () => {
                         onChange={(e) =>
                           setConfig({ ...config, encryption_enabled: e.target.checked })
                         }
-                        className="rounded border-slate-300 bg-white text-primary-600 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-500"
+                        className="rounded border-c-border-strong bg-c-surface text-c-accent"
                       />
                     </label>
                     <label className="flex items-center justify-between">
-                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                      <span className="text-sm text-c-text-secondary">
                         Auto-verify after backup
                       </span>
                       <input
@@ -645,19 +644,19 @@ export const EnterpriseBackupPanel: React.FC = () => {
                         checked={config.auto_verify}
                         disabled
                         onChange={(e) => setConfig({ ...config, auto_verify: e.target.checked })}
-                        className="rounded border-slate-300 bg-white text-primary-600 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-500"
+                        className="rounded border-c-border-strong bg-c-surface text-c-accent"
                       />
                     </label>
                   </div>
                 </div>
 
-                <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 md:col-span-2">
-                  <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                    <Cloud className="w-4 h-4 text-blue-400" />
+                <div className="p-4 bg-c-surface rounded-xl border border-c-border md:col-span-2">
+                  <h4 className="font-medium text-c-text mb-4 flex items-center gap-2">
+                    <Cloud className="w-4 h-4 text-c-info" />
                     Cloud Storage
                   </h4>
                   <label className="flex items-center justify-between mb-4">
-                    <span className="text-sm text-slate-700 dark:text-slate-300">
+                    <span className="text-sm text-c-text-secondary">
                       Enable cloud backup sync
                     </span>
                     <input
@@ -667,7 +666,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                       onChange={(e) =>
                         setConfig({ ...config, cloud_storage_enabled: e.target.checked })
                       }
-                      className="rounded border-slate-300 bg-white text-primary-600 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-500"
+                      className="rounded border-c-border-strong bg-c-surface text-c-accent"
                     />
                   </label>
                   {config.cloud_storage_enabled && (
@@ -677,8 +676,8 @@ export const EnterpriseBackupPanel: React.FC = () => {
                           key={provider}
                           className={`p-3 rounded-lg border transition-colors ${
                             config.cloud_provider === provider
-                              ? 'bg-primary-600/10 border-primary-500/30 text-primary-700 dark:text-primary-300'
-                              : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20'
+                              ? 'bg-c-accent-soft border-c-accent/30 text-c-accent'
+                              : 'bg-c-surface-raised border-c-border text-c-text-secondary hover:border-c-border-strong'
                           }`}
                           onClick={() => setConfig({ ...config, cloud_provider: provider })}
                         >
@@ -694,7 +693,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 <button
                   disabled
                   title="Backup settings persistence is not connected"
-                  className="px-4 py-2 bg-navy-900 text-white rounded-lg transition-colors opacity-50 cursor-not-allowed"
+                  className="px-4 py-2 bg-c-surface text-c-text rounded-lg transition-colors opacity-50 cursor-not-allowed"
                 >
                   Save Settings
                 </button>
@@ -710,14 +709,14 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 description={destructiveBackupActionReason}
               />
 
-              <div className="p-6 bg-gradient-to-br from-amber-500/10 to-amber-500/10 rounded-xl border border-amber-500/30">
+              <div className="p-6 bg-c-warning/10 rounded-xl border border-c-warning/30">
                 <div className="flex items-start gap-4">
-                  <Shield className="w-8 h-8 text-amber-400" />
+                  <Shield className="w-8 h-8 text-c-warning" />
                   <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">
+                    <h3 className="text-lg font-bold text-c-text mb-2">
                       Disaster Recovery Testing
                     </h3>
-                    <p className="text-slate-600 dark:text-slate-500 mb-4">
+                    <p className="text-c-text-secondary mb-4">
                       Regularly test your backup and recovery procedures to ensure business
                       continuity. DR tests run in an isolated environment and do not affect
                       production data.
@@ -725,7 +724,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                     <button
                       disabled
                       title={destructiveBackupActionReason}
-                      className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg opacity-50 cursor-not-allowed"
+                      className="flex items-center gap-2 px-4 py-2 bg-c-warning text-c-text rounded-lg opacity-50 cursor-not-allowed"
                     >
                       <Play className="w-4 h-4" />
                       Start DR Test
@@ -734,11 +733,11 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">
+              <div className="p-4 bg-c-surface rounded-xl border border-c-border">
+                <h4 className="font-medium text-c-text mb-2">
                   DR Test History
                 </h4>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-c-text-muted">
                   No verified disaster recovery test history is available until the backend job
                   lifecycle is connected.
                 </p>
@@ -750,38 +749,38 @@ export const EnterpriseBackupPanel: React.FC = () => {
 
       {/* Create Backup Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
+          <div className="bg-c-surface rounded-xl border border-c-border p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold text-c-text mb-4">
               Create Backup
             </h3>
             <div className="space-y-4">
-              <p className="text-sm text-slate-600 dark:text-slate-500">Select backup type:</p>
+              <p className="text-sm text-c-text-secondary">Select backup type:</p>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => handleCreateBackup('full')}
                   disabled={creating}
-                  className="p-4 bg-primary-500/10 border border-primary-500/30 rounded-lg text-left hover:bg-primary-500/20 transition-colors disabled:opacity-50"
+                  className="p-4 bg-c-accent-soft border border-c-accent/30 rounded-lg text-left hover:bg-c-accent-soft/70 transition-colors disabled:opacity-50"
                 >
-                  <div className="font-medium text-primary-400 mb-1">Full Backup</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                  <div className="font-medium text-c-accent mb-1">Full Backup</div>
+                  <div className="text-xs text-c-text-muted">
                     Complete database snapshot
                   </div>
                 </button>
                 <button
                   onClick={() => handleCreateBackup('incremental')}
                   disabled={creating}
-                  className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg text-left hover:bg-blue-500/20 transition-colors disabled:opacity-50"
+                  className="p-4 bg-c-info/10 border border-c-info/30 rounded-lg text-left hover:bg-c-info/20 transition-colors disabled:opacity-50"
                 >
-                  <div className="font-medium text-blue-400 mb-1">Incremental</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                  <div className="font-medium text-c-info mb-1">Incremental</div>
+                  <div className="text-xs text-c-text-muted">
                     Changes since last backup
                   </div>
                 </button>
               </div>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="w-full py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+                className="w-full py-2 text-c-text-muted hover:text-c-text transition-colors"
               >
                 Cancel
               </button>

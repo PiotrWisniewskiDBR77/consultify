@@ -661,7 +661,7 @@ export const ADMAForm: React.FC<ADMAFormProps> = ({
             <button
               onClick={() => goToPillar('next')}
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                bg-primary-500 text-white hover:bg-primary-400
+                bg-c-text text-c-bg hover:bg-c-text-secondary
                 transition-colors"
             >
               Next Pillar

@@ -33,7 +33,7 @@ export const AboutView: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-navy-950 flex flex-col">
+    <div className="min-h-screen bg-c-bg flex flex-col">
       {/* Header */}
       <EntryTopBar
         onTrialClick={handleTrialClick}
@@ -44,7 +44,7 @@ export const AboutView: React.FC = () => {
       />
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6 bg-gradient-to-b from-primary-50 to-white dark:from-navy-900 dark:to-navy-950">
+      <section className="pt-32 pb-20 px-6 bg-gradient-to-b from-c-accent-soft to-c-bg">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -52,21 +52,21 @@ export const AboutView: React.FC = () => {
             transition={{ duration: 0.6 }}
           >
             <span
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-100 dark:bg-primary-900/30
-                                         text-primary-600 dark:text-primary-400 text-sm font-semibold mb-6"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-c-accent-soft
+                                         text-c-accent text-sm font-semibold mb-6"
             >
               <Sparkles size={16} />
               About Consultify
             </span>
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-navy-950 dark:text-white mb-6 tracking-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-c-text mb-6 tracking-tight">
               AI-Powered Strategic Consulting for the{' '}
               <span className="bg-gradient-to-r from-primary-600 to-crimson-600 bg-clip-text text-transparent">
                 Modern Executive
               </span>
             </h1>
 
-            <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg text-c-text-secondary max-w-2xl mx-auto leading-relaxed">
               We believe every leader deserves access to world-class strategic consulting.
               Consultify combines AI intelligence with proven frameworks to democratize strategic
               decision-making.
@@ -85,18 +85,18 @@ export const AboutView: React.FC = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <h2 className="text-3xl font-bold text-navy-950 dark:text-white mb-6">Our Mission</h2>
-              <p className="text-lg text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
+              <h2 className="text-3xl font-bold text-c-text mb-6">Our Mission</h2>
+              <p className="text-lg text-c-text-secondary mb-6 leading-relaxed">
                 Traditional consulting is broken. It's expensive, slow, and often delivers beautiful
                 presentations instead of actionable decisions, reliant on external providers instead
                 of building internal competencies.
               </p>
-              <p className="text-lg text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
-                <strong className="text-navy-900 dark:text-white">Consultify changes that.</strong>{' '}
+              <p className="text-lg text-c-text-secondary mb-6 leading-relaxed">
+                <strong className="text-c-text">Consultify changes that.</strong>{' '}
                 We've built a platform that combines the rigor of top-tier consulting methodologies
                 with the speed and accessibility of AI.
               </p>
-              <p className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
+              <p className="text-lg text-c-text-secondary leading-relaxed">
                 The result? Strategic decisions in days, not months. At a fraction of the cost. With
                 full control staying in your hands.
               </p>
@@ -119,11 +119,11 @@ export const AboutView: React.FC = () => {
       </section>
 
       {/* Values Section */}
-      <section className="py-20 px-6 bg-slate-50 dark:bg-navy-900/50">
+      <section className="py-20 px-6 bg-c-surface-raised">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-navy-950 dark:text-white mb-4">Our Values</h2>
-            <p className="text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold text-c-text mb-4">Our Values</h2>
+            <p className="text-c-text-secondary max-w-2xl mx-auto">
               The principles that guide everything we build
             </p>
           </div>
@@ -151,25 +151,25 @@ export const AboutView: React.FC = () => {
       {/* Team Section - Placeholder */}
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-navy-950 dark:text-white mb-6">
+          <h2 className="text-3xl font-bold text-c-text mb-6">
             Built by Consultants, for Leaders
           </h2>
-          <p className="text-lg text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">
+          <p className="text-lg text-c-text-secondary mb-8 leading-relaxed">
             Consultify is developed by {COMPANY.name}, a team of technologists and strategy
             professionals based in {COMPANY.location}. We combine deep experience in enterprise
             consulting with cutting-edge AI capabilities.
           </p>
 
           <div
-            className="inline-flex items-center gap-4 px-6 py-4 rounded-xl bg-primary-50 dark:bg-primary-900/20
-                                    border border-primary-200 dark:border-primary-500/20"
+            className="inline-flex items-center gap-4 px-6 py-4 rounded-xl bg-c-accent-soft
+                                    border border-c-accent/20"
           >
-            <Rocket className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+            <Rocket className="w-6 h-6 text-c-accent" />
             <div className="text-left">
-              <p className="font-semibold text-navy-900 dark:text-white">
+              <p className="font-semibold text-c-text">
                 Founded in {COMPANY.founded}
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{COMPANY.location}</p>
+              <p className="text-sm text-c-text-muted">{COMPANY.location}</p>
             </div>
           </div>
         </div>
@@ -187,8 +187,8 @@ export const AboutView: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={handleDemoClick}
-              className="px-8 py-4 bg-white dark:bg-navy-900 text-primary-600 font-semibold rounded-xl
-                                       hover:bg-primary-50 transition-colors flex items-center justify-center gap-2"
+              className="px-8 py-4 bg-white text-crimson-700 font-semibold rounded-xl
+                                       hover:bg-white/90 transition-colors flex items-center justify-center gap-2"
             >
               Explore Demo
               <ArrowRight size={18} />
@@ -224,11 +224,11 @@ interface StatCardProps {
 const StatCard: React.FC<StatCardProps> = ({ number, label }) => {
   return (
     <div
-      className="p-6 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700
+      className="p-6 rounded-xl bg-c-surface border border-c-border
                         shadow-lg text-center"
     >
-      <p className="text-3xl font-black text-primary-600 dark:text-primary-400 mb-2">{number}</p>
-      <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
+      <p className="text-3xl font-black text-c-accent mb-2">{number}</p>
+      <p className="text-sm text-c-text-muted">{label}</p>
     </div>
   );
 };
@@ -243,17 +243,17 @@ interface ValueCardProps {
 const ValueCard: React.FC<ValueCardProps> = ({ icon, title, description }) => {
   return (
     <div
-      className="p-8 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700
+      className="p-8 rounded-xl bg-c-surface border border-c-border
                         shadow-lg text-center"
     >
       <div
-        className="w-14 h-14 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center
-                            text-primary-600 dark:text-primary-400 mx-auto mb-6"
+        className="w-14 h-14 rounded-xl bg-c-accent-soft flex items-center justify-center
+                            text-c-accent mx-auto mb-6"
       >
         {icon}
       </div>
-      <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-3">{title}</h3>
-      <p className="text-slate-500 dark:text-slate-400">{description}</p>
+      <h3 className="text-xl font-bold text-c-text mb-3">{title}</h3>
+      <p className="text-c-text-muted">{description}</p>
     </div>
   );
 };

@@ -23,13 +23,16 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { EntityStatusChip, LoadingState } from '@/components/ui/primitives';
+import { LoadingState } from '@/components/shared/states';
+import { EntityStatusChip } from '@/components/ui/primitives';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { exportPresentationDeck, PresentationExportError } from '@/services/presentationExport';
 
 import {
+  type BulkAction,
+  BulkActionBar,
   FilterableTable,
   FilterChip,
   GridItem,
@@ -37,9 +40,11 @@ import {
   ModuleHub,
   OpenDocument,
   TableColumn,
+  useTableSelection,
   ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import { useConfirmDialog } from '../MyWork/shared/ConfirmDialog';
 import { type RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { AssigneeCell } from '../ui/primitives/cells/AssigneeCell';
@@ -80,8 +85,8 @@ const SOURCE_TYPE_META: Record<
   },
   assessment: {
     labelKey: 'presentations.sourceType.assessment',
-    color: 'text-primary-400',
-    dotColor: 'bg-primary-400',
+    color: 'text-indigo-400',
+    dotColor: 'bg-indigo-400',
   },
   finance: {
     labelKey: 'presentations.sourceType.finance',
@@ -90,8 +95,8 @@ const SOURCE_TYPE_META: Record<
   },
   upload: {
     labelKey: 'presentations.sourceType.upload',
-    color: 'text-slate-500',
-    dotColor: 'bg-slate-400',
+    color: 'text-c-text-muted',
+    dotColor: 'bg-c-text-muted',
   },
 };
 
@@ -226,11 +231,13 @@ export const PresentationsHub: React.FC = () => {
   // Table columns
   const columns: TableColumn[] = useMemo(
     () => [
+      // canon §3.5 — leading selection column.
+      { id: 'select', label: '', type: 'select', width: '44px' },
       {
         id: 'title',
         label: t('presentations.columns.title', 'Title'),
         render: (row) => (
-          <span className="text-sm font-medium text-slate-900 dark:text-white">{row.title}</span>
+          <span className="text-sm font-medium text-c-text">{row.title}</span>
         ),
       },
       {
@@ -248,8 +255,8 @@ export const PresentationsHub: React.FC = () => {
           const meta = SOURCE_TYPE_META[row.sourceType as PresentationDeck['sourceType']];
           return (
             <span className="inline-flex items-center gap-1.5">
-              <span className={`h-1.5 w-1.5 rounded-full ${meta?.dotColor ?? 'bg-slate-400'}`} />
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+              <span className={`h-1.5 w-1.5 rounded-full ${meta?.dotColor ?? 'bg-c-text-muted'}`} />
+              <span className="text-xs font-medium text-c-text-secondary">
                 {String(t(meta?.labelKey ?? 'presentations.sourceType.unknown', row.sourceType))}
               </span>
             </span>
@@ -288,7 +295,7 @@ export const PresentationsHub: React.FC = () => {
         width: '120px',
         sortable: true,
         render: (row) => (
-          <span className="text-sm text-slate-500 dark:text-slate-400">
+          <span className="text-sm text-c-text-muted">
             {new Date(row.createdAt).toLocaleDateString(lang === 'pl' ? 'pl-PL' : 'en-US', {
               month: 'short',
               day: 'numeric',
@@ -304,7 +311,7 @@ export const PresentationsHub: React.FC = () => {
   // Row actions — canon §9.2 Fixed Bottom Manifest (decks have no due date → no Delay)
   const getRowActions = useCallback(
     (deck: PresentationDeck): RowAction[] => [
-      // GÓRA — kontekst
+      // TOP — context
       {
         id: 'open',
         label: t('common.open', 'Open'),
@@ -328,10 +335,10 @@ export const PresentationsHub: React.FC = () => {
             },
           ] as RowAction[])
         : []),
-      // DÓŁ — FIXED BOTTOM MANIFEST
+      // BOTTOM — FIXED BOTTOM MANIFEST
       {
         id: 'open_preview',
-        label: t('rap.actions.openPreview', 'Otwórz podgląd'),
+        label: t('rap.actions.openPreview', 'Open preview'),
         icon: ChevronRight,
         divider: true,
         onClick: () => setSelectedId(deck.id),
@@ -345,10 +352,10 @@ export const PresentationsHub: React.FC = () => {
       {
         // canon §14 + §9.2: Archive slot — soft-delete (backend TBD)
         id: 'archive',
-        label: t('rap.actions.archive', 'Archiwizuj'),
+        label: t('rap.actions.archive', 'Archive'),
         icon: Archive,
         disabled: true,
-        description: t('common.comingSoon', 'Wkrótce'),
+        description: t('common.comingSoon', 'Coming soon'),
         onClick: () => {},
       },
       // DANGER
@@ -455,6 +462,48 @@ export const PresentationsHub: React.FC = () => {
     [fetchDecks, t]
   );
 
+  // canon §3.5 — row selection + bulk delete (loops the existing DELETE
+  // /presentations/decks/:id; no new backend endpoint).
+  const selection = useTableSelection(filteredDecks.map((d) => String(d.id)));
+  const { dialog: bulkConfirmDialog, confirm: confirmBulkDelete } = useConfirmDialog();
+  const bulkActions = useMemo<BulkAction[]>(
+    () => [
+      {
+        id: 'delete',
+        label: t('common.delete', 'Delete'),
+        icon: Trash2,
+        variant: 'danger',
+        onRun: async (sel) => {
+          const ok = await confirmBulkDelete({
+            title: t('presentations.bulk.confirmDeleteTitle', 'Delete selected presentations?'),
+            description: t(
+              'presentations.bulk.confirmDeleteDesc',
+              'You will permanently delete {{count}} presentations. This action cannot be undone.',
+              { count: sel.count }
+            ),
+            confirmLabel: t('common.delete', 'Delete'),
+            cancelLabel: t('common.cancel', 'Cancel'),
+            variant: 'danger',
+          });
+          if (!ok) return;
+          const deleted: string[] = [];
+          await sel.runBulk(
+            async (id) => {
+              await Api.delete(`/presentations/decks/${id}`);
+              deleted.push(id);
+            },
+            { successNoun: t('presentations.bulk.deletedNoun', 'deleted') }
+          );
+          if (deleted.length > 0) {
+            setOpenDocuments((prev) => prev.filter((d) => !deleted.includes(String(d.id))));
+            fetchDecks();
+          }
+        },
+      },
+    ],
+    [confirmBulkDelete, fetchDecks, setOpenDocuments, t]
+  );
+
   const handleOpenSource = useCallback(
     (deck: PresentationDeck) => {
       if (!deck.sourceId) return;
@@ -542,7 +591,7 @@ export const PresentationsHub: React.FC = () => {
             e.stopPropagation();
             handleRowAction('export', item as unknown as PresentationDeck);
           }}
-          className="p-1 rounded hover:bg-slate-200 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-primary-400 transition-colors"
+          className="p-1 rounded hover:bg-c-surface-raised text-c-text-muted hover:text-c-text transition-colors"
           title={t('presentations.actions.export', 'Export')}
         >
           <Download size={12} />
@@ -553,7 +602,7 @@ export const PresentationsHub: React.FC = () => {
               e.stopPropagation();
               handleRowAction('open_source', item as unknown as PresentationDeck);
             }}
-            className="p-1 rounded hover:bg-slate-200 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-primary-400 transition-colors"
+            className="p-1 rounded hover:bg-c-surface-raised text-c-text-muted hover:text-c-text transition-colors"
             title={t('presentations.actions.openSource', 'Open source')}
           >
             <ExternalLink size={12} />
@@ -580,8 +629,8 @@ export const PresentationsHub: React.FC = () => {
 
     if (isLoading) {
       return (
-        <div className="flex items-center justify-center h-full min-h-[200px]">
-          <LoadingState variant="spinner" label={t('presentations.loading', 'Loading decks...')} />
+        <div className="p-6">
+          <LoadingState template="card" count={6} label={t('presentations.loading', 'Loading decks…')} />
         </div>
       );
     }
@@ -618,10 +667,10 @@ export const PresentationsHub: React.FC = () => {
           getItemById={(id) => filteredDecks.find((x) => x.id === id) ?? null}
           renderPreview={(item) => (
             <div className="space-y-3">
-              <div className="rounded-lg bg-slate-100/60 dark:bg-white/[0.03] p-4 space-y-2">
+              <div className="rounded-lg bg-c-surface-raised p-4 space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   <EntityStatusChip status={String(item.status ?? 'draft')} />
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                  <span className="text-xs text-c-text-muted">
                     {String(
                       t(
                         SOURCE_TYPE_META[item.sourceType]?.labelKey ??
@@ -633,18 +682,18 @@ export const PresentationsHub: React.FC = () => {
                 </div>
                 <dl className="text-sm space-y-1.5">
                   <div className="flex justify-between gap-3">
-                    <dt className="text-slate-500 dark:text-slate-400">
+                    <dt className="text-c-text-muted">
                       {t('presentations.columns.owner', 'Owner')}
                     </dt>
-                    <dd className="text-slate-700 dark:text-slate-200 truncate">
+                    <dd className="text-c-text-secondary truncate">
                       {item.createdBy || '—'}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-slate-500 dark:text-slate-400">
+                    <dt className="text-c-text-muted">
                       {t('presentations.columns.date', 'Date')}
                     </dt>
-                    <dd className="text-slate-700 dark:text-slate-200">
+                    <dd className="text-c-text-secondary">
                       {new Date(item.createdAt).toLocaleDateString(
                         lang === 'pl' ? 'pl-PL' : 'en-US',
                         { month: 'short', day: 'numeric', year: 'numeric' }
@@ -652,10 +701,10 @@ export const PresentationsHub: React.FC = () => {
                     </dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-slate-500 dark:text-slate-400">
+                    <dt className="text-c-text-muted">
                       {t('presentations.columns.slides', 'Slides')}
                     </dt>
-                    <dd className="text-slate-700 dark:text-slate-200">
+                    <dd className="text-c-text-secondary">
                       {Number(item.slideCount ?? 0)}
                     </dd>
                   </div>
@@ -664,17 +713,24 @@ export const PresentationsHub: React.FC = () => {
             </div>
           )}
         >
-          <FilterableTable
-            columns={columns}
-            data={filteredDecks}
-            selectedRowId={selectedId}
-            onRowClick={(row) => setSelectedId(row.id)}
-            onRowDoubleClick={(row) => handleOpenDocument(row as unknown as PresentationDeck)}
-            getRowActions={(row) => getRowActions(row as unknown as PresentationDeck)}
-            activeFilters={activeFilters}
-            onFilterChange={setActiveFilters}
-            emptyMessage={t('presentations.empty', 'No presentations yet.')}
-          />
+          <div className="flex h-full min-h-0 flex-col">
+            <BulkActionBar selection={selection} actions={bulkActions} />
+            {bulkConfirmDialog}
+            <div className="min-h-0 flex-1">
+              <FilterableTable
+                columns={columns}
+                data={filteredDecks}
+                selectedRowId={selectedId}
+                selection={selection.selectionProp}
+                onRowClick={(row) => setSelectedId(row.id)}
+                onRowDoubleClick={(row) => handleOpenDocument(row as unknown as PresentationDeck)}
+                getRowActions={(row) => getRowActions(row as unknown as PresentationDeck)}
+                activeFilters={activeFilters}
+                onFilterChange={setActiveFilters}
+                emptyMessage={t('presentations.empty', 'No presentations yet.')}
+              />
+            </div>
+          </div>
         </TableWithPreviewLayout>
       </div>
     );
@@ -700,31 +756,31 @@ export const PresentationsHub: React.FC = () => {
         availableViewModes={['table', 'grid']}
       >
         {activeDocumentId ? (
-          <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950">
+          <div className="h-full flex flex-col bg-c-bg">
             <div className="flex-1 overflow-auto p-6">
               <div className="max-w-2xl mx-auto">
                 <div className="flex items-center gap-3 mb-6">
                   <button
                     onClick={() => setActiveDocumentId(null)}
-                    className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 dark:text-slate-400"
+                    className="p-2 rounded-lg hover:bg-c-surface-raised text-c-text-muted"
                   >
                     <LayoutGrid size={20} />
                   </button>
                   <div>
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    <h2 className="text-lg font-semibold text-c-text">
                       {openDocuments.find((d) => d.id === activeDocumentId)?.name ?? 'Presentation'}
                     </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-c-text-muted">
                       {t('presentations.deckPreview', 'Deck preview')}
                     </p>
                   </div>
                 </div>
-                <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-8 text-center">
+                <div className="rounded-xl border border-c-border-subtle bg-c-surface p-8 text-center">
                   <Presentation
                     size={48}
-                    className="mx-auto text-slate-600 dark:text-slate-500 mb-4"
+                    className="mx-auto text-c-text-muted mb-4"
                   />
-                  <p className="text-slate-600 dark:text-slate-300 mb-4">
+                  <p className="text-c-text-secondary mb-4">
                     {t(
                       'presentations.openInBuilder',
                       'Open this deck in the full editor to view and edit slides.'
@@ -732,7 +788,7 @@ export const PresentationsHub: React.FC = () => {
                   </p>
                   <button
                     onClick={() => navigate(`/presentations/builder/${activeDocumentId}`)}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 transition-colors font-medium mb-4"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-c-text text-c-surface hover:opacity-90 transition-opacity font-medium mb-4"
                   >
                     <Presentation size={16} />
                     {t('presentations.openEditor', 'Open Editor')}
@@ -743,7 +799,7 @@ export const PresentationsHub: React.FC = () => {
                         const deck = allDecks.find((d) => d.id === activeDocumentId);
                         if (deck) handleExport(deck);
                       }}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/15 transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-c-surface-raised text-c-text-secondary border border-c-border-subtle hover:border-c-border transition-colors"
                     >
                       <Download size={16} />
                       {t('presentations.actions.export', 'Export')}
@@ -756,7 +812,7 @@ export const PresentationsHub: React.FC = () => {
                           setRenameValue(deck.title);
                         }
                       }}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                     >
                       <Pencil size={16} />
                       {t('presentations.actions.rename', 'Rename')}
@@ -774,28 +830,28 @@ export const PresentationsHub: React.FC = () => {
       {/* Rename modal */}
       {renameModalDeck && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-md shadow-xl">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+          <div className="bg-c-surface border border-c-border rounded-xl p-6 w-full max-w-md shadow-xl">
+            <h3 className="text-lg font-semibold text-c-text mb-4">
               {t('presentations.actions.rename', 'Rename')}
             </h3>
             <input
               type="text"
               value={renameValue}
               onChange={(e) => setRenameValue(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 rounded-lg bg-c-surface border border-c-border text-c-text focus:ring-2 focus:ring-c-focus"
               placeholder={t('presentations.renamePlaceholder', 'Deck title')}
               autoFocus
             />
             <div className="flex justify-end gap-2 mt-4">
               <button
                 onClick={() => setRenameModalDeck(null)}
-                className="px-4 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800"
+                className="px-4 py-2 rounded-lg text-c-text-secondary hover:bg-c-surface-raised"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
               <button
                 onClick={handleRenameSubmit}
-                className="px-4 py-2 rounded-lg bg-primary-500 text-white hover:bg-primary-600"
+                className="px-4 py-2 rounded-lg bg-c-text text-c-surface hover:opacity-90"
               >
                 {t('common.save', 'Save')}
               </button>

@@ -98,27 +98,27 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({
   const getPhaseTasks = (phase: Phase) => tasks.filter((t) => t.stepPhase === phase);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-50 dark:bg-navy-950 flex flex-col animate-in fade-in slide-in-from-bottom-10">
+    <div className="fixed inset-0 z-50 bg-c-surface-raised flex flex-col animate-in fade-in slide-in-from-bottom-10">
       {/* Header */}
-      <div className="h-16 border-b border-slate-200 dark:border-white/10 flex items-center justify-between px-6 bg-white dark:bg-navy-900">
+      <div className="h-16 border-b border-c-border dark:border-white/10 flex items-center justify-between px-6 bg-c-surface">
         <div className="flex items-center gap-4">
           <button
             onClick={onClose}
-            className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            className="text-c-text-muted hover:text-c-text"
           >
             Back
           </button>
-          <div className="h-6 w-px bg-slate-200 dark:bg-white/10"></div>
+          <div className="h-6 w-px bg-c-border"></div>
           <div>
-            <h2 className="text-slate-900 dark:text-white font-bold text-lg">{initiative.name}</h2>
-            <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-950 px-2 py-0.5 rounded border border-slate-200 dark:border-white/5">
+            <h2 className="text-c-text font-bold text-lg">{initiative.name}</h2>
+            <span className="text-xs text-c-text-muted bg-c-surface-raised px-2 py-0.5 rounded border border-c-border dark:border-white/5">
               {initiative.axis} • {activePhase.toUpperCase()}
             </span>
           </div>
         </div>
         <div className="flex gap-3">
           {/* Phase Tabs */}
-          <div className="flex bg-slate-100 dark:bg-navy-950 rounded-lg p-1 border border-slate-200 dark:border-white/10">
+          <div className="flex bg-c-surface-raised rounded-lg p-1 border border-c-border dark:border-white/10">
             {phases.map((p) => (
               <button
                 key={p}
@@ -126,7 +126,7 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({
                 className={`px-4 py-1.5 rounded text-sm font-medium transition-all ${
                   activePhase === p
                     ? 'bg-blue-600 text-white shadow-lg'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    : 'text-c-text-muted hover:text-c-text'
                 }`}
               >
                 {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -139,7 +139,7 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({
             disabled={generating || tasks.length > 0}
             className={`
                             px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2
-                            ${generating ? 'bg-slate-700 text-slate-600 dark:text-slate-500' : 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'}
+                            ${generating ? 'bg-c-surface-raised text-c-text-muted' : 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'}
                         `}
           >
             {generating ? 'Generating...' : '✨ Generate Plan'}
@@ -159,13 +159,13 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({
             return (
               <div
                 key={status}
-                className="flex-1 flex flex-col bg-slate-50/30 dark:bg-navy-950/30 rounded-xl border border-slate-200 dark:border-white/5 min-w-[280px]"
+                className="flex-1 flex flex-col bg-slate-50/30 dark:bg-navy-950/30 rounded-xl border border-c-border dark:border-white/5 min-w-[280px]"
               >
-                <div className="p-3 border-b border-slate-200 dark:border-white/5 flex justify-between items-center bg-slate-100/50 dark:bg-navy-950/50 rounded-t-xl">
-                  <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                <div className="p-3 border-b border-c-border dark:border-white/5 flex justify-between items-center bg-slate-100/50 dark:bg-navy-950/50 rounded-t-xl">
+                  <h4 className="text-sm font-medium text-c-text-secondary uppercase tracking-wider">
                     {status.replace('_', ' ')}
                   </h4>
-                  <span className="bg-white dark:bg-navy-900 text-slate-500 dark:text-slate-400 text-xs px-2 py-0.5 rounded-full border border-slate-200 dark:border-white/5">
+                  <span className="bg-c-surface text-c-text-muted text-xs px-2 py-0.5 rounded-full border border-c-border dark:border-white/5">
                     {phaseTasks.length}
                   </span>
                 </div>
@@ -180,8 +180,8 @@ export const InitiativeTaskBoard: React.FC<InitiativeTaskBoardProps> = ({
                     />
                   ))}
                   {phaseTasks.length === 0 && (
-                    <div className="h-24 border-2 border-dashed border-slate-200 dark:border-white/5 rounded-lg flex items-center justify-center">
-                      <span className="text-xs text-slate-600 dark:text-slate-400">No tasks</span>
+                    <div className="h-24 border-2 border-dashed border-c-border dark:border-white/5 rounded-lg flex items-center justify-center">
+                      <span className="text-xs text-c-text-secondary">No tasks</span>
                     </div>
                   )}
                 </div>

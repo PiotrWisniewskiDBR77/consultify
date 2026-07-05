@@ -471,9 +471,12 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
                   disabled={loading || !selectedOutcomeId}
                   className="rounded-md border px-3 py-2 text-xs font-medium disabled:opacity-50 dark:border-navy-700"
                 >
-                  {isPolish
-                    ? { client_ready: 'Dla klienta', investor_ready: 'Dla inwestora', steering_committee: 'Dla komitetu sterującego', ciso_security: 'CISO / Bezpieczeństwo' }[type] ?? type.replace(/_/g, ' ')
-                    : type.replace(/_/g, ' ')}
+                  {({
+                    client_ready: t('aios.wave9OutcomeAIOpsPanel.reportTypeClientReady'),
+                    investor_ready: t('aios.wave9OutcomeAIOpsPanel.reportTypeInvestorReady'),
+                    steering_committee: t('aios.wave9OutcomeAIOpsPanel.reportTypeSteeringCommittee'),
+                    ciso_security: t('aios.wave9OutcomeAIOpsPanel.reportTypeCisoSecurity'),
+                  } as Record<string, string>)[type] ?? type.replace(/_/g, ' ')}
                 </button>
               ))}
             </div>

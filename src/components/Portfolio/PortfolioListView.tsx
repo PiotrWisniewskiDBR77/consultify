@@ -61,7 +61,7 @@ const STATUS_DOT_CLASS: Record<string, string> = {
   warning: 'bg-c-warning',
   success: 'bg-c-success',
   danger: 'bg-c-danger',
-  neutral: 'bg-slate-400 dark:bg-slate-500',
+  neutral: 'bg-c-text-muted',
 };
 
 interface PortfolioListViewProps {
@@ -351,9 +351,9 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
   const SortIcon: React.FC<{ field: SortField }> = ({ field }) => {
     if (sortConfig.field !== field) return <div className="w-4 h-4" />;
     return sortConfig.direction === 'asc' ? (
-      <ChevronUp size={14} className="text-slate-600 dark:text-slate-500" />
+      <ChevronUp size={14} className="text-c-text-muted" />
     ) : (
-      <ChevronDown size={14} className="text-slate-600 dark:text-slate-500" />
+      <ChevronDown size={14} className="text-c-text-muted" />
     );
   };
 
@@ -365,11 +365,11 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
     filter?: { col: ColumnDef; key: keyof TableFilters };
   }> = ({ field, children, className = '', filter }) => (
     <th className={`text-left px-4 py-2 ${className}`}>
-      <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+      <div className="flex items-center gap-1 text-[11px] font-semibold text-c-text-muted uppercase tracking-wider">
         <span
           className={
             field
-              ? 'inline-flex items-center gap-1 cursor-pointer transition-colors hover:text-slate-700 dark:hover:text-slate-200'
+              ? 'inline-flex items-center gap-1 cursor-pointer transition-colors hover:text-c-text-secondary'
               : 'inline-flex items-center gap-1'
           }
           onClick={field ? () => handleSort(field) : undefined}
@@ -395,16 +395,16 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
 
   return (
     <div className={canvasClassName}>
-      <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-x-auto">
+      <div className="bg-c-surface backdrop-blur border border-c-border-subtle rounded-xl overflow-x-auto">
         <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full table-fixed" style={{ minWidth: 1080 }}>
-          <thead className="sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur border-b border-slate-200/60 dark:border-white/[0.03]">
+          <thead className="sticky top-0 z-10 bg-c-surface-raised backdrop-blur border-b border-c-border-subtle">
             <tr>
               <th className="w-10 px-4 py-2">
                 <input
                   type="checkbox"
                   checked={selectedIds.size === initiatives.length && initiatives.length > 0}
                   onChange={toggleSelectAll}
-                  className="w-4 h-4 rounded border-slate-300 dark:border-white/10 bg-white/80 dark:bg-navy-950 text-primary-600 focus:ring-primary-500/30"
+                  className="w-4 h-4 rounded border-c-border bg-c-surface text-c-info focus:ring-c-focus"
                 />
               </th>
               <TH field="name">{t('initiatives.table.initiative', 'Initiative')}</TH>
@@ -434,7 +434,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-slate-200/60 dark:divide-white/[0.03]">
+          <tbody className="divide-y divide-c-border-subtle">
             {sortedInitiatives.map((initiative) => {
               const terminal = isTerminal(initiative.status);
               const owner = initiative.ownerBusiness || initiative.ownerExecution;
@@ -451,7 +451,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                   className={`group cursor-pointer transition-colors ${
                     selected
                       ? SELECTED_ROW_CLASS
-                      : 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]'
+                      : 'hover:bg-c-surface-raised'
                   } ${terminal ? 'opacity-50' : ''}`}
                   onClick={() => onInitiativeClick(initiative)}
                   onDoubleClick={() => onOpenFull?.(initiative)}
@@ -462,13 +462,13 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                       type="checkbox"
                       checked={selectedIds.has(initiative.id)}
                       onChange={() => toggleSelect(initiative.id)}
-                      className="w-4 h-4 rounded border-slate-300 dark:border-white/10 bg-white/80 dark:bg-navy-950 text-primary-600 focus:ring-primary-500/30"
+                      className="w-4 h-4 rounded border-c-border bg-c-surface text-c-info focus:ring-c-focus"
                     />
                   </td>
 
                   {/* Initiative (name only, 1 line) */}
                   <td className="px-4 py-2">
-                    <div className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate">
+                    <div className="font-medium text-sm text-c-text truncate">
                       {initiative.name}
                     </div>
                   </td>
@@ -488,7 +488,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                             e.target.value as InitiativeStatus
                           )
                         }
-                        className="appearance-none bg-transparent text-xs font-medium cursor-pointer pr-4 text-slate-700 dark:text-slate-300 focus:outline-none"
+                        className="appearance-none bg-transparent text-xs font-medium cursor-pointer pr-4 text-c-text-secondary focus:outline-none"
                       >
                         {ALL_INITIATIVE_STATUSES.map((s) => (
                           <option key={s} value={s}>
@@ -498,7 +498,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                       </select>
                       <ChevronDown
                         size={12}
-                        className="absolute right-0 text-slate-600 pointer-events-none"
+                        className="absolute right-0 text-c-text-muted pointer-events-none"
                       />
                     </div>
                   </td>
@@ -508,7 +508,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                     {priorityLevel ? (
                       <PriorityChip level={priorityLevel} label={initiative.priority} />
                     ) : (
-                      <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                      <span className="text-xs text-c-text-muted">—</span>
                     )}
                   </td>
 
@@ -516,7 +516,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                   <td className="px-4 py-2">
                     {owner ? (
                       <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-[10px] font-medium text-slate-600 dark:text-slate-300 overflow-hidden flex-shrink-0">
+                        <div className="w-5 h-5 rounded-full bg-c-surface-raised flex items-center justify-center text-[10px] font-medium text-c-text-secondary overflow-hidden flex-shrink-0">
                           {owner.avatarUrl ? (
                             <img
                               src={owner.avatarUrl}
@@ -527,12 +527,12 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                             `${owner.firstName?.[0] || '?'}${owner.lastName?.[0] || ''}`
                           )}
                         </div>
-                        <span className="text-xs text-slate-600 dark:text-slate-400 truncate">
+                        <span className="text-xs text-c-text-secondary truncate">
                           {owner.firstName} {owner.lastName}
                         </span>
                       </div>
                     ) : (
-                      <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                      <span className="text-xs text-c-text-muted">—</span>
                     )}
                   </td>
 
@@ -545,7 +545,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                         showIcon
                       />
                     ) : (
-                      <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                      <span className="text-xs text-c-text-muted">—</span>
                     )}
                   </td>
 
@@ -553,7 +553,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                   <td className="px-4 py-2">
                     <div className="flex items-center gap-1.5">
                       <span className={`w-2 h-2 rounded-full flex-shrink-0 ${health.dotClass}`} />
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                      <span className="text-xs text-c-text-muted">
                         {health.label}
                       </span>
                     </div>
@@ -563,33 +563,33 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                   <td className="px-4 py-2">
                     {nextStep ? (
                       <div
-                        className="text-xs text-slate-600 dark:text-slate-400 truncate"
+                        className="text-xs text-c-text-secondary truncate"
                         title={
                           nextStep.role ? `${nextStep.label} (${nextStep.role})` : nextStep.label
                         }
                       >
-                        <span className="font-medium text-slate-700 dark:text-slate-300">
+                        <span className="font-medium text-c-text-secondary">
                           {nextStep.label}
                         </span>
                         {nextStep.role && (
-                          <span className="text-slate-600 dark:text-slate-500 ml-1">
+                          <span className="text-c-text-muted ml-1">
                             ({nextStep.role})
                           </span>
                         )}
                       </div>
                     ) : (
-                      <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                      <span className="text-xs text-c-text-muted">—</span>
                     )}
                   </td>
 
                   {/* Missing (blocking) — placeholder, filled when gate readiness is fetched per-row */}
                   <td className="px-4 py-2">
-                    <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                    <span className="text-xs text-c-text-muted">—</span>
                   </td>
 
                   {/* Updated */}
                   <td className="px-4 py-2">
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                    <span className="text-xs text-c-text-muted">
                       {formatRelativeTime(initiative.updatedAt)}
                     </span>
                   </td>
@@ -712,7 +712,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
       </div>
 
       {sortedInitiatives.length === 0 && (
-        <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
+        <div className="flex items-center justify-center h-64 text-c-text-muted">
           {t('initiatives.hub.noInitiativesFound', 'No initiatives found')}
         </div>
       )}

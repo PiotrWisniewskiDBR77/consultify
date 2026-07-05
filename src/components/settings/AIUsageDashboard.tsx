@@ -222,10 +222,10 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
       {/* Period Selector */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-c-text">
             {t('settings.aiUsage.title', 'AI Usage Overview')}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-c-text-muted">
             {t('settings.aiUsage.subtitle', 'Monitor your AI usage and token consumption')}
           </p>
         </div>
@@ -242,19 +242,19 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-primary-50 to-primary-50 dark:from-primary-900/20 dark:to-primary-900/20 border-primary-200 dark:border-primary-800">
+        <Card className="bg-gradient-to-br from-c-accent-soft to-c-accent-soft border-c-accent">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-primary-600 dark:text-primary-400 font-medium">
+                <p className="text-sm text-c-accent font-medium">
                   {t('settings.aiUsage.totalRequests', 'Total Requests')}
                 </p>
-                <p className="text-2xl font-bold text-primary-900 dark:text-primary-100 mt-1">
+                <p className="text-2xl font-bold text-c-accent mt-1">
                   {formatNumber(periodStats?.totalRequests || 0)}
                 </p>
               </div>
-              <div className="p-3 bg-primary-100 dark:bg-primary-800/50 rounded-xl">
-                <Sparkles className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+              <div className="p-3 bg-c-accent-soft rounded-xl">
+                <Sparkles className="w-6 h-6 text-c-accent" />
               </div>
             </div>
           </CardContent>
@@ -332,7 +332,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
                     ? 'text-danger-600'
                     : isNearLimit
                       ? 'text-amber-600'
-                      : 'text-slate-600 dark:text-slate-400'
+                      : 'text-c-text-secondary'
                 )}
               >
                 {formatNumber(periodStats?.used || 0)} / {formatNumber(periodStats?.limit || 0)}{' '}
@@ -383,7 +383,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
         <CardContent>
           <div className="space-y-4">
             {usageByFeature.length === 0 ? (
-              <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+              <div className="py-8 text-center text-sm text-c-text-muted">
                 {t(
                   'settings.aiUsage.noFeatureUsage',
                   'No feature-level AI usage has been reported for this period.'
@@ -399,23 +399,23 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
 
                 return (
                   <div key={stat.feature} className="flex items-center gap-4">
-                    <div className="p-2 bg-slate-100 dark:bg-navy-800 rounded-lg">
-                      <Icon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                    <div className="p-2 bg-c-surface-raised rounded-lg">
+                      <Icon className="w-5 h-5 text-c-text-secondary" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-slate-900 dark:text-white">
+                        <span className="text-sm font-medium text-c-text">
                           {t(
                             `settings.aiUsage.features.${stat.feature}`,
                             formatFeatureFallback(stat.feature)
                           )}
                         </span>
                         <div className="flex items-center gap-3 text-sm">
-                          <span className="text-slate-500 dark:text-slate-400">
+                          <span className="text-c-text-muted">
                             {formatNumber(stat.tokens)} tokens
                           </span>
-                          <span className="text-slate-600 dark:text-slate-500">•</span>
-                          <span className="text-slate-500 dark:text-slate-400">
+                          <span className="text-c-text-secondary">•</span>
+                          <span className="text-c-text-muted">
                             {stat.count} requests
                           </span>
                         </div>
@@ -445,7 +445,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
         <CardContent>
           {/* Simple bar chart visualization */}
           {dailyUsage.length === 0 ? (
-            <div className="flex h-48 items-center justify-center text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex h-48 items-center justify-center text-sm text-c-text-muted">
               {t(
                 'settings.aiUsage.noDailyUsage',
                 'No daily AI usage has been reported for this period.'
@@ -459,11 +459,11 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
                 return (
                   <div
                     key={day.date}
-                    className="flex-1 bg-primary-200 dark:bg-primary-800 rounded-t hover:bg-primary-300 dark:hover:bg-primary-700 transition-colors cursor-pointer group relative"
+                    className="flex-1 bg-c-accent-soft rounded-t hover:bg-c-accent-300 transition-colors cursor-pointer group relative"
                     style={{ height: `${height}%` }}
                     title={`${day.date}: ${formatNumber(day.tokens)} tokens`}
                   >
-                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none">
+                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-c-surface text-white text-xs rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none">
                       {formatNumber(day.tokens)} tokens
                     </div>
                   </div>
@@ -471,7 +471,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
               })}
             </div>
           )}
-          <div className="flex justify-between mt-2 text-xs text-slate-600 dark:text-slate-500">
+          <div className="flex justify-between mt-2 text-xs text-c-text-secondary">
             <span>{dailyUsage[0]?.date}</span>
             <span>{dailyUsage[dailyUsage.length - 1]?.date}</span>
           </div>
@@ -498,7 +498,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
                       stroke="currentColor"
                       strokeWidth="8"
                       fill="none"
-                      className="text-slate-200 dark:text-navy-700"
+                      className="text-c-text-muted dark:text-navy-700"
                     />
                     <circle
                       cx="48"
@@ -512,12 +512,12 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xl font-bold text-slate-900 dark:text-white">
+                    <span className="text-xl font-bold text-c-text">
                       {periodStats?.successRate?.toFixed(1)}%
                     </span>
                   </div>
                 </div>
-                <div className="text-sm text-slate-500 dark:text-slate-400">
+                <div className="text-sm text-c-text-muted">
                   <p>
                     {t(
                       'settings.aiUsage.successRateDesc',
@@ -540,7 +540,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
             <div className="space-y-3">
               {hasAvgResponseTime && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                  <span className="text-sm text-c-text-muted">
                     Average response time
                   </span>
                   <span className="text-sm font-medium">
@@ -550,14 +550,14 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
               )}
               {hasSuccessRate && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-500 dark:text-slate-400">Error rate</span>
+                  <span className="text-sm text-c-text-muted">Error rate</span>
                   <span className="text-sm font-medium text-emerald-600">
                     {(100 - (periodStats?.successRate || 0)).toFixed(1)}%
                   </span>
                 </div>
               )}
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="text-sm text-c-text-muted">
                   Tokens per request
                 </span>
                 <span className="text-sm font-medium">

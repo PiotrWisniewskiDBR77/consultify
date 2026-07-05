@@ -49,7 +49,7 @@ interface UserModelPrefs {
 }
 
 const TIER_BADGE: Record<string, { label: string; className: string } | null> = {
-  PLATFORM: { label: 'PLATFORM', className: 'bg-navy-900 text-white dark:bg-white dark:text-navy-950' },
+  PLATFORM: { label: 'PLATFORM', className: 'bg-navy-900 text-white dark:bg-c-surface dark:text-navy-950' },
   PREMIUM: { label: 'PRO', className: 'bg-amber-500/20 text-amber-400' },
   REASONING: { label: 'REASONING', className: 'bg-blue-500/20 text-blue-400' },
   STANDARD: null,
@@ -207,9 +207,9 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
           'flex items-center justify-between p-3 rounded-lg border transition-all duration-200 cursor-pointer',
           isEnabled
             ? isPlatform
-              ? 'border-primary-500/50 bg-gradient-to-r from-primary-600/10 to-primary-500/5'
-              : 'border-primary-500/40 bg-primary-600/5'
-            : 'border-slate-200 dark:border-white/5 bg-white dark:bg-navy-900/30 hover:border-slate-300 dark:hover:border-white/10'
+              ? 'border-c-accent bg-gradient-to-r from-c-accent-soft to-c-accent-soft'
+              : 'border-c-accent bg-c-accent-soft'
+            : 'border-c-border-subtle bg-c-surface-raised hover:border-c-border dark:hover:border-white/10'
         )}
         onClick={() => toggleModel(model.id)}
       >
@@ -217,7 +217,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
           <div
             className={cn(
               'flex-shrink-0',
-              isEnabled ? (isPlatform ? 'text-primary-300' : 'text-primary-400') : 'text-slate-600'
+              isEnabled ? (isPlatform ? 'text-c-accent' : 'text-c-accent') : 'text-c-text-secondary'
             )}
           >
             {isEnabled ? <CheckCircle size={18} /> : <Circle size={18} />}
@@ -227,7 +227,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
               <span
                 className={cn(
                   'text-sm font-medium',
-                  isPlatform ? 'text-primary-200' : 'text-white'
+                  isPlatform ? 'text-c-text-muted' : 'text-white'
                 )}
               >
                 {model.name}
@@ -248,12 +248,12 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
                 </span>
               )}
               {isPreferred && (
-                <span className="px-1.5 py-0.5 text-[10px] font-medium bg-navy-900 text-white rounded dark:bg-white dark:text-navy-950">
+                <span className="px-1.5 py-0.5 text-[10px] font-medium bg-navy-900 text-white rounded dark:bg-c-surface dark:text-navy-950">
                   {t('settings.ai.preferred', 'PREFERRED')}
                 </span>
               )}
             </div>
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-c-text-muted">
               {model.provider} &middot; {model.model_id}
               {model.context_window > 0 &&
                 ` &middot; ${(model.context_window / 1000).toFixed(0)}K ctx`}
@@ -269,8 +269,8 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
             className={cn(
               'px-2.5 py-1 text-xs rounded-md transition-colors flex-shrink-0',
               isPreferred
-                ? 'bg-navy-900 text-white dark:bg-white dark:text-navy-950'
-                : 'bg-white/5 text-slate-600 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-slate-200'
+                ? 'bg-navy-900 text-white dark:bg-c-surface dark:text-navy-950'
+                : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised hover:text-c-text'
             )}
           >
             {isPreferred
@@ -296,7 +296,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
         <div className="flex items-center gap-2 mb-3">
           <Icon size={14} className={iconColor} />
           <h4 className="text-sm font-semibold text-white">{title}</h4>
-          <span className="text-[10px] text-slate-500">({sectionModels.length})</span>
+          <span className="text-[10px] text-c-text-muted">({sectionModels.length})</span>
         </div>
         <div className="space-y-2">{sectionModels.map(renderModelRow)}</div>
         {extra}
@@ -328,8 +328,8 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
           {/* Empty state */}
           {!loadError && models.length === 0 && !loading && (
             <div className="text-center py-8">
-              <Brain size={32} className="text-slate-600 mx-auto mb-3" />
-              <p className="text-sm text-slate-600">
+              <Brain size={32} className="text-c-text-secondary mx-auto mb-3" />
+              <p className="text-sm text-c-text-secondary">
                 {t(
                   'settings.ai.noModels',
                   'No AI models are configured yet. Contact your administrator to enable models.'
@@ -343,23 +343,23 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
             renderSection(
               t('settings.ai.platformModel', 'Platform Model'),
               Zap,
-              'text-primary-400',
+              'text-c-accent',
               platform,
               platform.length > 0 && (
-                <div className="mt-3 p-3 bg-gradient-to-r from-primary-600/10 to-crimson-600/5 border border-primary-500/20 rounded-lg">
+                <div className="mt-3 p-3 bg-gradient-to-r from-c-accent-soft to-c-accent-soft border border-c-accent rounded-lg">
                   <div className="flex items-start gap-3">
-                    <Sparkles size={16} className="text-primary-400 flex-shrink-0 mt-0.5" />
+                    <Sparkles size={16} className="text-c-accent flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-xs text-primary-300 font-medium mb-1">
+                      <p className="text-xs text-c-accent font-medium mb-1">
                         Vector DBR77 — Platform AI
                       </p>
-                      <p className="text-xs text-slate-600 leading-relaxed">
+                      <p className="text-xs text-c-text-secondary leading-relaxed">
                         {t(
                           'settings.ai.vectorDesc',
                           'Optimized for consulting workflows: interview analysis, report generation, and strategic recommendations.'
                         )}
                       </p>
-                      <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 text-[10px] font-medium bg-slate-500/15 text-slate-400 rounded-full">
+                      <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 text-[10px] font-medium bg-c-surface text-c-text-muted rounded-full">
                         {t('settings.ai.platformModelBadge', 'Platform AI model')}
                       </span>
                     </div>
@@ -423,7 +423,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
               {/* Generation Parameters */}
               <div>
                 <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-                  <Sparkles size={14} className="text-primary-400" />
+                  <Sparkles size={14} className="text-c-accent" />
                   {t('settings.ai.generationParams', 'Generation Parameters')}
                 </h4>
 
@@ -446,13 +446,13 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
                           onChange={(e) =>
                             setPrefs((prev) => ({ ...prev, temperature: Number(e.target.value) }))
                           }
-                          className="flex-1 accent-primary-500"
+                          className="flex-1 accent-c-accent"
                         />
                         <span className="text-sm font-mono text-white w-10 text-right">
                           {prefs.temperature.toFixed(1)}
                         </span>
                       </div>
-                      <div className="flex justify-between text-[10px] text-slate-500">
+                      <div className="flex justify-between text-[10px] text-c-text-muted">
                         <span>{t('settings.ai.focused', 'Focused')}</span>
                         <span>{t('settings.ai.creative', 'Creative')}</span>
                       </div>

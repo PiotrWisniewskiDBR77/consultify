@@ -103,6 +103,12 @@ export function RecommendationStack(
     ];
   });
 
+  // Anti-sparseness: grow row height so the portfolio table fills the region
+  // (p.h) instead of sitting in the top with an empty bottom. Cap so a 3-row
+  // table doesn't become absurdly tall.
+  const rowCount = 1 + dataRows.length; // header + data rows
+  const rowH = Math.max(0.45, Math.min(0.9, p.h / rowCount));
+
   elements.push({
     kind: 'table',
     apply(slide) {
@@ -113,7 +119,8 @@ export function RecommendationStack(
         colW: [p.w * 0.07, p.w * 0.48, p.w * 0.25, p.w * 0.2],
         border: { pt: 0.5, color: tokens.colors.border },
         fontFace: tokens.fonts.body,
-        rowH: 0.45,
+        rowH,
+        valign: 'middle',
         autoPage: false,
       });
     },

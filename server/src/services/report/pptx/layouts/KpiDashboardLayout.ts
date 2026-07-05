@@ -54,9 +54,20 @@ export function KpiDashboardLayout(
     );
   }
 
-  // KPI tiles
-  const kpiY = c.period ? g.contentY + 0.25 : g.contentY;
-  const kpiH = c.context ? 1.3 : 2.5;
+  // KPI tiles — W7 anti-sparseness: kafelki rosną i wypełniają płótno zamiast
+  // siedzieć w górnej połowie z pustym dołem.
+  const periodOffset = c.period ? 0.3 : 0;
+  const regionY = g.contentY + periodOffset;
+  const regionH = g.contentH - periodOffset; // pasmo użytkowe pod tytułem/okresem
+
+  // Z kontekstem: kafelki biorą ~60% wysokości (większe niż dawne 1.3),
+  // tekst kontekstu wypełnia dół. Bez kontekstu: kafelki wypełniają cały region
+  // (były 2.5 → teraz ~3.7), więc oddychają i są czytelne.
+  const contextH = c.context ? Math.min(1.3, regionH * 0.32) : 0;
+  const contextGap = c.context ? 0.25 : 0;
+  const kpiH = regionH - contextH - contextGap;
+  const kpiY = regionY;
+
   const kpiElements = KpiStrip(
     {
       kpis: c.kpis.slice(0, 6),
@@ -66,7 +77,7 @@ export function KpiDashboardLayout(
   );
   elements.push(...kpiElements);
 
-  // Context text
+  // Context text — zakotwiczony pod kafelkami, wypełnia dolny pas.
   if (c.context) {
     elements.push(
       BodyText(
@@ -74,9 +85,9 @@ export function KpiDashboardLayout(
           text: c.context,
           position: {
             x: g.contentX,
-            y: kpiY + kpiH + 0.2,
+            y: kpiY + kpiH + contextGap,
             w: g.contentW,
-            h: g.contentH - kpiH - 0.5,
+            h: contextH,
           },
           color: tokens.colors.textSecondary,
         },

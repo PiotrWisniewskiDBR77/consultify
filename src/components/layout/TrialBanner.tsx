@@ -89,7 +89,7 @@ const TrialBanner: React.FC<TrialBannerProps> = ({
       </div>
       <button
         onClick={handleAction}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary-500 hover:bg-primary-600 text-white transition-colors flex-shrink-0"
+        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-c-text hover:bg-c-text-secondary text-c-bg transition-colors flex-shrink-0"
       >
         {actionLabel || t('trial.upgrade', 'Upgrade')}
         <ArrowRight className="w-3.5 h-3.5" />

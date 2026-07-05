@@ -120,6 +120,7 @@ import {
 import { exportReportToPDF } from '@/services/pdf/pdfExport';
 import { useAppStore } from '@/store/useAppStore';
 import { type ArtifactType, buildArtifactCode } from '@/utils/artifactLinks';
+import { getHandoffLandingPath } from '@/utils/initiativeLinks';
 
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 
@@ -2373,11 +2374,27 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             const initiativeId = res?.initiative?.id;
             const linkedLabel =
               mode === 'link' ? targetInitiativeName : initiativeId ? `${initiativeId}` : '';
-            toast.success(
-              isPolish
-                ? `Inicjatywa ${mode === 'create' ? 'utworzona' : 'powiązana'}${linkedLabel ? ` (${linkedLabel})` : ''}`
-                : `Initiative ${mode === 'create' ? 'created' : 'linked'}${linkedLabel ? ` (${linkedLabel})` : ''}`
-            );
+            // M13 flow redesign: creating a NEW initiative lands the user in
+            // its document immediately (Interview staging stays a source view).
+            const landingPath = getHandoffLandingPath({
+              mode,
+              initiativeId,
+              resultType: res?.initiative?.type,
+            });
+            if (landingPath) {
+              toast.success(
+                isPolish
+                  ? 'Inicjatywa utworzona — otwieram jej dokument'
+                  : 'Initiative created — opening its document'
+              );
+              navigate(landingPath);
+            } else {
+              toast.success(
+                isPolish
+                  ? `Inicjatywa ${mode === 'create' ? 'utworzona' : 'powiązana'}${linkedLabel ? ` (${linkedLabel})` : ''}`
+                  : `Initiative ${mode === 'create' ? 'created' : 'linked'}${linkedLabel ? ` (${linkedLabel})` : ''}`
+              );
+            }
             return;
           } catch (err: unknown) {
             lastError = err;
@@ -2438,6 +2455,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       handoffTargetInitiativeId,
       handoffInitiatives,
       isPolish,
+      navigate,
     ]
   );
 
@@ -3152,7 +3170,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     <button
                       type="button"
                       onClick={() => setActiveNSection('candidate-triage')}
-                      className="text-[11px] font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-300"
+                      className="text-[11px] font-semibold text-c-text-secondary hover:text-c-text"
                     >
                       {isPolish ? 'Triage' : 'Triage'}
                     </button>
@@ -3185,7 +3203,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     <button
                       type="button"
                       onClick={() => setActiveNSection('signals')}
-                      className="text-[11px] font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-300"
+                      className="text-[11px] font-semibold text-c-text-secondary hover:text-c-text"
                     >
                       {isPolish ? 'Sygnały' : 'Signals'}
                     </button>
@@ -3447,8 +3465,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="rounded-2xl border border-navy-700 bg-navy-900/40 p-4">
-                      <h4 className="text-sm font-semibold text-white">
+                    <div className="rounded-2xl border border-c-border-subtle bg-c-surface-raised p-4">
+                      <h4 className="text-sm font-semibold text-c-text">
                         {isPolish ? 'Ograniczenia materiału' : 'Material limitations'}
                       </h4>
                       {quality.limitations.length > 0 ? (
@@ -3469,8 +3487,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       )}
                     </div>
 
-                    <div className="rounded-2xl border border-navy-700 bg-navy-900/40 p-4">
-                      <h4 className="text-sm font-semibold text-white">
+                    <div className="rounded-2xl border border-c-border-subtle bg-c-surface-raised p-4">
+                      <h4 className="text-sm font-semibold text-c-text">
                         {isPolish ? 'Braki i follow-up' : 'Gaps and follow-up'}
                       </h4>
                       <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600">
@@ -3710,7 +3728,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           type="button"
                           onClick={handleExportReportManifest}
                           disabled={reportExporting || reportPack.status !== 'published'}
-                          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-primary-400 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.12] dark:bg-navy-900 dark:text-slate-200"
+                          className="rounded-xl border border-c-border bg-c-surface px-3 py-2 text-xs font-semibold text-c-text-secondary transition hover:border-c-border-strong hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {reportExporting
                             ? isPolish
@@ -3724,7 +3742,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           type="button"
                           onClick={handleExportReportMarkdown}
                           disabled={reportMarkdownExporting || reportPack.status !== 'published'}
-                          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-primary-400 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.12] dark:bg-navy-900 dark:text-slate-200"
+                          className="rounded-xl border border-c-border bg-c-surface px-3 py-2 text-xs font-semibold text-c-text-secondary transition hover:border-c-border-strong hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {reportMarkdownExporting
                             ? isPolish
@@ -3908,7 +3926,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                     action.warnings
                                   )
                                 }
-                                className="rounded-md border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-600 transition-colors hover:border-primary-400 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-45 dark:border-white/[0.08] dark:text-slate-300"
+                                className="rounded-md border border-c-border-subtle px-2 py-1 text-[10px] font-semibold text-c-text-secondary transition-colors hover:border-c-border-strong hover:text-c-text disabled:cursor-not-allowed disabled:opacity-45"
                               >
                                 {loading ? (isPolish ? 'Zapis...' : 'Saving...') : action.label}
                               </button>

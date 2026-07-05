@@ -340,7 +340,7 @@ export const RecentConversationsDropdown: React.FC<RecentConversationsDropdownPr
           role="menu"
           data-testid="workspace-breadcrumb-recents-menu"
           aria-label="Recent conversations"
-          className="absolute left-0 top-full mt-1 z-[81] w-64 rounded-lg border border-slate-200 bg-white shadow-lg dark:border-navy-700 dark:bg-navy-900"
+          className="absolute left-0 top-full mt-1 z-modal w-64 rounded-lg border border-slate-200 bg-white shadow-lg dark:border-navy-700 dark:bg-navy-900"
         >
           <ul
             data-testid="workspace-breadcrumb-recents-list"

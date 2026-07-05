@@ -458,7 +458,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           style: {
             width: maxX - minX + pad * 2,
             height: maxY - minY + pad * 2,
-            border: '2px dashed #94a3b8',
+            border: '2px dashed var(--c-tag-8)',
             borderRadius: 16,
             background: 'rgba(148,163,184,0.04)',
           },
@@ -491,7 +491,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           style: {
             width: 300,
             height: 200,
-            border: '2px dashed #94a3b8',
+            border: '2px dashed var(--c-tag-8)',
             borderRadius: 16,
             background: 'rgba(148,163,184,0.04)',
           },

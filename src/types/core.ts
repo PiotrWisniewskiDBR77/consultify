@@ -168,6 +168,7 @@ export enum AppView {
   INITIATIVE_MANAGEMENT = 'INITIATIVE_MANAGEMENT', // @deprecated - use PORTFOLIO_ROADMAP
   PORTFOLIO_ROADMAP = 'PORTFOLIO_ROADMAP', // Unified Portfolio & Roadmap view (replaces INITIATIVE_MANAGEMENT + FULL_STEP3_ROADMAP)
   BENEFITS_REALIZATION = 'BENEFITS_REALIZATION', // DONE, BLOCKED, CANCELLED, ARCHIVED + KPIs
+  CONCLUSIONS = 'CONCLUSIONS', // Conclusions layer — governed conclusions (verdict/rationale/evidence) + readout
   MCP_IRIS_COMING_SOON = 'MCP_IRIS_COMING_SOON',
   MCP_MARKETPLACE_COMING_SOON = 'MCP_MARKETPLACE_COMING_SOON',
 
@@ -852,6 +853,8 @@ export interface PortfolioStats {
 export interface PortfolioInitiative {
   id: string;
   name: string;
+  /** Some portfolio reads carry `title` instead of `name`; UI falls back to it. */
+  title?: string;
   summary?: string;
   description?: string;
   axis: string;

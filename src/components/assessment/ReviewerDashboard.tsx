@@ -260,8 +260,8 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
 
           <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-danger-100 dark:bg-danger-900/30 rounded-lg">
-                <AlertTriangle className="w-5 h-5 text-danger-600 dark:text-danger-400" />
+              <div className="p-2 bg-rose-100 dark:bg-rose-900/30 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-navy-900 dark:text-white">{stats.overdue}</p>
@@ -318,7 +318,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
       {/* Reviews List */}
       <div className="space-y-4">
         {error && (
-          <div className="flex items-center gap-3 p-4 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-500/30 rounded-lg text-danger-700 dark:text-danger-300">
+          <div className="flex items-center gap-3 p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 rounded-lg text-rose-700 dark:text-rose-300">
             <AlertCircle className="w-5 h-5" />
             <span>{error}</span>
           </div>
@@ -339,7 +339,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
               key={review.id}
               className={`bg-white dark:bg-navy-900 rounded-xl border p-4 transition-all hover:shadow-lg ${
                 review.isOverdue && review.status !== 'COMPLETED'
-                  ? 'border-danger-300 dark:border-danger-500/30'
+                  ? 'border-rose-300 dark:border-rose-500/30'
                   : 'border-slate-200 dark:border-navy-700'
               }`}
             >
@@ -350,7 +350,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
                     review.status === 'COMPLETED'
                       ? 'bg-green-100 dark:bg-green-900/30'
                       : review.isOverdue
-                        ? 'bg-danger-100 dark:bg-danger-900/30'
+                        ? 'bg-rose-100 dark:bg-rose-900/30'
                         : review.status === 'IN_PROGRESS'
                           ? 'bg-primary-100 dark:bg-primary-900/30'
                           : 'bg-amber-100 dark:bg-amber-900/30'
@@ -359,7 +359,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
                   {review.status === 'COMPLETED' ? (
                     <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
                   ) : review.isOverdue ? (
-                    <AlertTriangle className="w-6 h-6 text-danger-600 dark:text-danger-400" />
+                    <AlertTriangle className="w-6 h-6 text-rose-600 dark:text-rose-400" />
                   ) : review.status === 'IN_PROGRESS' ? (
                     <Timer className="w-6 h-6 text-primary-600 dark:text-primary-400" />
                   ) : (
@@ -380,7 +380,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
                     </div>
 
                     {review.isOverdue && review.status !== 'COMPLETED' && (
-                      <span className="px-2 py-1 bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-400 text-xs font-medium rounded-full">
+                      <span className="px-2 py-1 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-xs font-medium rounded-full">
                         Przeterminowane
                       </span>
                     )}
@@ -398,7 +398,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
                     {review.dueDate && (
                       <span
                         className={`flex items-center gap-1 ${
-                          review.isOverdue ? 'text-danger-500' : ''
+                          review.isOverdue ? 'text-rose-500' : ''
                         }`}
                       >
                         <Timer className="w-3.5 h-3.5" />
@@ -447,7 +447,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
                     </button>
                     <button
                       onClick={() => setReviewingReview(review)}
-                      className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-medium rounded-lg transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 bg-c-text hover:bg-c-text-secondary text-c-bg font-medium rounded-lg transition-colors"
                     >
                       <FileEdit className="w-4 h-4" />
                       Submit Review

@@ -2,6 +2,7 @@ import { ArrowRight, Check, Coins, Edit2, Package, Plus, Star, Trash2, X } from 
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
 
@@ -51,19 +52,23 @@ export const AdminTokenPackages = () => {
   };
 
   if (loading && !packages.length)
-    return <div className="text-slate-600 dark:text-white/60 p-6">Loading packages...</div>;
+    return (
+      <div className="p-6">
+        <SharedLoadingState template="card" count={3} />
+      </div>
+    );
 
   return (
-    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden shadow-lg p-6 relative">
+    <div className="bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-xl overflow-hidden shadow-lg p-6 relative">
       <div className="absolute top-0 left-0 p-32 bg-blue-500/5 rounded-full blur-3xl -ml-16 -mt-16 pointer-events-none" />
 
       <div className="flex justify-between items-center mb-8 relative z-10">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-c-text flex items-center gap-2">
             <Package className="w-5 h-5 text-blue-400" />
             Token Packages
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-secondary mt-1">
             Manage purchasable token bundles.
           </p>
         </div>
@@ -91,16 +96,16 @@ export const AdminTokenPackages = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <form
             onSubmit={handleSave}
-            className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 p-6 rounded-xl shadow-2xl w-full max-w-2xl animate-fade-in-up"
+            className="bg-c-surface border border-c-border-subtle dark:border-white/10 p-6 rounded-xl shadow-2xl w-full max-w-2xl animate-fade-in-up"
           >
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+              <h3 className="text-xl font-bold text-c-text">
                 {editingPkg.id ? 'Edit Package' : 'Create New Package'}
               </h3>
               <button
                 type="button"
                 onClick={() => setEditingPkg(null)}
-                className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                className="text-c-text-muted hover:text-c-text dark:hover:text-white"
               >
                 <X size={24} />
               </button>
@@ -108,7 +113,7 @@ export const AdminTokenPackages = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-medium text-c-text-secondary mb-1.5 uppercase tracking-wider">
                   Package Name
                 </label>
                 <input
@@ -116,12 +121,12 @@ export const AdminTokenPackages = () => {
                   type="text"
                   value={editingPkg.name}
                   onChange={(e) => setEditingPkg({ ...editingPkg, name: e.target.value })}
-                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-4 py-3 text-slate-900 dark:text-white focus:border-blue-500 outline-none transition-colors"
+                  className="w-full bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg px-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors"
                   placeholder="e.g. Starter, Pro"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-medium text-c-text-secondary mb-1.5 uppercase tracking-wider">
                   Stripe Price ID
                 </label>
                 <input
@@ -130,12 +135,12 @@ export const AdminTokenPackages = () => {
                   onChange={(e) =>
                     setEditingPkg({ ...editingPkg, stripe_price_id: e.target.value })
                   }
-                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-4 py-3 text-slate-900 dark:text-white focus:border-blue-500 outline-none transition-colors font-mono text-sm"
+                  className="w-full bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg px-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors font-mono text-sm"
                   placeholder="price_..."
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-medium text-c-text-secondary mb-1.5 uppercase tracking-wider">
                   Tokens Amount
                 </label>
                 <div className="relative">
@@ -144,13 +149,13 @@ export const AdminTokenPackages = () => {
                     type="number"
                     value={editingPkg.tokens}
                     onChange={(e) => setEditingPkg({ ...editingPkg, tokens: e.target.value })}
-                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg pl-10 pr-4 py-3 text-slate-900 dark:text-white focus:border-blue-500 outline-none transition-colors font-mono"
+                    className="w-full bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg pl-10 pr-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors font-mono"
                   />
-                  <Coins className="absolute left-3 top-3.5 text-slate-500 dark:text-slate-400 w-4 h-4" />
+                  <Coins className="absolute left-3 top-3.5 text-c-text-muted w-4 h-4" />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-medium text-c-text-secondary mb-1.5 uppercase tracking-wider">
                   Price (USD)
                 </label>
                 <div className="relative">
@@ -160,61 +165,61 @@ export const AdminTokenPackages = () => {
                     step="0.01"
                     value={editingPkg.price_usd}
                     onChange={(e) => setEditingPkg({ ...editingPkg, price_usd: e.target.value })}
-                    className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg pl-8 pr-4 py-3 text-slate-900 dark:text-white focus:border-blue-500 outline-none transition-colors font-mono"
+                    className="w-full bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg pl-8 pr-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors font-mono"
                   />
-                  <span className="absolute left-3 top-3.5 text-slate-500 dark:text-slate-400 text-sm">
+                  <span className="absolute left-3 top-3.5 text-c-text-muted text-sm">
                     $
                   </span>
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-medium text-c-text-secondary mb-1.5 uppercase tracking-wider">
                   Bonus Tokens (%)
                 </label>
                 <input
                   type="number"
                   value={editingPkg.bonus_percent}
                   onChange={(e) => setEditingPkg({ ...editingPkg, bonus_percent: e.target.value })}
-                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-4 py-3 text-slate-900 dark:text-white focus:border-blue-500 outline-none transition-colors"
+                  className="w-full bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg px-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-medium text-c-text-secondary mb-1.5 uppercase tracking-wider">
                   Sort Order
                 </label>
                 <input
                   type="number"
                   value={editingPkg.sort_order || 0}
                   onChange={(e) => setEditingPkg({ ...editingPkg, sort_order: e.target.value })}
-                  className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-4 py-3 text-slate-900 dark:text-white focus:border-blue-500 outline-none transition-colors"
+                  className="w-full bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg px-4 py-3 text-c-text focus:border-blue-500 outline-none transition-colors"
                 />
               </div>
             </div>
 
             <div className="mb-8">
-              <label className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-navy-950/20 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors border border-slate-200 dark:border-white/10">
+              <label className="flex items-center gap-3 p-4 bg-c-surface-raised/20 rounded-lg cursor-pointer hover:bg-c-surface-raised/40 transition-colors border border-c-border-subtle dark:border-white/10">
                 <input
                   type="checkbox"
                   checked={!!editingPkg.is_popular}
                   onChange={(e) => setEditingPkg({ ...editingPkg, is_popular: e.target.checked })}
-                  className="w-5 h-5 rounded border-slate-300 dark:border-white/20 bg-white dark:bg-navy-950 text-blue-500 focus:ring-blue-500 focus:ring-offset-white dark:focus:ring-offset-navy-900"
+                  className="w-5 h-5 rounded border-c-border dark:border-white/20 bg-c-surface text-blue-500 focus:ring-blue-500 focus:ring-offset-white dark:focus:ring-offset-navy-900"
                 />
                 <div>
-                  <span className="text-slate-900 dark:text-white font-medium block">
+                  <span className="text-c-text font-medium block">
                     Mark as "Popular"
                   </span>
-                  <span className="text-slate-600 dark:text-slate-400 text-xs block">
+                  <span className="text-c-text-secondary text-xs block">
                     Highlights this package with a badge and border.
                   </span>
                 </div>
               </label>
             </div>
 
-            <div className="flex gap-3 justify-end pt-4 border-t border-slate-200 dark:border-white/10">
+            <div className="flex gap-3 justify-end pt-4 border-t border-c-border-subtle dark:border-white/10">
               <button
                 type="button"
                 onClick={() => setEditingPkg(null)}
-                className="px-6 py-2.5 text-slate-700 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-navy-800/20 rounded-lg transition-colors font-medium"
+                className="px-6 py-2.5 text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised dark:text-slate-300 dark:hover:text-white dark:hover:bg-navy-800/20 rounded-lg transition-colors font-medium"
               >
                 Cancel
               </button>
@@ -232,10 +237,10 @@ export const AdminTokenPackages = () => {
           {packages.map((pkg) => (
             <div
               key={pkg.id}
-              className={`relative bg-slate-50 dark:bg-navy-950/20 rounded-xl p-6 border transition-all hover:-translate-y-1 hover:shadow-xl group ${
+              className={`relative bg-c-surface-raised/20 rounded-xl p-6 border transition-all hover:-translate-y-1 hover:shadow-xl group ${
                 pkg.is_popular
                   ? 'border-blue-500/50 shadow-blue-500/10'
-                  : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                  : 'border-c-border-subtle dark:border-white/10 hover:border-c-border dark:hover:border-white/20'
               }`}
             >
               {pkg.is_popular === 1 && (
@@ -246,14 +251,14 @@ export const AdminTokenPackages = () => {
 
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">{pkg.name}</h3>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">
+                  <h3 className="text-lg font-bold text-c-text">{pkg.name}</h3>
+                  <div className="text-xs text-c-text-muted mt-1 uppercase tracking-wider">
                     Package
                   </div>
                 </div>
                 <button
                   onClick={() => setEditingPkg(pkg)}
-                  className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                  className="p-2 text-c-text-muted hover:text-c-text dark:hover:text-white hover:bg-c-surface-raised/40 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                 >
                   <Edit2 size={16} />
                 </button>
@@ -261,10 +266,10 @@ export const AdminTokenPackages = () => {
 
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-slate-900 dark:text-white">
+                  <span className="text-2xl font-bold text-c-text">
                     ${pkg.price_usd}
                   </span>
-                  <span className="text-slate-500 dark:text-slate-400 text-sm">USD</span>
+                  <span className="text-c-text-muted text-sm">USD</span>
                 </div>
                 {pkg.bonus_percent > 0 && (
                   <div className="text-xs text-emerald-400 font-medium mt-1 flex items-center gap-1">
@@ -276,18 +281,18 @@ export const AdminTokenPackages = () => {
 
               <div className="space-y-3 mb-6">
                 <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
-                  <span className="text-slate-600 dark:text-slate-500">Tokens</span>
-                  <span className="text-white font-mono">{pkg.tokens.toLocaleString()}</span>
+                  <span className="text-c-text-secondary">Tokens</span>
+                  <span className="text-c-text font-mono">{pkg.tokens.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
-                  <span className="text-slate-600 dark:text-slate-500">Total Value</span>
+                  <span className="text-c-text-secondary">Total Value</span>
                   <span className="text-emerald-400 font-mono font-medium">
                     {(pkg.tokens * (1 + pkg.bonus_percent / 100)).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
-                  <span className="text-slate-600 dark:text-slate-500">Sort Order</span>
-                  <span className="text-slate-500 dark:text-slate-400">#{pkg.sort_order}</span>
+                  <span className="text-c-text-secondary">Sort Order</span>
+                  <span className="text-c-text-muted">#{pkg.sort_order}</span>
                 </div>
               </div>
 

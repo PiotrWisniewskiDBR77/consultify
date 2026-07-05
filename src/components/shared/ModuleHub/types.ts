@@ -38,6 +38,7 @@ export type ModuleTab =
   | 'results_initiatives'
   | 'results_kpi'
   | 'results_reports'
+  | 'results_benefits_inbox'
   | 'roi'
   | 'all_kpis'
   | 'by_initiative'
@@ -50,8 +51,15 @@ export type ModuleTab =
   // V3-H03 — Results Operational + ROI Analysis
   | 'operational'
   | 'roi_analysis'
+  | 'results_strategic'
+  | 'results_ai'
   // V3-F02 — Initiatives Portfolio Analysis
   | 'analysis'
+  // USPOJNIENIE E1/E2 — Initiatives observability (lineage + funnel)
+  | 'observability'
+  // Initiatives backbone — F2 candidates inbox + F4 portfolio health
+  | 'candidates'
+  | 'portfolioHealth'
   // V3-Phase10 — Unified Report Builder Hub
   | 'my_reports'
   | 'r1_r4'

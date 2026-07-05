@@ -1,7 +1,33 @@
+/**
+ * Dynamic SWOT — AI prompt builders + pending-action reducers (OXFORD O3 pilot).
+ *
+ * Doctrine:
+ * - docs/standards/CONCLUSION_LAYER_STANDARD.md — §4 ConclusionInput/Output contract,
+ *   variant W2 (verdict + rationale + MANDATORY trade-off + rejected alternative).
+ * - src/config/swot/* — laddered question bank, insight staircase, tension engine.
+ *
+ * Hard rules encoded into every prompt:
+ * - Numbers and facts ONLY from the session facts block (signals + accepted elements).
+ *   The LLM never computes and never invents numbers.
+ * - Every interpretive claim carries factRefs into the session.
+ * - Items without session evidence are explicitly "declared, unconfirmed".
+ */
+
 import {
   type ConsultingMissionContext,
   createConsultingMissionContext,
 } from '@/config/consultingToolsStandard';
+import {
+  buildQuadrantLadderPromptBlock,
+  type SwotQuadrant,
+} from '@/config/swot/dynamicSwotQuestionBank';
+import { buildStaircasePromptRules } from '@/config/swot/swotInsightStaircase';
+import {
+  buildMoveConclusionPromptRules,
+  deriveTensionCandidates,
+  TENSION_TYPE_TO_POSTURE,
+  type SwotTensionType,
+} from '@/config/swot/swotTensionEngine';
 import type {
   SessionGenerationStatus,
   SWOTCorrelation,
@@ -47,54 +73,226 @@ export interface DynamicSwotApplyResult {
   clearRethinkTarget?: boolean;
 }
 
+// ---------------------------------------------------------------------------
+// ConclusionInput-style facts block (§4.1) — the ONLY source of facts/numbers
+// ---------------------------------------------------------------------------
+
+const isActiveCard = (card: { proposalStatus?: string }) =>
+  card.proposalStatus !== 'rejected' && card.proposalStatus !== 'rethinking';
+
+const isAccepted = (card: { proposalStatus?: string; status?: string }) =>
+  card.proposalStatus === 'accepted' ||
+  (!card.proposalStatus && (card.status === 'accepted' || card.status === undefined));
+
+/**
+ * Serializes the session into a closed facts block (ConclusionInput.facts).
+ * Every entry carries a stable ref key the model must echo back as factRefs.
+ */
+export function buildSwotFactsBlock(swotData: SWOTData): string {
+  const lines: string[] = [];
+  const ctx = swotData.context;
+  lines.push('MISSION (org framing — not evidence):');
+  lines.push(`- goal: ${ctx?.goal || 'not defined'}`);
+  lines.push(`- scope: ${ctx?.scope || 'not defined'}`);
+  lines.push(`- successSignal: ${ctx?.successSignal || 'not defined'}`);
+  lines.push(`- timeframe: ${ctx?.timeframe || 'medium'}`);
+  if (ctx?.constraints) lines.push(`- constraints: ${ctx.constraints}`);
+  if (ctx?.assumptions) lines.push(`- assumptions: ${ctx.assumptions}`);
+  if (ctx?.kpiTarget) lines.push(`- kpiTarget: ${ctx.kpiTarget}`);
+
+  const signals = (swotData.signals || []).filter(isActiveCard);
+  lines.push('');
+  lines.push('EVIDENCE (facts[] — the ONLY admissible source of numbers and facts):');
+  if (signals.length === 0) {
+    lines.push('- (no evidence captured yet — everything downstream is a declaration)');
+  }
+  signals.forEach((signal) => {
+    const conf =
+      signal.evidenceType === 'fact'
+        ? 'confirmed'
+        : signal.evidenceType === 'hypothesis'
+          ? 'missing'
+          : 'declared';
+    lines.push(
+      `- [${signal.id}] (${signal.type}, ${conf}) ${signal.content} — source: ${signal.sourceLabel}`
+    );
+  });
+
+  const items = (swotData.items || []).filter(isActiveCard);
+  if (items.length > 0) {
+    lines.push('');
+    lines.push('SWOT ELEMENTS (accepted = client-validated, proposed = pending):');
+    items.forEach((item) => {
+      const state = isAccepted(item) ? 'accepted' : 'proposed';
+      const evidence = item.evidenceStatus ? `, evidence: ${item.evidenceStatus}` : '';
+      lines.push(
+        `- [${item.id}] ${item.quadrant.toUpperCase()} (${state}, impact ${item.impact}${evidence}) ${item.text}`
+      );
+      if (item.staircase?.fact) {
+        lines.push(
+          `    fact: ${item.staircase.fact} | interpretation: ${item.staircase.interpretation} | implication: ${item.staircase.implication}`
+        );
+      }
+    });
+  }
+
+  const tensions = (swotData.tensions || []).filter(isActiveCard);
+  if (tensions.length > 0) {
+    lines.push('');
+    lines.push('TENSIONS:');
+    tensions.forEach((tension) => {
+      lines.push(
+        `- [${tension.id}] (${tension.type}) ${tension.title}: ${tension.insight} [items: ${(tension.linkedItemIds || []).join(', ') || 'none'}]`
+      );
+    });
+  }
+  return lines.join('\n');
+}
+
+const HARD_RULES_BLOCK = `HARD RULES (CONCLUSION_LAYER_STANDARD §4):
+- You are a partner at a consulting firm (HBS, MBA, 10 years of practice). You sign this output with your own name in front of the client's board.
+- Numbers and facts EXCLUSIVELY from the facts block above. Never compute, never estimate, never quote statistics from outside the input.
+- Every interpretive claim carries "factRefs" — ids from the facts block. A claim without evidence must be named a hypothesis.
+- Evidence marked "declared" -> write "wg deklaracji, do potwierdzenia" / "as declared, to be confirmed". No data -> "do ustalenia (gdzie/kiedy)" / "to be established (where/when)" — never an invented number.
+- No filler phrases that fit any company on earth ("improve communication", "optimize processes", "dynamic market"). Every conclusion must be falsifiable: with opposite data it would read differently.
+- Answer-first (Minto): the first sentence of every conclusion unit is the conclusion, not an introduction.
+- Actions: verb + artifact + accountable role. Effects: measurable or behaviorally observable, with a time horizon.
+- Respond in the user's language (Polish or English) — professional partner tone, active voice.`;
+
+// ---------------------------------------------------------------------------
+// Laddered question prompt (q-bank as single source of truth)
+// ---------------------------------------------------------------------------
+
+/**
+ * Builds the interviewing prompt for a quadrant: the AI mentor must walk the
+ * laddered question bank, branching on the user's answers, and must not accept
+ * an element without either evidence or an explicit "declared, unconfirmed".
+ */
+export function buildDynamicSwotQuadrantLadderPrompt(
+  swotData: SWOTData,
+  quadrant: SwotQuadrant,
+  language: 'pl' | 'en' = 'en'
+): string {
+  const ladder = buildQuadrantLadderPromptBlock(quadrant, language);
+  return `${buildSwotFactsBlock(swotData)}
+
+You are interviewing the client about the "${quadrant}" quadrant. Use the laddered question bank below as your interview protocol — it is the single source of truth. Ask ONE question at a time, then branch on the answer using the branch keys.
+
+QUESTION LADDER (${quadrant}):
+${ladder}
+
+INTERVIEW RULES:
+- Start at the level-1 question unless the ladder position is already known from the conversation.
+- Classify the user's answer into one of the branch keys and follow that branch. If the answer is vague, use the probe before moving on.
+- ${quadrant === 'strengths' ? 'Distinguish a NICHE STRENGTH from a CORE COMPETENCY: external validation + broad scope + durability = core competency; validated but segment-bound = niche strength; no external proof = claimed strength (declared, unconfirmed).' : ''}
+- ${quadrant === 'weaknesses' ? 'Umbrella claims ("lack of agility", "poor communication") MUST be decomposed: process / tools / skills / incentives — each root demands a different move.' : ''}
+- When the ladder completes, propose the resulting SWOT item WITH its insight staircase and evidence status.
+
+${buildStaircasePromptRules(language)}
+
+${HARD_RULES_BLOCK}
+
+When proposing the resulting item, return JSON:
+{"items":[{"text":"...","quadrant":"${quadrant}","impact":"high|medium|low","confidence":1-5,"status":"proposed","staircase":{"fact":"...","factRefs":["signal-id"],"interpretation":"...","implication":"..."},"decomposition":[{"dimension":"process|tools|skills|incentives","finding":"..."}],"evidenceStatus":"confirmed|declared","classification":"core-competency|niche-strength|claimed-strength|table-stakes","ladderAnswers":[{"questionId":"...","answerKey":"...","note":"..."}]}]}
+("decomposition" required only for umbrella claims; "classification" only for strengths.)`;
+}
+
+/**
+ * Conversation-layer protocol appended to the system prompt for the SWOT step:
+ * the mentor in chat interviews with the SAME laddered question bank as the wizard
+ * (single source of truth), one question at a time, branching on answers.
+ */
+export function buildDynamicSwotConversationProtocol(
+  stepId: string | undefined,
+  language: 'pl' | 'en' = 'en'
+): string {
+  if (stepId !== 'swot') return '';
+  const quadrants: SwotQuadrant[] = ['strengths', 'weaknesses', 'opportunities', 'threats'];
+  const ladders = quadrants
+    .map(
+      (quadrant) =>
+        `--- ${quadrant.toUpperCase()} ---\n${buildQuadrantLadderPromptBlock(quadrant, language)}`
+    )
+    .join('\n');
+  return `
+
+INTERVIEW PROTOCOL (laddered question bank — the single source of truth for this step):
+When the user explores a quadrant in conversation, walk this ladder. Ask ONE question at a time; classify the answer into a branch key and follow the branch. Vague answer -> use the probe. When a ladder path completes, propose the resulting item with its insight staircase and evidence status ("confirmed" only with session evidence, otherwise explicitly "declared, unconfirmed").
+
+${ladders}`;
+}
+
+// ---------------------------------------------------------------------------
+// Correlations / tensions — computed pairs first, narration second
+// ---------------------------------------------------------------------------
+
 export function buildDynamicSwotCorrelationsPrompt(swotData: SWOTData): string | null {
   const items = swotData.items || [];
   if (items.length < 4) return null;
 
-  const itemsSummary = items
+  // Deterministic engine output: explicit SO/WO/ST/WT pairs from ACCEPTED items.
+  const candidates = deriveTensionCandidates(items.filter(isActiveCard), 3);
+  const acceptedItems = items.filter((item) => isActiveCard(item) && isAccepted(item));
+  const itemsForPrompt = (acceptedItems.length >= 4 ? acceptedItems : items.filter(isActiveCard))
     .map(
       (item: SWOTItem) =>
-        `[${item.id}] ${item.quadrant.toUpperCase()}: ${item.text} (${item.impact} impact)`
+        `[${item.id}] ${item.quadrant.toUpperCase()} (${item.impact} impact${item.evidenceStatus ? `, evidence: ${item.evidenceStatus}` : ''}): ${item.text}`
     )
     .join('\n');
 
-  return `Analyze these SWOT items and identify strategic correlations.
-Act as an AI strategy mentor: explain the most meaningful tensions, not just mechanically pair items.
+  const candidateLines =
+    candidates.length > 0
+      ? candidates
+          .map(
+            (c) =>
+              `- ${c.type} pair [${c.linkedItemIds[0]} x ${c.linkedItemIds[1]}] (weight ${c.weight})`
+          )
+          .join('\n')
+      : '- (not enough accepted items to pre-compute pairs — pair only from the ids listed above)';
 
-${itemsSummary}
+  return `${buildSwotFactsBlock(swotData)}
 
-Generate 4-6 strategic correlations that connect:
-- Strengths with Opportunities (SO) - offensive strategies
-- Weaknesses with Opportunities (WO) - reorientation strategies
-- Strengths with Threats (ST) - defensive strategies
-- Weaknesses with Threats (WT) - survival strategies
+SWOT ITEMS IN SCOPE:
+${itemsForPrompt}
+
+PRE-COMPUTED TENSION CANDIDATES (from ACCEPTED items, impact-ranked — your working set):
+${candidateLines}
+
+Task: turn the strongest candidate pairs into strategic correlations. You NARRATE tensions that verifiably exist in the session — you do not invent pairs.
+
+RULES:
+- "items" in each correlation MUST be ids from the list above (they will be validated; invalid ids are dropped).
+- Cover the four postures where the material allows: SO (attack), WO (repair), ST (defend), WT (protect). If a posture cannot be formed, say so in "coverageNote" instead of forcing it.
+- Each "insight" must say WHY these two elements together demand a decision — not restate both items. Falsifiable, grounded in factRefs.
+- "whyNow" names the timing pressure (window closing, compounding cost, visible early signal) — from the facts block only.
+
+${HARD_RULES_BLOCK}
 
 Return as JSON:
-{"correlations": [{"items": ["id1", "id2"], "type": "SO|WO|ST|WT", "insight": "strategic insight", "initiativeProposal": "proposed action"}]}`;
+{"correlations":[{"items":["itemId1","itemId2"],"type":"SO|WO|ST|WT","insight":"...","factRefs":["signal-id"],"whyNow":"...","initiativeProposal":"..."}],"coverageNote":"which postures could not be formed and why"}`;
 }
+
+// ---------------------------------------------------------------------------
+// Full session draft
+// ---------------------------------------------------------------------------
 
 export function buildDynamicSwotFullSessionPrompt(
   swotData: SWOTData | undefined,
   orgContext: string
 ): string {
-  return `You are a senior strategy consultant presenting initial findings to a CEO.
-The client has framed their strategic question. Now produce a COMPLETE first-draft Dynamic SWOT session.
+  return `You are a senior strategy partner presenting first findings to a CEO. Produce a COMPLETE first-draft Dynamic SWOT session. Everything you produce is a PROPOSAL for the client to review.
 
-=== MISSION BRIEF ===
-- Strategic question: ${swotData?.context?.goal || 'not yet defined'}
-- Scope: ${swotData?.context?.scope || 'not yet defined'}
-- Success signal: ${swotData?.context?.successSignal || 'not yet defined'}
-- Time horizon: ${swotData?.context?.timeframe || 'medium'}
-- Constraints: ${swotData?.context?.constraints || 'none specified'}
-- Assumptions: ${swotData?.context?.assumptions || 'none specified'}
-- KPI target: ${swotData?.context?.kpiTarget || 'none specified'}
-
+=== SESSION FACTS ===
+${swotData ? buildSwotFactsBlock(swotData) : '(empty session)'}
 === ORGANIZATION CONTEXT ===
 ${orgContext}
 === END CONTEXT ===
 
-Generate a complete consulting-grade session covering ALL phases. Be specific, grounded, and actionable.
-Every item you produce is a PROPOSAL for the client to review -- mark everything as proposed.
+${HARD_RULES_BLOCK}
+
+${buildStaircasePromptRules('en')}
+
+${buildMoveConclusionPromptRules('en')}
 
 Return a single JSON object with this exact structure:
 {
@@ -102,21 +300,33 @@ Return a single JSON object with this exact structure:
     {"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["..."], "evidenceType": "fact|observation|hypothesis", "state": "proposed", "provenance": "..."}
   ],
   "items": [
-    {"text": "...", "impact": "high|medium|low", "quadrant": "strengths|weaknesses|opportunities|threats", "confidence": 1-5, "status": "proposed"}
+    {"text": "...", "impact": "high|medium|low", "quadrant": "strengths|weaknesses|opportunities|threats", "confidence": 1-5, "status": "proposed",
+     "staircase": {"fact": "...", "factRefs": ["..."], "interpretation": "...", "implication": "..."},
+     "decomposition": [{"dimension": "process|tools|skills|incentives", "finding": "..."}],
+     "evidenceStatus": "confirmed|declared",
+     "classification": "core-competency|niche-strength|claimed-strength|table-stakes"}
   ],
   "correlations": [
-    {"type": "SO|WO|ST|WT", "insight": "...", "initiativeProposal": "..."}
+    {"type": "SO|WO|ST|WT", "insight": "...", "factRefs": ["..."], "initiativeProposal": "..."}
   ],
   "tensions": [
     {"title": "...", "type": "attack|repair|defend|protect", "insight": "...", "whyNow": "...", "confidence": 1-5}
   ],
   "moves": [
-    {"title": "...", "category": "quick-win|big-bet|defensive-move|capability-build", "rationale": "...", "expectedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "riskLevel": "high|medium|low", "confidence": 1-5, "firstStep": "..."}
+    {"title": "...", "category": "quick-win|big-bet|defensive-move|capability-build", "rationale": "...",
+     "tradeoff": {"chosen": "...", "deferred": "...", "cost": "..."},
+     "rejectedAlternative": {"option": "...", "reason": "..."},
+     "whyFirst": "...", "ownerRole": "...",
+     "expectedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "riskLevel": "high|medium|low", "confidence": 1-5, "firstStep": "..."}
   ],
   "outputCandidates": [
     {"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}
   ],
   "summary": {
+    "verdict": "answer-first, 1-2 sentences: what this analysis means for the client's decision",
+    "verdictRationale": {"text": "why — referencing specific elements", "factRefs": ["..."]},
+    "tradeoffs": [{"chosen": "...", "rejected": "...", "why": "..."}],
+    "expectedEffect": {"text": "...", "horizon": "e.g. 2 quarters"},
     "executiveSummary": "...",
     "keyInsights": ["..."],
     "appliedConclusions": ["..."]
@@ -127,16 +337,17 @@ Return a single JSON object with this exact structure:
 }
 
 Guidelines:
-- Generate 4-8 signals from diverse sources (interviews, benchmarks, AI context)
-- Generate 8-12 SWOT items across all 4 quadrants (at least 2 per quadrant)
-- Generate 3-5 correlations covering different tension types
-- Generate 3-5 tensions with clear "why now" rationale
-- Generate 3-5 strategic moves across different categories
-- Generate 2-4 output candidates
-- Write a concise executive summary (3-5 sentences)
-- List 3-5 key insights and 3-5 applied conclusions
-- Propose 2-4 initiative drafts`;
+- 4-8 signals from diverse sources; every downstream fact must trace to one of them.
+- 8-12 SWOT items across all 4 quadrants (>= 2 per quadrant), each with a complete staircase; umbrella weaknesses decomposed.
+- 3-5 correlations and 3-5 tensions covering different postures with clear "why now".
+- 3-5 moves, EACH with tradeoff + rejectedAlternative — a move without a trade-off will be rejected by validation.
+- Summary: verdict first; >= 1 trade-off at recommendation level; effect with horizon.
+- 2-4 output candidates and 2-4 initiative drafts.`;
 }
+
+// ---------------------------------------------------------------------------
+// Rethink
+// ---------------------------------------------------------------------------
 
 export function buildDynamicSwotRethinkPrompt(
   swotData: SWOTData,
@@ -152,22 +363,36 @@ export function buildDynamicSwotRethinkPrompt(
       : '';
   } else if (cardType === 'item') {
     const item = swotData.items.find((i) => i.id === cardId);
-    cardContent = item ? `[${item.quadrant}] ${item.text} (impact: ${item.impact})` : '';
+    cardContent = item
+      ? `[${item.quadrant}] ${item.text} (impact: ${item.impact})${
+          item.staircase
+            ? `\nstaircase: fact="${item.staircase.fact}" | interpretation="${item.staircase.interpretation}" | implication="${item.staircase.implication}"`
+            : ''
+        }`
+      : '';
   } else if (cardType === 'tension') {
     const tension = swotData.tensions.find((t) => t.id === cardId);
     cardContent = tension ? `[${tension.type}] ${tension.title}: ${tension.insight}` : '';
   } else if (cardType === 'move') {
     const move = swotData.recommendedMoves.find((m) => m.id === cardId);
-    cardContent = move ? `[${move.category}] ${move.title}: ${move.rationale}` : '';
+    cardContent = move
+      ? `[${move.category}] ${move.title}: ${move.rationale}${
+          move.tradeoff
+            ? `\ntradeoff: chosen="${move.tradeoff.chosen}" deferred="${move.tradeoff.deferred}" cost="${move.tradeoff.cost}"`
+            : ''
+        }`
+      : '';
   } else if (cardType === 'output-candidate') {
     const output = swotData.outputCandidates.find((o) => o.id === cardId);
     cardContent = output ? `[${output.outputType}] ${output.title}: ${output.description}` : '';
   } else if (cardType === 'conclusion') {
     cardContent = JSON.stringify(
       {
+        verdict: swotData.summary?.verdict || '',
         executiveSummary: swotData.summary?.executiveSummary || '',
         keyInsights: swotData.summary?.keyInsights || [],
         appliedConclusions: swotData.summary?.appliedConclusions || [],
+        tradeoffs: swotData.summary?.tradeoffs || [],
       },
       null,
       2
@@ -181,15 +406,153 @@ ${cardContent}
 
 User feedback: ${userComment || 'Please provide a better version.'}
 
-Session context:
-- Strategic question: ${swotData.context?.goal || 'N/A'}
-- Scope: ${swotData.context?.scope || 'N/A'}
+=== SESSION FACTS ===
+${buildSwotFactsBlock(swotData)}
+=== END FACTS ===
 
-Provide an improved version of this card. Keep the same type/structure but make it sharper, more grounded, and responsive to the user's feedback.
+${HARD_RULES_BLOCK}
+
+Provide an improved version of this card. Keep the same type/structure but make it sharper, grounded in the facts block, and responsive to the user's feedback.
+${cardType === 'item' ? 'The improved item MUST include the full "staircase" (fact/factRefs/interpretation/implication).' : ''}
+${cardType === 'move' ? 'The improved move MUST include "tradeoff" {chosen,deferred,cost} and "rejectedAlternative" {option,reason}.' : ''}
 
 Return JSON with the updated fields for this ${cardType}. Use the same field names as the original.
 If the card type is conclusion, return:
-{"executiveSummary":"...","keyInsights":["..."],"appliedConclusions":["..."]}`;
+{"verdict":"...","verdictRationale":{"text":"...","factRefs":["..."]},"tradeoffs":[{"chosen":"...","rejected":"...","why":"..."}],"expectedEffect":{"text":"...","horizon":"..."},"executiveSummary":"...","keyInsights":["..."],"appliedConclusions":["..."]}`;
+}
+
+// ---------------------------------------------------------------------------
+// Parsers for the new structured fields
+// ---------------------------------------------------------------------------
+
+function normalizeStaircase(raw: any): SWOTItem['staircase'] | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const fact = typeof raw.fact === 'string' ? raw.fact : '';
+  const interpretation = typeof raw.interpretation === 'string' ? raw.interpretation : '';
+  const implication = typeof raw.implication === 'string' ? raw.implication : '';
+  if (!fact && !interpretation && !implication) return undefined;
+  return {
+    fact,
+    factRefs: Array.isArray(raw.factRefs) ? raw.factRefs.filter(Boolean).map(String) : [],
+    interpretation,
+    implication,
+  };
+}
+
+function normalizeDecomposition(raw: any): SWOTItem['decomposition'] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const valid = raw.filter(
+    (d: any) =>
+      d &&
+      ['process', 'tools', 'skills', 'incentives'].includes(d.dimension) &&
+      typeof d.finding === 'string' &&
+      d.finding.trim()
+  );
+  return valid.length > 0
+    ? valid.map((d: any) => ({ dimension: d.dimension, finding: String(d.finding) }))
+    : undefined;
+}
+
+function normalizeItemConclusionFields(item: any): Partial<Omit<SWOTItem, 'id'>> {
+  const extras: Partial<Omit<SWOTItem, 'id'>> = {};
+  const staircase = normalizeStaircase(item.staircase);
+  if (staircase) extras.staircase = staircase;
+  const decomposition = normalizeDecomposition(item.decomposition);
+  if (decomposition) extras.decomposition = decomposition;
+  if (item.evidenceStatus === 'confirmed' || item.evidenceStatus === 'declared') {
+    extras.evidenceStatus = item.evidenceStatus;
+  } else if (staircase) {
+    extras.evidenceStatus = staircase.factRefs.length > 0 ? 'confirmed' : 'declared';
+  }
+  if (
+    ['core-competency', 'niche-strength', 'claimed-strength', 'table-stakes'].includes(
+      item.classification
+    )
+  ) {
+    extras.classification = item.classification;
+  }
+  if (Array.isArray(item.ladderAnswers)) {
+    const answers = item.ladderAnswers.filter(
+      (a: any) => a && typeof a.questionId === 'string' && typeof a.answerKey === 'string'
+    );
+    if (answers.length > 0) {
+      extras.ladderAnswers = answers.map((a: any) => ({
+        questionId: a.questionId,
+        answerKey: a.answerKey,
+        note: typeof a.note === 'string' ? a.note : undefined,
+      }));
+    }
+  }
+  return extras;
+}
+
+function normalizeMoveTradeoff(raw: any): { chosen: string; deferred: string; cost: string } | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const chosen = typeof raw.chosen === 'string' ? raw.chosen : '';
+  const deferred = typeof raw.deferred === 'string' ? raw.deferred : '';
+  const cost = typeof raw.cost === 'string' ? raw.cost : '';
+  if (!chosen && !deferred && !cost) return undefined;
+  return { chosen, deferred, cost };
+}
+
+function normalizeRejectedAlternative(raw: any): { option: string; reason: string } | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const option = typeof raw.option === 'string' ? raw.option : '';
+  const reason = typeof raw.reason === 'string' ? raw.reason : '';
+  if (!option && !reason) return undefined;
+  return { option, reason };
+}
+
+function normalizeMove(move: any): Omit<SWOTData['recommendedMoves'][number], 'id'> {
+  return {
+    title: move.title,
+    category: move.category || 'quick-win',
+    rationale: move.rationale || '',
+    linkedTensionIds: Array.isArray(move.linkedTensionIds) ? move.linkedTensionIds : [],
+    linkedItemIds: Array.isArray(move.linkedItemIds) ? move.linkedItemIds : [],
+    expectedImpact: move.expectedImpact || 'medium',
+    estimatedEffort: move.estimatedEffort || 'medium',
+    riskLevel: move.riskLevel || 'medium',
+    confidence: typeof move.confidence === 'number' ? move.confidence : 3,
+    firstStep: move.firstStep || '',
+    tradeoff: normalizeMoveTradeoff(move.tradeoff),
+    rejectedAlternative: normalizeRejectedAlternative(move.rejectedAlternative),
+    whyFirst: typeof move.whyFirst === 'string' ? move.whyFirst : undefined,
+    ownerRole: typeof move.ownerRole === 'string' ? move.ownerRole : undefined,
+  };
+}
+
+function normalizeSummaryConclusionFields(summaryObj: any, parsed: Record<string, any>) {
+  const source = summaryObj && typeof summaryObj === 'object' ? summaryObj : parsed;
+  const verdict = typeof source.verdict === 'string' ? source.verdict : undefined;
+  const rationaleRaw = source.verdictRationale;
+  const verdictRationale =
+    rationaleRaw && typeof rationaleRaw === 'object' && typeof rationaleRaw.text === 'string'
+      ? {
+          text: rationaleRaw.text,
+          factRefs: Array.isArray(rationaleRaw.factRefs)
+            ? rationaleRaw.factRefs.filter(Boolean).map(String)
+            : [],
+        }
+      : undefined;
+  const tradeoffs = Array.isArray(source.tradeoffs)
+    ? source.tradeoffs
+        .filter(
+          (t: any) =>
+            t && typeof t.chosen === 'string' && (typeof t.rejected === 'string' || typeof t.why === 'string')
+        )
+        .map((t: any) => ({
+          chosen: t.chosen,
+          rejected: typeof t.rejected === 'string' ? t.rejected : '',
+          why: typeof t.why === 'string' ? t.why : '',
+        }))
+    : undefined;
+  const effectRaw = source.expectedEffect;
+  const expectedEffect =
+    effectRaw && typeof effectRaw === 'object' && typeof effectRaw.text === 'string'
+      ? { text: effectRaw.text, horizon: typeof effectRaw.horizon === 'string' ? effectRaw.horizon : '' }
+      : undefined;
+  return { verdict, verdictRationale, tradeoffs, expectedEffect };
 }
 
 function normalizeMissionSuggestion(
@@ -214,6 +577,10 @@ function normalizeMissionSuggestion(
     kpiTarget: typeof parsed.mission.kpiTarget === 'string' ? parsed.mission.kpiTarget : undefined,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Pending-action reducer
+// ---------------------------------------------------------------------------
 
 export function applyDynamicSwotPendingAction({
   pendingAction,
@@ -282,6 +649,7 @@ export function applyDynamicSwotPendingAction({
           confidence: typeof item.confidence === 'number' ? item.confidence : 3,
           status: 'proposed',
           proposalStatus: 'ai-proposed',
+          ...normalizeItemConclusionFields(item),
         });
       });
     }
@@ -292,13 +660,21 @@ export function applyDynamicSwotPendingAction({
   if (pendingAction === 'correlations') {
     const correlations = Array.isArray(parsed.correlations) ? parsed.correlations : [];
     const currentCorrelations = (swotData.correlations || []) as SWOTCorrelation[];
-    const normalizedCorrelations = correlations.filter(
-      (corr) =>
-        Array.isArray(corr?.items) &&
-        corr.items.length >= 2 &&
-        typeof corr?.type === 'string' &&
-        typeof corr?.insight === 'string'
-    );
+    // Traceability gate: correlation item ids must exist in the session.
+    const knownItemIds = new Set((swotData.items || []).map((item) => item.id));
+    const normalizedCorrelations = correlations
+      .filter(
+        (corr) =>
+          Array.isArray(corr?.items) &&
+          corr.items.length >= 2 &&
+          typeof corr?.type === 'string' &&
+          typeof corr?.insight === 'string'
+      )
+      .map((corr) => ({
+        ...corr,
+        items: corr.items.filter((id: string) => knownItemIds.has(id)),
+      }))
+      .filter((corr) => corr.items.length >= 2);
 
     normalizedCorrelations.forEach((corr) => {
       const duplicate = currentCorrelations.some(
@@ -321,28 +697,16 @@ export function applyDynamicSwotPendingAction({
     const existingTensions = swotData.tensions || [];
     const mergedTensions = [...existingTensions];
     normalizedCorrelations.forEach((corr) => {
+      const posture = TENSION_TYPE_TO_POSTURE[corr.type as SwotTensionType];
+      if (!posture) return;
       const derivedTension: SWOTTension = {
         id: `derived-${corr.type}-${corr.items.join('-')}-${corr.insight}`,
-        title:
-          corr.type === 'SO'
-            ? 'Attack opportunity'
-            : corr.type === 'WO'
-              ? 'Repair to capture'
-              : corr.type === 'ST'
-                ? 'Defend with strength'
-                : 'Protect against exposure',
-        type:
-          corr.type === 'SO'
-            ? 'attack'
-            : corr.type === 'WO'
-              ? 'repair'
-              : corr.type === 'ST'
-                ? 'defend'
-                : 'protect',
+        title: posture.titleEn,
+        type: posture.type,
         linkedCorrelationIds: [],
         linkedItemIds: corr.items,
         insight: corr.insight,
-        whyNow: corr.initiativeProposal,
+        whyNow: typeof corr.whyNow === 'string' ? corr.whyNow : corr.initiativeProposal,
         confidence: 4,
         proposalStatus: 'ai-proposed',
       };
@@ -364,14 +728,28 @@ export function applyDynamicSwotPendingAction({
     const initiatives = Array.isArray(parsed.initiatives) ? parsed.initiatives : [];
     const moves = Array.isArray(parsed.moves) ? parsed.moves : [];
     const outputCandidates = Array.isArray(parsed.outputCandidates) ? parsed.outputCandidates : [];
+    const summaryObj = parsed.summary && typeof parsed.summary === 'object' ? parsed.summary : null;
+    const conclusionFields = normalizeSummaryConclusionFields(summaryObj, parsed);
 
     actions.setSWOTSummary({
       proposalId: 'swot-summary',
-      executiveSummary: typeof parsed.summary === 'string' ? parsed.summary : '',
-      keyInsights: Array.isArray(parsed.insights) ? parsed.insights.filter(Boolean) : [],
-      appliedConclusions: Array.isArray(parsed.appliedConclusions)
-        ? parsed.appliedConclusions.filter(Boolean)
-        : [],
+      executiveSummary:
+        typeof summaryObj?.executiveSummary === 'string'
+          ? summaryObj.executiveSummary
+          : typeof parsed.summary === 'string'
+            ? parsed.summary
+            : '',
+      keyInsights: Array.isArray(summaryObj?.keyInsights)
+        ? summaryObj.keyInsights.filter(Boolean)
+        : Array.isArray(parsed.insights)
+          ? parsed.insights.filter(Boolean)
+          : [],
+      appliedConclusions: Array.isArray(summaryObj?.appliedConclusions)
+        ? summaryObj.appliedConclusions.filter(Boolean)
+        : Array.isArray(parsed.appliedConclusions)
+          ? parsed.appliedConclusions.filter(Boolean)
+          : [],
+      ...conclusionFields,
       proposalStatus: 'ai-proposed',
       recommendedInitiatives: initiatives.map((initiative) => ({
         id: '',
@@ -386,20 +764,7 @@ export function applyDynamicSwotPendingAction({
       })),
     });
 
-    actions.setSWOTMoves(
-      moves.map((move) => ({
-        title: move.title,
-        category: move.category || 'quick-win',
-        rationale: move.rationale || '',
-        linkedTensionIds: move.linkedTensionIds || [],
-        linkedItemIds: move.linkedItemIds || [],
-        expectedImpact: move.expectedImpact || 'medium',
-        estimatedEffort: move.estimatedEffort || 'medium',
-        riskLevel: move.riskLevel || 'medium',
-        confidence: typeof move.confidence === 'number' ? move.confidence : 3,
-        firstStep: move.firstStep || '',
-      }))
-    );
+    actions.setSWOTMoves(moves.filter((move) => move?.title).map(normalizeMove));
 
     actions.setSWOTOutputCandidates(
       outputCandidates.map((candidate) => ({
@@ -468,6 +833,7 @@ export function applyDynamicSwotPendingAction({
         confidence: typeof item.confidence === 'number' ? item.confidence : 3,
         status: 'proposed',
         proposalStatus: 'ai-proposed',
+        ...normalizeItemConclusionFields(item),
       });
     });
 
@@ -504,16 +870,7 @@ export function applyDynamicSwotPendingAction({
       moves
         .filter((move) => move?.title)
         .map((move) => ({
-          title: move.title,
-          category: move.category || 'quick-win',
-          rationale: move.rationale || '',
-          linkedTensionIds: [],
-          linkedItemIds: [],
-          expectedImpact: move.expectedImpact || 'medium',
-          estimatedEffort: move.estimatedEffort || 'medium',
-          riskLevel: move.riskLevel || 'medium',
-          confidence: typeof move.confidence === 'number' ? move.confidence : 3,
-          firstStep: move.firstStep || '',
+          ...normalizeMove(move),
           proposalStatus: 'ai-proposed' as const,
         }))
     );
@@ -536,6 +893,7 @@ export function applyDynamicSwotPendingAction({
 
     const summaryObj = parsed.summary && typeof parsed.summary === 'object' ? parsed.summary : null;
     const initiatives = Array.isArray(parsed.initiatives) ? parsed.initiatives : [];
+    const conclusionFields = normalizeSummaryConclusionFields(summaryObj, parsed);
     actions.setSWOTSummary({
       proposalId: 'swot-summary',
       executiveSummary:
@@ -554,6 +912,7 @@ export function applyDynamicSwotPendingAction({
         : Array.isArray(parsed.appliedConclusions)
           ? parsed.appliedConclusions.filter(Boolean)
           : [],
+      ...conclusionFields,
       proposalStatus: 'ai-proposed',
       recommendedInitiatives: initiatives.map((initiative) => ({
         id: '',
@@ -588,6 +947,7 @@ export function applyDynamicSwotPendingAction({
   if (pendingAction === 'rethink' && rethinkTarget) {
     const { cardType, cardId } = rethinkTarget;
     if (cardType === 'conclusion') {
+      const conclusionFields = normalizeSummaryConclusionFields(parsed, parsed);
       actions.updateCardAfterRethink(cardType as any, cardId, {
         executiveSummary:
           typeof parsed.executiveSummary === 'string'
@@ -603,6 +963,27 @@ export function applyDynamicSwotPendingAction({
         appliedConclusions: Array.isArray(parsed.appliedConclusions)
           ? parsed.appliedConclusions.filter(Boolean)
           : undefined,
+        ...(conclusionFields.verdict !== undefined ? { verdict: conclusionFields.verdict } : {}),
+        ...(conclusionFields.verdictRationale
+          ? { verdictRationale: conclusionFields.verdictRationale }
+          : {}),
+        ...(conclusionFields.tradeoffs ? { tradeoffs: conclusionFields.tradeoffs } : {}),
+        ...(conclusionFields.expectedEffect
+          ? { expectedEffect: conclusionFields.expectedEffect }
+          : {}),
+      });
+    } else if (cardType === 'item') {
+      actions.updateCardAfterRethink(cardType as any, cardId, {
+        ...parsed,
+        ...normalizeItemConclusionFields(parsed),
+      });
+    } else if (cardType === 'move') {
+      const tradeoff = normalizeMoveTradeoff(parsed.tradeoff);
+      const rejectedAlternative = normalizeRejectedAlternative(parsed.rejectedAlternative);
+      actions.updateCardAfterRethink(cardType as any, cardId, {
+        ...parsed,
+        ...(tradeoff ? { tradeoff } : {}),
+        ...(rejectedAlternative ? { rejectedAlternative } : {}),
       });
     } else {
       actions.updateCardAfterRethink(cardType as any, cardId, parsed);

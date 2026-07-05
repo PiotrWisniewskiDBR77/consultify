@@ -23,6 +23,74 @@ export interface ArtifactConversion {
   updatedAt: string;
 }
 
+/** Verdict / rationale / evidence shape mirrored from the server ConclusionService. */
+export interface ConclusionArtifactRef {
+  type: string;
+  id: string;
+  title?: string | null;
+  url?: string | null;
+}
+
+export interface ConclusionEvidenceRef {
+  type: string;
+  ref: string;
+  excerpt?: string | null;
+}
+
+export type ConclusionStatus =
+  | 'candidate'
+  | 'needs_evidence'
+  | 'needs_review'
+  | 'ready_for_readout'
+  | 'published'
+  | 'converted'
+  | 'rejected';
+
+export interface Conclusion {
+  id: string;
+  organizationId: string;
+  projectId?: string | null;
+  /** Verdict headline (CARD_CONTENT_FORMULA title). */
+  title: string;
+  /** Rationale — the answer-first statement. */
+  statement: string;
+  /** Origin: 'tool' | 'assessment' | 'assessment_siri' | 'assessment_adma' | 'interview' | 'tools'. */
+  sourceModule: string;
+  sourceArtifactRefs: ConclusionArtifactRef[];
+  sourcePackId?: string | null;
+  confidenceLevel: string;
+  limits: string;
+  evidenceRefs: ConclusionEvidenceRef[];
+  recommendedNextAction?: string | null;
+  status: ConclusionStatus;
+  ownerId?: string | null;
+  reviewerId?: string | null;
+  sponsorId?: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ConclusionSourcePack {
+  id: string;
+  organizationId: string;
+  projectId?: string | null;
+  sourceModule: string;
+  sourceArtifactRefs: ConclusionArtifactRef[];
+  evidenceRefs: ConclusionEvidenceRef[];
+  contextSummary: string;
+  limitations: string[];
+  capturedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ConclusionDetail {
+  conclusion: Conclusion;
+  sourcePack: ConclusionSourcePack | null;
+  conversions: ArtifactConversion[];
+}
+
 async function apiGet<T>(path: string): Promise<T> {
   const res = await fetchWithRetry(`/api${path}`, {
     method: 'GET',
@@ -32,6 +100,22 @@ async function apiGet<T>(path: string): Promise<T> {
 }
 
 export const ConclusionsApi = {
+  /**
+   * Org-wide list of governed conclusions. The server lazily syncs interview /
+   * assessment / tool sources on every call, so the list is always current.
+   */
+  list: (params?: { status?: string; sourceModule?: string; projectId?: string }) => {
+    const search = new URLSearchParams();
+    if (params?.status) search.set('status', params.status);
+    if (params?.sourceModule) search.set('sourceModule', params.sourceModule);
+    if (params?.projectId) search.set('projectId', params.projectId);
+    const qs = search.toString();
+    return apiGet<{ conclusions: Conclusion[] }>(`/conclusions${qs ? `?${qs}` : ''}`);
+  },
+
+  /** Single conclusion + its source pack + downstream conversions (readout view). */
+  get: (id: string) => apiGet<ConclusionDetail>(`/conclusions/${encodeURIComponent(id)}`),
+
   listConversions: (params?: {
     sourceConclusionId?: string;
     sourceArtifactType?: string;

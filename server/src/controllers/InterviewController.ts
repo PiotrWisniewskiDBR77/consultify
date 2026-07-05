@@ -45,42 +45,48 @@ const DEFAULT_INTERVIEW_QUESTION_TEMPLATES = [
   {
     id: 'tpl_strategy_1',
     category: 'strategy',
-    questionText: 'What are your main business objectives for the next 2-3 years?',
+    questionText:
+      "Walk me through your top 2-3 business objectives for the next 2-3 years — and for each, what specifically has to change operationally for you to get there?",
     sortOrder: 1,
     isRequired: 1,
   },
   {
     id: 'tpl_strategy_2',
     category: 'strategy',
-    questionText: "What is your company's vision for digital transformation?",
+    questionText:
+      'Describe a recent decision where digital capability — or the lack of it — directly changed a business outcome. What does that tell you about where transformation needs to go next?',
     sortOrder: 2,
     isRequired: 1,
   },
   {
     id: 'tpl_operations_1',
     category: 'operations',
-    questionText: 'Where do you see the biggest inefficiencies in your operations?',
+    questionText:
+      'Walk me through your core end-to-end process — from request or order to delivery — step by step, including every handoff between teams. Where does it slow down?',
     sortOrder: 1,
     isRequired: 1,
   },
   {
     id: 'tpl_digital_1',
     category: 'digital',
-    questionText: 'What systems and tools do you currently use?',
+    questionText:
+      'Which systems run this business day to day, and where does someone have to re-key or copy-paste data between them?',
     sortOrder: 1,
     isRequired: 1,
   },
   {
     id: 'tpl_people_1',
     category: 'people',
-    questionText: "How would you describe your team's digital skills?",
+    questionText:
+      "Tell me about the last time your team had to learn a new tool or system. How long did it take to reach full productivity, and what made it hard?",
     sortOrder: 1,
     isRequired: 1,
   },
   {
     id: 'tpl_finance_1',
     category: 'finance',
-    questionText: 'What is the available budget for transformation initiatives?',
+    questionText:
+      'What budget is actually committed for this initiative this year, and what would you need to see to unlock more?',
     sortOrder: 1,
     isRequired: 1,
   },

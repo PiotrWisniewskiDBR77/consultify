@@ -38,8 +38,8 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) 
   return (
     <div
       onClick={onClick}
-      className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700
-                p-5 cursor-pointer group hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-600
+      className="bg-c-surface rounded-xl border border-c-border-subtle
+                p-5 cursor-pointer group hover:shadow-lg hover:border-c-border-strong
                 transition-all duration-200"
     >
       {/* Priority bar */}
@@ -49,13 +49,13 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) 
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex-1 min-w-0">
           <h4
-            className="font-semibold text-navy-900 dark:text-white text-base line-clamp-2
-                        group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors"
+            className="font-semibold text-c-text text-base line-clamp-2
+                        group-hover:text-c-text transition-colors"
           >
             {initiative.name}
           </h4>
           {initiative.projectName && (
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 truncate">
+            <p className="text-sm text-c-text-muted mt-1 truncate">
               {initiative.projectName}
             </p>
           )}
@@ -89,8 +89,8 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) 
       {initiative.ownerBusiness && (
         <div className="flex items-center gap-2 mb-4">
           <div
-            className="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center
-                          text-xs font-medium text-primary-700 dark:text-primary-300 overflow-hidden"
+            className="w-7 h-7 rounded-full bg-c-surface-raised flex items-center justify-center
+                          text-xs font-medium text-c-text-secondary overflow-hidden"
           >
             {initiative.ownerBusiness.avatarUrl ? (
               <img
@@ -102,7 +102,7 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) 
               `${initiative.ownerBusiness.firstName?.[0] || ''}${initiative.ownerBusiness.lastName?.[0] || ''}`
             )}
           </div>
-          <span className="text-sm text-slate-600 dark:text-slate-400 truncate">
+          <span className="text-sm text-c-text-secondary truncate">
             {initiative.ownerBusiness.firstName} {initiative.ownerBusiness.lastName}
           </span>
         </div>
@@ -110,7 +110,7 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) 
 
       {/* Timeline */}
       {initiative.targetQuarter && (
-        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-4">
+        <div className="flex items-center gap-2 text-sm text-c-text-muted mb-4">
           <Calendar size={14} />
           <span>{initiative.targetQuarter}</span>
         </div>
@@ -118,26 +118,26 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) 
 
       {/* Progress bar */}
       <div className="mb-4">
-        <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400 mb-2">
+        <div className="flex items-center justify-between text-sm text-c-text-muted mb-2">
           <span>Progress</span>
           <span className="font-medium">{initiative.progress || 0}%</span>
         </div>
-        <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+        <div className="h-2 bg-c-border-subtle rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all"
+            className="h-full bg-c-info rounded-full transition-all"
             style={{ width: `${initiative.progress || 0}%` }}
           />
         </div>
       </div>
 
       {/* Footer: Budget & ROI */}
-      <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-navy-700">
-        <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
+      <div className="flex items-center justify-between pt-3 border-t border-c-border-subtle">
+        <div className="flex items-center gap-1.5 text-sm text-c-text-secondary">
           <DollarSign size={14} />
           <span className="font-medium">{formatCurrency(initiative.budget || 0)}</span>
         </div>
         {initiative.expectedRoi && initiative.expectedRoi > 0 && (
-          <div className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
+          <div className="flex items-center gap-1.5 text-sm text-c-success">
             <TrendingUp size={14} />
             <span className="font-medium">{initiative.expectedRoi.toFixed(1)}x ROI</span>
           </div>
@@ -168,7 +168,7 @@ export const PortfolioGridView: React.FC<PortfolioGridViewProps> = ({
       </div>
 
       {initiatives.length === 0 && (
-        <div className="flex items-center justify-center h-64 text-slate-600 dark:text-slate-500">
+        <div className="flex items-center justify-center h-64 text-c-text-muted">
           <p>No initiatives found</p>
         </div>
       )}

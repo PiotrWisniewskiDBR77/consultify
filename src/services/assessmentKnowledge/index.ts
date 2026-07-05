@@ -12,6 +12,21 @@ export type { LeanLevelKnowledge, LeanWasteKnowledge } from './leanKnowledge';
 export { getLeanKnowledge, getLeanLevelMeaning, getLeanWasteKnowledge } from './leanKnowledge';
 export type { SIRIDimensionLevelKey, SIRILevelKnowledge } from './siriKnowledge';
 export { getSIRIBuildingBlockInfo, getSIRIKnowledge } from './siriKnowledge';
+export type {
+  MaturityPathwayFramework,
+  MaturityPathwayInput,
+  MaturityPathwayRecommendation,
+} from './maturityPathwayService';
+export { getMaturityPathway } from './maturityPathwayService';
+export type { WhyThisMattersHint } from './whyThisMatters';
+export {
+  ADMA_PILLAR_WHY_HINTS,
+  DRD_AXIS_WHY_HINTS,
+  GENERIC_WHY_HINT,
+  getDRDAxisWhyHint,
+  getWhyThisMattersHint,
+  SIRI_BLOCK_WHY_HINTS,
+} from './whyThisMatters';
 
 /**
  * Universal knowledge getter for any framework

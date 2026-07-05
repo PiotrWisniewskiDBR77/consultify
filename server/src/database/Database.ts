@@ -293,7 +293,7 @@ function createMockDatabase(): MockDatabase {
       const col = cols[i] || `col_${i}`;
       const tok = valueTokens[i] || '?';
       const tokLower = tok.toLowerCase();
-      if (tok.includes('?') || /^\$\d+$/.test(tok.trim())) {
+      if (tok.includes('?') || /^\$\d+(::[a-zA-Z0-9_]+)*$/.test(tok.trim())) {
         row[col] = params?.[pIdx++];
       } else if (tokLower.includes('current_timestamp') || tokLower.includes('now()')) {
         row[col] = nowIso();
@@ -312,9 +312,18 @@ function createMockDatabase(): MockDatabase {
     if (row.created_at == null && cols.includes('created_at')) row.created_at = nowIso();
     if (row.updated_at == null && cols.includes('updated_at')) row.updated_at = nowIso();
 
-    // Upsert-ish behavior for tables using "id" primary key.
+    // Upsert behavior: prefer the ON CONFLICT column when specified,
+    // otherwise fall back to `id`. This lets tables with non-id PKs
+    // (e.g. share_link_id, pack_id, template_id) upsert correctly.
     const rows = store.tables.get(table)!;
-    if (row.id != null) {
+    const conflictMatch = normalizeSql(sql).match(/on\s+conflict\s*\(\s*([a-zA-Z0-9_]+)\s*\)/i);
+    const conflictCol = conflictMatch?.[1]?.toLowerCase() ?? 'id';
+    const conflictVal = row[conflictCol];
+    if (conflictVal != null) {
+      const idx = rows.findIndex((r) => String(r[conflictCol]) === String(conflictVal));
+      if (idx >= 0) rows[idx] = { ...rows[idx], ...row };
+      else rows.push(row);
+    } else if (row.id != null) {
       const idx = rows.findIndex((r) => String(r.id) === String(row.id));
       if (idx >= 0) rows[idx] = { ...rows[idx], ...row };
       else rows.push(row);
@@ -402,6 +411,11 @@ function createMockDatabase(): MockDatabase {
     const m = normalizeSql(sql).match(/delete\s+from\s+([a-zA-Z0-9_]+)/i);
     const table = m?.[1]?.toLowerCase();
     if (!table) return false;
+    // No WHERE clause → full table truncate (used by test-reset helpers).
+    if (!s.includes(' where ')) {
+      store.tables.set(table, []);
+      return true;
+    }
     const id = params?.[0];
     if (id == null) return true;
     const rows = store.tables.get(table) || [];
@@ -435,11 +449,34 @@ function createMockDatabase(): MockDatabase {
         'article_id',
         'category_id',
         'language',
+        // Auth lookups use `WHERE LOWER(email) = LOWER(?)`; without `email` here the
+        // predicate was dropped and the SELECT returned ALL users → register-demo's
+        // "email already in use" check matched the first row for every fresh email,
+        // 400-ing every E2E run that registers a unique account (M06 harness, 2026-06-21).
+        'email',
+        'jti',
+        'token',
+        // Share-link hash-based lookup (`WHERE token_hash = $1`).
+        'token_hash',
+        // Document Studio cross-table lookups keyed by artifact or pack id.
+        'artifact_id',
+        'share_link_id',
+        'pack_id',
+        'version_id',
       ]);
 
-      const equalityMatches = Array.from(
-        wherePart.matchAll(/\b([a-zA-Z0-9_]+)\s*=\s*(\?|\$\d+)/gi)
-      ).filter((m) => allowed.has(String(m[1] || '').toLowerCase()));
+      // Match bare `col = ?` AND case-folded `LOWER(col) = LOWER(?)` / `LOWER(col) = ?`.
+      // The original regex only handled the bare form, so any LOWER()-wrapped predicate
+      // (all case-insensitive email lookups) silently matched nothing → no filtering.
+      const predicateRe =
+        /(lower\s*\(\s*)?\b([a-zA-Z0-9_]+)\b\s*\)?\s*=\s*(lower\s*\(\s*)?(\?|\$\d+)\s*\)?/gi;
+      const equalityMatches = Array.from(wherePart.matchAll(predicateRe))
+        .map((m) => ({
+          column: String(m[2] || '').toLowerCase(),
+          placeholder: String(m[4] || '?').trim(),
+          ci: !!(m[1] || m[3]),
+        }))
+        .filter((p) => allowed.has(p.column));
 
       let sequentialParamIndex = 0;
       const resolveExpected = (placeholder: string) => {
@@ -451,13 +488,14 @@ function createMockDatabase(): MockDatabase {
         return undefined;
       };
 
-      equalityMatches.forEach((match) => {
-        const column = String(match[1] || '').toLowerCase();
-        const placeholder = String(match[2] || '?').trim();
-        const expected = resolveExpected(placeholder);
+      equalityMatches.forEach((pred) => {
+        const expected = resolveExpected(pred.placeholder);
         rows = rows.filter((row) => {
-          const actual = row[column];
-          return actual != null && expected != null && String(actual) === String(expected);
+          const actual = row[pred.column];
+          if (actual == null || expected == null) return false;
+          return pred.ci
+            ? String(actual).toLowerCase() === String(expected).toLowerCase()
+            : String(actual) === String(expected);
         });
       });
 

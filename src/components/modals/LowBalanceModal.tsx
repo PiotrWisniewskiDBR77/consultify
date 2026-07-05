@@ -25,7 +25,7 @@ export const LowBalanceModal: React.FC<LowBalanceModalProps> = ({
   const isLowBalance = currentBalance > 0 && currentBalance < minRequired;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
         {/* Header */}
         <div

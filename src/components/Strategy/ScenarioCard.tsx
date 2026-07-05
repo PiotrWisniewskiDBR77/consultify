@@ -45,13 +45,13 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
                 flex flex-col justify-between h-[380px]
                 ${
                   isSelected
-                    ? 'border-primary-600 bg-white dark:bg-navy-800 shadow-xl shadow-primary-900/20 scale-105 z-10'
+                    ? 'border-c-text bg-white dark:bg-navy-800 shadow-xl shadow-black/10 scale-105 z-10'
                     : 'border-slate-200 dark:border-navy-700 bg-white/50 dark:bg-navy-900/50 hover:border-slate-300 dark:hover:border-white/20 hover:bg-white dark:hover:bg-navy-800 hover:shadow-lg opacity-80 hover:opacity-100 scale-100'
                 }
             `}
     >
       {isRecommended && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary-600 text-white text-[10px] font-bold uppercase tracking-wide rounded-full shadow-lg shadow-primary-900/40 flex items-center gap-1 z-20 whitespace-nowrap border border-primary-400">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-c-accent text-white text-[10px] font-bold uppercase tracking-wide rounded-full shadow-lg shadow-black/20 flex items-center gap-1 z-20 whitespace-nowrap border border-c-accent">
           <BrainCircuit size={12} />
           {recommendedText}
         </div>

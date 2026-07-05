@@ -210,7 +210,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         nodesDraggable={!isLockedState}
         nodesConnectable={!isLockedState}
         elementsSelectable={true}
-        className="bg-slate-950"
+        className="bg-c-bg"
       >
         {/* Background Grid */}
         {showGridState && (
@@ -226,14 +226,14 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         {showControls && (
           <Panel
             position="top-right"
-            className="flex items-center gap-1 bg-slate-800/90 backdrop-blur-sm rounded-lg p-1 border border-white/10"
+            className="flex items-center gap-1 bg-c-surface-raised backdrop-blur-sm rounded-lg p-1 border border-c-border-subtle"
           >
             <button
               onClick={() => setShowGridState(!showGridState)}
               className={`p-2 rounded-md transition-colors ${
                 showGridState
-                  ? 'bg-blue-500/20 text-blue-400'
-                  : 'text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40'
+                  ? 'bg-c-accent-soft text-c-accent'
+                  : 'text-c-text-muted hover:text-c-text hover:bg-c-surface-raised'
               }`}
               title="Toggle Grid"
             >
@@ -243,18 +243,18 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
               onClick={() => setIsLockedState(!isLockedState)}
               className={`p-2 rounded-md transition-colors ${
                 isLockedState
-                  ? 'bg-amber-500/20 text-amber-400'
-                  : 'text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40'
+                  ? 'bg-c-warning/20 text-c-warning'
+                  : 'text-c-text-muted hover:text-c-text hover:bg-c-surface-raised'
               }`}
               title={isLockedState ? 'Unlock Canvas' : 'Lock Canvas'}
             >
               {isLockedState ? <Lock size={16} /> : <Unlock size={16} />}
             </button>
-            <div className="w-px h-6 bg-white/10 mx-1" />
+            <div className="w-px h-6 bg-c-border-subtle mx-1" />
             {onSnapshot && (
               <button
                 onClick={onSnapshot}
-                className="p-2 rounded-md text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors"
+                className="p-2 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors"
                 title="Save Snapshot"
               >
                 <Camera size={16} />
@@ -263,7 +263,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
             {onExport && (
               <button
                 onClick={onExport}
-                className="p-2 rounded-md text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors"
+                className="p-2 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors"
                 title="Export"
               >
                 <Download size={16} />
@@ -276,7 +276,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         {isLockedState && (
           <Panel
             position="top-center"
-            className="bg-amber-500/20 text-amber-400 px-3 py-1.5 rounded-lg text-xs font-medium border border-amber-500/30"
+            className="bg-c-warning/20 text-c-warning px-3 py-1.5 rounded-lg text-xs font-medium border border-c-warning/30"
           >
             Canvas Locked - View Only
           </Panel>
@@ -288,7 +288,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
           showZoom={true}
           showFitView={true}
           showInteractive={false}
-          className="!bg-slate-800/90 !backdrop-blur-sm !border-white/10 !rounded-lg [&>button]:!bg-transparent [&>button]:!border-white/10 [&>button]:!text-slate-600 dark:text-slate-500 [&>button:hover]:!bg-white/10 [&>button:hover]:!text-white"
+          className="!bg-c-surface-raised !backdrop-blur-sm !border-c-border-subtle !rounded-lg [&>button]:!bg-transparent [&>button]:!border-c-border-subtle [&>button]:!text-c-text-muted [&>button:hover]:!bg-c-surface [&>button:hover]:!text-c-text"
         />
 
         {/* MiniMap */}
@@ -299,7 +299,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
             nodeStrokeWidth={3}
             zoomable
             pannable
-            className="!bg-slate-800/90 !backdrop-blur-sm !border-white/10 !rounded-lg"
+            className="!bg-c-surface-raised !backdrop-blur-sm !border-c-border-subtle !rounded-lg"
           />
         )}
       </ReactFlow>

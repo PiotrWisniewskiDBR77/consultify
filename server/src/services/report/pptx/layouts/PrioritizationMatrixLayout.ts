@@ -14,6 +14,7 @@ import { Footnote } from '../atomics/Footnote.js';
 import { HeaderBar } from '../atomics/HeaderBar.js';
 import { PageNumber } from '../atomics/PageNumber.js';
 import { SlideTitle } from '../atomics/SlideTitle.js';
+import { distributeY } from '../composites/verticalRhythm.js';
 import type {
   DesignTokens,
   LayoutResult,
@@ -138,16 +139,25 @@ export function PrioritizationMatrixLayout(
       )
     );
 
-    // Items inside quadrant
-    const maxItems = Math.min(quad.items.length, 5);
-    const itemH = 0.2;
+    // Items inside quadrant — distribute across the cell so they breathe and
+    // fill the quadrant height instead of clinging to the top (W7).
+    const maxItems = Math.min(quad.items.length, 6);
+    const hasOverflow = quad.items.length > maxItems;
+    // Item region: below the quadrant label, with bottom padding.
+    const itemsRegionY = cy + 0.34;
+    const itemsRegionH = cellH - 0.34 - 0.1 - (hasOverflow ? 0.2 : 0);
+    const itemH = 0.26;
+    const slots = maxItems;
+    const itemYs =
+      slots > 0
+        ? distributeY({ y: itemsRegionY, h: itemsRegionH }, Array(slots).fill(itemH), 'fill', 0.06)
+        : [];
     for (let i = 0; i < maxItems; i++) {
-      const itemY = cy + 0.32 + i * (itemH + 0.04);
       elements.push(
         Badge(
           {
             text: quad.items[i].name,
-            position: { x: cx + 0.12, y: itemY, w: cellW - 0.24, h: itemH },
+            position: { x: cx + 0.12, y: itemYs[i], w: cellW - 0.24, h: itemH },
             bgColor: tokens.colors.primary,
             textColor: tokens.colors.textInverse,
           },
@@ -157,16 +167,16 @@ export function PrioritizationMatrixLayout(
     }
 
     // Overflow indicator
-    if (quad.items.length > maxItems) {
+    if (hasOverflow) {
       elements.push(
         BodyText(
           {
             text: `+${quad.items.length - maxItems} more`,
             position: {
               x: cx + 0.12,
-              y: cy + 0.32 + maxItems * (itemH + 0.04),
+              y: cy + cellH - 0.26,
               w: cellW - 0.24,
-              h: 0.15,
+              h: 0.18,
             },
             color: tokens.colors.muted,
             fontSize: 8,

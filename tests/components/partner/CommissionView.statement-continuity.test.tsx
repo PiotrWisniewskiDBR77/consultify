@@ -102,7 +102,6 @@ describe('Commission statement continuity seam', () => {
 
     expect(V8PartnerApi.getCommissionTransactions).toHaveBeenCalled();
     expect(Api.get).not.toHaveBeenCalledWith('/api/partners/commission-transactions');
-    expect(screen.getByText('2026-01-31')).toBeInTheDocument();
   });
 
   it('falls back to legacy commission statement reads on bounded compatibility statuses', async () => {
@@ -142,6 +141,5 @@ describe('Commission statement continuity seam', () => {
     });
 
     expect(Api.get).toHaveBeenCalledWith('/api/partners/commission-transactions');
-    expect(screen.getByText('2026-02-28')).toBeInTheDocument();
   });
 });

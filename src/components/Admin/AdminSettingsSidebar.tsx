@@ -1,10 +1,10 @@
-import { ArrowLeft, CreditCard, ScrollText, ShieldCheck, Sparkles, Users } from 'lucide-react';
+import { Activity, ArrowLeft, CreditCard, ScrollText, ShieldCheck, Sparkles, Users } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../utils/cn';
 
-export type AdminSettingsSection = 'people' | 'billing' | 'ai' | 'security' | 'audit';
+export type AdminSettingsSection = 'people' | 'billing' | 'ai' | 'security' | 'audit' | 'health';
 
 interface AdminSettingsSidebarProps {
   activeSection: AdminSettingsSection;
@@ -62,6 +62,14 @@ const NAV_ITEMS: NavItem[] = [
     descriptionKey: 'admin.nav.audit.description',
     descriptionDefault: 'High-risk admin events and compliance evidence',
     icon: ScrollText,
+  },
+  {
+    id: 'health',
+    labelKey: 'admin.nav.health.label',
+    labelDefault: 'Health',
+    descriptionKey: 'admin.nav.health.description',
+    descriptionDefault: 'Proof-of-life probes across critical flows',
+    icon: Activity,
   },
 ];
 

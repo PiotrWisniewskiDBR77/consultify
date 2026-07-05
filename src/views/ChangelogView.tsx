@@ -57,9 +57,9 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
 
   // Type badge config
   const typeBadge = {
-    major: { color: 'bg-sky-500', label: { en: 'Major', pl: 'Główna' } },
-    minor: { color: 'bg-blue-500', label: { en: 'Minor', pl: 'Mniejsza' } },
-    patch: { color: 'bg-green-500', label: { en: 'Patch', pl: 'Poprawka' } },
+    major: { color: 'bg-c-accent', label: { en: 'Major', pl: 'Główna' } },
+    minor: { color: 'bg-c-info', label: { en: 'Minor', pl: 'Mniejsza' } },
+    patch: { color: 'bg-c-success', label: { en: 'Patch', pl: 'Poprawka' } },
   };
 
   // Text
@@ -81,30 +81,30 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-c-surface-raised">
       {/* Header */}
-      <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+      <header className="bg-c-surface border-b border-c-border-subtle">
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               {onBack && (
                 <button
                   onClick={onBack}
-                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+                  className="p-2 hover:bg-c-surface-raised rounded-lg"
                 >
-                  <ArrowLeft size={20} className="text-slate-600 dark:text-slate-300" />
+                  <ArrowLeft size={20} className="text-c-text-secondary" />
                 </button>
               )}
               <div>
-                <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                  <Tag size={32} className="text-primary-500" />
+                <h1 className="text-3xl font-bold text-c-text flex items-center gap-3">
+                  <Tag size={32} className="text-c-accent" />
                   {t.title[lang]}
                 </h1>
-                <p className="text-slate-600 dark:text-slate-400 mt-1">{t.subtitle[lang]}</p>
+                <p className="text-c-text-secondary mt-1">{t.subtitle[lang]}</p>
               </div>
             </div>
             <button
-              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
               title={t.rss[lang]}
             >
               <Rss size={16} />
@@ -117,15 +117,15 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
       <main className="max-w-4xl mx-auto px-4 py-8">
         {/* Filters */}
         <div className="flex items-center gap-2 mb-8">
-          <Filter size={18} className="text-slate-600 dark:text-slate-500" />
+          <Filter size={18} className="text-c-text-muted" />
           {(['all', 'major', 'minor', 'patch'] as ReleaseType[]).map((type) => (
             <button
               key={type}
               onClick={() => setFilter(type)}
               className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                 filter === type
-                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  ? 'bg-c-accent-soft text-c-accent font-medium'
+                  : 'text-c-text-secondary hover:bg-c-surface-raised'
               }`}
             >
               {t[type][lang]}
@@ -136,7 +136,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
         {/* Timeline */}
         <div className="relative">
           {/* Timeline line */}
-          <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-700" />
+          <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-c-border-subtle" />
 
           {/* Releases */}
           <div className="space-y-6">
@@ -154,15 +154,15 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                 >
                   {/* Timeline dot */}
                   <div
-                    className={`absolute left-4 w-5 h-5 rounded-full ${badge.color} border-4 border-slate-50 dark:border-slate-900`}
+                    className={`absolute left-4 w-5 h-5 rounded-full ${badge.color} border-4 border-c-surface-raised`}
                   />
 
                   {/* Release card */}
-                  <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
+                  <div className="bg-c-surface rounded-xl shadow-sm overflow-hidden">
                     {/* Header */}
                     <button
                       onClick={() => toggleVersion(release.version)}
-                      className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                      className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-c-surface-raised transition-colors"
                     >
                       <div>
                         <div className="flex items-center gap-3 mb-1">
@@ -171,7 +171,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                           >
                             v{release.version}
                           </span>
-                          <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                          <span className="text-sm text-c-text-muted flex items-center gap-1">
                             <Calendar size={14} />
                             {new Date(release.date).toLocaleDateString(
                               lang === 'pl' ? 'pl-PL' : 'en-US',
@@ -183,11 +183,11 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                             )}
                           </span>
                         </div>
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                        <h3 className="text-lg font-semibold text-c-text">
                           {release.title[lang]}
                         </h3>
                         {release.summary && (
-                          <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
+                          <p className="text-c-text-secondary text-sm mt-1">
                             {release.summary[lang]}
                           </p>
                         )}
@@ -195,12 +195,12 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                       {isExpanded ? (
                         <ChevronUp
                           size={20}
-                          className="text-slate-600 dark:text-slate-500 flex-shrink-0"
+                          className="text-c-text-muted flex-shrink-0"
                         />
                       ) : (
                         <ChevronDown
                           size={20}
-                          className="text-slate-600 dark:text-slate-500 flex-shrink-0"
+                          className="text-c-text-muted flex-shrink-0"
                         />
                       )}
                     </button>
@@ -216,27 +216,27 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                         {/* Features */}
                         {release.features.length > 0 && (
                           <div>
-                            <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                              <Sparkles size={16} className="text-primary-500" />
+                            <h4 className="text-sm font-semibold text-c-text-muted uppercase tracking-wider mb-3 flex items-center gap-2">
+                              <Sparkles size={16} className="text-c-accent" />
                               {t.features[lang]}
                             </h4>
                             <div className="space-y-3">
                               {release.features.map((feature: any, i: number) => (
                                 <div key={i} className="flex items-start gap-3">
                                   {feature.icon && (
-                                    <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
+                                    <div className="w-8 h-8 rounded-lg bg-c-accent-soft flex items-center justify-center flex-shrink-0">
                                       <DynamicIcon
                                         name={feature.icon}
                                         size={16}
-                                        className="text-primary-600 dark:text-primary-400"
+                                        className="text-c-accent"
                                       />
                                     </div>
                                   )}
                                   <div>
-                                    <h5 className="font-medium text-slate-900 dark:text-white">
+                                    <h5 className="font-medium text-c-text">
                                       {feature.title[lang]}
                                     </h5>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                                    <p className="text-sm text-c-text-secondary">
                                       {feature.description[lang]}
                                     </p>
                                   </div>
@@ -249,19 +249,19 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                         {/* Improvements */}
                         {release.improvements.length > 0 && (
                           <div>
-                            <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                              <Wrench size={16} className="text-blue-500" />
+                            <h4 className="text-sm font-semibold text-c-text-muted uppercase tracking-wider mb-3 flex items-center gap-2">
+                              <Wrench size={16} className="text-c-info" />
                               {t.improvements[lang]}
                             </h4>
                             <ul className="space-y-2">
                               {release.improvements.map((item: any, i: number) => (
                                 <li
                                   key={i}
-                                  className="flex items-start gap-2 text-slate-600 dark:text-slate-300"
+                                  className="flex items-start gap-2 text-c-text-secondary"
                                 >
                                   <CheckCircle
                                     size={16}
-                                    className="text-blue-500 mt-0.5 flex-shrink-0"
+                                    className="text-c-info mt-0.5 flex-shrink-0"
                                   />
                                   {item[lang]}
                                 </li>
@@ -273,17 +273,17 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                         {/* Fixes */}
                         {release.fixes.length > 0 && (
                           <div>
-                            <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                              <CheckCircle size={16} className="text-green-500" />
+                            <h4 className="text-sm font-semibold text-c-text-muted uppercase tracking-wider mb-3 flex items-center gap-2">
+                              <CheckCircle size={16} className="text-c-success" />
                               {t.fixes[lang]}
                             </h4>
                             <ul className="space-y-2">
                               {release.fixes.map((item: any, i: number) => (
                                 <li
                                   key={i}
-                                  className="flex items-start gap-2 text-slate-600 dark:text-slate-300"
+                                  className="flex items-start gap-2 text-c-text-secondary"
                                 >
-                                  <span className="text-green-500">•</span>
+                                  <span className="text-c-success">•</span>
                                   {item[lang]}
                                 </li>
                               ))}
@@ -293,8 +293,8 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
 
                         {/* Breaking Changes */}
                         {release.breaking && release.breaking.length > 0 && (
-                          <div className="bg-danger-50 dark:bg-danger-900/20 rounded-lg p-4">
-                            <h4 className="text-sm font-semibold text-danger-700 dark:text-danger-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                          <div className="bg-c-danger/10 rounded-lg p-4">
+                            <h4 className="text-sm font-semibold text-c-danger uppercase tracking-wider mb-3 flex items-center gap-2">
                               <AlertTriangle size={16} />
                               {t.breaking[lang]}
                             </h4>
@@ -302,7 +302,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                               {release.breaking.map((item: any, i: number) => (
                                 <li
                                   key={i}
-                                  className="flex items-start gap-2 text-danger-700 dark:text-danger-300"
+                                  className="flex items-start gap-2 text-c-danger"
                                 >
                                   <span>•</span>
                                   {item[lang]}

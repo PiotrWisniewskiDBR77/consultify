@@ -78,17 +78,17 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+        <h3 className="text-lg font-semibold text-c-text mb-2">
           {t('settings.profile.status.title', 'Availability Status')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           {t('settings.profile.status.subtitle', 'Let others know your current availability')}
         </p>
       </div>
 
       {/* Status Selection */}
       <div className="space-y-4">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="block text-sm font-medium text-c-text-secondary">
           {t('settings.profile.status.currentStatus', 'Current Status')}
         </label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -104,20 +104,20 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
                                     flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all
                                     ${
                                       isSelected
-                                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/20'
-                                        : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
+                                        ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+                                        : 'border-c-border-subtle dark:border-navy-700 hover:border-c-accent'
                                     }
                                 `}
               >
                 <Icon
                   size={24}
-                  className={isSelected ? option.color : 'text-slate-600 dark:text-slate-500'}
+                  className={isSelected ? option.color : 'text-c-text-secondary'}
                 />
                 <span
                   className={`text-sm font-medium ${
                     isSelected
-                      ? 'text-primary-700 dark:text-primary-300'
-                      : 'text-slate-600 dark:text-slate-400'
+                      ? 'text-c-accent'
+                      : 'text-c-text-secondary'
                   }`}
                 >
                   {option.label}
@@ -130,9 +130,9 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
 
       {/* Status Message */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="block text-sm font-medium text-c-text-secondary">
           {t('settings.profile.status.message', 'Status Message')}
-          <span className="text-slate-600 dark:text-slate-500 text-xs ml-1">
+          <span className="text-c-text-secondary text-xs ml-1">
             ({t('common.optional', 'Optional')})
           </span>
         </label>
@@ -145,29 +145,29 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({
             'e.g., In a meeting until 3 PM'
           )}
           maxLength={100}
-          className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none"
+          className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
         />
-        <p className="text-xs text-slate-600 dark:text-slate-500">
+        <p className="text-xs text-c-text-secondary">
           {statusMessage.length}/100 {t('common.characters', 'characters')}
         </p>
       </div>
 
       {/* Preview */}
-      <div className="p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg border border-slate-200 dark:border-navy-700">
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+      <div className="p-4 bg-c-surface-raised rounded-lg border border-c-border-subtle dark:border-navy-700">
+        <p className="text-xs text-c-text-muted mb-2">
           {t('settings.profile.status.preview', 'Preview')}:
         </p>
         <div className="flex items-center gap-2">
           {selectedStatus && (
             <>
               <selectedStatus.icon size={16} className={selectedStatus.color} />
-              <span className="text-sm font-medium text-slate-900 dark:text-white">
+              <span className="text-sm font-medium text-c-text">
                 {selectedStatus.label}
               </span>
               {statusMessage && (
                 <>
-                  <span className="text-slate-600 dark:text-slate-500">•</span>
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                  <span className="text-c-text-secondary">•</span>
+                  <span className="text-sm text-c-text-secondary">
                     {statusMessage}
                   </span>
                 </>

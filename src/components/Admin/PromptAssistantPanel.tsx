@@ -335,7 +335,7 @@ How can I help you today?`,
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-primary-600 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
+            <Sparkles className="w-4 h-4 text-c-text" />
           </div>
           <div>
             <h3 className="font-semibold text-slate-900 dark:text-white text-sm">

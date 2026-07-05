@@ -245,7 +245,7 @@ export function OrganizationContextWorkerOperationsView() {
             type="button"
             onClick={handleRunWorkerOnce}
             disabled={loading || running}
-            className="flex items-center gap-2 rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-500 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg bg-c-text text-c-bg px-3 py-2 text-sm font-medium hover:bg-c-text-secondary disabled:opacity-50"
           >
             {running ? <RefreshCw size={14} className="animate-spin" /> : <PlayCircle size={14} />}
             Run worker once

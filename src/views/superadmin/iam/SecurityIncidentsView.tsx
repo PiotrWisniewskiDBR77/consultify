@@ -697,7 +697,7 @@ const SecurityIncidentsView: React.FC = () => {
                       className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                     >
                       <td className="py-3 px-4">
-                        <span className="px-2 py-1 bg-slate-700 rounded text-xs font-mono">
+                        <span className="px-2 py-1 bg-c-surface-raised rounded text-xs font-mono">
                           {getIncidentTypeLabel(incident.incidentType)}
                         </span>
                       </td>
@@ -764,7 +764,7 @@ const SecurityIncidentsView: React.FC = () => {
                 <select
                   value={formData.incidentType}
                   onChange={(e) => setFormData({ ...formData, incidentType: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm"
                 >
                   {INCIDENT_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>
@@ -780,7 +780,7 @@ const SecurityIncidentsView: React.FC = () => {
                 <select
                   value={formData.severity}
                   onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm"
                 >
                   {SEVERITY_OPTIONS.map((s) => (
                     <option key={s} value={s}>
@@ -797,7 +797,7 @@ const SecurityIncidentsView: React.FC = () => {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Describe the security incident..."
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm h-24 resize-none"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm h-24 resize-none"
                 />
               </div>
               <div>
@@ -809,7 +809,7 @@ const SecurityIncidentsView: React.FC = () => {
                   value={formData.affectedResources}
                   onChange={(e) => setFormData({ ...formData, affectedResources: e.target.value })}
                   placeholder="e.g., server-1, database-prod, user-accounts"
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm"
                 />
               </div>
             </div>
@@ -824,7 +824,7 @@ const SecurityIncidentsView: React.FC = () => {
                     affectedResources: '',
                   });
                 }}
-                className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg"
+                className="px-4 py-2 text-sm bg-c-surface-raised hover:bg-slate-600 rounded-lg"
               >
                 Cancel
               </button>
@@ -854,7 +854,7 @@ const SecurityIncidentsView: React.FC = () => {
               value={resolutionNotes}
               onChange={(e) => setResolutionNotes(e.target.value)}
               placeholder="Resolution notes..."
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm mb-4 h-24 resize-none"
+              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm mb-4 h-24 resize-none"
             />
             <div className="flex justify-end gap-2">
               <button
@@ -862,7 +862,7 @@ const SecurityIncidentsView: React.FC = () => {
                   setShowResolveModal(null);
                   setResolutionNotes('');
                 }}
-                className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg"
+                className="px-4 py-2 text-sm bg-c-surface-raised hover:bg-slate-600 rounded-lg"
               >
                 Cancel
               </button>
@@ -929,7 +929,7 @@ const SecurityIncidentsView: React.FC = () => {
                     <p className="text-sm text-slate-600 dark:text-slate-500">Affected Resources</p>
                     <div className="flex flex-wrap gap-2 mt-1">
                       {showDetailModal.affectedResources.map((r, i) => (
-                        <span key={i} className="px-2 py-1 bg-slate-700 rounded text-xs">
+                        <span key={i} className="px-2 py-1 bg-c-surface-raised rounded text-xs">
                           {r}
                         </span>
                       ))}
@@ -937,7 +937,7 @@ const SecurityIncidentsView: React.FC = () => {
                   </div>
                 )}
               {showDetailModal.resolvedAt && (
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-700">
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-c-border">
                   <div>
                     <p className="text-sm text-slate-600 dark:text-slate-500">Resolved At</p>
                     <p>{formatDateTime(showDetailModal.resolvedAt)}</p>
@@ -962,7 +962,7 @@ const SecurityIncidentsView: React.FC = () => {
             <div className="flex justify-end mt-6">
               <button
                 onClick={() => setShowDetailModal(null)}
-                className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg"
+                className="px-4 py-2 text-sm bg-c-surface-raised hover:bg-slate-600 rounded-lg"
               >
                 Close
               </button>

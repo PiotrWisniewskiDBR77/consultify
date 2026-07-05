@@ -693,7 +693,7 @@ const ThreatIntelligenceView: React.FC = () => {
                       className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                     >
                       <td className="py-3 px-4">
-                        <span className="px-2 py-1 bg-slate-700 rounded text-xs font-mono">
+                        <span className="px-2 py-1 bg-c-surface-raised rounded text-xs font-mono">
                           {getThreatTypeLabel(threat.threatType)}
                         </span>
                       </td>
@@ -788,7 +788,7 @@ const ThreatIntelligenceView: React.FC = () => {
                 <select
                   value={formData.threatType}
                   onChange={(e) => setFormData({ ...formData, threatType: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm"
                 >
                   {THREAT_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>
@@ -807,7 +807,7 @@ const ThreatIntelligenceView: React.FC = () => {
                     value={formData.ipAddress}
                     onChange={(e) => setFormData({ ...formData, ipAddress: e.target.value })}
                     placeholder="192.168.1.1"
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                    className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm"
                   />
                 </div>
                 <div>
@@ -819,7 +819,7 @@ const ThreatIntelligenceView: React.FC = () => {
                     value={formData.domain}
                     onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
                     placeholder="malicious.com"
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                    className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm"
                   />
                 </div>
               </div>
@@ -831,7 +831,7 @@ const ThreatIntelligenceView: React.FC = () => {
                   <select
                     value={formData.threatLevel}
                     onChange={(e) => setFormData({ ...formData, threatLevel: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                    className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm"
                   >
                     {THREAT_LEVELS.map((l) => (
                       <option key={l} value={l}>
@@ -852,7 +852,7 @@ const ThreatIntelligenceView: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, reputationScore: parseInt(e.target.value) })
                     }
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                    className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm"
                   />
                 </div>
               </div>
@@ -865,7 +865,7 @@ const ThreatIntelligenceView: React.FC = () => {
                   value={formData.source}
                   onChange={(e) => setFormData({ ...formData, source: e.target.value })}
                   placeholder="e.g., Internal detection, AbuseIPDB"
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm"
                 />
               </div>
               <div>
@@ -876,14 +876,14 @@ const ThreatIntelligenceView: React.FC = () => {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Describe the threat..."
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm h-20 resize-none"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm h-20 resize-none"
                 />
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg"
+                className="px-4 py-2 text-sm bg-c-surface-raised hover:bg-slate-600 rounded-lg"
               >
                 Cancel
               </button>
@@ -921,7 +921,7 @@ const ThreatIntelligenceView: React.FC = () => {
                       setCheckResult(null);
                     }}
                     className={`flex-1 py-2 rounded-lg text-sm ${
-                      checkType === 'ip' ? 'bg-indigo-500' : 'bg-slate-700'
+                      checkType === 'ip' ? 'bg-indigo-500' : 'bg-c-surface-raised'
                     }`}
                   >
                     IP Address
@@ -932,7 +932,7 @@ const ThreatIntelligenceView: React.FC = () => {
                       setCheckResult(null);
                     }}
                     className={`flex-1 py-2 rounded-lg text-sm ${
-                      checkType === 'domain' ? 'bg-indigo-500' : 'bg-slate-700'
+                      checkType === 'domain' ? 'bg-indigo-500' : 'bg-c-surface-raised'
                     }`}
                   >
                     Domain
@@ -948,7 +948,7 @@ const ThreatIntelligenceView: React.FC = () => {
                   value={checkValue}
                   onChange={(e) => setCheckValue(e.target.value)}
                   placeholder={checkType === 'ip' ? '192.168.1.1' : 'example.com'}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm"
                 />
               </div>
               {checkResult && (
@@ -1002,7 +1002,7 @@ const ThreatIntelligenceView: React.FC = () => {
                   setCheckValue('');
                   setCheckResult(null);
                 }}
-                className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg"
+                className="px-4 py-2 text-sm bg-c-surface-raised hover:bg-slate-600 rounded-lg"
               >
                 Close
               </button>

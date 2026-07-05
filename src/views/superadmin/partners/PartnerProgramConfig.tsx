@@ -118,7 +118,7 @@ const DEFAULT_TIERS: CommissionRate[] = [
   { tier: 'BRONZE', tierName: 'Bronze', rate: 12, minRevenue: 5000, color: 'bg-amber-600' },
   { tier: 'SILVER', tierName: 'Silver', rate: 15, minRevenue: 15000, color: 'bg-slate-400' },
   { tier: 'GOLD', tierName: 'Gold', rate: 18, minRevenue: 50000, color: 'bg-yellow-500' },
-  { tier: 'PLATINUM', tierName: 'Platinum', rate: 20, minRevenue: 100000, color: 'bg-navy-900' },
+  { tier: 'PLATINUM', tierName: 'Platinum', rate: 20, minRevenue: 100000, color: 'bg-slate-700' },
 ];
 
 const PAYMENT_METHODS = [
@@ -345,7 +345,7 @@ export const PartnerProgramConfig: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-bold text-c-text">
             {t('superadmin.partnerConfig.title', 'Partner Program Configuration')}
           </h1>
           <p className="text-slate-600 dark:text-slate-500">
@@ -375,13 +375,13 @@ export const PartnerProgramConfig: React.FC = () => {
       )}
 
       {/* Commission Rates */}
-      <div className="bg-navy-800/50 rounded-xl border border-white/5 p-6">
+      <div className="bg-c-surface-raised/50 rounded-xl border border-white/5 p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 rounded-lg bg-emerald-500/20">
             <TrendingUp className="w-5 h-5 text-emerald-400" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-white">
+            <h2 className="text-lg font-semibold text-c-text">
               {t('superadmin.partnerConfig.commissionRates', 'Commission Rates by Tier')}
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-500">
@@ -392,11 +392,11 @@ export const PartnerProgramConfig: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {commissionRates.map((tier) => (
-            <div key={tier.tier} className="bg-navy-900/50 rounded-xl border border-white/5 p-4">
+            <div key={tier.tier} className="bg-c-surface/50 rounded-xl border border-white/5 p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className={cn('w-3 h-3 rounded-full', tier.color)} />
-                  <span className="font-medium text-white">{tier.tierName}</span>
+                  <span className="font-medium text-c-text">{tier.tierName}</span>
                 </div>
                 {editingTier !== tier.tier && (
                   <button
@@ -420,7 +420,7 @@ export const PartnerProgramConfig: React.FC = () => {
                       onChange={(e) => setEditRate(Number(e.target.value))}
                       min={0}
                       max={100}
-                      className="w-full px-3 py-2 bg-navy-800 border border-white/10 rounded-lg text-white text-center"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-white/10 rounded-lg text-c-text text-center"
                     />
                     <span className="text-slate-600 dark:text-slate-500">%</span>
                   </div>
@@ -443,7 +443,7 @@ export const PartnerProgramConfig: React.FC = () => {
                 </div>
               ) : (
                 <div className="text-center">
-                  <p className="text-3xl font-bold text-white">{tier.rate}%</p>
+                  <p className="text-3xl font-bold text-c-text">{tier.rate}%</p>
                   {tier.minRevenue !== undefined && tier.minRevenue > 0 && (
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                       Min: €{tier.minRevenue.toLocaleString()} revenue
@@ -457,14 +457,14 @@ export const PartnerProgramConfig: React.FC = () => {
       </div>
 
       {/* Client Discount Settings */}
-      <div className="bg-navy-800/50 rounded-xl border border-white/5 p-6">
+      <div className="bg-c-surface-raised/50 rounded-xl border border-white/5 p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary-500/20">
               <Percent className="w-5 h-5 text-primary-400" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">
+              <h2 className="text-lg font-semibold text-c-text">
                 {t('superadmin.partnerConfig.clientDiscount', 'Client Discount Settings')}
               </h2>
               <p className="text-sm text-slate-600 dark:text-slate-500">
@@ -505,7 +505,7 @@ export const PartnerProgramConfig: React.FC = () => {
               onChange={(e) =>
                 setDiscountConfig({ ...discountConfig, discountType: e.target.value as any })
               }
-              className="w-full px-4 py-2.5 bg-navy-900 border border-white/10 rounded-lg text-white"
+              className="w-full px-4 py-2.5 bg-c-text text-c-bg border border-white/10 rounded-lg"
             >
               <option value="PERCENTAGE">Percentage</option>
               <option value="FLAT">Flat Amount</option>
@@ -524,7 +524,7 @@ export const PartnerProgramConfig: React.FC = () => {
               }
               min={0}
               max={discountConfig.discountType === 'PERCENTAGE' ? 100 : undefined}
-              className="w-full px-4 py-2.5 bg-navy-900 border border-white/10 rounded-lg text-white"
+              className="w-full px-4 py-2.5 bg-c-text text-c-bg border border-white/10 rounded-lg"
             />
           </div>
 
@@ -540,7 +540,7 @@ export const PartnerProgramConfig: React.FC = () => {
               }
               min={1}
               max={60}
-              className="w-full px-4 py-2.5 bg-navy-900 border border-white/10 rounded-lg text-white"
+              className="w-full px-4 py-2.5 bg-c-text text-c-bg border border-white/10 rounded-lg"
             />
           </div>
 
@@ -558,7 +558,7 @@ export const PartnerProgramConfig: React.FC = () => {
                 })
               }
               placeholder="No limit"
-              className="w-full px-4 py-2.5 bg-navy-900 border border-white/10 rounded-lg text-white"
+              className="w-full px-4 py-2.5 bg-c-text text-c-bg border border-white/10 rounded-lg"
             />
           </div>
         </div>
@@ -576,13 +576,13 @@ export const PartnerProgramConfig: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-6">
+        <div className="bg-c-surface-raised/50 rounded-xl border border-white/5 p-6">
           <div className="flex items-center gap-3 mb-5">
             <div className="p-2 rounded-lg bg-emerald-500/20">
               <Users className="w-5 h-5 text-emerald-300" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">Public Partner Applications</h2>
+              <h2 className="text-lg font-semibold text-c-text">Public Partner Applications</h2>
               <p className="text-sm text-slate-600 dark:text-slate-500">
                 Lightweight qualification leads submitted from the public recruitment page
               </p>
@@ -591,18 +591,18 @@ export const PartnerProgramConfig: React.FC = () => {
 
           <div className="space-y-3">
             {partnerApplications.length === 0 ? (
-              <div className="rounded-xl border border-white/5 bg-navy-900/40 p-4 text-sm text-slate-600">
+              <div className="rounded-xl border border-white/5 bg-c-surface/40 p-4 text-sm text-slate-600">
                 No partner applications submitted yet.
               </div>
             ) : (
               partnerApplications.slice(0, 6).map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-xl border border-white/5 bg-navy-900/40 p-4 space-y-3"
+                  className="rounded-xl border border-white/5 bg-c-surface/40 p-4 space-y-3"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="text-white font-medium">{item.company}</div>
+                      <div className="text-c-text font-medium">{item.company}</div>
                       <div className="text-xs text-slate-600">
                         {item.full_name} • {item.email}
                       </div>
@@ -648,7 +648,7 @@ export const PartnerProgramConfig: React.FC = () => {
                     <button
                       onClick={() => handlePartnerApplicationDecision(item.id, 'rejected')}
                       disabled={saving}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm disabled:opacity-50"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-c-surface-raised hover:bg-slate-600 text-c-text text-sm disabled:opacity-50"
                     >
                       <AlertCircle className="w-4 h-4" />
                       Reject
@@ -660,13 +660,13 @@ export const PartnerProgramConfig: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-6">
+        <div className="bg-c-surface-raised/50 rounded-xl border border-white/5 p-6">
           <div className="flex items-center gap-3 mb-5">
             <div className="p-2 rounded-lg bg-amber-500/20">
               <Shield className="w-5 h-5 text-amber-300" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">
+              <h2 className="text-lg font-semibold text-c-text">
                 {t('superadmin.partnerConfig.reviewQueue', 'Certification Review Queue')}
               </h2>
               <p className="text-sm text-slate-600 dark:text-slate-500">
@@ -677,18 +677,18 @@ export const PartnerProgramConfig: React.FC = () => {
 
           <div className="space-y-3">
             {reviewQueue.length === 0 ? (
-              <div className="rounded-xl border border-white/5 bg-navy-900/40 p-4 text-sm text-slate-600">
+              <div className="rounded-xl border border-white/5 bg-c-surface/40 p-4 text-sm text-slate-600">
                 No certifications are waiting for operator review.
               </div>
             ) : (
               reviewQueue.slice(0, 6).map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-xl border border-white/5 bg-navy-900/40 p-4 space-y-3"
+                  className="rounded-xl border border-white/5 bg-c-surface/40 p-4 space-y-3"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="text-white font-medium">{item.certification_name}</div>
+                      <div className="text-c-text font-medium">{item.certification_name}</div>
                       <div className="text-xs text-slate-600">
                         {item.partner_name || 'Partner'} • {item.certification_track} /{' '}
                         {item.certification_level}
@@ -726,13 +726,13 @@ export const PartnerProgramConfig: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-6">
+        <div className="bg-c-surface-raised/50 rounded-xl border border-white/5 p-6">
           <div className="flex items-center gap-3 mb-5">
             <div className="p-2 rounded-lg bg-primary-500/20">
               <Users className="w-5 h-5 text-primary-300" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">
+              <h2 className="text-lg font-semibold text-c-text">
                 {t('superadmin.partnerConfig.programSignals', 'Program Signals')}
               </h2>
               <p className="text-sm text-slate-600 dark:text-slate-500">
@@ -745,10 +745,10 @@ export const PartnerProgramConfig: React.FC = () => {
             {(reporting?.blockedReasons || []).map((item) => (
               <div
                 key={item.reason}
-                className="rounded-xl border border-white/5 bg-navy-900/40 p-4"
+                className="rounded-xl border border-white/5 bg-c-surface/40 p-4"
               >
                 <div className="text-xs uppercase tracking-wide text-slate-500">{item.reason}</div>
-                <div className="mt-1 text-2xl font-semibold text-white">{item.count}</div>
+                <div className="mt-1 text-2xl font-semibold text-c-text">{item.count}</div>
               </div>
             ))}
           </div>
@@ -757,9 +757,9 @@ export const PartnerProgramConfig: React.FC = () => {
             {(reporting?.examPassRates || []).slice(0, 4).map((item) => (
               <div
                 key={`${item.track}-${item.level}`}
-                className="flex items-center justify-between rounded-xl border border-white/5 bg-navy-900/40 p-3"
+                className="flex items-center justify-between rounded-xl border border-white/5 bg-c-surface/40 p-3"
               >
-                <div className="text-sm text-white">
+                <div className="text-sm text-c-text">
                   {item.track} / {item.level}
                 </div>
                 <div className="text-sm text-slate-600">
@@ -770,9 +770,9 @@ export const PartnerProgramConfig: React.FC = () => {
             {(reporting?.partnerDocViews || []).slice(0, 3).map((item) => (
               <div
                 key={item.slug}
-                className="flex items-center justify-between rounded-xl border border-white/5 bg-navy-900/40 p-3"
+                className="flex items-center justify-between rounded-xl border border-white/5 bg-c-surface/40 p-3"
               >
-                <div className="text-sm text-white">{item.slug}</div>
+                <div className="text-sm text-c-text">{item.slug}</div>
                 <div className="text-sm text-slate-600">{item.views || 0} views</div>
               </div>
             ))}
@@ -781,13 +781,13 @@ export const PartnerProgramConfig: React.FC = () => {
       </div>
 
       {/* Payout Settings */}
-      <div className="bg-navy-800/50 rounded-xl border border-white/5 p-6">
+      <div className="bg-c-surface-raised/50 rounded-xl border border-white/5 p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 rounded-lg bg-blue-500/20">
             <Wallet className="w-5 h-5 text-blue-400" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-white">
+            <h2 className="text-lg font-semibold text-c-text">
               {t('superadmin.partnerConfig.payoutSettings', 'Payout Settings')}
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-500">
@@ -808,7 +808,7 @@ export const PartnerProgramConfig: React.FC = () => {
                 setPayoutSettings({ ...payoutSettings, minimumThreshold: Number(e.target.value) })
               }
               min={0}
-              className="w-full px-4 py-2.5 bg-navy-900 border border-white/10 rounded-lg text-white"
+              className="w-full px-4 py-2.5 bg-c-text text-c-bg border border-white/10 rounded-lg"
             />
           </div>
 
@@ -821,7 +821,7 @@ export const PartnerProgramConfig: React.FC = () => {
               onChange={(e) =>
                 setPayoutSettings({ ...payoutSettings, payoutSchedule: e.target.value as any })
               }
-              className="w-full px-4 py-2.5 bg-navy-900 border border-white/10 rounded-lg text-white"
+              className="w-full px-4 py-2.5 bg-c-text text-c-bg border border-white/10 rounded-lg"
             >
               <option value="WEEKLY">Weekly</option>
               <option value="BIWEEKLY">Bi-weekly</option>
@@ -845,7 +845,7 @@ export const PartnerProgramConfig: React.FC = () => {
               min={0}
               max={10}
               step={0.1}
-              className="w-full px-4 py-2.5 bg-navy-900 border border-white/10 rounded-lg text-white"
+              className="w-full px-4 py-2.5 bg-c-text text-c-bg border border-white/10 rounded-lg"
             />
           </div>
 
@@ -893,8 +893,8 @@ export const PartnerProgramConfig: React.FC = () => {
                 className={cn(
                   'flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors',
                   payoutSettings.paymentMethods.includes(method.id)
-                    ? 'bg-primary-600/20 border-primary-500 text-white'
-                    : 'bg-navy-900 border-white/10 text-slate-600 dark:text-slate-500 hover:text-white'
+                    ? 'bg-c-accent/10 border-c-accent'
+                    : 'bg-c-surface border-white/10 text-slate-600 dark:text-slate-500 hover:text-white'
                 )}
               >
                 <method.icon className="w-4 h-4" />

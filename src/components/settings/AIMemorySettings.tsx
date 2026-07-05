@@ -181,7 +181,7 @@ export const AIMemorySettings: React.FC<{ className?: string }> = ({ className =
                       onChange={(e) => update('retentionDays', parseInt(e.target.value) || 30)}
                       className="w-28"
                     />
-                    <span className="text-sm text-slate-500">{t('settings.ai.days', 'days')}</span>
+                    <span className="text-sm text-c-text-muted">{t('settings.ai.days', 'days')}</span>
                   </div>
                 </SettingsFormRow>
 
@@ -236,7 +236,7 @@ export const AIMemorySettings: React.FC<{ className?: string }> = ({ className =
                     <h4 className="text-sm font-medium text-red-300">
                       {t('settings.ai.dangerZone', 'Danger Zone')}
                     </h4>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-c-text-muted mt-1">
                       {t(
                         'settings.ai.clearMemoryWarning',
                         'Permanently delete all AI memory data. This action cannot be undone.'
@@ -258,7 +258,7 @@ export const AIMemorySettings: React.FC<{ className?: string }> = ({ className =
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button
                       onClick={() => setShowClearConfirm(false)}
-                      className="px-3 py-1.5 text-xs text-slate-600 hover:text-white transition-colors"
+                      className="px-3 py-1.5 text-xs text-c-text-secondary hover:text-white transition-colors"
                     >
                       {t('common.cancel', 'Cancel')}
                     </button>

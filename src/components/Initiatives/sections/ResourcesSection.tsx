@@ -174,14 +174,14 @@ const TableAIMenu: React.FC<{
           onToggle();
         }}
         disabled={busy}
-        className="p-1 rounded-md text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
+        className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors"
         title="AI"
       >
         {busy ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
       </button>
       {isOpen && (
         <div
-          className="absolute right-0 top-7 z-30 w-48 rounded-xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30"
+          className="absolute right-0 top-7 z-30 w-48 rounded-xl border border-c-border dark:border-navy-700/70 bg-c-surface p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30"
           onClick={(e) => e.stopPropagation()}
         >
           {actions.map((a) => (
@@ -191,7 +191,7 @@ const TableAIMenu: React.FC<{
                 onClose();
                 a.onClick();
               }}
-              className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors whitespace-nowrap"
+              className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors whitespace-nowrap"
             >
               {isPolish ? a.label.pl : a.label.en}
             </button>
@@ -207,10 +207,10 @@ const TableAIMenu: React.FC<{
 // ==========================================
 
 const INLINE_INPUT_CLS =
-  'w-full px-2 py-1.5 rounded-md bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-400 dark:focus:ring-primary-500';
+  'w-full px-2 py-1.5 rounded-md bg-c-surface border border-c-border text-xs text-c-text focus:outline-none focus:ring-1 focus:ring-c-focus';
 
 const INLINE_SELECT_CLS =
-  'w-full px-1.5 py-1.5 rounded-md bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-400 dark:focus:ring-primary-500';
+  'w-full px-1.5 py-1.5 rounded-md bg-c-surface border border-c-border text-xs text-c-text focus:outline-none focus:ring-1 focus:ring-c-focus';
 
 // ==========================================
 // Shared helpers
@@ -218,7 +218,7 @@ const INLINE_SELECT_CLS =
 
 /** canon §4.2 — status pill shell is always neutral; colour lives in the signal dot. */
 const STATUS_BADGE_SHELL =
-  'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs border border-slate-200/70 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300';
+  'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs border border-slate-200/70 dark:border-white/[0.08] bg-c-bg dark:bg-white/[0.04] text-c-text-secondary';
 
 /** Signal-tone dot for embedded resource-status pills (no hardcoded shell fills). */
 const statusDotClass = (status: string): string => {
@@ -274,7 +274,7 @@ export const ResourcesSection: React.FC = () => {
   } = useInitiativeContext();
 
   const aiLanguage = isPolish ? 'pl' : 'en';
-  const targetLanguageName = isPolish ? 'Polish' : 'English';
+  const targetLanguageName = t('initiatives.resourcesSection.english');
 
   const [aiBusy, setAiBusy] = useState(false);
   const [aiProposal, setAiProposal] = useState<ResourcesAiProposal | null>(null);
@@ -719,11 +719,11 @@ export const ResourcesSection: React.FC = () => {
         `Return ONLY valid JSON.`,
         `If nothing is missing, return: { "budget": { "add": [] }, "teamFte": { "add": [] }, "tools": { "add": [] }, "intangibles": { "add": [] } }`,
         `Schema: {`,
-        `  "budget": { "add": [{ "category": "personnel"|"technology"|"consulting"|"training"|"infrastructure"|"licenses"|"other", "costType": "CAPEX"|"OPEX", "amount": number, "currency": "PLN"|"EUR"|"USD"|"GBP", "description"?: string, "rationale"?: string }] },`,
-        `  "teamFte": { "add": [{ "name": string, "role": "lead"|"member"|"consultant"|"stakeholder", "allocationPercentage": number, "startDate"?: "YYYY-MM-DD", "endDate"?: "YYYY-MM-DD", "notes"?: string, "rationale"?: string }] },`,
-        `  "tools": { "add": [{ "name": string, "category": "software"|"hardware"|"cloud"|"platform"|"other", "vendor"?: string, "licenseCost": number, "licenseType": "subscription"|"perpetual"|"open_source"|"internal", "status": "planned"|"active"|"deprecated", "notes"?: string, "rationale"?: string }] },`,
-        `  "intangibles": { "add": [{ "assetType": "license"|"training"|"certification"|"knowledge"|"ip"|"legal_right"|"other", "name": string, "provider"?: string, "cost": number, "currency": "PLN"|"EUR"|"USD"|"GBP", "validFrom"?: "YYYY-MM-DD", "validUntil"?: "YYYY-MM-DD", "status": "planned"|"active"|"expired"|"renewed", "beneficiaries"?: string, "notes"?: string, "rationale"?: string }] },`,
-        `  "note"?: string`,
+        `"budget": { "add": [{ "category": "personnel"|"technology"|"consulting"|"training"|"infrastructure"|"licenses"|"other", "costType": "CAPEX"|"OPEX", "amount": number, "currency": "PLN"|"EUR"|"USD"|"GBP", "description"?: string, "rationale"?: string }] },`,
+        `"teamFte": { "add": [{ "name": string, "role": "lead"|"member"|"consultant"|"stakeholder", "allocationPercentage": number, "startDate"?: "YYYY-MM-DD", "endDate"?: "YYYY-MM-DD", "notes"?: string, "rationale"?: string }] },`,
+        `"tools": { "add": [{ "name": string, "category": "software"|"hardware"|"cloud"|"platform"|"other", "vendor"?: string, "licenseCost": number, "licenseType": "subscription"|"perpetual"|"open_source"|"internal", "status": "planned"|"active"|"deprecated", "notes"?: string, "rationale"?: string }] },`,
+        `"intangibles": { "add": [{ "assetType": "license"|"training"|"certification"|"knowledge"|"ip"|"legal_right"|"other", "name": string, "provider"?: string, "cost": number, "currency": "PLN"|"EUR"|"USD"|"GBP", "validFrom"?: "YYYY-MM-DD", "validUntil"?: "YYYY-MM-DD", "status": "planned"|"active"|"expired"|"renewed", "beneficiaries"?: string, "notes"?: string, "rationale"?: string }] },`,
+        `"note"?: string`,
         `}`,
       ].join('\n');
     },
@@ -1419,17 +1419,17 @@ export const ResourcesSection: React.FC = () => {
       {/* AI Proposal Modal (shared across all tables + CTA) */}
       {showAIModal && aiProposal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <div className="w-full max-w-4xl rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl">
+          <div className="w-full max-w-4xl rounded-2xl border border-c-border dark:border-navy-700/60 bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl">
             <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
               <div>
-                <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+                <h3 className="text-sm font-semibold text-c-text dark:text-white">
                   {t('initiatives.resourcesSection.proposedResourcesAi')}
                 </h3>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-[11px] text-c-text-muted mt-0.5">
                   {t('initiatives.resourcesSection.selectItemsToAdd')}
                 </p>
                 {aiProposal.note ? (
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-[11px] text-c-text-muted mt-1">
                     {aiProposal.note}
                   </p>
                 ) : null}
@@ -1476,7 +1476,7 @@ export const ResourcesSection: React.FC = () => {
               </div>
               <button
                 onClick={closeAIModal}
-                className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                className="p-2 rounded-lg text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                 title={t('initiatives.resourcesSection.close')}
               >
                 <X size={16} />
@@ -1487,7 +1487,7 @@ export const ResourcesSection: React.FC = () => {
               {aiProposal.budgetAdd.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    <span className="text-xs font-semibold text-c-text">
                       {t('initiatives.resourcesSection.budgetToAdd')} ({aiProposal.budgetAdd.length}
                       )
                     </span>
@@ -1497,7 +1497,7 @@ export const ResourcesSection: React.FC = () => {
                           Object.fromEntries(aiProposal.budgetAdd.map((_, idx) => [idx, true]))
                         )
                       }
-                      className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                      className="text-[11px] text-c-text-muted hover:text-c-text-secondary"
                     >
                       {t('initiatives.resourcesSection.selectAll')}
                     </button>
@@ -1518,20 +1518,20 @@ export const ResourcesSection: React.FC = () => {
                         />
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-medium text-slate-800 dark:text-white">
+                            <span className="text-sm font-medium text-c-text dark:text-white">
                               {String(b.costType || '').toUpperCase()} · {b.category}
                             </span>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                            <span className="text-[11px] text-c-text-muted">
                               {fmtCurrency(Number(b.amount) || 0, b.currency || 'PLN', isPolish)}
                             </span>
                           </div>
                           {b.description ? (
-                            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 whitespace-pre-wrap">
+                            <p className="text-xs text-c-text-secondary mt-0.5 whitespace-pre-wrap">
                               {b.description}
                             </p>
                           ) : null}
                           {b.rationale ? (
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                            <p className="text-[11px] text-c-text-muted mt-1">
                               {b.rationale}
                             </p>
                           ) : null}
@@ -1545,7 +1545,7 @@ export const ResourcesSection: React.FC = () => {
               {aiProposal.fteAdd.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    <span className="text-xs font-semibold text-c-text">
                       {t('initiatives.resourcesSection.fteToAdd')} ({aiProposal.fteAdd.length})
                     </span>
                     <button
@@ -1554,7 +1554,7 @@ export const ResourcesSection: React.FC = () => {
                           Object.fromEntries(aiProposal.fteAdd.map((_, idx) => [idx, true]))
                         )
                       }
-                      className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                      className="text-[11px] text-c-text-muted hover:text-c-text-secondary"
                     >
                       {t('initiatives.resourcesSection.selectAll')}
                     </button>
@@ -1575,20 +1575,20 @@ export const ResourcesSection: React.FC = () => {
                         />
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-medium text-slate-800 dark:text-white">
+                            <span className="text-sm font-medium text-c-text dark:text-white">
                               {r.name}
                             </span>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                            <span className="text-[11px] text-c-text-muted">
                               {r.role} · {r.allocationPercentage}%
                             </span>
                           </div>
                           {r.notes ? (
-                            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 whitespace-pre-wrap">
+                            <p className="text-xs text-c-text-secondary mt-0.5 whitespace-pre-wrap">
                               {r.notes}
                             </p>
                           ) : null}
                           {r.rationale ? (
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                            <p className="text-[11px] text-c-text-muted mt-1">
                               {r.rationale}
                             </p>
                           ) : null}
@@ -1602,7 +1602,7 @@ export const ResourcesSection: React.FC = () => {
               {aiProposal.toolsAdd.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    <span className="text-xs font-semibold text-c-text">
                       {t('initiatives.resourcesSection.toolsToAdd')} ({aiProposal.toolsAdd.length})
                     </span>
                     <button
@@ -1611,7 +1611,7 @@ export const ResourcesSection: React.FC = () => {
                           Object.fromEntries(aiProposal.toolsAdd.map((_, idx) => [idx, true]))
                         )
                       }
-                      className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                      className="text-[11px] text-c-text-muted hover:text-c-text-secondary"
                     >
                       {t('initiatives.resourcesSection.selectAll')}
                     </button>
@@ -1632,25 +1632,25 @@ export const ResourcesSection: React.FC = () => {
                         />
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-medium text-slate-800 dark:text-white">
+                            <span className="text-sm font-medium text-c-text dark:text-white">
                               {tool.name}
                             </span>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                            <span className="text-[11px] text-c-text-muted">
                               {tool.category} · {tool.status}
                             </span>
                           </div>
                           {tool.vendor ? (
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            <p className="text-[11px] text-c-text-muted mt-0.5">
                               {t('initiatives.resourcesSection.vendor')}: {tool.vendor}
                             </p>
                           ) : null}
                           {tool.notes ? (
-                            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 whitespace-pre-wrap">
+                            <p className="text-xs text-c-text-secondary mt-0.5 whitespace-pre-wrap">
                               {tool.notes}
                             </p>
                           ) : null}
                           {tool.rationale ? (
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                            <p className="text-[11px] text-c-text-muted mt-1">
                               {tool.rationale}
                             </p>
                           ) : null}
@@ -1664,7 +1664,7 @@ export const ResourcesSection: React.FC = () => {
               {aiProposal.intangibleAdd.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    <span className="text-xs font-semibold text-c-text">
                       {t('initiatives.resourcesSection.intangiblesToAdd')} (
                       {aiProposal.intangibleAdd.length})
                     </span>
@@ -1674,7 +1674,7 @@ export const ResourcesSection: React.FC = () => {
                           Object.fromEntries(aiProposal.intangibleAdd.map((_, idx) => [idx, true]))
                         )
                       }
-                      className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                      className="text-[11px] text-c-text-muted hover:text-c-text-secondary"
                     >
                       {t('initiatives.resourcesSection.selectAll')}
                     </button>
@@ -1695,25 +1695,25 @@ export const ResourcesSection: React.FC = () => {
                         />
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-medium text-slate-800 dark:text-white">
+                            <span className="text-sm font-medium text-c-text dark:text-white">
                               {a.name}
                             </span>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                            <span className="text-[11px] text-c-text-muted">
                               {a.assetType} · {a.status}
                             </span>
                           </div>
                           {a.provider ? (
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            <p className="text-[11px] text-c-text-muted mt-0.5">
                               {t('initiatives.resourcesSection.provider')}: {a.provider}
                             </p>
                           ) : null}
                           {a.notes ? (
-                            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 whitespace-pre-wrap">
+                            <p className="text-xs text-c-text-secondary mt-0.5 whitespace-pre-wrap">
                               {a.notes}
                             </p>
                           ) : null}
                           {a.rationale ? (
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                            <p className="text-[11px] text-c-text-muted mt-1">
                               {a.rationale}
                             </p>
                           ) : null}
@@ -1729,14 +1729,14 @@ export const ResourcesSection: React.FC = () => {
               <button
                 onClick={closeAIModal}
                 disabled={aiBusy}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50"
               >
                 {t('initiatives.resourcesSection.cancel')}
               </button>
               <button
                 onClick={() => void applyProposal()}
                 disabled={aiBusy || !hasAnyAdd}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50"
               >
                 {aiBusy ? <Loader2 size={13} className="animate-spin" /> : null}
                 {t('initiatives.resourcesSection.apply')}
@@ -1861,11 +1861,11 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2.5">
           <DollarSign size={16} className="text-emerald-500" />
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+          <h3 className="text-sm font-semibold text-c-text dark:text-white">
             {t('initiatives.resourcesSection.budget')}
           </h3>
           {items.length > 0 && (
-            <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-medium text-c-text-muted bg-c-surface-raised px-2 py-0.5 rounded-full">
               {items.length}
             </span>
           )}
@@ -1877,14 +1877,14 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+          className="inline-flex items-center gap-1 text-xs font-medium text-c-text-muted hover:text-c-text transition-colors"
         >
           <Plus size={12} />
           {t('initiatives.resourcesSection.addItem')}
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-navy-700/40">
+      <div className="overflow-x-auto rounded-xl border border-c-border dark:border-navy-700/40">
         <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full text-sm table-fixed">
           <colgroup>
             <col style={{ width: '5%' }} />
@@ -1896,7 +1896,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
             <col style={{ width: '4%' }} />
           </colgroup>
           <thead className="sticky top-0 z-10">
-            <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700/40">
+            <tr className="text-[10px] uppercase tracking-wider font-semibold text-c-text-muted bg-c-bg border-b border-c-border dark:border-navy-700/40">
               <th className="text-right py-2.5 pl-3 pr-2">#</th>
               <th className="text-left py-2.5 pl-3 pr-2">
                 {t('initiatives.resourcesSection.category')}
@@ -1941,10 +1941,10 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   className="group hover:bg-slate-50/50 dark:hover:bg-navy-800/20 transition-colors"
                 >
-                  <td className="py-2.5 pl-3 pr-2 text-xs text-right text-slate-500">{idx + 1}</td>
-                  <td className="py-2.5 pl-3 pr-2 text-slate-700 dark:text-slate-200 truncate">
+                  <td className="py-2.5 pl-3 pr-2 text-xs text-right text-c-text-muted">{idx + 1}</td>
+                  <td className="py-2.5 pl-3 pr-2 text-c-text truncate">
                     <span className="inline-flex items-center gap-1.5">
-                      <Briefcase size={12} className="text-slate-600 flex-shrink-0" />
+                      <Briefcase size={12} className="text-c-text-secondary flex-shrink-0" />
                       {BUDGET_CATEGORIES.find((c) => c.value === item.category)?.[
                         isPolish ? 'labelPl' : 'labelEn'
                       ] || item.category}
@@ -1957,12 +1957,12 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                       {item.costType}
                     </span>
                   </td>
-                  <td className="py-2.5 pr-2 text-right text-xs font-medium text-slate-700 dark:text-slate-200">
+                  <td className="py-2.5 pr-2 text-right text-xs font-medium text-c-text">
                     {fmtCurrency(item.amount, item.currency, isPolish)}
                   </td>
-                  <td className="py-2.5 pr-2 text-xs text-slate-500">{item.currency || 'PLN'}</td>
+                  <td className="py-2.5 pr-2 text-xs text-c-text-muted">{item.currency || 'PLN'}</td>
                   <td
-                    className="py-2.5 pr-2 text-xs text-slate-500 truncate"
+                    className="py-2.5 pr-2 text-xs text-c-text-muted truncate"
                     title={item.description || ''}
                   >
                     {item.description || '—'}
@@ -1973,12 +1973,12 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                         e.stopPropagation();
                         setMenuId((p) => (p === item.id ? null : item.id));
                       }}
-                      className="p-1 rounded-md text-slate-600 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                      className="p-1 rounded-md text-c-text-secondary hover:text-c-text transition-colors"
                     >
                       <MoreVertical size={14} />
                     </button>
                     {menuId === item.id && (
-                      <div className="absolute right-0 top-8 z-20 w-36 rounded-xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 p-1.5 shadow-xl">
+                      <div className="absolute right-0 top-8 z-20 w-36 rounded-xl border border-c-border dark:border-navy-700/70 bg-c-surface p-1.5 shadow-xl">
                         <button
                           onClick={() => {
                             setMenuId(null);
@@ -2001,7 +2001,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-emerald-50/30 dark:bg-emerald-500/5"
               >
-                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-600">
+                <td className="py-2 pl-3 pr-2 text-xs text-right text-c-text-secondary">
                   {items.length + 1}
                 </td>
                 <td className="py-2 pl-3 pr-2">
@@ -2077,7 +2077,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                     </button>
                     <button
                       onClick={() => setShowAdd(false)}
-                      className="p-1 rounded-md text-slate-600 hover:bg-slate-500/10 transition-colors"
+                      className="p-1 rounded-md text-c-text-secondary hover:bg-slate-500/10 transition-colors"
                       title={t('initiatives.resourcesSection.cancel')}
                     >
                       <X size={14} />
@@ -2088,7 +2088,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
             )}
             {items.length === 0 && !showAdd && (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-sm text-slate-600">
+                <td colSpan={7} className="py-8 text-center text-sm text-c-text-secondary">
                   {t('initiatives.resourcesSection.noBudgetItems')}
                 </td>
               </tr>
@@ -2098,7 +2098,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
       </div>
 
       {items.length > 0 && (
-        <div className="mt-2 flex items-center justify-end gap-4 text-xs text-slate-500 dark:text-slate-400">
+        <div className="mt-2 flex items-center justify-end gap-4 text-xs text-c-text-muted">
           <span>
             CAPEX:{' '}
             <span className="font-semibold text-blue-600 dark:text-blue-400">
@@ -2184,11 +2184,11 @@ const TeamTable: React.FC<TeamTableProps> = ({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2.5">
           <Users size={16} className="text-blue-500" />
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+          <h3 className="text-sm font-semibold text-c-text dark:text-white">
             {t('initiatives.resourcesSection.teamFteAllocation')}
           </h3>
           {items.length > 0 && (
-            <span className="text-[10px] font-medium text-slate-500 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-medium text-c-text-muted bg-c-surface-raised px-2 py-0.5 rounded-full">
               {items.length}
             </span>
           )}
@@ -2200,14 +2200,14 @@ const TeamTable: React.FC<TeamTableProps> = ({
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+          className="inline-flex items-center gap-1 text-xs font-medium text-c-text-muted hover:text-c-text transition-colors"
         >
           <Plus size={12} />
           {t('initiatives.resourcesSection.addItem')}
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-navy-700/40">
+      <div className="overflow-x-auto rounded-xl border border-c-border dark:border-navy-700/40">
         <table className="w-full text-sm table-fixed">
           <colgroup>
             <col style={{ width: '5%' }} />
@@ -2220,7 +2220,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
             <col style={{ width: '4%' }} />
           </colgroup>
           <thead className="sticky top-0 z-10">
-            <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700/40">
+            <tr className="text-[10px] uppercase tracking-wider font-semibold text-c-text-muted bg-c-bg border-b border-c-border dark:border-navy-700/40">
               <th className="text-right py-2.5 pl-3 pr-2">#</th>
               <th className="text-left py-2.5 pl-3 pr-2">
                 {t('initiatives.resourcesSection.name')}
@@ -2264,8 +2264,8 @@ const TeamTable: React.FC<TeamTableProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   className="group hover:bg-slate-50/50 dark:hover:bg-navy-800/20 transition-colors"
                 >
-                  <td className="py-2.5 pl-3 pr-2 text-xs text-right text-slate-500">{idx + 1}</td>
-                  <td className="py-2.5 pl-3 pr-2 text-slate-700 dark:text-slate-200 truncate">
+                  <td className="py-2.5 pl-3 pr-2 text-xs text-right text-c-text-muted">{idx + 1}</td>
+                  <td className="py-2.5 pl-3 pr-2 text-c-text truncate">
                     {item.name ||
                       (item.firstName ? `${item.firstName} ${item.lastName || ''}`.trim() : '—')}
                   </td>
@@ -2279,18 +2279,18 @@ const TeamTable: React.FC<TeamTableProps> = ({
                     </span>
                   </td>
                   <td className="py-2.5 pr-2 text-xs">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 font-medium">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-c-surface-raised text-c-text-secondary font-medium">
                       {item.allocationPercentage || 0}%
                     </span>
                   </td>
-                  <td className="py-2.5 pr-2 text-xs text-slate-500">
+                  <td className="py-2.5 pr-2 text-xs text-c-text-muted">
                     {item.startDate ? new Date(item.startDate).toLocaleDateString() : '—'}
                   </td>
-                  <td className="py-2.5 pr-2 text-xs text-slate-500">
+                  <td className="py-2.5 pr-2 text-xs text-c-text-muted">
                     {item.endDate ? new Date(item.endDate).toLocaleDateString() : '—'}
                   </td>
                   <td
-                    className="py-2.5 pr-2 text-xs text-slate-500 truncate"
+                    className="py-2.5 pr-2 text-xs text-c-text-muted truncate"
                     title={item.notes || ''}
                   >
                     {item.notes || '—'}
@@ -2301,12 +2301,12 @@ const TeamTable: React.FC<TeamTableProps> = ({
                         e.stopPropagation();
                         setMenuId((p) => (p === item.id ? null : item.id));
                       }}
-                      className="p-1 rounded-md text-slate-600 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                      className="p-1 rounded-md text-c-text-secondary hover:text-c-text transition-colors"
                     >
                       <MoreVertical size={14} />
                     </button>
                     {menuId === item.id && (
-                      <div className="absolute right-0 top-8 z-20 w-36 rounded-xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 p-1.5 shadow-xl">
+                      <div className="absolute right-0 top-8 z-20 w-36 rounded-xl border border-c-border dark:border-navy-700/70 bg-c-surface p-1.5 shadow-xl">
                         <button
                           onClick={() => {
                             setMenuId(null);
@@ -2329,7 +2329,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-blue-50/30 dark:bg-blue-500/5"
               >
-                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-600">
+                <td className="py-2 pl-3 pr-2 text-xs text-right text-c-text-secondary">
                   {items.length + 1}
                 </td>
                 <td className="py-2 pl-3 pr-2">
@@ -2413,7 +2413,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
                     </button>
                     <button
                       onClick={() => setShowAdd(false)}
-                      className="p-1 rounded-md text-slate-600 hover:bg-slate-500/10 transition-colors"
+                      className="p-1 rounded-md text-c-text-secondary hover:bg-slate-500/10 transition-colors"
                       title={t('initiatives.resourcesSection.cancel')}
                     >
                       <X size={14} />
@@ -2424,7 +2424,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
             )}
             {items.length === 0 && !showAdd && (
               <tr>
-                <td colSpan={8} className="py-8 text-center text-sm text-slate-600">
+                <td colSpan={8} className="py-8 text-center text-sm text-c-text-secondary">
                   {t('initiatives.resourcesSection.noTeamMembers')}
                 </td>
               </tr>
@@ -2434,7 +2434,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
       </div>
 
       {items.length > 0 && (
-        <div className="mt-2 flex items-center justify-end text-xs text-slate-500">
+        <div className="mt-2 flex items-center justify-end text-xs text-c-text-muted">
           {t('initiatives.resourcesSection.totalFte')}:{' '}
           <span className="ml-1 font-semibold text-blue-600 dark:text-blue-400">
             {totalFTE.toFixed(1)}
@@ -2509,25 +2509,25 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2.5">
           <Wrench size={16} className="text-indigo-500" />
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+          <h3 className="text-sm font-semibold text-c-text dark:text-white">
             {t('initiatives.resourcesSection.toolsInfrastructure')}
           </h3>
           {items.length > 0 && (
-            <span className="text-[10px] font-medium text-slate-500 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-medium text-c-text-muted bg-c-surface-raised px-2 py-0.5 rounded-full">
               {items.length}
             </span>
           )}
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+          className="inline-flex items-center gap-1 text-xs font-medium text-c-text-muted hover:text-c-text transition-colors"
         >
           <Plus size={12} />
           {t('initiatives.resourcesSection.addItem')}
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-navy-700/40">
+      <div className="overflow-x-auto rounded-xl border border-c-border dark:border-navy-700/40">
         <table className="w-full text-sm table-fixed">
           <colgroup>
             <col style={{ width: '5%' }} />
@@ -2540,7 +2540,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
             <col style={{ width: '4%' }} />
           </colgroup>
           <thead className="sticky top-0 z-10">
-            <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700/40">
+            <tr className="text-[10px] uppercase tracking-wider font-semibold text-c-text-muted bg-c-bg border-b border-c-border dark:border-navy-700/40">
               <th className="text-right py-2.5 pl-3 pr-2">#</th>
               <th className="text-left py-2.5 pl-3 pr-2">
                 {t('initiatives.resourcesSection.name')}
@@ -2584,22 +2584,22 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   className="group hover:bg-slate-50/50 dark:hover:bg-navy-800/20 transition-colors"
                 >
-                  <td className="py-2.5 pl-3 pr-2 text-xs text-right text-slate-500">{idx + 1}</td>
-                  <td className="py-2.5 pl-3 pr-2 text-slate-700 dark:text-slate-200 truncate">
+                  <td className="py-2.5 pl-3 pr-2 text-xs text-right text-c-text-muted">{idx + 1}</td>
+                  <td className="py-2.5 pl-3 pr-2 text-c-text truncate">
                     {item.name || '—'}
                   </td>
-                  <td className="py-2.5 pr-2 text-xs text-slate-500">
+                  <td className="py-2.5 pr-2 text-xs text-c-text-muted">
                     {TOOL_CATEGORIES.find((c) => c.value === item.category)?.[
                       isPolish ? 'labelPl' : 'labelEn'
                     ] || item.category}
                   </td>
-                  <td className="py-2.5 pr-2 text-xs text-slate-500 truncate">
+                  <td className="py-2.5 pr-2 text-xs text-c-text-muted truncate">
                     {item.vendor || '—'}
                   </td>
-                  <td className="py-2.5 pr-2 text-right text-xs font-medium text-slate-700 dark:text-slate-200">
+                  <td className="py-2.5 pr-2 text-right text-xs font-medium text-c-text">
                     {item.licenseCost ? fmtCurrency(item.licenseCost, 'PLN', isPolish) : '—'}
                   </td>
-                  <td className="py-2.5 pr-2 text-xs text-slate-500">
+                  <td className="py-2.5 pr-2 text-xs text-c-text-muted">
                     {LICENSE_TYPE_OPTIONS.find((l) => l.value === item.licenseType)?.[
                       isPolish ? 'labelPl' : 'labelEn'
                     ] ||
@@ -2620,12 +2620,12 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                         e.stopPropagation();
                         setMenuId((p) => (p === item.id ? null : item.id));
                       }}
-                      className="p-1 rounded-md text-slate-600 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                      className="p-1 rounded-md text-c-text-secondary hover:text-c-text transition-colors"
                     >
                       <MoreVertical size={14} />
                     </button>
                     {menuId === item.id && (
-                      <div className="absolute right-0 top-8 z-20 w-36 rounded-xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 p-1.5 shadow-xl">
+                      <div className="absolute right-0 top-8 z-20 w-36 rounded-xl border border-c-border dark:border-navy-700/70 bg-c-surface p-1.5 shadow-xl">
                         <button
                           onClick={() => {
                             setMenuId(null);
@@ -2648,7 +2648,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-indigo-50/30 dark:bg-indigo-500/5"
               >
-                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-600">
+                <td className="py-2 pl-3 pr-2 text-xs text-right text-c-text-secondary">
                   {items.length + 1}
                 </td>
                 <td className="py-2 pl-3 pr-2">
@@ -2740,7 +2740,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                     </button>
                     <button
                       onClick={() => setShowAdd(false)}
-                      className="p-1 rounded-md text-slate-600 hover:bg-slate-500/10 transition-colors"
+                      className="p-1 rounded-md text-c-text-secondary hover:bg-slate-500/10 transition-colors"
                       title={t('initiatives.resourcesSection.cancel')}
                     >
                       <X size={14} />
@@ -2751,7 +2751,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
             )}
             {items.length === 0 && !showAdd && (
               <tr>
-                <td colSpan={8} className="py-8 text-center text-sm text-slate-600">
+                <td colSpan={8} className="py-8 text-center text-sm text-c-text-secondary">
                   {t('initiatives.resourcesSection.noTools')}
                 </td>
               </tr>
@@ -2761,7 +2761,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
       </div>
 
       {items.length > 0 && totalCost > 0 && (
-        <div className="mt-2 flex items-center justify-end text-xs text-slate-500">
+        <div className="mt-2 flex items-center justify-end text-xs text-c-text-muted">
           {t('initiatives.resourcesSection.totalLicenseCost')}:{' '}
           <span className="ml-1 font-semibold text-indigo-600 dark:text-indigo-400">
             {fmtCurrency(totalCost, 'PLN', isPolish)}
@@ -2855,13 +2855,13 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
   const typeIcon = (assetType: string) => {
     switch (assetType) {
       case 'training':
-        return <GraduationCap size={12} className="text-primary-400 flex-shrink-0" />;
+        return <GraduationCap size={12} className="text-c-info flex-shrink-0" />;
       case 'certification':
         return <BookOpen size={12} className="text-blue-400 flex-shrink-0" />;
       case 'knowledge':
         return <BookOpen size={12} className="text-amber-400 flex-shrink-0" />;
       default:
-        return <Briefcase size={12} className="text-slate-600 flex-shrink-0" />;
+        return <Briefcase size={12} className="text-c-text-secondary flex-shrink-0" />;
     }
   };
 
@@ -2869,31 +2869,31 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
     <div>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2.5">
-          <GraduationCap size={16} className="text-primary-500" />
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+          <GraduationCap size={16} className="text-c-info" />
+          <h3 className="text-sm font-semibold text-c-text dark:text-white">
             {t('initiatives.resourcesSection.licensesTrainingIntangibles')}
           </h3>
           {items.length > 0 && (
-            <span className="text-[10px] font-medium text-slate-500 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-medium text-c-text-muted bg-c-surface-raised px-2 py-0.5 rounded-full">
               {items.length}
             </span>
           )}
           {items.length > 0 && totalCost > 0 && (
-            <span className="text-[10px] font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-medium text-c-info bg-c-surface-raised px-2 py-0.5 rounded-full">
               {fmtCurrency(totalCost, cur, isPolish)}
             </span>
           )}
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+          className="inline-flex items-center gap-1 text-xs font-medium text-c-text-muted hover:text-c-text transition-colors"
         >
           <Plus size={12} />
           {t('initiatives.resourcesSection.addItem')}
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-navy-700/40">
+      <div className="overflow-x-auto rounded-xl border border-c-border dark:border-navy-700/40">
         <table className="w-full text-sm table-fixed">
           <colgroup>
             <col style={{ width: '4%' }} />
@@ -2907,7 +2907,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
             <col style={{ width: '4%' }} />
           </colgroup>
           <thead className="sticky top-0 z-10">
-            <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700/40">
+            <tr className="text-[10px] uppercase tracking-wider font-semibold text-c-text-muted bg-c-bg border-b border-c-border dark:border-navy-700/40">
               <th className="text-right py-2.5 pl-3 pr-2">#</th>
               <th className="text-left py-2.5 pr-2">{t('initiatives.resourcesSection.type')}</th>
               <th className="text-left py-2.5 pr-2">{t('initiatives.resourcesSection.name')}</th>
@@ -2954,30 +2954,30 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   className="group hover:bg-slate-50/50 dark:hover:bg-navy-800/20 transition-colors"
                 >
-                  <td className="py-2.5 pl-3 pr-2 text-xs text-right text-slate-500">{idx + 1}</td>
+                  <td className="py-2.5 pl-3 pr-2 text-xs text-right text-c-text-muted">{idx + 1}</td>
                   <td className="py-2.5 pr-2">
                     <span className="inline-flex items-center gap-1.5 text-xs">
                       {typeIcon(item.assetType)}
-                      <span className="text-slate-600 dark:text-slate-300">
+                      <span className="text-c-text-secondary">
                         {INTANGIBLE_TYPE_OPTIONS.find((t) => t.value === item.assetType)?.[
                           isPolish ? 'labelPl' : 'labelEn'
                         ] || item.assetType}
                       </span>
                     </span>
                   </td>
-                  <td className="py-2.5 pr-2 text-slate-700 dark:text-slate-200 truncate">
+                  <td className="py-2.5 pr-2 text-c-text truncate">
                     {item.name}
                   </td>
-                  <td className="py-2.5 pr-2 text-xs text-slate-500 truncate">
+                  <td className="py-2.5 pr-2 text-xs text-c-text-muted truncate">
                     {item.provider || '—'}
                   </td>
-                  <td className="py-2.5 pr-2 text-right text-xs font-medium text-slate-700 dark:text-slate-200">
+                  <td className="py-2.5 pr-2 text-right text-xs font-medium text-c-text">
                     {item.cost ? fmtCurrency(item.cost, item.currency, isPolish) : '—'}
                   </td>
-                  <td className="py-2.5 pr-2 text-xs text-slate-500">
+                  <td className="py-2.5 pr-2 text-xs text-c-text-muted">
                     {item.validFrom ? new Date(item.validFrom).toLocaleDateString() : '—'}
                   </td>
-                  <td className="py-2.5 pr-2 text-xs text-slate-500">
+                  <td className="py-2.5 pr-2 text-xs text-c-text-muted">
                     {item.validUntil ? new Date(item.validUntil).toLocaleDateString() : '—'}
                   </td>
                   <td className="py-2.5 pr-2">
@@ -2994,12 +2994,12 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                         e.stopPropagation();
                         setMenuId((p) => (p === item.id ? null : item.id));
                       }}
-                      className="p-1 rounded-md text-slate-600 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                      className="p-1 rounded-md text-c-text-secondary hover:text-c-text transition-colors"
                     >
                       <MoreVertical size={14} />
                     </button>
                     {menuId === item.id && (
-                      <div className="absolute right-0 top-8 z-20 w-36 rounded-xl border border-slate-200 dark:border-navy-700/70 bg-white dark:bg-navy-900 p-1.5 shadow-xl">
+                      <div className="absolute right-0 top-8 z-20 w-36 rounded-xl border border-c-border dark:border-navy-700/70 bg-c-surface p-1.5 shadow-xl">
                         <button
                           onClick={() => {
                             setMenuId(null);
@@ -3020,9 +3020,9 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
               <motion.tr
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-primary-50/30 dark:bg-primary-500/5"
+                className="bg-c-accent-soft"
               >
-                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-600">
+                <td className="py-2 pl-3 pr-2 text-xs text-right text-c-text-secondary">
                   {items.length + 1}
                 </td>
                 <td className="py-2 pr-2">
@@ -3110,14 +3110,14 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                     <button
                       onClick={handleSubmit}
                       disabled={!newName.trim()}
-                      className="p-1 rounded-md text-primary-500 hover:bg-primary-500/10 disabled:opacity-30 transition-colors"
+                      className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised disabled:opacity-30 transition-colors"
                       title={t('initiatives.resourcesSection.save')}
                     >
                       <Check size={14} />
                     </button>
                     <button
                       onClick={() => setShowAdd(false)}
-                      className="p-1 rounded-md text-slate-600 hover:bg-slate-500/10 transition-colors"
+                      className="p-1 rounded-md text-c-text-secondary hover:bg-slate-500/10 transition-colors"
                       title={t('initiatives.resourcesSection.cancel')}
                     >
                       <X size={14} />
@@ -3128,7 +3128,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
             )}
             {items.length === 0 && !showAdd && (
               <tr>
-                <td colSpan={9} className="py-8 text-center text-sm text-slate-600">
+                <td colSpan={9} className="py-8 text-center text-sm text-c-text-secondary">
                   {t('initiatives.resourcesSection.noIntangibles')}
                 </td>
               </tr>
@@ -3138,9 +3138,9 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
       </div>
 
       {items.length > 0 && totalCost > 0 && (
-        <div className="mt-2 flex items-center justify-end text-xs text-slate-500">
+        <div className="mt-2 flex items-center justify-end text-xs text-c-text-muted">
           {t('initiatives.resourcesSection.totalCost')}:{' '}
-          <span className="ml-1 font-semibold text-primary-600 dark:text-primary-400">
+          <span className="ml-1 font-semibold text-c-text">
             {fmtCurrency(totalCost, cur, isPolish)}
           </span>
         </div>

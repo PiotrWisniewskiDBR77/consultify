@@ -95,18 +95,18 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
 
   // Styling
   const cardClass =
-    'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-6';
+    'bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg p-6';
   const sectionTitleClass =
-    'text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2';
+    'text-sm font-bold text-navy-900 mb-4 uppercase tracking-wider flex items-center gap-2';
   const inputClass =
-    'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
-  const labelClass = 'text-xs font-medium text-slate-500 dark:text-slate-400';
+    'w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-md text-navy-900 focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none transition-all';
+  const labelClass = 'text-xs font-medium text-c-text-muted';
   const toggleClass = (enabled: boolean) =>
     `relative w-12 h-6 rounded-full transition-colors ${
-      enabled ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
+      enabled ? 'bg-c-accent' : 'bg-c-surface-raised'
     }`;
   const toggleKnobClass = (enabled: boolean) =>
-    `absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;
+    `absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;
 
   const ToggleSwitch = ({
     enabled,
@@ -119,10 +119,10 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
     label: string;
     description: string;
   }) => (
-    <div className="flex items-center justify-between py-3 border-b border-slate-200 dark:border-navy-700 last:border-0">
+    <div className="flex items-center justify-between py-3 border-b border-c-border-subtle dark:border-navy-700 last:border-0">
       <div className="flex-1">
-        <p className="text-sm font-medium text-navy-900 dark:text-white">{label}</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>
+        <p className="text-sm font-medium text-navy-900">{label}</p>
+        <p className="text-xs text-c-text-muted mt-0.5">{description}</p>
       </div>
       <button onClick={() => onChange(!enabled)} className={toggleClass(enabled)}>
         <span className={toggleKnobClass(enabled)} />
@@ -157,10 +157,10 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-bold text-navy-900 dark:text-white">
+          <h3 className="text-lg font-bold text-navy-900">
             {t('settings.quietHours.title', 'Quiet Hours / Do Not Disturb')}
           </h3>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t(
               'settings.quietHours.description',
               'Schedule times when you want to minimize notifications'
@@ -170,7 +170,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary-500/20"
+          className="flex items-center gap-2 px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-c-accent"
         >
           {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {isSaving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
@@ -201,19 +201,19 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
-              className={`p-2 rounded-lg ${quietHours.enabled ? 'bg-indigo-100 dark:bg-indigo-500/20' : 'bg-slate-100 dark:bg-white/10'}`}
+              className={`p-2 rounded-lg ${quietHours.enabled ? 'bg-indigo-100 dark:bg-indigo-500/20' : 'bg-c-surface-raised'}`}
             >
               {quietHours.enabled ? (
                 <BellOff size={20} className="text-indigo-600 dark:text-indigo-400" />
               ) : (
-                <Bell size={20} className="text-slate-600 dark:text-slate-500" />
+                <Bell size={20} className="text-c-text-secondary" />
               )}
             </div>
             <div>
-              <p className="font-medium text-navy-900 dark:text-white">
+              <p className="font-medium text-navy-900">
                 {t('settings.quietHours.enable', 'Enable Quiet Hours')}
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t('settings.quietHours.enableDesc', 'Pause notifications during scheduled times')}
               </p>
             </div>
@@ -232,7 +232,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
           {/* Schedule */}
           <div className={cardClass}>
             <h4 className={sectionTitleClass}>
-              <Clock size={16} className="text-primary-500" />
+              <Clock size={16} className="text-c-accent" />
               {t('settings.quietHours.schedule', 'Schedule')}
             </h4>
 
@@ -276,7 +276,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       quietHours.daysOfWeek.includes(day.value)
                         ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border-2 border-indigo-500'
-                        : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 border-2 border-transparent hover:border-slate-300 dark:border-navy-700'
+                        : 'bg-c-surface-raised text-c-text-secondary border-2 border-transparent hover:border-c-border dark:border-navy-700'
                     }`}
                     title={day.fullLabel}
                   >
@@ -290,11 +290,11 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
           {/* Exceptions */}
           <div className={cardClass}>
             <h4 className={sectionTitleClass}>
-              <AlertTriangle size={16} className="text-primary-500" />
+              <AlertTriangle size={16} className="text-c-accent" />
               {t('settings.quietHours.exceptions', 'Exceptions')}
             </h4>
 
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+            <p className="text-sm text-c-text-muted mb-4">
               {t(
                 'settings.quietHours.exceptionsDesc',
                 'Allow certain types of notifications even during quiet hours'
@@ -337,16 +337,16 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
           {/* Auto Reply */}
           <div className={cardClass}>
             <h4 className={sectionTitleClass}>
-              <MessageCircle size={16} className="text-primary-500" />
+              <MessageCircle size={16} className="text-c-accent" />
               {t('settings.quietHours.autoReply', 'Auto Reply')}
             </h4>
 
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-sm font-medium text-navy-900 dark:text-white">
+                <p className="text-sm font-medium text-navy-900">
                   {t('settings.quietHours.enableAutoReply', 'Enable auto-reply')}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-c-text-muted">
                   {t(
                     'settings.quietHours.enableAutoReplyDesc',
                     'Automatically respond to messages during quiet hours'
@@ -403,7 +403,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
                     daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
                   }))
                 }
-                className="px-4 py-2 bg-slate-100 dark:bg-navy-950 hover:bg-slate-200 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300 rounded-lg text-sm transition-colors"
+                className="px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-navy-800 text-c-text-secondary rounded-lg text-sm transition-colors"
               >
                 {t('settings.quietHours.presetNights', 'Nights (10pm-8am, every day)')}
               </button>
@@ -416,7 +416,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
                     daysOfWeek: [0, 6],
                   }))
                 }
-                className="px-4 py-2 bg-slate-100 dark:bg-navy-950 hover:bg-slate-200 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300 rounded-lg text-sm transition-colors"
+                className="px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-navy-800 text-c-text-secondary rounded-lg text-sm transition-colors"
               >
                 {t('settings.quietHours.presetWeekends', 'Weekends only')}
               </button>
@@ -429,7 +429,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
                     daysOfWeek: [1, 2, 3, 4, 5],
                   }))
                 }
-                className="px-4 py-2 bg-slate-100 dark:bg-navy-950 hover:bg-slate-200 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300 rounded-lg text-sm transition-colors"
+                className="px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-navy-800 text-c-text-secondary rounded-lg text-sm transition-colors"
               >
                 {t('settings.quietHours.presetAfterWork', 'After work hours (6pm-9am, weekdays)')}
               </button>

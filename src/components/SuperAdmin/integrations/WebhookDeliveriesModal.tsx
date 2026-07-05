@@ -115,12 +115,12 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-slate-900 border border-white/10 rounded-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-c-surface border border-white/10 rounded-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/10">
           <div>
-            <h3 className="text-lg font-semibold text-white">Delivery History</h3>
+            <h3 className="text-lg font-semibold text-c-text">Delivery History</h3>
             <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
               Recent webhook deliveries and their status
             </p>
@@ -128,7 +128,7 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={fetchDeliveries}
-              className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+              className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors"
             >
               <RefreshCw
                 size={18}
@@ -137,7 +137,7 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
             </button>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+              className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors"
             >
               <X size={18} className="text-slate-600 dark:text-slate-500" />
             </button>
@@ -160,18 +160,18 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
               {deliveries.map((delivery) => (
                 <div
                   key={delivery.id}
-                  className="bg-slate-800/50 border border-white/[0.06] rounded-xl overflow-hidden"
+                  className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl overflow-hidden"
                 >
                   {/* Delivery Header */}
                   <div
-                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-800/80 transition-colors"
+                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-c-surface-raised/80 transition-colors"
                     onClick={() => setExpandedId(expandedId === delivery.id ? null : delivery.id)}
                   >
                     <div className="flex items-center gap-4">
                       {getStatusIcon(delivery)}
                       <div>
                         <div className="flex items-center gap-3">
-                          <span className="font-medium text-white">{delivery.event_type}</span>
+                          <span className="font-medium text-c-text">{delivery.event_type}</span>
                           {delivery.response_status && (
                             <span
                               className={`font-mono text-sm ${getStatusColor(delivery.response_status)}`}
@@ -236,7 +236,7 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
                             Request Payload
                           </span>
                         </div>
-                        <pre className="bg-slate-900/50 rounded-lg p-3 text-xs text-slate-600 overflow-x-auto font-mono">
+                        <pre className="bg-c-surface/50 rounded-lg p-3 text-xs text-slate-600 overflow-x-auto font-mono">
                           {formatJson(delivery.payload)}
                         </pre>
                       </div>
@@ -250,7 +250,7 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
                               Response Body
                             </span>
                           </div>
-                          <pre className="bg-slate-900/50 rounded-lg p-3 text-xs text-slate-600 overflow-x-auto font-mono max-h-48 overflow-y-auto">
+                          <pre className="bg-c-surface/50 rounded-lg p-3 text-xs text-slate-600 overflow-x-auto font-mono max-h-48 overflow-y-auto">
                             {formatJson(delivery.response_body)}
                           </pre>
                         </div>
@@ -265,7 +265,7 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
                               Request Headers
                             </span>
                           </div>
-                          <pre className="bg-slate-900/50 rounded-lg p-3 text-xs text-slate-600 overflow-x-auto font-mono">
+                          <pre className="bg-c-surface/50 rounded-lg p-3 text-xs text-slate-600 overflow-x-auto font-mono">
                             {formatJson(delivery.request_headers)}
                           </pre>
                         </div>

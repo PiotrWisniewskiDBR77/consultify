@@ -208,7 +208,7 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-overlay flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       >
         <motion.div
@@ -550,7 +550,7 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
             <button
               onClick={handleConfirm}
               disabled={submitting || (outputType !== 'initiatives' && useTemplate && !templateId)}
-              className="px-4 py-2 rounded-full bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 rounded-full bg-c-text hover:bg-c-text-secondary text-c-bg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {submitting ? (
                 <>

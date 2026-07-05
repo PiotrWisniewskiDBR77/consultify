@@ -80,3 +80,59 @@ export function buildScheduleItems(source: ScheduleSource): ScheduleItem[] {
 
   return items;
 }
+
+/**
+ * Critical path = the longest-duration chain through the dependency DAG.
+ * Returns the ScheduleItem.ids on that chain (empty when no edges).
+ * Defensive against cycles; durations are inclusive day counts (min 1).
+ */
+export function computeCriticalPath(
+  items: ScheduleItem[],
+  edges: Array<{ fromId: string; toId: string }>
+): string[] {
+  if (!items.length || !edges.length) return [];
+  const byId = new Map(items.map((i) => [i.id, i]));
+  const DAY = 24 * 60 * 60 * 1000;
+  const dur = (id: string): number => {
+    const it = byId.get(id);
+    if (!it || !it.start) return 1;
+    const s = new Date(it.start).getTime();
+    const e = new Date(it.end || it.start).getTime();
+    if (Number.isNaN(s) || Number.isNaN(e)) return 1;
+    return Math.max(1, Math.round((e - s) / DAY) + 1);
+  };
+  const preds = new Map<string, string[]>();
+  const nodes = new Set<string>();
+  for (const e of edges) {
+    if (!byId.has(e.fromId) || !byId.has(e.toId)) continue;
+    nodes.add(e.fromId);
+    nodes.add(e.toId);
+    if (!preds.has(e.toId)) preds.set(e.toId, []);
+    preds.get(e.toId)!.push(e.fromId);
+  }
+  if (nodes.size === 0) return [];
+  const memo = new Map<string, { len: number; chain: string[] }>();
+  const visiting = new Set<string>();
+  const longestTo = (id: string): { len: number; chain: string[] } => {
+    const cached = memo.get(id);
+    if (cached) return cached;
+    if (visiting.has(id)) return { len: dur(id), chain: [id] }; // cycle guard
+    visiting.add(id);
+    let best = { len: dur(id), chain: [id] };
+    for (const p of preds.get(id) || []) {
+      const sub = longestTo(p);
+      if (sub.len + dur(id) > best.len) {
+        best = { len: sub.len + dur(id), chain: [...sub.chain, id] };
+      }
+    }
+    visiting.delete(id);
+    memo.set(id, best);
+    return best;
+  };
+  let overall = { len: 0, chain: [] as string[] };
+  for (const id of nodes) {
+    const r = longestTo(id);
+    if (r.len > overall.len) overall = r;
+  }
+  return overall.chain;
+}

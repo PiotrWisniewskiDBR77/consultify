@@ -49,8 +49,8 @@ const PROVIDERS = [
       </svg>
     ),
     color:
-      'bg-white border border-slate-200 dark:border-white/20 hover:bg-slate-50 dark:hover:bg-white/10',
-    textColor: 'text-slate-700 dark:text-white',
+      'bg-c-surface border border-c-border-subtle hover:bg-c-surface-raised dark:hover:bg-c-surface-raised',
+    textColor: 'text-c-text-secondary',
     description: 'settings.connectedAccounts.googleDesc',
     benefits: ['Quick sign-in', 'Sync calendar', 'Import contacts'],
   },
@@ -154,10 +154,10 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+        <h3 className="text-lg font-semibold text-c-text">
           {t('settings.connectedAccounts.title', 'Connected Accounts')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-sm text-c-text-muted mt-1">
           {t(
             'settings.connectedAccounts.subtitle',
             'Connect external accounts for easier sign-in and enhanced features'
@@ -189,17 +189,17 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
           return (
             <div
               key={provider.id}
-              className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4"
+              className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-white/10 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-c-surface-raised flex items-center justify-center">
                     <provider.icon className="w-6 h-6" />
                   </div>
 
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="font-semibold text-slate-900 dark:text-white">
+                      <h4 className="font-semibold text-c-text">
                         {provider.name}
                       </h4>
                       {connected && (
@@ -212,16 +212,16 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
 
                     {connected && connectionInfo ? (
                       <div className="mt-1">
-                        <p className="text-sm text-slate-600 dark:text-slate-300">
+                        <p className="text-sm text-c-text-secondary">
                           {connectionInfo.email || connectionInfo.displayName}
                         </p>
-                        <p className="text-xs text-slate-600 dark:text-slate-500 mt-0.5">
+                        <p className="text-xs text-c-text-secondary mt-0.5">
                           {t('settings.connectedAccounts.connectedOn', 'Connected')}{' '}
                           {new Date(connectionInfo.connectedAt).toLocaleDateString()}
                         </p>
                       </div>
                     ) : (
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                      <p className="text-sm text-c-text-muted mt-1">
                         {t(provider.description, provider.description)}
                       </p>
                     )}
@@ -231,7 +231,7 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
                         {provider.benefits.map((benefit, idx) => (
                           <span
                             key={idx}
-                            className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/5 px-2 py-1 rounded"
+                            className="text-xs text-c-text-muted bg-c-surface-raised px-2 py-1 rounded"
                           >
                             {benefit}
                           </span>
@@ -276,14 +276,14 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
         })}
       </div>
 
-      <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-navy-700">
+      <div className="p-4 bg-c-surface-raised rounded-lg border border-c-border-subtle dark:border-navy-700">
         <div className="flex items-start gap-3">
-          <Shield size={18} className="text-slate-500 dark:text-slate-400 mt-0.5 flex-shrink-0" />
+          <Shield size={18} className="text-c-text-muted mt-0.5 flex-shrink-0" />
           <div>
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            <p className="text-sm font-medium text-c-text-secondary">
               {t('settings.connectedAccounts.securityTitle', 'Your data is secure')}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-xs text-c-text-muted mt-1">
               {t(
                 'settings.connectedAccounts.securityText',
                 'We only request minimal permissions. Your credentials are never stored. You can disconnect at any time.'

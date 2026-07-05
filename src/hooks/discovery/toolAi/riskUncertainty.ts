@@ -6,6 +6,7 @@ import type {
 } from '@/store/useToolStore';
 
 import type { ToolAiPendingAction } from './dynamicSwot';
+import { pickW2SummaryFields } from './w2SummaryFields';
 
 interface RiskActionHandlers {
   updateInputData: (data: Partial<RiskUncertaintyData>) => void;
@@ -282,6 +283,7 @@ export function applyRiskPendingAction({
     actions.updateInputData({
       summary: {
         proposalId: 'risk-summary',
+        ...pickW2SummaryFields(summaryObj),
         executiveSummary:
           typeof summaryObj?.executiveSummary === 'string'
             ? summaryObj.executiveSummary

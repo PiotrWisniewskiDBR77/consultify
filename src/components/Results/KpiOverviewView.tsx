@@ -38,16 +38,16 @@ const CockpitCard: React.FC<CockpitCardProps> = ({
     <Element
       type={onClick ? 'button' : undefined}
       onClick={onClick}
-      className={`w-full rounded-2xl border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.03] p-4 text-left transition-colors ${onClick ? 'hover:bg-white dark:hover:bg-white/[0.05]' : ''}`}
+      className={`w-full rounded-2xl border border-c-border-subtle bg-c-surface p-4 text-left transition-colors ${onClick ? 'hover:bg-c-surface-raised' : ''}`}
     >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
             {title}
           </div>
           <div className={`mt-2 text-2xl font-semibold ${accentClassName}`}>{value}</div>
         </div>
-        <div className="max-w-[180px] text-right text-xs text-slate-500 dark:text-slate-400">
+        <div className="max-w-[180px] text-right text-xs text-c-text-muted">
           {hint}
         </div>
       </div>
@@ -89,19 +89,19 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
 
   return (
     <div className="p-4 space-y-4">
-      <div className="rounded-2xl border border-slate-200/70 dark:border-white/[0.06] bg-gradient-to-br from-white to-slate-50 dark:from-navy-900 dark:to-navy-950 p-5">
+      <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <div className="text-xs font-semibold uppercase tracking-wider text-c-text-muted">
               {t('results.kpi.overview.eyebrow', 'KPI overview')}
             </div>
-            <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">
+            <h2 className="mt-1 text-xl font-semibold text-c-text">
               {t(
                 'results.kpi.overview.title',
                 'Closed-loop cockpit for signal, report, reconciliation, and next action'
               )}
             </h2>
-            <p className="mt-2 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
+            <p className="mt-2 max-w-3xl text-sm text-c-text-secondary">
               {t(
                 'results.kpi.overview.copy',
                 'Use this surface to triage stale signals, inspect degraded KPIs, move into scorecards, and close the loop with reconciliation and next actions.'
@@ -121,7 +121,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                   },
                 ])
               }
-              className="inline-flex items-center gap-2 rounded-full bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-400 transition-colors"
+              className="inline-flex items-center gap-2 rounded-full bg-c-text px-4 py-2 text-sm font-medium text-c-bg hover:opacity-90 transition-opacity"
             >
               <AlertTriangle size={16} />
               {t('results.kpi.overview.cta.review', 'Open data / signals')}
@@ -129,7 +129,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
             <button
               type="button"
               onClick={onOpenScorecards}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.03] px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+              className="inline-flex items-center gap-2 rounded-full border border-c-border bg-c-surface px-4 py-2 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
             >
               <ClipboardList size={16} />
               {t('results.kpi.overview.cta.scorecards', 'Open scorecards')}
@@ -146,7 +146,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
             'results.kpi.overview.cards.totalHint',
             'All KPI definitions currently in runtime'
           )}
-          accentClassName="text-slate-900 dark:text-white"
+          accentClassName="text-c-text"
           onClick={() => onOpenCatalog()}
         />
         <CockpitCard
@@ -206,13 +206,13 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-2xl border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.03] p-4">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+              <h3 className="text-sm font-semibold text-c-text">
                 {t('results.kpi.overview.spotlight', 'Signal spotlight')}
               </h3>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-xs text-c-text-muted">
                 {t(
                   'results.kpi.overview.spotlightHint',
                   'Priority signal list ordered by deviation severity, stale data, and reporting readiness.'
@@ -222,7 +222,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
             <button
               type="button"
               onClick={() => onOpenQueue()}
-              className="text-xs font-medium text-primary-500 hover:text-primary-400 transition-colors"
+              className="text-xs font-medium text-c-info hover:opacity-80 transition-opacity"
             >
               {t('common.open', 'Open')}
             </button>
@@ -230,7 +230,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
 
           <div className="mt-4 space-y-2">
             {spotlight.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 dark:border-white/[0.08] px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+              <div className="rounded-xl border border-dashed border-c-border px-4 py-10 text-center text-sm text-c-text-muted">
                 {t('results.kpi.overview.empty', 'No KPI signals available yet.')}
               </div>
             ) : (
@@ -239,14 +239,14 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                   key={kpi.id}
                   type="button"
                   onClick={() => onOpenKpi(kpi.id)}
-                  className="w-full rounded-xl border border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02] px-4 py-3 text-left hover:bg-white dark:hover:bg-white/[0.04] transition-colors"
+                  className="w-full rounded-xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 text-left hover:bg-c-surface transition-colors"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-medium text-slate-900 dark:text-white">
+                      <div className="truncate text-sm font-medium text-c-text">
                         {kpi.name}
                       </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-c-text-muted">
                         <span>{kpi.initiativeName || t('common.noData', 'No data')}</span>
                         <span>·</span>
                         <span>
@@ -278,8 +278,8 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.03] p-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
+          <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
               <TrendingUp size={16} className="text-emerald-500" />
               {t('results.kpi.overview.health', 'Signal health')}
             </div>
@@ -291,7 +291,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                     { id: 'status:below', column: 'status', value: 'below', label: 'Below target' },
                   ])
                 }
-                className="flex w-full items-center justify-between rounded-xl border border-slate-200/70 dark:border-white/[0.06] px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+                className="flex w-full items-center justify-between rounded-xl border border-c-border-subtle px-3 py-2 text-sm hover:bg-c-surface-raised transition-colors"
               >
                 <span>{t('results.kpi.overview.healthBelow', 'Below target')}</span>
                 <span className="font-semibold text-danger-500">{metrics.below}</span>
@@ -303,10 +303,10 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                     { id: 'status:no-data', column: 'status', value: 'no-data', label: 'No data' },
                   ])
                 }
-                className="flex w-full items-center justify-between rounded-xl border border-slate-200/70 dark:border-white/[0.06] px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+                className="flex w-full items-center justify-between rounded-xl border border-c-border-subtle px-3 py-2 text-sm hover:bg-c-surface-raised transition-colors"
               >
                 <span>{t('results.kpi.overview.healthNoData', 'No fresh signal')}</span>
-                <span className="font-semibold text-slate-600 dark:text-slate-300">
+                <span className="font-semibold text-c-text-secondary">
                   {metrics.noData}
                 </span>
               </button>
@@ -322,7 +322,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                     },
                   ])
                 }
-                className="flex w-full items-center justify-between rounded-xl border border-slate-200/70 dark:border-white/[0.06] px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+                className="flex w-full items-center justify-between rounded-xl border border-c-border-subtle px-3 py-2 text-sm hover:bg-c-surface-raised transition-colors"
               >
                 <span>{t('results.kpi.overview.healthNeedsEntry', 'Needs entry')}</span>
                 <span className="font-semibold text-amber-500">{metrics.needsEntry}</span>
@@ -330,14 +330,14 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.03] p-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-              <Target size={16} className="text-primary-500" />
+          <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
+              <Target size={16} className="text-c-info" />
               {t('results.kpi.overview.reviewArtifacts', 'Review artifacts')}
             </div>
             <div className="mt-4 space-y-2">
               {reviewArtifacts.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-200 dark:border-white/[0.08] px-3 py-6 text-sm text-slate-500 dark:text-slate-400">
+                <div className="rounded-xl border border-dashed border-c-border px-3 py-6 text-sm text-c-text-muted">
                   {t(
                     'results.kpi.overview.reviewArtifactsEmpty',
                     'No recent KPI review packs yet. Create a scorecard to close the loop.'
@@ -349,17 +349,17 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                     key={pack.packId}
                     type="button"
                     onClick={onOpenReports}
-                    className="flex w-full items-center justify-between rounded-xl border border-slate-200/70 dark:border-white/[0.06] px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+                    className="flex w-full items-center justify-between rounded-xl border border-c-border-subtle px-3 py-2 text-left hover:bg-c-surface-raised transition-colors"
                   >
                     <div>
-                      <div className="text-sm font-medium text-slate-900 dark:text-white">
+                      <div className="text-sm font-medium text-c-text">
                         {pack.reviewPeriod}
                       </div>
-                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      <div className="mt-1 text-xs text-c-text-muted">
                         {pack.kpiSummaryCount} KPI · {pack.deviationHighlightCount} deviations
                       </div>
                     </div>
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-300">
+                    <span className="text-xs font-medium text-c-text-muted">
                       {pack.status}
                     </span>
                   </button>

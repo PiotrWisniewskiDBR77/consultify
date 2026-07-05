@@ -671,13 +671,22 @@ export interface ReconciliationVarianceItem {
   reconciliationId: string;
   kpiId: string;
   kpiName: string | null;
+  /**
+   * KPI unit (e.g. '%', '€', 'szt.'). Drives display formatting and whether a
+   * monetary variance is meaningful. Null when the KPI has no unit.
+   */
+  unit: string | null;
   initiativeId: string | null;
   financeRef: string;
   reconciliationStatus: ReconciliationStatus;
   initiatedBy: ReconciliationInitiator;
   /** KPI target_value — the projected benefit. Null when the KPI has no target. */
   projectedValue: number | null;
-  /** Sum of ROI realization entries for this KPI. Null when none recorded. */
+  /**
+   * Sum of ROI realization entries (currency deltas) for this KPI. Null when none
+   * recorded, or when the KPI unit is non-monetary (so the sum is not comparable
+   * to a percentage/count target).
+   */
   realizedValue: number | null;
   /** realizedValue − projectedValue; null when either side is missing. */
   varianceAbsolute: number | null;
@@ -685,6 +694,23 @@ export interface ReconciliationVarianceItem {
   variancePercent: number | null;
   /** True when projected and realized are both known and differ beyond rounding. */
   hasMismatch: boolean;
+  /**
+   * Finance-model driver/benefit key this KPI was reconciled against, when the
+   * reconciliation ENGINE (resultsFinanceReconciliationService) has run. Null on
+   * legacy display-only rows.
+   */
+  driverKey?: string | null;
+  /**
+   * CONCLUSION_LAYER payload persisted by the reconciliation engine
+   * (headline / K2 meaning / K3 actions / K4 effect). Null when the engine has
+   * not reconciled this pair yet.
+   */
+  conclusion?: unknown | null;
+  /**
+   * True when the projected/realized/variance figures above come from the
+   * engine's unit-normalised deviation rather than the legacy monetary heuristic.
+   */
+  engineReconciled?: boolean;
   createdAt: string;
   updatedAt: string;
 }

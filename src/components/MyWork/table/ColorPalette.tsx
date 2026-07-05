@@ -30,9 +30,9 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
   if (!open) return null;
 
   return (
-    <div className="absolute right-0 top-full mt-1 z-50 w-[240px] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl p-3">
+    <div className="absolute right-0 top-full mt-1 z-overlay w-[240px] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl p-3">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
           <Palette size={10} className="inline mr-1" />
           {isPl ? 'Paleta kolorów' : 'Color Palette'}
         </span>
@@ -45,8 +45,8 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
             onClick={() => onPaletteChange(id)}
             className={`w-full flex items-center gap-2 p-2 rounded-xl transition-colors ${
               activePalette === id
-                ? 'bg-primary-500/10 ring-1 ring-primary-500/30'
-                : 'hover:bg-slate-50 dark:hover:bg-navy-800'
+                ? 'bg-c-accent-soft ring-1 ring-c-focus'
+                : 'hover:bg-c-surface-raised'
             }`}
           >
             <div className="flex items-center gap-0.5 flex-shrink-0">
@@ -54,21 +54,21 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
                 <div key={i} className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: c }} />
               ))}
             </div>
-            <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 flex-1 text-left">
+            <span className="text-[10px] font-semibold text-c-text flex-1 text-left">
               {palette.name}
             </span>
-            {activePalette === id && <Check size={12} className="text-primary-500" />}
+            {activePalette === id && <Check size={12} className="text-c-accent" />}
           </button>
         ))}
       </div>
 
-      <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-navy-700/60">
+      <div className="mt-3 pt-2 border-t border-c-border-subtle">
         <button
           onClick={() => {
             onAutoAssign();
             onClose();
           }}
-          className="w-full px-3 py-2 rounded-xl text-[10px] font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
+          className="w-full px-3 py-2 rounded-xl text-[10px] font-bold text-c-accent bg-c-accent-soft hover:bg-c-accent-soft transition-colors"
         >
           {isPl ? 'Auto-przypisz kolory do wierszy' : 'Auto-assign colors to rows'}
         </button>

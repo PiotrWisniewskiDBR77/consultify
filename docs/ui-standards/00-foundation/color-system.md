@@ -551,3 +551,33 @@ text-red-400 → text-danger-400
 ║  • Zawsze z ikoną                                            ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
+
+---
+
+## 10. Paleta DANYCH — `c-tag` vs `c-chart` vs `c-accent` (VA1)
+
+SSOT tokenów: `--c-*` CSS variables w `src/index.css` (`:root` light + `.dark`),
+zmapowane w Tailwind pod namespace `c.*` (np. `bg-c-tag-1`, `text-c-chart-2`).
+**Reguła nadrzędna: crimson (brand) NIGDY nie jest daną.**
+
+| Token | Zakres | Rola | Kiedy używać |
+|-------|--------|------|--------------|
+| `c-accent` (crimson) | 1 | Brand / CTA / selected | Nigdy jako dana, seria ani kategoria. Crimson w danych = dług. |
+| `c-success/warning/danger/info` | 4 | SYGNAŁ (status/alarm/kierunek) | Wynik/stan/trend (done, failed, blocked). Nie kategoria. |
+| `c-tag-1..12` | 12 | KATEGORIA / TYP / ŹRÓDŁO — równoważne, bezkolejnościowe „kropki" | Chipy typu/tagu/źródła, kategorie osi. ≤5 serii widocznych (§15.1). |
+| `c-chart-1..8` | 8 | SERIA WYKRESU — kolejność MA znaczenie (seria 1,2,3…) | Line/bar/area/pie N-serii. Blue-first, **nigdy red-first**. |
+| `c-tag-foreground` | 1 | Biały tekst/ikona NA wypełnionym swatchu | `text-c-tag-foreground` na `bg-c-tag-*`/`bg-c-chart-*` (AA oba tryby). |
+
+**Różnica c-tag vs c-chart:** `c-tag` = równoważne kropki kategorii (dowolna
+kolejność, np. chipy typu). `c-chart` = uporządkowany ramp serii czytany po kolei
+(seria 1 zawsze ten sam blue), dobrany pod czytelność linii/słupków i colorblind.
+
+**Recharts / inline SVG:** `var()` NIE rozwiązuje się w `fill`/`stroke`. Rozwiązuj
+hex w read-time przez `financeChartTokens.ts` / `assessmentChartTokens.ts` (wzorzec:
+`readCssToken('--c-chart-N', fallback)`), re-read na flip dark/light.
+
+**Wzorce referencyjne (VA1):**
+- `src/components/MyWork/IdeaNodeDetailDrawer.tsx` — `TAG_COLORS` (crimson+alarm-red
+  jako kategorie → `bg-c-tag-* text-c-tag-foreground`).
+- `src/components/AIAnalyticsDashboard.tsx` — `COLORS` (crimson-first ramp →
+  read-time `--c-chart-1..8`, blue-first).

@@ -89,7 +89,7 @@ export const TabLayout: React.FC<TabLayoutProps> = ({
                 <span
                   className={`
                     px-1.5 py-0.5 text-[10px] font-bold rounded-full
-                    ${activeTab === tab.id ? 'bg-navy-900 text-white' : 'bg-slate-200 text-slate-700 dark:bg-white/10 dark:text-slate-300'}
+                    ${activeTab === tab.id ? 'bg-c-text text-c-bg' : 'bg-slate-200 text-slate-700 dark:bg-white/10 dark:text-slate-300'}
                   `}
                 >
                   {tab.badge > 99 ? '99+' : tab.badge}

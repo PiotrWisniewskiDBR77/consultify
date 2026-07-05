@@ -76,12 +76,12 @@ const BulletList: React.FC<{ items: string[]; color: string; label: string }> = 
 }) =>
   items.length > 0 ? (
     <section>
-      <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+      <h4 className="text-xs font-semibold text-c-text-secondary dark:text-c-text-muted uppercase tracking-wider mb-1.5">
         {label}
       </h4>
       <ul className="space-y-1">
         {items.map((item, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+          <li key={i} className="flex items-start gap-2 text-sm text-c-text-secondary dark:text-c-text">
             <span className={`mt-1.5 w-1.5 h-1.5 rounded-full ${color} shrink-0`} />
             {item}
           </li>
@@ -170,54 +170,54 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-y-0 right-0 z-50 flex">
-      <div className="w-[380px] bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border-l border-slate-200 dark:border-white/10 shadow-2xl flex flex-col rounded-l-2xl">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200 dark:border-white/10">
-          <FileText size={16} className="text-primary-500 shrink-0" />
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-white truncate flex-1">
+    <div className="fixed inset-y-0 right-0 z-overlay flex">
+      <div className="w-[380px] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border-l border-c-border-subtle dark:border-c-border shadow-2xl flex flex-col rounded-l-2xl">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle dark:border-c-border">
+          <FileText size={16} className="text-c-text-secondary shrink-0" />
+          <h3 className="text-sm font-semibold text-c-text dark:text-c-text truncate flex-1">
             {branchLabel || (isPl ? 'Podsumowanie gałęzi' : 'Branch Summary')}
           </h3>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+            className="p-1 rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
           >
-            <X size={16} className="text-slate-500" />
+            <X size={16} className="text-c-text-secondary" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
           {loading && (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <Loader2 size={24} className="animate-spin text-primary-500" />
-              <span className="text-xs text-slate-500 dark:text-slate-400">
+              <Loader2 size={24} className="animate-spin text-c-text-secondary" />
+              <span className="text-xs text-c-text-secondary dark:text-c-text-muted">
                 {isPl ? 'Generowanie podsumowania…' : 'Generating summary…'}
               </span>
             </div>
           )}
           {error && (
-            <div className="rounded-xl bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800/40 p-3 text-xs text-danger-700 dark:text-danger-300">
+            <div className="rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-danger dark:border-c-danger p-3 text-xs text-c-danger dark:text-c-danger">
               {error}
             </div>
           )}
           {summary && !loading && (
             <>
               <section>
-                <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                <h4 className="text-xs font-semibold text-c-text-secondary dark:text-c-text-muted uppercase tracking-wider mb-1.5">
                   {isPl ? 'Podsumowanie' : 'Summary'}
                 </h4>
-                <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                <p className="text-sm text-c-text-secondary dark:text-c-text leading-relaxed">
                   {summary.narrative}
                 </p>
               </section>
               <BulletList
                 items={summary.keyPoints}
-                color="bg-navy-900"
+                color="bg-c-surface"
                 label={isPl ? 'Kluczowe punkty' : 'Key Points'}
               />
               <BulletList
                 items={summary.recommendations}
-                color="bg-emerald-500"
+                color="bg-c-success"
                 label={isPl ? 'Rekomendacje' : 'Recommendations'}
               />
             </>
@@ -225,11 +225,11 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
         </div>
 
         {summary && !loading && (
-          <div className="px-4 py-3 border-t border-slate-200 dark:border-white/10">
+          <div className="px-4 py-3 border-t border-c-border-subtle dark:border-c-border">
             <button
               type="button"
               onClick={copyToClipboard}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-xs font-medium transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-c-surface hover:bg-c-surface text-c-text dark:bg-c-surface-raised dark:text-c-text dark:hover:bg-c-surface-raised text-xs font-medium transition-colors"
             >
               <Clipboard size={14} />
               {isPl ? 'Kopiuj do schowka' : 'Copy to clipboard'}

@@ -304,8 +304,8 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
       default:
         return {
           icon: <MessageSquare size={16} />,
-          color: 'text-slate-500 dark:text-slate-400',
-          bgColor: 'bg-slate-100 dark:bg-slate-800',
+          color: 'text-c-text-muted',
+          bgColor: 'bg-c-surface-raised',
           label: t('admin.feedback.types.other', 'Inne'),
         };
     }
@@ -345,13 +345,13 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
         };
       case 'archived':
         return {
-          color: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
+          color: 'bg-c-surface-raised text-c-text-secondary',
           icon: <Archive size={12} />,
           label: t('admin.feedback.statuses.archived', 'Zarchiwizowany'),
         };
       default:
         return {
-          color: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
+          color: 'bg-c-surface-raised text-c-text-secondary',
           icon: null,
           label: status,
         };
@@ -411,66 +411,66 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
     <div className={`space-y-6 ${className}`}>
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+        <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-slate-100 dark:bg-navy-700 rounded-lg">
-              <MessageSquare size={18} className="text-slate-600 dark:text-slate-400" />
+            <div className="p-2 bg-c-surface-raised rounded-lg">
+              <MessageSquare size={18} className="text-c-text-secondary" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.total}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-2xl font-bold text-c-text">{stats.total}</p>
+              <p className="text-xs text-c-text-muted">
                 {t('admin.feedback.stats.total', 'Wszystkich')}
               </p>
             </div>
           </div>
         </div>
-        <div className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+        <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
               <Star size={18} className="text-primary-600 dark:text-primary-400" />
             </div>
             <div>
               <p className="text-2xl font-bold text-primary-600">{stats.new}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-c-text-muted">
                 {t('admin.feedback.stats.new', 'Nowych')}
               </p>
             </div>
           </div>
         </div>
-        <div className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+        <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
               <Clock size={18} className="text-amber-600 dark:text-amber-400" />
             </div>
             <div>
               <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-c-text-muted">
                 {t('admin.feedback.stats.pending', 'W toku')}
               </p>
             </div>
           </div>
         </div>
-        <div className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+        <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-danger-100 dark:bg-danger-900/30 rounded-lg">
               <Bug size={18} className="text-danger-600 dark:text-danger-400" />
             </div>
             <div>
               <p className="text-2xl font-bold text-danger-600">{stats.bugs}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-c-text-muted">
                 {t('admin.feedback.stats.openBugs', 'Otwarte błędy')}
               </p>
             </div>
           </div>
         </div>
-        <div className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+        <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
               <Star size={18} className="text-green-600 dark:text-green-400" />
             </div>
             <div>
               <p className="text-2xl font-bold text-green-600">{stats.avgRating.toFixed(1)}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-c-text-muted">
                 {t('admin.feedback.stats.avgRating', 'Śr. ocena')}
               </p>
             </div>
@@ -479,28 +479,28 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4 p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+      <div className="flex flex-wrap items-center gap-4 p-4 bg-c-surface rounded-xl border border-c-border-subtle">
         <div className="flex-1 min-w-[200px]">
           <div className="relative">
             <Search
               size={18}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-muted"
             />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('admin.feedback.searchPlaceholder', 'Szukaj w feedbacku...')}
-              className="w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-900 text-sm"
+              className="w-full pl-10 pr-4 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-sm"
             />
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Filter size={16} className="text-slate-400 dark:text-slate-500" />
+          <Filter size={16} className="text-c-text-muted" />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-900 text-sm"
+            className="px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-sm"
           >
             <option value="all">
               {t('admin.feedback.filters.allStatuses', 'Wszystkie statusy')}
@@ -519,7 +519,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-900 text-sm"
+            className="px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-sm"
           >
             <option value="all">{t('admin.feedback.filters.allTypes', 'Wszystkie typy')}</option>
             <option value="bug">{t('admin.feedback.filters.bugs', 'Błędy')}</option>
@@ -537,17 +537,17 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
       {loading ? (
         <div className="p-12 text-center">
           <div className="animate-spin w-8 h-8 border-2 border-brand border-t-transparent rounded-full mx-auto" />
-          <p className="mt-4 text-slate-500 dark:text-slate-400">
+          <p className="mt-4 text-c-text-muted">
             {t('common.loading', 'Ładowanie...')}
           </p>
         </div>
       ) : filteredFeedback.length === 0 ? (
-        <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+        <div className="p-12 text-center bg-c-surface rounded-xl border border-c-border-subtle">
           <MessageSquare size={48} className="mx-auto text-slate-300 mb-4" />
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white">
+          <h3 className="text-lg font-medium text-c-text">
             {t('admin.feedback.noFeedback', 'Brak feedbacku')}
           </h3>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-c-text-muted mt-1">
             {t('admin.feedback.noFeedbackDesc', 'Nie znaleziono feedbacku spełniającego kryteria')}
           </p>
         </div>
@@ -562,7 +562,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
               <div
                 key={item.id}
                 onClick={() => openDetailModal(item)}
-                className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-brand/50 dark:hover:border-brand/50 transition-colors cursor-pointer group"
+                className="p-4 bg-c-surface rounded-xl border border-c-border-subtle hover:border-brand/50 dark:hover:border-brand/50 transition-colors cursor-pointer group"
               >
                 <div className="flex items-start gap-4">
                   {/* Type Icon */}
@@ -573,7 +573,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="font-medium text-slate-900 dark:text-white">
+                      <span className="font-medium text-c-text">
                         {item.userName || item.userEmail}
                       </span>
                       <span
@@ -594,11 +594,11 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
                       )}
                     </div>
 
-                    <p className="text-slate-600 dark:text-slate-300 line-clamp-2 text-sm">
+                    <p className="text-c-text-secondary line-clamp-2 text-sm">
                       {item.message}
                     </p>
 
-                    <div className="flex items-center gap-4 mt-2 text-xs text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center gap-4 mt-2 text-xs text-c-text-muted">
                       <span className="flex items-center gap-1">
                         <Calendar size={12} />
                         {new Date(item.createdAt).toLocaleDateString('pl-PL')}
@@ -634,10 +634,10 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
                         e.stopPropagation();
                         openDetailModal(item);
                       }}
-                      className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg"
+                      className="p-2 hover:bg-c-surface-raised rounded-lg"
                       title={t('admin.feedback.view', 'Zobacz szczegóły')}
                     >
-                      <Eye size={18} className="text-slate-500 dark:text-slate-400" />
+                      <Eye size={18} className="text-c-text-muted" />
                     </button>
                   </div>
                 </div>
@@ -650,9 +650,9 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
       {/* Detail Modal */}
       {showDetailModal && selectedFeedback && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="bg-c-surface rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Modal Header */}
-            <div className="p-6 border-b border-slate-200 dark:border-navy-700">
+            <div className="p-6 border-b border-c-border-subtle">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div className={`p-3 rounded-xl ${getTypeConfig(selectedFeedback.type).bgColor}`}>
@@ -661,19 +661,19 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
                     </span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    <h3 className="text-lg font-semibold text-c-text">
                       {getTypeConfig(selectedFeedback.type).label}
                     </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-c-text-muted">
                       {selectedFeedback.userName || selectedFeedback.userEmail}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowDetailModal(false)}
-                  className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg"
+                  className="p-2 hover:bg-c-surface-raised rounded-lg"
                 >
-                  <X size={20} className="text-slate-500 dark:text-slate-400" />
+                  <X size={20} className="text-c-text-muted" />
                 </button>
               </div>
             </div>
@@ -683,7 +683,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
               {/* Status & Priority */}
               <div className="flex items-center gap-4 flex-wrap">
                 <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
+                  <label className="text-xs text-c-text-muted mb-1 block">
                     {t('admin.feedback.status', 'Status')}
                   </label>
                   <select
@@ -693,7 +693,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
                       updateStatus(selectedFeedback.id, newStatus);
                       setSelectedFeedback((prev) => (prev ? { ...prev, status: newStatus } : null));
                     }}
-                    className="px-3 py-1.5 border border-slate-200 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-sm"
+                    className="px-3 py-1.5 border border-c-border-subtle rounded-lg bg-c-surface text-sm"
                   >
                     <option value="new">Nowy</option>
                     <option value="pending">Oczekujący</option>
@@ -705,7 +705,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
                 </div>
                 {selectedFeedback.rating && (
                   <div>
-                    <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
+                    <label className="text-xs text-c-text-muted mb-1 block">
                       {t('admin.feedback.rating', 'Ocena')}
                     </label>
                     <div className="flex items-center gap-1">
@@ -724,10 +724,10 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
                   </div>
                 )}
                 <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
+                  <label className="text-xs text-c-text-muted mb-1 block">
                     {t('admin.feedback.date', 'Data')}
                   </label>
-                  <p className="text-sm text-slate-900 dark:text-white">
+                  <p className="text-sm text-c-text">
                     {new Date(selectedFeedback.createdAt).toLocaleString('pl-PL')}
                   </p>
                 </div>
@@ -735,11 +735,11 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
 
               {/* Message */}
               <div>
-                <label className="text-xs text-slate-500 dark:text-slate-400 mb-2 block">
+                <label className="text-xs text-c-text-muted mb-2 block">
                   {t('admin.feedback.message', 'Wiadomość')}
                 </label>
-                <div className="p-4 bg-slate-50 dark:bg-navy-800 rounded-xl">
-                  <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+                <div className="p-4 bg-c-surface-raised rounded-xl">
+                  <p className="text-c-text-secondary whitespace-pre-wrap">
                     {selectedFeedback.message}
                   </p>
                 </div>
@@ -748,10 +748,10 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
               {/* Metadata */}
               {selectedFeedback.metadata && (
                 <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 mb-2 block">
+                  <label className="text-xs text-c-text-muted mb-2 block">
                     {t('admin.feedback.context', 'Kontekst')}
                   </label>
-                  <div className="flex gap-4 text-sm text-slate-600 dark:text-slate-400">
+                  <div className="flex gap-4 text-sm text-c-text-secondary">
                     {selectedFeedback.metadata.browser && (
                       <span>🌐 {selectedFeedback.metadata.browser}</span>
                     )}
@@ -765,10 +765,10 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
               {/* Previous Response */}
               {selectedFeedback.adminResponse && (
                 <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 mb-2 block flex items-center gap-2">
+                  <label className="text-xs text-c-text-muted mb-2 block flex items-center gap-2">
                     <Reply size={14} />
                     {t('admin.feedback.yourResponse', 'Twoja odpowiedź')}
-                    <span className="text-slate-400 dark:text-slate-500">
+                    <span className="text-c-text-muted">
                       ({new Date(selectedFeedback.respondedAt!).toLocaleDateString('pl-PL')})
                     </span>
                   </label>
@@ -782,7 +782,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
 
               {/* Response Input */}
               <div>
-                <label className="text-xs text-slate-500 dark:text-slate-400 mb-2 block">
+                <label className="text-xs text-c-text-muted mb-2 block">
                   {selectedFeedback.adminResponse
                     ? t('admin.feedback.updateResponse', 'Zaktualizuj odpowiedź')
                     : t('admin.feedback.writeResponse', 'Napisz odpowiedź')}
@@ -795,17 +795,17 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
                     'Wpisz odpowiedź dla użytkownika...'
                   )}
                   rows={4}
-                  className="w-full px-4 py-3 border border-slate-200 dark:border-navy-600 rounded-xl bg-white dark:bg-navy-800 resize-none"
+                  className="w-full px-4 py-3 border border-c-border-subtle rounded-xl bg-c-surface resize-none"
                 />
               </div>
             </div>
 
             {/* Modal Footer */}
-            <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between">
+            <div className="p-6 border-t border-c-border-subtle flex items-center justify-between">
               <div className="flex gap-2">
                 <button
                   onClick={() => updateStatus(selectedFeedback.id, 'archived')}
-                  className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg flex items-center gap-2"
+                  className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised rounded-lg flex items-center gap-2"
                 >
                   <Archive size={16} />
                   {t('admin.feedback.archive', 'Archiwizuj')}
@@ -814,7 +814,7 @@ export const AdminFeedbackView: React.FC<AdminFeedbackViewProps> = ({ className 
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowDetailModal(false)}
-                  className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg"
+                  className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
                 >
                   {t('common.close', 'Zamknij')}
                 </button>

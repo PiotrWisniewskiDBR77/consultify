@@ -391,7 +391,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                       resetForm();
                       setViewMode('create');
                     }}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-c-text text-c-bg text-sm font-medium hover:bg-c-text-secondary transition-colors"
                   >
                     <Plus size={16} />
                     <span>{isPolish ? 'Nowy' : 'New'}</span>
@@ -712,7 +712,7 @@ export const TaskTemplates: React.FC<TaskTemplatesProps> = ({
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-c-text text-c-bg font-medium hover:bg-c-text-secondary disabled:opacity-50 transition-colors"
                 >
                   {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                   <span>

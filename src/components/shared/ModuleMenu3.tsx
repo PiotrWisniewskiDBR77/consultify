@@ -3,22 +3,24 @@ import React from 'react';
 import { cn } from '@/utils/cn';
 
 export const MENU_2_TAB_BASE =
-  'inline-flex h-9 items-center gap-2 rounded-full border px-3 text-sm font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+  'inline-flex h-9 items-center gap-2 rounded-full border px-3 text-sm font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-[var(--c-surface)]';
 
 export const MENU_2_TAB_INACTIVE = cn(
   MENU_2_TAB_BASE,
-  'border-slate-200/70 bg-white/70 text-slate-700 hover:bg-slate-100/70',
-  'dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-300 dark:hover:bg-white/[0.06]'
+  'border-c-border bg-transparent text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text'
 );
 
+// Menu 2 (ModuleTabs) — decyzja Piotra 2026-07-03: pill z NEUTRALNYM aktywnym
+// (NIE crimson — `primary`=crimson to pułapka). Spójne z ModuleNavBar TAB_ACTIVE:
+// wypełniony pill na c-surface-raised + ramka c-border + c-text.
 export const MENU_2_TAB_ACTIVE = cn(
   MENU_2_TAB_BASE,
-  'border-primary-500/50 bg-primary-500/10 text-primary-800',
+  'border-c-border bg-c-surface-raised text-c-text',
   'dark:border-white/25 dark:bg-white/10 dark:text-slate-100'
 );
 
 export const MENU_3_ROW_CLASS =
-  'px-4 py-2 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.05]';
+  'px-4 py-2 bg-c-surface border-b border-c-border-subtle';
 
 export const MENU_3_INNER_CLASS =
   'flex min-h-8 items-center justify-between gap-3 overflow-x-auto whitespace-nowrap no-scrollbar';
@@ -27,18 +29,17 @@ export const MENU_3_LEFT_CLASS = 'inline-flex items-center gap-1';
 export const MENU_3_RIGHT_CLASS = 'flex shrink-0 items-center justify-end gap-2';
 
 export const MENU_3_CHIP_BASE =
-  'inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+  'inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-[var(--c-surface)]';
 
 export const MENU_3_CHIP_INACTIVE = cn(
   MENU_3_CHIP_BASE,
-  'border-slate-200 bg-transparent text-c-text-muted hover:bg-slate-100 hover:text-slate-900',
-  'dark:border-white/10 dark:hover:bg-white/5 dark:hover:text-slate-200'
+  'border-c-border bg-transparent text-c-text-muted hover:bg-c-surface-raised hover:text-c-text'
 );
 
+// Selected chip = neutral accent-soft tint (§9.2 ②) — NOT crimson text.
 export const MENU_3_CHIP_ACTIVE = cn(
   MENU_3_CHIP_BASE,
-  'border-primary-500/50 bg-primary-500/10 text-primary-800',
-  'dark:border-white/30 dark:bg-white/10 dark:text-white'
+  'border-c-border-strong bg-c-accent-soft text-c-text'
 );
 
 export const MENU_3_BADGE_BASE =
@@ -46,30 +47,28 @@ export const MENU_3_BADGE_BASE =
 
 export const MENU_3_BADGE_INACTIVE = cn(
   MENU_3_BADGE_BASE,
-  'bg-slate-300 text-slate-700 dark:bg-navy-700 dark:text-slate-300'
+  'bg-c-surface-raised text-c-text-secondary'
 );
 
 export const MENU_3_BADGE_ACTIVE = cn(
   MENU_3_BADGE_BASE,
-  'bg-primary-500/20 text-primary-800 dark:bg-white/15 dark:text-white'
+  'bg-c-accent-soft text-c-text'
 );
 
 export const MENU_3_ACTION_BASE =
-  'inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/35 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+  'inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-[var(--c-surface)]';
 
 export const MENU_3_ACTION_NEUTRAL = cn(
   MENU_3_ACTION_BASE,
-  'border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900',
-  'dark:border-navy-700/60 dark:bg-navy-800 dark:text-slate-300 dark:hover:bg-navy-900/50'
+  'border-c-border bg-c-surface-raised text-c-text-secondary hover:bg-c-surface hover:text-c-text'
 );
 
 export const MENU_3_ACTION_DANGER = cn(
   MENU_3_ACTION_BASE,
-  'border-danger-300/40 bg-danger-50/70 text-danger-700 hover:bg-danger-100/80',
-  'dark:border-danger-500/20 dark:bg-danger-500/[0.08] dark:text-danger-300 dark:hover:bg-danger-500/[0.14]'
+  'border-[color:var(--c-danger)]/30 bg-[color:var(--c-danger)]/[0.08] text-c-danger hover:bg-[color:var(--c-danger)]/[0.14]'
 );
 
-export const MENU_3_ALL_DOT_CLASS = 'h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500';
+export const MENU_3_ALL_DOT_CLASS = 'h-1.5 w-1.5 rounded-full bg-c-text-muted';
 
 export function Menu3Row({
   children,

@@ -251,10 +251,10 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <h2 className="text-2xl font-bold text-c-text">
             {t('settings.dashboard.title', 'Dashboard Preferences')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t(
               'settings.dashboard.description',
               'Customize your dashboard layout and default views'
@@ -264,7 +264,7 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
         <button
           onClick={handleReset}
           disabled={!!loadError}
-          className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600 rounded-lg transition-colors text-sm"
+          className="flex items-center gap-2 px-4 py-2 text-c-text-secondary hover:text-c-text dark:hover:text-white border border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-navy-600 rounded-lg transition-colors text-sm"
         >
           <RotateCcw size={14} />
           {t('settings.dashboard.resetDefaults', 'Reset to Defaults')}
@@ -280,12 +280,12 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
       {!loadError && (
         <>
           {/* Widget Visibility */}
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
               <Eye size={20} className="text-green-500" />
               {t('settings.dashboard.widgetVisibility', 'Widget Visibility')}
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+            <p className="text-sm text-c-text-muted mb-4">
               {t(
                 'settings.dashboard.widgetVisibilityDescription',
                 'Choose which widgets to show on your dashboard'
@@ -299,27 +299,27 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                 return (
                   <div
                     key={option.key}
-                    className="flex items-center justify-between p-4 rounded-lg bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700"
+                    className="flex items-center justify-between p-4 rounded-lg bg-c-surface-raised border border-c-border-subtle dark:border-navy-700"
                   >
                     <div className="flex items-center gap-3">
                       <Icon
                         size={20}
                         className={
-                          isEnabled ? 'text-green-500' : 'text-slate-600 dark:text-slate-500'
+                          isEnabled ? 'text-green-500' : 'text-c-text-secondary'
                         }
                       />
-                      <span className="font-medium text-slate-700 dark:text-slate-300">
+                      <span className="font-medium text-c-text-secondary">
                         {option.label}
                       </span>
                     </div>
                     <button
                       onClick={() => toggleWidget(option.key)}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        isEnabled ? 'bg-green-600' : 'bg-slate-200 dark:bg-slate-700'
+                        isEnabled ? 'bg-green-600' : 'bg-c-surface-raised'
                       }`}
                     >
                       <span
-                        className={`${isEnabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                        className={`${isEnabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
                       />
                     </button>
                   </div>
@@ -329,9 +329,9 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
           </div>
 
           {/* Display Options */}
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-              <Minimize2 size={20} className="text-primary-500" />
+          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
+              <Minimize2 size={20} className="text-c-accent" />
               {t('settings.dashboard.displayOptions', 'Display Options')}
             </h3>
 
@@ -339,10 +339,10 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
               {/* Compact Mode */}
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300">
+                  <label className="block font-medium text-c-text-secondary">
                     {t('settings.dashboard.compactMode', 'Compact Mode')}
                   </label>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-c-text-muted">
                     {t(
                       'settings.dashboard.compactModeDescription',
                       'Reduce padding and margins for denser information display'
@@ -352,23 +352,23 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                 <button
                   onClick={() => updatePreference('compactMode', !preferences.compactMode)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    preferences.compactMode ? 'bg-navy-900' : 'bg-slate-200 dark:bg-slate-700'
+                    preferences.compactMode ? 'bg-navy-900' : 'bg-c-surface-raised'
                   }`}
                 >
                   <span
-                    className={`${preferences.compactMode ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                    className={`${preferences.compactMode ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
                   />
                 </button>
               </div>
 
               {/* Show Greeting */}
-              <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
+              <div className="flex items-center justify-between pt-4 border-t border-c-border-subtle dark:border-navy-700">
                 <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                  <label className="block font-medium text-c-text-secondary flex items-center gap-2">
                     <MessageSquare size={16} className="text-amber-500" />
                     {t('settings.dashboard.showGreeting', 'Show Greeting Message')}
                   </label>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-c-text-muted">
                     {t(
                       'settings.dashboard.showGreetingDescription',
                       'Display personalized greeting on dashboard'
@@ -378,11 +378,11 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                 <button
                   onClick={() => updatePreference('showGreeting', !preferences.showGreeting)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    preferences.showGreeting ? 'bg-navy-900' : 'bg-slate-200 dark:bg-slate-700'
+                    preferences.showGreeting ? 'bg-navy-900' : 'bg-c-surface-raised'
                   }`}
                 >
                   <span
-                    className={`${preferences.showGreeting ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                    className={`${preferences.showGreeting ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
                   />
                 </button>
               </div>

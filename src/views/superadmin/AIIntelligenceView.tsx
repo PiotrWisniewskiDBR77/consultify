@@ -108,7 +108,7 @@ export const AIIntelligenceView: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-crimson-600 flex items-center justify-center shadow-lg shadow-primary-500/20">
-              <Brain className="text-white" size={24} />
+              <Brain className="text-c-text" size={24} />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white">AI Intelligence</h1>
@@ -134,7 +134,7 @@ export const AIIntelligenceView: React.FC = () => {
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
               activeTab === tab.id
-                ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/20'
+                ? 'bg-c-text text-c-bg shadow-lg shadow-primary-500/20'
                 : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
             }`}
           >
@@ -615,7 +615,7 @@ const LearningSystemDashboard: React.FC = () => {
                 onClick={() => setTimeRange(range)}
                 className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                   timeRange === range
-                    ? 'bg-navy-900 text-white'
+                    ? 'bg-c-text text-c-bg'
                     : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-navy-700/50'
                 }`}
               >

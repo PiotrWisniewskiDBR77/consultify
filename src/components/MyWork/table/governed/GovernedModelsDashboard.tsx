@@ -87,19 +87,19 @@ const TRUST_CONFIG: Record<
   certified: {
     label: 'Certified',
     labelPl: 'Certyfikowany',
-    color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10',
+    color: 'text-c-success bg-c-success',
     icon: <ShieldCheck size={12} />,
   },
   draft: {
     label: 'Draft',
     labelPl: 'Szkic',
-    color: 'text-amber-600 bg-amber-50 dark:bg-amber-500/10',
+    color: 'text-c-warning bg-c-warning',
     icon: <AlertTriangle size={12} />,
   },
   deprecated: {
     label: 'Deprecated',
     labelPl: 'Wycofany',
-    color: 'text-danger-600 bg-danger-50 dark:bg-danger-500/10',
+    color: 'text-c-danger bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] bg-c-danger',
     icon: <XCircle size={12} />,
   },
 };
@@ -125,17 +125,17 @@ function KpiProgressBar({
   target?: number;
   unit?: string;
 }) {
-  if (value === null) return <span className="text-xs text-slate-600">—</span>;
+  if (value === null) return <span className="text-xs text-c-text-secondary">—</span>;
   const pct = target && target > 0 ? Math.min((value / target) * 100, 100) : 0;
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
+      <div className="flex-1 h-1.5 bg-c-surface-raised rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all"
           style={{ backgroundColor: 'var(--c-info)', width: `${pct}%` }}
         />
       </div>
-      <span className="text-[11px] text-slate-600 dark:text-slate-400 whitespace-nowrap">
+      <span className="text-[11px] text-c-text-muted whitespace-nowrap">
         {value.toLocaleString()}
         {unit ? ` ${unit}` : ''}
         {target ? ` / ${target.toLocaleString()}` : ''}
@@ -254,7 +254,7 @@ function CreateModelWizard({
     : ['Name', 'Sources', 'KPIs', 'Dimensions', 'Trust'];
 
   const inputCls =
-    'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40';
+    'w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-tag-2';
 
   return (
     <div
@@ -262,34 +262,34 @@ function CreateModelWizard({
       onClick={onClose}
     >
       <div
-        className="w-[560px] max-w-[95vw] max-h-[85vh] bg-white dark:bg-navy-950 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 flex flex-col overflow-hidden"
+        className="w-[560px] max-w-[95vw] max-h-[85vh] bg-c-bg rounded-2xl shadow-2xl border border-c-border flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-800">
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-c-border">
+          <h3 className="text-sm font-semibold text-c-text">
             {isPl ? 'Nowy model danych' : 'New Data Model'}
           </h3>
           <button
             onClick={onClose}
-            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="p-1 rounded hover:bg-c-surface-raised"
           >
-            <X size={16} className="text-slate-600" />
+            <X size={16} className="text-c-text-secondary" />
           </button>
         </div>
 
         {/* Step indicator */}
-        <div className="flex items-center gap-1 px-5 py-3 border-b border-slate-50 dark:border-navy-800">
+        <div className="flex items-center gap-1 px-5 py-3 border-b border-c-border">
           {stepLabels.map((lbl, i) => (
             <React.Fragment key={i}>
-              {i > 0 && <ChevronRight size={12} className="text-slate-600 dark:text-navy-600" />}
+              {i > 0 && <ChevronRight size={12} className="text-c-text-secondary" />}
               <span
                 className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
                   i + 1 === step
-                    ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300'
+                    ? 'bg-c-tag-2 text-c-tag-2 bg-c-tag-2 text-c-tag-2'
                     : i + 1 < step
-                      ? 'text-emerald-600 dark:text-emerald-400'
-                      : 'text-slate-600'
+                      ? 'text-c-success'
+                      : 'text-c-text-secondary'
                 }`}
               >
                 {lbl}
@@ -302,7 +302,7 @@ function CreateModelWizard({
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {step === 1 && (
             <>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400">
+              <label className="block text-xs font-medium text-c-text-muted">
                 {isPl ? 'Nazwa modelu' : 'Model name'}
               </label>
               <input
@@ -312,7 +312,7 @@ function CreateModelWizard({
                 placeholder={isPl ? 'np. Revenue Model' : 'e.g. Revenue Model'}
                 autoFocus
               />
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mt-3">
+              <label className="block text-xs font-medium text-c-text-muted mt-3">
                 {isPl ? 'Opis' : 'Description'}
               </label>
               <textarea
@@ -326,11 +326,11 @@ function CreateModelWizard({
 
           {step === 2 && (
             <>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-c-text-muted">
                 {isPl ? 'Wybierz tabele źródłowe:' : 'Select source tables:'}
               </p>
               {tables.length === 0 && (
-                <p className="text-xs text-slate-600 italic">
+                <p className="text-xs text-c-text-secondary italic">
                   {isPl ? 'Brak tabel' : 'No tables available'}
                 </p>
               )}
@@ -338,7 +338,7 @@ function CreateModelWizard({
                 {tables.map((t) => (
                   <label
                     key={t.id}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 cursor-pointer"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-c-surface-raised cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -351,10 +351,10 @@ function CreateModelWizard({
                             : [...p.sourceTables, t.id],
                         }))
                       }
-                      className="rounded border-slate-300 text-indigo-600"
+                      className="rounded border-c-border text-c-tag-2"
                     />
-                    <Database size={14} className="text-slate-600" />
-                    <span className="text-sm text-slate-700 dark:text-slate-300">{t.name}</span>
+                    <Database size={14} className="text-c-text-secondary" />
+                    <span className="text-sm text-c-text-muted">{t.name}</span>
                   </label>
                 ))}
               </div>
@@ -363,13 +363,13 @@ function CreateModelWizard({
 
           {step === 3 && (
             <>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+              <p className="text-xs text-c-text-muted mb-2">
                 {isPl ? 'Zdefiniuj KPI:' : 'Define KPIs:'}
               </p>
               {wiz.kpis.map((k, idx) => (
                 <div
                   key={idx}
-                  className="p-3 rounded-xl border border-slate-200 dark:border-navy-800 space-y-2 mb-2"
+                  className="p-3 rounded-xl border border-c-border space-y-2 mb-2"
                 >
                   <div className="grid grid-cols-2 gap-2">
                     <input
@@ -435,7 +435,7 @@ function CreateModelWizard({
                       onClick={() =>
                         setWiz((p) => ({ ...p, kpis: p.kpis.filter((_, i) => i !== idx) }))
                       }
-                      className="text-[11px] text-danger-500 hover:underline"
+                      className="text-[11px] text-c-danger hover:underline"
                     >
                       {isPl ? 'Usuń' : 'Remove'}
                     </button>
@@ -444,7 +444,7 @@ function CreateModelWizard({
               ))}
               <button
                 onClick={() => setWiz((p) => ({ ...p, kpis: [...p.kpis, { ...EMPTY_KPI }] }))}
-                className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline"
+                className="inline-flex items-center gap-1 text-xs text-c-tag-2 hover:underline"
               >
                 <Plus size={12} /> {isPl ? 'Dodaj KPI' : 'Add KPI'}
               </button>
@@ -453,13 +453,13 @@ function CreateModelWizard({
 
           {step === 4 && (
             <>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+              <p className="text-xs text-c-text-muted mb-2">
                 {isPl ? 'Zdefiniuj wymiary:' : 'Define dimensions:'}
               </p>
               {wiz.dimensions.map((d, idx) => (
                 <div
                   key={idx}
-                  className="p-3 rounded-xl border border-slate-200 dark:border-navy-800 space-y-2 mb-2"
+                  className="p-3 rounded-xl border border-c-border space-y-2 mb-2"
                 >
                   <div className="grid grid-cols-2 gap-2">
                     <input
@@ -494,7 +494,7 @@ function CreateModelWizard({
                           dimensions: p.dimensions.filter((_, i) => i !== idx),
                         }))
                       }
-                      className="text-[11px] text-danger-500 hover:underline"
+                      className="text-[11px] text-c-danger hover:underline"
                     >
                       {isPl ? 'Usuń' : 'Remove'}
                     </button>
@@ -505,7 +505,7 @@ function CreateModelWizard({
                 onClick={() =>
                   setWiz((p) => ({ ...p, dimensions: [...p.dimensions, { ...EMPTY_DIM }] }))
                 }
-                className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline"
+                className="inline-flex items-center gap-1 text-xs text-c-tag-2 hover:underline"
               >
                 <Plus size={12} /> {isPl ? 'Dodaj wymiar' : 'Add dimension'}
               </button>
@@ -514,7 +514,7 @@ function CreateModelWizard({
 
           {step === 5 && (
             <>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+              <p className="text-xs text-c-text-muted mb-3">
                 {isPl ? 'Ustaw poziom zaufania:' : 'Set trust level:'}
               </p>
               {(['draft', 'certified', 'deprecated'] as const).map((lvl) => {
@@ -522,14 +522,14 @@ function CreateModelWizard({
                 return (
                   <label
                     key={lvl}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 cursor-pointer mb-1"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-c-surface-raised cursor-pointer mb-1"
                   >
                     <input
                       type="radio"
                       name="trust"
                       checked={wiz.trustLevel === lvl}
                       onChange={() => setWiz((p) => ({ ...p, trustLevel: lvl }))}
-                      className="text-indigo-600"
+                      className="text-c-tag-2"
                     />
                     <span
                       className={`inline-flex items-center gap-1 text-sm font-medium ${cfg.color} px-2 py-0.5 rounded-full`}
@@ -544,10 +544,10 @@ function CreateModelWizard({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-3 border-t border-slate-200 dark:border-navy-800">
+        <div className="flex items-center justify-between px-5 py-3 border-t border-c-border">
           <button
             onClick={() => (step === 1 ? onClose() : setStep((s) => (s - 1) as WizardStep))}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="px-3 py-1.5 rounded-lg text-xs font-medium text-c-text-muted hover:bg-c-surface-raised"
           >
             {step === 1 ? (isPl ? 'Anuluj' : 'Cancel') : isPl ? 'Wstecz' : 'Back'}
           </button>
@@ -555,7 +555,7 @@ function CreateModelWizard({
             <button
               disabled={!canNext}
               onClick={() => setStep((s) => (s + 1) as WizardStep)}
-              className="px-4 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40"
+              className="px-4 py-1.5 rounded-lg text-xs font-medium bg-c-tag-2 text-c-text hover:bg-c-tag-2 disabled:opacity-40"
             >
               {isPl ? 'Dalej' : 'Next'}
             </button>
@@ -563,7 +563,7 @@ function CreateModelWizard({
             <button
               disabled={saving}
               onClick={handleSave}
-              className="px-4 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 inline-flex items-center gap-1"
+              className="px-4 py-1.5 rounded-lg text-xs font-medium bg-c-tag-2 text-c-text hover:bg-c-tag-2 disabled:opacity-40 inline-flex items-center gap-1"
             >
               {saving && <Loader2 size={12} className="animate-spin" />}
               {isPl ? 'Utwórz model' : 'Create Model'}
@@ -600,16 +600,16 @@ function ModelCard({
 
   return (
     <div
-      className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4 hover:shadow-md transition-shadow cursor-pointer"
+      className="rounded-xl border border-c-border bg-c-surface p-4 hover:shadow-md transition-shadow cursor-pointer"
       onClick={onSelect}
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-semibold text-slate-800 dark:text-white truncate">
+          <h4 className="text-sm font-semibold text-c-text truncate">
             {model.name}
           </h4>
           {model.description && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+            <p className="text-xs text-c-text-muted mt-0.5 line-clamp-2">
               {model.description}
             </p>
           )}
@@ -619,13 +619,13 @@ function ModelCard({
 
       {/* Counters */}
       <div className="flex items-center gap-4 mb-3">
-        <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+        <span className="inline-flex items-center gap-1 text-[11px] text-c-text-muted">
           <BarChart3 size={12} /> {kpiCount} KPI{kpiCount !== 1 ? 's' : ''}
         </span>
-        <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+        <span className="inline-flex items-center gap-1 text-[11px] text-c-text-muted">
           <Layers size={12} /> {dimCount} {isPl ? 'wym.' : 'dim.'}
         </span>
-        <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+        <span className="inline-flex items-center gap-1 text-[11px] text-c-text-muted">
           <Database size={12} /> {sourceCount} {isPl ? 'źr.' : 'src.'}
         </span>
       </div>
@@ -636,15 +636,15 @@ function ModelCard({
           {model.sources.slice(0, 3).map((s) => (
             <span
               key={s.id}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-c-surface-raised text-[10px] text-c-text-muted"
             >
               <Database size={10} />
               {s.table_name || s.table_id.slice(0, 8)}
-              {s.trusted && <CheckCircle2 size={10} className="text-emerald-500" />}
+              {s.trusted && <CheckCircle2 size={10} className="text-c-success" />}
             </span>
           ))}
           {model.sources.length > 3 && (
-            <span className="text-[10px] text-slate-600">+{model.sources.length - 3}</span>
+            <span className="text-[10px] text-c-text-secondary">+{model.sources.length - 3}</span>
           )}
         </div>
       )}
@@ -656,7 +656,7 @@ function ModelCard({
             const val = kpiValues[kpi.kpi_id];
             return (
               <div key={kpi.kpi_id}>
-                <span className="text-[11px] text-slate-600 dark:text-slate-400">
+                <span className="text-[11px] text-c-text-muted">
                   {isPl ? kpi.label_pl || kpi.label_en : kpi.label_en}
                 </span>
                 <KpiProgressBar value={val?.value ?? null} unit={kpi.unit} />
@@ -667,8 +667,8 @@ function ModelCard({
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-navy-800">
-        <span className="text-[10px] text-slate-600">
+      <div className="flex items-center justify-between pt-2 border-t border-c-border">
+        <span className="text-[10px] text-c-text-secondary">
           {model.updated_at
             ? `${isPl ? 'Ost. zmiana' : 'Updated'}: ${new Date(model.updated_at).toLocaleDateString()}`
             : ''}
@@ -679,7 +679,7 @@ function ModelCard({
               e.stopPropagation();
               onEdit();
             }}
-            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 hover:text-slate-600"
+            className="p-1 rounded hover:bg-c-surface-raised text-c-text-secondary hover:text-c-text-secondary"
             title={isPl ? 'Edytuj' : 'Edit'}
           >
             <Pencil size={12} />
@@ -689,7 +689,7 @@ function ModelCard({
               e.stopPropagation();
               onDelete();
             }}
-            className="p-1 rounded hover:bg-danger-50 dark:hover:bg-danger-500/10 text-slate-600 hover:text-danger-500"
+            className="p-1 rounded hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] hover:bg-c-danger text-c-text-secondary hover:text-c-danger"
             title={isPl ? 'Usuń' : 'Delete'}
           >
             <Trash2 size={12} />
@@ -723,7 +723,7 @@ function EditModelModal({
   const [saving, setSaving] = useState(false);
 
   const inputCls =
-    'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-crimson-500/40';
+    'w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-crimson-500/40';
 
   const dirty =
     name.trim() !== (model.name ?? '').trim() ||
@@ -760,25 +760,25 @@ function EditModelModal({
       onClick={onClose}
     >
       <div
-        className="w-[480px] max-w-[95vw] max-h-[85vh] bg-white dark:bg-navy-950 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 flex flex-col overflow-hidden"
+        className="w-[480px] max-w-[95vw] max-h-[85vh] bg-c-bg rounded-2xl shadow-2xl border border-c-border flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-800">
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-c-border">
+          <h3 className="text-sm font-semibold text-c-text">
             {isPl ? 'Edytuj model' : 'Edit model'}
           </h3>
           <button
             onClick={onClose}
-            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="p-1 rounded hover:bg-c-surface-raised"
             aria-label={isPl ? 'Zamknij' : 'Close'}
           >
-            <X size={16} className="text-slate-600" />
+            <X size={16} className="text-c-text-secondary" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+            <label className="block text-xs font-medium text-c-text-muted mb-1">
               {isPl ? 'Nazwa modelu' : 'Model name'}
             </label>
             <input
@@ -789,7 +789,7 @@ function EditModelModal({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+            <label className="block text-xs font-medium text-c-text-muted mb-1">
               {isPl ? 'Opis' : 'Description'}
             </label>
             <textarea
@@ -799,7 +799,7 @@ function EditModelModal({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+            <label className="block text-xs font-medium text-c-text-muted mb-1">
               {isPl ? 'Poziom zaufania' : 'Trust level'}
             </label>
             <div className="flex flex-wrap gap-2">
@@ -811,7 +811,7 @@ function EditModelModal({
                   className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                     status === opt
                       ? 'border-crimson-500 bg-crimson-50 text-crimson-700 dark:bg-crimson-500/10 dark:text-crimson-300'
-                      : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                      : 'border-c-border text-c-text-muted hover:border-c-border'
                   }`}
                 >
                   {TRUST_CONFIG[opt]?.icon}
@@ -822,7 +822,7 @@ function EditModelModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-200 dark:border-navy-800">
+        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-c-border">
           <Button variant="ghost" size="sm" onClick={onClose} disabled={saving}>
             {isPl ? 'Anuluj' : 'Cancel'}
           </Button>
@@ -931,10 +931,10 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-slate-800 dark:text-white">
+          <h2 className="text-base font-semibold text-c-text">
             {isPl ? 'Modele danych' : 'Data Models'}
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-xs text-c-text-muted mt-0.5">
             {isPl
               ? 'Zarządzaj modelami KPI, wymiarami i źródłami danych'
               : 'Manage KPI models, dimensions, and data sources'}
@@ -945,8 +945,8 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
             onClick={() => setShowLineage(!showLineage)}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               showLineage
-                ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300'
-                : 'bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                ? 'bg-c-tag-2 text-c-tag-2 bg-c-tag-2 text-c-tag-2'
+                : 'bg-c-surface-raised text-c-text-secondary bg-c-surface-raised text-c-text-muted hover:bg-c-surface-raised'
             }`}
           >
             <Activity size={14} />
@@ -955,7 +955,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
           {!locked && (
             <button
               onClick={() => setShowWizard(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-c-tag-2 text-c-text hover:bg-c-tag-2 transition-colors"
             >
               <Plus size={14} />
               {isPl ? 'Nowy model' : 'New Model'}
@@ -972,14 +972,14 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
       {/* Empty state */}
       {!showLineage && models.length === 0 && (
         <div className="text-center py-12">
-          <Layers size={40} className="mx-auto text-slate-600 dark:text-navy-600 mb-3" />
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <Layers size={40} className="mx-auto text-c-text-secondary mb-3" />
+          <p className="text-sm text-c-text-muted">
             {isPl ? 'Brak modeli danych' : 'No data models yet'}
           </p>
           {!locked && (
             <button
               onClick={() => setShowWizard(true)}
-              className="mt-3 inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline"
+              className="mt-3 inline-flex items-center gap-1 text-xs text-c-tag-2 hover:underline"
             >
               <Plus size={12} /> {isPl ? 'Utwórz pierwszy model' : 'Create your first model'}
             </button>
@@ -1011,23 +1011,23 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
           onClick={() => setSelectedModel(null)}
         >
           <div
-            className="w-[480px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-y-auto p-5"
+            className="w-[480px] max-w-[90vw] h-full bg-c-bg border-l border-c-border shadow-2xl overflow-y-auto p-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+              <h3 className="text-sm font-semibold text-c-text">
                 {selectedModel.name}
               </h3>
               <button
                 onClick={() => setSelectedModel(null)}
-                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+                className="p-1 rounded hover:bg-c-surface-raised"
               >
-                <X size={16} className="text-slate-600" />
+                <X size={16} className="text-c-text-secondary" />
               </button>
             </div>
 
             {selectedModel.description && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+              <p className="text-xs text-c-text-muted mb-4">
                 {selectedModel.description}
               </p>
             )}
@@ -1036,11 +1036,11 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
 
             {/* KPIs */}
             <div className="mt-6">
-              <h4 className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">
+              <h4 className="text-xs font-semibold text-c-text-muted uppercase tracking-wider mb-2">
                 KPIs
               </h4>
               {(selectedModel.kpis ?? []).length === 0 && (
-                <p className="text-xs text-slate-600 italic">
+                <p className="text-xs text-c-text-secondary italic">
                   {isPl ? 'Brak KPI' : 'No KPIs defined'}
                 </p>
               )}
@@ -1050,13 +1050,13 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
                   return (
                     <div
                       key={kpi.kpi_id}
-                      className="p-3 rounded-lg border border-slate-200 dark:border-navy-800"
+                      className="p-3 rounded-lg border border-c-border"
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                        <span className="text-xs font-medium text-c-text-muted">
                           {isPl ? kpi.label_pl || kpi.label_en : kpi.label_en}
                         </span>
-                        <span className="text-[10px] text-slate-600 uppercase">
+                        <span className="text-[10px] text-c-text-secondary uppercase">
                           {kpi.formula_type}
                         </span>
                       </div>
@@ -1069,11 +1069,11 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
 
             {/* Dimensions */}
             <div className="mt-6">
-              <h4 className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">
+              <h4 className="text-xs font-semibold text-c-text-muted uppercase tracking-wider mb-2">
                 {isPl ? 'Wymiary' : 'Dimensions'}
               </h4>
               {(selectedModel.dimensions ?? []).length === 0 && (
-                <p className="text-xs text-slate-600 italic">
+                <p className="text-xs text-c-text-secondary italic">
                   {isPl ? 'Brak wymiarów' : 'No dimensions'}
                 </p>
               )}
@@ -1081,7 +1081,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
                 {(selectedModel.dimensions ?? []).map((d) => (
                   <span
                     key={d.dimension_id}
-                    className="px-2 py-1 rounded-md bg-slate-100 dark:bg-navy-800 text-[11px] text-slate-600 dark:text-slate-400"
+                    className="px-2 py-1 rounded-md bg-c-surface-raised text-[11px] text-c-text-muted"
                   >
                     {d.name} <span className="opacity-50">({d.dimension_type})</span>
                   </span>
@@ -1091,11 +1091,11 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
 
             {/* Sources */}
             <div className="mt-6">
-              <h4 className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">
+              <h4 className="text-xs font-semibold text-c-text-muted uppercase tracking-wider mb-2">
                 {isPl ? 'Źródła' : 'Sources'}
               </h4>
               {(selectedModel.sources ?? []).length === 0 && (
-                <p className="text-xs text-slate-600 italic">
+                <p className="text-xs text-c-text-secondary italic">
                   {isPl ? 'Brak źródeł' : 'No sources'}
                 </p>
               )}
@@ -1103,16 +1103,16 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
                 {(selectedModel.sources ?? []).map((s) => (
                   <div
                     key={s.id}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-800"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-c-border"
                   >
-                    <Database size={14} className="text-slate-600" />
-                    <span className="text-xs text-slate-700 dark:text-slate-300 flex-1">
+                    <Database size={14} className="text-c-text-secondary" />
+                    <span className="text-xs text-c-text-muted flex-1">
                       {s.table_name || s.table_id}
                     </span>
                     {s.trusted ? (
-                      <CheckCircle2 size={14} className="text-emerald-500" />
+                      <CheckCircle2 size={14} className="text-c-success" />
                     ) : (
-                      <AlertTriangle size={14} className="text-amber-500" />
+                      <AlertTriangle size={14} className="text-c-warning" />
                     )}
                   </div>
                 ))}

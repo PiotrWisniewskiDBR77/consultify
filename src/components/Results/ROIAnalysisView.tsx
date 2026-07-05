@@ -82,7 +82,7 @@ function normalizePortfolioSummary(
 }
 
 const STATUS_STYLES: Record<ROIStatus, { bg: string; text: string; dot: string }> = {
-  'on-track': { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400' },
+  'on-track': { bg: 'bg-c-surface-raised/10', text: 'text-c-text-secondary', dot: 'bg-c-border-strong' },
   below: { bg: 'bg-danger-500/10', text: 'text-danger-400', dot: 'bg-danger-500' },
   above: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
 };
@@ -162,8 +162,8 @@ const ColumnFilterDropdown: React.FC<{
         onClick={() => setOpen(!open)}
         className={`h-8 px-2 rounded-lg border transition-colors flex items-center gap-1 ${
           activeValues.length > 0
-            ? 'text-primary-600 dark:text-primary-400 border-primary-500/40'
-            : 'text-slate-500 border-slate-200/60 dark:border-navy-600 hover:bg-slate-100 dark:hover:bg-navy-700'
+            ? 'text-c-info dark:text-c-info border-c-focus'
+            : 'text-c-text-muted border-c-border/60 dark:border-c-border-strong hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
         }`}
       >
         <ChevronDown size={14} />
@@ -171,32 +171,32 @@ const ColumnFilterDropdown: React.FC<{
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-white dark:bg-navy-800 border border-slate-200/70 dark:border-navy-700 rounded-lg shadow-xl overflow-hidden">
+          <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-white dark:bg-c-surface-raised border border-c-border/70 dark:border-c-border rounded-lg shadow-xl overflow-hidden">
             <div className="max-h-[200px] overflow-y-auto p-2">
               {options.map((o) => (
                 <label
                   key={o.value}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-slate-50 dark:hover:bg-navy-700 cursor-pointer"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-c-surface-raised dark:hover:bg-c-surface-raised cursor-pointer"
                 >
                   <input
                     type="checkbox"
                     checked={selected.includes(o.value)}
                     onChange={() => toggle(o.value)}
-                    className="rounded border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-primary-500 focus:ring-primary-500"
+                    className="rounded border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface-raised text-c-focus-solid focus:ring-c-focus"
                   />
                   {o.color && <span className={`w-2 h-2 rounded-full ${o.color}`} />}
-                  <span className="text-sm text-slate-700 dark:text-slate-300">{o.label}</span>
+                  <span className="text-sm text-c-text-secondary dark:text-c-text-secondary">{o.label}</span>
                 </label>
               ))}
             </div>
-            <div className="flex items-center justify-between p-2 border-t border-slate-200/60 dark:border-navy-700">
+            <div className="flex items-center justify-between p-2 border-t border-c-border/60 dark:border-c-border">
               <button
                 onClick={() => {
                   setSelected([]);
                   onApply([]);
                   setOpen(false);
                 }}
-                className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+                className="text-xs text-c-text-muted hover:text-c-text dark:hover:text-c-text transition-colors"
               >
                 Clear
               </button>
@@ -205,7 +205,7 @@ const ColumnFilterDropdown: React.FC<{
                   onApply(selected);
                   setOpen(false);
                 }}
-                className="h-8 px-3 text-xs font-medium rounded-full bg-primary-500 text-white hover:bg-primary-400 transition-colors"
+                className="h-8 px-3 text-xs font-medium rounded-full bg-c-text text-c-bg hover:opacity-90 transition-colors"
               >
                 Apply
               </button>
@@ -248,7 +248,7 @@ const LockBadge: React.FC<{ lockState: ROILockState }> = ({ lockState }) => {
   }
   return (
     <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-500/15 text-slate-600"
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-c-surface-raised/15 text-c-text-secondary"
       title={t(
         'results.roiAnalysis.lockedHint',
         'Assumptions are finalized and locked for editing'
@@ -430,7 +430,7 @@ export const ROIAnalysisView: React.FC = () => {
   }, []);
 
   const statusFilterOptions: FilterOption[] = [
-    { value: 'on-track', label: t('results.roi.statusOnTrack', 'On track'), color: 'bg-slate-400' },
+    { value: 'on-track', label: t('results.roi.statusOnTrack', 'On track'), color: 'bg-c-border-strong' },
     { value: 'below', label: t('results.roi.statusBelow', 'Below plan'), color: 'bg-danger-500' },
     { value: 'above', label: t('results.roi.statusAbove', 'Above plan'), color: 'bg-emerald-500' },
   ];
@@ -462,9 +462,9 @@ export const ROIAnalysisView: React.FC = () => {
     <div className="p-4 space-y-4">
       {/* Lock / approval governance banner */}
       {(lockedCount > 0 || approvedCount > 0) && (
-        <div className="rounded-xl bg-slate-50 dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 p-3 flex flex-wrap items-center gap-3">
-          <Lock size={16} className="text-slate-600 shrink-0" />
-          <span className="text-sm text-slate-600 dark:text-slate-300">
+        <div className="rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border/70 dark:border-c-border p-3 flex flex-wrap items-center gap-3">
+          <Lock size={16} className="text-c-text-secondary shrink-0" />
+          <span className="text-sm text-c-text-secondary dark:text-c-text-secondary">
             {t(
               'results.roiAnalysis.lockBanner',
               '{{locked}} locked · {{approved}} approved — finalized assumptions are read-only',
@@ -475,36 +475,36 @@ export const ROIAnalysisView: React.FC = () => {
       )}
       {/* Portfolio summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 p-4">
+        <div className="rounded-xl bg-white dark:bg-c-surface border border-c-border/70 dark:border-c-border p-4">
           <div className="flex items-center gap-2 mb-1">
-            <DollarSign size={16} className="text-slate-600" />
-            <span className="text-xs font-medium text-slate-500 uppercase">
+            <DollarSign size={16} className="text-c-text-secondary" />
+            <span className="text-xs font-medium text-c-text-muted uppercase">
               {t('results.roiAnalysis.totalPlanned', 'Total Planned Value')}
             </span>
           </div>
-          <p className="text-lg font-semibold text-slate-900 dark:text-white">
+          <p className="text-lg font-semibold text-c-text dark:text-white">
             {formatCurrency(totalPlanned)}
           </p>
         </div>
-        <div className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 p-4">
+        <div className="rounded-xl bg-white dark:bg-c-surface border border-c-border/70 dark:border-c-border p-4">
           <div className="flex items-center gap-2 mb-1">
-            <Target size={16} className="text-slate-600" />
-            <span className="text-xs font-medium text-slate-500 uppercase">
+            <Target size={16} className="text-c-text-secondary" />
+            <span className="text-xs font-medium text-c-text-muted uppercase">
               {t('results.roiAnalysis.totalRealized', 'Total Realized Value')}
             </span>
           </div>
-          <p className="text-lg font-semibold text-slate-900 dark:text-white">
+          <p className="text-lg font-semibold text-c-text dark:text-white">
             {formatCurrency(totalRealized)}
           </p>
         </div>
-        <div className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 p-4">
+        <div className="rounded-xl bg-white dark:bg-c-surface border border-c-border/70 dark:border-c-border p-4">
           <div className="flex items-center gap-2 mb-1">
             {totalVariance >= 0 ? (
               <TrendingUp size={16} className="text-emerald-400" />
             ) : (
               <TrendingDown size={16} className="text-danger-400" />
             )}
-            <span className="text-xs font-medium text-slate-500 uppercase">
+            <span className="text-xs font-medium text-c-text-muted uppercase">
               {t('results.roiAnalysis.portfolioVariance', 'Portfolio Variance')}
             </span>
           </div>
@@ -514,7 +514,7 @@ export const ROIAnalysisView: React.FC = () => {
                 ? 'text-emerald-400'
                 : totalVariance < 0
                   ? 'text-danger-400'
-                  : 'text-slate-600'
+                  : 'text-c-text-secondary'
             }`}
           >
             {formatCurrency(totalVariance)} ({formatPercent(variancePct)})
@@ -530,91 +530,121 @@ export const ROIAnalysisView: React.FC = () => {
             <h4 className="text-sm font-medium text-amber-400">
               {t('results.roiAnalysis.anomalyTitle', 'AI-suggested insights')}
             </h4>
-            <p className="text-sm text-slate-600 mt-1">{anomalyMessage}</p>
+            <p className="text-sm text-c-text-secondary mt-1">{anomalyMessage}</p>
           </div>
         </div>
       )}
 
       {/* Waterfall/bar chart - initiative contributions sorted by variance */}
       {filteredItems.length > 0 && (
-        <div className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 p-4">
-          <h3 className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-3">
+        <div className="rounded-xl bg-white dark:bg-c-surface border border-slate-200/70 dark:border-c-border p-4">
+          <h3 className="text-sm font-medium text-slate-600 dark:text-c-text-secondary mb-3">
+
             {t('results.roiAnalysis.contributionsChart', 'Initiative Contributions to ROI')}
           </h3>
-          <div className="flex items-end gap-1 h-32">
-            {[...filteredItems]
+          {(() => {
+            const chartItems = [...filteredItems]
               .sort((a, b) => a.variance - b.variance)
-              .slice(0, 10)
-              .map((item, idx) => {
-                const maxAbs = Math.max(...filteredItems.map((i) => Math.abs(i.variance)), 1);
-                const h = (Math.abs(item.variance) / maxAbs) * 100;
-                const isNeg = item.variance < 0;
-                return (
-                  <div
-                    key={item.initiativeId}
-                    className="flex-1 flex flex-col items-center group"
-                    title={`${item.initiativeName}: ${formatCurrency(item.variance)}`}
-                  >
+              .slice(0, 10);
+            // Diverging bars around a zero baseline: positive variance grows up,
+            // negative grows down. Height is proportional to |variance| against the
+            // largest magnitude, so equal-sign values no longer collapse into flat
+            // full-height bars (H2.6). Series colors use c-tag tokens.
+            const maxAbs = Math.max(...chartItems.map((i) => Math.abs(i.variance)), 1);
+            return (
+              <div className="relative h-32 flex items-stretch gap-1">
+                {/* zero baseline */}
+                <div className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-slate-200 dark:bg-c-border" />
+                {chartItems.map((item) => {
+                  const isNeg = item.variance < 0;
+                  // Half-height track above and below the baseline.
+                  const h = (Math.abs(item.variance) / maxAbs) * 50;
+                  return (
                     <div
-                      className={`w-full min-h-[4px] rounded-t transition-all ${
-                        isNeg ? 'bg-danger-500' : 'bg-emerald-500'
-                      }`}
-                      style={{ height: `${Math.max(h, 4)}%` }}
-                    />
-                    <span className="text-[10px] text-slate-500 truncate max-w-full mt-1 opacity-0 group-hover:opacity-100">
-                      {item.initiativeName?.slice(0, 8)}
-                    </span>
-                  </div>
-                );
-              })}
-          </div>
+                      key={item.initiativeId}
+                      className="relative flex-1 flex flex-col group"
+                      title={`${item.initiativeName}: ${formatCurrency(item.variance)}`}
+                    >
+                      {/* upper half — positive bars anchored to baseline */}
+                      <div className="flex-1 flex items-end">
+                        {!isNeg && (
+                          <div
+                            className="w-full min-h-[3px] rounded-t transition-all"
+                            style={{
+                              height: `${Math.max(h, 3)}%`,
+                              backgroundColor: 'var(--c-tag-12)',
+                            }}
+                          />
+                        )}
+                      </div>
+                      {/* lower half — negative bars hang from baseline */}
+                      <div className="flex-1 flex items-start">
+                        {isNeg && (
+                          <div
+                            className="w-full min-h-[3px] rounded-b transition-all"
+                            style={{
+                              height: `${Math.max(h, 3)}%`,
+                              backgroundColor: 'var(--c-tag-4)',
+                            }}
+                          />
+                        )}
+                      </div>
+                      <span className="absolute -bottom-1 inset-x-0 text-center text-[10px] text-slate-500 dark:text-c-text-muted truncate opacity-0 group-hover:opacity-100">
+                        {item.initiativeName?.slice(0, 8)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       )}
 
       {/* Initiative list table */}
       {/* §27-exempt: financial-calculation — sort state drives bar chart order; lock-conditional disabled row actions and custom ColumnFilterDropdown in Status header cannot be expressed through FilterableTable column API without destructive rewrite */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-c-surface border border-c-border/70 dark:border-c-border rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-slate-50/80 dark:bg-navy-900/50 border-b border-slate-200/60 dark:border-navy-700/50">
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[20%]">
+              <tr className="bg-c-surface-raised/80 dark:bg-c-surface/50 border-b border-c-border/60 dark:border-c-border/50">
+                <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider w-[20%]">
                   <button
                     onClick={() => handleSort('initiativeName')}
-                    className="hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1"
+                    className="hover:text-c-text dark:hover:text-white transition-colors flex items-center gap-1"
                   >
                     {t('results.roi.columns.initiative', 'Initiative')}
                     {sortCol === 'initiativeName' && (sortDir === 'asc' ? ' ↑' : ' ↓')}
                   </button>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[12%]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider w-[12%]">
                   <button
                     onClick={() => handleSort('projectedBenefit')}
-                    className="hover:text-slate-900 dark:hover:text-white transition-colors"
+                    className="hover:text-c-text dark:hover:text-white transition-colors"
                   >
                     {t('results.roiAnalysis.plannedRoi', 'Planned ROI')}
                     {sortCol === 'projectedBenefit' && (sortDir === 'asc' ? ' ↑' : ' ↓')}
                   </button>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[12%]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider w-[12%]">
                   <button
                     onClick={() => handleSort('realizedBenefit')}
-                    className="hover:text-slate-900 dark:hover:text-white transition-colors"
+                    className="hover:text-c-text dark:hover:text-white transition-colors"
                   >
                     {t('results.roiAnalysis.realizedRoi', 'Realized ROI')}
                     {sortCol === 'realizedBenefit' && (sortDir === 'asc' ? ' ↑' : ' ↓')}
                   </button>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[10%]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider w-[10%]">
                   <button
                     onClick={() => handleSort('variance')}
-                    className="hover:text-slate-900 dark:hover:text-white transition-colors"
+                    className="hover:text-c-text dark:hover:text-white transition-colors"
                   >
                     {t('results.roi.columns.variance', 'Variance')}
                     {sortCol === 'variance' && (sortDir === 'asc' ? ' ↑' : ' ↓')}
                   </button>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[12%]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider w-[12%]">
                   <div className="flex items-center gap-1">
                     <span>{t('results.roi.columns.status', 'Status')}</span>
                     <ColumnFilterDropdown
@@ -624,26 +654,26 @@ export const ROIAnalysisView: React.FC = () => {
                     />
                   </div>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[10%]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider w-[10%]">
                   {t('results.roiAnalysis.columns.lock', 'Lock')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[10%]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider w-[10%]">
                   {t('results.roi.columns.owner', 'Owner')}
                 </th>
                 <th
-                  className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-16"
+                  className="px-4 py-3 text-right text-xs font-medium text-c-text-muted uppercase tracking-wider w-16"
                   aria-label="Row actions"
                 >
                   <span className="sr-only">{t('common.actions', 'Actions')}</span>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200/60 dark:divide-navy-700/50">
+            <tbody className="divide-y divide-c-border-subtle/60 dark:divide-c-border-subtle/50">
               {filteredItems.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-16 text-center text-slate-500">
+                  <td colSpan={8} className="px-4 py-16 text-center text-c-text-muted">
                     <div className="flex flex-col items-center gap-2">
-                      <BarChart3 size={24} className="text-slate-600" />
+                      <BarChart3 size={24} className="text-c-text-secondary" />
                       <span>{t('results.roi.emptyState', 'No initiatives with ROI data')}</span>
                     </div>
                   </td>
@@ -664,23 +694,23 @@ export const ROIAnalysisView: React.FC = () => {
                       ? 'text-emerald-400'
                       : varPct < 0
                         ? 'text-danger-400'
-                        : 'text-slate-600';
+                        : 'text-c-text-secondary';
 
                   return (
                     <tr
                       key={item.initiativeId}
                       onClick={() => setDrawerInitiativeId(item.initiativeId)}
-                      className="group hover:bg-slate-50/80 dark:hover:bg-navy-800/50 cursor-pointer transition-colors"
+                      className="group hover:bg-c-surface-raised/80 dark:hover:bg-c-surface-raised/50 cursor-pointer transition-colors"
                     >
                       <td className="px-4 py-3">
-                        <span className="text-sm font-medium text-slate-900 dark:text-white">
+                        <span className="text-sm font-medium text-c-text dark:text-white">
                           {item.initiativeName || '—'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                      <td className="px-4 py-3 text-sm text-c-text-secondary dark:text-c-text-secondary">
                         {formatCurrency(item.projectedBenefit)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                      <td className="px-4 py-3 text-sm text-c-text-secondary dark:text-c-text-secondary">
                         {formatCurrency(item.realizedBenefit)}
                       </td>
                       <td className={`px-4 py-3 text-sm font-medium ${varColor}`}>
@@ -691,12 +721,12 @@ export const ROIAnalysisView: React.FC = () => {
                       </td>
                       <td className="px-4 py-3">
                         {lockState === 'open' ? (
-                          <span className="text-xs text-slate-600">—</span>
+                          <span className="text-xs text-c-text-secondary">—</span>
                         ) : (
                           <LockBadge lockState={lockState} />
                         )}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-500">{item.ownerName || '—'}</td>
+                      <td className="px-4 py-3 text-sm text-c-text-muted">{item.ownerName || '—'}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="relative">
                           <button
@@ -706,7 +736,7 @@ export const ROIAnalysisView: React.FC = () => {
                                 menuRowId === item.initiativeId ? null : item.initiativeId
                               );
                             }}
-                            className="h-8 w-8 flex items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+                            className="h-8 w-8 flex items-center justify-center rounded hover:bg-c-surface-raised dark:hover:bg-c-surface-raised text-c-text-muted hover:text-c-text dark:hover:text-white transition-colors"
                           >
                             <MoreVertical size={14} />
                           </button>
@@ -716,13 +746,13 @@ export const ROIAnalysisView: React.FC = () => {
                                 className="fixed inset-0 z-40"
                                 onClick={() => setMenuRowId(null)}
                               />
-                              <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-white dark:bg-navy-800 border border-slate-200/70 dark:border-navy-700 rounded-lg shadow-xl overflow-hidden">
+                              <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-white dark:bg-c-surface-raised border border-c-border/70 dark:border-c-border rounded-lg shadow-xl overflow-hidden">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleRowAction('open', item);
                                   }}
-                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-c-text-secondary dark:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised"
                                 >
                                   <Maximize2 size={14} />
                                   {t('results.roi.actions.openDetail', 'Open detail')}
@@ -744,8 +774,8 @@ export const ROIAnalysisView: React.FC = () => {
                                   }
                                   className={`flex items-center gap-2 w-full px-3 py-2 text-sm ${
                                     editable
-                                      ? 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700'
-                                      : 'text-slate-600 dark:text-slate-400 cursor-not-allowed'
+                                      ? 'text-c-text-secondary dark:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
+                                      : 'text-c-text-secondary dark:text-c-text-muted cursor-not-allowed'
                                   }`}
                                 >
                                   {editable ? <Plus size={14} /> : <Lock size={14} />}
@@ -756,7 +786,7 @@ export const ROIAnalysisView: React.FC = () => {
                                     e.stopPropagation();
                                     handleRowAction('history', item);
                                   }}
-                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-c-text-secondary dark:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised"
                                 >
                                   {t('results.roi.actions.viewHistory', 'View history')}
                                 </button>

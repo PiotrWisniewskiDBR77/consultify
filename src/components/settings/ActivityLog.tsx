@@ -13,9 +13,9 @@ interface ActivityLogProps {
 export const ActivityLog: React.FC<ActivityLogProps> = ({ userId, limit = 20, currentUser }) => {
   const targetUserId = userId || currentUser?.id;
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-lg p-4">
+    <div className="bg-c-surface rounded-lg p-4">
       <h3 className="text-lg font-semibold mb-4">Activity Log</h3>
-      <p className="text-sm text-gray-600 dark:text-gray-400">No activity recorded yet.</p>
+      <p className="text-sm text-c-text-secondary">No activity recorded yet.</p>
     </div>
   );
 };

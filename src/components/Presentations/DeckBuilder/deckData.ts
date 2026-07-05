@@ -1,4 +1,44 @@
-import type { CardBlock, Deck, DeckCard } from '../wizard/types';
+import type { CardBlock, CardComposition, Deck, DeckCard } from '../wizard/types';
+
+/**
+ * STEP 1b — normalize a raw slide `composition` (from B1 / unifiedJson) into the
+ * FE CardComposition contract. Guarded + fail-open: malformed input → null, so
+ * back-compat holds (absent composition === today's heuristic). Never throws.
+ */
+export function normalizeSlideComposition(raw: unknown): CardComposition | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  const out: CardComposition = {};
+
+  if (typeof r.layoutVariantId === 'string' && r.layoutVariantId.trim()) {
+    out.layoutVariantId = r.layoutVariantId.trim().slice(0, 60);
+  }
+  if (typeof r.emphasis === 'string' && r.emphasis.trim()) {
+    out.emphasis = r.emphasis.trim().slice(0, 40);
+  }
+  if (Array.isArray(r.regions)) {
+    const regions: { area: string; blockTypes?: string[] }[] = [];
+    for (const reg of r.regions) {
+      if (!reg || typeof reg !== 'object') continue;
+      const area = (reg as Record<string, unknown>).area;
+      if (typeof area !== 'string' || !area.trim()) continue;
+      const blockTypesRaw = (reg as Record<string, unknown>).blockTypes;
+      const blockTypes = Array.isArray(blockTypesRaw)
+        ? blockTypesRaw.filter((b): b is string => typeof b === 'string' && !!b.trim())
+        : undefined;
+      regions.push({
+        area: area.trim(),
+        ...(blockTypes && blockTypes.length ? { blockTypes } : {}),
+      });
+    }
+    if (regions.length) out.regions = regions;
+  }
+
+  if (out.layoutVariantId === undefined && out.emphasis === undefined && out.regions === undefined) {
+    return null;
+  }
+  return out;
+}
 
 export function safeJsonParse<T>(raw: unknown, fallback: T): T {
   if (!raw) return fallback;
@@ -112,12 +152,22 @@ export function deckFromUnifiedJson(params: {
       pushBlock('paragraph', { text: String(slide.content?.text || slide.key_message) });
     }
 
+    // STEP 1b — carry B1's per-slide composition (if any) onto the card so the
+    // renderer can honour the AI's layout choice. Additive + back-compatible:
+    // a slide without `composition` keeps layout_id 'auto' (pure heuristic).
+    const composition = normalizeSlideComposition(slide?.composition);
+    const layoutId =
+      composition?.layoutVariantId && composition.layoutVariantId.trim()
+        ? composition.layoutVariantId.trim()
+        : 'auto';
+
     return {
       card_id: cardId,
       deck_id: params.deckId,
       order_index: idx,
       intent,
-      layout_id: 'auto',
+      layout_id: layoutId,
+      composition: composition ?? null,
       title: String(headingText),
       blocks,
       source_refs: Array.isArray(slide?.source_refs)

@@ -90,7 +90,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
             <BarChart2 className="w-6 h-6 text-primary-400" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">Content Analytics</h2>
+            <h2 className="text-xl font-bold text-c-text">Content Analytics</h2>
             <p className="text-sm text-slate-400 dark:text-slate-500">
               Overview of your content module performance
             </p>
@@ -100,7 +100,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+            className="px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
           >
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>
@@ -109,7 +109,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
           </select>
           <button
             onClick={loadDashboard}
-            className="p-2 text-slate-400 dark:text-slate-500 hover:text-white bg-slate-800 border border-slate-700 rounded-lg"
+            className="p-2 text-slate-400 dark:text-slate-500 hover:text-white bg-c-surface-raised border border-c-border rounded-lg"
           >
             <RefreshCw size={16} />
           </button>
@@ -124,7 +124,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
             <Play size={18} className="text-blue-400" />
             <span className="text-sm font-medium text-blue-300">Playbooks</span>
           </div>
-          <div className="text-3xl font-bold text-white mb-1">{data.totalPlaybookTemplates}</div>
+          <div className="text-3xl font-bold text-c-text mb-1">{data.totalPlaybookTemplates}</div>
           <div className="text-sm text-slate-400 dark:text-slate-500">
             <span className="text-emerald-400">{data.publishedPlaybooks}</span> published
           </div>
@@ -136,7 +136,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
             <Mail size={18} className="text-pink-400" />
             <span className="text-sm font-medium text-pink-300">Email Templates</span>
           </div>
-          <div className="text-3xl font-bold text-white mb-1">{data.totalEmailTemplates}</div>
+          <div className="text-3xl font-bold text-c-text mb-1">{data.totalEmailTemplates}</div>
           <div className="text-sm text-slate-400 dark:text-slate-500">
             <span className="text-emerald-400">{data.publishedEmails}</span> published
           </div>
@@ -148,7 +148,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
             <FolderOpen size={18} className="text-primary-400" />
             <span className="text-sm font-medium text-primary-300">Categories</span>
           </div>
-          <div className="text-3xl font-bold text-white mb-1">{data.totalCategories}</div>
+          <div className="text-3xl font-bold text-c-text mb-1">{data.totalCategories}</div>
           <div className="text-sm text-slate-400 dark:text-slate-500">Content organization</div>
         </div>
 
@@ -158,7 +158,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
             <Tag size={18} className="text-emerald-400" />
             <span className="text-sm font-medium text-emerald-300">Tags</span>
           </div>
-          <div className="text-3xl font-bold text-white mb-1">{data.totalTags}</div>
+          <div className="text-3xl font-bold text-c-text mb-1">{data.totalTags}</div>
           <div className="text-sm text-slate-400 dark:text-slate-500">Content labels</div>
         </div>
       </div>
@@ -166,13 +166,13 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
       {/* Performance Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Playbook Runs */}
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Activity size={18} className="text-blue-400" />
-              <h3 className="font-semibold text-white">Playbook Runs</h3>
+              <h3 className="font-semibold text-c-text">Playbook Runs</h3>
             </div>
-            <span className="text-2xl font-bold text-white">{data.totalPlaybookRuns}</span>
+            <span className="text-2xl font-bold text-c-text">{data.totalPlaybookRuns}</span>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
@@ -189,7 +189,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
                 {data.avgPlaybookSuccessRate}%
               </span>
             </div>
-            <div className="h-2 bg-slate-900 rounded-full overflow-hidden">
+            <div className="h-2 bg-c-surface rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full ${
                   data.avgPlaybookSuccessRate >= 70
@@ -205,13 +205,13 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
         </div>
 
         {/* Email Stats */}
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Send size={18} className="text-pink-400" />
-              <h3 className="font-semibold text-white">Emails Sent</h3>
+              <h3 className="font-semibold text-c-text">Emails Sent</h3>
             </div>
-            <span className="text-2xl font-bold text-white">{data.totalEmailsSent}</span>
+            <span className="text-2xl font-bold text-c-text">{data.totalEmailsSent}</span>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -226,15 +226,15 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
-          <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+          <h3 className="font-semibold text-c-text mb-4 flex items-center gap-2">
             <Zap size={18} className="text-amber-400" />
             Quick Actions
           </h3>
           <div className="space-y-2">
             <a
               href="/superadmin/playbook-templates"
-              className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-700/50 transition-colors group"
+              className="flex items-center justify-between p-2 rounded-lg hover:bg-c-surface-raised/50 transition-colors group"
             >
               <span className="text-slate-300 group-hover:text-white">Manage Playbooks</span>
               <TrendingUp
@@ -244,7 +244,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
             </a>
             <a
               href="/superadmin/email-templates"
-              className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-700/50 transition-colors group"
+              className="flex items-center justify-between p-2 rounded-lg hover:bg-c-surface-raised/50 transition-colors group"
             >
               <span className="text-slate-300 group-hover:text-white">Email Templates</span>
               <TrendingUp
@@ -254,7 +254,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
             </a>
             <a
               href="/superadmin/content/categories"
-              className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-700/50 transition-colors group"
+              className="flex items-center justify-between p-2 rounded-lg hover:bg-c-surface-raised/50 transition-colors group"
             >
               <span className="text-slate-300 group-hover:text-white">Manage Categories</span>
               <TrendingUp
@@ -269,8 +269,8 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
       {/* Top Content Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Top Playbooks */}
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
-          <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+          <h3 className="font-semibold text-c-text mb-4 flex items-center gap-2">
             <Play size={18} className="text-blue-400" />
             Top Playbooks
           </h3>
@@ -279,13 +279,13 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
               {data.topPlaybooks.slice(0, 5).map((playbook, index: number) => (
                 <div
                   key={playbook.id}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700/30 transition-colors"
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-c-surface-raised/30 transition-colors"
                 >
                   <span className="text-sm font-medium text-slate-500 dark:text-slate-400 w-5">
                     #{index + 1}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-white truncate">{playbook.title}</div>
+                    <div className="text-sm font-medium text-c-text truncate">{playbook.title}</div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">
                       {playbook.totalRuns} runs • {playbook.successRate}% success
                     </div>
@@ -304,8 +304,8 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
         </div>
 
         {/* Top Emails */}
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
-          <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+          <h3 className="font-semibold text-c-text mb-4 flex items-center gap-2">
             <Mail size={18} className="text-pink-400" />
             Top Email Templates
           </h3>
@@ -314,13 +314,13 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
               {data.topEmails.slice(0, 5).map((email, index: number) => (
                 <div
                   key={email.id}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700/30 transition-colors"
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-c-surface-raised/30 transition-colors"
                 >
                   <span className="text-sm font-medium text-slate-500 dark:text-slate-400 w-5">
                     #{index + 1}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-white truncate">{email.name}</div>
+                    <div className="text-sm font-medium text-c-text truncate">{email.name}</div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">
                       {email.totalSends} sent • {email.openRate}% open rate
                     </div>
@@ -341,15 +341,15 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
 
       {/* Usage by Category */}
       {data.usageByCategory && data.usageByCategory.length > 0 && (
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
-          <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+          <h3 className="font-semibold text-c-text mb-4 flex items-center gap-2">
             <FolderOpen size={18} className="text-primary-400" />
             Usage by Category
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {data.usageByCategory.map((cat) => (
-              <div key={cat.categoryId} className="bg-slate-900/50 rounded-lg p-3">
-                <div className="text-sm font-medium text-white mb-2">{cat.categoryName}</div>
+              <div key={cat.categoryId} className="bg-c-surface/50 rounded-lg p-3">
+                <div className="text-sm font-medium text-c-text mb-2">{cat.categoryName}</div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
                     <span className="text-slate-500 dark:text-slate-400">Playbooks:</span>
@@ -371,8 +371,8 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
 
       {/* Recent Activity */}
       {data.recentActivity && data.recentActivity.length > 0 && (
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
-          <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+          <h3 className="font-semibold text-c-text mb-4 flex items-center gap-2">
             <Activity size={18} className="text-emerald-400" />
             Recent Activity
           </h3>
@@ -380,10 +380,10 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
             {data.recentActivity.slice(0, 10).map((event) => (
               <div
                 key={event.id}
-                className="flex items-center justify-between py-2 border-b border-slate-700/30 last:border-0"
+                className="flex items-center justify-between py-2 border-b border-c-border/30 last:border-0"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-c-surface flex items-center justify-center">
                     {event.contentType === 'EMAIL_TEMPLATE' ? (
                       <Mail size={14} className="text-pink-400" />
                     ) : (
@@ -391,7 +391,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
                     )}
                   </div>
                   <div>
-                    <span className="text-sm text-white">
+                    <span className="text-sm text-c-text">
                       {String(event.eventType ?? 'Unknown').replaceAll('_', ' ')}
                     </span>
                     <span className="text-sm text-slate-500 dark:text-slate-400 ml-2">

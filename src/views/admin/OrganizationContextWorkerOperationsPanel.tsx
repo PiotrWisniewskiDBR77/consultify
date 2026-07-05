@@ -186,77 +186,77 @@ export function OrganizationContextWorkerOperationsPanel({
   );
 
   return (
-    <div className="rounded-lg border border-slate-200 dark:border-navy-700 overflow-hidden">
-      <div className="px-3 py-2 bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
+    <div className="rounded-lg border border-c-border-subtle overflow-hidden">
+      <div className="px-3 py-2 bg-c-surface-raised border-b border-c-border-subtle">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+          <p className="text-sm font-medium text-c-text-secondary flex items-center gap-2">
             <RefreshCw size={14} />
             Processing Jobs
           </p>
           {summary && (
-            <span className="text-xs text-slate-500 dark:text-slate-400">{configuredBackend}</span>
+            <span className="text-xs text-c-text-muted">{configuredBackend}</span>
           )}
         </div>
       </div>
 
       {summary && (
-        <div className="grid grid-cols-2 gap-2 border-b border-slate-200 dark:border-navy-700 p-3 text-xs">
-          <div className="rounded bg-slate-50 dark:bg-navy-900 p-2">
-            <p className="text-slate-500 dark:text-slate-400">Pending</p>
-            <p className="text-lg font-semibold text-slate-900 dark:text-white">
+        <div className="grid grid-cols-2 gap-2 border-b border-c-border-subtle p-3 text-xs">
+          <div className="rounded bg-c-surface-raised p-2">
+            <p className="text-c-text-muted">Pending</p>
+            <p className="text-lg font-semibold text-c-text">
               {summary.pendingCount}
             </p>
           </div>
-          <div className="rounded bg-slate-50 dark:bg-navy-900 p-2">
-            <p className="text-slate-500 dark:text-slate-400">Needs attention</p>
-            <p className="text-lg font-semibold text-slate-900 dark:text-white">
+          <div className="rounded bg-c-surface-raised p-2">
+            <p className="text-c-text-muted">Needs attention</p>
+            <p className="text-lg font-semibold text-c-text">
               {summary.blockedCount}
             </p>
           </div>
-          <div className="rounded bg-slate-50 dark:bg-navy-900 p-2">
-            <p className="text-slate-500 dark:text-slate-400">Claimed</p>
-            <p className="text-lg font-semibold text-slate-900 dark:text-white">
+          <div className="rounded bg-c-surface-raised p-2">
+            <p className="text-c-text-muted">Claimed</p>
+            <p className="text-lg font-semibold text-c-text">
               {Number(summary.claimedCount || 0)}
             </p>
           </div>
-          <div className="rounded bg-slate-50 dark:bg-navy-900 p-2">
-            <p className="text-slate-500 dark:text-slate-400">Stale locks</p>
+          <div className="rounded bg-c-surface-raised p-2">
+            <p className="text-c-text-muted">Stale locks</p>
             <p
               className={
                 Number(summary.staleClaimedCount || 0) > 0
                   ? 'text-lg font-semibold text-amber-700'
-                  : 'text-lg font-semibold text-slate-900 dark:text-white'
+                  : 'text-lg font-semibold text-c-text'
               }
             >
               {Number(summary.staleClaimedCount || 0)}
             </p>
           </div>
-          <div className="rounded bg-slate-50 dark:bg-navy-900 p-2">
-            <p className="text-slate-500 dark:text-slate-400">Dead letters</p>
+          <div className="rounded bg-c-surface-raised p-2">
+            <p className="text-c-text-muted">Dead letters</p>
             <p
               className={
                 Number(summary.deadLetterCount || 0) > 0
                   ? 'text-lg font-semibold text-danger-700'
-                  : 'text-lg font-semibold text-slate-900 dark:text-white'
+                  : 'text-lg font-semibold text-c-text'
               }
             >
               {Number(summary.deadLetterCount || 0)}
             </p>
           </div>
-          <div className="rounded bg-slate-50 dark:bg-navy-900 p-2">
-            <p className="text-slate-500 dark:text-slate-400">Scheduler</p>
-            <p className="font-semibold text-slate-900 dark:text-white">
+          <div className="rounded bg-c-surface-raised p-2">
+            <p className="text-c-text-muted">Scheduler</p>
+            <p className="font-semibold text-c-text">
               {summary.schedulerEnabled ? 'Enabled' : 'Disabled'}
             </p>
           </div>
-          <div className="rounded bg-slate-50 dark:bg-navy-900 p-2">
-            <p className="text-slate-500 dark:text-slate-400">Lease duration</p>
-            <p className="font-semibold text-slate-900 dark:text-white">
+          <div className="rounded bg-c-surface-raised p-2">
+            <p className="text-c-text-muted">Lease duration</p>
+            <p className="font-semibold text-c-text">
               {Math.round(Number(summary.leaseDurationMs || 0) / 60000) || 0} min
             </p>
           </div>
-          <div className="rounded bg-slate-50 dark:bg-navy-900 p-2">
-            <p className="text-slate-500 dark:text-slate-400">Queue readiness</p>
+          <div className="rounded bg-c-surface-raised p-2">
+            <p className="text-c-text-muted">Queue readiness</p>
             <p
               className={
                 queueReady ? 'font-semibold text-green-700' : 'font-semibold text-amber-700'
@@ -265,20 +265,20 @@ export function OrganizationContextWorkerOperationsPanel({
               {queueReady ? 'Ready' : 'Configuration needed'}
             </p>
           </div>
-          <div className="rounded bg-slate-50 dark:bg-navy-900 p-2">
-            <p className="text-slate-500 dark:text-slate-400">Enqueue</p>
-            <p className="font-semibold text-slate-900 dark:text-white">
+          <div className="rounded bg-c-surface-raised p-2">
+            <p className="text-c-text-muted">Enqueue</p>
+            <p className="font-semibold text-c-text">
               {summary.queueCanEnqueue === false ? 'Unavailable' : 'Available'}
             </p>
           </div>
-          <div className="rounded bg-slate-50 dark:bg-navy-900 p-2">
-            <p className="text-slate-500 dark:text-slate-400">Local consume</p>
-            <p className="font-semibold text-slate-900 dark:text-white">
+          <div className="rounded bg-c-surface-raised p-2">
+            <p className="text-c-text-muted">Local consume</p>
+            <p className="font-semibold text-c-text">
               {summary.queueCanConsumeLocally === false ? 'Unavailable' : 'Available'}
             </p>
           </div>
-          <div className="rounded bg-slate-50 dark:bg-navy-900 p-2">
-            <p className="text-slate-500 dark:text-slate-400">Broker deployment</p>
+          <div className="rounded bg-c-surface-raised p-2">
+            <p className="text-c-text-muted">Broker deployment</p>
             <p
               className={
                 summary.brokerDeploymentReady === false
@@ -289,8 +289,8 @@ export function OrganizationContextWorkerOperationsPanel({
               {summary.brokerDeploymentReady === false ? 'Needs setup' : 'Ready'}
             </p>
           </div>
-          <div className="rounded bg-slate-50 dark:bg-navy-900 p-2">
-            <p className="text-slate-500 dark:text-slate-400">Async cutover</p>
+          <div className="rounded bg-c-surface-raised p-2">
+            <p className="text-c-text-muted">Async cutover</p>
             <p
               className={
                 summary.asyncCutoverReady
@@ -301,13 +301,13 @@ export function OrganizationContextWorkerOperationsPanel({
               {summary.asyncCutoverReady ? 'Ready' : 'Not ready'}
             </p>
           </div>
-          <div className="rounded bg-slate-50 dark:bg-navy-900 p-2">
-            <p className="text-slate-500 dark:text-slate-400">Upload execution</p>
+          <div className="rounded bg-c-surface-raised p-2">
+            <p className="text-c-text-muted">Upload execution</p>
             <p
               className={
                 summary.guardedAsyncUploadReady
                   ? 'font-semibold text-green-700'
-                  : 'font-semibold text-slate-900 dark:text-white'
+                  : 'font-semibold text-c-text'
               }
             >
               {summary.uploadProcessingMode === 'async_worker_enqueued_v1'
@@ -315,20 +315,20 @@ export function OrganizationContextWorkerOperationsPanel({
                 : 'Inline guarded'}
             </p>
           </div>
-          <div className="rounded bg-slate-50 dark:bg-navy-900 p-2">
-            <p className="text-slate-500 dark:text-slate-400">Async upload read-back</p>
+          <div className="rounded bg-c-surface-raised p-2">
+            <p className="text-c-text-muted">Async upload read-back</p>
             <p
               className={
                 summary.asyncUploadReadBack?.attentionRequired
                   ? 'font-semibold text-amber-700'
-                  : 'font-semibold text-slate-900 dark:text-white'
+                  : 'font-semibold text-c-text'
               }
             >
               {Number(summary.asyncUploadReadBack?.processingDocumentCount || 0)} processing
             </p>
           </div>
-          <div className="rounded bg-slate-50 dark:bg-navy-900 p-2">
-            <p className="text-slate-500 dark:text-slate-400">External worker</p>
+          <div className="rounded bg-c-surface-raised p-2">
+            <p className="text-c-text-muted">External worker</p>
             <p
               className={
                 summary.externalWorkerDeploymentVerified === false
@@ -341,8 +341,8 @@ export function OrganizationContextWorkerOperationsPanel({
                 : 'Verified'}
             </p>
           </div>
-          <div className="rounded bg-slate-50 dark:bg-navy-900 p-2">
-            <p className="text-slate-500 dark:text-slate-400">Worker health</p>
+          <div className="rounded bg-c-surface-raised p-2">
+            <p className="text-c-text-muted">Worker health</p>
             <p
               className={
                 summary.externalWorkerHealthProbe?.status === 'healthy'
@@ -361,7 +361,7 @@ export function OrganizationContextWorkerOperationsPanel({
             </p>
           )}
           {summary.queueAdapterReason && (
-            <p className="col-span-2 rounded bg-slate-50 dark:bg-navy-900 p-2 text-slate-600 dark:text-slate-300">
+            <p className="col-span-2 rounded bg-c-surface-raised p-2 text-c-text-secondary">
               Adapter note: {summary.queueAdapterReason.replaceAll('_', ' ')}.
             </p>
           )}
@@ -378,7 +378,7 @@ export function OrganizationContextWorkerOperationsPanel({
             </p>
           )}
           {summary.guardedAsyncUploadBlockers && summary.guardedAsyncUploadBlockers.length > 0 && (
-            <p className="col-span-2 rounded bg-slate-50 p-2 text-slate-600 dark:bg-navy-900 dark:text-slate-300">
+            <p className="col-span-2 rounded bg-c-bg p-2 text-c-text-secondary dark:bg-navy-900 dark:text-slate-300">
               Guarded upload switch blockers:{' '}
               {summary.guardedAsyncUploadBlockers
                 .map((item) => item.replaceAll('_', ' '))
@@ -387,7 +387,7 @@ export function OrganizationContextWorkerOperationsPanel({
             </p>
           )}
           {summary.guardedAsyncUploadSwitchPlan && (
-            <p className="col-span-2 rounded bg-slate-50 p-2 text-slate-600 dark:bg-navy-900 dark:text-slate-300">
+            <p className="col-span-2 rounded bg-c-bg p-2 text-c-text-secondary dark:bg-navy-900 dark:text-slate-300">
               Upload cutover plan: set {summary.guardedAsyncUploadSwitchPlan.requiredEnv.join(', ')}
               ; rollback with {summary.guardedAsyncUploadSwitchPlan.rollbackEnv}.
             </p>
@@ -397,7 +397,7 @@ export function OrganizationContextWorkerOperationsPanel({
               className={
                 summary.asyncUploadReadBack.attentionRequired
                   ? 'col-span-2 rounded bg-amber-50 p-2 text-amber-800 dark:bg-amber-900/20 dark:text-amber-200'
-                  : 'col-span-2 rounded bg-slate-50 p-2 text-slate-600 dark:bg-navy-900 dark:text-slate-300'
+                  : 'col-span-2 rounded bg-c-bg p-2 text-c-text-secondary dark:bg-navy-900 dark:text-slate-300'
               }
             >
               Async upload status: {summary.asyncUploadReadBack.processingDocumentCount} processing
@@ -412,7 +412,7 @@ export function OrganizationContextWorkerOperationsPanel({
             </p>
           )}
           {summary.asyncUploadReadBack && onRefreshAsyncUploadStatus && (
-            <div className="col-span-2 flex flex-wrap items-center justify-between gap-2 rounded bg-slate-50 p-2 text-slate-600 dark:bg-navy-900 dark:text-slate-300">
+            <div className="col-span-2 flex flex-wrap items-center justify-between gap-2 rounded bg-c-bg p-2 text-c-text-secondary dark:bg-navy-900 dark:text-slate-300">
               <span>
                 Async upload refresh loop:{' '}
                 {summary.asyncUploadReadBack.processingDocumentCount > 0 ? 'active' : 'idle'}
@@ -424,7 +424,7 @@ export function OrganizationContextWorkerOperationsPanel({
                 type="button"
                 onClick={onRefreshAsyncUploadStatus}
                 disabled={refreshingAsyncUploadStatus}
-                className="rounded-lg border border-slate-200 px-2 py-1 font-medium text-slate-600 hover:bg-white disabled:opacity-50 dark:border-navy-600 dark:text-slate-300 dark:hover:bg-navy-700"
+                className="rounded-lg border border-c-border-subtle px-2 py-1 font-medium text-c-text-secondary hover:bg-c-surface disabled:opacity-50 dark:border-navy-600 dark:text-slate-300 dark:hover:bg-navy-700"
               >
                 {refreshingAsyncUploadStatus ? 'Refreshing status...' : 'Refresh async status'}
               </button>
@@ -441,7 +441,7 @@ export function OrganizationContextWorkerOperationsPanel({
               </p>
             )}
           {summary.externalWorkerDeploymentVerification && (
-            <p className="col-span-2 rounded bg-slate-50 p-2 text-slate-600 dark:bg-navy-900 dark:text-slate-300">
+            <p className="col-span-2 rounded bg-c-bg p-2 text-c-text-secondary dark:bg-navy-900 dark:text-slate-300">
               External worker verification:{' '}
               {summary.externalWorkerDeploymentVerification.mode.replaceAll('_', ' ')}, health URL{' '}
               {summary.externalWorkerDeploymentVerification.healthUrlConfigured
@@ -459,7 +459,7 @@ export function OrganizationContextWorkerOperationsPanel({
               className={
                 summary.externalWorkerHealthProbe.status === 'unhealthy'
                   ? 'col-span-2 rounded bg-danger-50 p-2 text-danger-800 dark:bg-danger-900/20 dark:text-danger-200'
-                  : 'col-span-2 rounded bg-slate-50 p-2 text-slate-600 dark:bg-navy-900 dark:text-slate-300'
+                  : 'col-span-2 rounded bg-c-bg p-2 text-c-text-secondary dark:bg-navy-900 dark:text-slate-300'
               }
             >
               External worker health probe:{' '}
@@ -474,7 +474,7 @@ export function OrganizationContextWorkerOperationsPanel({
             </p>
           )}
           {summary.locatorUpgradePlan && (
-            <p className="col-span-2 rounded bg-slate-50 p-2 text-slate-600 dark:bg-navy-900 dark:text-slate-300">
+            <p className="col-span-2 rounded bg-c-bg p-2 text-c-text-secondary dark:bg-navy-900 dark:text-slate-300">
               Locator upgrade: baseline ready{' '}
               {summary.locatorUpgradePlan.baselineReady
                 .map((item) => item.replaceAll('_', ' '))
@@ -487,7 +487,7 @@ export function OrganizationContextWorkerOperationsPanel({
             </p>
           )}
           {(summary.oldestClaimedAt || summary.latestDeadLetterAt) && (
-            <p className="col-span-2 rounded bg-slate-50 dark:bg-navy-900 p-2 text-slate-600 dark:text-slate-300">
+            <p className="col-span-2 rounded bg-c-surface-raised p-2 text-c-text-secondary">
               Lease health:{' '}
               {summary.oldestClaimedAt
                 ? `oldest claim ${formatTimestamp(summary.oldestClaimedAt)}`
@@ -498,12 +498,12 @@ export function OrganizationContextWorkerOperationsPanel({
             </p>
           )}
           {summary.externalQueueName && (
-            <p className="col-span-2 text-slate-500 dark:text-slate-400">
+            <p className="col-span-2 text-c-text-muted">
               External queue: {summary.externalQueueName}
             </p>
           )}
           {summary.generatedAt && (
-            <p className="col-span-2 text-slate-500 dark:text-slate-400">
+            <p className="col-span-2 text-c-text-muted">
               Queue summary generated: {formatTimestamp(summary.generatedAt)}
             </p>
           )}
@@ -521,7 +521,7 @@ export function OrganizationContextWorkerOperationsPanel({
       )}
 
       {lastRunResult && (
-        <div className="space-y-2 border-b border-slate-200 p-3 text-xs text-slate-600 dark:border-navy-700 dark:text-slate-300">
+        <div className="space-y-2 border-b border-c-border-subtle p-3 text-xs text-c-text-secondary dark:border-navy-700 dark:text-slate-300">
           <p>
             Last run: {Number(lastRunResult.processed || 0)} processed,{' '}
             {Number(lastRunResult.retried || 0)} retried, {Number(lastRunResult.deadLettered || 0)}{' '}
@@ -573,11 +573,11 @@ export function OrganizationContextWorkerOperationsPanel({
       )}
 
       {(workerRunHistory.length > 0 || onWorkerRunHistoryFilterChange) && (
-        <div className="border-b border-slate-200 p-3 text-xs dark:border-navy-700">
+        <div className="border-b border-c-border-subtle p-3 text-xs dark:border-navy-700">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="font-medium text-slate-700 dark:text-slate-200">Worker run history</p>
+            <p className="font-medium text-c-text-secondary">Worker run history</p>
             {onWorkerRunHistoryFilterChange && (
-              <div className="flex rounded-lg border border-slate-200 p-0.5 dark:border-navy-600">
+              <div className="flex rounded-lg border border-c-border-subtle p-0.5 dark:border-navy-600">
                 {(['all', 'attention', 'backoff'] as WorkerRunHistoryFilter[]).map((filter) => (
                   <button
                     key={filter}
@@ -585,8 +585,8 @@ export function OrganizationContextWorkerOperationsPanel({
                     onClick={() => onWorkerRunHistoryFilterChange(filter)}
                     className={
                       workerRunHistoryFilter === filter
-                        ? 'rounded-md bg-slate-100 px-2 py-1 font-medium text-slate-800 dark:bg-navy-700 dark:text-slate-100'
-                        : 'rounded-md px-2 py-1 text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-navy-700'
+                        ? 'rounded-md bg-c-surface-raised px-2 py-1 font-medium text-c-text dark:bg-navy-700 dark:text-slate-100'
+                        : 'rounded-md px-2 py-1 text-c-text-muted hover:bg-c-bg dark:text-c-text-muted dark:hover:bg-navy-700'
                     }
                   >
                     {filter === 'all'
@@ -601,14 +601,14 @@ export function OrganizationContextWorkerOperationsPanel({
           </div>
           <div className="mt-2 space-y-2">
             {workerRunHistory.length === 0 ? (
-              <p className="rounded bg-slate-50 p-2 text-slate-500 dark:bg-navy-900 dark:text-slate-400">
+              <p className="rounded bg-c-bg p-2 text-c-text-muted dark:bg-navy-900 dark:text-c-text-muted">
                 No worker runs found for this filter.
               </p>
             ) : (
               workerRunHistory.map((run) => (
                 <div
                   key={run.id}
-                  className="rounded bg-slate-50 p-2 text-slate-600 dark:bg-navy-900 dark:text-slate-300"
+                  className="rounded bg-c-bg p-2 text-c-text-secondary dark:bg-navy-900 dark:text-slate-300"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-mono">{run.runId}</span>
@@ -620,14 +620,14 @@ export function OrganizationContextWorkerOperationsPanel({
                     recovered locks, {Number(run.claimSkipped || 0)} skipped claims.
                   </p>
                   {run.auditEventId && (
-                    <p className="mt-1 text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 text-c-text-muted">
                       Audit event: <span className="font-mono">{run.auditEventId}</span>
                     </p>
                   )}
                   {(run.pulledMessages !== undefined ||
                     run.ackedMessages !== undefined ||
                     run.backoffMessages !== undefined) && (
-                    <p className="mt-1 text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 text-c-text-muted">
                       Queue correlation: {Number(run.pulledMessages || 0)} pulled,{' '}
                       {Number(run.ackedMessages || 0)} acknowledged,{' '}
                       {Number(run.backoffMessages || 0)} backoff.
@@ -646,22 +646,22 @@ export function OrganizationContextWorkerOperationsPanel({
       )}
 
       {(queueOutcomeEvents.length > 0 || onRefreshQueueOutcomeEvents) && (
-        <div className="border-b border-slate-200 p-3 text-xs dark:border-navy-700">
+        <div className="border-b border-c-border-subtle p-3 text-xs dark:border-navy-700">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="font-medium text-slate-700 dark:text-slate-200">Queue outcome audit</p>
+              <p className="font-medium text-c-text-secondary">Queue outcome audit</p>
               <p
                 className={
                   attentionOutcomeCount > 0
                     ? 'text-amber-700 dark:text-amber-200'
-                    : 'text-slate-500 dark:text-slate-400'
+                    : 'text-c-text-muted'
                 }
               >
                 Attention outcomes: {attentionOutcomeCount}; backoff messages:{' '}
                 {attentionBackoffCount}
               </p>
               {queueOutcomeLastLoadedAt && (
-                <p className="text-slate-500 dark:text-slate-400">
+                <p className="text-c-text-muted">
                   Refreshed {formatTimestamp(queueOutcomeLastLoadedAt)}
                 </p>
               )}
@@ -669,15 +669,15 @@ export function OrganizationContextWorkerOperationsPanel({
             {onRefreshQueueOutcomeEvents && (
               <div className="flex flex-wrap items-center justify-end gap-2">
                 {onQueueOutcomeFilterChange && (
-                  <div className="flex rounded-lg border border-slate-200 p-0.5 dark:border-navy-600">
+                  <div className="flex rounded-lg border border-c-border-subtle p-0.5 dark:border-navy-600">
                     <button
                       type="button"
                       onClick={() => onQueueOutcomeFilterChange('all')}
                       disabled={refreshingQueueOutcomeEvents}
                       className={
                         queueOutcomeFilter === 'all'
-                          ? 'rounded-md bg-slate-100 px-2 py-1 font-medium text-slate-800 disabled:opacity-50 dark:bg-navy-700 dark:text-slate-100'
-                          : 'rounded-md px-2 py-1 text-slate-500 hover:bg-slate-50 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-navy-700'
+                          ? 'rounded-md bg-c-surface-raised px-2 py-1 font-medium text-c-text disabled:opacity-50 dark:bg-navy-700 dark:text-slate-100'
+                          : 'rounded-md px-2 py-1 text-c-text-muted hover:bg-c-bg disabled:opacity-50 dark:text-c-text-muted dark:hover:bg-navy-700'
                       }
                     >
                       All
@@ -689,7 +689,7 @@ export function OrganizationContextWorkerOperationsPanel({
                       className={
                         queueOutcomeFilter === 'attention'
                           ? 'rounded-md bg-amber-100 px-2 py-1 font-medium text-amber-800 disabled:opacity-50 dark:bg-amber-900/30 dark:text-amber-100'
-                          : 'rounded-md px-2 py-1 text-slate-500 hover:bg-slate-50 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-navy-700'
+                          : 'rounded-md px-2 py-1 text-c-text-muted hover:bg-c-bg disabled:opacity-50 dark:text-c-text-muted dark:hover:bg-navy-700'
                       }
                     >
                       Attention only
@@ -700,7 +700,7 @@ export function OrganizationContextWorkerOperationsPanel({
                   type="button"
                   onClick={onRefreshQueueOutcomeEvents}
                   disabled={refreshingQueueOutcomeEvents}
-                  className="rounded-lg border border-slate-200 px-2 py-1 font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-navy-600 dark:text-slate-300 dark:hover:bg-navy-700"
+                  className="rounded-lg border border-c-border-subtle px-2 py-1 font-medium text-c-text-secondary hover:bg-c-bg disabled:opacity-50 dark:border-navy-600 dark:text-slate-300 dark:hover:bg-navy-700"
                 >
                   {refreshingQueueOutcomeEvents ? 'Refreshing audit...' : 'Refresh outcome audit'}
                 </button>
@@ -709,7 +709,7 @@ export function OrganizationContextWorkerOperationsPanel({
           </div>
           <div className="mt-2 space-y-2">
             {queueOutcomeEvents.length === 0 ? (
-              <p className="rounded bg-slate-50 p-2 text-slate-500 dark:bg-navy-900 dark:text-slate-400">
+              <p className="rounded bg-c-bg p-2 text-c-text-muted dark:bg-navy-900 dark:text-c-text-muted">
                 No external queue outcome audit events found.
               </p>
             ) : (
@@ -719,7 +719,7 @@ export function OrganizationContextWorkerOperationsPanel({
                   className={
                     event.degraded
                       ? 'rounded bg-amber-50 p-2 text-amber-800 dark:bg-amber-900/20 dark:text-amber-200'
-                      : 'rounded bg-slate-50 p-2 text-slate-600 dark:bg-navy-900 dark:text-slate-300'
+                      : 'rounded bg-c-bg p-2 text-c-text-secondary dark:bg-navy-900 dark:text-slate-300'
                   }
                 >
                   <div className="flex items-center justify-between gap-3">
@@ -751,7 +751,7 @@ export function OrganizationContextWorkerOperationsPanel({
       )}
 
       {jobs.length === 0 ? (
-        <p className="p-3 text-sm text-slate-500 dark:text-slate-400">
+        <p className="p-3 text-sm text-c-text-muted">
           No context processing jobs found.
         </p>
       ) : (
@@ -759,17 +759,17 @@ export function OrganizationContextWorkerOperationsPanel({
           {jobs.map((job) => (
             <div key={job.id} className="p-3 text-sm">
               <div className="flex items-center justify-between gap-3">
-                <span className="font-medium text-slate-900 dark:text-white">
+                <span className="font-medium text-c-text">
                   {job.status.replaceAll('_', ' ')}
                 </span>
-                <span className="text-xs text-slate-500 dark:text-slate-400">
+                <span className="text-xs text-c-text-muted">
                   {formatTimestamp(job.createdAt)}
                 </span>
               </div>
-              <p className="mt-1 text-slate-600 dark:text-slate-300">
+              <p className="mt-1 text-c-text-secondary">
                 Document: <span className="font-mono">{job.documentId}</span>
               </p>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-xs text-c-text-muted">
                 Attempts: {job.attemptCount}
                 {job.lockedBy ? ` · Locked by ${job.lockedBy}` : ''}
                 {job.errorCode ? ` · ${job.errorCode}` : ''}

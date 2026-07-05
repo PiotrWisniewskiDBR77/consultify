@@ -37,10 +37,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 import { cn } from '@/utils/cn';
-
-import { LoadingState } from '../../../components/ui/primitives';
 
 interface SettlementsSummary {
   totalPendingCommissions: number;
@@ -355,7 +354,7 @@ export const PartnerSettlementsView: React.FC = () => {
   };
 
   if (loading) {
-    return <LoadingState variant="spinner" className="py-12" />;
+    return <LoadingState template="list" className="py-12" />;
   }
 
   return (
@@ -363,16 +362,16 @@ export const PartnerSettlementsView: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-c-text">
             {t('superadmin.settlements.title', 'Partner Settlements')}
           </h1>
-          <p className="text-slate-600 dark:text-slate-400">
+          <p className="text-c-text-secondary">
             {t('superadmin.settlements.subtitle', 'Manage partner commissions and payouts')}
           </p>
         </div>
         <button
           onClick={() => window.location.reload()}
-          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm text-c-text-secondary hover:text-c-text transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Refresh
@@ -381,72 +380,72 @@ export const PartnerSettlementsView: React.FC = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 rounded-lg bg-amber-500/20">
-              <Clock className="w-5 h-5 text-amber-400" />
+            <div className="p-2 rounded-lg bg-c-warning/20">
+              <Clock className="w-5 h-5 text-c-warning" />
             </div>
-            <span className="text-sm text-slate-600 dark:text-slate-400">Pending Commissions</span>
+            <span className="text-sm text-c-text-secondary">Pending Commissions</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+          <p className="text-2xl font-bold text-c-text">
             {summary?.totalPendingCommissions}
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             €{summary?.pendingCommissionAmount.toLocaleString()} total
           </p>
         </div>
 
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 rounded-lg bg-blue-500/20">
-              <Banknote className="w-5 h-5 text-blue-400" />
+            <div className="p-2 rounded-lg bg-c-info/20">
+              <Banknote className="w-5 h-5 text-c-info" />
             </div>
-            <span className="text-sm text-slate-600 dark:text-slate-400">Pending Payouts</span>
+            <span className="text-sm text-c-text-secondary">Pending Payouts</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+          <p className="text-2xl font-bold text-c-text">
             {summary?.totalPendingPayouts}
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             €{summary?.pendingPayoutAmount.toLocaleString()} total
           </p>
         </div>
 
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 rounded-lg bg-emerald-500/20">
-              <TrendingUp className="w-5 h-5 text-emerald-400" />
+            <div className="p-2 rounded-lg bg-c-success/20">
+              <TrendingUp className="w-5 h-5 text-c-success" />
             </div>
-            <span className="text-sm text-slate-600 dark:text-slate-400">
+            <span className="text-sm text-c-text-secondary">
               This Month Commissions
             </span>
           </div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+          <p className="text-2xl font-bold text-c-text">
             €{summary?.thisMonthCommissions.toLocaleString()}
           </p>
         </div>
 
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 rounded-lg bg-primary-500/20">
-              <DollarSign className="w-5 h-5 text-primary-400" />
+            <div className="p-2 rounded-lg bg-c-accent/20">
+              <DollarSign className="w-5 h-5 text-c-accent" />
             </div>
-            <span className="text-sm text-slate-600 dark:text-slate-400">This Month Payouts</span>
+            <span className="text-sm text-c-text-secondary">This Month Payouts</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+          <p className="text-2xl font-bold text-c-text">
             €{summary?.thisMonthPayouts.toLocaleString()}
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 p-1 bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-white/5 rounded-lg w-fit">
+      <div className="flex items-center gap-1 p-1 bg-c-surface border border-c-border-subtle dark:border-white/5 rounded-lg w-fit">
         <button
           onClick={() => setActiveTab('commissions')}
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors',
             activeTab === 'commissions'
-              ? 'bg-navy-900 text-white'
-              : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              ? 'bg-c-accent text-c-text'
+              : 'text-c-text-secondary hover:text-c-text'
           )}
         >
           Pending Commissions
@@ -456,8 +455,8 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors',
             activeTab === 'payouts'
-              ? 'bg-navy-900 text-white'
-              : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              ? 'bg-c-accent text-c-text'
+              : 'text-c-text-secondary hover:text-c-text'
           )}
         >
           Pending Payouts
@@ -467,8 +466,8 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors',
             activeTab === 'attribution'
-              ? 'bg-navy-900 text-white'
-              : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              ? 'bg-c-accent text-c-text'
+              : 'text-c-text-secondary hover:text-c-text'
           )}
         >
           Attribution Manager
@@ -478,8 +477,8 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
             activeTab === 'expiring'
-              ? 'bg-navy-900 text-white'
-              : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              ? 'bg-c-accent text-c-text'
+              : 'text-c-text-secondary hover:text-c-text'
           )}
         >
           <AlertTriangle className="w-4 h-4" />
@@ -495,8 +494,8 @@ export const PartnerSettlementsView: React.FC = () => {
           className={cn(
             'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
             activeTab === 'analytics'
-              ? 'bg-navy-900 text-white'
-              : 'text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              ? 'bg-c-accent text-c-text'
+              : 'text-c-text-secondary hover:text-c-text'
           )}
         >
           <BarChart3 className="w-4 h-4" />
@@ -506,19 +505,19 @@ export const PartnerSettlementsView: React.FC = () => {
 
       {/* Commissions Tab */}
       {activeTab === 'commissions' && (
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
           {/* Toolbar */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-c-text-secondary" />
                 <input
                   type="text"
                   placeholder="Search partners..."
-                  className="pl-9 pr-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white w-64"
+                  className="pl-9 pr-4 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-sm text-c-text-secondary dark:text-white w-64"
                 />
               </div>
-              <button className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-white/10 rounded-lg">
+              <button className="flex items-center gap-2 px-3 py-2 text-sm text-c-text-secondary hover:text-c-text-secondary dark:hover:text-white border border-c-border-subtle dark:border-white/10 rounded-lg">
                 <Filter className="w-4 h-4" />
                 Filter
               </button>
@@ -539,7 +538,7 @@ export const PartnerSettlementsView: React.FC = () => {
           <div className="overflow-x-auto">
             <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-white/10">
+                <tr className="border-b border-c-border-subtle dark:border-white/10">
                   <th className="text-left px-3 py-2">
                     <input
                       type="checkbox"
@@ -547,61 +546,61 @@ export const PartnerSettlementsView: React.FC = () => {
                         selectedCommissions.size === commissions.length && commissions.length > 0
                       }
                       onChange={selectAllCommissions}
-                      className="rounded text-primary-600"
+                      className="rounded text-c-accent"
                     />
                   </th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                  <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                     Partner
                   </th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                  <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                     Customer
                   </th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                  <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                     Type
                   </th>
-                  <th className="text-right px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                  <th className="text-right px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                     Amount
                   </th>
-                  <th className="text-right px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                  <th className="text-right px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                     Commission
                   </th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                  <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                     Date
                   </th>
                   <th className="px-3 py-2"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+              <tbody className="divide-y divide-c-border-subtle dark:divide-white/10">
                 {commissions.map((commission) => (
-                  <tr key={commission.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
+                  <tr key={commission.id} className="hover:bg-c-surface dark:hover:bg-c-surface/20">
                     <td className="px-3 py-3">
                       <input
                         type="checkbox"
                         checked={selectedCommissions.has(commission.id)}
                         onChange={() => toggleCommissionSelection(commission.id)}
-                        className="rounded text-primary-600"
+                        className="rounded text-c-accent"
                       />
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                        <span className="font-medium text-slate-900 dark:text-white">
+                        <Building2 className="w-4 h-4 text-c-text-muted" />
+                        <span className="font-medium text-c-text-secondary dark:text-white">
                           {commission.partnerName}
                         </span>
                       </div>
                     </td>
                     <td className="px-3 py-3">
-                      <span className="text-slate-700 dark:text-slate-300">
+                      <span className="text-c-text-secondary">
                         {commission.organizationName}
                       </span>
                     </td>
                     <td className="px-3 py-3">
-                      <span className="text-sm text-slate-600 dark:text-slate-500 capitalize">
+                      <span className="text-sm text-c-text-secondary capitalize">
                         {commission.transactionType.toLowerCase()}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-right">
-                      <span className="text-slate-700 dark:text-slate-300">
+                      <span className="text-c-text-secondary">
                         €{commission.grossAmount.toLocaleString()}
                       </span>
                     </td>
@@ -609,17 +608,17 @@ export const PartnerSettlementsView: React.FC = () => {
                       <span className="font-medium text-emerald-400">
                         €{commission.commissionAmount.toLocaleString()}
                       </span>
-                      <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">
+                      <span className="text-xs text-c-text-muted ml-1">
                         ({commission.commissionRate}%)
                       </span>
                     </td>
                     <td className="px-3 py-3">
-                      <span className="text-sm text-slate-600 dark:text-slate-500">
+                      <span className="text-sm text-c-text-secondary">
                         {commission.transactionDate}
                       </span>
                     </td>
                     <td className="px-3 py-3">
-                      <button className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors">
+                      <button className="p-1.5 text-c-text-muted hover:text-c-text-secondary dark:hover:text-white rounded transition-colors">
                         <Eye className="w-4 h-4" />
                       </button>
                     </td>
@@ -632,7 +631,7 @@ export const PartnerSettlementsView: React.FC = () => {
           {commissions.length === 0 && (
             <div className="text-center py-12">
               <CheckCircle className="w-12 h-12 text-emerald-500/50 mx-auto mb-3" />
-              <p className="text-slate-600 dark:text-slate-500">
+              <p className="text-c-text-secondary">
                 No pending commissions to approve
               </p>
             </div>
@@ -646,7 +645,7 @@ export const PartnerSettlementsView: React.FC = () => {
           {payouts.map((payout) => (
             <div
               key={payout.id}
-              className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4"
+              className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/5 p-4"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -664,10 +663,10 @@ export const PartnerSettlementsView: React.FC = () => {
                     )}
                   </div>
                   <div>
-                    <p className="font-medium text-slate-900 dark:text-white">
+                    <p className="font-medium text-c-text-secondary dark:text-white">
                       {payout.partnerName}
                     </p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                    <p className="text-sm text-c-text-secondary">
                       {payout.transactionCount} transactions • {payout.periodStart} to{' '}
                       {payout.periodEnd}
                     </p>
@@ -675,10 +674,10 @@ export const PartnerSettlementsView: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-6">
                   <div className="text-right">
-                    <p className="text-xl font-bold text-slate-900 dark:text-white">
+                    <p className="text-xl font-bold text-c-text-secondary dark:text-white">
                       €{payout.netAmount.toLocaleString()}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-c-text-muted">
                       Gross: €{payout.grossAmount.toLocaleString()} • Fees: €
                       {payout.fees.toLocaleString()}
                     </p>
@@ -705,7 +704,7 @@ export const PartnerSettlementsView: React.FC = () => {
                       </button>
                     )}
                     <button
-                      className="p-2 text-slate-600 dark:text-slate-500 hover:text-danger-400 rounded transition-colors"
+                      className="p-2 text-c-text-secondary hover:text-danger-400 rounded transition-colors"
                       title="Reject"
                     >
                       <XCircle className="w-5 h-5" />
@@ -717,9 +716,9 @@ export const PartnerSettlementsView: React.FC = () => {
           ))}
 
           {payouts.length === 0 && (
-            <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-12 text-center">
+            <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/5 p-12 text-center">
               <CheckCircle className="w-12 h-12 text-emerald-500/50 mx-auto mb-3" />
-              <p className="text-slate-600 dark:text-slate-400">No pending payouts to process</p>
+              <p className="text-c-text-secondary">No pending payouts to process</p>
             </div>
           )}
         </div>
@@ -727,20 +726,20 @@ export const PartnerSettlementsView: React.FC = () => {
 
       {/* Attribution Tab */}
       {activeTab === 'attribution' && (
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              <h3 className="text-lg font-semibold text-c-text-secondary dark:text-white">
                 {t('superadmin.settlements.attributionManager', 'Attribution Manager')}
               </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-c-text-secondary">
                 {t(
                   'superadmin.settlements.attributionDesc',
                   'Manually link organizations to partners or view existing attributions'
                 )}
               </p>
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium">
+            <button className="flex items-center gap-2 px-4 py-2 bg-c-surface hover:bg-c-surface text-white dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium">
               <Plus className="w-4 h-4" />
               {t('superadmin.settlements.createAttribution', 'Create Attribution')}
             </button>
@@ -749,13 +748,13 @@ export const PartnerSettlementsView: React.FC = () => {
           {/* Search */}
           <div className="mb-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-c-text-secondary" />
               <input
                 type="text"
                 placeholder="Search by organization or partner name..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white"
+                className="w-full pl-9 pr-4 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-sm text-c-text-secondary dark:text-white"
               />
             </div>
           </div>
@@ -765,29 +764,29 @@ export const PartnerSettlementsView: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-white/10">
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                  <tr className="border-b border-c-border-subtle dark:border-white/10">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Organization
                     </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Partner
                     </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Type
                     </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Code Used
                     </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                    <th className="text-center px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Status
                     </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Date
                     </th>
                     <th className="px-3 py-2"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+                <tbody className="divide-y divide-c-border-subtle dark:divide-white/10">
                   {attributions
                     .filter(
                       (a) =>
@@ -798,33 +797,33 @@ export const PartnerSettlementsView: React.FC = () => {
                     .map((attribution) => (
                       <tr
                         key={attribution.id}
-                        className="hover:bg-slate-50 dark:hover:bg-navy-800/20"
+                        className="hover:bg-c-surface dark:hover:bg-c-surface/20"
                       >
                         <td className="px-3 py-3">
-                          <span className="font-medium text-slate-900 dark:text-white">
+                          <span className="font-medium text-c-text-secondary dark:text-white">
                             {attribution.organizationName || attribution.organizationId}
                           </span>
                         </td>
                         <td className="px-3 py-3">
                           <div className="flex items-center gap-2">
-                            <Building2 className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                            <span className="text-slate-700 dark:text-slate-300">
+                            <Building2 className="w-4 h-4 text-c-text-muted" />
+                            <span className="text-c-text-secondary">
                               {attribution.partnerName || attribution.partnerOrgId}
                             </span>
                           </div>
                         </td>
                         <td className="px-3 py-3">
-                          <span className="text-sm text-slate-600 dark:text-slate-500">
+                          <span className="text-sm text-c-text-secondary">
                             {attribution.attributionType?.replace('_', ' ')}
                           </span>
                         </td>
                         <td className="px-3 py-3">
                           {attribution.referralCodeUsed ? (
-                            <code className="text-xs bg-navy-900 px-2 py-1 rounded text-primary-400">
+                            <code className="text-xs bg-c-surface px-2 py-1 rounded text-c-accent">
                               {attribution.referralCodeUsed}
                             </code>
                           ) : (
-                            <span className="text-slate-500 dark:text-slate-400">-</span>
+                            <span className="text-c-text-muted">-</span>
                           )}
                         </td>
                         <td className="px-3 py-3 text-center">
@@ -835,14 +834,14 @@ export const PartnerSettlementsView: React.FC = () => {
                                 'bg-emerald-500/20 text-emerald-400',
                               attribution.status === 'PENDING' && 'bg-amber-500/20 text-amber-400',
                               attribution.status === 'EXPIRED' &&
-                                'bg-slate-500/20 text-slate-600 dark:text-slate-500'
+                                'bg-c-surface-raised/20 text-c-text-secondary '
                             )}
                           >
                             {attribution.status?.toLowerCase()}
                           </span>
                         </td>
                         <td className="px-3 py-3">
-                          <span className="text-sm text-slate-600 dark:text-slate-500">
+                          <span className="text-sm text-c-text-secondary">
                             {attribution.attributedAt
                               ? new Date(attribution.attributedAt).toLocaleDateString()
                               : '-'}
@@ -851,7 +850,7 @@ export const PartnerSettlementsView: React.FC = () => {
                         <td className="px-3 py-3">
                           <div className="flex items-center gap-1 justify-end">
                             <button
-                              className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-white rounded transition-colors"
+                              className="p-1.5 text-c-text-secondary hover:text-white rounded transition-colors"
                               title="View details"
                             >
                               <Eye className="w-4 h-4" />
@@ -859,7 +858,7 @@ export const PartnerSettlementsView: React.FC = () => {
                             <button
                               onClick={() => handleRemoveAttribution(attribution.id)}
                               disabled={processing}
-                              className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-400 rounded transition-colors"
+                              className="p-1.5 text-c-text-secondary hover:text-danger-400 rounded transition-colors"
                               title="Remove attribution"
                             >
                               <Unlink className="w-4 h-4" />
@@ -873,9 +872,9 @@ export const PartnerSettlementsView: React.FC = () => {
             </div>
           ) : (
             <div className="text-center py-12">
-              <Link2 className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-              <p className="text-slate-600 dark:text-slate-400">No attributions found</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <Link2 className="w-12 h-12 text-c-text-secondary mx-auto mb-3" />
+              <p className="text-c-text-secondary">No attributions found</p>
+              <p className="text-sm text-c-text-muted mt-1">
                 Create a new attribution to link an organization with a partner
               </p>
             </div>
@@ -885,14 +884,14 @@ export const PartnerSettlementsView: React.FC = () => {
 
       {/* GAP-PARTNER-004: Expiring Attributions Tab */}
       {activeTab === 'expiring' && (
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-c-text-secondary dark:text-white flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-amber-500" />
                 Expiring Attributions & Discounts
               </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-c-text-secondary">
                 Partner discounts expiring within the selected timeframe
               </p>
             </div>
@@ -900,7 +899,7 @@ export const PartnerSettlementsView: React.FC = () => {
               <select
                 value={expiringDays}
                 onChange={(e) => setExpiringDays(Number(e.target.value))}
-                className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white"
+                className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-sm text-c-text-secondary dark:text-white"
               >
                 <option value={7}>Next 7 days</option>
                 <option value={14}>Next 14 days</option>
@@ -910,7 +909,7 @@ export const PartnerSettlementsView: React.FC = () => {
               </select>
               <button
                 onClick={fetchData}
-                className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-white/10 rounded-lg"
+                className="p-2 text-c-text-secondary hover:text-c-text-secondary dark:hover:text-white border border-c-border-subtle dark:border-white/10 rounded-lg"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
@@ -921,42 +920,42 @@ export const PartnerSettlementsView: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-white/10">
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                  <tr className="border-b border-c-border-subtle dark:border-white/10">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Organization
                     </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Partner
                     </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                    <th className="text-center px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Discount
                     </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                    <th className="text-center px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Expires In
                     </th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                    <th className="text-right px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Lifetime Value
                     </th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                    <th className="text-right px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Commission Earned
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+                <tbody className="divide-y divide-c-border-subtle dark:divide-white/10">
                   {expiringAttributions.map((attr) => (
-                    <tr key={attr.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
+                    <tr key={attr.id} className="hover:bg-c-surface dark:hover:bg-c-surface/20">
                       <td className="px-3 py-3">
-                        <span className="font-medium text-slate-900 dark:text-white">
+                        <span className="font-medium text-c-text-secondary dark:text-white">
                           {attr.organizationName}
                         </span>
                         {attr.referralCodeUsed && (
-                          <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">
+                          <span className="ml-2 text-xs text-c-text-muted">
                             ({attr.referralCodeUsed})
                           </span>
                         )}
                       </td>
                       <td className="px-3 py-3">
-                        <span className="text-slate-700 dark:text-slate-300">
+                        <span className="text-c-text-secondary">
                           {attr.partnerName}
                         </span>
                       </td>
@@ -966,7 +965,7 @@ export const PartnerSettlementsView: React.FC = () => {
                             {attr.discountPercent}% off
                           </span>
                         ) : (
-                          <span className="text-slate-500 dark:text-slate-400">-</span>
+                          <span className="text-c-text-muted">-</span>
                         )}
                       </td>
                       <td className="px-3 py-3 text-center">
@@ -977,14 +976,14 @@ export const PartnerSettlementsView: React.FC = () => {
                               ? 'bg-danger-500/20 text-danger-400'
                               : attr.daysRemaining <= 14
                                 ? 'bg-amber-500/20 text-amber-400'
-                                : 'bg-slate-500/20 text-slate-600 dark:text-slate-500'
+                                : 'bg-c-surface-raised/20 text-c-text-secondary '
                           )}
                         >
                           {attr.daysRemaining} days
                         </span>
                       </td>
                       <td className="px-3 py-3 text-right">
-                        <span className="text-slate-900 dark:text-white font-medium">
+                        <span className="text-c-text-secondary dark:text-white font-medium">
                           €{attr.lifetimeValue.toLocaleString()}
                         </span>
                       </td>
@@ -1001,7 +1000,7 @@ export const PartnerSettlementsView: React.FC = () => {
           ) : (
             <div className="text-center py-12">
               <CheckCircle className="w-12 h-12 text-emerald-500/50 mx-auto mb-3" />
-              <p className="text-slate-600 dark:text-slate-400">
+              <p className="text-c-text-secondary">
                 No expiring discounts in the selected timeframe
               </p>
             </div>
@@ -1011,20 +1010,20 @@ export const PartnerSettlementsView: React.FC = () => {
 
       {/* GAP-PARTNER-003: Code Analytics Tab */}
       {activeTab === 'analytics' && (
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/5 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-primary-400" />
+              <h3 className="text-lg font-semibold text-c-text-secondary dark:text-white flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-c-accent" />
                 Referral Code Analytics
               </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-c-text-secondary">
                 Performance metrics per partner referral code (last 90 days)
               </p>
             </div>
             <button
               onClick={fetchData}
-              className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-white/10 rounded-lg"
+              className="p-2 text-c-text-secondary hover:text-c-text-secondary dark:hover:text-white border border-c-border-subtle dark:border-white/10 rounded-lg"
             >
               <RefreshCw className="w-4 h-4" />
             </button>
@@ -1034,56 +1033,56 @@ export const PartnerSettlementsView: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-white/10">
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                  <tr className="border-b border-c-border-subtle dark:border-white/10">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Code
                     </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Partner
                     </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                    <th className="text-center px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Clicks
                     </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                    <th className="text-center px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Signups
                     </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                    <th className="text-center px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Conv. Rate
                     </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                    <th className="text-center px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Active Orgs
                     </th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                    <th className="text-right px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Revenue
                     </th>
-                    <th className="text-right px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
+                    <th className="text-right px-3 py-2 text-xs font-medium text-c-text-secondary uppercase">
                       Commissions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+                <tbody className="divide-y divide-c-border-subtle dark:divide-white/10">
                   {codeAnalytics.map((code) => (
                     <tr
                       key={code.referralCode}
-                      className="hover:bg-slate-50 dark:hover:bg-navy-800/20"
+                      className="hover:bg-c-surface dark:hover:bg-c-surface/20"
                     >
                       <td className="px-3 py-3">
-                        <span className="font-mono text-sm px-2 py-1 bg-primary-500/20 text-primary-300 rounded">
+                        <span className="font-mono text-sm px-2 py-1 bg-c-accent/20 text-c-accent rounded">
                           {code.referralCode}
                         </span>
                       </td>
                       <td className="px-3 py-3">
-                        <span className="text-slate-700 dark:text-slate-300">
+                        <span className="text-c-text-secondary">
                           {code.partnerName}
                         </span>
                       </td>
                       <td className="px-3 py-3 text-center">
-                        <span className="text-slate-900 dark:text-white">
+                        <span className="text-c-text-secondary dark:text-white">
                           {code.totalClicks.toLocaleString()}
                         </span>
                       </td>
                       <td className="px-3 py-3 text-center">
-                        <span className="text-slate-900 dark:text-white">
+                        <span className="text-c-text-secondary dark:text-white">
                           {code.totalSignups.toLocaleString()}
                         </span>
                       </td>
@@ -1095,7 +1094,7 @@ export const PartnerSettlementsView: React.FC = () => {
                               ? 'text-emerald-400'
                               : code.conversionRate >= 10
                                 ? 'text-amber-400'
-                                : 'text-slate-600 dark:text-slate-500'
+                                : 'text-c-text-secondary '
                           )}
                         >
                           {code.conversionRate}%
@@ -1107,7 +1106,7 @@ export const PartnerSettlementsView: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-3 py-3 text-right">
-                        <span className="text-slate-900 dark:text-white font-medium">
+                        <span className="text-c-text-secondary dark:text-white font-medium">
                           €{code.totalRevenue.toLocaleString()}
                         </span>
                       </td>
@@ -1123,8 +1122,8 @@ export const PartnerSettlementsView: React.FC = () => {
             </div>
           ) : (
             <div className="text-center py-12">
-              <BarChart3 className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-              <p className="text-slate-600 dark:text-slate-400">No code analytics data available</p>
+              <BarChart3 className="w-12 h-12 text-c-text-secondary mx-auto mb-3" />
+              <p className="text-c-text-secondary">No code analytics data available</p>
             </div>
           )}
         </div>

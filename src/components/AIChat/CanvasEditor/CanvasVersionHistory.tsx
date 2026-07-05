@@ -129,7 +129,7 @@ export function CanvasVersionHistory({
                         type="button"
                         disabled={isRestoring}
                         onClick={() => void runRestore(version)}
-                        className="inline-flex items-center gap-1 rounded-full bg-primary-600 px-2 py-0.5 font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
+                        className="inline-flex items-center gap-1 rounded-full bg-c-text px-2 py-0.5 font-semibold text-c-bg hover:bg-c-text-secondary disabled:opacity-50"
                         data-testid="canvas-version-restore-confirm"
                       >
                         {isRestoring ? (

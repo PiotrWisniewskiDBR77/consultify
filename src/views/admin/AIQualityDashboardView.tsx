@@ -226,13 +226,13 @@ const AIQualityDashboardView: React.FC = () => {
     trend?: 'up' | 'down' | 'neutral',
     subtitle?: string
   ) => (
-    <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+    <div className="bg-c-surface rounded-xl p-4 border border-c-border-subtle">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm text-slate-500 dark:text-slate-400">{title}</span>
+        <span className="text-sm text-c-text-muted">{title}</span>
         {icon}
       </div>
       <div className="flex items-baseline gap-2">
-        <span className="text-2xl font-bold text-slate-900 dark:text-white">{value ?? '-'}</span>
+        <span className="text-2xl font-bold text-c-text">{value ?? '-'}</span>
         {trend && (
           <span
             className={`text-xs ${
@@ -240,21 +240,21 @@ const AIQualityDashboardView: React.FC = () => {
                 ? 'text-green-500'
                 : trend === 'down'
                   ? 'text-danger-500'
-                  : 'text-slate-400'
+                  : 'text-c-text-muted'
             }`}
           >
             {trend === 'up' ? '↑' : trend === 'down' ? '↓' : '→'}
           </span>
         )}
       </div>
-      {subtitle && <p className="text-xs text-slate-400 mt-1">{subtitle}</p>}
+      {subtitle && <p className="text-xs text-c-text-muted mt-1">{subtitle}</p>}
     </div>
   );
 
   const renderTrendChart = () => {
     if (trend.length === 0) {
       return (
-        <div className="h-48 flex items-center justify-center text-slate-400">
+        <div className="h-48 flex items-center justify-center text-c-text-muted">
           {t('admin.aiQuality.noTrendData', 'Brak danych trendu')}
         </div>
       );
@@ -280,7 +280,7 @@ const AIQualityDashboardView: React.FC = () => {
                   style={{ height: '100%', zIndex: -1 }}
                 />
               </div>
-              <span className="text-[8px] text-slate-400 truncate w-full text-center">
+              <span className="text-[8px] text-c-text-muted truncate w-full text-center">
                 {point.date.split('-').slice(1).join('/')}
               </span>
             </div>
@@ -299,11 +299,11 @@ const AIQualityDashboardView: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-c-text flex items-center gap-2">
             <Brain className="text-primary-500" />
             {t('admin.aiQuality.title', 'AI Quality Dashboard')}
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             {t('admin.aiQuality.subtitle', 'Monitorowanie jakości i uczenia AI')}
           </p>
         </div>
@@ -313,7 +313,7 @@ const AIQualityDashboardView: React.FC = () => {
           <select
             value={period}
             onChange={(e) => setPeriod(e.target.value as any)}
-            className="px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+            className="px-3 py-2 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
           >
             <option value="7d">7 dni</option>
             <option value="30d">30 dni</option>
@@ -324,7 +324,7 @@ const AIQualityDashboardView: React.FC = () => {
           <button
             onClick={refreshData}
             disabled={loading}
-            className="p-2 text-slate-500 hover:text-primary-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-2 text-c-text-muted hover:text-primary-500 hover:bg-c-surface-raised rounded-lg transition-colors"
           >
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
           </button>
@@ -332,7 +332,7 @@ const AIQualityDashboardView: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg w-fit">
+      <div className="flex gap-1 mb-6 bg-c-surface-raised p-1 rounded-lg w-fit">
         {[
           {
             id: 'overview',
@@ -356,8 +356,8 @@ const AIQualityDashboardView: React.FC = () => {
             onClick={() => setActiveTab(tab.id as any)}
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
               activeTab === tab.id
-                ? 'bg-white dark:bg-slate-700 text-primary-600 dark:text-primary-400 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-c-surface text-primary-600 dark:text-primary-400 shadow-sm'
+                : 'text-c-text-secondary hover:text-c-text dark:hover:text-white'
             }`}
           >
             <tab.icon size={16} />
@@ -397,12 +397,12 @@ const AIQualityDashboardView: React.FC = () => {
           </div>
 
           {/* Trend Chart */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
-            <h3 className="text-sm font-medium text-slate-900 dark:text-white mb-4">
+          <div className="bg-c-surface rounded-xl p-6 border border-c-border-subtle">
+            <h3 className="text-sm font-medium text-c-text mb-4">
               {t('admin.aiQuality.trendChart', 'Trend satysfakcji')}
             </h3>
             {renderTrendChart()}
-            <div className="flex items-center gap-4 mt-4 text-xs text-slate-500">
+            <div className="flex items-center gap-4 mt-4 text-xs text-c-text-muted">
               <span className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-green-500 rounded" /> Pozytywne
               </span>
@@ -414,24 +414,24 @@ const AIQualityDashboardView: React.FC = () => {
 
           {/* Quick Stats */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-              <h3 className="text-sm font-medium text-slate-900 dark:text-white mb-3">
+            <div className="bg-c-surface rounded-xl p-4 border border-c-border-subtle">
+              <h3 className="text-sm font-medium text-c-text mb-3">
                 {t('admin.aiQuality.learningStatus', 'Status uczenia')}
               </h3>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Aktywne wzorce</span>
+                  <span className="text-c-text-muted">Aktywne wzorce</span>
                   <span className="font-medium">{metrics?.activePatternsCount ?? 0}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Profile użytkowników</span>
+                  <span className="text-c-text-muted">Profile użytkowników</span>
                   <span className="font-medium">{metrics?.userProfilesCount ?? 0}</span>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-              <h3 className="text-sm font-medium text-slate-900 dark:text-white mb-3">
+            <div className="bg-c-surface rounded-xl p-4 border border-c-border-subtle">
+              <h3 className="text-sm font-medium text-c-text mb-3">
                 {t('admin.aiQuality.feedbackBreakdown', 'Rozkład feedbacku')}
               </h3>
               <div className="space-y-2">
@@ -457,15 +457,15 @@ const AIQualityDashboardView: React.FC = () => {
       {activeTab === 'feedback' && (
         <div className="space-y-4">
           {/* Filters */}
-          <div className="flex items-center gap-4 bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
-            <Filter size={18} className="text-slate-400" />
+          <div className="flex items-center gap-4 bg-c-surface p-4 rounded-xl border border-c-border-subtle">
+            <Filter size={18} className="text-c-text-muted" />
             <select
               value={feedbackStatus}
               onChange={(e) => {
                 setFeedbackStatus(e.target.value as any);
                 setCurrentPage(1);
               }}
-              className="px-3 py-1.5 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg"
+              className="px-3 py-1.5 text-sm bg-c-surface-raised border border-c-border-subtle rounded-lg"
             >
               <option value="all">Wszystkie</option>
               <option value="pending">Oczekujące</option>
@@ -477,7 +477,7 @@ const AIQualityDashboardView: React.FC = () => {
                 setFeedbackRating(e.target.value as any);
                 setCurrentPage(1);
               }}
-              className="px-3 py-1.5 text-sm bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg"
+              className="px-3 py-1.5 text-sm bg-c-surface-raised border border-c-border-subtle rounded-lg"
             >
               <option value="all">Wszystkie oceny</option>
               <option value="positive">Pozytywne</option>
@@ -486,38 +486,38 @@ const AIQualityDashboardView: React.FC = () => {
           </div>
 
           {/* Feedback List */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
             <table /* §27-exempt: data-viz/render analityczny read-only, nie lista encji */  className="w-full">
-              <thead className="bg-slate-50 dark:bg-slate-700/50">
+              <thead className="bg-c-surface-raised/50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                     Użytkownik
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                     Ocena
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                     Kontekst
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                     Komentarz
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                     Data
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                     Akcje
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {feedback.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                  <tr key={item.id} className="hover:bg-c-surface-raised/50">
                     <td className="px-4 py-3">
-                      <div className="text-sm font-medium text-slate-900 dark:text-white">
+                      <div className="text-sm font-medium text-c-text">
                         {item.user_name || 'Nieznany'}
                       </div>
-                      <div className="text-xs text-slate-500">{item.user_email}</div>
+                      <div className="text-xs text-c-text-muted">{item.user_email}</div>
                     </td>
                     <td className="px-4 py-3">
                       <span
@@ -537,13 +537,13 @@ const AIQualityDashboardView: React.FC = () => {
                           : 'Negatywna'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
+                    <td className="px-4 py-3 text-sm text-c-text-secondary">
                       {item.screen_context || '-'}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 max-w-xs truncate">
+                    <td className="px-4 py-3 text-sm text-c-text-secondary max-w-xs truncate">
                       {item.missing_info || item.comment || '-'}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-500">
+                    <td className="px-4 py-3 text-sm text-c-text-muted">
                       {new Date(item.created_at).toLocaleDateString('pl-PL')}
                     </td>
                     <td className="px-4 py-3">
@@ -564,7 +564,7 @@ const AIQualityDashboardView: React.FC = () => {
                 ))}
                 {feedback.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan={6} className="px-4 py-8 text-center text-c-text-muted">
                       Brak feedbacku do wyświetlenia
                     </td>
                   </tr>
@@ -579,17 +579,17 @@ const AIQualityDashboardView: React.FC = () => {
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1.5 text-sm bg-slate-100 dark:bg-slate-700 rounded-lg disabled:opacity-50"
+                className="px-3 py-1.5 text-sm bg-c-surface-raised rounded-lg disabled:opacity-50"
               >
                 Poprzednia
               </button>
-              <span className="px-3 py-1.5 text-sm text-slate-600 dark:text-slate-400">
+              <span className="px-3 py-1.5 text-sm text-c-text-secondary">
                 {currentPage} / {totalPages}
               </span>
               <button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1.5 text-sm bg-slate-100 dark:bg-slate-700 rounded-lg disabled:opacity-50"
+                className="px-3 py-1.5 text-sm bg-c-surface-raised rounded-lg disabled:opacity-50"
               >
                 Następna
               </button>
@@ -601,40 +601,40 @@ const AIQualityDashboardView: React.FC = () => {
       {/* Patterns Tab */}
       {activeTab === 'patterns' && (
         <div className="space-y-4">
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-              <h3 className="font-medium text-slate-900 dark:text-white">Wykryte wzorce uczenia</h3>
-              <p className="text-sm text-slate-500 mt-1">
+          <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
+            <div className="p-4 border-b border-c-border-subtle">
+              <h3 className="font-medium text-c-text">Wykryte wzorce uczenia</h3>
+              <p className="text-sm text-c-text-muted mt-1">
                 Wzorce preferencji wykryte na podstawie feedbacku użytkowników
               </p>
             </div>
             <table className="w-full">
-              <thead className="bg-slate-50 dark:bg-slate-700/50">
+              <thead className="bg-c-surface-raised/50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">Typ</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">Typ</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                     Wartość
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                     Wystąpienia
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                     Pewność
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">Akcje</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">Akcje</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {patterns.map((pattern) => (
-                  <tr key={pattern.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                    <td className="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">
+                  <tr key={pattern.id} className="hover:bg-c-surface-raised/50">
+                    <td className="px-4 py-3 text-sm font-medium text-c-text">
                       {pattern.pattern_type.replace('_', ' ')}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
+                    <td className="px-4 py-3 text-sm text-c-text-secondary">
                       {pattern.pattern_value}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
+                    <td className="px-4 py-3 text-sm text-c-text-secondary">
                       {pattern.occurrence_count}
                     </td>
                     <td className="px-4 py-3">
@@ -651,7 +651,7 @@ const AIQualityDashboardView: React.FC = () => {
                             style={{ width: `${pattern.confidence_score * 100}%` }}
                           />
                         </div>
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-c-text-muted">
                           {(pattern.confidence_score * 100).toFixed(0)}%
                         </span>
                       </div>
@@ -663,7 +663,7 @@ const AIQualityDashboardView: React.FC = () => {
                             ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
                             : pattern.status === 'applied'
                               ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
-                              : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
+                              : 'bg-c-surface-raised text-c-text-secondary dark:bg-slate-700 dark:text-c-text-muted'
                         }`}
                       >
                         {pattern.status}
@@ -693,7 +693,7 @@ const AIQualityDashboardView: React.FC = () => {
                 ))}
                 {patterns.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan={6} className="px-4 py-8 text-center text-c-text-muted">
                       Brak wykrytych wzorców
                     </td>
                   </tr>
@@ -708,42 +708,42 @@ const AIQualityDashboardView: React.FC = () => {
       {activeTab === 'analytics' && (
         <div className="space-y-6">
           {/* Context Analytics */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-              <h3 className="font-medium text-slate-900 dark:text-white">
+          <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
+            <div className="p-4 border-b border-c-border-subtle">
+              <h3 className="font-medium text-c-text">
                 Analiza według kontekstu
               </h3>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-sm text-c-text-muted mt-1">
                 Satysfakcja i jakość odpowiedzi w różnych kontekstach ekranu
               </p>
             </div>
             <table className="w-full">
-              <thead className="bg-slate-50 dark:bg-slate-700/50">
+              <thead className="bg-c-surface-raised/50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                     Kontekst
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                     Feedback
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                     Satysfakcja
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                     Przydatność
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted">
                     Trafność
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {contextAnalytics.map((ctx) => (
-                  <tr key={ctx.context} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                    <td className="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">
+                  <tr key={ctx.context} className="hover:bg-c-surface-raised/50">
+                    <td className="px-4 py-3 text-sm font-medium text-c-text">
                       {ctx.context}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
+                    <td className="px-4 py-3 text-sm text-c-text-secondary">
                       {ctx.total}
                     </td>
                     <td className="px-4 py-3">
@@ -759,17 +759,17 @@ const AIQualityDashboardView: React.FC = () => {
                         {ctx.satisfactionRate ? `${ctx.satisfactionRate}%` : '-'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
+                    <td className="px-4 py-3 text-sm text-c-text-secondary">
                       {ctx.avgActionability ? `${ctx.avgActionability}/5` : '-'}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
+                    <td className="px-4 py-3 text-sm text-c-text-secondary">
                       {ctx.avgAccuracy ? `${ctx.avgAccuracy}/5` : '-'}
                     </td>
                   </tr>
                 ))}
                 {contextAnalytics.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan={5} className="px-4 py-8 text-center text-c-text-muted">
                       Brak danych analitycznych
                     </td>
                   </tr>

@@ -276,7 +276,7 @@ export const DropdownContent: React.FC<DropdownContentProps> = ({
           ref={contentRef}
           role="menu"
           className={`
-            fixed z-[9999]
+            fixed z-dropdown
             min-w-[180px]
             py-1
             bg-white dark:bg-navy-900
@@ -424,7 +424,7 @@ export const Select: React.FC<SelectProps> = ({
             rounded-xl
             border border-transparent
             hover:bg-slate-100 dark:hover:bg-navy-800
-            focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
+            focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus
             disabled:opacity-50 disabled:cursor-not-allowed
             transition-all duration-150
             ${fullWidth ? 'w-full' : ''}

@@ -16,6 +16,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { LoadingState } from '@/components/shared/states';
+
 import { API_URL, getHeaders } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
@@ -393,8 +395,8 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
 
   if (loading)
     return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+      <div className="h-full p-6">
+        <LoadingState template="panel" />
       </div>
     );
 

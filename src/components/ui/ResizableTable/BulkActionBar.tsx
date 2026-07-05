@@ -50,7 +50,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
           transition={{ duration: 0.2 }}
           data-testid="bulk-action-bar"
           className={`
-            fixed bottom-6 left-1/2 -translate-x-1/2 z-50
+            fixed bottom-6 left-1/2 -translate-x-1/2 z-dropdown
             flex items-center gap-3 px-4 py-2.5
             bg-white dark:bg-navy-800
             border border-slate-200 dark:border-navy-600
@@ -112,14 +112,14 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
                   {showMoreActions && (
                     <>
                       <div
-                        className="fixed inset-0 z-40"
+                        className="fixed inset-0 z-sticky"
                         onClick={() => setShowMoreActions(false)}
                       />
                       <motion.div
                         initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 4 }}
-                        className="absolute bottom-full right-0 mb-2 z-50 min-w-[160px] bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden"
+                        className="absolute bottom-full right-0 mb-2 z-dropdown min-w-[160px] bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden"
                       >
                         {overflowActions.map((action) => (
                           <button

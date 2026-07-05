@@ -182,17 +182,17 @@ export function AISecuritySettings() {
       <div className="flex items-center gap-3">
         <Shield className="w-8 h-8 text-indigo-600" />
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-c-text">
             Ustawienia bezpieczeństwa AI
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-c-text-muted">
             Konfiguracja funkcji AI dla organizacji
           </p>
         </div>
       </div>
 
       {error && (
-        <div className="bg-danger-50 border border-danger-200 rounded-lg p-4 text-danger-700 flex items-center gap-2">
+        <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 text-rose-700 flex items-center gap-2">
           <AlertCircle className="w-5 h-5" />
           {error}
         </div>
@@ -208,8 +208,8 @@ export function AISecuritySettings() {
       {settings && (
         <>
           {/* Features Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <div className="bg-c-surface rounded-xl p-6 shadow-sm border border-c-border-subtle">
+            <h2 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
               <Zap className="w-5 h-5 text-yellow-500" />
               Włączone funkcje
             </h2>
@@ -220,18 +220,18 @@ export function AISecuritySettings() {
                   className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
                     settings.enabled_features.includes(feature.id)
                       ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                      : 'border-c-border-subtle hover:border-c-border'
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={settings.enabled_features.includes(feature.id)}
                     onChange={() => toggleFeature(feature.id)}
-                    className="mt-1 rounded border-gray-300 dark:border-gray-600"
+                    className="mt-1 rounded border-c-border"
                   />
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-white">{feature.label}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="font-medium text-c-text">{feature.label}</p>
+                    <p className="text-sm text-c-text-muted">
                       {feature.description}
                     </p>
                   </div>
@@ -241,12 +241,12 @@ export function AISecuritySettings() {
           </div>
 
           {/* Models Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <Settings className="w-5 h-5 text-primary-500" />
+          <div className="bg-c-surface rounded-xl p-6 shadow-sm border border-c-border-subtle">
+            <h2 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
+              <Settings className="w-5 h-5 text-c-accent" />
               Dozwolone modele
             </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-sm text-c-text-muted mb-4">
               Odznacz modele, które chcesz wyłączyć dla użytkowników
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -255,18 +255,18 @@ export function AISecuritySettings() {
                   key={model.id}
                   className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${
                     settings.disabled_models.includes(model.id)
-                      ? 'border-danger-300 bg-danger-50 dark:bg-danger-900/20'
-                      : 'border-gray-200 dark:border-gray-700'
+                      ? 'border-rose-300 bg-rose-50 dark:bg-rose-900/20'
+                      : 'border-c-border-subtle'
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={!settings.disabled_models.includes(model.id)}
                     onChange={() => toggleModel(model.id)}
-                    className="rounded border-gray-300 dark:border-gray-600"
+                    className="rounded border-c-border"
                   />
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900 dark:text-white text-sm">
+                    <p className="font-medium text-c-text text-sm">
                       {model.label}
                     </p>
                   </div>
@@ -275,8 +275,8 @@ export function AISecuritySettings() {
                       model.tier === 'premium'
                         ? 'bg-yellow-100 text-yellow-700'
                         : model.tier === 'reasoning'
-                          ? 'bg-primary-100 text-primary-700'
-                          : 'bg-gray-100 dark:bg-navy-800 text-gray-600 dark:text-gray-400'
+                          ? 'bg-c-accent-soft text-c-accent'
+                          : 'bg-c-surface-raised text-c-text-secondary'
                     }`}
                   >
                     {model.tier}
@@ -287,9 +287,9 @@ export function AISecuritySettings() {
           </div>
 
           {/* Limits Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="bg-c-surface rounded-xl p-6 shadow-sm border border-c-border-subtle">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-c-text flex items-center gap-2">
                 <Clock className="w-5 h-5 text-blue-500" />
                 Limity zapytań
               </h2>
@@ -300,19 +300,19 @@ export function AISecuritySettings() {
             </div>
 
             {showAddLimit && (
-              <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <div className="mb-4 p-4 bg-c-surface-raised rounded-lg">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <input
                     type="text"
                     placeholder="Nazwa reguły"
                     value={newLimit.ruleName}
                     onChange={(e) => setNewLimit({ ...newLimit, ruleName: e.target.value })}
-                    className="px-3 py-2 border rounded-lg bg-white dark:bg-gray-800"
+                    className="px-3 py-2 border rounded-lg bg-c-surface"
                   />
                   <select
                     value={newLimit.limitType}
                     onChange={(e) => setNewLimit({ ...newLimit, limitType: e.target.value })}
-                    className="px-3 py-2 border rounded-lg bg-white dark:bg-gray-800"
+                    className="px-3 py-2 border rounded-lg bg-c-surface"
                   >
                     {LIMIT_TYPES.map((lt) => (
                       <option key={lt.id} value={lt.id}>
@@ -327,7 +327,7 @@ export function AISecuritySettings() {
                     onChange={(e) =>
                       setNewLimit({ ...newLimit, limitValue: parseInt(e.target.value) })
                     }
-                    className="px-3 py-2 border rounded-lg bg-white dark:bg-gray-800"
+                    className="px-3 py-2 border rounded-lg bg-c-surface"
                   />
                   <Button variant="primary" onClick={addRateLimit}>
                     Dodaj
@@ -337,7 +337,7 @@ export function AISecuritySettings() {
             )}
 
             {rateLimits.length === 0 ? (
-              <p className="text-gray-500 dark:text-gray-400 text-sm">
+              <p className="text-c-text-muted text-sm">
                 Brak skonfigurowanych limitów. Używane są domyślne limity systemowe.
               </p>
             ) : (
@@ -345,18 +345,18 @@ export function AISecuritySettings() {
                 {rateLimits.map((limit) => (
                   <div
                     key={limit.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg"
                   >
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white">{limit.rule_name}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="font-medium text-c-text">{limit.rule_name}</p>
+                      <p className="text-sm text-c-text-muted">
                         {limit.limit_value}{' '}
                         {LIMIT_TYPES.find((t) => t.id === limit.limit_type)?.label}
                         {limit.applies_to !== 'all' && ` (${limit.applies_to})`}
                       </p>
                     </div>
                     <Button variant="ghost" size="sm" onClick={() => deleteRateLimit(limit.id)}>
-                      <Trash2 className="w-4 h-4 text-danger-500" />
+                      <Trash2 className="w-4 h-4 text-rose-500" />
                     </Button>
                   </div>
                 ))}
@@ -365,14 +365,14 @@ export function AISecuritySettings() {
           </div>
 
           {/* Advanced Settings */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <Settings className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <div className="bg-c-surface rounded-xl p-6 shadow-sm border border-c-border-subtle">
+            <h2 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
+              <Settings className="w-5 h-5 text-c-text-muted" />
               Ustawienia zaawansowane
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   Maksymalna liczba tokenów na zapytanie
                 </label>
                 <input
@@ -384,11 +384,11 @@ export function AISecuritySettings() {
                       max_tokens_per_request: parseInt(e.target.value),
                     })
                   }
-                  className="w-full px-3 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700"
+                  className="w-full px-3 py-2 border rounded-lg bg-c-surface-raised"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   Retencja danych (dni)
                 </label>
                 <input
@@ -400,9 +400,9 @@ export function AISecuritySettings() {
                       data_retention_days: parseInt(e.target.value),
                     })
                   }
-                  className="w-full px-3 py-2 border rounded-lg bg-gray-50 dark:bg-gray-700"
+                  className="w-full px-3 py-2 border rounded-lg bg-c-surface-raised"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1">
+                <p className="text-xs text-c-text-muted mt-1 flex items-center gap-1">
                   <Info className="w-3 h-3" />
                   Logi AI starsze niż ta liczba dni będą automatycznie usuwane
                 </p>
@@ -418,9 +418,9 @@ export function AISecuritySettings() {
                         allow_web_research: e.target.checked,
                       })
                     }
-                    className="rounded border-gray-300 dark:border-gray-600"
+                    className="rounded border-c-border"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <span className="text-sm text-c-text-secondary">
                     Pozwól na wyszukiwanie w internecie
                   </span>
                 </label>
@@ -434,9 +434,9 @@ export function AISecuritySettings() {
                         allow_tool_calling: e.target.checked,
                       })
                     }
-                    className="rounded border-gray-300 dark:border-gray-600"
+                    className="rounded border-c-border"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <span className="text-sm text-c-text-secondary">
                     Pozwól na wykonywanie akcji (MCP Tools)
                   </span>
                 </label>

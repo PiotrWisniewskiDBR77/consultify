@@ -160,6 +160,28 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     category: 'experimental',
     allowLocalOverride: false,
   },
+  {
+    id: 'mindmapHeuristicAiOverlays',
+    name: 'Mind Map: Heuristic AI Overlays (DP-5)',
+    description:
+      'DP-5 honesty gate for mind-map overlays whose displayed result is a client-side ' +
+      'heuristic rather than real LLM output: AIBranchBalancer (no LLM call at all), ' +
+      'AISentimentOverlay (sentiment = confidence-threshold mapping), AIAutoClustering ' +
+      '(cluster membership = substring match), AIDependencyDetector (node pairs default to ' +
+      'indices the backend never returns). OFF by default until backed by real AI analysis.',
+    defaultValue: false,
+    category: 'ai',
+    allowLocalOverride: true,
+  },
+  {
+    id: 'ENABLE_TERESA_MINDMAP',
+    name: 'Teresa: Mind Map Bridge',
+    description:
+      'Sidekick→chat entity-context bridge for Ideas mind maps (M06 Fala 2 §2.1): kickoff carries ideaId/intent and reuses the existing conversation instead of creating a new one. OFF = today’s local-only kickoff behavior.',
+    defaultValue: false,
+    category: 'ai',
+    allowLocalOverride: true,
+  },
 ];
 
 // ============================================

@@ -356,11 +356,44 @@ describe('ProcessFlow context menu helpers', () => {
       onDelete,
       onOpenProperties,
     });
-    expect(actions.map((a) => a.label)).toEqual(['Edit label', 'Duplicate', 'Properties', 'Delete']);
-    actions[0].onClick();
+    // Canon K6 order: Open → Context (edit/duplicate) → Danger. Optional AI/convert/auto
+    // items only appear when their handlers are passed.
+    expect(actions.map((a) => a.label)).toEqual([
+      'Open properties',
+      'Edit label',
+      'Duplicate',
+      'Delete',
+    ]);
+    actions[1].onClick();
     expect(onEditLabel).toHaveBeenCalled();
     actions[3].onClick();
     expect(onDelete).toHaveBeenCalled();
+    // Delete is danger-styled and separated from the group above (K6).
+    expect(actions[3].danger).toBe(true);
+    expect(actions[3].separatorBefore).toBe(true);
+  });
+
+  it('getNodeContextActions adds Auto-layout + Convert only when handlers provided', () => {
+    const onAutoLayout = vi.fn();
+    const onConvertInitiative = vi.fn();
+    const actions = getNodeContextActions({
+      nodeId: 'n1',
+      isPl: false,
+      locked: false,
+      onEditLabel: vi.fn(),
+      onDuplicate: vi.fn(),
+      onDelete: vi.fn(),
+      onOpenProperties: vi.fn(),
+      onAutoLayout,
+      onConvertInitiative,
+    });
+    const labels = actions.map((a) => a.label);
+    expect(labels).toContain('Auto-layout');
+    expect(labels).toContain('Convert to initiative');
+    actions.find((a) => a.id === 'auto-layout')?.onClick();
+    expect(onAutoLayout).toHaveBeenCalled();
+    actions.find((a) => a.id === 'convert-initiative')?.onClick();
+    expect(onConvertInitiative).toHaveBeenCalled();
   });
 
   it('getNodeContextActions disables destructive actions when locked', () => {
@@ -392,5 +425,75 @@ describe('ProcessFlow context menu helpers', () => {
     expect(onAddNode).toHaveBeenCalledWith('action');
     actions[1].onClick();
     expect(onAddNode).toHaveBeenCalledWith('decision');
+  });
+});
+
+// ── ProcessFlowToolbar — AI Proposal / Readback triggers (M07 gap fix) ──────
+// The AIProposalPanel and ReadbackPanel were fully wired but UNREACHABLE: no
+// trigger ever set showAIPanel/showReadbackPanel to true. These guard the new
+// toolbar buttons that open them (and that they stay hidden when the optional
+// callbacks are not supplied).
+import { ProcessFlowToolbar } from '../../../src/components/MyWork/processflow/ProcessFlowToolbar';
+
+function baseToolbarProps() {
+  return {
+    isPl: false,
+    locked: false,
+    flowMode: 'classic' as const,
+    setFlowMode: vi.fn(),
+    semanticKit: 'none',
+    availableShapes: [],
+    addNode: vi.fn(),
+    addLane: vi.fn(),
+    insertBetween: vi.fn(),
+    splitPath: vi.fn(),
+    runValidation: vi.fn(),
+    showWarnings: false,
+    warnings: [],
+    showCoach: false,
+    setShowCoach: vi.fn(),
+    coachLoading: false,
+    runProcessCoach: vi.fn(),
+    showSummary: false,
+    setShowSummary: vi.fn(),
+    summaryLoading: false,
+    generateSummary: vi.fn(),
+    showKPIDashboard: false,
+    setShowKPIDashboard: vi.fn(),
+    canUndo: false,
+    canRedo: false,
+    undo: vi.fn(),
+    redo: vi.fn(),
+    handleAutoLayout: vi.fn(),
+    duplicateSelected: vi.fn(),
+    deleteSelected: vi.fn(),
+    saving: false,
+    syncLabel: 'Saved',
+    handleSave: vi.fn(),
+    stepCount: 3,
+    laneCount: 1,
+    guidance: { en: 'g', pl: 'g', stageEn: 's', stagePl: 's' },
+  };
+}
+
+describe('ProcessFlowToolbar — AI panel triggers', () => {
+  it('renders AI Proposal + Readback buttons and fires callbacks on click', () => {
+    const onAIProposal = vi.fn();
+    const onReadback = vi.fn();
+    render(<ProcessFlowToolbar {...baseToolbarProps()} onAIProposal={onAIProposal} onReadback={onReadback} />);
+
+    const aiBtn = screen.getByTitle(/AI Proposal — flow edits/i);
+    const readbackBtn = screen.getByTitle(/Semantic readback/i);
+    fireEvent.click(aiBtn);
+    fireEvent.click(readbackBtn);
+
+    expect(onAIProposal).toHaveBeenCalledTimes(1);
+    expect(onReadback).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides both buttons when callbacks are not supplied (back-compat)', () => {
+    render(<ProcessFlowToolbar {...baseToolbarProps()} />);
+    expect(screen.queryByTitle(/AI Proposal — flow edits/i)).toBeNull();
+    expect(screen.queryByTitle(/Semantic readback/i)).toBeNull();
   });
 });

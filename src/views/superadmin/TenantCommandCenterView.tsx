@@ -376,7 +376,7 @@ export const TenantCommandCenterView: React.FC = () => {
                       onClick={() => setSelectedOrgId(org.id)}
                       className={`w-full rounded-xl border px-4 py-3 text-left transition ${
                         org.id === selectedOrgId
-                          ? 'border-[var(--c-info)] bg-slate-100 dark:border-[var(--c-info)]/60 dark:bg-white/[0.08]'
+                          ? 'border-[var(--c-info)] bg-slate-100 dark:border-c-info/60 dark:bg-white/[0.08]'
                           : 'border-slate-200 bg-slate-50 hover:border-slate-300 dark:border-navy-700 dark:bg-navy-950/40'
                       }`}
                     >

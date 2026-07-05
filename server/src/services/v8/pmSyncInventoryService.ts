@@ -190,6 +190,45 @@ function mapErrorRate(status: string, healthy: boolean, conflictCount: number): 
   return 25;
 }
 
+/**
+ * Batch-fetch the single most recent sync run for each integration in ONE query
+ * instead of one `LIMIT 1` query per integration (the previous N+1 — painful on
+ * staging where each round-trip is ~150ms). Uses ROW_NUMBER() to keep only the
+ * latest run per integration_id; the caller maps by integration id in memory.
+ */
+async function loadLastRunsByIntegrationId(
+  organizationId: string,
+  integrationIds: string[]
+): Promise<Map<string, SyncRunRow>> {
+  const result = new Map<string, SyncRunRow>();
+  if (integrationIds.length === 0) return result;
+  const placeholders = integrationIds.map(() => '?').join(', ');
+  const runRows = await dbAll<SyncRunRow & { integration_id: string }>(
+    `SELECT id, integration_id, status, items_processed, duration_ms,
+            started_at, completed_at, error_summary
+     FROM (
+       SELECT r.*,
+              ROW_NUMBER() OVER (
+                PARTITION BY r.integration_id
+                ORDER BY r.started_at DESC
+              ) AS rn
+       FROM integration_sync_runs r
+       WHERE r.organization_id = ?
+         AND r.integration_id IN (${placeholders})
+     ) ranked
+     WHERE ranked.rn = 1`,
+    [organizationId, ...integrationIds]
+  );
+  for (const run of runRows || []) {
+    if (!result.has(run.integration_id)) {
+      const { integration_id: _ignored, ...syncRun } = run;
+      void _ignored;
+      result.set(run.integration_id, syncRun as SyncRunRow);
+    }
+  }
+  return result;
+}
+
 export async function listGovernedIntegrations(
   organizationId: string
 ): Promise<V8SyncIntegrationInventoryRow[]> {
@@ -200,17 +239,17 @@ export async function listGovernedIntegrations(
     [organizationId]
   );
 
+  // Batch the per-integration "last sync run" lookup into a single query
+  // (replaces the previous one-query-per-row N+1).
+  const lastRunByIntegrationId = await loadLastRunsByIntegrationId(
+    organizationId,
+    (rows || []).map((row) => row.id)
+  );
+
   return Promise.all(
     (rows || []).map(async (row) => {
       const health = await getConnectorHealth(row.connector_id, organizationId);
-      const lastRunRows = await dbAll<SyncRunRow>(
-        `SELECT id, status, items_processed, duration_ms, started_at, completed_at, error_summary
-         FROM integration_sync_runs
-         WHERE integration_id = ?
-         ORDER BY started_at DESC
-         LIMIT 1`,
-        [row.id]
-      );
+      const lastRun = lastRunByIntegrationId.get(row.id) ?? null;
       const connector = CONNECTORS[row.connector_id];
       const credential = await getCredential(row.connector_id, organizationId);
       const capabilities = safeJsonParse<string[]>(row.capabilities, connector?.capabilities ?? []);
@@ -248,7 +287,7 @@ export async function listGovernedIntegrations(
         health: derivedHealth,
         errorRate: mapErrorRate(health.syncStatus, health.healthy, health.conflictCount),
         unresolvedErrors: health.conflictCount,
-        lastRun: lastRunRows[0] ?? null,
+        lastRun,
         configuredFields,
         onboardingStatus,
         credential: credential

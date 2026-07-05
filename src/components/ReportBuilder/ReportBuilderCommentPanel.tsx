@@ -80,7 +80,7 @@ const COMMENT_TYPE_CONFIG: Record<CommentType, { label: string; labelPl: string;
     QUESTION: {
       label: 'Question',
       labelPl: 'Pytanie',
-      color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
+      color: 'bg-c-accent-soft text-c-accent',
     },
     APPROVAL: {
       label: 'Approval',
@@ -116,12 +116,12 @@ const STATUS_CONFIG: Record<
     icon: CheckCircle2,
     color: 'text-green-500',
   },
-  DISMISSED: { label: 'Dismissed', labelPl: 'Odrzucony', icon: X, color: 'text-slate-600' },
+  DISMISSED: { label: 'Dismissed', labelPl: 'Odrzucony', icon: X, color: 'text-c-text-secondary' },
   WONT_FIX: {
     label: "Won't Fix",
     labelPl: 'Nie będzie naprawiane',
     icon: X,
-    color: 'text-slate-600',
+    color: 'text-c-text-secondary',
   },
 };
 
@@ -227,24 +227,24 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
   };
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700">
+    <div className="h-full flex flex-col bg-c-surface border-l border-c-border-subtle">
       {/* Header */}
-      <div className="shrink-0 px-4 py-3 border-b border-slate-200 dark:border-navy-700">
+      <div className="shrink-0 px-4 py-3 border-b border-c-border-subtle">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-primary-500" />
+            <MessageSquare className="w-5 h-5 text-c-accent" />
             <div>
-              <h3 className="font-semibold text-navy-900 dark:text-white">
+              <h3 className="font-semibold text-c-text">
                 {isPl ? 'Komentarze' : 'Comments'}
               </h3>
               {sectionName && (
-                <p className="text-xs text-slate-500 dark:text-slate-400">{sectionName}</p>
+                <p className="text-xs text-c-text-secondary">{sectionName}</p>
               )}
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+            className="p-1.5 text-c-text-secondary hover:text-c-text-secondary hover:opacity-90 rounded-lg transition-colors"
           >
             <X size={18} />
           </button>
@@ -252,7 +252,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
 
         {/* Stats */}
         <div className="flex items-center gap-4 mt-3 text-xs">
-          <span className="text-slate-500 dark:text-slate-400">
+          <span className="text-c-text-secondary">
             {filteredComments.length} {isPl ? 'komentarzy' : 'comments'}
           </span>
           <span className="flex items-center gap-1 text-amber-500">
@@ -281,7 +281,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
 
         {/* Filter */}
         <div className="flex items-center gap-2 mt-3">
-          <Filter size={14} className="text-slate-500 dark:text-slate-400" />
+          <Filter size={14} className="text-c-text-secondary" />
           <div className="flex gap-1">
             {(['all', 'open', 'resolved'] as const).map((f) => (
               <button
@@ -289,8 +289,8 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
                 onClick={() => setFilterStatus(f)}
                 className={`px-2 py-1 text-xs rounded ${
                   filterStatus === f
-                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
-                    : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'
+                    ? 'bg-c-accent-soft text-c-accent'
+                    : 'text-c-text-secondary hover:opacity-90'
                 }`}
               >
                 {f === 'all'
@@ -314,15 +314,15 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 text-primary-500 animate-spin" />
+            <Loader2 className="w-6 h-6 text-c-accent animate-spin" />
           </div>
         ) : filteredComments.length === 0 ? (
           <div className="text-center py-8">
-            <MessageCircle className="w-10 h-10 text-slate-600 dark:text-slate-400 mx-auto mb-2" />
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <MessageCircle className="w-10 h-10 text-c-text-secondary mx-auto mb-2" />
+            <p className="text-sm text-c-text-secondary">
               {isPl ? 'Brak komentarzy' : 'No comments yet'}
             </p>
-            <p className="text-xs text-slate-600 dark:text-slate-500">
+            <p className="text-xs text-c-text-secondary">
               {isPl
                 ? 'Dodaj komentarz, aby rozpocząć dyskusję'
                 : 'Add a comment to start the discussion'}
@@ -339,21 +339,21 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
             return (
               <div
                 key={comment.id}
-                className="bg-slate-50 dark:bg-navy-950 rounded-lg border border-slate-200 dark:border-navy-700 overflow-hidden"
+                className="bg-c-surface-raised rounded-lg border border-c-border-subtle overflow-hidden"
               >
                 {/* Comment header */}
-                <div className="px-3 py-2 flex items-center justify-between border-b border-slate-200 dark:border-navy-700">
+                <div className="px-3 py-2 flex items-center justify-between border-b border-c-border-subtle">
                   <div className="flex items-center gap-2">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${typeConfig.color}`}>
                       {isPl ? typeConfig.labelPl : typeConfig.label}
                     </span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                    <span className="text-xs text-c-text-secondary">
                       {comment.userName || 'Unknown'}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <StatusIcon size={14} className={statusConfig?.color} />
-                    <span className="text-xs text-slate-600 dark:text-slate-500">
+                    <span className="text-xs text-c-text-secondary">
                       {formatDate(comment.createdAt)}
                     </span>
                   </div>
@@ -361,13 +361,13 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
 
                 {/* Comment content */}
                 <div className="p-3">
-                  <p className="text-sm text-navy-900 dark:text-white whitespace-pre-wrap">
+                  <p className="text-sm text-c-text whitespace-pre-wrap">
                     {comment.content}
                   </p>
 
                   {/* Section indicator */}
                   {comment.sectionKey && sectionKey === undefined && (
-                    <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    <div className="mt-2 text-xs text-c-text-secondary">
                       {isPl ? 'Sekcja:' : 'Section:'} {comment.sectionKey}
                     </div>
                   )}
@@ -386,7 +386,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
                 </div>
 
                 {/* Comment actions */}
-                <div className="px-3 py-2 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between">
+                <div className="px-3 py-2 border-t border-c-border-subtle flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {comment.status === 'OPEN' && (
                       <>
@@ -420,14 +420,14 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
                     {comment.resolutionNotes && (
                       <button
                         onClick={() => toggleExpanded(comment.id)}
-                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded"
+                        className="p-1 text-c-text-secondary hover:text-c-text-secondary rounded"
                       >
                         {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                       </button>
                     )}
                     <button
                       onClick={() => onDeleteComment(comment.id)}
-                      className="p-1 text-slate-600 dark:text-slate-500 hover:text-danger-500 rounded"
+                      className="p-1 text-c-text-secondary hover:text-danger-500 rounded"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -440,7 +440,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
       </div>
 
       {/* New comment form */}
-      <div className="shrink-0 p-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
+      <div className="shrink-0 p-4 border-t border-c-border-subtle bg-c-surface-raised">
         <div className="flex items-start gap-2">
           <div className="relative">
             <button
@@ -453,7 +453,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
               <ChevronDown size={12} className="inline ml-1" />
             </button>
             {showTypeSelector && (
-              <div className="absolute bottom-full left-0 mb-1 bg-white dark:bg-navy-900 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1 z-10 min-w-[140px]">
+              <div className="absolute bottom-full left-0 mb-1 bg-c-surface rounded-lg shadow-lg border border-c-border-subtle py-1 z-10 min-w-[140px]">
                 {(['FEEDBACK', 'SUGGESTION', 'QUESTION', 'CHANGE_REQUEST'] as CommentType[]).map(
                   (type) => (
                     <button
@@ -462,8 +462,8 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
                         setCommentType(type);
                         setShowTypeSelector(false);
                       }}
-                      className={`w-full px-3 py-1.5 text-xs text-left hover:bg-slate-50 dark:hover:bg-white/5 ${
-                        commentType === type ? 'bg-slate-100 dark:bg-white/10' : ''
+                      className={`w-full px-3 py-1.5 text-xs text-left hover:opacity-90 ${
+                        commentType === type ? 'bg-c-surface-raised' : ''
                       }`}
                     >
                       {isPl ? COMMENT_TYPE_CONFIG[type].labelPl : COMMENT_TYPE_CONFIG[type].label}
@@ -479,7 +479,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
               onChange={(e) => setNewComment(e.target.value)}
               placeholder={isPl ? 'Dodaj komentarz...' : 'Add a comment...'}
               rows={2}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-navy-900 dark:text-white resize-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-c-border-subtle bg-c-text text-c-bg resize-none focus:ring-2 focus:ring-c-focus focus:border-transparent"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                   handleSubmit();
@@ -492,14 +492,14 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
             disabled={!newComment.trim() || submitting}
             className={`p-2 rounded-lg transition-colors ${
               newComment.trim() && !submitting
-                ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
+                ? 'bg-c-text text-c-bg hover:opacity-90'
+                : 'bg-c-surface-raised text-c-text-secondary cursor-not-allowed'
             }`}
           >
             {submitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
           </button>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+        <p className="text-xs text-c-text-secondary mt-2">
           {isPl ? 'Cmd+Enter aby wysłać' : 'Cmd+Enter to submit'}
         </p>
       </div>

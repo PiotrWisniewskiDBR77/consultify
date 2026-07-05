@@ -6,6 +6,8 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import { safePersistToolSessionConclusion } from '../services/conclusions/toolConclusionBridge.js';
+import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import KnownToolsService from '../services/KnownToolsService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { hasPermission } from '../services/permissionService.js';
@@ -384,11 +386,15 @@ const ensureToolsSchema = async (): Promise<void> => {
       // column already exists
     }
     // P27-B: wizard state, missing items, failure reason
+    // H3: output_json — generated tool outputs; read by the Conclusions sync
+    // (ConclusionService.syncToolOutputs) and written by demo seeds. Aligning
+    // the runtime schema here keeps that SELECT from failing on fresh DBs.
     for (const col of [
       { name: 'wizard_state_json', def: 'TEXT' },
       { name: 'missing_items_json', def: 'TEXT' },
       { name: 'failure_reason', def: 'TEXT' },
       { name: 'last_generation_batch_id', def: 'TEXT' },
+      { name: 'output_json', def: 'TEXT' },
     ]) {
       try {
         await queryHelpers.queryRun(`ALTER TABLE tool_sessions ADD COLUMN ${col.name} ${col.def}`);
@@ -947,8 +953,10 @@ export class ToolController {
         updatedAt: session.updated_at,
         reviewRequestedAt: session.review_requested_at,
         approvedAt: session.approved_at,
-        answers: session.answers_json ? JSON.parse(session.answers_json) : {},
-        contextSnapshot: session.context_snapshot ? JSON.parse(session.context_snapshot) : {},
+        // Fail-soft: a corrupt JSON blob must degrade to an empty object (the UI
+        // shows an empty-but-editable session), never a 500 that blocks resume.
+        answers: safeJsonParse(session.answers_json),
+        contextSnapshot: safeJsonParse(session.context_snapshot),
         wizardState: safeParseJSON((session as any).wizard_state_json, null),
         missingItems: safeParseJSON((session as any).missing_items_json, []),
         failureReason: (session as any).failure_reason || null,
@@ -981,7 +989,7 @@ export class ToolController {
       } = req.body;
 
       const existing = (await queryHelpers.queryOne(
-        `SELECT status, missing_items_json, runtime_contract_json, answers_json, dod_status, completion_percent, confidence_avg
+        `SELECT status, missing_items_json, runtime_contract_json, answers_json, dod_status, completion_percent, confidence_avg, tool_type, name, project_id
          FROM tool_sessions WHERE id = ? AND organization_id = ?`,
         [toolId, user.organizationId]
       )) as Pick<
@@ -993,6 +1001,9 @@ export class ToolController {
         | 'dod_status'
         | 'completion_percent'
         | 'confidence_avg'
+        | 'tool_type'
+        | 'name'
+        | 'project_id'
       > | null;
       if (!existing) {
         res.status(404).json({ error: 'Tool session not found' });
@@ -1067,24 +1078,32 @@ export class ToolController {
       }
 
       const now = new Date().toISOString();
-      const setClauses = [
-        'answers_json = ?',
-        'context_snapshot = ?',
-        'completion_percent = ?',
-        'confidence_avg = ?',
-        'status = ?',
-        'updated_by = ?',
-        'updated_at = ?',
-      ];
-      const params: unknown[] = [
-        JSON.stringify(answers || {}),
-        JSON.stringify(contextSnapshot || {}),
-        completionPercent ?? 0,
-        confidenceAvg ?? 0,
-        newStatus,
-        user.id,
-        now,
-      ];
+      // H3 resume-hardening: PARTIAL update semantics. All payload fields are
+      // optional (UpdateToolSessionSchema) and live callers save different
+      // slices (e.g. wizard auto-save sends only wizardState+status). The old
+      // unconditional SET wiped answers_json/context_snapshot to '{}' and
+      // zeroed completion/confidence on every partial save — destroying the
+      // session state a user resumes into and permanently blocking the DoD
+      // gate (confidence >= 3). Only update columns the caller actually sent.
+      const setClauses = ['status = ?', 'updated_by = ?', 'updated_at = ?'];
+      const params: unknown[] = [newStatus, user.id, now];
+
+      if (answers !== undefined) {
+        setClauses.push('answers_json = ?');
+        params.push(JSON.stringify(answers || {}));
+      }
+      if (contextSnapshot !== undefined) {
+        setClauses.push('context_snapshot = ?');
+        params.push(JSON.stringify(contextSnapshot || {}));
+      }
+      if (completionPercent !== undefined) {
+        setClauses.push('completion_percent = ?');
+        params.push(completionPercent ?? 0);
+      }
+      if (confidenceAvg !== undefined) {
+        setClauses.push('confidence_avg = ?');
+        params.push(confidenceAvg ?? 0);
+      }
 
       if (wizardState !== undefined) {
         setClauses.push('wizard_state_json = ?');
@@ -1127,6 +1146,26 @@ export class ToolController {
           confidenceAvg,
         },
       });
+
+      // CONCLUSION_LAYER bridge: when the synced answers carry a generated W2
+      // conclusion (summary.verdict / executiveSummary), persist it as a
+      // Conclusion candidate. Fire-and-forget + fail-safe — a Conclusion write
+      // failure must never break the tool session save.
+      void safePersistToolSessionConclusion(
+        {
+          organizationId: user.organizationId,
+          projectId: existing.project_id ?? null,
+          actorUserId: user.id,
+          sessionId: toolId,
+          toolType: req.body?.toolType || existing.tool_type || null,
+          name: req.body?.name || existing.name || null,
+          // Partial saves may omit answers — bridge from the persisted state so
+          // a wizard-only save cannot erase an already-generated W2 conclusion.
+          answers: answers !== undefined ? answers : safeJsonParse(existing.answers_json),
+          confidenceAvg: confidenceAvg ?? Number(existing.confidence_avg || 0),
+        },
+        { logger }
+      );
 
       res.json({ id: toolId, status: newStatus, updatedAt: now });
     }
@@ -1308,6 +1347,23 @@ export class ToolController {
       await logAudit(user.organizationId, user.id, 'tool_approved', toolId, {
         decisionId,
       });
+
+      // CONCLUSION_LAYER bridge: the approve gate is the strongest evidence
+      // signal — re-persist the session's W2 conclusion with the final answers.
+      // Fire-and-forget + fail-safe (must never break approval).
+      void safePersistToolSessionConclusion(
+        {
+          organizationId: user.organizationId,
+          projectId: session.project_id ?? null,
+          actorUserId: user.id,
+          sessionId: toolId,
+          toolType: session.tool_type || null,
+          name: session.name || null,
+          answers: safeParseJSON<Record<string, unknown>>(session.answers_json, {}),
+          confidenceAvg: Number(session.confidence_avg || 0),
+        },
+        { logger }
+      );
 
       res.json({ id: toolId, status: 'APPROVED' });
     }
@@ -1813,27 +1869,54 @@ export class ToolController {
         promotion_type: outputType,
       };
 
+      let initiativeOutputId = outputId;
       if (outputType === 'initiative') {
-        await queryHelpers.queryRun(
-          `INSERT INTO initiatives (
-            id, organization_id, project_id, name, summary, status, axis, source_type, source_id,
-            priority_order, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            outputId,
+        // Uspójnienie F1.8 — przez kanoniczny lejek (DRAFT + name/title + lineage).
+        if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+          const __r = await funnelCreateInitiative(
             session.organization_id,
-            session.project_id || null,
-            title,
-            description || '',
-            'DRAFT',
-            'operations',
-            'tool',
-            toolId,
-            2,
-            now,
-            now,
-          ]
-        );
+            {
+              title,
+              projectId: session.project_id || null,
+              summary: description || '',
+              axis: 'operations',
+              sourceType: 'tool',
+              sourceId: toolId,
+            },
+            { validate: false, actor: { id: user.id } }
+          );
+          initiativeOutputId = __r.id;
+          // Extra column not set by the funnel — post-create UPDATE (best-effort).
+          try {
+            await queryHelpers.queryRun(
+              `UPDATE initiatives SET priority_order = ? WHERE id = ? AND organization_id = ?`,
+              [2, initiativeOutputId, session.organization_id]
+            );
+          } catch {
+            // priority_order column may be absent on legacy schemas
+          }
+        } else {
+          await queryHelpers.queryRun(
+            `INSERT INTO initiatives (
+              id, organization_id, project_id, name, summary, status, axis, source_type, source_id,
+              priority_order, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              outputId,
+              session.organization_id,
+              session.project_id || null,
+              title,
+              description || '',
+              'DRAFT',
+              'operations',
+              'tool',
+              toolId,
+              2,
+              now,
+              now,
+            ]
+          );
+        }
       }
 
       if (outputType === 'report') {
@@ -1917,25 +2000,29 @@ export class ToolController {
         }
       }
 
+      // Thread the funnel-created id downstream for the initiative path (F1.8);
+      // other output types keep the locally-generated outputId.
+      const effectiveOutputId = outputType === 'initiative' ? initiativeOutputId : outputId;
+
       // Record promotion link for traceability
       try {
         await queryHelpers.queryRun(
           `INSERT INTO tool_initiative_links (id, tool_session_id, batch_id, initiative_id, created_at)
            VALUES (?, ?, ?, ?, ?)`,
-          [uuidv4(), toolId, promoteBatchId, outputId, now]
+          [uuidv4(), toolId, promoteBatchId, effectiveOutputId, now]
         );
       } catch {
         // Graceful fallback
       }
 
       await logAudit(user.organizationId, user.id, `tool_promoted_to_${outputType}`, toolId, {
-        outputId,
+        outputId: effectiveOutputId,
         outputType,
         title,
       });
 
       res.json({
-        id: outputId,
+        id: effectiveOutputId,
         outputType,
         title,
         sourceSessionId: toolId,

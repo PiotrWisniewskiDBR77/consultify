@@ -1,0 +1,18 @@
+{
+  "bytes": 11528,
+  "navy_fill_in_document": 8,
+  "navy_heading_color_in_styles": 3,
+  "navySoft_h2_color_in_styles": 2,
+  "teal_rule_in_document": 2,
+  "teal_in_styles_H1_and_Callout": 2,
+  "zebra_fill_in_document": 0,
+  "callout_soft_fills": {
+    "success": 1,
+    "danger": 1
+  },
+  "crimson_status_accent_C0392B": 3,
+  "table_column_fold_marker": true,
+  "old_slate_table_header_E2E8F0": 0,
+  "old_indigo_callout_4338CA": 0,
+  "old_slate_heading_0F172A": 0
+}

@@ -4,6 +4,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import type { TFunction } from 'i18next';
+
 import {
   type ActionRow,
   type DetailsAction,
@@ -15,6 +17,7 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { statusChipTone } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { ROUTES } from '@/routes/routeConfig';
 import { type ArtifactConversion, ConclusionsApi } from '@/services/api/conclusions.api';
 import { type InitiativeEconomicsLink, InitiativeApi } from '@/services/api/initiatives.api';
@@ -49,12 +52,58 @@ const formatDate = (value: unknown): string => {
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
+/** Humanize an unknown enum key (never surface a raw UPPER_SNAKE key). */
+const humanizeKey = (raw: string): string => {
+  const spaced = raw.trim().replace(/[_-]+/g, ' ').trim().toLowerCase();
+  return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1) : '';
+};
+
+/**
+ * Localized initiative status label — canon §7.3: no raw enum keys in preview.
+ * Tone stays owned by statusChipTone(); this only supplies the text.
+ */
+const initiativeStatusLabel = (t: TFunction, raw: string): string => {
+  const key = raw.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  const map: Record<string, string> = {
+    draft: t('preview.statuses.draft', 'Draft'),
+    pending_review: t('initiatives.status.pendingReview', 'Pending review'),
+    review: t('preview.statuses.review', 'In review'),
+    promoted: t('initiatives.status.promoted', 'Promoted'),
+    planning: t('initiatives.status.planning', 'Planning'),
+    approved: t('preview.statuses.approved', 'Approved'),
+    scheduled: t('initiatives.status.scheduled', 'Scheduled'),
+    executing: t('initiatives.status.executing', 'Executing'),
+    blocked: t('initiatives.status.blocked', 'Blocked'),
+    done: t('initiatives.status.done', 'Done'),
+    tracking: t('initiatives.status.tracking', 'Tracking'),
+    cancelled: t('initiatives.status.cancelled', 'Cancelled'),
+    archived: t('initiatives.status.archived', 'Archived'),
+  };
+  return map[key] ?? humanizeKey(raw);
+};
+
+/** Localized initiative priority label. */
+const initiativePriorityLabel = (t: TFunction, raw: string): string => {
+  const key = raw.trim().toLowerCase();
+  const map: Record<string, string> = {
+    critical: t('initiatives.priorityLevels.critical', 'Critical'),
+    high: t('initiatives.priorityLevels.high', 'High'),
+    medium: t('initiatives.priorityLevels.medium', 'Medium'),
+    low: t('initiatives.priorityLevels.low', 'Low'),
+    p1: t('initiatives.priorityLevels.critical', 'Critical'),
+    p2: t('initiatives.priorityLevels.high', 'High'),
+    p3: t('initiatives.priorityLevels.medium', 'Medium'),
+    p4: t('initiatives.priorityLevels.low', 'Low'),
+  };
+  return map[key] ?? humanizeKey(raw);
+};
+
 export const InitiativePreviewV3Body: React.FC<{
   initiative: InitiativePreviewV3Model;
   detailsExpanded?: boolean;
   onToggleDetailsExpanded?: () => void;
   onSummarize?: () => Promise<void> | void;
-  /** B1 (deliverables): generuje dokument ugruntowany w tej inicjatywie (czat). */
+  /** B1 (deliverables): generates a document grounded in this initiative (chat). */
   onMakeDocument?: () => Promise<void> | void;
 }> = ({ initiative, detailsExpanded, onToggleDetailsExpanded, onSummarize, onMakeDocument }) => {
   const { i18n, t } = useTranslation();
@@ -107,31 +156,37 @@ export const InitiativePreviewV3Body: React.FC<{
   }, [detailsText, initiative.name, initiative.title, isPolish]);
 
   const metaPills = useMemo((): MetaPill[] => {
-    const pillClass = 'bg-slate-500/10 text-slate-700 dark:text-slate-200';
+    const pillClass = 'bg-c-surface-raised text-c-text-secondary';
+    // Canon §4.1: status carries a semantic tone (dot); label is localized —
+    // never the raw UPPER_SNAKE enum. Other meta stay neutral.
+    const statusTone = statusChipTone(status) as MetaPill['tone'];
     const pills: MetaPill[] = [
       { label: t('initiatives.initiative2'), className: pillClass },
-      { label: status.replace(/_/g, ' '), className: pillClass },
+      { label: initiativeStatusLabel(t, status), tone: statusTone },
     ];
     if (progress != null) {
       pills.push({
-        label: `${t('preview.progress', 'Progress')}: ${progress}%`,
+        label: t('preview.progress', 'Progress'),
+        value: `${progress}%`,
         className: pillClass,
       });
     }
     if (axis) {
       pills.push({
-        label: `${t('initiatives.axis3')}: ${axis}`,
+        label: t('initiatives.axis3'),
+        value: axis,
         className: pillClass,
       });
     }
     if (priority) {
       pills.push({
-        label: `${t('initiatives.priority4')}: ${priority}`,
+        label: t('initiatives.priority4'),
+        value: initiativePriorityLabel(t, priority),
         className: pillClass,
       });
     }
     return pills;
-  }, [axis, isPolish, priority, progress, status, t]);
+  }, [axis, priority, progress, status, t]);
 
   const detailsCustomActions = useMemo((): DetailsAction[] => {
     const title = String(initiative.name || initiative.title || '').trim();
@@ -161,7 +216,7 @@ export const InitiativePreviewV3Body: React.FC<{
         : []),
       {
         id: 'copy',
-        label: isPolish ? 'Kopiuj' : t('common.copy', 'Copy'),
+        label: t('common.copy', 'Copy'),
         icon: Copy,
         onClick: async () => {
           await handleCopy();
@@ -199,16 +254,16 @@ export const InitiativePreviewV3Body: React.FC<{
       <PreviewMetaCard pills={metaPills}>
         <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
           <div>
-            <div className="text-slate-500 dark:text-slate-400">
+            <div className="text-c-text-muted">
               {t('initiatives.created2')}
             </div>
-            <div className="text-slate-900 dark:text-white">{createdAt}</div>
+            <div className="text-c-text">{createdAt}</div>
           </div>
           <div className="text-right">
-            <div className="text-slate-500 dark:text-slate-400">
+            <div className="text-c-text-muted">
               {t('initiatives.lastModified2')}
             </div>
-            <div className="text-slate-900 dark:text-white">{updatedAt}</div>
+            <div className="text-c-text">{updatedAt}</div>
           </div>
         </div>
       </PreviewMetaCard>
@@ -227,14 +282,14 @@ export const InitiativePreviewV3Body: React.FC<{
         String(initiative.sourceType || '').toLowerCase()
       ) ||
         lineage.length > 0) && (
-        <div className="rounded-xl border border-primary-200/70 dark:border-primary-500/20 bg-primary-50/70 dark:bg-primary-500/[0.08] p-3">
+        <div className="rounded-xl border border-c-border bg-c-surface-raised p-3">
           <div className="flex items-center gap-2 mb-2">
-            <Link2 size={14} className="text-primary-500" />
-            <span className="text-[11px] font-semibold text-primary-700 dark:text-primary-300 uppercase tracking-wider">
+            <Link2 size={14} className="text-c-info" />
+            <span className="text-[11px] font-semibold text-c-info uppercase tracking-wider">
               {t('initiatives.interviewInsightLineage2')}
             </span>
           </div>
-          <div className="space-y-1.5 text-xs text-primary-800 dark:text-primary-200">
+          <div className="space-y-1.5 text-xs text-c-text-secondary">
             {initiative.sourceId ? (
               <button
                 type="button"
@@ -290,12 +345,12 @@ function getLinkageStatusMeta(
     case 'local_only':
       return {
         label: isPolish ? 'Tylko lokalnie' : 'Local only',
-        tone: 'bg-slate-500/10 text-slate-500 dark:text-slate-400',
+        tone: 'bg-c-surface-raised text-c-text-muted',
       };
     default:
       return {
         label: isPolish ? 'Nie rozpoczęto' : 'Not started',
-        tone: 'bg-slate-500/10 text-slate-500 dark:text-slate-400',
+        tone: 'bg-c-surface-raised text-c-text-muted',
       };
   }
 }
@@ -315,13 +370,14 @@ function getLinkageTypeLabel(
 }
 
 /**
- * Inline "Powiązane modele finansowe / Linked finance models" list.
+ * Inline "Linked finance models" list.
  * Reads the M16-written economics linkages for this initiative (org-scoped on the
  * server) and renders name (finance model ref) + type + status, with an action to
  * open the model in /economics. Renders nothing when there are no linkages so the
  * card stays clean for initiatives without a finance link.
  */
 const LinkedFinanceModels: React.FC<{ initiativeId: string }> = ({ initiativeId }) => {
+    const { t } = useTranslation();
   const { i18n } = useTranslation();
   const navigate = useNavigate();
   const isPolish = i18n.language === 'pl';
@@ -347,13 +403,13 @@ const LinkedFinanceModels: React.FC<{ initiativeId: string }> = ({ initiativeId 
   if (loading || links.length === 0) return null;
 
   return (
-    <div className="mb-3 pb-3 border-b border-slate-200/70 dark:border-white/[0.08]">
+    <div className="mb-3 pb-3 border-b border-c-border-subtle">
       <div className="flex items-center gap-2 mb-2">
-        <Link2 size={12} className="text-slate-400 shrink-0" />
-        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-          {isPolish ? 'Powiązane modele finansowe' : 'Linked finance models'}
+        <Link2 size={12} className="text-c-text-muted shrink-0" />
+        <span className="text-[10px] font-semibold text-c-text-muted uppercase tracking-wider">
+          {t('initiatives.initiativePreviewV3.linkedFinanceModels')}
         </span>
-        <span className="text-[10px] text-slate-400">({links.length})</span>
+        <span className="text-[10px] text-c-text-muted">({links.length})</span>
       </div>
       <div className="space-y-1.5">
         {links.map((link) => {
@@ -368,15 +424,15 @@ const LinkedFinanceModels: React.FC<{ initiativeId: string }> = ({ initiativeId 
                   )}&modelRef=${encodeURIComponent(link.financeModelRef)}`
                 )
               }
-              className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06] transition group"
-              title={isPolish ? 'Otwórz w module Finanse' : 'Open in Finance'}
+              className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-c-surface-raised transition group"
+              title={t('initiatives.initiativePreviewV3.openInFinance')}
             >
-              <ExternalLink size={12} className="text-primary-500 shrink-0" />
+              <ExternalLink size={12} className="text-c-info shrink-0" />
               <span className="flex-1 min-w-0">
-                <span className="block text-xs font-medium text-slate-700 dark:text-slate-200 truncate">
+                <span className="block text-xs font-medium text-c-text-secondary truncate">
                   {link.financeModelRef}
                 </span>
-                <span className="block text-[10px] text-slate-400">
+                <span className="block text-[10px] text-c-text-muted">
                   {getLinkageTypeLabel(link.linkageType, isPolish)}
                 </span>
               </span>
@@ -399,10 +455,10 @@ const FinancialAnalysisCard: React.FC<{ initiativeId: string }> = ({ initiativeI
   const isPolish = i18n.language === 'pl';
 
   return (
-    <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
+    <div className="rounded-xl border border-c-border-subtle bg-white/70 dark:bg-white/[0.04] p-3">
       <div className="flex items-center gap-2 mb-2">
-        <Calculator size={14} className="text-slate-500 dark:text-slate-400" />
-        <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+        <Calculator size={14} className="text-c-text-muted" />
+        <span className="text-[11px] font-semibold text-c-text-muted uppercase tracking-wider">
           {t('initiatives.preview.financialAnalysis', 'Financial Analysis')}
         </span>
       </div>
@@ -410,23 +466,23 @@ const FinancialAnalysisCard: React.FC<{ initiativeId: string }> = ({ initiativeI
       <div className="space-y-1.5">
         <button
           onClick={() => navigate(`/economics?tab=analysis&initiativeId=${initiativeId}`)}
-          className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
+          className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised transition"
         >
-          <ExternalLink size={12} className="text-primary-500 shrink-0" />
+          <ExternalLink size={12} className="text-c-info shrink-0" />
           {t('initiatives.ratioAnalysis2')}
         </button>
         <button
           onClick={() => navigate(`/economics?tab=valuation&initiativeId=${initiativeId}`)}
-          className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
+          className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised transition"
         >
-          <ExternalLink size={12} className="text-primary-500 shrink-0" />
+          <ExternalLink size={12} className="text-c-info shrink-0" />
           {t('initiatives.companyValuation2')}
         </button>
         <button
           onClick={() => navigate(`/economics?tab=prediction&initiativeId=${initiativeId}`)}
-          className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
+          className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised transition"
         >
-          <ExternalLink size={12} className="text-primary-500 shrink-0" />
+          <ExternalLink size={12} className="text-c-info shrink-0" />
           {t('initiatives.budgetPrediction2')}
         </button>
         <button
@@ -435,9 +491,9 @@ const FinancialAnalysisCard: React.FC<{ initiativeId: string }> = ({ initiativeI
               `${ROUTES.BENEFITS}?tab=results_reports&rmode=reports&initiativeId=${encodeURIComponent(initiativeId)}`
             )
           }
-          className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition"
+          className="w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-c-text-secondary hover:bg-c-surface-raised transition"
         >
-          <ExternalLink size={12} className="text-primary-500 shrink-0" />
+          <ExternalLink size={12} className="text-c-info shrink-0" />
           {t('initiatives.resultsKpiReports2')}
         </button>
       </div>
@@ -464,6 +520,7 @@ export const InitiativePreviewV3Footer: React.FC<{
   extraActionsSlot,
   extraActionsAfterSlot,
 }) => {
+    const { t } = useTranslation();
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
@@ -500,9 +557,7 @@ export const InitiativePreviewV3Footer: React.FC<{
   const handleRegenerate = useCallback(
     () =>
       onOpenChat?.(
-        isPolish
-          ? 'Wygeneruj 3 szybkie hinty (co zrobić / na co uważać / jak mierzyć).'
-          : 'Generate 3 quick hints (what to do / risks / how to measure).'
+        t('initiatives.initiativePreviewV3.generate3QuickHintsWhatTo')
       ),
     [isPolish, onOpenChat]
   );
@@ -510,22 +565,20 @@ export const InitiativePreviewV3Footer: React.FC<{
   const relationItems: RelationItem[] = useMemo(() => {
     const items: RelationItem[] = [
       {
-        label: `${isPolish ? 'Źródło' : 'Source'}: ${sourceLabel}`,
-        tone: 'text-slate-600 dark:text-slate-300',
+        label: `${t('initiatives.initiativePreviewV3.source')}: ${sourceLabel}`,
+        tone: 'text-c-text-secondary',
       },
     ];
     if (typeof tasksCount === 'number') {
       items.push({
-        label: `${isPolish ? 'Zadania' : 'Tasks'}: ${tasksCount}`,
-        tone: 'text-slate-600 dark:text-slate-300',
+        label: `${t('initiatives.initiativePreviewV3.tasks')}: ${tasksCount}`,
+        tone: 'text-c-text-secondary',
       });
     }
     return items;
   }, [isPolish, sourceLabel, tasksCount]);
 
-  const chatPrompt = isPolish
-    ? 'Pomóż mi dopracować tę inicjatywę: brakujące pola, ryzyka, KPI i następne kroki.'
-    : 'Help me refine this initiative: missing fields, risks, KPIs, and next steps.';
+  const chatPrompt = t('initiatives.initiativePreviewV3.helpMeRefineThisInitiativeMissing');
 
   const actionRows: ActionRow[] = useMemo(() => {
     if (extraActionsSlot) return [];
@@ -533,7 +586,7 @@ export const InitiativePreviewV3Footer: React.FC<{
       ...(onOpenFull
         ? [
             {
-              label: isPolish ? 'Otwórz' : 'Open',
+              label: t('initiatives.initiativePreviewV3.open'),
               icon: ExternalLink,
               onClick: onOpenFull,
               colorScheme: 'primary' as const,
@@ -544,7 +597,7 @@ export const InitiativePreviewV3Footer: React.FC<{
       ...(onOpenInModule
         ? [
             {
-              label: isPolish ? 'W module' : 'In module',
+              label: t('initiatives.initiativePreviewV3.inModule'),
               icon: ChevronRight,
               onClick: onOpenInModule,
               colorScheme: 'neutral' as const,
@@ -555,7 +608,7 @@ export const InitiativePreviewV3Footer: React.FC<{
       ...(onOpenChat
         ? [
             {
-              label: isPolish ? 'Czat' : 'Chat',
+              label: t('initiatives.initiativePreviewV3.chat'),
               icon: MessageSquare,
               onClick: () => onOpenChat(chatPrompt),
               colorScheme: 'neutral' as const,
@@ -566,7 +619,7 @@ export const InitiativePreviewV3Footer: React.FC<{
       ...(onCopyLink
         ? [
             {
-              label: isPolish ? 'Kopiuj link' : 'Copy link',
+              label: t('initiatives.initiativePreviewV3.copyLink'),
               icon: Link2,
               onClick: async () => onCopyLink(),
               colorScheme: 'neutral' as const,
@@ -579,7 +632,7 @@ export const InitiativePreviewV3Footer: React.FC<{
 
   return (
     <div className="space-y-0">
-      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+      <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
         <PreviewAIHintStrip
           hints={aiHintLabels}
           onRunHint={handleRunHint}
@@ -588,11 +641,11 @@ export const InitiativePreviewV3Footer: React.FC<{
         />
       </div>
 
-      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+      <div className="border-t border-c-border-subtle my-3" />
 
       <PreviewRelations items={relationItems} />
 
-      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+      <div className="border-t border-c-border-subtle my-3" />
 
       {extraActionsSlot ? extraActionsSlot : <PreviewActionBar rows={actionRows} />}
       {extraActionsAfterSlot ? extraActionsAfterSlot : null}

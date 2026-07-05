@@ -206,26 +206,26 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
   };
 
   const roleColors: Record<string, string> = {
-    user: 'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800',
-    ai: 'bg-primary-50 border-primary-200 dark:bg-primary-950/30 dark:border-primary-800',
-    system: 'bg-gray-50 border-gray-200 dark:bg-gray-800/50 dark:border-gray-700',
+    user: 'bg-c-info/8 border-c-info/20',
+    ai: 'bg-[var(--c-surface-raised)] border-[var(--c-border-subtle)]',
+    system: 'bg-[var(--c-surface-raised)] border-[var(--c-border-subtle)]',
   };
 
   return (
     <div className="flex flex-col h-full">
       {/* Progress bar */}
-      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+      <div className="px-4 py-3 border-b border-[var(--c-border-subtle)]">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-medium text-[var(--c-text)]">
             {t('interview.conversational.progress')}
           </span>
-          <span className="text-sm text-gray-500 dark:text-gray-400">
+          <span className="text-sm text-[var(--c-text-muted)]">
             {answeredCount}/{totalCount} ({progressPct}%)
           </span>
         </div>
-        <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div className="w-full h-2 bg-[var(--c-border-subtle)] rounded-token-pill overflow-hidden">
           <div
-            className="h-full bg-navy-900 rounded-full transition-all duration-300"
+            className="h-full bg-[var(--c-text)] rounded-token-pill transition-all duration-300"
             style={{ width: `${progressPct}%` }}
           />
         </div>
@@ -234,7 +234,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-gray-600 dark:text-gray-500">
+          <div className="flex flex-col items-center justify-center h-full text-[var(--c-text-muted)]">
             <MessageSquare className="w-10 h-10 mb-2 opacity-40" />
             <p className="text-sm">{t('interview.conversational.startConversation')}</p>
           </div>
@@ -243,24 +243,24 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`rounded-xl border p-3 ${roleColors[msg.role] || roleColors.system}`}
+            className={`rounded-token-md border p-3 ${roleColors[msg.role] || roleColors.system}`}
           >
             <div className="flex items-center gap-2 mb-1">
               {msg.role === 'ai' ? (
-                <span className="inline-flex items-center gap-1 text-crimson-700 dark:text-crimson-300">
+                <span className="inline-flex items-center gap-1 text-[var(--c-accent)]">
                   <TeresaMark size={13} />
                   <span className="text-xs font-semibold uppercase tracking-wide">Teresa</span>
                 </span>
               ) : (
-                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                <span className="text-xs font-semibold uppercase tracking-wide text-[var(--c-text-muted)]">
                   {msg.role}
                 </span>
               )}
-              <span className="text-xs text-gray-600 dark:text-gray-500">
+              <span className="text-xs text-[var(--c-text-muted)]">
                 {new Date(msg.createdAt).toLocaleTimeString()}
               </span>
             </div>
-            <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+            <p className="text-sm text-[var(--c-text)] whitespace-pre-wrap">
               {msg.content}
             </p>
           </div>
@@ -270,21 +270,21 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
 
       {/* Draft review UI */}
       {draftMappings && (
-        <div className="border-t border-gray-200 dark:border-gray-700 bg-amber-50/50 dark:bg-amber-950/20 p-4 max-h-64 overflow-y-auto">
+        <div className="border-t border-[var(--c-border-subtle)] bg-c-warning/8 p-4 max-h-64 overflow-y-auto">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <h4 className="text-sm font-semibold text-[var(--c-text)]">
               {t('interview.conversational.reviewing')}
             </h4>
             <div className="flex gap-2">
               <button
                 onClick={acceptAll}
-                className="text-xs px-2 py-1 rounded bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400"
+                className="text-xs px-2 py-1 rounded-token-xs bg-c-success/12 text-[var(--c-success)] hover:bg-c-success/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
               >
                 {t('interview.conversational.acceptAll')}
               </button>
               <button
                 onClick={() => setDraftMappings(null)}
-                className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400"
+                className="text-xs px-2 py-1 rounded-token-xs bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)] hover:bg-[var(--c-surface)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -294,24 +294,24 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
             {draftMappings.map((mapping, idx) => (
               <div
                 key={mapping.questionId}
-                className={`flex items-start gap-3 p-2 rounded-lg border ${
+                className={`flex items-start gap-3 p-2 rounded-token-md border ${
                   mapping.accepted
-                    ? 'border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20'
-                    : 'border-danger-200 bg-danger-50/30 dark:border-danger-800 dark:bg-danger-950/20 opacity-60'
+                    ? 'border-c-success/30 bg-c-success/8'
+                    : 'border-c-danger/30 bg-c-danger/8 opacity-60'
                 }`}
               >
                 <button onClick={() => toggleMapping(idx)} className="mt-0.5 flex-shrink-0">
                   {mapping.accepted ? (
-                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <CheckCircle className="w-4 h-4 text-[var(--c-success)]" />
                   ) : (
-                    <X className="w-4 h-4 text-danger-400" />
+                    <X className="w-4 h-4 text-[var(--c-danger)]" />
                   )}
                 </button>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">
+                  <p className="text-xs font-medium text-[var(--c-text-muted)] truncate">
                     {mapping.questionText}
                   </p>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 mt-0.5">
+                  <p className="text-sm text-[var(--c-text-secondary)] mt-0.5">
                     {mapping.answerText}
                   </p>
                 </div>
@@ -320,7 +320,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
           </div>
           <button
             onClick={applyDraftMappings}
-            className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 text-sm font-medium hover:bg-navy-800 transition-colors"
+            className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-token-md bg-[var(--c-text)] text-[var(--c-surface)] hover:brightness-110 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
           >
             <Check className="w-4 h-4" />
             {t('interview.conversational.acceptAnswer')} ({acceptedDraftCount})
@@ -330,7 +330,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
 
       {/* Input area */}
       {!locked && (
-        <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+        <div className="border-t border-[var(--c-border-subtle)] p-4">
           <div className="flex gap-2">
             <div className="flex-1 relative">
               <textarea
@@ -338,7 +338,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={t('interview.conversational.inputPlaceholder')}
-                className="w-full resize-none rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400"
+                className="w-full resize-none rounded-token-md border border-[var(--c-border)] bg-[var(--c-surface)] px-4 py-2.5 text-sm text-[var(--c-text)] placeholder:text-[var(--c-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--c-focus)]"
                 rows={2}
               />
             </div>
@@ -346,7 +346,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
               <button
                 onClick={sendMessage}
                 disabled={!inputValue.trim() || loading}
-                className="flex items-center justify-center w-10 h-10 rounded-xl bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center justify-center w-10 h-10 rounded-token-md bg-[var(--c-text)] text-[var(--c-surface)] hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
                 title="Send"
               >
                 {loading ? (
@@ -358,7 +358,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
               <button
                 onClick={parseToAnswers}
                 disabled={parsing || messages.length === 0}
-                className="flex items-center justify-center w-10 h-10 rounded-xl border border-primary-300 dark:border-primary-700 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center justify-center w-10 h-10 rounded-token-md border border-c-accent/40 text-[var(--c-accent)] hover:bg-[var(--c-accent-soft)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
                 title={t('interview.conversational.parseToAnswers')}
               >
                 {parsing ? (

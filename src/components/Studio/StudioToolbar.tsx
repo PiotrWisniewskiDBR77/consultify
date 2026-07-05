@@ -113,34 +113,34 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({
       {/* Expand/Collapse Toggle */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="absolute -top-8 left-1/2 -translate-x-1/2 px-3 py-1 bg-slate-800/90 backdrop-blur-sm border border-white/10 rounded-t-lg text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
+        className="absolute -top-8 left-1/2 -translate-x-1/2 px-3 py-1 bg-c-surface-raised backdrop-blur-sm border border-c-border-subtle rounded-t-lg text-c-text-muted hover:text-c-text transition-colors"
       >
         {isExpanded ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
       </button>
 
       {/* Toolbar */}
       {isExpanded && (
-        <div className="flex items-center gap-1 px-2 py-2 bg-slate-800/90 backdrop-blur-sm border border-white/10 rounded-xl shadow-xl">
+        <div className="flex items-center gap-1 px-2 py-2 bg-c-surface-raised backdrop-blur-sm border border-c-border-subtle rounded-xl shadow-xl">
           {nodeTypes.map((nodeType) => (
             <button
               key={nodeType.type}
               onClick={() => onAddNode(nodeType.type)}
-              className="group relative flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-all"
+              className="group relative flex items-center gap-2 px-3 py-2 text-c-text-muted hover:text-c-text hover:bg-c-surface rounded-lg transition-all"
               title={nodeType.description}
             >
               {nodeType.icon}
               <span className="text-xs font-medium">{nodeType.label}</span>
 
               {/* Tooltip */}
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 border border-white/10 rounded text-[10px] text-slate-600 dark:text-slate-500 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-c-surface border border-c-border-subtle rounded text-[10px] text-c-text-muted whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                 {nodeType.description}
               </div>
             </button>
           ))}
 
-          <div className="w-px h-6 bg-white/10 mx-1" />
+          <div className="w-px h-6 bg-c-border-subtle mx-1" />
 
-          <button className="flex items-center gap-1 px-3 py-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-all">
+          <button className="flex items-center gap-1 px-3 py-2 text-c-accent hover:text-c-accent hover:bg-c-accent-soft rounded-lg transition-all">
             <Plus size={14} />
             <span className="text-xs font-medium">More</span>
           </button>

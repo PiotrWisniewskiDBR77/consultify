@@ -485,9 +485,38 @@ async function upsertExternalConclusion(params: {
   );
 }
 
+export interface CreateConclusionParams {
+  organizationId: string;
+  projectId?: string | null;
+  title: string;
+  statement: string;
+  sourceModule: string;
+  sourceRefs: ArtifactRef[];
+  confidenceLevel: string;
+  limits: string;
+  evidenceRefs: EvidenceRef[];
+  recommendedNextAction?: string | null;
+  status?: ConclusionStatus;
+  createdBy: string;
+  contextSummary: string;
+}
+
 export class ConclusionService {
   async ensureReady(): Promise<void> {
     await ensureTables();
+  }
+
+  /**
+   * Push-based CONCLUSION_LAYER entry point: persist (upsert) a conclusion
+   * produced by a live generation flow (tool W2 finishing block, DRD/SIRI/ADMA
+   * report conclusion models, ...). Idempotent per
+   * (organizationId, sourceModule, sourceRefs) — regenerating a conclusion for
+   * the same source updates the existing row instead of duplicating it, and a
+   * 'converted' conclusion is never demoted.
+   */
+  async createConclusion(params: CreateConclusionParams): Promise<void> {
+    await ensureTables();
+    await upsertExternalConclusion(params);
   }
 
   async syncInterviewFindings(organizationId: string, actorUserId: string): Promise<number> {
@@ -602,10 +631,20 @@ export class ConclusionService {
 
   async syncToolOutputs(organizationId: string, actorUserId: string): Promise<number> {
     await ensureTables();
+    // H3: output_json is NOT part of the base tool_sessions schema (it is added
+    // lazily / by demo seeds). Selecting a missing column makes the whole query
+    // throw, and the .catch(() => []) below then silently drops EVERY tool
+    // conclusion for the org ("subquery optional column = silent empty").
+    // Probe the schema and only select the column when it actually exists.
+    const hasOutputJson = await queryHelpers
+      .getTableColumns('tool_sessions')
+      .then((cols) => (cols || []).some((col) => col?.name === 'output_json'))
+      .catch(() => false);
+    const outputJsonSelect = hasOutputJson ? 'output_json,' : `NULL as output_json,`;
     const rows = await queryHelpers
       .queryAll<any>(
         `SELECT id, organization_id, project_id, name, tool_type, status, confidence_avg,
-              output_json, answers_json, context_snapshot, created_by, updated_at
+              ${outputJsonSelect} answers_json, context_snapshot, created_by, updated_at
        FROM tool_sessions
        WHERE organization_id = ?
          AND UPPER(COALESCE(status, '')) IN ('APPROVED', 'GENERATED', 'REVIEW')
@@ -616,12 +655,41 @@ export class ConclusionService {
       .catch(() => []);
 
     for (const row of rows) {
+      // Skip sessions whose live W2 conclusion was already pushed by the tool
+      // conclusion bridge (sourceModule='tool') — the push-based conclusion is
+      // grounded in the session's accepted elements and must not be shadowed by
+      // this coarse session-level sync.
+      const pushed = await queryHelpers
+        .queryOne<{ id: string }>(
+          `SELECT id FROM conclusions
+           WHERE organization_id = ? AND source_module = 'tool'
+             AND source_artifact_refs_json LIKE ?
+           LIMIT 1`,
+          [organizationId, `%"id":"${String(row.id)}"%`]
+        )
+        .catch(() => null);
+      if (pushed?.id) continue;
+
       const output =
         safeJsonArray<any>(row.output_json)[0] || row.output_json || row.context_snapshot;
+      // H3: prefer the consultant-facing summary generated inside the session
+      // answers over dumping a raw JSON snapshot as the conclusion statement.
+      let answersSummary: string | null = null;
+      try {
+        const answers = row.answers_json ? JSON.parse(row.answers_json) : null;
+        const summary = answers && typeof answers === 'object' ? (answers as any).summary : null;
+        const candidate = summary?.executiveSummary || summary?.verdict;
+        if (typeof candidate === 'string' && candidate.trim()) {
+          answersSummary = candidate.trim();
+        }
+      } catch {
+        // answers_json unreadable — fall through to legacy fallbacks
+      }
       const statement =
-        typeof output === 'string'
+        answersSummary ||
+        (typeof output === 'string'
           ? output
-          : row.context_snapshot || row.name || 'Tool output recommendation';
+          : row.context_snapshot || row.name || 'Tool output recommendation');
       await upsertExternalConclusion({
         organizationId,
         projectId: row.project_id ?? null,

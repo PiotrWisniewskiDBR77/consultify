@@ -45,15 +45,15 @@ const Btn: React.FC<ToolbarBtnProps> = ({ icon: Icon, onClick, isActive, disable
     title={title}
     className={`p-1.5 rounded-md transition-all duration-100 ${
       isActive
-        ? 'bg-primary-500/15 text-primary-600 dark:text-primary-400'
-        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
+        ? 'bg-c-surface-raised text-c-text-secondary'
+        : 'text-c-text-muted hover:bg-c-surface-raised hover:text-c-text'
     } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
   >
     <Icon className="w-3.5 h-3.5" />
   </button>
 );
 
-const Divider: React.FC = () => <div className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5" />;
+const Divider: React.FC = () => <div className="w-px h-5 bg-c-surface-raised mx-0.5" />;
 
 export const NotebookToolbar: React.FC<NotebookToolbarProps> = ({ editor }) => {
   const { i18n } = useTranslation();

@@ -27,6 +27,9 @@ import { type CardValidationIssue, validateCard } from '@/services/api/cardValid
 import { checkSimilarInitiatives, type SimilarInitiative } from '@/services/api/initiativeSimilar';
 import { createInitiativeWriteTruth } from '@/services/initiativeWriteTruth';
 
+import { ProposedCardsPanel } from './ProposedCardsPanel';
+import { useProposeCards } from './useProposeCards';
+
 // ──────────────────────────────────────────────────────────────────────────
 // Types
 // ──────────────────────────────────────────────────────────────────────────
@@ -97,7 +100,7 @@ const splitLines = (v: string): string[] =>
 // ──────────────────────────────────────────────────────────────────────────
 
 const inputCls =
-  'w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-[var(--c-info)] focus:outline-none focus:ring-1 focus:ring-[var(--c-info)]/30 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500';
+  'w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-[var(--c-info)] focus:outline-none focus:ring-1 focus:ring-c-info/30 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500';
 const labelCls = 'mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-300';
 
 const Disclosure: React.FC<{
@@ -146,7 +149,7 @@ const QuadrantMatrix: React.FC<{ impact: Band; effort: Effort; isPolish: boolean
     <div
       className={`flex h-12 items-center justify-center rounded-lg border text-[11px] font-semibold transition-all ${
         active === key
-          ? 'border-[var(--c-info)] bg-slate-100 text-[var(--c-info)] ring-1 ring-[var(--c-info)]/30 dark:bg-white/[0.08] dark:text-[var(--c-info)]'
+          ? 'border-[var(--c-info)] bg-slate-100 text-[var(--c-info)] ring-1 ring-c-info/30 dark:bg-white/[0.08] dark:text-[var(--c-info)]'
           : 'border-slate-200 bg-white text-slate-400 dark:border-navy-700/60 dark:bg-navy-800/40'
       }`}
     >
@@ -196,7 +199,7 @@ const SegmentedRow = <T extends string>({
         className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
           value === o.value
             ? 'border-[var(--c-info)] bg-slate-100 text-[var(--c-info)] dark:bg-white/[0.08] dark:text-[var(--c-info)]'
-            : 'border-slate-200 bg-white text-slate-600 hover:border-[var(--c-info)]/40 dark:border-navy-700/60 dark:bg-navy-800/40 dark:text-slate-300'
+            : 'border-slate-200 bg-white text-slate-600 hover:border-c-info/40 dark:border-navy-700/60 dark:bg-navy-800/40 dark:text-slate-300'
         }`}
       >
         {o.label}
@@ -244,6 +247,26 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
     return () => clearTimeout(h);
   }, [title, thesis]);
 
+  // AI-proposed cards (R6) — surface the deterministic card proposal for the
+  // chosen lever/type and let the user opt extra cards in. Selection is held in
+  // wizard state (rendered below); persisting it further is out of scope here.
+  const { core: proposedCore, proposed: proposedExtra, loading: proposalLoading, fetchProposal } =
+    useProposeCards();
+  const [selectedCards, setSelectedCards] = useState<string[]>([]);
+  const toggleSelectedCard = useCallback((key: string) => {
+    setSelectedCards((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+  }, []);
+  // Re-propose whenever the lever (the closest "type" signal) changes.
+  useEffect(() => {
+    if (!isOpen) return;
+    void fetchProposal({ type: lever, sourceType: source?.sourceType, brief: thesis });
+    // brief/title intentionally excluded from deps — the proposal keys off type;
+    // refetching on every keystroke would be noisy.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, lever, source?.sourceType, fetchProposal]);
+
   // M13 Depth · K1 — debounced §B3 quality hints on the thesis/hypothesis field.
   const [cardIssues, setCardIssues] = useState<CardValidationIssue[]>([]);
   useEffect(() => {
@@ -287,6 +310,7 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
     setTitle(source?.title ?? '');
     setThesis(source?.thesis ?? '');
     setLever('cost');
+    setSelectedCards([]);
     setOwnerId('');
     setSponsorId('');
     setImpact('high');
@@ -450,7 +474,7 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
   const defineBody = (
     <div className="space-y-5">
       {source?.label && (
-        <div className="flex items-center gap-2 rounded-xl border border-[var(--c-info)]/30 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-[var(--c-info)]/20 dark:bg-white/[0.05] dark:text-slate-300">
+        <div className="flex items-center gap-2 rounded-xl border border-c-info/30 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-c-info/20 dark:bg-white/[0.05] dark:text-slate-300">
           <ShieldCheck size={14} className="shrink-0 text-[var(--c-info)]" />
           <span className="font-medium">{tr('Źródło:', 'Source:')}</span>
           <span className="truncate">{source.label}</span>
@@ -540,6 +564,20 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
           ]}
         />
       </div>
+      {(proposedCore.length > 0 || proposedExtra.length > 0) && (
+        <div>
+          <label className={labelCls}>
+            {tr('Karty inicjatywy (propozycja AI)', 'Initiative cards (AI proposal)')}
+          </label>
+          <ProposedCardsPanel
+            core={proposedCore}
+            proposed={proposedExtra}
+            selected={selectedCards}
+            onToggle={toggleSelectedCard}
+            loading={proposalLoading}
+          />
+        </div>
+      )}
     </div>
   );
 
@@ -615,7 +653,7 @@ export const InitiativeCharterWizard: React.FC<InitiativeCharterWizardProps> = (
         />
       </div>
 
-      <div className="rounded-xl border border-[var(--c-info)]/30 bg-slate-50 p-3.5 dark:border-[var(--c-info)]/20 dark:bg-white/[0.05]">
+      <div className="rounded-xl border border-c-info/30 bg-slate-50 p-3.5 dark:border-c-info/20 dark:bg-white/[0.05]">
         <label className={labelCls}>
           {tr('KPI #1 — miara sukcesu', 'KPI #1 — success metric')} *
         </label>

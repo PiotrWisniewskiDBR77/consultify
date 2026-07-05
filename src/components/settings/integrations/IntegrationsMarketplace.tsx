@@ -13,7 +13,7 @@ interface IntegrationsMarketplaceProps {
 }
 
 export const IntegrationsMarketplace: React.FC<IntegrationsMarketplaceProps> = () => (
-  <div className="p-8 text-center text-slate-500 dark:text-slate-400 text-sm">
+  <div className="p-8 text-center text-c-text-muted text-sm">
     This view has been replaced by Connected Apps in Settings.
   </div>
 );

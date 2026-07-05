@@ -144,25 +144,25 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg mx-4 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
+      <div className="relative w-full max-w-lg mx-4 bg-c-surface rounded-2xl shadow-2xl border border-c-border-subtle overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-white/5">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            <h2 className="text-lg font-semibold text-c-text">
               {t('scheduleModal.title', 'Zaplanuj raport')}
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-xs text-c-text-secondary mt-0.5">
               {t('scheduleModal.fromTemplate', 'Na podstawie szablonu')}: {templateName}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 transition-colors"
+            className="p-1.5 rounded-lg hover:opacity-90 text-c-text-secondary transition-colors"
           >
             <X size={18} />
           </button>
@@ -172,7 +172,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
         <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
           {/* Schedule Name */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-c-text mb-1.5">
               {t('scheduleModal.nameLabel', 'Nazwa harmonogramu')}
             </label>
             <input
@@ -180,13 +180,13 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
               value={scheduleName}
               onChange={(e) => setScheduleName(e.target.value)}
               placeholder={isPl ? 'np. Tygodniowy raport statusu' : 'e.g. Weekly Status Report'}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 outline-none transition-colors"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-c-border bg-c-text text-c-bg placeholder:text-c-text-muted focus:ring-2 focus:ring-c-focus focus:border-c-accent outline-none transition-colors"
             />
           </div>
 
           {/* Frequency */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-c-text mb-1.5">
               <Calendar size={14} className="inline mr-1.5 -mt-0.5" />
               {t('scheduleModal.frequencyLabel', 'Częstotliwość')}
             </label>
@@ -197,8 +197,8 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
                   onClick={() => setFrequency(opt.value)}
                   className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
                     frequency === opt.value
-                      ? 'border-primary-500 bg-primary-500/10 text-primary-600 dark:text-primary-400 font-medium'
-                      : 'border-slate-300 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
+                      ? 'border-c-accent bg-c-accent-soft0 text-c-accent font-medium'
+                      : 'border-c-border text-c-text-secondary hover:opacity-90'
                   }`}
                 >
                   {isPl ? opt.labelPl : opt.labelEn}
@@ -210,13 +210,13 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
           {/* Day of Week */}
           {needsDayOfWeek && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+              <label className="block text-sm font-medium text-c-text mb-1.5">
                 {t('scheduleModal.dayOfWeekLabel', 'Dzień tygodnia')}
               </label>
               <select
                 value={dayOfWeek}
                 onChange={(e) => setDayOfWeek(Number(e.target.value))}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 outline-none transition-colors"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-c-border bg-c-text text-c-bg focus:ring-2 focus:ring-c-focus focus:border-c-accent outline-none transition-colors"
               >
                 {DAYS_OF_WEEK.map((d) => (
                   <option key={d.value} value={d.value}>
@@ -230,13 +230,13 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
           {/* Day of Month */}
           {needsDayOfMonth && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+              <label className="block text-sm font-medium text-c-text mb-1.5">
                 {t('scheduleModal.dayOfMonthLabel', 'Dzień miesiąca')}
               </label>
               <select
                 value={dayOfMonth}
                 onChange={(e) => setDayOfMonth(Number(e.target.value))}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 outline-none transition-colors"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-c-border bg-c-text text-c-bg focus:ring-2 focus:ring-c-focus focus:border-c-accent outline-none transition-colors"
               >
                 {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
                   <option key={d} value={d}>
@@ -249,7 +249,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
 
           {/* Time */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-c-text mb-1.5">
               <Clock size={14} className="inline mr-1.5 -mt-0.5" />
               {t('scheduleModal.timeLabel', 'Godzina')}
             </label>
@@ -257,37 +257,37 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 outline-none transition-colors"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-c-border bg-c-text text-c-bg focus:ring-2 focus:ring-c-focus focus:border-c-accent outline-none transition-colors"
             />
           </div>
 
           {/* Delivery Methods */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text mb-2">
               {t('scheduleModal.deliveryLabel', 'Metoda dostarczania')}
             </label>
             <div className="space-y-2">
-              <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/[0.03] cursor-pointer transition-colors">
+              <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-c-border-subtle hover:opacity-90/[0.03] cursor-pointer transition-colors">
                 <input
                   type="checkbox"
                   checked={deliveryEmail}
                   onChange={(e) => setDeliveryEmail(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 dark:border-white/20 text-primary-600 focus:ring-primary-500/50"
+                  className="w-4 h-4 rounded border-c-border text-c-accent focus:ring-c-focus"
                 />
-                <Mail size={16} className="text-slate-500 dark:text-slate-400" />
-                <span className="text-sm text-slate-700 dark:text-slate-300">
+                <Mail size={16} className="text-c-text-secondary" />
+                <span className="text-sm text-c-text">
                   {t('scheduleModal.deliveryEmail', 'E-mail')}
                 </span>
               </label>
-              <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/[0.03] cursor-pointer transition-colors">
+              <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-c-border-subtle hover:opacity-90/[0.03] cursor-pointer transition-colors">
                 <input
                   type="checkbox"
                   checked={deliveryDashboard}
                   onChange={(e) => setDeliveryDashboard(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 dark:border-white/20 text-primary-600 focus:ring-primary-500/50"
+                  className="w-4 h-4 rounded border-c-border text-c-accent focus:ring-c-focus"
                 />
-                <Bell size={16} className="text-slate-500 dark:text-slate-400" />
-                <span className="text-sm text-slate-700 dark:text-slate-300">
+                <Bell size={16} className="text-c-text-secondary" />
+                <span className="text-sm text-c-text">
                   {t('scheduleModal.deliveryDashboard', 'Powiadomienie w aplikacji')}
                 </span>
               </label>
@@ -296,18 +296,18 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-navy-950/50">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-c-border-subtle bg-c-surface-raised">
           <button
             onClick={onClose}
             disabled={isSubmitting}
-            className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-c-text-secondary hover:text-c-text transition-colors"
           >
             {t('common.cancel', 'Anuluj')}
           </button>
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="flex items-center gap-2 px-5 py-2 text-sm font-medium bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
+            className="flex items-center gap-2 px-5 py-2 text-sm font-medium bg-c-text text-c-bg hover:opacity-90 rounded-lg transition-colors"
           >
             {isSubmitting ? (
               <>

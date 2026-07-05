@@ -232,10 +232,10 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
         animate={{ opacity: 1, y: 0, x: 0 }}
         exit={{ opacity: 0 }}
         style={getTooltipStyle()}
-        className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden pointer-events-auto"
+        className="bg-c-surface-raised rounded-xl shadow-2xl border border-c-border-subtle overflow-hidden pointer-events-auto"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary-500 to-crimson-500 text-white">
+        <div className="flex items-center justify-between px-4 py-3 bg-c-accent text-white">
           <div className="flex items-center gap-2">
             <Lightbulb size={18} />
             <span className="font-semibold">{title[lang]}</span>
@@ -243,7 +243,7 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
           {dismissable && (
             <button
               onClick={handleDismiss}
-              className="p-1 hover:bg-white/20 rounded transition-colors"
+              className="p-1 hover:bg-c-surface-raised rounded transition-colors"
             >
               <X size={16} />
             </button>
@@ -252,7 +252,7 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
 
         {/* Content */}
         <div className="p-4">
-          <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+          <p className="text-c-text-secondary text-sm leading-relaxed">
             {description[lang]}
           </p>
 
@@ -260,7 +260,7 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
           <div className="flex items-center justify-between mt-4">
             <button
               onClick={handleDismiss}
-              className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              className="text-sm text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted"
             >
               {lang === 'pl' ? 'Rozumiem' : 'Got it'}
             </button>
@@ -268,7 +268,7 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
             {ctaText && ctaAction && (
               <button
                 onClick={handleCtaClick}
-                className="flex items-center gap-1 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
+                className="flex items-center gap-1 text-sm font-medium text-c-accent dark:text-c-accent hover:text-c-accent dark:hover:text-c-accent"
               >
                 {ctaText[lang]}
                 <ChevronRight size={16} />
@@ -279,7 +279,7 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
 
         {/* Arrow */}
         <div
-          className={`absolute w-3 h-3 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 transform rotate-45 ${
+          className={`absolute w-3 h-3 bg-c-surface-raised border-c-border-subtle transform rotate-45 ${
             placement === 'top'
               ? 'bottom-[-7px] left-1/2 -translate-x-1/2 border-b border-r'
               : placement === 'bottom'

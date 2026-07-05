@@ -92,7 +92,7 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
   }, [title, sourceType, sourceId, horizonYears, onCreated, t]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-overlay bg-black/40 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-navy-900 rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">
           {t('finance.valuation.createTitle', 'Nowa wycena przedsiębiorstwa')}

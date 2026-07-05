@@ -10,6 +10,10 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import {
+  EmptyState as SharedEmptyState,
+  LoadingState as SharedLoadingState,
+} from '@/components/shared/states';
 import { Api } from '../../services/api';
 
 export const AdminMarginConfig = () => {
@@ -77,11 +81,8 @@ export const AdminMarginConfig = () => {
 
   if (loading && margins.length === 0) {
     return (
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 h-full flex items-center justify-center">
-        <div className="text-slate-600 dark:text-white/60 flex flex-col items-center gap-2">
-          <RefreshCw className="animate-spin" />
-          <span>Loading margins...</span>
-        </div>
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 h-full">
+        <SharedLoadingState template="list" rows={4} />
       </div>
     );
   }
@@ -115,7 +116,7 @@ export const AdminMarginConfig = () => {
           <div>
             <p className="font-bold">Error Loading Data</p>
             <p>{error}</p>
-            <button onClick={loadMargins} className="text-white underline mt-2 hover:text-white/80">
+            <button onClick={loadMargins} className="text-c-text underline mt-2 hover:text-white/80">
               Try Again
             </button>
           </div>
@@ -124,9 +125,13 @@ export const AdminMarginConfig = () => {
 
       <div className="space-y-4 flex-1 overflow-auto">
         {margins.length === 0 && !loading && !error && (
-          <div className="text-center p-8 text-slate-500 dark:text-slate-400 border border-dashed border-slate-300 dark:border-white/10 rounded-lg">
-            No margin configurations found.
-          </div>
+          <SharedEmptyState
+            variant="new"
+            icon={TrendingUp}
+            compact
+            title="No margin configurations yet"
+            description="Add a margin configuration to set base profit margins for non-LLM costs."
+          />
         )}
 
         {margins.map((margin) => (
@@ -146,7 +151,7 @@ export const AdminMarginConfig = () => {
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500 cursor-pointer select-none">
                   <div
-                    className={`w-8 h-4 rounded-full relative transition-colors ${margin.is_active ? 'bg-emerald-500/30' : 'bg-slate-700'}`}
+                    className={`w-8 h-4 rounded-full relative transition-colors ${margin.is_active ? 'bg-emerald-500/30' : 'bg-c-surface-raised'}`}
                   >
                     <div
                       className={`absolute top-0.5 w-3 h-3 rounded-full bg-white dark:bg-navy-900 transition-all ${margin.is_active ? 'left-4.5 bg-emerald-400' : 'left-0.5 bg-slate-400'}`}

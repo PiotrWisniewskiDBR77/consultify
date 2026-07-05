@@ -297,7 +297,9 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                           onClick={() =>
                             onProposeIntervention?.(String(node.interventionTemplateKey))
                           }
-                          className="inline-flex items-center h-7 px-2.5 rounded-full bg-navy-900 text-white text-[11px] font-medium disabled:opacity-60"
+                          // Secondary (quiet) — the primary action on this card is
+                          // the approval queue; sequence "Intervene" only proposes.
+                          className="inline-flex items-center h-7 px-2.5 rounded-full border border-slate-200 dark:border-white/[0.12] text-slate-700 dark:text-slate-200 text-[11px] font-medium hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors disabled:opacity-60"
                         >
                           {t('executive.aiOperator.intervene', 'Intervene')}
                         </button>
@@ -408,7 +410,9 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                         type="button"
                         disabled={busyActionId === item.templateKey}
                         onClick={() => onProposeIntervention?.(String(item.templateKey))}
-                        className="inline-flex items-center h-8 px-3 rounded-full bg-navy-900 text-white text-xs font-medium disabled:opacity-60"
+                        // Secondary (quiet) — proposing queues an item; the
+                        // primary decision (Accept/Execute) lives in the queue.
+                        className="inline-flex items-center h-8 px-3 rounded-full border border-slate-200 dark:border-white/[0.12] text-slate-700 dark:text-slate-200 text-xs font-medium hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors disabled:opacity-60"
                       >
                         {busyActionId === item.templateKey
                           ? t('executive.aiOperator.working', 'Working...')

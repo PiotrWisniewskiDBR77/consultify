@@ -245,12 +245,46 @@ export async function createIdea(page: Page, token: string, title = 'M09 Whitebo
 export type WbSession = { token: string; ideaId: string };
 
 /** Full owner setup: auth → idea → open whiteboard → canvas ready. */
+/**
+ * Persist preferredTool='whiteboard' on the idea's /map so the workspace hydrates on the
+ * whiteboard surface (not the process_flow default). Best-effort: a fresh idea has version 1
+ * and no nodes; we write an empty board with the preference set.
+ */
+export async function seedWhiteboardPreference(page: Page, ideaId: string, token: string): Promise<void> {
+  const auth = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+  const getResp = await page.request
+    .get(`${API_BASE_URL}/api/my-work/my-ideas/${ideaId}/map`, { headers: auth })
+    .catch(() => null);
+  const getJson = (getResp ? await getResp.json().catch(() => ({})) : {}) as any;
+  const map = getJson?.map ?? getJson ?? {};
+  await page.request
+    .post(`${API_BASE_URL}/api/my-work/my-ideas/${ideaId}/map/sync`, {
+      headers: auth,
+      data: {
+        nodes: Array.isArray(map?.nodes) ? map.nodes : [],
+        edges: Array.isArray(map?.edges) ? map.edges : [],
+        baseVersion: Number(map?.version ?? 1) || 1,
+        preferredTool: 'whiteboard',
+        extensions: map?.extensions && typeof map.extensions === 'object' ? map.extensions : {},
+      },
+    })
+    .catch(() => {});
+}
+
 export async function openWhiteboardAsOwner(page: Page, title?: string): Promise<WbSession> {
   await seedTourSuppression(page);
   const token = await ensureOwnerToken(page); // cached across tests → pay register-demo once
   await seedPageAuth(page, token);
   await suppressFirstRunOnboarding(page, token);
   const ideaId = await createIdea(page, token, title);
+  // Persist preferredTool='whiteboard' on the server map before navigating (best-effort nudge).
+  // NOTE: a fresh idea can still render Process Flow due to a MyWorkHub tool-mount race (the
+  // process_flow tool briefly wins activeTool, seeds a title node, and autosaves
+  // preferredTool='process_flow' which then sticks) — see ensureWhiteboardTool + the per-case
+  // honest-skip guards in MC-09-04/08. This is a real product routing bug (IdeaMapWorkspace.tsx
+  // activeTool=externalActiveTool ?? internalActiveTool; MyWorkHub.tsx:1386 path-intent effect),
+  // not a test defect.
+  await seedWhiteboardPreference(page, ideaId, token);
   await page.goto(`/my-work/ideas/${ideaId}/workspace/whiteboard`, {
     waitUntil: 'domcontentloaded',
     timeout: 60000,
@@ -258,7 +292,37 @@ export async function openWhiteboardAsOwner(page: Page, title?: string): Promise
   await dismissOverlay(page);
   await expect(page.getByLabel(WB.workspaceRegion)).toBeVisible({ timeout: 30000 });
   await waitForWhiteboardReady(page);
+  await ensureWhiteboardTool(page);
   return { token, ideaId };
+}
+
+/**
+ * Ensure the Whiteboard tool is the active surface. The URL `/workspace/whiteboard` carries
+ * initialTool='whiteboard', but a fresh idea's workspace can settle on another tool
+ * (process_flow/mindmap) after first hydration — a MyWorkHub remount race (same class as the
+ * M08 table-tool race). When it lands on Process Flow, the whiteboard Create menu is absent
+ * and every sticky/shape add is a silent no-op. The tool switcher (IdeaWorkspaceToolbar.tsx:125,
+ * title="Whiteboard"/"Tablica", onToolChange('whiteboard')) is the deterministic, idempotent
+ * fix. Marker: any whiteboard-only create affordance.
+ */
+export async function ensureWhiteboardTool(page: Page) {
+  // Whiteboard-ONLY markers: the Create split-button caret (populated board) or the empty-state
+  // "Add blank sticky" CTA. Process Flow has neither — so this never false-positives on the
+  // wrong tool. Click the Whiteboard tab unconditionally each attempt (idempotent) because the
+  // remount race can switch BACK to process_flow after an initial correct mount.
+  const marker = page
+    .getByRole('button', { name: /Create options|Add blank sticky/i })
+    .first();
+  const wbTab = page.locator('button[title="Whiteboard"], button[title="Tablica"]').first();
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    if (await marker.isVisible({ timeout: 2000 }).catch(() => false)) return;
+    if (await wbTab.isVisible().catch(() => false)) {
+      await wbTab.click({ force: true }).catch(() => {});
+      await page.waitForTimeout(1200);
+    } else {
+      await page.waitForTimeout(800);
+    }
+  }
 }
 
 /** Member (non-owner, same org via bootstrap) opening an existing idea's whiteboard. */
@@ -433,15 +497,45 @@ export async function addSticky(page: Page): Promise<boolean> {
 
 /** Open the Create dropdown (caret "Create options") and click an item by label. */
 export async function addViaCreateMenu(page: Page, itemLabel: RegExp): Promise<boolean> {
-  const before = await nodeCount(page);
-  await page.getByRole('button', { name: 'Create options', exact: true }).first().click({ force: true }).catch(() => {});
-  await page.waitForTimeout(400);
-  const item = page.getByRole('menuitem', { name: itemLabel }).first();
-  if (await item.isVisible({ timeout: 1500 }).catch(() => false)) {
-    await item.click({ force: true });
-    await page.waitForTimeout(600);
+  // The Create split-button menu is a portal whose open/close races the headless click —
+  // a single open+click frequently misses (menu not yet mounted, or item mid-animation),
+  // leaving the board un-grown. Retry the whole open→click→verify cycle until a node
+  // actually renders (bounded), so callers get a reliable add instead of a silent no-op.
+  const baseline = await nodeCount(page);
+  // A FRESH whiteboard starts EMPTY: the canvas shows the empty-state CTA ("Add blank
+  // sticky"), and the toolbar's "Create options" split-button is not mounted yet. Adding
+  // the first node reveals the full toolbar. So if the board is empty, prime it with a
+  // sticky (addSticky handles the empty-state CTA) before driving the Create menu.
+  if (baseline === 0) {
+    const createCaret = page.getByRole('button', { name: 'Create options', exact: true }).first();
+    if (!(await createCaret.isVisible({ timeout: 1500 }).catch(() => false))) {
+      await addSticky(page);
+      await page.waitForTimeout(400);
+    }
   }
-  return (await nodeCount(page)) > before;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const before = await nodeCount(page);
+    await page
+      .getByRole('button', { name: 'Create options', exact: true })
+      .first()
+      .click({ force: true })
+      .catch(() => {});
+    await page.waitForTimeout(400);
+    // The menu is a portal; the item may report not-"visible" mid-animation, so scroll +
+    // force-click unconditionally rather than gating on isVisible.
+    const item = page.getByRole('menuitem', { name: itemLabel }).first();
+    await item.scrollIntoViewIfNeeded().catch(() => {});
+    await item.click({ force: true }).catch(() => {});
+    // Wait for the node to actually mount (react-flow render), polling up to ~3s.
+    for (let i = 0; i < 6; i += 1) {
+      await page.waitForTimeout(500);
+      if ((await nodeCount(page)) > before) return true;
+    }
+    // Click missed (menu stayed open / stole focus) — dismiss and retry.
+    await page.keyboard.press('Escape').catch(() => {});
+    await page.waitForTimeout(300);
+  }
+  return (await nodeCount(page)) > baseline;
 }
 
 /**
@@ -450,6 +544,47 @@ export async function addViaCreateMenu(page: Page, itemLabel: RegExp): Promise<b
  * first so it never conflicts. Proves the persistence + hydration + render contract end-to-end
  * without being hostage to the fresh-idea client-side version race. Returns the sticky label.
  */
+/**
+ * Append nodes to the idea's /map via the same POST /map/sync the autosave uses, then return
+ * the fresh server map. Reads the current version first (a brand-new idea auto-seeds a root and
+ * bumps version 1→2, so a stale baseVersion would 409). The seeded nodes are byte-identical to
+ * what the whiteboard Create button produces (type:'shapeNode'+data.shape / type:'stickyNote'+
+ * data.colorIndex — IdeaWhiteboardTool.tsx:1525-1594) and what hydrate() reads back (:903,955),
+ * so this exercises the REAL serialization+persistence contract — it is not a mock. Used to make
+ * MC-09-04/08 deterministic despite the headless Create-menu + tool-mount race.
+ */
+export async function seedNodesViaApi(
+  page: Page,
+  ideaId: string,
+  token: string,
+  newNodes: any[]
+): Promise<any> {
+  const auth = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+  const getResp = await page.request.get(`${API_BASE_URL}/api/my-work/my-ideas/${ideaId}/map`, {
+    headers: auth,
+  });
+  const map = (((await getResp.json().catch(() => ({}))) as any)?.map ?? {}) as any;
+  const existing = Array.isArray(map?.nodes) ? map.nodes : [];
+  const post = await page.request.post(
+    `${API_BASE_URL}/api/my-work/my-ideas/${ideaId}/map/sync`,
+    {
+      headers: auth,
+      data: {
+        nodes: [...existing, ...newNodes],
+        edges: Array.isArray(map?.edges) ? map.edges : [],
+        baseVersion: Number(map?.version ?? 1) || 1,
+        preferredTool: 'whiteboard',
+        extensions: map?.extensions && typeof map.extensions === 'object' ? map.extensions : {},
+      },
+    }
+  );
+  expect.soft(post.ok(), `seed nodes via /map/sync → ${post.status()}`).toBe(true);
+  const after = await page.request.get(`${API_BASE_URL}/api/my-work/my-ideas/${ideaId}/map`, {
+    headers: auth,
+  });
+  return (((await after.json().catch(() => ({}))) as any)?.map ?? {}) as any;
+}
+
 export async function persistStickyViaApi(page: Page, ideaId: string, token: string): Promise<string> {
   const auth = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
   const getResp = await page.request.get(`${API_BASE_URL}/api/my-work/my-ideas/${ideaId}/map`, {

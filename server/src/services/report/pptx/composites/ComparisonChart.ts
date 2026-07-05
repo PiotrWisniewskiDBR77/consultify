@@ -1,11 +1,15 @@
 /**
  * Composite: Comparison Chart
  * Side-by-side comparison — A vs B / before vs after.
- * Two columns with header labels and bullet items.
+ *
+ * W7 anti-sparseness:
+ *  - The two columns are framed as full-height surface cards so the bullet lists
+ *    visually fill the region instead of floating under the headers.
+ *  - The verdict is rendered as a filled bar anchored at the bottom of the region
+ *    (a confident closing element low on the slide), not a thin centred line.
  */
 import { BodyText } from '../atomics/BodyText.js';
 import { Bullet } from '../atomics/Bullet.js';
-import { Divider } from '../atomics/Divider.js';
 import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface ComparisonChartProps {
@@ -23,107 +27,115 @@ export function ComparisonChart(
 ): RenderedElement[] {
   const { position: p } = props;
   const colW = (p.w - tokens.spacing.gutter) / 2;
-  const headerH = 0.4;
+  const headerH = 0.42;
   const elements: RenderedElement[] = [];
 
-  // Left column header
-  elements.push({
-    kind: 'shape',
-    apply(slide) {
-      slide.addShape('roundRect', {
-        x: p.x,
-        y: p.y,
-        w: colW,
-        h: headerH,
-        fill: { color: tokens.colors.primary },
-        rectRadius: 0.04,
-      });
+  const hasVerdict = !!props.verdict;
+  const verdictH = 0.5;
+  const verdictGap = 0.18;
+  // Columns occupy the full region minus the verdict bar (if any) at the bottom.
+  const colBottomReserve = hasVerdict ? verdictH + verdictGap : 0;
+  const colH = p.h - colBottomReserve;
+
+  const rightX = p.x + colW + tokens.spacing.gutter;
+  const columns: Array<{ x: number; label: string; items: string[]; color: string }> = [
+    { x: p.x, label: props.leftLabel, items: props.leftItems, color: tokens.colors.primary },
+    {
+      x: rightX,
+      label: props.rightLabel,
+      items: props.rightItems,
+      color: tokens.colors.secondary,
     },
-  });
-  elements.push(
-    BodyText(
-      {
-        text: props.leftLabel,
-        position: { x: p.x, y: p.y, w: colW, h: headerH },
-        bold: true,
-        color: tokens.colors.textInverse,
-        align: 'center',
-        valign: 'middle',
-      },
-      tokens
-    )
-  );
+  ];
 
-  // Right column header
-  elements.push({
-    kind: 'shape',
-    apply(slide) {
-      slide.addShape('roundRect', {
-        x: p.x + colW + tokens.spacing.gutter,
-        y: p.y,
-        w: colW,
-        h: headerH,
-        fill: { color: tokens.colors.secondary },
-        rectRadius: 0.04,
-      });
-    },
-  });
-  elements.push(
-    BodyText(
-      {
-        text: props.rightLabel,
-        position: { x: p.x + colW + tokens.spacing.gutter, y: p.y, w: colW, h: headerH },
-        bold: true,
-        color: tokens.colors.textInverse,
-        align: 'center',
-        valign: 'middle',
+  for (const col of columns) {
+    // Full-height column card so the body reads as filled.
+    elements.push({
+      kind: 'shape',
+      apply(slide) {
+        slide.addShape('roundRect', {
+          x: col.x,
+          y: p.y,
+          w: colW,
+          h: colH,
+          fill: { color: tokens.colors.surface },
+          line: { color: tokens.colors.border, width: 1 },
+          rectRadius: 0.05,
+        });
       },
-      tokens
-    )
-  );
+    });
 
-  // Left bullets
-  const bulletY = p.y + headerH + 0.15;
-  const bulletH = p.h - headerH - 0.5;
-  elements.push(
-    Bullet(
-      {
-        items: props.leftItems.slice(0, 5),
-        position: { x: p.x, y: bulletY, w: colW, h: bulletH },
+    // Column header.
+    elements.push({
+      kind: 'shape',
+      apply(slide) {
+        slide.addShape('roundRect', {
+          x: col.x,
+          y: p.y,
+          w: colW,
+          h: headerH,
+          fill: { color: col.color },
+          line: { color: col.color, width: 0 },
+          rectRadius: 0.05,
+        });
       },
-      tokens
-    )
-  );
-
-  // Right bullets
-  elements.push(
-    Bullet(
-      {
-        items: props.rightItems.slice(0, 5),
-        position: { x: p.x + colW + tokens.spacing.gutter, y: bulletY, w: colW, h: bulletH },
-      },
-      tokens
-    )
-  );
-
-  // Verdict
-  if (props.verdict) {
+    });
     elements.push(
-      Divider(
+      BodyText(
         {
-          position: { x: p.x, y: p.y + p.h - 0.35, w: p.w, h: 0 },
+          text: col.label,
+          position: { x: col.x + 0.1, y: p.y, w: colW - 0.2, h: headerH },
+          bold: true,
+          color: tokens.colors.textInverse,
+          align: 'center',
+          valign: 'middle',
+          fontFace: tokens.fonts.title,
         },
         tokens
       )
     );
+
+    // Bullets fill the card body (top-anchored under header, runs to card bottom).
+    const bulletY = p.y + headerH + 0.18;
+    const bulletH = colH - headerH - 0.36;
+    elements.push(
+      Bullet(
+        {
+          items: col.items.slice(0, 6),
+          position: { x: col.x + 0.2, y: bulletY, w: colW - 0.4, h: Math.max(0.4, bulletH) },
+        },
+        tokens
+      )
+    );
+  }
+
+  // Verdict — filled bar anchored at the bottom of the region.
+  if (hasVerdict) {
+    const verdictY = p.y + p.h - verdictH;
+    elements.push({
+      kind: 'shape',
+      apply(slide) {
+        slide.addShape('roundRect', {
+          x: p.x,
+          y: verdictY,
+          w: p.w,
+          h: verdictH,
+          fill: { color: tokens.colors.primary },
+          line: { color: tokens.colors.primary, width: 0 },
+          rectRadius: 0.05,
+        });
+      },
+    });
     elements.push(
       BodyText(
         {
-          text: props.verdict,
-          position: { x: p.x, y: p.y + p.h - 0.3, w: p.w, h: 0.3 },
+          text: props.verdict!,
+          position: { x: p.x + 0.3, y: verdictY, w: p.w - 0.6, h: verdictH },
           bold: true,
-          color: tokens.colors.primary,
+          color: tokens.colors.textInverse,
           align: 'center',
+          valign: 'middle',
+          fontSize: tokens.fontSizes.body,
         },
         tokens
       )

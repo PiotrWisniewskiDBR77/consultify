@@ -301,7 +301,7 @@ const GenerateInitiativesModal: FC<{
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -375,7 +375,7 @@ const GenerateInitiativesModal: FC<{
               type="checkbox"
               checked={includeChatContext}
               onChange={(e) => setIncludeChatContext(e.target.checked)}
-              className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+              className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-[color:var(--c-focus)]"
             />
             <div>
               <div className="text-sm font-medium text-slate-900 dark:text-white">
@@ -399,7 +399,7 @@ const GenerateInitiativesModal: FC<{
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className="px-5 py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-semibold transition-colors flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl bg-c-text hover:bg-c-text-secondary disabled:bg-c-border-strong text-c-bg text-sm font-semibold transition-colors flex items-center gap-2"
           >
             {generating ? (
               <>
@@ -539,8 +539,8 @@ const InitiativeRow: FC<{
 
           {showStatusDropdown && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowStatusDropdown(false)} />
-              <div className="absolute left-0 top-full mt-1 z-50 w-40 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
+              <div className="fixed inset-0 z-dropdown" onClick={() => setShowStatusDropdown(false)} />
+              <div className="absolute left-0 top-full mt-1 z-overlay w-40 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
                 {getStatusActions(initiative.status).length === 0 ? (
                   <div className="px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
                     No actions
@@ -633,8 +633,8 @@ const InitiativeRow: FC<{
 
             {showActions && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowActions(false)} />
-                <div className="absolute right-0 top-full mt-1 z-50 w-40 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
+                <div className="fixed inset-0 z-dropdown" onClick={() => setShowActions(false)} />
+                <div className="absolute right-0 top-full mt-1 z-overlay w-40 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
                   <button
                     onClick={() => {
                       onOpen(initiative.id);
@@ -1017,7 +1017,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               {canManage && (
                 <button
                   onClick={() => setShowManualModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-primary-500 hover:bg-primary-600 text-white transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-c-text hover:bg-c-text-secondary text-c-bg transition-colors"
                 >
                   <Plus size={16} />
                   New
@@ -1048,7 +1048,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                       disabled={!isApproved}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
                         isApproved
-                          ? 'bg-primary-500 hover:bg-primary-600 text-white'
+                          ? 'bg-c-text hover:bg-c-text-secondary text-c-bg'
                           : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                       }`}
                       title={
@@ -1163,7 +1163,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                                 type="checkbox"
                                 checked={checked}
                                 readOnly
-                                className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                                className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-[color:var(--c-focus)]"
                               />
                               <Icon
                                 size={14}
@@ -1217,7 +1217,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search initiatives..."
-              className="w-full h-10 pl-10 pr-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
+              className="w-full h-10 pl-10 pr-4 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-c-accent transition-colors"
             />
           </div>
         </div>
@@ -1242,7 +1242,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
               {isApproved && canManage && canGenerateInitiatives && (
                 <button
                   onClick={() => setShowGenerateModal(true)}
-                  className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors"
+                  className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-c-text hover:bg-c-text-secondary text-c-bg text-sm font-semibold transition-colors"
                 >
                   <Sparkles size={16} />
                   Generate Initiatives
@@ -1358,7 +1358,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
       <AnimatePresence>
         {showManualModal && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-overlay flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -1512,7 +1512,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                       toast.error(e?.message || t('initiatives.form.createFailed'));
                     }
                   }}
-                  className="h-10 px-4 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold"
+                  className="h-10 px-4 rounded-lg bg-c-text hover:bg-c-text-secondary text-c-bg text-sm font-semibold"
                 >
                   {t('initiatives.form.create')}
                 </button>
@@ -1526,7 +1526,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
       <AnimatePresence>
         {editModalOpen && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-overlay flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -1622,7 +1622,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                 </button>
                 <button
                   onClick={handleSaveEdit}
-                  className="h-10 px-4 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold"
+                  className="h-10 px-4 rounded-lg bg-c-text hover:bg-c-text-secondary text-c-bg text-sm font-semibold"
                 >
                   Save
                 </button>

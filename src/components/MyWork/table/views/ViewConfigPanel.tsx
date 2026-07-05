@@ -163,24 +163,24 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-end" onClick={onClose}>
+    <div className="fixed inset-0 z-modal flex items-start justify-end" onClick={onClose}>
       <div
-        className="w-80 h-full bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-auto"
+        className="w-80 h-full bg-c-surface border-l border-c-border shadow-2xl overflow-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200/60 dark:border-navy-700/60">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-c-border">
           <div className="flex items-center gap-2">
-            <Settings2 size={14} className="text-slate-500" />
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+            <Settings2 size={14} className="text-c-text-muted" />
+            <span className="text-xs font-bold text-c-text">
               {isPl ? 'Konfiguracja widoku' : 'View Configuration'}
             </span>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1 rounded-lg hover:bg-c-surface-raised transition-colors"
           >
-            <X size={14} className="text-slate-600" />
+            <X size={14} className="text-c-text-secondary" />
           </button>
         </div>
 
@@ -202,8 +202,8 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                     onClick={() => updateConfig({ viewType: vt.id })}
                     className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-medium transition-colors ${
                       isActive
-                        ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-300 dark:border-primary-500/40'
-                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 border border-transparent'
+                        ? 'bg-c-accent-soft text-c-accent border border-c-accent'
+                        : 'text-c-text-muted hover:bg-c-surface-raised border border-transparent'
                     }`}
                   >
                     <Icon size={14} />
@@ -308,7 +308,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                   allowEmpty
                 />
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">
+                  <label className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider mb-1 block">
                     {isPl ? 'Rozmiar karty' : 'Card size'}
                   </label>
                   <div className="flex gap-1">
@@ -318,8 +318,8 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                         onClick={() => updateConfig({ galleryCardSize: s.id })}
                         className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
                           config.galleryCardSize === s.id
-                            ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-300 dark:border-primary-500/40'
-                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 border border-transparent'
+                            ? 'bg-c-accent-soft text-c-accent border border-c-accent'
+                            : 'text-c-text-muted hover:bg-c-surface-raised border border-transparent'
                         }`}
                       >
                         {isPl ? s.labelPl : s.labelEn}
@@ -377,7 +377,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                   allowEmpty
                 />
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">
+                  <label className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider mb-1 block">
                     {isPl ? 'Zoom' : 'Zoom'}
                   </label>
                   <div className="flex gap-1">
@@ -387,8 +387,8 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                         onClick={() => updateConfig({ timelineZoom: z })}
                         className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
                           (config.timelineZoom || 'week') === z
-                            ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-300 dark:border-primary-500/40'
-                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 border border-transparent'
+                            ? 'bg-c-accent-soft text-c-accent border border-c-accent'
+                            : 'text-c-text-muted hover:bg-c-surface-raised border border-transparent'
                         }`}
                       >
                         {z === 'day'
@@ -457,7 +457,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                   allowEmpty
                 />
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">
+                  <label className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider mb-1 block">
                     {isPl ? 'Zoom' : 'Zoom'}
                   </label>
                   <div className="flex gap-1">
@@ -467,8 +467,8 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                         onClick={() => updateConfig({ ganttZoom: z })}
                         className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
                           (config.ganttZoom || 'week') === z
-                            ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-300 dark:border-primary-500/40'
-                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 border border-transparent'
+                            ? 'bg-c-accent-soft text-c-accent border border-c-accent'
+                            : 'text-c-text-muted hover:bg-c-surface-raised border border-transparent'
                         }`}
                       >
                         {z === 'day'
@@ -500,7 +500,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
             >
               <div className="space-y-3">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">
+                  <label className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider mb-1 block">
                     {isPl ? 'Układ' : 'Layout'}
                   </label>
                   <div className="flex gap-1">
@@ -510,8 +510,8 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                         onClick={() => updateConfig({ formLayout: l })}
                         className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
                           (config.formLayout || 'single-column') === l
-                            ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-300 dark:border-primary-500/40'
-                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 border border-transparent'
+                            ? 'bg-c-accent-soft text-c-accent border border-c-accent'
+                            : 'text-c-text-muted hover:bg-c-surface-raised border border-transparent'
                         }`}
                       >
                         {l === 'single-column'
@@ -546,7 +546,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
             >
               <div className="space-y-3">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">
+                  <label className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider mb-1 block">
                     {isPl ? 'Typ wykresu' : 'Chart type'}
                   </label>
                   <div className="grid grid-cols-2 gap-1">
@@ -556,8 +556,8 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                         onClick={() => updateConfig({ chartType: ct })}
                         className={`px-2 py-1.5 rounded-lg text-[10px] font-medium transition-colors capitalize ${
                           (config.chartType || 'bar') === ct
-                            ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-300 dark:border-primary-500/40'
-                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 border border-transparent'
+                            ? 'bg-c-accent-soft text-c-accent border border-c-accent'
+                            : 'text-c-text-muted hover:bg-c-surface-raised border border-transparent'
                         }`}
                       >
                         {ct}
@@ -581,7 +581,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                   allowEmpty
                 />
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">
+                  <label className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider mb-1 block">
                     {isPl ? 'Agregacja' : 'Aggregation'}
                   </label>
                   <select
@@ -591,7 +591,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                         chartAggregation: e.target.value as 'count' | 'sum' | 'avg' | 'min' | 'max',
                       })
                     }
-                    className="w-full h-8 px-2 rounded-lg text-[11px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+                    className="w-full h-8 px-2 rounded-lg text-[11px] bg-c-surface-raised border border-c-border text-c-text outline-none focus:ring-2 focus:ring-c-focus"
                   >
                     <option value="count">Count</option>
                     <option value="sum">Sum</option>
@@ -646,19 +646,19 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                   <button
                     key={col.key}
                     onClick={() => toggleVisibleField(col.key)}
-                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text hover:bg-c-surface-raised transition-colors"
                   >
                     <div
                       className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
                         isVisible
-                          ? 'bg-navy-900 border-navy-900'
-                          : 'border-slate-300 dark:border-navy-600'
+                          ? 'bg-c-surface border-c-border-strong'
+                          : 'border-c-border'
                       }`}
                     >
-                      {isVisible && <Check size={10} className="text-white" />}
+                      {isVisible && <Check size={10} className="text-c-text" />}
                     </div>
                     <span className="flex-1 text-left truncate">{col.header}</span>
-                    <span className="text-[9px] text-slate-600">{col.type}</span>
+                    <span className="text-[9px] text-c-text-secondary">{col.type}</span>
                   </button>
                 );
               })}
@@ -667,11 +667,11 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 px-4 py-3 border-t border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900">
+        <div className="sticky bottom-0 px-4 py-3 border-t border-c-border bg-c-surface">
           <div className="flex gap-2">
             <button
               onClick={onClose}
-              className="flex-1 px-3 py-2 rounded-xl text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+              className="flex-1 px-3 py-2 rounded-xl text-xs font-medium text-c-text-muted hover:bg-c-surface-raised transition-colors"
             >
               {isPl ? 'Anuluj' : 'Cancel'}
             </button>
@@ -680,7 +680,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                 onSave();
                 onClose();
               }}
-              className="flex-1 px-3 py-2 rounded-xl text-xs font-semibold bg-primary-500 text-white hover:bg-primary-600 transition-colors"
+              className="flex-1 px-3 py-2 rounded-xl text-xs font-semibold bg-c-accent text-c-text hover:bg-c-accent transition-colors"
             >
               {isPl ? 'Zapisz' : 'Save'}
             </button>
@@ -702,15 +702,15 @@ const Section: React.FC<{
 }> = ({ title, id, expanded, onToggle, children }) => {
   const isOpen = expanded === id;
   return (
-    <div className="border border-slate-200/60 dark:border-navy-700/40 rounded-xl overflow-hidden">
+    <div className="border border-c-border rounded-xl overflow-hidden">
       <button
         onClick={() => onToggle(isOpen ? null : id)}
-        className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+        className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold text-c-text-muted hover:bg-c-surface-raised transition-colors"
       >
         {title}
         <ChevronDown
           size={12}
-          className={`text-slate-600 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`text-c-text-secondary transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
       {isOpen && <div className="px-3 pb-3">{children}</div>}
@@ -727,13 +727,13 @@ const FieldSelect: React.FC<{
   allowEmpty?: boolean;
 }> = ({ label, value, options, onChange, isPl, allowEmpty }) => (
   <div>
-    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">
+    <label className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider mb-1 block">
       {label}
     </label>
     <select
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full h-8 px-2 rounded-lg text-[11px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+      className="w-full h-8 px-2 rounded-lg text-[11px] bg-c-surface-raised border border-c-border text-c-text outline-none focus:ring-2 focus:ring-c-focus"
     >
       {allowEmpty && <option value="">{isPl ? '— Brak —' : '— None —'}</option>}
       {options.map((col) => (
@@ -761,26 +761,26 @@ const FieldMultiSelect: React.FC<{
 
   return (
     <div>
-      <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">
+      <label className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider mb-1 block">
         {label}
       </label>
-      <div className="space-y-0.5 max-h-[120px] overflow-auto rounded-lg border border-slate-200 dark:border-navy-700 p-1">
+      <div className="space-y-0.5 max-h-[120px] overflow-auto rounded-lg border border-c-border p-1">
         {options.map((col) => {
           const isSelected = selected.includes(col.key);
           return (
             <button
               key={col.key}
               onClick={() => toggle(col.key)}
-              className="w-full flex items-center gap-2 px-2 py-1 rounded text-[10px] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+              className="w-full flex items-center gap-2 px-2 py-1 rounded text-[10px] text-c-text-muted hover:bg-c-surface-raised transition-colors"
             >
               <div
                 className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${
                   isSelected
-                    ? 'bg-navy-900 border-navy-900'
-                    : 'border-slate-300 dark:border-navy-600'
+                    ? 'bg-c-surface border-c-border-strong'
+                    : 'border-c-border'
                 }`}
               >
-                {isSelected && <Check size={8} className="text-white" />}
+                {isSelected && <Check size={8} className="text-c-text" />}
               </div>
               <span className="truncate">{col.header}</span>
             </button>

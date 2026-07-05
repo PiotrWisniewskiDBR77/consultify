@@ -69,7 +69,7 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
         ? 'text-emerald-600 dark:text-emerald-400'
         : completeness >= 50
           ? 'text-amber-600 dark:text-amber-400'
-          : 'text-slate-500 dark:text-slate-400';
+          : 'text-c-text-muted';
 
     const items: MetricItem[] = [
       {
@@ -84,7 +84,7 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
         labelEn: 'Edges',
         labelPl: 'Połączenia',
         value: edgeCount,
-        color: 'text-primary-500',
+        color: 'text-c-accent',
       },
       {
         icon: Target,
@@ -111,9 +111,9 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
   }, [edges, isPl, nodes, seedText, title]);
 
   return (
-    <div className="rounded-xl border border-slate-200/40 dark:border-white/[0.04] bg-white/40 dark:bg-white/[0.02] p-3">
+    <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-3">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
           {isPl ? 'Kompletność pomysłu' : 'Idea Completeness'}
         </span>
         <span className={`text-[10px] font-bold ${metrics.readinessColor}`}>
@@ -122,7 +122,7 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
       </div>
 
       {/* Progress bar */}
-      <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden mb-3">
+      <div className="w-full h-2 rounded-full bg-c-border-subtle overflow-hidden mb-3">
         <div
           className={`h-full rounded-full transition-all ${
             metrics.completeness >= 80
@@ -143,10 +143,10 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
             <div key={item.labelEn} className="flex items-center gap-2">
               <Icon size={12} className={item.color} />
               <div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                <div className="text-[10px] text-c-text-muted">
                   {isPl ? item.labelPl : item.labelEn}
                 </div>
-                <div className="text-xs font-bold text-slate-800 dark:text-slate-200 tabular-nums">
+                <div className="text-xs font-bold text-c-text tabular-nums">
                   {item.value}
                 </div>
               </div>

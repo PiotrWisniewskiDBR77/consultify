@@ -28,12 +28,16 @@ export function SingleInsightChart(
   tokens: DesignTokens
 ): RenderedElement[] {
   const { position: p } = props;
-  const chartW = p.w * 0.58;
-  const textW = p.w * 0.38;
-  const gutter = p.w * 0.04;
+  // Chart claims the majority of the region; insight becomes a full-height
+  // callout panel on the right so neither column leaves an empty bottom.
+  const gutter = p.w * 0.035;
+  const textW = p.w * 0.32;
+  const chartW = p.w - textW - gutter;
+  const sourceH = props.source ? 0.22 : 0;
+  const chartH = p.h - sourceH;
   const elements: RenderedElement[] = [];
 
-  // Chart element
+  // Chart element (enlarged to fill the region height)
   elements.push({
     kind: 'chart',
     apply(slide) {
@@ -48,7 +52,7 @@ export function SingleInsightChart(
         x: p.x,
         y: p.y,
         w: chartW,
-        h: p.h,
+        h: chartH,
         showLegend: props.chartData.series.length > 1,
         legendPos: 'b',
         chartColors: props.chartData.series.map((s) => s.color ?? tokens.colors.primary),
@@ -58,25 +62,51 @@ export function SingleInsightChart(
     },
   });
 
-  // Insight text
+  // Insight callout panel (full-height, vertically centered text)
+  const calloutX = p.x + chartW + gutter;
+  elements.push({
+    kind: 'shape',
+    apply(slide) {
+      slide.addShape('roundRect', {
+        x: calloutX,
+        y: p.y,
+        w: textW,
+        h: p.h,
+        fill: { color: tokens.colors.surface },
+        line: { color: tokens.colors.border, width: 0.5 },
+        rectRadius: 0.06,
+      });
+      // Accent stripe along the left edge of the callout
+      slide.addShape('rect', {
+        x: calloutX,
+        y: p.y,
+        w: 0.06,
+        h: p.h,
+        fill: { color: tokens.colors.primary },
+      });
+    },
+  });
+
+  // Insight text (centered inside the panel so it fills the full height)
   elements.push(
     BodyText(
       {
         text: props.insightText,
-        position: { x: p.x + chartW + gutter, y: p.y, w: textW, h: p.h * 0.85 },
+        position: { x: calloutX + 0.2, y: p.y + 0.15, w: textW - 0.35, h: p.h - 0.3 },
         fontSize: tokens.fontSizes.body,
+        valign: 'middle',
       },
       tokens
     )
   );
 
-  // Source tag
+  // Source tag (under the chart, bottom of region)
   if (props.source) {
     elements.push(
       SourceTag(
         {
           source: props.source,
-          position: { x: p.x, y: p.y + p.h - 0.2, w: chartW, h: 0.2 },
+          position: { x: p.x, y: p.y + p.h - sourceH, w: chartW, h: sourceH },
         },
         tokens
       )

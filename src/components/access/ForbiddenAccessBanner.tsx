@@ -58,7 +58,7 @@ export const ForbiddenAccessBanner: React.FC = () => {
   if (!message || !isAdminLikePath(location.pathname)) return null;
 
   return (
-    <div className="fixed top-16 right-4 z-[70] w-full max-w-md rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 shadow-lg dark:border-amber-500/30 dark:bg-amber-900/25">
+    <div className="fixed top-16 right-4 z-modal w-full max-w-md rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 shadow-lg dark:border-amber-500/30 dark:bg-amber-900/25">
       <div className="flex items-start gap-3">
         <AlertTriangle className="mt-0.5 h-5 w-5 text-amber-700 dark:text-amber-300" />
         <div className="min-w-0 flex-1">

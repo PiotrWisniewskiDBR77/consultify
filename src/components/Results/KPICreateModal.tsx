@@ -152,7 +152,7 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
   const labelCls = 'block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center">
       <div className="absolute inset-0 bg-navy-950/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-lg mx-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-2xl shadow-2xl">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
@@ -332,7 +332,7 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
             <button
               type="submit"
               disabled={!name.trim() || saving}
-              className="h-9 px-5 text-sm font-medium rounded-full bg-primary-500 text-white hover:bg-primary-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="h-9 px-5 text-sm font-medium rounded-full bg-c-text text-c-bg hover:bg-c-text-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {saving
                 ? t('common.saving', 'Saving...')

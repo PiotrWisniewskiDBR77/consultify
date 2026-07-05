@@ -30,6 +30,7 @@ import {
 import { InitiativeKPI, KPIMeasurement } from '@/types/core';
 
 import type { KpiDrawerSection } from './kpiDomain';
+import { buildLinkedInitiatives, dedupeInitiativeOptions } from './resultsLineage';
 
 interface KPITimeSeriesDrawerProps {
   kpiId: string;
@@ -198,7 +199,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       try {
         const res: any = await Api.get('/initiatives');
         const data = (res?.data ?? res) as any;
-        setInitiatives((data || []).map((i: any) => ({ id: i.id, name: i.name || i.title })));
+        // Dedup by id — the same initiative can appear more than once when the
+        // source list is composed from joined rows (H2.8 lineage duplicates).
+        setInitiatives(dedupeInitiativeOptions((data || []) as any[]));
       } catch {
         // silent
       }
@@ -683,6 +686,17 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     [connectors, kpiId]
   );
 
+  /**
+   * Deduplicated linked initiatives for the lineage panel (H2.8). Mapping rows
+   * can repeat the same initiative, and `initiative_name` is sometimes null
+   * (deleted / cross-org join). Dedup by initiative_id and resolve the label from
+   * the initiatives list before falling back to "Unknown".
+   */
+  const linkedInitiatives = useMemo(
+    () => buildLinkedInitiatives(mappings, initiatives, t('common.unknown', 'Unknown')),
+    [mappings, initiatives, t]
+  );
+
   const definitionStats: QuickStat[] = useMemo(() => {
     if (!kpi) return [];
     return [
@@ -799,7 +813,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
           'results.drawer.calculationHint',
           'The runtime reads the latest governed measurement as the primary period value.'
         ),
-        icon: <Sigma size={14} className="text-primary-400" />,
+        icon: <Sigma size={14} className="text-c-info" />,
       },
       {
         label: t('results.drawer.periodOnPeriod', 'Period on period'),
@@ -823,7 +837,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
             : achievement >= 100
               ? 'text-emerald-400'
               : 'text-amber-400',
-        icon: <Target size={14} className="text-primary-400" />,
+        icon: <Target size={14} className="text-c-info" />,
       },
       {
         label: t('results.drawer.projection', 'Projection'),
@@ -932,7 +946,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
           actionAgeing != null && actionAgeing > 7
             ? 'text-danger-400'
             : 'text-slate-900 dark:text-white',
-        icon: <Calendar size={14} className="text-primary-400" />,
+        icon: <Calendar size={14} className="text-c-info" />,
       },
     ] satisfies MetricStat[];
   }, [kpi, openCase, t]);
@@ -1129,8 +1143,8 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-navy-950/40" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 shadow-2xl flex flex-col overflow-hidden">
+      <div className="fixed inset-0 z-dropdown bg-navy-950/40" onClick={onClose} />
+      <div className="fixed inset-y-0 right-0 z-overlay w-full max-w-md bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
@@ -1225,15 +1239,21 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
               {normalizedSection === 'summary' && (
                 <>
                   {/* Quick Stats */}
-                  <div id="kpi-drawer-summary" className="grid grid-cols-4 gap-2 scroll-mt-4">
+                  <div
+                    id="kpi-drawer-summary"
+                    className="grid grid-cols-2 sm:grid-cols-4 gap-2 scroll-mt-4"
+                  >
                     {quickStats.map((s) => (
                       <div
                         key={s.label}
-                        className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700"
+                        className="min-w-0 p-2.5 rounded-lg bg-slate-50 dark:bg-c-surface-raised border border-slate-200 dark:border-c-border"
                       >
-                        <p className="text-[10px] uppercase text-slate-500 mb-1">{s.label}</p>
+                        <p className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-c-text-muted mb-1 truncate">
+                          {s.label}
+                        </p>
                         <p
-                          className={`text-sm font-semibold ${s.color || 'text-slate-900 dark:text-white'}`}
+                          className={`text-sm font-semibold tabular-nums truncate ${s.color || 'text-slate-900 dark:text-c-text'}`}
+                          title={s.value}
                         >
                           {s.value}
                         </p>
@@ -1245,11 +1265,14 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     {expectationStats.map((s) => (
                       <div
                         key={s.label}
-                        className="p-2.5 rounded-lg bg-white/70 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700"
+                        className="min-w-0 p-2.5 rounded-lg bg-white/70 dark:bg-c-surface border border-slate-200 dark:border-c-border"
                       >
-                        <p className="text-[10px] uppercase text-slate-500 mb-1">{s.label}</p>
+                        <p className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-c-text-muted mb-1 truncate">
+                          {s.label}
+                        </p>
                         <p
-                          className={`text-sm font-semibold ${s.color || 'text-slate-900 dark:text-white'}`}
+                          className={`text-sm font-semibold tabular-nums truncate ${s.color || 'text-slate-900 dark:text-c-text'}`}
+                          title={s.value}
                         >
                           {s.value}
                         </p>
@@ -1542,10 +1565,10 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     <div className="relative h-32 flex items-end gap-1">
                       {kpi?.targetValue != null && (
                         <div
-                          className="absolute left-0 right-0 border-t border-dashed border-primary-500/40"
+                          className="absolute left-0 right-0 border-t border-dashed border-c-info/50"
                           style={{ bottom: `${(kpi.targetValue / maxVal) * 100}%` }}
                         >
-                          <span className="absolute -top-3 right-0 text-[10px] text-primary-400">
+                          <span className="absolute -top-3 right-0 text-[10px] text-c-info">
                             {t('results.columns.target', 'Target')}
                           </span>
                         </div>
@@ -1630,7 +1653,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     <button
                       type="submit"
                       disabled={!newValue || submitting}
-                      className="w-full h-9 text-sm font-medium rounded-full bg-primary-500 text-white hover:bg-primary-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="w-full h-9 text-sm font-medium rounded-full bg-c-text text-c-bg hover:bg-c-text-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       {submitting
                         ? t('common.saving', 'Saving...')
@@ -2217,20 +2240,20 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       {t('results.drawer.linksTitle', 'Linked initiatives')}
                     </div>
-                    {(mappings || []).length > 0 ? (
+                    {linkedInitiatives.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
-                        {mappings.map((m) => (
+                        {linkedInitiatives.map((m) => (
                           <span
-                            key={m.id}
+                            key={m.initiativeId}
                             className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/70 dark:bg-white/[0.04] border border-slate-200/70 dark:border-white/[0.08] text-xs text-slate-700 dark:text-slate-200"
                           >
                             <span className="truncate max-w-[220px]">
-                              {m.initiative_name || t('common.unknown', 'Unknown')}
+                              {m.label}
                             </span>
                             <button
                               type="button"
                               disabled={mappingBusy}
-                              onClick={() => void handleUnlinkMapping(m.id)}
+                              onClick={() => void handleUnlinkMapping(m.mappingId)}
                               className="text-slate-600 hover:text-danger-400 transition-colors disabled:opacity-60"
                               title={t('common.remove', 'Remove')}
                             >

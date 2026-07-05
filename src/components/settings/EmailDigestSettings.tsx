@@ -194,14 +194,14 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
   };
 
   const sectionLabel =
-    'text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4';
+    'text-xs font-bold text-c-text-secondary uppercase tracking-wider flex items-center gap-2 mb-4';
 
   const optionCardCls = (active: boolean) =>
     cn(
       'p-3.5 rounded-lg border-2 transition-all text-left cursor-pointer',
       active
-        ? 'border-primary-500 bg-primary-600/10'
-        : 'border-white/5 hover:border-primary-500/30 bg-navy-800/30'
+        ? 'border-c-accent bg-c-accent-soft'
+        : 'border-c-border-subtle hover:border-c-accent bg-c-surface-raised'
     );
 
   return (
@@ -230,7 +230,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
             {/* ═══════════════════════════════════════════════ */}
             <div>
               <h4 className={sectionLabel}>
-                <Mail size={14} className="text-primary-400" />
+                <Mail size={14} className="text-c-accent" />
                 {t('settings.emailDigest.categories', 'Email Categories')}
               </h4>
 
@@ -238,13 +238,13 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
                 {EMAIL_CATEGORIES.map(({ key, label, desc }) => (
                   <div
                     key={key}
-                    className="flex items-center justify-between p-3.5 bg-white dark:bg-navy-900/30 border border-slate-200 dark:border-white/5 rounded-lg"
+                    className="flex items-center justify-between p-3.5 bg-c-surface-raised border border-c-border-subtle rounded-lg"
                   >
                     <div>
-                      <p className="text-sm font-medium text-white">
+                      <p className="text-sm font-medium text-c-text">
                         {t(`settings.emailDigest.cat_${key}`, label)}
                       </p>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-c-text-muted mt-0.5">
                         {t(`settings.emailDigest.cat_${key}_desc`, desc)}
                       </p>
                     </div>
@@ -253,8 +253,8 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
                       className={cn(
                         'w-6 h-6 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0',
                         emailSettings[key]
-                          ? 'bg-navy-900 border-navy-900 text-white dark:bg-white dark:border-white dark:text-navy-950'
-                          : 'border-white/20 hover:border-white/40'
+                          ? 'bg-navy-900 border-navy-900 text-white dark:bg-c-surface dark:border-white dark:text-navy-950'
+                          : 'border-c-border hover:border-c-border-strong'
                       )}
                     >
                       {emailSettings[key] && (
@@ -281,13 +281,13 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
             {/* ═══════════════════════════════════════════════ */}
             <div>
               <h4 className={sectionLabel}>
-                <Mail size={14} className="text-primary-400" />
+                <Mail size={14} className="text-c-accent" />
                 {t('settings.emailDigest.digestSettings', 'Digest Settings')}
               </h4>
 
               {/* Frequency */}
               <div className="mb-5">
-                <label className="text-xs font-medium text-slate-600 mb-2 block">
+                <label className="text-xs font-medium text-c-text-secondary mb-2 block">
                   {t('settings.emailDigest.frequency', 'Digest Frequency')}
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -300,12 +300,12 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
                       <div
                         className={cn(
                           'text-sm font-medium',
-                          frequency === opt.value ? 'text-primary-300' : 'text-slate-600'
+                          frequency === opt.value ? 'text-c-accent' : 'text-c-text-secondary'
                         )}
                       >
                         {t(`settings.emailDigest.freq_${opt.value}`, opt.label)}
                       </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
+                      <div className="text-[11px] text-c-text-muted mt-0.5">
                         {t(`settings.emailDigest.freq_${opt.value}_desc`, opt.description)}
                       </div>
                     </button>
@@ -315,7 +315,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
 
               {/* Content */}
               <div className="mb-5">
-                <label className="text-xs font-medium text-slate-600 mb-2 block">
+                <label className="text-xs font-medium text-c-text-secondary mb-2 block">
                   {t('settings.emailDigest.content', 'Digest Content')}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -328,12 +328,12 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
                       <div
                         className={cn(
                           'text-sm font-medium',
-                          content === opt.value ? 'text-primary-300' : 'text-slate-600'
+                          content === opt.value ? 'text-c-accent' : 'text-c-text-secondary'
                         )}
                       >
                         {t(`settings.emailDigest.content_${opt.value}`, opt.label)}
                       </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
+                      <div className="text-[11px] text-c-text-muted mt-0.5">
                         {t(`settings.emailDigest.content_${opt.value}_desc`, opt.description)}
                       </div>
                     </button>
@@ -343,7 +343,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
 
               {/* Format */}
               <div>
-                <label className="text-xs font-medium text-slate-600 mb-2 block">
+                <label className="text-xs font-medium text-c-text-secondary mb-2 block">
                   {t('settings.emailDigest.format', 'Email Format')}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -356,12 +356,12 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
                       <div
                         className={cn(
                           'text-sm font-medium',
-                          format === opt.value ? 'text-primary-300' : 'text-slate-600'
+                          format === opt.value ? 'text-c-accent' : 'text-c-text-secondary'
                         )}
                       >
                         {t(`settings.emailDigest.format_${opt.value}`, opt.label)}
                       </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
+                      <div className="text-[11px] text-c-text-muted mt-0.5">
                         {t(`settings.emailDigest.format_${opt.value}_desc`, opt.description)}
                       </div>
                     </button>

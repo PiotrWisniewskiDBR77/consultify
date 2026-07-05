@@ -172,16 +172,16 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
 
   // Styles
   const cardClass =
-    'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl';
+    'bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl';
   const inputClass =
-    'w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all';
+    'w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none transition-all';
   const textareaClass =
-    'w-full px-4 py-3 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all resize-none font-mono text-sm';
+    'w-full px-4 py-3 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none transition-all resize-none font-mono text-sm';
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-c-accent" />
       </div>
     );
   }
@@ -195,10 +195,10 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
             <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            <h2 className="text-xl font-bold text-c-text">
               {t('settings.signature.title', 'Email Signatures')}
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t('settings.signature.description', 'Create and manage your email signatures')}
             </p>
           </div>
@@ -217,13 +217,13 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
       {/* Create/Edit Form */}
       {(isCreating || editingId) && (
         <div className={cardClass + ' p-6'}>
-          <h3 className="font-semibold text-slate-900 dark:text-white mb-4">
+          <h3 className="font-semibold text-c-text mb-4">
             {isCreating ? 'Create New Signature' : 'Edit Signature'}
           </h3>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 Signature Name
               </label>
               <input
@@ -236,7 +236,7 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 Signature Content
               </label>
               <textarea
@@ -246,18 +246,18 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
                 className={textareaClass}
                 placeholder="Enter your signature..."
               />
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+              <p className="text-xs text-c-text-muted mt-2">
                 Tip: You can use emojis and basic formatting. HTML is not supported.
               </p>
             </div>
 
             {/* Preview */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 Preview
               </label>
-              <div className="p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg border border-slate-200 dark:border-navy-700">
-                <pre className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 font-sans">
+              <div className="p-4 bg-c-surface-raised rounded-lg border border-c-border-subtle dark:border-navy-700">
+                <pre className="whitespace-pre-wrap text-sm text-c-text-secondary font-sans">
                   {formContent || 'Your signature will appear here...'}
                 </pre>
               </div>
@@ -278,7 +278,7 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
               </button>
               <button
                 onClick={handleCancel}
-                className="px-6 py-2 bg-slate-200 dark:bg-navy-800 hover:bg-slate-300 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors"
+                className="px-6 py-2 bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-navy-700 text-c-text-secondary rounded-lg font-medium transition-colors"
               >
                 Cancel
               </button>
@@ -290,11 +290,11 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
       {/* Signatures List */}
       {signatures.length === 0 && !isCreating ? (
         <div className={cardClass + ' p-8 text-center'}>
-          <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+          <FileText className="w-12 h-12 text-c-text-muted mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-c-text mb-2">
             No signatures yet
           </h3>
-          <p className="text-slate-500 dark:text-slate-400 mb-4">
+          <p className="text-c-text-muted mb-4">
             Create your first email signature to use across your communications.
           </p>
           <button
@@ -310,9 +310,9 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
           {signatures.map((signature) => (
             <div key={signature.id} className={cardClass + ' overflow-hidden'}>
               {/* Header */}
-              <div className="p-4 flex items-center justify-between border-b border-slate-100 dark:border-navy-700">
+              <div className="p-4 flex items-center justify-between border-b border-c-border-subtle dark:border-navy-700">
                 <div className="flex items-center gap-3">
-                  <span className="font-semibold text-slate-900 dark:text-white">
+                  <span className="font-semibold text-c-text">
                     {signature.name}
                   </span>
                   {signature.isDefault && (
@@ -325,14 +325,14 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setPreviewId(previewId === signature.id ? null : signature.id)}
-                    className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                    className="p-2 text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg transition-colors"
                     title="Preview"
                   >
                     <Eye size={16} />
                   </button>
                   <button
                     onClick={() => handleCopy(signature.content)}
-                    className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                    className="p-2 text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg transition-colors"
                     title="Copy"
                   >
                     <Copy size={16} />
@@ -340,7 +340,7 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
                   {!signature.isDefault && (
                     <button
                       onClick={() => handleSetDefault(signature.id)}
-                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-lg transition-colors"
+                      className="p-2 text-c-text-muted hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-lg transition-colors"
                       title="Set as default"
                     >
                       <Star size={16} />
@@ -348,14 +348,14 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
                   )}
                   <button
                     onClick={() => handleEdit(signature)}
-                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-lg transition-colors"
+                    className="p-2 text-c-text-muted hover:text-c-accent hover:bg-c-accent-soft dark:hover:bg-c-accent-soft rounded-lg transition-colors"
                     title="Edit"
                   >
                     <Edit2 size={16} />
                   </button>
                   <button
                     onClick={() => handleDelete(signature.id)}
-                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg transition-colors"
+                    className="p-2 text-c-text-muted hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg transition-colors"
                     title="Delete"
                   >
                     <Trash2 size={16} />
@@ -365,8 +365,8 @@ ${currentUser.email ? `✉️ ${currentUser.email}` : ''}`;
 
               {/* Preview Content */}
               {previewId === signature.id && (
-                <div className="p-4 bg-slate-50 dark:bg-navy-950/50">
-                  <pre className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 font-sans">
+                <div className="p-4 bg-c-surface-raised">
+                  <pre className="whitespace-pre-wrap text-sm text-c-text-secondary font-sans">
                     {signature.content}
                   </pre>
                 </div>

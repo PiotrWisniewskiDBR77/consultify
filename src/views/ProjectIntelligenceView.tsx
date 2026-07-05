@@ -387,16 +387,16 @@ export const ProjectIntelligenceView: React.FC = () => {
         subtitle="AI-powered knowledge capture"
         chatSystemPrompt={INTERVIEW_SYSTEM_PROMPT}
       >
-        <div className="h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-navy-950 p-8">
+        <div className="h-full flex flex-col items-center justify-center bg-c-surface-raised p-8">
           <div className="w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mb-6">
             <FolderOpen className="w-10 h-10 text-primary-500" />
           </div>
           <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-2">Select a Project</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-center max-w-md mb-6">
+          <p className="text-c-text-muted text-center max-w-md mb-6">
             Choose a project from the sidebar to start capturing project intelligence. The AI will
             help you organize knowledge about objectives, stakeholders, risks, and more.
           </p>
-          <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-500">
+          <div className="flex items-center gap-2 text-sm text-c-text-secondary">
             <Info size={14} />
             <span>Use the project selector in the header</span>
           </div>
@@ -416,16 +416,16 @@ export const ProjectIntelligenceView: React.FC = () => {
       subtitle={currentProject?.name || 'AI-powered knowledge capture'}
       chatSystemPrompt={INTERVIEW_SYSTEM_PROMPT}
     >
-      <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950">
+      <div className="h-full flex flex-col bg-c-surface-raised">
         {/* Header */}
-        <div className="shrink-0 px-6 py-4 bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
+        <div className="shrink-0 px-6 py-4 bg-c-surface border-b border-c-border-subtle">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold text-navy-900 dark:text-white flex items-center gap-3">
                 <Brain className="text-primary-500" size={28} />
                 Project Intelligence Hub
               </h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-sm text-c-text-muted mt-1">
                 AI-powered knowledge capture for {currentProject?.name || 'your project'}
               </p>
             </div>
@@ -447,7 +447,7 @@ export const ProjectIntelligenceView: React.FC = () => {
               )}
               <button
                 onClick={fetchData}
-                className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2 text-c-text-secondary hover:text-c-text-secondary dark:hover:text-slate-200 hover:bg-c-surface-raised dark:hover:bg-c-surface/10 rounded-lg transition-colors"
               >
                 <RefreshCw size={18} />
               </button>
@@ -455,13 +455,13 @@ export const ProjectIntelligenceView: React.FC = () => {
           </div>
 
           {/* Tabs */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-950 rounded-lg p-1 w-fit">
+          <div className="flex items-center gap-1 bg-c-surface-raised/40 dark:bg-navy-950 rounded-lg p-1 w-fit">
             <button
               onClick={() => setActiveTab('interview')}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'interview'
-                  ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-c-surface text-navy-900 dark:text-white shadow-sm'
+                  : 'text-c-text-secondary hover:text-c-text dark:hover:text-white'
               }`}
             >
               <MessageSquare size={16} />
@@ -471,8 +471,8 @@ export const ProjectIntelligenceView: React.FC = () => {
               onClick={() => setActiveTab('knowledge')}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'knowledge'
-                  ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-c-surface text-navy-900 dark:text-white shadow-sm'
+                  : 'text-c-text-secondary hover:text-c-text dark:hover:text-white'
               }`}
             >
               <Database size={16} />
@@ -487,14 +487,14 @@ export const ProjectIntelligenceView: React.FC = () => {
               onClick={() => setActiveTab('sessions')}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === 'sessions'
-                  ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-c-surface text-navy-900 dark:text-white shadow-sm'
+                  : 'text-c-text-secondary hover:text-c-text dark:hover:text-white'
               }`}
             >
               <History size={16} />
               Sessions
               {sessions.length > 0 && (
-                <span className="px-1.5 py-0.5 text-xs bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400 rounded-full">
+                <span className="px-1.5 py-0.5 text-xs bg-slate-200 text-c-text-secondary dark:bg-slate-700 dark:text-c-text-muted rounded-full">
                   {sessions.length}
                 </span>
               )}
@@ -553,7 +553,7 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({
             <h3 className="font-semibold text-navy-900 dark:text-white text-lg mb-2">
               Start an AI Interview
             </h3>
-            <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">
+            <p className="text-c-text-secondary text-sm mb-4">
               Use the chat panel on the left to have a conversation with the AI. As you discuss your
               project, the AI will automatically detect and extract key insights like objectives,
               risks, stakeholders, and decisions.
@@ -572,7 +572,7 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({
                   </span>
                 );
               })}
-              <span className="text-xs text-slate-600 dark:text-slate-500 py-1">
+              <span className="text-xs text-c-text-secondary py-1">
                 +4 more categories
               </span>
             </div>
@@ -588,7 +588,7 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({
           return (
             <div
               key={category}
-              className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4 hover:shadow-md transition-shadow"
+              className="bg-c-surface rounded-xl border border-c-border-subtle p-4 hover:shadow-md transition-shadow"
             >
               <div
                 className={`w-10 h-10 rounded-lg ${config.bgColor} flex items-center justify-center mb-3`}
@@ -596,7 +596,7 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({
                 <IconComponent size={20} className={config.color} />
               </div>
               <h4 className="font-medium text-navy-900 dark:text-white text-sm">{config.label}</h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+              <p className="text-xs text-c-text-muted mt-1 line-clamp-2">
                 {getCategoryDescription(category)}
               </p>
             </div>
@@ -605,10 +605,10 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({
       </div>
 
       {/* PMO Alignment Note */}
-      <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl p-4 flex items-start gap-3">
-        <Info size={18} className="text-slate-600 dark:text-slate-500 shrink-0 mt-0.5" />
+      <div className="bg-c-surface-raised/50 rounded-xl p-4 flex items-start gap-3">
+        <Info size={18} className="text-c-text-secondary shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm text-slate-600 dark:text-slate-300">
+          <p className="text-sm text-c-text-secondary">
             All captured insights are aligned with <strong>ISO 21500</strong>,{' '}
             <strong>PMBOK 7</strong>, and <strong>PRINCE2</strong> standards for full PMO compliance
             and auditability.
@@ -644,13 +644,13 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
   if (insights.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
-        <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-800 flex items-center justify-center mb-4">
-          <Database className="w-8 h-8 text-slate-600 dark:text-slate-500" />
+        <div className="w-16 h-16 rounded-full bg-c-surface-raised/40 dark:bg-navy-800 flex items-center justify-center mb-4">
+          <Database className="w-8 h-8 text-c-text-secondary" />
         </div>
-        <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-1">
+        <p className="text-lg font-medium text-c-text-secondary mb-1">
           No insights captured yet
         </p>
-        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md">
+        <p className="text-sm text-c-text-muted max-w-md">
           Start a conversation with the AI to capture project knowledge. Insights will appear here
           as they are detected.
         </p>
@@ -662,7 +662,7 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Category Filter Sidebar */}
       <div className="lg:col-span-1">
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
           <h3 className="font-semibold text-navy-900 dark:text-white mb-4">Categories</h3>
 
           <button
@@ -670,11 +670,11 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
             className={`w-full flex items-center justify-between px-3 py-2 rounded-lg mb-2 transition-colors ${
               selectedCategory === 'all'
                 ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'
+                : 'hover:bg-c-bg dark:hover:bg-c-surface/5 text-c-text-secondary'
             }`}
           >
             <span className="text-sm font-medium">All Insights</span>
-            <span className="text-xs bg-slate-100 dark:bg-navy-800/40 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+            <span className="text-xs bg-c-surface-raised/40 dark:bg-slate-800 px-2 py-0.5 rounded-full">
               {insights.length}
             </span>
           </button>
@@ -692,13 +692,13 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
                   className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                     selectedCategory === cat
                       ? `${config.bgColor} ${config.color}`
-                      : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'
+                      : 'hover:bg-c-bg dark:hover:bg-c-surface/5 text-c-text-secondary'
                   }`}
                 >
                   <IconComponent size={16} />
                   <span className="text-sm font-medium flex-1 text-left">{config.label}</span>
                   {count > 0 && (
-                    <span className="text-xs bg-white/50 dark:bg-black/20 px-2 py-0.5 rounded-full">
+                    <span className="text-xs bg-c-surface/50 dark:bg-black/20 px-2 py-0.5 rounded-full">
                       {count}
                     </span>
                   )}
@@ -746,10 +746,10 @@ const InsightCard: React.FC<InsightCardProps> = ({
 
   return (
     <div
-      className={`bg-white dark:bg-navy-900 rounded-xl border ${
+      className={`bg-c-surface rounded-xl border ${
         isSelected
           ? 'border-primary-300 dark:border-primary-700 ring-1 ring-primary-200 dark:ring-primary-800'
-          : 'border-slate-200 dark:border-navy-700'
+          : 'border-c-border-subtle'
       } p-4 hover:shadow-md transition-all cursor-pointer`}
       onClick={onSelect}
     >
@@ -758,7 +758,7 @@ const InsightCard: React.FC<InsightCardProps> = ({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+            <span className="text-xs font-medium text-c-text-muted uppercase tracking-wide">
               {getCategoryLabel(insight.category)}
             </span>
             <span
@@ -776,7 +776,7 @@ const InsightCard: React.FC<InsightCardProps> = ({
                   ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
                   : insight.confidence === 'medium'
                     ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400'
-                    : 'bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                    : 'bg-c-bg text-c-text-muted dark:bg-slate-800 dark:text-c-text-muted'
               }`}
             >
               {String(insight.confidence)} confidence
@@ -786,13 +786,13 @@ const InsightCard: React.FC<InsightCardProps> = ({
           <h4 className="font-semibold text-navy-900 dark:text-white mb-2">{insight.title}</h4>
 
           {(insight.content as any).description && (
-            <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+            <p className="text-sm text-c-text-secondary line-clamp-2">
               {String((insight.content as any).description || '')}
             </p>
           )}
 
           {insight.pmo_domain && (
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-500">
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-c-text-secondary">
               <Target size={12} />
               <span>PMO: {insight.pmo_domain.replace(/_/g, ' ')}</span>
             </div>
@@ -817,7 +817,7 @@ const InsightCard: React.FC<InsightCardProps> = ({
               e.stopPropagation();
               onDelete();
             }}
-            className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
+            className="p-1.5 text-c-text-secondary hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
             title="Delete insight"
           >
             <Trash2 size={18} />
@@ -838,13 +838,13 @@ const SessionsTabContent: React.FC<SessionsTabContentProps> = ({ sessions, onSes
   if (sessions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
-        <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-800 flex items-center justify-center mb-4">
-          <History className="w-8 h-8 text-slate-600 dark:text-slate-500" />
+        <div className="w-16 h-16 rounded-full bg-c-surface-raised/40 dark:bg-navy-800 flex items-center justify-center mb-4">
+          <History className="w-8 h-8 text-c-text-secondary" />
         </div>
-        <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-1">
+        <p className="text-lg font-medium text-c-text-secondary mb-1">
           No interview sessions yet
         </p>
-        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md">
+        <p className="text-sm text-c-text-muted max-w-md">
           Your AI interview sessions will appear here. Start a conversation to create your first
           session.
         </p>
@@ -858,12 +858,12 @@ const SessionsTabContent: React.FC<SessionsTabContentProps> = ({ sessions, onSes
         <div
           key={session.id}
           onClick={() => onSessionSelect(session)}
-          className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4 hover:shadow-md transition-all cursor-pointer"
+          className="bg-c-surface rounded-xl border border-c-border-subtle p-4 hover:shadow-md transition-all cursor-pointer"
         >
           <div className="flex items-start justify-between">
             <div>
               <h4 className="font-semibold text-navy-900 dark:text-white">{session.topic}</h4>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-sm text-c-text-muted mt-1">
                 Started {new Date(session.started_at).toLocaleDateString()}
               </p>
             </div>
@@ -873,7 +873,7 @@ const SessionsTabContent: React.FC<SessionsTabContentProps> = ({ sessions, onSes
                   ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                   : session.status === 'active'
                     ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
-                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                    : 'bg-c-surface-raised text-c-text-secondary dark:bg-slate-800 dark:text-c-text-muted'
               }`}
             >
               {session.status}
@@ -882,7 +882,7 @@ const SessionsTabContent: React.FC<SessionsTabContentProps> = ({ sessions, onSes
 
           {/* Progress */}
           <div className="mt-4 flex items-center gap-2">
-            <div className="flex-1 h-2 bg-slate-100 dark:bg-navy-800/40 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div className="flex-1 h-2 bg-c-surface-raised/40 dark:bg-slate-800 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-primary-500 to-emerald-500 rounded-full"
                 style={{
@@ -890,7 +890,7 @@ const SessionsTabContent: React.FC<SessionsTabContentProps> = ({ sessions, onSes
                 }}
               />
             </div>
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+            <span className="text-xs text-c-text-muted">
               {session.progress.completed.length}/8 topics
             </span>
           </div>

@@ -234,19 +234,19 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
     errorCount > 0 ? 'text-danger-400' : warningCount > 0 ? 'text-amber-400' : 'text-emerald-400';
 
   return (
-    <div className={`rounded-xl bg-navy-900/50 border border-navy-700/50 p-4 ${className}`}>
+    <div className={`rounded-xl bg-c-surface border border-c-border p-4 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Shield size={16} className="text-primary-400" />
-          <span className="text-sm font-medium text-white">
+          <Shield size={16} className="text-c-accent" />
+          <span className="text-sm font-medium text-c-text">
             {t('reports.qualityGates.title', 'Quality Check')}
           </span>
         </div>
         <button
           onClick={runCheck}
           disabled={loading}
-          className="p-1.5 text-slate-600 hover:text-primary-400 hover:bg-primary-500/10 rounded-lg transition-colors disabled:opacity-50"
+          className="p-1.5 text-c-text-secondary hover:text-c-accent hover:bg-c-accent-soft0 rounded-lg transition-colors disabled:opacity-50"
         >
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
         </button>
@@ -254,7 +254,7 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
 
       {loading && !report ? (
         <div className="flex items-center justify-center py-6">
-          <Loader2 className="animate-spin text-primary-400" size={20} />
+          <Loader2 className="animate-spin text-c-accent" size={20} />
         </div>
       ) : report ? (
         <>
@@ -262,7 +262,7 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
           <div className="flex items-center gap-3 mb-3">
             <div className={`text-3xl font-bold ${scoreColor}`}>{report.score}</div>
             <div>
-              <div className="text-xs text-slate-600">
+              <div className="text-xs text-c-text-secondary">
                 {t('reports.qualityGates.readinessScore', 'Readiness Score')}
               </div>
               <div className="flex items-center gap-3 mt-0.5">
@@ -319,11 +319,11 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
                 return (
                   <div key={cat}>
                     <div className="flex items-center gap-1.5 mb-1.5">
-                      <span className="text-slate-500">{meta.icon}</span>
-                      <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
+                      <span className="text-c-text-secondary">{meta.icon}</span>
+                      <span className="text-[11px] font-semibold text-c-text-secondary uppercase tracking-wider">
                         {t(meta.labelKey, meta.fallback)}
                       </span>
-                      <span className="text-[10px] text-slate-600 ml-auto">{gates.length}</span>
+                      <span className="text-[10px] text-c-text-secondary ml-auto">{gates.length}</span>
                     </div>
                     <div className="space-y-1">
                       {gates.map((gate) => {
@@ -351,7 +351,7 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
                                   e.stopPropagation();
                                   handleFixWithAI(gate);
                                 }}
-                                className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-primary-400 hover:bg-primary-500/15 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                                className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-c-accent hover:bg-c-accent-soft0 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
                                 title={t('reports.qualityGates.fixWithAI', 'Fix with AI')}
                               >
                                 {isFixing ? (

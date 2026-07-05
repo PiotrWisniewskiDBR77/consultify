@@ -254,20 +254,20 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
 
   return (
     <div
-      className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 z-30 overflow-hidden"
+      className="absolute right-0 top-full mt-2 w-80 bg-c-surface rounded-xl shadow-2xl border border-c-border-subtle z-30 overflow-hidden"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 border-b border-slate-200 dark:border-slate-700">
+      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r bg-c-accent to-blue-50 dark:to-blue-900/20 border-b border-c-border-subtle">
         <div className="flex items-center gap-2">
-          <Wand2 className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-          <span className="text-sm font-semibold text-slate-800 dark:text-white">
+          <Wand2 className="w-4 h-4 text-c-accent" />
+          <span className="text-sm font-semibold text-c-text">
             {isPl ? 'Akcje AI' : 'AI Actions'}
           </span>
         </div>
         <button
           onClick={onClose}
-          className="p-1 text-slate-600 hover:text-slate-600 hover:bg-white/50 rounded"
+          className="p-1 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface rounded"
         >
           <X className="w-4 h-4" />
         </button>
@@ -282,7 +282,7 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
 
           return (
             <div key={cat} className="mb-2">
-              <div className="px-2 py-1 text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
+              <div className="px-2 py-1 text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider">
                 {isPl ? catLabel.labelPl : catLabel.label}
               </div>
               <div className="space-y-0.5">
@@ -295,15 +295,15 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
                       w-full flex items-center gap-2.5 px-3 py-2 text-left rounded-lg transition-all
                       ${
                         activeAction === action.id
-                          ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300'
-                          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                          ? 'bg-c-accent-soft text-c-accent'
+                          : 'text-c-text hover:opacity-90'
                       }
                       ${isProcessing && activeAction !== action.id ? 'opacity-50' : ''}
                     `}
                   >
-                    <span className="flex-shrink-0 text-slate-600">
+                    <span className="flex-shrink-0 text-c-text-secondary">
                       {activeAction === action.id && isProcessing ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-primary-500" />
+                        <Loader2 className="w-4 h-4 animate-spin text-c-accent" />
                       ) : (
                         action.icon
                       )}
@@ -319,7 +319,7 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
         })}
 
         {/* Full Regenerate */}
-        <div className="mt-1 pt-1 border-t border-slate-200 dark:border-slate-700">
+        <div className="mt-1 pt-1 border-t border-c-border-subtle">
           <button
             onClick={() =>
               handleQuickAction({
@@ -335,9 +335,9 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
               })
             }
             disabled={isProcessing}
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-left rounded-lg text-slate-700 dark:text-slate-300 hover:bg-danger-50 dark:hover:bg-danger-900/20 hover:text-danger-600 transition-all"
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-left rounded-lg text-c-text hover:bg-danger-50 dark:hover:bg-danger-900/20 hover:text-danger-600 transition-all"
           >
-            <RefreshCw className="w-4 h-4 text-slate-600" />
+            <RefreshCw className="w-4 h-4 text-c-text-secondary" />
             <span className="text-xs font-medium">
               {isPl ? 'Wygeneruj od nowa' : 'Regenerate Completely'}
             </span>
@@ -346,7 +346,7 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
       </div>
 
       {/* Custom Instruction */}
-      <div className="p-3 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700">
+      <div className="p-3 bg-c-surface-raised border-t border-c-border-subtle">
         <div className="flex gap-2">
           <input
             type="text"
@@ -354,13 +354,13 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
             onChange={(e) => setCustomInstruction(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCustomSubmit()}
             placeholder={isPl ? 'Własna instrukcja...' : 'Custom instruction...'}
-            className="flex-1 px-3 py-2 text-xs bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+            className="flex-1 px-3 py-2 text-xs bg-c-surface border border-c-border-subtle rounded-lg focus:ring-1 focus:ring-c-focus focus:border-c-accent"
             disabled={isProcessing}
           />
           <button
             onClick={handleCustomSubmit}
             disabled={isProcessing || !customInstruction.trim()}
-            className="p-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg hover:bg-navy-800 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 bg-c-text text-c-bg rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isProcessing && activeAction === 'custom' ? (
               <Loader2 className="w-4 h-4 animate-spin" />

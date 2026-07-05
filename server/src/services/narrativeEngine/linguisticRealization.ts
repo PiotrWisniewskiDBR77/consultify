@@ -48,6 +48,16 @@ function buildSystemPrompt(input: NarrativeEngineInput): string {
     REGISTER_INSTRUCTIONS[report_config.communication_register] ?? REGISTER_INSTRUCTIONS.formal;
   const langGuide = LANGUAGE_INSTRUCTIONS[report_config.language] ?? LANGUAGE_INSTRUCTIONS.en;
 
+  const instructionBlock =
+    typeof input.user_instruction === 'string' && input.user_instruction.trim().length > 0
+      ? [
+          '',
+          '## Author Instruction (HIGHEST PRIORITY)',
+          'The author has requested a specific rewrite of this slide. Honour it while still obeying the factual rules above:',
+          `> ${input.user_instruction.trim()}`,
+        ]
+      : [];
+
   return [
     'You are a report narrative engine. Your task is to write a single report section based on a structured discourse plan.',
     '',
@@ -65,6 +75,7 @@ function buildSystemPrompt(input: NarrativeEngineInput): string {
     `## Report goal: ${report_config.goal_v3}`,
     `## Density: ${report_config.density}`,
     `## Data level: ${report_config.data_level}`,
+    ...instructionBlock,
   ].join('\n');
 }
 
@@ -140,6 +151,14 @@ function buildUserPrompt(
     'Write the full section content following the discourse plan above.',
     'Output Markdown only. Start with ## as the section heading.'
   );
+
+  if (typeof input.user_instruction === 'string' && input.user_instruction.trim().length > 0) {
+    parts.push(
+      '',
+      'IMPORTANT — apply the author instruction declared in the system prompt:',
+      `"${input.user_instruction.trim()}"`
+    );
+  }
 
   return parts.join('\n');
 }

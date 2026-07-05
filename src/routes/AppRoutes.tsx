@@ -82,6 +82,10 @@ const ResultsHub = lazyWithRetry(() =>
   import('@/components/Results/ResultsHub').then((m) => ({ default: m.default }))
 );
 
+const ConclusionsHub = lazyWithRetry(() =>
+  import('@/components/Conclusions/ConclusionsHub').then((m) => ({ default: m.default }))
+);
+
 // Legacy views (kept for backward compatibility)
 const FullInitiativesView = lazyWithRetry(() =>
   import('@/views/FullInitiativesView').then((m) => ({ default: m.FullInitiativesView }))
@@ -423,6 +427,13 @@ const HowItWorksPage = lazyWithRetry(() =>
 );
 const AppIntroView = lazyWithRetry(() => import('@/views/AppIntroView'));
 
+// DRD Maturity Matrix — read-only DEMONSTRATION prototype (Piotr's Digital
+// Pathfinder). Reconnects the previously orphaned DRD_STRUCTURE + MaturityMatrix
+// onto an achievable URL for live review. Not a production flow.
+const DRDMatrixPreview = lazyWithRetry(() =>
+  import('@/views/DRDMatrixPreview').then((m) => ({ default: m.DRDMatrixPreview }))
+);
+
 const ForWhomPage = lazyWithRetry(() =>
   import('@/views/ForWhomPage').then((m) => ({ default: m.ForWhomPage }))
 );
@@ -696,7 +707,6 @@ export const AppRoutes: React.FC = () => {
       'piotr.wisniewski@demo.com',
       'anna.zielinska@ateliertoys-demo.com',
     ]);
-    const FORCE_DEMO_OFF_EMAIL = 'piotr.wisniewski@dbr77.com';
     const isDemoUser = (validUser as any).isDemo === true || DEMO_EMAILS.has(validUser.email);
 
     try {
@@ -712,20 +722,6 @@ export const AppRoutes: React.FC = () => {
       }
     } catch {
       // ignore storage errors
-    }
-
-    // Hard override: this account should never have demo mode enabled.
-    if (validUser.email === FORCE_DEMO_OFF_EMAIL) {
-      try {
-        sessionStorage.removeItem('isDemo');
-        localStorage.removeItem('consultify_demo_session');
-        localStorage.removeItem('demo_events');
-      } catch {
-        // ignore
-      }
-      setDemoMode(false);
-      resetDemoState();
-      (validUser as any).isDemo = false;
     }
 
     const authenticatedUser: User = {
@@ -933,6 +929,18 @@ export const AppRoutes: React.FC = () => {
                 <HowItWorksPage />
               </Suspense>
             </AuthLayout>
+          }
+        />
+
+        {/* DRD Maturity Matrix — read-only DEMONSTRATION prototype (Piotr's
+            Digital Pathfinder). Publicly reachable by URL for live review;
+            no auth, no backend. Not a production flow. */}
+        <Route
+          path="/drd-matrix-preview"
+          element={
+            <Suspense fallback={<LoadingScreen message="Loading matrix..." />}>
+              <DRDMatrixPreview />
+            </Suspense>
           }
         />
 
@@ -1988,12 +1996,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <BetaGate moduleId="MODULE_PRESENTATIONS">
               <MainLayout
-                breadcrumbs={
-                  breadcrumbs || [
-                    t('sidebar.outputsLibrary', 'Outputs'),
-                    t('rap.outputs.breadcrumb.library', 'Library'),
-                  ]
-                }
+                breadcrumbs={breadcrumbs || [t('sidebar.materialy', 'Materials')]}
                 noPadding
               >
                 <ProductionModuleGate
@@ -2169,6 +2172,29 @@ export const AppRoutes: React.FC = () => {
                 >
                   <RouteErrorBoundary>
                     <ResultsHub />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* Conclusions layer — governed conclusions (verdict/rationale/evidence) +
+            per-conclusion readout. Infra live since OXFORD #41; this is the user
+            surface. Beta-gated via MODULE_CONCLUSIONS (open for admins). */}
+        <Route
+          path={ROUTES.CONCLUSIONS}
+          element={
+            <BetaGate moduleId="MODULE_CONCLUSIONS">
+              <MainLayout
+                breadcrumbs={breadcrumbs || [t('sidebar.conclusions', 'Conclusions')]}
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Conclusions"
+                >
+                  <RouteErrorBoundary>
+                    <ConclusionsHub />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
               </MainLayout>

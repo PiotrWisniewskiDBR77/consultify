@@ -57,7 +57,7 @@ export const BreakGlassBanner: React.FC<BreakGlassBannerProps> = ({
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50">
+    <div className="fixed top-0 left-0 right-0 z-overlay">
       {sessions.map((session) => (
         <div
           key={session.id}

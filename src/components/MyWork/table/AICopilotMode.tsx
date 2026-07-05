@@ -58,7 +58,7 @@ const MODE_CONFIG: Record<
     labelPl: 'Burza mózgów',
     prompt:
       'Generate creative ideas related to the existing ones. Consider the company context. Return 3-5 new ideas as JSON array: [{ "label": "...", "description": "...", "category": "..." }]',
-    color: '#f59e0b',
+    color: 'var(--c-warning)',
   },
   devils_advocate: {
     icon: <AlertTriangle size={12} />,
@@ -66,7 +66,7 @@ const MODE_CONFIG: Record<
     labelPl: 'Adwokat diabła',
     prompt:
       'Challenge these ideas. For each, identify: weaknesses, risks, assumptions that might be wrong, and what could go wrong. Be constructive but critical.',
-    color: '#f43f5e',
+    color: 'var(--c-danger)',
   },
   expand: {
     icon: <GitBranch size={12} />,
@@ -74,7 +74,7 @@ const MODE_CONFIG: Record<
     labelPl: 'Rozwiń',
     prompt:
       'Take the most promising idea and expand it in 5 different directions. Each direction should be a concrete sub-idea with actionable next steps. Return as JSON: [{ "label": "...", "description": "...", "direction": "..." }]',
-    color: '#6366f1',
+    color: 'var(--c-info)',
   },
   summarize: {
     icon: <MessageSquare size={12} />,
@@ -82,7 +82,7 @@ const MODE_CONFIG: Record<
     labelPl: 'Podsumuj',
     prompt:
       'Create an executive summary of all ideas. Group them thematically, highlight the strongest ones, and provide a recommended prioritization.',
-    color: '#3b82f6',
+    color: 'var(--c-info)',
   },
 };
 
@@ -251,13 +251,13 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[480px] max-w-[95vw] h-[70vh] max-h-[600px] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden flex flex-col"
+        className="w-[480px] max-w-[95vw] h-[70vh] max-h-[600px] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200/60 dark:border-navy-700/60">
-          <Brain size={16} className="text-primary-500" />
-          <span className="text-sm font-bold text-slate-800 dark:text-slate-200">AI Copilot</span>
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle">
+          <Brain size={16} className="text-c-accent" />
+          <span className="text-sm font-bold text-c-text">AI Copilot</span>
 
           {/* Mode selector */}
           <div className="relative ml-2">
@@ -265,7 +265,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
               onClick={() => setShowModeSelector(!showModeSelector)}
               className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-colors"
               style={{
-                backgroundColor: `${currentModeConfig.color}15`,
+                backgroundColor: `color-mix(in srgb, ${currentModeConfig.color} 10%, transparent)`,
                 color: currentModeConfig.color,
               }}
             >
@@ -274,7 +274,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
               <ChevronDown size={9} />
             </button>
             {showModeSelector && (
-              <div className="absolute top-full left-0 mt-1 z-50 w-48 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-1.5">
+              <div className="absolute top-full left-0 mt-1 z-50 w-48 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-1.5">
                 {(
                   Object.entries(MODE_CONFIG) as [CopilotMode, (typeof MODE_CONFIG)[CopilotMode]][]
                 ).map(([key, config]) => (
@@ -284,7 +284,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
                       setMode(key);
                       setShowModeSelector(false);
                     }}
-                    className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-[10px] font-bold transition-colors ${mode === key ? 'bg-primary-500/10 text-primary-600' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'}`}
+                    className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-[10px] font-bold transition-colors ${mode === key ? 'bg-c-accent-soft text-c-accent' : 'text-c-text-secondary hover:bg-c-surface-raised'}`}
                   >
                     <span style={{ color: config.color }}>{config.icon}</span>
                     {isPl ? config.labelPl : config.label}
@@ -295,21 +295,21 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
           </div>
 
           <div className="flex-1" />
-          <span className="text-[9px] text-slate-600">
+          <span className="text-[9px] text-c-text-secondary">
             {nodes.length} {isPl ? 'pomysłów' : 'ideas'}
           </span>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-c-surface-raised transition-colors"
           >
-            <X size={14} className="text-slate-600" />
+            <X size={14} className="text-c-text-secondary" />
           </button>
         </div>
 
         {/* Quick actions */}
         {messages.length === 0 && (
-          <div className="px-4 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">
-            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-2">
+          <div className="px-4 py-3 border-b border-c-border-subtle">
+            <p className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-2">
               {isPl ? 'Szybkie akcje' : 'Quick actions'}
             </p>
             <div className="flex flex-wrap gap-1.5">
@@ -320,7 +320,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
                   key={key}
                   onClick={() => handleQuickAction(key)}
                   className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[10px] font-bold transition-colors hover:opacity-80"
-                  style={{ backgroundColor: `${config.color}10`, color: config.color }}
+                  style={{ backgroundColor: `color-mix(in srgb, ${config.color} 8%, transparent)`, color: config.color }}
                 >
                   {config.icon}
                   {isPl ? config.labelPl : config.label}
@@ -340,10 +340,10 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
               <div
                 className={`max-w-[85%] rounded-2xl px-3 py-2 ${
                   msg.role === 'user'
-                    ? 'bg-primary-500/10 text-slate-800 dark:text-slate-200'
+                    ? 'bg-c-accent-soft text-c-text'
                     : msg.role === 'system'
                       ? 'bg-danger-500/10 text-danger-600 dark:text-danger-400'
-                      : 'bg-slate-100 dark:bg-navy-800/50 text-slate-700 dark:text-slate-300'
+                      : 'bg-c-surface-raised text-c-text'
                 }`}
               >
                 {msg.role === 'assistant' && msg.mode && (
@@ -363,10 +363,10 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
 
                 {/* Actionable suggestions */}
                 {msg.suggestions && msg.suggestions.length > 0 && (
-                  <div className="mt-2 space-y-1 border-t border-slate-200/30 dark:border-white/[0.04] pt-2">
+                  <div className="mt-2 space-y-1 border-t border-c-border-subtle pt-2">
                     {msg.suggestions.map((sug, idx) => (
                       <div key={idx} className="flex items-center gap-2">
-                        <span className="text-[10px] text-slate-600 dark:text-slate-300 flex-1 truncate">
+                        <span className="text-[10px] text-c-text-secondary flex-1 truncate">
                           {sug.label}
                         </span>
                         <button
@@ -387,8 +387,8 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
           {/* Streaming indicator */}
           {streamingText && (
             <div className="flex justify-start">
-              <div className="max-w-[85%] rounded-2xl px-3 py-2 bg-slate-100 dark:bg-navy-800/50">
-                <p className="text-[11px] text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+              <div className="max-w-[85%] rounded-2xl px-3 py-2 bg-c-surface-raised">
+                <p className="text-[11px] text-c-text whitespace-pre-wrap">
                   {streamingText}
                   <span className="animate-pulse">▊</span>
                 </p>
@@ -398,8 +398,8 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
 
           {loading && !streamingText && (
             <div className="flex justify-start">
-              <div className="rounded-2xl px-3 py-2 bg-slate-100 dark:bg-navy-800/50">
-                <Loader2 size={14} className="animate-spin text-primary-500" />
+              <div className="rounded-2xl px-3 py-2 bg-c-surface-raised">
+                <Loader2 size={14} className="animate-spin text-c-accent" />
               </div>
             </div>
           )}
@@ -408,7 +408,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
         </div>
 
         {/* Input */}
-        <div className="px-4 py-3 border-t border-slate-200/60 dark:border-navy-700/60">
+        <div className="px-4 py-3 border-t border-c-border-subtle">
           <div className="flex items-center gap-2">
             <input
               ref={inputRef}
@@ -422,12 +422,12 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
               }}
               placeholder={isPl ? 'Zapytaj AI o pomysły…' : 'Ask AI about ideas…'}
               disabled={loading}
-              className="flex-1 h-9 px-3 rounded-xl text-[11px] bg-slate-50 dark:bg-navy-800/50 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
+              className="flex-1 h-9 px-3 rounded-xl text-[11px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
             />
             <button
               onClick={() => handleSend()}
               disabled={loading || !input.trim()}
-              className="p-2 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors disabled:opacity-50"
+              className="p-2 rounded-xl bg-c-accent-soft text-c-accent hover:bg-c-accent-soft transition-colors disabled:opacity-50"
             >
               {loading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
             </button>

@@ -112,7 +112,7 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
       <div className="w-[380px] max-h-[480px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/60 dark:border-white/[0.06] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-200/40 dark:border-white/[0.04]">

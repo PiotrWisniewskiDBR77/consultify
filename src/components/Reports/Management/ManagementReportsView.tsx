@@ -261,25 +261,25 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
   };
 
   return (
-    <div className={`min-h-full bg-slate-50 dark:bg-navy-950 ${className}`}>
+    <div className={`min-h-full bg-c-surface-raised dark:bg-c-bg ${className}`}>
       {/* Header */}
-      <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700 px-6 py-4">
+      <div className="bg-c-surface border-b border-c-border-subtle px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             {viewMode !== 'selector' && (
               <button
                 onClick={() => setViewMode('selector')}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2 hover:bg-c-surface-raised dark:hover:bg-white/10 rounded-lg transition-colors"
               >
-                <ArrowLeft size={20} className="text-slate-500 dark:text-slate-400" />
+                <ArrowLeft size={20} className="text-c-text-muted" />
               </button>
             )}
             <div>
-              <h1 className="text-2xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                <FileBarChart2 size={28} className="text-primary-500" />
+              <h1 className="text-2xl font-bold text-c-text flex items-center gap-2">
+                <FileBarChart2 size={28} className="text-c-accent" />
                 Management Reports
               </h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-sm text-c-text-muted mt-1">
                 Generate Team Meeting and Steering Committee reports
               </p>
             </div>
@@ -301,8 +301,8 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                   onClick={() => setViewMode(tab.id as ViewModeExtended)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
-                      : 'hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
+                      ? 'bg-c-accent-soft text-c-accent'
+                      : 'hover:bg-c-surface-raised dark:hover:bg-white/10 text-c-text-secondary'
                   }`}
                 >
                   <Icon size={16} />
@@ -313,7 +313,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
             {viewMode !== 'selector' && (
               <button
                 onClick={() => setViewMode('selector')}
-                className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-c-accent hover:opacity-90 text-white rounded-lg font-medium transition-colors"
               >
                 <Plus size={18} />
                 <span>New Report</span>
@@ -327,10 +327,10 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
       <div className="p-6">
         {viewMode === 'selector' && (
           <div className="max-w-3xl mx-auto">
-            <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+            <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
               <div className="flex items-center gap-2 mb-6">
-                <Sparkles size={20} className="text-primary-500" />
-                <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
+                <Sparkles size={20} className="text-c-accent" />
+                <h2 className="text-lg font-semibold text-c-text">
                   Generate New Report
                 </h2>
               </div>
@@ -369,8 +369,8 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
               />
 
               <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-navy-700">
-                  <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                <div className="p-4 rounded-xl border border-c-border-subtle">
+                  <h3 className="text-sm font-semibold text-c-text-secondary mb-3">
                     Output Format
                   </h3>
                   <div className="flex gap-3">
@@ -380,21 +380,21 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                         onClick={() => setOutputFormat(format)}
                         className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
                           outputFormat === format
-                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                            : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-primary-300'
+                            ? 'border-c-accent bg-c-accent-soft text-c-accent dark:text-c-accent'
+                            : 'border-c-border-subtle text-c-text-muted hover:border-c-accent'
                         }`}
                       >
                         {format}
                       </button>
                     ))}
                   </div>
-                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-2 text-xs text-c-text-muted">
                     Export controls are available after generation.
                   </p>
                 </div>
 
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-navy-700">
-                  <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                <div className="p-4 rounded-xl border border-c-border-subtle">
+                  <h3 className="text-sm font-semibold text-c-text-secondary mb-3">
                     Schedule
                   </h3>
                   <div className="flex gap-3">
@@ -402,8 +402,8 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                       onClick={() => setScheduleMode('ONE_TIME')}
                       className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
                         scheduleMode === 'ONE_TIME'
-                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                          : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-primary-300'
+                          ? 'border-c-accent bg-c-accent-soft text-c-accent dark:text-c-accent'
+                          : 'border-c-border-subtle text-c-text-muted hover:border-c-accent'
                       }`}
                     >
                       One-time
@@ -412,8 +412,8 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                       onClick={() => setScheduleMode('RECURRING')}
                       className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
                         scheduleMode === 'RECURRING'
-                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                          : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:border-primary-300'
+                          ? 'border-c-accent bg-c-accent-soft text-c-accent dark:text-c-accent'
+                          : 'border-c-border-subtle text-c-text-muted hover:border-c-accent'
                       }`}
                     >
                       Recurring
@@ -422,7 +422,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                   {scheduleMode === 'RECURRING' && (
                     <div className="mt-4 space-y-3 text-sm">
                       <div>
-                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                        <label className="block text-xs text-c-text-muted mb-1">
                           Frequency
                         </label>
                         <select
@@ -432,7 +432,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                               event.target.value as 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'
                             )
                           }
-                          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-2 text-sm"
+                          className="w-full rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm"
                         >
                           <option value="DAILY">Daily</option>
                           <option value="WEEKLY">Weekly</option>
@@ -442,13 +442,13 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                       </div>
                       {scheduleFrequency !== 'MONTHLY' ? (
                         <div>
-                          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          <label className="block text-xs text-c-text-muted mb-1">
                             Day of week
                           </label>
                           <select
                             value={scheduleDayOfWeek}
                             onChange={(event) => setScheduleDayOfWeek(Number(event.target.value))}
-                            className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-2 text-sm"
+                            className="w-full rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm"
                           >
                             <option value={1}>Monday</option>
                             <option value={2}>Tuesday</option>
@@ -461,7 +461,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                         </div>
                       ) : (
                         <div>
-                          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          <label className="block text-xs text-c-text-muted mb-1">
                             Day of month
                           </label>
                           <input
@@ -470,42 +470,42 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                             max={28}
                             value={scheduleDayOfMonth}
                             onChange={(event) => setScheduleDayOfMonth(Number(event.target.value))}
-                            className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-2 text-sm"
+                            className="w-full rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm"
                           />
                         </div>
                       )}
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          <label className="block text-xs text-c-text-muted mb-1">
                             Time
                           </label>
                           <input
                             type="time"
                             value={scheduleTime}
                             onChange={(event) => setScheduleTime(event.target.value)}
-                            className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-2 text-sm"
+                            className="w-full rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                          <label className="block text-xs text-c-text-muted mb-1">
                             Timezone
                           </label>
                           <input
                             value={scheduleTimezone}
                             onChange={(event) => setScheduleTimezone(event.target.value)}
-                            className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-2 text-sm"
+                            className="w-full rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm"
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                        <label className="block text-xs text-c-text-muted mb-1">
                           Recipients (emails or user IDs)
                         </label>
                         <input
                           value={scheduleRecipients}
                           onChange={(event) => setScheduleRecipients(event.target.value)}
                           placeholder="name@example.com, user-id-123"
-                          className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 px-3 py-2 text-sm"
+                          className="w-full rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm"
                         />
                       </div>
                     </div>
@@ -513,11 +513,11 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                 </div>
               </div>
 
-              <div className="mt-8 pt-6 border-t border-slate-200 dark:border-navy-700">
+              <div className="mt-8 pt-6 border-t border-c-border-subtle">
                 <button
                   onClick={handleGenerateReport}
                   disabled={generating || (scope === 'PROJECT' && !selectedProjectId)}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white rounded-xl font-semibold text-lg transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-c-accent hover:opacity-90 disabled:opacity-50 text-white rounded-xl font-semibold text-lg transition-colors"
                 >
                   {generating ? (
                     <>
@@ -532,18 +532,18 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                   )}
                 </button>
 
-                <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
+                <p className="mt-4 text-center text-sm text-c-text-muted">
                   AI will analyze your data and generate a comprehensive report with insights.
                 </p>
               </div>
             </div>
 
             {/* PMO Standards info */}
-            <div className="mt-6 p-4 bg-slate-100 dark:bg-navy-800/50 rounded-xl">
-              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            <div className="mt-6 p-4 bg-c-surface-raised rounded-xl">
+              <h3 className="text-sm font-semibold text-c-text-secondary mb-2">
                 PMO Standards Compliance
               </h3>
-              <div className="grid grid-cols-3 gap-4 text-xs text-slate-500 dark:text-slate-400">
+              <div className="grid grid-cols-3 gap-4 text-xs text-c-text-muted">
                 <div>
                   <span className="font-medium">ISO 21500:2021</span>
                   <p>Project Performance Measurement</p>
@@ -564,10 +564,10 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
         {viewMode === 'preview' && currentReport && (
           <div className="max-w-5xl mx-auto space-y-6">
             {/* Export Controls */}
-            <div className="flex items-center justify-between bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-              <div className="text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex items-center justify-between bg-c-surface rounded-xl border border-c-border-subtle p-4">
+              <div className="text-sm text-c-text-muted">
                 Report ID:{' '}
-                <code className="px-1 py-0.5 bg-slate-100 dark:bg-navy-800 rounded">
+                <code className="px-1 py-0.5 bg-c-surface-raised rounded">
                   {currentReport.id}
                 </code>
               </div>
@@ -641,28 +641,28 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
 
         {viewMode === 'settings' && (
           <div className="max-w-3xl mx-auto">
-            <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6 space-y-4">
-              <h2 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
+            <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6 space-y-4">
+              <h2 className="text-lg font-semibold text-c-text flex items-center gap-2">
                 <Settings size={18} />
                 Reporting Settings
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div className="rounded-lg border border-slate-200 dark:border-navy-700 p-4">
-                  <p className="font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <div className="rounded-lg border border-c-border-subtle p-4">
+                  <p className="font-medium text-c-text-secondary mb-2">
                     Default Output
                   </p>
-                  <p className="text-slate-500 dark:text-slate-400">
+                  <p className="text-c-text-muted">
                     Current default: {outputFormat}
                   </p>
                 </div>
-                <div className="rounded-lg border border-slate-200 dark:border-navy-700 p-4">
-                  <p className="font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <div className="rounded-lg border border-c-border-subtle p-4">
+                  <p className="font-medium text-c-text-secondary mb-2">
                     Schedule Timezone
                   </p>
-                  <p className="text-slate-500 dark:text-slate-400">{scheduleTimezone}</p>
+                  <p className="text-c-text-muted">{scheduleTimezone}</p>
                 </div>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-c-text-muted">
                 Settings are applied when creating new reports or schedules.
               </p>
             </div>

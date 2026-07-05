@@ -84,6 +84,8 @@ export interface V8ResultsReconciliationItem {
   reconciliationId: string;
   kpiId: string;
   kpiName: string | null;
+  /** KPI unit (e.g. '%', '€', 'szt.') — drives value formatting. */
+  unit: string | null;
   initiativeId: string | null;
   financeRef: string;
   reconciliationStatus: V8ReconciliationStatus;
@@ -619,4 +621,33 @@ export const V8ResultsApi = {
         kpiName?: string;
       }>;
     }>('/results/workflow/signals'),
+
+  // M14 → M15 closure-handoff benefits inbox (Decision B1b).
+  getClosureBenefitsInbox: () =>
+    v8Get<{ items: V8ResultsClosureBenefit[] }>('/results/benefits/inbox'),
+  promoteClosureBenefit: (benefitId: string) =>
+    v8Post<{ kpiId: string | null; alreadyPromoted: boolean }>(
+      `/results/benefits/${encodeURIComponent(benefitId)}/promote`,
+      {}
+    ),
+  dismissClosureBenefit: (benefitId: string) =>
+    v8Post<{ success: boolean }>(
+      `/results/benefits/${encodeURIComponent(benefitId)}/dismiss`,
+      {}
+    ),
 };
+
+/** A closure-handoff benefit awaiting triage in the M15 Results inbox. */
+export interface V8ResultsClosureBenefit {
+  id: string;
+  initiativeId: string;
+  initiativeName: string | null;
+  kpiName: string;
+  sourceKpiId: string | null;
+  unit: string | null;
+  description: string | null;
+  targetValue: number | null;
+  status: string;
+  closedAt: string | null;
+  createdAt: string | null;
+}

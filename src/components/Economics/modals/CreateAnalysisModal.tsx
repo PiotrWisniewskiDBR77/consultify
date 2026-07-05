@@ -29,11 +29,16 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
   initialTitle = '',
 }) => {
   const { t } = useTranslation();
+  const isInvestmentCase = defaultAnalysisType === 'investment_case';
   const [title, setTitle] = useState(initialTitle);
   const [creating, setCreating] = useState(false);
   const [selectedStatementPackId, setSelectedStatementPackId] = useState(
     initialStatementPackId || ''
   );
+  const [initialInvestment, setInitialInvestment] = useState('');
+  const [horizon, setHorizon] = useState('5');
+  const [discountRatePct, setDiscountRatePct] = useState('10');
+  const [annualBenefits, setAnnualBenefits] = useState('');
 
   const selectedStatementPack = useMemo(
     () => availableStatements.find((statement) => statement.id === selectedStatementPackId) || null,
@@ -48,6 +53,14 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
     if (!title.trim()) return;
     setCreating(true);
     try {
+      const investmentPayload = isInvestmentCase
+        ? {
+            initialInvestment: initialInvestment ? parseFloat(initialInvestment) : undefined,
+            horizon: horizon ? parseInt(horizon, 10) : undefined,
+            discountRatePct: discountRatePct ? parseFloat(discountRatePct) : undefined,
+            annualBenefits: annualBenefits ? parseFloat(annualBenefits) : undefined,
+          }
+        : {};
       let result: any;
       try {
         result = await V8FinanceApi.createAnalysis({
@@ -55,6 +68,7 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
           analysisType: defaultAnalysisType,
           currency: selectedStatementPack?.currency || 'PLN',
           sourceStatementPackId: selectedStatementPackId || undefined,
+          ...investmentPayload,
         });
       } catch (error) {
         if (!shouldFallbackToLegacyFinance(error)) {
@@ -65,6 +79,7 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
           analysisType: defaultAnalysisType,
           currency: selectedStatementPack?.currency || 'PLN',
           sourceStatementPackId: selectedStatementPackId || undefined,
+          ...investmentPayload,
         });
       }
       const created = result as any;
@@ -99,13 +114,15 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
     } finally {
       setCreating(false);
     }
-  }, [defaultAnalysisType, onCreated, selectedStatementPack, selectedStatementPackId, t, title]);
+  }, [annualBenefits, defaultAnalysisType, discountRatePct, horizon, initialInvestment, isInvestmentCase, onCreated, selectedStatementPack, selectedStatementPackId, t, title]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-overlay bg-black/40 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-navy-900 rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-          {t('finance.analysis.createTitle', 'New Financial Analysis')}
+          {isInvestmentCase
+            ? t('finance.investment.createTitle', 'New Investment Case')
+            : t('finance.analysis.createTitle', 'New Financial Analysis')}
         </h3>
         <div>
           <label className="text-xs text-slate-500">
@@ -120,6 +137,66 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
             className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
           />
         </div>
+        {isInvestmentCase && (
+          <div className="space-y-3 rounded-xl border border-amber-200 dark:border-amber-700/40 bg-amber-50/60 dark:bg-amber-900/10 p-4">
+            <div className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wide">
+              {t('finance.investment.inputs', 'Investment parameters')}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-slate-500">
+                  {t('finance.investment.capex', 'Initial investment (PLN)')}
+                </label>
+                <input
+                  type="number"
+                  value={initialInvestment}
+                  onChange={(e) => setInitialInvestment(e.target.value)}
+                  placeholder="1 000 000"
+                  className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">
+                  {t('finance.investment.horizon', 'Horizon (years)')}
+                </label>
+                <input
+                  type="number"
+                  value={horizon}
+                  onChange={(e) => setHorizon(e.target.value)}
+                  min="1"
+                  max="30"
+                  className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">
+                  {t('finance.investment.rate', 'Discount rate (%)')}
+                </label>
+                <input
+                  type="number"
+                  value={discountRatePct}
+                  onChange={(e) => setDiscountRatePct(e.target.value)}
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">
+                  {t('finance.investment.benefits', 'Annual benefits (PLN/yr)')}
+                </label>
+                <input
+                  type="number"
+                  value={annualBenefits}
+                  onChange={(e) => setAnnualBenefits(e.target.value)}
+                  placeholder="250 000"
+                  className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
+                />
+              </div>
+            </div>
+          </div>
+        )}
         <div className="space-y-2 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
           <div className="flex items-center justify-between">
             <label className="text-xs text-slate-500">

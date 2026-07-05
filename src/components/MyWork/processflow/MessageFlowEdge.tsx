@@ -103,11 +103,11 @@ export const MessageFlowEdge: React.FC<EdgeProps> = ({
               if (e.key === 'Enter') commitEdit();
               if (e.key === 'Escape') setEditing(false);
             }}
-            className="w-full text-[9px] font-medium text-center bg-white dark:bg-navy-800 border border-indigo-400 rounded px-1 outline-none"
+            className="w-full text-[9px] font-medium text-center bg-c-surface border border-c-tag-2 rounded px-1 outline-none"
           />
         ) : (
           <div
-            className="text-[9px] font-medium text-indigo-600 dark:text-indigo-300 text-center cursor-pointer hover:text-indigo-700 truncate"
+            className="text-[9px] font-medium text-c-tag-2 text-center cursor-pointer hover:text-c-tag-2 truncate"
             onDoubleClick={(e) => {
               e.stopPropagation();
               if (edgeLocked) return;

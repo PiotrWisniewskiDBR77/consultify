@@ -160,30 +160,30 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
       onClick={onClose}
     >
       <div
-        className="w-[520px] max-w-[90vw] max-h-[80vh] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden flex flex-col"
+        className="w-[520px] max-w-[90vw] max-h-[80vh] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200/60 dark:border-navy-700/60">
-          <Sparkles size={16} className="text-primary-500" />
-          <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+        <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle">
+          <Sparkles size={16} className="text-c-accent" />
+          <span className="text-sm font-bold text-c-text">
             {isPl ? 'AI Kategoryzacja & Klastry' : 'AI Categorize & Cluster'}
           </span>
           <div className="flex-1" />
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-c-surface-raised transition-colors"
           >
-            <X size={14} className="text-slate-600" />
+            <X size={14} className="text-c-text-secondary" />
           </button>
         </div>
 
         {/* Action bar */}
-        <div className="px-5 py-3 border-b border-slate-200/30 dark:border-white/[0.04] flex items-center gap-2">
+        <div className="px-5 py-3 border-b border-c-border-subtle flex items-center gap-2">
           <button
             onClick={handleAnalyze}
             disabled={loading || nodes.length === 0}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-primary-500/10 to-crimson-500/10 text-primary-600 dark:text-primary-400 hover:from-primary-500/20 hover:to-crimson-500/20 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-c-accent-soft text-c-accent hover:bg-c-accent-soft transition-colors disabled:opacity-50"
           >
             {loading ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
             {loading
@@ -207,17 +207,17 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
 
         {/* Tabs */}
         {(categories.length > 0 || duplicates.length > 0) && (
-          <div className="flex items-center gap-1 px-5 py-2 border-b border-slate-200/30 dark:border-white/[0.04]">
+          <div className="flex items-center gap-1 px-5 py-2 border-b border-c-border-subtle">
             <button
               onClick={() => setActiveTab('clusters')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === 'clusters' ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white' : 'text-slate-600 hover:text-slate-600'}`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === 'clusters' ? 'bg-c-border-subtle text-c-text' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
             >
               <Layers size={10} className="inline mr-1" />
               {isPl ? 'Klastry' : 'Clusters'} ({clusters.length})
             </button>
             <button
               onClick={() => setActiveTab('duplicates')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === 'duplicates' ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white' : 'text-slate-600 hover:text-slate-600'}`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${activeTab === 'duplicates' ? 'bg-c-border-subtle text-c-text' : 'text-c-text-secondary hover:text-c-text-secondary'}`}
             >
               <GitMerge size={10} className="inline mr-1" />
               {isPl ? 'Duplikaty' : 'Duplicates'} ({duplicates.length})
@@ -229,8 +229,8 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
         <div className="flex-1 overflow-auto p-5">
           {categories.length === 0 && duplicates.length === 0 && !loading && (
             <div className="text-center py-8">
-              <Sparkles size={24} className="text-slate-600 mx-auto mb-2" />
-              <p className="text-xs text-slate-600">
+              <Sparkles size={24} className="text-c-text-secondary mx-auto mb-2" />
+              <p className="text-xs text-c-text-secondary">
                 {isPl
                   ? 'Kliknij "Analizuj" aby AI pogrupowało pomysły'
                   : 'Click "Analyze" to let AI group your ideas'}
@@ -243,17 +243,17 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
               {clusters.map(([clusterName, { color, nodes: clusterNodes }]) => (
                 <div
                   key={clusterName}
-                  className="rounded-xl border border-slate-200/40 dark:border-navy-700/40 overflow-hidden"
+                  className="rounded-xl border border-c-border-subtle overflow-hidden"
                 >
-                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-50/80 dark:bg-navy-900/50">
+                  <div className="flex items-center gap-2 px-3 py-2 bg-c-surface-raised">
                     <div
                       className="w-3 h-3 rounded-full flex-shrink-0"
                       style={{ backgroundColor: color }}
                     />
-                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                    <span className="text-[11px] font-bold text-c-text">
                       {clusterName}
                     </span>
-                    <span className="text-[9px] text-slate-600 ml-auto">
+                    <span className="text-[9px] text-c-text-secondary ml-auto">
                       {clusterNodes.length} {isPl ? 'elementów' : 'items'}
                     </span>
                   </div>
@@ -261,16 +261,16 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
                     {clusterNodes.map((cat) => (
                       <div
                         key={cat.nodeId}
-                        className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800/50"
+                        className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-c-surface-raised"
                       >
-                        <span className="text-[11px] text-slate-700 dark:text-slate-300 flex-1 truncate">
+                        <span className="text-[11px] text-c-text flex-1 truncate">
                           {getNodeLabel(cat.nodeId)}
                         </span>
                         <div className="flex items-center gap-1">
                           {cat.suggestedTags.map((tag) => (
                             <span
                               key={tag}
-                              className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-primary-500/10 text-primary-600 dark:text-primary-400"
+                              className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-c-accent-soft text-c-accent"
                             >
                               <Tag size={7} className="inline mr-0.5" />
                               {tag}
@@ -298,7 +298,7 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
           {activeTab === 'duplicates' && (
             <div className="space-y-2">
               {duplicates.length === 0 && (
-                <p className="text-xs text-slate-600 text-center py-4">
+                <p className="text-xs text-c-text-secondary text-center py-4">
                   {isPl ? 'Nie znaleziono duplikatów' : 'No duplicates found'}
                 </p>
               )}
@@ -311,15 +311,15 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex-1 truncate">
+                    <span className="text-[11px] font-medium text-c-text flex-1 truncate">
                       {getNodeLabel(dup.nodeA)}
                     </span>
-                    <span className="text-[9px] text-slate-600">↔</span>
-                    <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex-1 truncate text-right">
+                    <span className="text-[9px] text-c-text-secondary">↔</span>
+                    <span className="text-[11px] font-medium text-c-text flex-1 truncate text-right">
                       {getNodeLabel(dup.nodeB)}
                     </span>
                   </div>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2">
+                  <p className="text-[10px] text-c-text-muted mb-2">
                     {dup.reason}
                   </p>
                   {onMergeNodes && (

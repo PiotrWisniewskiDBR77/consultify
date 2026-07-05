@@ -11,6 +11,7 @@
  */
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import logger from '../../utils/Logger.js';
+import { jaccardSimilarity } from './similarityPrimitives.js';
 
 export interface SimilarInitiative {
   id: string;
@@ -39,12 +40,12 @@ export function tokenize(text: string): Set<string> {
   return out;
 }
 
+/**
+ * Jaccard similarity (kept as a named export — used by callers & tests).
+ * Delegates to the shared primitive; behavior is identical.
+ */
 export function jaccard(a: Set<string>, b: Set<string>): number {
-  if (a.size === 0 || b.size === 0) return 0;
-  let inter = 0;
-  for (const t of a) if (b.has(t)) inter++;
-  const union = a.size + b.size - inter;
-  return union === 0 ? 0 : inter / union;
+  return jaccardSimilarity(a, b);
 }
 
 /**

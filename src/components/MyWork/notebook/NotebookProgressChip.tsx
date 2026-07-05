@@ -3,7 +3,15 @@
  * Replaces NotebookCanonicalPathStrip (4-card layout) with a slim pill strip.
  * L-03: same callbacks as NotebookCanonicalPathStrip, much smaller footprint.
  */
-import { FileOutput, Lightbulb, Paperclip, Radar, Sparkles } from 'lucide-react';
+import {
+  ChevronRight,
+  Eye,
+  FileOutput,
+  Lightbulb,
+  Paperclip,
+  Radar,
+  Sparkles,
+} from 'lucide-react';
 import React from 'react';
 
 interface NotebookProgressChipProps {
@@ -34,15 +42,17 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
   const pillBase =
     'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors';
   const pillActive =
-    'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/[0.06] dark:text-slate-300 dark:hover:bg-white/[0.08]';
+    'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised';
   const pillDisabled =
-    'cursor-not-allowed bg-slate-100 text-slate-400 dark:bg-white/[0.04] dark:text-slate-500';
+    'cursor-not-allowed bg-c-surface-raised text-c-text-muted';
   const pillHighlight =
-    'bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/15';
-  const sep = <span className="text-slate-300 dark:text-slate-600 select-none">·</span>;
+    'bg-c-warning/10 text-c-warning hover:bg-c-warning/15';
+  const sep = (
+    <ChevronRight size={12} className="text-c-text-muted select-none" aria-hidden />
+  );
 
   return (
-    <div className="mt-3 flex items-center flex-wrap gap-1.5 rounded-xl border border-slate-200 bg-slate-50 dark:border-white/[0.07] dark:bg-white/[0.03] px-3 py-1.5">
+    <div className="mt-3 flex items-center flex-wrap gap-1.5 rounded-xl border border-c-border bg-c-surface-raised px-3 py-1.5">
       {/* Step 1: Sources */}
       <button
         type="button"
@@ -51,7 +61,7 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
         className={`${pillBase} ${pillActive}`}
       >
         <Paperclip size={11} />
-        {isPolish ? '① Źródła' : '① Sources'}
+        {isPolish ? 'Źródła' : 'Sources'}
       </button>
 
       {sep}
@@ -64,7 +74,7 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
         className={`${pillBase} ${pillActive}`}
       >
         <Sparkles size={11} />
-        {isPolish ? '② AI' : '② AI'}
+        AI
       </button>
 
       {sep}
@@ -85,9 +95,10 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
         }
         className={`${pillBase} ${hasPendingAIProposals ? pillHighlight : pillDisabled}`}
       >
-        {isPolish ? '③ Review' : '③ Review'}
+        <Eye size={11} />
+        Review
         {hasPendingAIProposals && (
-          <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+          <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-c-warning animate-pulse" />
         )}
       </button>
 
@@ -99,16 +110,16 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
         onClick={onConvert}
         disabled={!canConvertDeliverable}
         title={canConvertDeliverable ? (isPolish ? 'Konwertuj do raportu' : 'Convert to report') : convertBlockedReason}
-        className={`${pillBase} ${canConvertDeliverable ? 'bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]' : pillDisabled}`}
+        className={`${pillBase} ${canConvertDeliverable ? 'bg-c-accent text-white hover:brightness-110' : pillDisabled}`}
       >
         <FileOutput size={11} />
-        {isPolish ? '④ Konwertuj' : '④ Convert'}
+        {isPolish ? 'Konwertuj' : 'Convert'}
       </button>
 
       {/* Handoff buttons */}
       {(onHandoffRadar || onHandoffInitiatives) && (
         <>
-          <span className="mx-1 h-3 w-px bg-slate-200 dark:bg-white/[0.07]" />
+          <span className="mx-1 h-3 w-px bg-c-border" />
           {onHandoffRadar && (
             <button
               type="button"

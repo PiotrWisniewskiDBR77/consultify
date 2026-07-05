@@ -24,7 +24,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  CircleAlert,
   ClipboardList,
   Clock,
   Copy,
@@ -36,7 +35,6 @@ import {
   MessageSquare,
   Mic,
   Paperclip,
-  RefreshCw,
   Save,
   Send,
   Shield,
@@ -58,7 +56,7 @@ import {
   NModeSectionWrapper,
   NModeShell,
 } from '@/components/shared/NModeLayout';
-import { LoadingState } from '@/components/ui/primitives';
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
@@ -381,7 +379,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     assigned: {
       label: { en: 'Assigned', pl: 'Przypisany' },
       color: 'bg-slate-400',
-      textColor: 'text-slate-600 dark:text-slate-400',
+      textColor: 'text-c-text-muted',
     },
     in_progress: {
       label: { en: 'In Progress', pl: 'W trakcie' },
@@ -1679,7 +1677,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             initial={{ height: 0 }}
             animate={{ height: 'auto' }}
             exit={{ height: 0 }}
-            className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
+            className="border-t border-c-border overflow-hidden"
           >
             {children}
           </motion.div>
@@ -1753,11 +1751,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
-        <LoadingState
-          variant="spinner"
-          label={isPolish ? 'Ładowanie wywiadu...' : 'Loading interview...'}
-        />
+      <div className="min-h-screen bg-c-surface p-8">
+        <div className="mx-auto max-w-3xl">
+          <LoadingState
+            template="panel"
+            label={isPolish ? 'Ładowanie wywiadu…' : 'Loading interview…'}
+          />
+        </div>
       </div>
     );
   }
@@ -1765,29 +1765,25 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   // IMPACT-UX-002: Degraded UX Error State
   if (loadError) {
     return (
-      <div className="flex flex-col items-center justify-center h-full min-h-screen bg-slate-50 dark:bg-navy-900 p-8 text-center">
-        <CircleAlert className="w-12 h-12 text-c-danger mb-4" />
-        <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
-          {loadError.isTransportBlock
-            ? isPolish
-              ? 'Ochrona przed pętlą zapytań (Transport Safeguard)'
-              : 'Requests blocked by global transport safeguard'
-            : isPolish
-              ? 'Błąd pobierania danych'
-              : 'Data Loading Error'}
-        </h3>
-        <p className="text-slate-500 dark:text-slate-400 max-w-md mb-6">{loadError.message}</p>
-        <button
-          onClick={() => {
+      <div className="flex min-h-screen items-center justify-center bg-c-surface-raised p-8">
+        <EmptyState
+          variant="error"
+          title={
+            loadError.isTransportBlock
+              ? isPolish
+                ? 'Ochrona przed pętlą zapytań (Transport Safeguard)'
+                : 'Requests blocked by global transport safeguard'
+              : isPolish
+                ? 'Błąd pobierania danych'
+                : 'Data Loading Error'
+          }
+          description={loadError.message}
+          onRetry={() => {
             setLoadError(null);
             setIsLoading(true);
             window.location.reload();
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-md font-medium"
-        >
-          <RefreshCw className="w-4 h-4" />
-          {isPolish ? 'Spróbuj ponownie' : 'Retry'}
-        </button>
+        />
       </div>
     );
   }
@@ -1951,14 +1947,14 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         {/* #3 — Lifecycle status read-back (assigned / in_progress / submitted /
             sent_back / approved / completed) via the canonical EntityStatusChip. */}
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          <span className="text-xs font-medium text-c-text-muted">
             {isPolish ? 'Status:' : 'Status:'}
           </span>
           <EntityStatusChip
             status={lifecycleStatus}
             label={isPolish ? lifecycleConfig.label.pl : lifecycleConfig.label.en}
           />
-          <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+          <span className="text-xs text-c-text-muted tabular-nums">
             {completionPercent}% {isPolish ? 'ukończone' : 'complete'}
           </span>
         </div>
@@ -2092,7 +2088,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               value={sendBackReason}
               onChange={(e) => setSendBackReason(e.target.value)}
               rows={3}
-              className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-white dark:bg-navy-950 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-c-surface px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
               placeholder={
                 isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs improvement...'
               }
@@ -2142,7 +2138,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   setShowSendBackForm(false);
                   setSendBackReason('');
                 }}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-navy-700/70 px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-navy-700/70 px-3 py-1.5 text-xs font-medium text-c-text-muted transition-colors"
               >
                 {isPolish ? 'Anuluj' : 'Cancel'}
               </button>
@@ -2302,7 +2298,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 <ArrowRight size={14} />
                 {isPolish ? 'Następne brakujące' : 'Next missing'}
               </button>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
+              <span className="text-xs text-c-text-muted">
                 {answeredQuestions}/{totalQuestions}
               </span>
             </div>
@@ -2317,13 +2313,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     onClick={() => setActiveCategory(cat)}
                     className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
                       isActive
-                        ? 'bg-slate-200/70 dark:bg-white/[0.08] text-slate-900 dark:text-white border-slate-400/40 dark:border-white/20'
-                        : 'bg-white/60 dark:bg-navy-900/40 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-navy-700/60 hover:bg-slate-50/80 dark:hover:bg-navy-800/50'
+                        ? 'bg-slate-200/70 dark:bg-white/[0.08] text-c-text border-slate-400/40 dark:border-white/20'
+                        : 'bg-white/60 dark:bg-navy-900/40 text-c-text-muted border-slate-200/60 dark:border-navy-700/60 hover:bg-slate-50/80 dark:hover:bg-navy-800/50'
                     }`}
                   >
                     <cfg.icon
                       size={14}
-                      className={isActive ? 'text-slate-700 dark:text-slate-200' : 'text-slate-600'}
+                      className={isActive ? 'text-c-text-secondary' : 'text-slate-600'}
                     />
                     {isPolish ? cfg.labelPl : cfg.labelEn}
                   </button>
@@ -2401,7 +2397,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     type="text"
                     value={editedProfile.name || ''}
                     onChange={(e) => setEditedProfile({ ...editedProfile, name: e.target.value })}
-                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60 text-slate-700 dark:text-slate-200"
+                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60 text-c-text-secondary"
                   />
                 </div>
                 <div>
@@ -2414,7 +2410,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     onChange={(e) =>
                       setEditedProfile({ ...editedProfile, industry: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60 text-slate-700 dark:text-slate-200"
+                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60 text-c-text-secondary"
                   />
                 </div>
                 <div>
@@ -2425,7 +2421,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     type="text"
                     value={editedProfile.size || ''}
                     onChange={(e) => setEditedProfile({ ...editedProfile, size: e.target.value })}
-                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60 text-slate-700 dark:text-slate-200"
+                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60 text-c-text-secondary"
                   />
                 </div>
                 <div>
@@ -2438,7 +2434,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     onChange={(e) =>
                       setEditedProfile({ ...editedProfile, location: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60 text-slate-700 dark:text-slate-200"
+                    className="w-full px-3 py-2 text-sm rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60 text-c-text-secondary"
                   />
                 </div>
               </div>
@@ -2456,7 +2452,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     setEditedProfile(companyProfile);
                     setIsEditingProfile(false);
                   }}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-700/60 text-slate-600 dark:text-slate-300 bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50"
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-700/60 text-c-text-secondary bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50"
                 >
                   <X size={14} />
                   {isPolish ? 'Anuluj' : 'Cancel'}
@@ -2465,7 +2461,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             </>
           ) : (
             <>
-              <div className="text-sm text-slate-700 dark:text-slate-200">
+              <div className="text-sm text-c-text-secondary">
                 {companyProfile.name ? (
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -2487,7 +2483,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               {!isLocked && (
                 <button
                   onClick={() => setIsEditingProfile(true)}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-700/60 text-slate-600 dark:text-slate-300 bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50"
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-200/60 dark:border-navy-700/60 text-c-text-secondary bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50"
                 >
                   <Edit3 size={14} />
                   {isPolish ? 'Edytuj' : 'Edit'}
@@ -2518,7 +2514,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 <Users size={14} className="text-blue-500" />
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+                <div className="text-sm font-medium text-c-text-secondary truncate">
                   {s.name}
                 </div>
                 <div className="text-xs text-slate-500 truncate">{s.role}</div>
@@ -2550,7 +2546,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     : 'border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-900/40'
               }`}
             >
-              <div className="text-sm text-slate-700 dark:text-slate-200">{gap.description}</div>
+              <div className="text-sm text-c-text-secondary">{gap.description}</div>
               <div className="text-xs text-slate-500 mt-1">{gap.category}</div>
             </div>
           ))}
@@ -2653,7 +2649,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   {summaryData.facts.map((f, idx) => (
                     <li
                       key={idx}
-                      className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300"
+                      className="flex items-start gap-2 text-sm text-c-text-secondary"
                     >
                       <Check size={14} className="text-emerald-500 mt-0.5" />
                       {f}
@@ -2706,7 +2702,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 <AlertTriangle size={20} />
               </div>
               <div className="min-w-0">
-                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                <h3 className="text-base font-semibold text-c-text">
                   {gateHasHardBlock
                     ? isPolish
                       ? 'Uzupełnij wymagane odpowiedzi, aby wysłać'
@@ -2715,7 +2711,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                       ? 'Niektóre odpowiedzi wyglądają na zbyt krótkie'
                       : 'Some answers look too short'}
                 </h3>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                <p className="mt-1 text-sm text-c-text-muted">
                   {gateHasHardBlock
                     ? isPolish
                       ? 'Te pozycje są wymagane — wywiadu nie można wysłać, dopóki nie zostaną uzupełnione.'
@@ -2746,7 +2742,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                         {item.index || '•'}
                       </span>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+                        <p className="text-sm font-medium text-c-text-secondary truncate">
                           {item.label}
                         </p>
                         <p
@@ -2770,7 +2766,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               <button
                 type="button"
                 onClick={handleQualityGateGoBack}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-navy-700/70 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-navy-700/70 px-4 py-2 text-sm font-medium text-c-text-secondary bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
               >
                 <ChevronLeft size={16} />
                 {gateHasHardBlock
@@ -2788,7 +2784,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     void handleSubmitSession({ bypassGate: true });
                   }}
                   disabled={isSubmittingSession}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary-500 hover:bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
                 >
                   {isSubmittingSession ? (
                     <Loader2 size={16} className="animate-spin" />
@@ -2827,13 +2823,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             <button
               type="button"
               onClick={onClose || (() => {})}
-              className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-c-text-muted hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
             >
               <ChevronLeft size={16} />
               {isPolish ? 'Wróć' : 'Back'}
             </button>
             <div className="h-4 w-px bg-white/[0.08]" />
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate max-w-[300px]">
+            <span className="text-sm font-medium text-c-text-secondary truncate max-w-[300px]">
               {sessionName || (isPolish ? 'Sesja wywiadu' : 'Interview session')}
             </span>
             <EntityStatusChip
@@ -2889,7 +2885,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-c-text-muted hover:text-c-text transition-colors disabled:opacity-50"
               >
                 {isSaving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
                 {isPolish ? 'Zapisz' : 'Save'}
@@ -2925,7 +2921,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   value={sendBackReason}
                   onChange={(e) => setSendBackReason(e.target.value)}
                   rows={2}
-                  className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-white dark:bg-navy-950 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-c-surface px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
                   placeholder={
                     isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs improvement...'
                   }
@@ -3005,10 +3001,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             ) : (
               <div className="flex flex-col items-center justify-center h-full py-20 px-6">
                 <div className="max-w-md text-center space-y-4">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-primary-500/10">
-                    <ClipboardList size={28} className="text-primary-500" />
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-c-surface-raised">
+                    <ClipboardList size={28} className="text-c-text-muted" />
                   </div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-c-text-muted">
                     {isPolish ? 'Brak pytań w tej sesji.' : 'No questions in this session.'}
                   </p>
                 </div>

@@ -37,6 +37,12 @@ import {
   YAxis,
 } from 'recharts';
 
+import { getDrdLevelDescriptor } from '../../../services/drdMaturityLevels';
+import {
+  useAssessmentChartColors,
+  type AssessmentChartColors,
+} from './assessmentChartTokens';
+
 // ============================================
 // TYPES
 // ============================================
@@ -96,10 +102,10 @@ export const ScoreCard: React.FC<ScoreCardProps> = ({
       icon: 'text-emerald-400',
     },
     purple: {
-      bg: 'bg-primary-500/10',
-      border: 'border-primary-500/30',
-      text: 'text-primary-400',
-      icon: 'text-primary-400',
+      bg: 'bg-teal-500/10',
+      border: 'border-teal-500/30',
+      text: 'text-teal-400',
+      icon: 'text-teal-400',
     },
     amber: {
       bg: 'bg-amber-500/10',
@@ -210,60 +216,176 @@ interface AssessmentRadarChartProps {
   height?: number;
 }
 
+/** Per-point payload carried through Recharts to the tooltip. */
+interface RadarPoint {
+  axisId: string;
+  name: string;
+  current: number;
+  target: number;
+  maxLevel: number;
+}
+
+/**
+ * Rich tooltip for the DRD maturity radar: dimension name, current vs. target
+ * level (with the level's title + a one-sentence description drawn from the DRD
+ * structure, when the framework is DRD), and the gap. Fully bilingual.
+ */
+const RadarTooltip: React.FC<{
+  active?: boolean;
+  payload?: Array<{ payload: RadarPoint }>;
+  colors: AssessmentChartColors;
+  framework: AssessmentFramework;
+  isPolish: boolean;
+  t: (key: string, opts?: Record<string, unknown>) => string;
+}> = ({ active, payload, colors, framework, isPolish, t }) => {
+  if (!active || !payload || payload.length === 0) return null;
+  const p = payload[0]?.payload;
+  if (!p) return null;
+
+  const gap = Math.round((p.target - p.current) * 10) / 10;
+  // Level descriptors only exist for DRD; other frameworks show numbers only.
+  const currentDesc =
+    framework === 'DRD' ? getDrdLevelDescriptor(p.axisId, p.current) : null;
+  const targetDesc =
+    framework === 'DRD' ? getDrdLevelDescriptor(p.axisId, p.target) : null;
+
+  return (
+    <div
+      className="rounded-lg shadow-xl p-3 max-w-[280px]"
+      style={{
+        backgroundColor: colors.tooltipBg,
+        border: `1px solid ${colors.tooltipBorder}`,
+        color: colors.tooltipText,
+      }}
+    >
+      <p className="font-semibold text-sm mb-2">{p.name}</p>
+      <div className="space-y-2">
+        <div>
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-xs" style={{ color: colors.tooltipMuted }}>
+              {t('assessmentModule.drdRadar.current', { defaultValue: 'Current' })}
+            </span>
+            <span className="font-semibold text-sm" style={{ color: colors.current }}>
+              {p.current} / {p.maxLevel}
+              {currentDesc ? ` · ${currentDesc.title}` : ''}
+            </span>
+          </div>
+          {currentDesc && (
+            <p className="text-xs mt-0.5" style={{ color: colors.tooltipMuted }}>
+              {currentDesc.description}
+            </p>
+          )}
+        </div>
+        <div>
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-xs" style={{ color: colors.tooltipMuted }}>
+              {t('assessmentModule.drdRadar.target', { defaultValue: 'Target (N+1)' })}
+            </span>
+            <span className="font-semibold text-sm" style={{ color: colors.target }}>
+              {p.target} / {p.maxLevel}
+              {targetDesc ? ` · ${targetDesc.title}` : ''}
+            </span>
+          </div>
+          {targetDesc && (
+            <p className="text-xs mt-0.5" style={{ color: colors.tooltipMuted }}>
+              {targetDesc.description}
+            </p>
+          )}
+        </div>
+        <div
+          className="flex items-center justify-between gap-4 pt-1.5 border-t"
+          style={{ borderColor: colors.tooltipBorder }}
+        >
+          <span className="text-xs" style={{ color: colors.tooltipMuted }}>
+            {t('assessmentModule.drdRadar.gap', { defaultValue: 'Gap' })}
+          </span>
+          <span className="font-semibold text-sm">
+            {gap > 0 ? '+' : ''}
+            {gap}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Flagship maturity radar (spider chart): "current state" vs. "target (N+1)"
+ * across the assessment dimensions. Theme-token colors (no crimson), bilingual
+ * labels, rich per-dimension tooltips. Fail-soft: with fewer than 3 dimensions
+ * carrying data, a radar is not meaningful, so nothing is rendered.
+ */
 export const AssessmentRadarChart: React.FC<AssessmentRadarChartProps> = ({
   data,
   showTarget = true,
   height = 400,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation('assessment-module');
   const isPolish = i18n.language === 'pl';
+  const colors = useAssessmentChartColors();
 
-  const chartData = useMemo(() => {
-    return data.dimensions.map((dim) => ({
+  const chartData = useMemo<RadarPoint[]>(() => {
+    return (data.dimensions ?? []).map((dim) => ({
+      axisId: dim.id,
       name: isPolish && dim.namePL ? dim.namePL : dim.name,
       current: dim.current,
       target: dim.target,
-      fullMark: dim.maxLevel,
+      maxLevel: dim.maxLevel,
     }));
   }, [data.dimensions, isPolish]);
 
+  // Fail-soft: a radar needs at least 3 axes with any signal to be legible.
+  const hasSignal = chartData.filter((d) => d.current > 0 || d.target > 0).length >= 3;
+  if (!hasSignal) return null;
+
+  // Domain top = the largest per-axis scale, so mixed 5/6/7 scales all fit.
+  const domainMax = Math.max(5, ...chartData.map((d) => d.maxLevel || 0));
+
   return (
     <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-      <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-        Maturity Overview
+      <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+        {t('assessmentModule.drdRadar.title', { defaultValue: 'Maturity profile' })}
       </h3>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+        {t('assessmentModule.drdRadar.subtitle', {
+          defaultValue: 'Current state vs. target (N+1) per dimension',
+        })}
+      </p>
       <ResponsiveContainer width="100%" height={height}>
-        <RechartsRadar data={chartData}>
-          <PolarGrid stroke="#334155" />
+        <RechartsRadar data={chartData} outerRadius="72%">
+          <PolarGrid stroke={colors.grid} gridType="polygon" />
           <PolarAngleAxis
             dataKey="name"
-            tick={{ fill: '#94a3b8', fontSize: 11 }}
+            tick={{ fill: colors.axis, fontSize: 11 }}
             tickLine={false}
           />
           <PolarRadiusAxis
             angle={90}
-            domain={[0, 'auto']}
-            tick={{ fill: '#64748b', fontSize: 10 }}
+            domain={[0, domainMax]}
+            tick={{ fill: colors.tick, fontSize: 10 }}
             axisLine={false}
-          />
-          <Radar
-            name="Current"
-            dataKey="current"
-            stroke="#3b82f6"
-            fill="#3b82f6"
-            fillOpacity={0.3}
-            strokeWidth={2}
           />
           {showTarget && (
             <Radar
-              name="Target"
+              name={t('assessmentModule.drdRadar.target', { defaultValue: 'Target (N+1)' })}
               dataKey="target"
-              stroke="#10b981"
-              fill="transparent"
+              stroke={colors.target}
+              fill={colors.targetFill}
+              fillOpacity={1}
               strokeWidth={2}
               strokeDasharray="5 5"
+              isAnimationActive={false}
             />
           )}
+          <Radar
+            name={t('assessmentModule.drdRadar.current', { defaultValue: 'Current' })}
+            dataKey="current"
+            stroke={colors.current}
+            fill={colors.currentFill}
+            fillOpacity={1}
+            strokeWidth={2}
+            isAnimationActive={false}
+          />
           <Legend
             wrapperStyle={{ paddingTop: 20 }}
             formatter={(value) => (
@@ -271,12 +393,14 @@ export const AssessmentRadarChart: React.FC<AssessmentRadarChartProps> = ({
             )}
           />
           <Tooltip
-            contentStyle={{
-              backgroundColor: '#1e293b',
-              border: '1px solid #334155',
-              borderRadius: '8px',
-            }}
-            labelStyle={{ color: '#f8fafc' }}
+            content={
+              <RadarTooltip
+                colors={colors}
+                framework={data.framework}
+                isPolish={isPolish}
+                t={t}
+              />
+            }
           />
         </RechartsRadar>
       </ResponsiveContainer>
@@ -440,7 +564,7 @@ export const DimensionBars: React.FC<DimensionBarsProps> = ({ data, height = 300
             )}
           />
           <Bar dataKey="current" name="Current" fill="#3b82f6" radius={[0, 4, 4, 0]} />
-          <Bar dataKey="target" name="Target" fill="#10b981" radius={[0, 4, 4, 0]} />
+          <Bar dataKey="target" name="Target" fill="#1D9E75" radius={[0, 4, 4, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

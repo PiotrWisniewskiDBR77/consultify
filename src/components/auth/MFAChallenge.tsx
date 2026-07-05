@@ -171,9 +171,9 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+      <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 text-center">
+        <div className="bg-c-accent px-6 py-4 text-center">
           <Shield className="w-10 h-10 text-white mx-auto mb-2" />
           <h2 className="text-lg font-semibold text-white">
             {t('mfa.challenge.title', 'Two-Factor Authentication')}
@@ -192,7 +192,7 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
           {/* TOTP Mode */}
           {mode === 'totp' && (
             <div className="space-y-4">
-              <p className="text-gray-600 dark:text-gray-300 text-center text-sm">
+              <p className="text-c-text-secondary text-center text-sm">
                 {t('mfa.challenge.enterTotp', 'Enter the code from your authenticator app')}
               </p>
 
@@ -210,7 +210,7 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
                     value={code[index] || ''}
                     onChange={(e) => handleTOTPInput(index, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(index, e)}
-                    className="w-10 h-12 text-center text-xl font-mono border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:bg-gray-700 dark:text-white transition"
+                    className="w-10 h-12 text-center text-xl font-mono border-2 border-c-border rounded-lg focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus bg-c-surface text-c-text transition"
                     disabled={loading}
                   />
                 ))}
@@ -218,12 +218,12 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
 
               {/* Trust Device Option */}
               {trustDeviceOption && (
-                <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+                <label className="flex items-center gap-2 text-sm text-c-text-secondary cursor-pointer">
                   <input
                     type="checkbox"
                     checked={trustDevice}
                     onChange={(e) => setTrustDevice(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-c-accent border-c-border rounded focus:ring-c-focus"
                   />
                   {t('mfa.challenge.trustDevice', 'Trust this device for 30 days')}
                 </label>
@@ -232,14 +232,14 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
               {/* Loading indicator */}
               {loading && (
                 <div className="flex justify-center">
-                  <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+                  <Loader2 className="w-6 h-6 text-c-accent animate-spin" />
                 </div>
               )}
 
               {/* Use backup code link */}
               <button
                 onClick={() => setMode('backup')}
-                className="w-full text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 transition"
+                className="w-full text-sm text-c-accent hover:opacity-80 transition"
               >
                 <Key className="w-4 h-4 inline mr-1" />
                 {t('mfa.challenge.useBackupCode', 'Use a backup code instead')}
@@ -250,7 +250,7 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
           {/* Backup Code Mode */}
           {mode === 'backup' && (
             <div className="space-y-4">
-              <p className="text-gray-600 dark:text-gray-300 text-center text-sm">
+              <p className="text-c-text-secondary text-center text-sm">
                 {t('mfa.challenge.enterBackup', 'Enter one of your backup codes')}
               </p>
 
@@ -262,7 +262,7 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
                   setError(null);
                 }}
                 placeholder="XXXX-XXXX"
-                className="w-full text-center text-lg font-mono px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:bg-gray-700 dark:text-white"
+                className="w-full text-center text-lg font-mono px-4 py-3 border-2 border-c-border rounded-lg focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus bg-c-surface text-c-text"
                 autoFocus
                 disabled={loading}
               />
@@ -270,7 +270,7 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
               <button
                 onClick={verifyBackupCode}
                 disabled={loading || !backupCode.trim()}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full px-4 py-2 bg-c-accent text-white rounded-lg hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                 {t('mfa.challenge.verify', 'Verify')}
@@ -282,7 +282,7 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
                   setBackupCode('');
                   setError(null);
                 }}
-                className="w-full text-sm text-gray-600 hover:text-gray-700 dark:text-gray-400 transition"
+                className="w-full text-sm text-c-text-secondary hover:text-c-text transition"
               >
                 {t('mfa.challenge.backToTotp', 'Back to authenticator code')}
               </button>
@@ -293,7 +293,7 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
           {onCancel && (
             <button
               onClick={onCancel}
-              className="w-full mt-4 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition"
+              className="w-full mt-4 text-sm text-c-text-muted hover:text-c-text-secondary transition"
             >
               {t('common.cancel', 'Cancel')}
             </button>

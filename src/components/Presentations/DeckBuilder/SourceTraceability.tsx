@@ -34,7 +34,7 @@ export const CardSourceFooter: React.FC<CardSourceFooterProps> = ({
 
   return (
     <div className="flex items-center gap-1.5 pt-2 mt-auto opacity-60 hover:opacity-100 transition-opacity">
-      <Database size={9} className="text-slate-600 flex-shrink-0" />
+      <Database size={9} className="text-c-text-secondary flex-shrink-0" />
       <div className="flex flex-wrap gap-1">
         {sourceRefs.map((ref) => {
           const Icon = SOURCE_ICONS[ref.artifact_type] || FileText;
@@ -45,7 +45,7 @@ export const CardSourceFooter: React.FC<CardSourceFooterProps> = ({
                   e.stopPropagation();
                   onClickSource?.(ref);
                 }}
-                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-500/10 hover:bg-blue-500/10 text-[8px] text-slate-500 hover:text-blue-600 transition-colors"
+                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-c-surface-raised hover:bg-blue-500/10 text-[8px] text-c-text-secondary hover:text-blue-600 transition-colors"
                 title={`${ref.artifact_type}: ${ref.artifact_name}`}
               >
                 <Icon size={8} />
@@ -54,9 +54,9 @@ export const CardSourceFooter: React.FC<CardSourceFooterProps> = ({
               </button>
               {/* V4-DECK-01: Hover citation tooltip */}
               <div className="absolute bottom-full left-0 mb-0.5 hidden group-hover/chip:block z-50 pointer-events-none">
-                <div className="px-2 py-1 rounded bg-slate-800 text-white text-[9px] shadow-lg whitespace-nowrap">
+                <div className="px-2 py-1 rounded bg-c-surface text-c-text text-[9px] shadow-lg whitespace-nowrap">
                   <span className="font-medium">{ref.artifact_type}</span>: {ref.artifact_name}
-                  <div className="text-slate-600 text-[8px] mt-0.5">Click to navigate</div>
+                  <div className="text-c-text-secondary text-[8px] mt-0.5">Click to navigate</div>
                 </div>
               </div>
             </div>

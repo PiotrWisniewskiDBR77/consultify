@@ -171,7 +171,7 @@ const getPriorityConfig = (priority?: string) => {
       };
     case 'high':
       return {
-        color: 'text-slate-700 dark:text-slate-200',
+        color: 'text-c-text-secondary',
         badgeClass: '',
         bg: 'bg-amber-500',
         dot: 'bg-amber-500',
@@ -179,7 +179,7 @@ const getPriorityConfig = (priority?: string) => {
       };
     case 'medium':
       return {
-        color: 'text-slate-700 dark:text-slate-200',
+        color: 'text-c-text-secondary',
         badgeClass: '',
         bg: 'bg-blue-500',
         dot: 'bg-blue-500',
@@ -187,7 +187,7 @@ const getPriorityConfig = (priority?: string) => {
       };
     case 'low':
       return {
-        color: 'text-slate-500 dark:text-slate-400',
+        color: 'text-c-text-muted',
         badgeClass: '',
         bg: 'bg-slate-400',
         dot: 'bg-slate-400',
@@ -195,7 +195,7 @@ const getPriorityConfig = (priority?: string) => {
       };
     default:
       return {
-        color: 'text-slate-500 dark:text-slate-400',
+        color: 'text-c-text-muted',
         badgeClass: '',
         bg: 'bg-slate-400',
         dot: 'bg-slate-400',
@@ -249,15 +249,15 @@ const getStatusConfig = (status?: string) => {
     case 'cancelled':
     case 'canceled':
       return {
-        color: 'text-slate-600 dark:text-slate-400',
-        bg: 'bg-slate-100 dark:bg-navy-800/60',
+        color: 'text-c-text-secondary',
+        bg: 'bg-c-surface-raised',
         dot: 'bg-slate-400 dark:bg-slate-500',
         label: 'Cancelled',
       };
     default:
       return {
-        color: 'text-slate-700 dark:text-slate-400',
-        bg: 'bg-slate-200/80 dark:bg-navy-800/60',
+        color: 'text-c-text-secondary',
+        bg: 'bg-c-surface-raised',
         dot: 'bg-slate-500 dark:bg-slate-500',
         label: 'To Do',
       };
@@ -469,9 +469,9 @@ const TaskSortIcon: React.FC<{
   if (sortConfig?.field !== field)
     return <ChevronsUpDown size={12} className="text-slate-300 dark:text-slate-600" />;
   return sortConfig.direction === 'asc' ? (
-    <ChevronUp size={12} className="text-primary-500" />
+    <ChevronUp size={12} className="text-c-text-secondary" />
   ) : (
-    <ChevronDown size={12} className="text-primary-500" />
+    <ChevronDown size={12} className="text-c-text-secondary" />
   );
 };
 
@@ -531,7 +531,7 @@ const InlineCellDropdown: React.FC<{
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
       transition={{ duration: 0.12 }}
-      className="absolute top-full left-0 mt-1 z-50 min-w-[140px] bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden"
+      className="absolute top-full left-0 mt-1 z-50 min-w-[140px] bg-c-surface-raised border border-c-border rounded-lg shadow-xl overflow-hidden"
     >
       {options.map((opt) => (
         <button
@@ -540,7 +540,7 @@ const InlineCellDropdown: React.FC<{
             onSelect(opt.value);
             onClose();
           }}
-          className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-200 transition-colors"
+          className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-c-text-secondary transition-colors"
         >
           <span className={`w-2 h-2 rounded-full ${opt.dot}`} />
           {opt.label}
@@ -621,7 +621,7 @@ const TaskTableRow: React.FC<{
       onClick={() => onPreview(task.id, task)}
       onDoubleClick={() => onOpenFull(task.id, task)}
       className={`
-        group cursor-pointer border-b border-slate-200/70 dark:border-white/[0.06]
+        group cursor-pointer border-b border-c-border-subtle
         ${isCompleted ? 'opacity-60' : ''}
         ${isSelected ? TASK_SELECTED_ROW_CLASS : ''}
         ${isPreviewed ? TASK_PREVIEW_ROW_CLASS : ''}
@@ -641,8 +641,8 @@ const TaskTableRow: React.FC<{
             h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-all
             ${
               isSelected
-                ? 'bg-navy-900 border-navy-900 text-white opacity-100'
-                : 'border-slate-400/75 bg-white/80 text-transparent opacity-0 hover:border-primary-400 group-hover:opacity-100 group-hover:border-slate-300 dark:group-hover:border-white/[0.22] group-hover:bg-white/90 dark:group-hover:bg-white/[0.08] group-focus-within:opacity-100 group-focus-within:border-primary-400 group-focus-within:bg-white/90 dark:group-focus-within:bg-white/[0.08] focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035]'
+                ? 'bg-c-text border-c-text text-c-surface opacity-100'
+                : 'border-c-border-strong bg-white/80 text-transparent opacity-0 hover:border-c-border-strong group-hover:opacity-100 group-hover:border-c-border dark:group-hover:border-white/[0.22] group-hover:bg-white/90 dark:group-hover:bg-white/[0.08] group-focus-within:opacity-100 group-focus-within:border-c-focus-solid group-focus-within:bg-white/90 dark:group-focus-within:bg-white/[0.08] focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035]'
             }
           `}
           aria-label={isPolish ? 'Zaznacz zadanie' : 'Select task'}
@@ -657,14 +657,14 @@ const TaskTableRow: React.FC<{
           <div className="flex items-center gap-1.5 min-w-0">
             <span
               className={`text-sm font-semibold ${
-                isCompleted ? 'line-through text-slate-400' : 'text-slate-900 dark:text-slate-100'
+                isCompleted ? 'line-through text-c-text-muted' : 'text-c-text'
               } truncate`}
               title={task.title}
             >
               {task.title}
             </span>
             {focusState?.[task.id] && (
-              <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-medium rounded-full border border-slate-300/80 bg-slate-100 text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200">
+              <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-medium rounded-full border border-c-border bg-c-surface-raised text-c-text-secondary">
                 {focusState[task.id] === 'today'
                   ? '📌 Today'
                   : focusState[task.id] === 'thisWeek'
@@ -675,7 +675,7 @@ const TaskTableRow: React.FC<{
           </div>
           {showRowDescription && (task.description || task.projectName) ? (
             <span
-              className="mt-0.5 truncate text-[11px] leading-4 text-slate-500 dark:text-slate-400"
+              className="mt-0.5 truncate text-[11px] leading-4 text-c-text-muted"
               title={task.description || task.projectName}
             >
               {task.description || task.projectName}
@@ -698,11 +698,11 @@ const TaskTableRow: React.FC<{
             <EntityStatusChip
               status={task.status}
               label={statusConfig.label}
-              className="cursor-pointer hover:ring-2 hover:ring-primary-500/30 transition-all"
+              className="cursor-pointer hover:ring-2 hover:ring-c-focus transition-all"
             />
             {(task as any).triageAction && (
               <span
-                className="px-1.5 py-0.5 text-[10px] font-medium rounded-full border border-slate-300/80 bg-slate-100 text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200"
+                className="px-1.5 py-0.5 text-[10px] font-medium rounded-full border border-c-border bg-c-surface-raised text-c-text-secondary"
                 title={
                   (task as any).triaged_at
                     ? `Triaged ${new Date((task as any).triaged_at).toLocaleDateString()}`
@@ -773,7 +773,7 @@ const TaskTableRow: React.FC<{
           }}
         >
           {!task.dueDate ? (
-            <span className="text-xs italic text-slate-400 dark:text-slate-500 cursor-pointer hover:underline decoration-dotted">
+            <span className="text-xs italic text-c-text-muted cursor-pointer hover:underline decoration-dotted">
               {formatDueDate(task.dueDate)}
             </span>
           ) : (
@@ -781,7 +781,7 @@ const TaskTableRow: React.FC<{
               label={formatDueDate(task.dueDate)}
               risk={overdue ? 'overdue' : deriveDueRisk(task.dueDate)}
               showIcon
-              className="cursor-pointer hover:ring-2 hover:ring-primary-500/30 transition-all"
+              className="cursor-pointer hover:ring-2 hover:ring-c-focus transition-all"
             />
           )}
           <AnimatePresence>
@@ -790,7 +790,7 @@ const TaskTableRow: React.FC<{
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
-                className="absolute top-full left-0 mt-1 z-50 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden p-2"
+                className="absolute top-full left-0 mt-1 z-50 bg-c-surface-raised border border-c-border rounded-lg shadow-xl overflow-hidden p-2"
               >
                 <input
                   type="date"
@@ -808,7 +808,7 @@ const TaskTableRow: React.FC<{
                   onKeyDown={(e) => {
                     if (e.key === 'Escape') setInlineDropdown(null);
                   }}
-                  className="h-8 px-2 text-sm rounded-lg border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                  className="h-8 px-2 text-sm rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
                 />
               </motion.div>
             )}
@@ -821,17 +821,17 @@ const TaskTableRow: React.FC<{
         <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.assignee }}>
           <div className="flex items-center gap-2">
             {assigneeInitial ? (
-              <div className="w-6 h-6 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] flex items-center justify-center text-[10px] font-semibold text-slate-600 dark:text-slate-200">
+              <div className="w-6 h-6 rounded-full border border-c-border-subtle bg-c-surface-raised flex items-center justify-center text-[10px] font-semibold text-c-text-secondary">
                 {assigneeInitial}
               </div>
             ) : (
-              <User size={14} className="text-slate-500 dark:text-slate-400" />
+              <User size={14} className="text-c-text-muted" />
             )}
             <span
               className={`text-xs truncate max-w-[120px] ${
                 assigneeName === 'Unassigned'
-                  ? 'text-slate-500 dark:text-slate-400 italic'
-                  : 'text-slate-600 dark:text-slate-400'
+                  ? 'text-c-text-muted italic'
+                  : 'text-c-text-secondary'
               }`}
             >
               {assigneeName}
@@ -1346,7 +1346,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                 trackFunnelEvent('undo_used', { field, taskId });
                 handleInlineEdit(taskId, field, prevValue);
               }}
-              className="ml-1 px-2 py-0.5 text-xs font-medium bg-slate-200 dark:bg-navy-700 rounded hover:bg-slate-300 dark:hover:bg-navy-600 transition-colors"
+              className="ml-1 px-2 py-0.5 text-xs font-medium bg-c-surface-raised rounded hover:bg-c-border-subtle transition-colors"
             >
               Undo
             </button>
@@ -1913,7 +1913,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg">
         <div className="flex-1 overflow-y-auto p-4">
           <div className="flex-1 flex items-center justify-center h-64">
             <Loader2 className="animate-spin text-blue-500" size={32} />
@@ -1925,7 +1925,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
   if (loadError) {
     return (
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg">
         <div className="flex-1 overflow-y-auto p-4 flex items-center justify-center">
           <ErrorState
             message={t('myWork.errors.fetchFailed', 'Failed to load tasks')}
@@ -1937,7 +1937,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg">
       <div className="flex-1 min-h-0">
         <TableWithPreviewLayout<Task>
           selectedId={previewTaskId}
@@ -1980,7 +1980,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                 ? [
                     {
                       label: task.projectName,
-                      className: 'text-slate-500 dark:text-slate-400 truncate max-w-[120px]',
+                      className: 'text-c-text-muted truncate max-w-[120px]',
                     },
                   ]
                 : []),
@@ -1990,8 +1990,8 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
               <span
                 className={`text-[11px] font-semibold ${
                   due === 'No due date'
-                    ? 'text-slate-600 dark:text-slate-500 italic'
-                    : 'text-slate-600 dark:text-slate-300'
+                    ? 'text-c-text-muted italic'
+                    : 'text-c-text-secondary'
                 }`}
               >
                 {due}
@@ -2020,7 +2020,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
             return (
               <div className="space-y-4">
                 <PreviewMetaCard pills={pills} trailing={trailing}>
-                  <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white leading-snug">
+                  <div className="mt-2 text-sm font-semibold text-c-text leading-snug">
                     {task.title}
                     {isCompleted ? (
                       <span className="ml-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">
@@ -2075,7 +2075,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                 label: isPolish
                   ? `Załączniki: ${task.attachments.length}`
                   : `Attachments: ${task.attachments.length}`,
-                tone: 'text-slate-700 dark:text-slate-200',
+                tone: 'text-c-text-secondary',
               });
 
             const actionRows: ActionRow[] = [
@@ -2122,7 +2122,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
             return (
               // canon §7.3 — footer cards stacked with space-y-2.5, NO dividers between framed cards.
               <div className="space-y-2.5">
-                <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+                <div className="rounded-xl border border-c-border-subtle bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
                   <PreviewAIHintStrip
                     hints={hints}
                     loading={aiLoading}
@@ -2160,12 +2160,12 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
         >
           <div className="pl-4 pr-1.5 pt-3 pb-4">
             {tasks.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl">
-                <CheckCircle2 size={48} className="text-slate-600 mb-4" />
-                <h3 className="text-lg font-medium text-slate-700 dark:text-slate-200 mb-2">
+              <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-c-border-subtle rounded-xl">
+                <CheckCircle2 size={48} className="text-c-text-muted mb-4" />
+                <h3 className="text-lg font-medium text-c-text-secondary mb-2">
                   {t('myWork.personalTasks.empty.title', 'No personal tasks in the current scope')}
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                <p className="text-sm text-c-text-muted mb-4">
                   {t(
                     'myWork.personalTasks.empty.description',
                     'This view shows only personal tasks assigned in the active organization.'
@@ -2173,20 +2173,20 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                 </p>
                 <button
                   onClick={onCreateTask}
-                  className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                  className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
                 >
                   <Plus size={16} />
                   {t('myWork.personalTasks.create', 'Create task')}
                 </button>
               </div>
             ) : (
-              <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl">
+              <div className="bg-c-surface border border-c-border-subtle rounded-xl">
                 <table
                   /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full table-fixed"
                   style={{ minWidth: tableMinWidth }}
                 >
                   <thead>
-                    <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-white/60 dark:bg-navy-900/60 sticky top-0 z-10">
+                    <tr className="border-b border-c-border-subtle bg-c-surface sticky top-0 z-10">
                       {/* Select All */}
                       <th className="px-2 py-2" style={{ width: columnWidths.select }}>
                         <button
@@ -2195,10 +2195,10 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                           h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-colors
                           ${
                             allSelected
-                              ? 'bg-navy-900 border-navy-900 text-white'
+                              ? 'bg-c-text border-c-text text-c-surface'
                               : someSelected
-                                ? 'bg-primary-500/50 border-primary-500 text-white'
-                                : 'border-slate-300 dark:border-white/[0.10] hover:border-primary-400 text-transparent hover:text-slate-500 dark:text-slate-400'
+                                ? 'bg-c-text/60 border-c-text text-c-surface'
+                                : 'border-c-border hover:border-c-border-strong text-transparent hover:text-c-text-muted'
                           }
                         `}
                         >
@@ -2212,13 +2212,13 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                         </button>
                       </th>
                       <th
-                        className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                        className="relative px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                         style={{ width: columnWidths.title }}
                       >
                         <button
                           type="button"
                           onClick={() => handleSort('title')}
-                          className="inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                          className="inline-flex items-center gap-1 transition-colors hover:text-c-text-secondary"
                         >
                           {isPolish ? 'Zadanie' : 'Task'}
                           <TaskSortIcon field="title" sortConfig={sortConfig} />
@@ -2234,15 +2234,15 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
                       {!hiddenSet.has('status') && (
                         <th
-                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                           style={{ width: columnWidths.status }}
                         >
                           <div className="flex items-center justify-start gap-1">
                             <button
                               type="button"
                               onClick={() => handleSort('status')}
-                              className={`inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200 ${
-                                (tableFilters.status as string[])?.length ? 'text-primary-500' : ''
+                              className={`inline-flex items-center gap-1 transition-colors hover:text-c-text-secondary ${
+                                (tableFilters.status as string[])?.length ? 'text-c-text-secondary' : ''
                               }`}
                             >
                               Status
@@ -2271,16 +2271,16 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
                       {!hiddenSet.has('priority') && (
                         <th
-                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                           style={{ width: columnWidths.priority }}
                         >
                           <div className="flex items-center justify-start gap-1">
                             <button
                               type="button"
                               onClick={() => handleSort('priority')}
-                              className={`inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200 ${
+                              className={`inline-flex items-center gap-1 transition-colors hover:text-c-text-secondary ${
                                 (tableFilters.priority as string[])?.length
-                                  ? 'text-primary-500'
+                                  ? 'text-c-text-secondary'
                                   : ''
                               }`}
                             >
@@ -2310,13 +2310,13 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
                       {!hiddenSet.has('date') && (
                         <th
-                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                           style={{ width: columnWidths.date }}
                         >
                           <button
                             type="button"
                             onClick={() => handleSort('date')}
-                            className="inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                            className="inline-flex items-center gap-1 transition-colors hover:text-c-text-secondary"
                           >
                             {isPolish ? 'Termin' : 'Due Date'}
                             <TaskSortIcon field="date" sortConfig={sortConfig} />
@@ -2332,13 +2332,13 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                       )}
                       {!hiddenSet.has('assignee') && (
                         <th
-                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          className="px-3 py-2 text-left text-[11px] font-semibold text-c-text-muted uppercase tracking-wider relative group/header"
                           style={{ width: columnWidths.assignee }}
                         >
                           <button
                             type="button"
                             onClick={() => handleSort('assignee')}
-                            className="inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                            className="inline-flex items-center gap-1 transition-colors hover:text-c-text-secondary"
                           >
                             {isPolish ? 'Właściciel' : 'Assignee'}
                             <TaskSortIcon field="assignee" sortConfig={sortConfig} />
@@ -2354,7 +2354,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                       )}
                       {!hiddenSet.has('actions') && (
                         <th
-                          className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                          className="relative px-3 py-2 text-right text-[11px] font-semibold text-c-text-muted uppercase tracking-wider"
                           style={{ width: columnWidths.actions }}
                         >
                           <div className="flex items-center justify-end normal-case tracking-normal">

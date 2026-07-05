@@ -28,6 +28,7 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import { DegradedState } from '../../components/Admin/AdminState';
 import { EntityStatusChip } from '../../components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '../../services/api';
@@ -396,8 +397,8 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
 
   if (loading) {
     return (
-      <div className="p-8 text-center text-slate-400 dark:text-slate-500">
-        {t('common.loading', 'Loading...')}
+      <div className={`space-y-6 ${className}`}>
+        <SharedLoadingState template="card" count={4} />
       </div>
     );
   }
@@ -407,10 +408,10 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-medium text-navy-900 dark:text-white flex items-center gap-2">
-            <CreditCard size={16} className="text-slate-500 dark:text-slate-400" />
+            <CreditCard size={16} className="text-c-text-muted" />
             {t('admin.billing.title', 'Billing & Subscription')}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-sm text-c-text-muted mt-0.5">
             {t('admin.billing.desc', "Manage your organization's subscription and billing")}
           </p>
         </div>
@@ -443,7 +444,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="admin-metric">
             <div className="flex items-center gap-2">
-              <CreditCard size={14} className="text-slate-500 dark:text-slate-400" />
+              <CreditCard size={14} className="text-c-text-muted" />
               <span className="admin-metric-label">
                 {t('admin.billing.currentPlan', 'Current Plan')}
               </span>
@@ -454,7 +455,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
 
           <div className="admin-metric">
             <div className="flex items-center gap-2">
-              <Calendar size={14} className="text-slate-500 dark:text-slate-400" />
+              <Calendar size={14} className="text-c-text-muted" />
               <span className="admin-metric-label">
                 {t('admin.billing.nextBilling', 'Next Billing')}
               </span>
@@ -464,13 +465,13 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
 
           <div className="admin-metric">
             <div className="flex items-center gap-2">
-              <Users size={14} className="text-slate-500 dark:text-slate-400" />
+              <Users size={14} className="text-c-text-muted" />
               <span className="admin-metric-label">{t('admin.billing.seats', 'Seats Used')}</span>
             </div>
             <p className="admin-metric-value">
               {billing?.users} / {billing?.maxUsers}
             </p>
-            <div className="w-full bg-white/5 rounded-full h-1.5 mt-2">
+            <div className="w-full bg-c-surface/5 rounded-full h-1.5 mt-2">
               <div
                 className="bg-[var(--admin-accent)] rounded-full h-1.5"
                 style={{ width: `${((billing?.users || 0) / (billing?.maxUsers || 1)) * 100}%` }}
@@ -485,7 +486,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
         {/* Usage */}
         <div className="admin-card p-4">
           <h3 className="text-sm font-medium text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-            <TrendingUp size={14} className="text-slate-500 dark:text-slate-400" />
+            <TrendingUp size={14} className="text-c-text-muted" />
             {t('admin.billing.usage', 'Current Usage')}
           </h3>
           {usageLoadError ? (
@@ -494,12 +495,12 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between text-sm mb-1.5">
-                  <span className="text-slate-500 dark:text-slate-400">AI Tokens</span>
+                  <span className="text-c-text-muted">AI Tokens</span>
                   <span className="text-slate-300">
                     {formatUsagePair(usageData?.tokens?.used, usageData?.tokens?.limit)}
                   </span>
                 </div>
-                <div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-1.5">
+                <div className="w-full bg-c-surface-raised dark:bg-c-surface/5 rounded-full h-1.5">
                   <div
                     className="bg-slate-400 rounded-full h-1.5 transition-all duration-500"
                     style={{
@@ -510,7 +511,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
               </div>
               <div>
                 <div className="flex justify-between text-sm mb-1.5">
-                  <span className="text-slate-500 dark:text-slate-400">Storage</span>
+                  <span className="text-c-text-muted">Storage</span>
                   <span className="text-slate-300">
                     {typeof usageData?.storage?.used_gb === 'number' &&
                     typeof usageData?.storage?.limit_gb === 'number'
@@ -518,9 +519,9 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                       : '--'}
                   </span>
                 </div>
-                <div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-1.5">
+                <div className="w-full bg-c-surface-raised dark:bg-c-surface/5 rounded-full h-1.5">
                   <div
-                    className="bg-slate-50 dark:bg-navy-800/300 rounded-full h-1.5 transition-all duration-500"
+                    className="bg-c-surface-raised/300 rounded-full h-1.5 transition-all duration-500"
                     style={{
                       width: usagePercent(
                         usageData?.storage?.used_gb,
@@ -537,32 +538,32 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
         {/* Recent Invoices */}
         <div className="admin-card p-4">
           <h3 className="text-sm font-medium text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-            <DollarSign size={14} className="text-slate-500 dark:text-slate-400" />
+            <DollarSign size={14} className="text-c-text-muted" />
             {t('admin.billing.invoices', 'Recent Invoices')}
           </h3>
           <div className="space-y-2">
             {loadingInvoices ? (
               <div className="flex items-center justify-center py-8">
-                <RefreshCw className="w-5 h-5 text-slate-500 dark:text-slate-400 animate-spin" />
+                <RefreshCw className="w-5 h-5 text-c-text-muted animate-spin" />
               </div>
             ) : invoicesLoadError ? (
               <DegradedState title="Invoices unavailable" description={invoicesLoadError} />
             ) : invoices.length === 0 ? (
-              <div className="text-center py-8 text-slate-600 dark:text-slate-400 text-sm">
+              <div className="text-center py-8 text-c-text-secondary text-sm">
                 {t('admin.billing.noInvoices', 'No invoices found')}
               </div>
             ) : (
               invoices.map((invoice: Invoice, i: number) => (
                 <div
                   key={invoice.id || i}
-                  className="flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 dark:bg-white/[0.02] dark:hover:bg-white/[0.04] rounded-lg transition-colors"
+                  className="flex items-center justify-between p-3 bg-c-bg hover:bg-c-surface-raised dark:bg-c-surface/[0.02] dark:hover:bg-c-surface/[0.04] rounded-lg transition-colors"
                 >
                   <div>
                     <p className="text-sm text-navy-900 dark:text-white">
                       {invoice.currency === 'USD' ? '$' : ''}
                       {((invoice.amount_paid || invoice.amountPaid || 0) / 100).toFixed(2)}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="text-xs text-c-text-muted mt-0.5">
                       {new Date(
                         invoice.created_at || invoice.createdAt || Date.now()
                       ).toLocaleDateString()}
@@ -575,7 +576,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                         href={invoice.downloadUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-white transition-colors"
+                        className="p-1 text-c-text-muted hover:text-white transition-colors"
                       >
                         <Download size={14} />
                       </a>
@@ -592,7 +593,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
       <div className="admin-card p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-medium text-navy-900 dark:text-white flex items-center gap-2">
-            <FileText size={20} className="text-slate-400 dark:text-slate-500" />
+            <FileText size={20} className="text-c-text-muted" />
             {t('admin.billing.contactInfo', 'Billing Information')}
           </h3>
           <button
@@ -604,11 +605,11 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center">
-              <Mail className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <div className="w-10 h-10 rounded-lg bg-c-surface-raised dark:bg-c-surface/5 flex items-center justify-center">
+              <Mail className="w-5 h-5 text-c-text-muted" />
             </div>
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
+              <p className="text-xs text-c-text-muted font-medium uppercase tracking-wider">
                 Billing Email
               </p>
               <p className="text-sm font-medium text-navy-900 dark:text-white">
@@ -617,11 +618,11 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center">
-              <UserIcon className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <div className="w-10 h-10 rounded-lg bg-c-surface-raised dark:bg-c-surface/5 flex items-center justify-center">
+              <UserIcon className="w-5 h-5 text-c-text-muted" />
             </div>
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
+              <p className="text-xs text-c-text-muted font-medium uppercase tracking-wider">
                 Billing Name
               </p>
               <p className="text-sm font-medium text-navy-900 dark:text-white">
@@ -630,11 +631,11 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <div className="w-10 h-10 rounded-lg bg-c-surface-raised dark:bg-c-surface/5 flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-c-text-muted" />
             </div>
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
+              <p className="text-xs text-c-text-muted font-medium uppercase tracking-wider">
                 Tax ID / VAT
               </p>
               <p className="text-sm font-medium text-navy-900 dark:text-white">
@@ -643,11 +644,11 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center">
-              <MapPin className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <div className="w-10 h-10 rounded-lg bg-c-surface-raised dark:bg-c-surface/5 flex items-center justify-center">
+              <MapPin className="w-5 h-5 text-c-text-muted" />
             </div>
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
+              <p className="text-xs text-c-text-muted font-medium uppercase tracking-wider">
                 Billing Address
               </p>
               <p className="text-sm font-medium text-navy-900 dark:text-white">
@@ -663,17 +664,17 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
       {/* Payment Method - Moved/Updated */}
       <div className="admin-card p-6">
         <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-4 flex items-center gap-2">
-          <CreditCard size={20} className="text-slate-400 dark:text-slate-500" />
+          <CreditCard size={20} className="text-c-text-muted" />
           {t('admin.billing.paymentMethod', 'Payment Method')}
         </h3>
-        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-navy-700 rounded-xl">
+        <div className="flex items-center justify-between p-4 bg-c-bg dark:bg-c-surface/[0.02] border border-c-border-subtle rounded-xl">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-lg bg-c-surface-raised dark:bg-c-surface/5 flex items-center justify-center">
               <CreditCard className="w-6 h-6 text-slate-300" />
             </div>
             <div>
               <p className="font-medium text-navy-900 dark:text-white">•••• •••• •••• 4242</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Expires 12/2026</p>
+              <p className="text-sm text-c-text-muted">Expires 12/2026</p>
             </div>
           </div>
           <button className="admin-btn admin-btn-subtle">
@@ -690,16 +691,16 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl max-w-4xl w-full overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl max-w-4xl w-full overflow-hidden flex flex-col max-h-[90vh]"
             >
-              <div className="p-6 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
+              <div className="p-6 border-b border-c-border-subtle flex items-center justify-between">
                 <h3 className="text-xl font-semibold text-navy-900 dark:text-white flex items-center gap-2">
                   <Crown size={20} className="text-[var(--admin-accent)]" />
                   {t('admin.billing.changePlan', 'Change Subscription Plan')}
                 </h3>
                 <button
                   onClick={() => setShowPlanModal(false)}
-                  className="text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors"
+                  className="text-c-text-muted hover:text-navy-900 dark:hover:text-white transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -708,7 +709,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
               <div className="p-6 overflow-y-auto">
                 {loadingPlans ? (
                   <div className="flex items-center justify-center py-12">
-                    <RefreshCw className="w-6 h-6 text-slate-500 dark:text-slate-400 animate-spin" />
+                    <RefreshCw className="w-6 h-6 text-c-text-muted animate-spin" />
                   </div>
                 ) : plansLoadError ? (
                   <DegradedState title="Plans unavailable" description={plansLoadError} />
@@ -722,29 +723,29 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                           selectedPlanId === plan.id
                             ? 'border-[var(--admin-accent)] bg-[var(--admin-accent)]/5'
                             : billing?.plan === plan.name
-                              ? 'border-slate-400 bg-slate-50 dark:bg-white/5'
-                              : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-white/20'
+                              ? 'border-slate-400 bg-c-bg dark:bg-c-surface/5'
+                              : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
                         }`}
                       >
                         {billing?.plan === plan.name && (
-                          <span className="absolute top-3 right-3 text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full">
+                          <span className="absolute top-3 right-3 text-xs bg-slate-200 dark:bg-slate-700 text-c-text-secondary px-2 py-0.5 rounded-full">
                             Current
                           </span>
                         )}
                         <h4 className="font-semibold text-navy-900 dark:text-white">{plan.name}</h4>
                         <p className="text-2xl font-bold text-navy-900 dark:text-white mt-2">
                           ${plan.price_monthly}
-                          <span className="text-sm font-normal text-slate-500 dark:text-slate-400">
+                          <span className="text-sm font-normal text-c-text-muted">
                             /mo
                           </span>
                         </p>
-                        <div className="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                        <div className="mt-4 space-y-2 text-sm text-c-text-secondary">
                           <p className="flex items-center gap-2">
-                            <Zap size={14} className="text-slate-400 dark:text-slate-500" />
+                            <Zap size={14} className="text-c-text-muted" />
                             {(plan.token_limit / 1000).toFixed(0)}K tokens/month
                           </p>
                           <p className="flex items-center gap-2">
-                            <Building2 size={14} className="text-slate-400 dark:text-slate-500" />
+                            <Building2 size={14} className="text-c-text-muted" />
                             {plan.storage_limit_gb} GB storage
                           </p>
                         </div>
@@ -760,7 +761,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
 
                 {/* Comparison Summary */}
                 {planComparison && selectedPlanId && selectedPlanId !== billing?.plan && (
-                  <div className="mt-6 p-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-navy-700 rounded-xl">
+                  <div className="mt-6 p-4 bg-c-bg dark:bg-c-surface/[0.02] border border-c-border-subtle rounded-xl">
                     <h4 className="text-sm font-medium text-navy-900 dark:text-white mb-3">
                       {planComparison.comparison.isUpgrade
                         ? 'Upgrade Summary'
@@ -768,7 +769,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                     </h4>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <p className="text-slate-500 dark:text-slate-400">Price difference</p>
+                        <p className="text-c-text-muted">Price difference</p>
                         <p
                           className={`font-medium ${
                             planComparison.comparison.priceDifference > 0
@@ -782,7 +783,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                       </div>
                       {planComparison.comparison.isUpgrade ? (
                         <div>
-                          <p className="text-slate-500 dark:text-slate-400">
+                          <p className="text-c-text-muted">
                             Prorated charge today
                           </p>
                           <p className="font-medium text-navy-900 dark:text-white">
@@ -791,14 +792,14 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                         </div>
                       ) : (
                         <div>
-                          <p className="text-slate-500 dark:text-slate-400">Credit to account</p>
+                          <p className="text-c-text-muted">Credit to account</p>
                           <p className="font-medium text-emerald-500">
                             ${planComparison.comparison.creditAmount.toFixed(2)}
                           </p>
                         </div>
                       )}
                       <div className="col-span-2">
-                        <p className="text-slate-500 dark:text-slate-400">
+                        <p className="text-c-text-muted">
                           {planComparison.comparison.isUpgrade
                             ? 'Changes take effect immediately'
                             : `Changes take effect at end of billing period (${planComparison.comparison.daysRemaining} days)`}
@@ -809,7 +810,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                 )}
               </div>
 
-              <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-3 bg-slate-50 dark:bg-white/[0.02]">
+              <div className="p-6 border-t border-c-border-subtle flex justify-end gap-3 bg-c-bg dark:bg-c-surface/[0.02]">
                 <button
                   onClick={() => setShowPlanModal(false)}
                   className="admin-btn admin-btn-subtle"
@@ -838,9 +839,9 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]"
             >
-              <div className="p-6 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
+              <div className="p-6 border-b border-c-border-subtle flex items-center justify-between">
                 <h3 className="text-xl font-semibold text-navy-900 dark:text-white flex items-center gap-2">
                   <Package size={20} className="text-[var(--admin-accent)]" />
                   {t('admin.billing.purchaseAddons', 'Purchase Add-ons')}
@@ -850,7 +851,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                     setShowAddonsModal(false);
                     setSelectedAddon(null);
                   }}
-                  className="text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors"
+                  className="text-c-text-muted hover:text-navy-900 dark:hover:text-white transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -867,7 +868,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                         <div
                           key={addon.id}
                           onClick={() => setSelectedAddon(addon)}
-                          className="p-4 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-[var(--admin-accent)] cursor-pointer transition-all flex items-center justify-between group"
+                          className="p-4 rounded-xl border border-c-border-subtle hover:border-[var(--admin-accent)] cursor-pointer transition-all flex items-center justify-between group"
                         >
                           <div className="flex items-center gap-4">
                             <div
@@ -891,7 +892,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                               <h4 className="font-medium text-navy-900 dark:text-white">
                                 {addon.name}
                               </h4>
-                              <p className="text-sm text-slate-500 dark:text-slate-400">
+                              <p className="text-sm text-c-text-muted">
                                 {addon.description}
                               </p>
                             </div>
@@ -900,18 +901,18 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                             <p className="font-semibold text-navy-900 dark:text-white">
                               ${addon.price}
                             </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                            <p className="text-xs text-c-text-muted">
                               {addon.recurring ? '/month' : 'one-time'}
                             </p>
                           </div>
                           <ChevronRight
                             size={16}
-                            className="text-slate-400 dark:text-slate-500 group-hover:text-[var(--admin-accent)] transition-colors"
+                            className="text-c-text-muted group-hover:text-[var(--admin-accent)] transition-colors"
                           />
                         </div>
                       ))}
                     {!addonsLoadError && addons.length === 0 && (
-                      <p className="text-center py-8 text-slate-500 dark:text-slate-400">
+                      <p className="text-center py-8 text-c-text-muted">
                         No add-ons available
                       </p>
                     )}
@@ -920,48 +921,48 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                   <div className="space-y-6">
                     <button
                       onClick={() => setSelectedAddon(null)}
-                      className="text-sm text-slate-500 dark:text-slate-400 hover:text-white flex items-center gap-1"
+                      className="text-sm text-c-text-muted hover:text-white flex items-center gap-1"
                     >
                       ← Back to add-ons
                     </button>
 
-                    <div className="p-4 bg-slate-50 dark:bg-white/[0.02] rounded-xl border border-slate-200 dark:border-navy-700">
+                    <div className="p-4 bg-c-bg dark:bg-c-surface/[0.02] rounded-xl border border-c-border-subtle">
                       <h4 className="font-semibold text-navy-900 dark:text-white">
                         {selectedAddon.name}
                       </h4>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                      <p className="text-sm text-c-text-muted mt-1">
                         {selectedAddon.description}
                       </p>
 
                       <div className="mt-4 flex items-center gap-4">
-                        <label className="text-sm text-slate-500 dark:text-slate-400">
+                        <label className="text-sm text-c-text-muted">
                           Quantity:
                         </label>
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setAddonQuantity(Math.max(1, addonQuantity - 1))}
-                            className="w-8 h-8 rounded-lg border border-slate-200 dark:border-navy-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-white hover:border-white/30"
+                            className="w-8 h-8 rounded-lg border border-c-border-subtle flex items-center justify-center text-c-text-muted hover:text-white hover:border-white/30"
                           >
                             -
                           </button>
-                          <span className="w-12 text-center font-medium text-white">
+                          <span className="w-12 text-center font-medium text-c-text">
                             {addonQuantity}
                           </span>
                           <button
                             onClick={() => setAddonQuantity(Math.min(10, addonQuantity + 1))}
-                            className="w-8 h-8 rounded-lg border border-slate-200 dark:border-navy-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-white hover:border-white/30"
+                            className="w-8 h-8 rounded-lg border border-c-border-subtle flex items-center justify-center text-c-text-muted hover:text-white hover:border-white/30"
                           >
                             +
                           </button>
                         </div>
                       </div>
 
-                      <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700 flex justify-between items-center">
-                        <span className="text-slate-500 dark:text-slate-400">Total:</span>
+                      <div className="mt-4 pt-4 border-t border-c-border-subtle flex justify-between items-center">
+                        <span className="text-c-text-muted">Total:</span>
                         <span className="text-xl font-bold text-navy-900 dark:text-white">
                           ${(selectedAddon.price * addonQuantity).toFixed(2)}
                           {selectedAddon.recurring && (
-                            <span className="text-sm font-normal text-slate-500 dark:text-slate-400">
+                            <span className="text-sm font-normal text-c-text-muted">
                               /month
                             </span>
                           )}
@@ -982,7 +983,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                 )}
               </div>
 
-              <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-3 bg-slate-50 dark:bg-white/[0.02]">
+              <div className="p-6 border-t border-c-border-subtle flex justify-end gap-3 bg-c-bg dark:bg-c-surface/[0.02]">
                 <button
                   onClick={() => {
                     setShowAddonsModal(false);
@@ -1016,16 +1017,16 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh]"
             >
-              <div className="p-6 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
+              <div className="p-6 border-b border-c-border-subtle flex items-center justify-between">
                 <h3 className="text-xl font-semibold text-navy-900 dark:text-white flex items-center gap-2">
                   <FileText size={20} className="text-[var(--admin-accent)]" />
                   {t('admin.billing.editTitle', 'Edit Billing Information')}
                 </h3>
                 <button
                   onClick={() => setShowBillingModal(false)}
-                  className="text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors"
+                  className="text-c-text-muted hover:text-navy-900 dark:hover:text-white transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -1043,7 +1044,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-1.5">
+                    <label className="block text-sm font-medium text-c-text-muted mb-1.5">
                       Billing Name
                     </label>
                     <input
@@ -1057,7 +1058,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-1.5">
+                    <label className="block text-sm font-medium text-c-text-muted mb-1.5">
                       Billing Email
                     </label>
                     <input
@@ -1071,7 +1072,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-1.5">
+                    <label className="block text-sm font-medium text-c-text-muted mb-1.5">
                       Tax ID
                     </label>
                     <input
@@ -1083,7 +1084,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-1.5">
+                    <label className="block text-sm font-medium text-c-text-muted mb-1.5">
                       VAT Number
                     </label>
                     <input
@@ -1097,7 +1098,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-200 dark:border-navy-700">
+                <div className="pt-4 border-t border-c-border-subtle">
                   <h4 className="text-sm font-medium text-navy-900 dark:text-white mb-4">
                     Billing Address
                   </h4>
@@ -1168,7 +1169,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                 </div>
               </div>
 
-              <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-3 bg-slate-50 dark:bg-white/[0.02]">
+              <div className="p-6 border-t border-c-border-subtle flex justify-end gap-3 bg-c-bg dark:bg-c-surface/[0.02]">
                 <button
                   onClick={() => setShowBillingModal(false)}
                   className="admin-btn admin-btn-subtle"

@@ -1,5 +1,7 @@
 import { AlertCircle, MessageSquare, PhoneIncoming, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';
@@ -20,8 +22,10 @@ export const SuperAdminSignalCenter: React.FC = () => {
   });
   const [selectedType, setSelectedType] = useState<'system' | 'client' | 'feedback' | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Close popover on click outside
   useEffect(() => {
@@ -45,8 +49,12 @@ export const SuperAdminSignalCenter: React.FC = () => {
       const feedback = allSignals.filter((n: any) => n.type === 'USER_FEEDBACK');
 
       setNotifications({ system, client, feedback });
-    } catch (error) {
-      console.error('Failed to fetch signals', error);
+      setError(false);
+    } catch (err) {
+      // Surface failure so the popover can show a Retry instead of an
+      // indistinguishable "no signals" empty state (which read as "all clear").
+      console.error('Failed to fetch signals', err);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -67,8 +75,9 @@ export const SuperAdminSignalCenter: React.FC = () => {
         ...prev,
         [type]: prev[type].filter((n) => n.id !== id),
       }));
-    } catch (error) {
-      console.error('Failed to dismiss', error);
+    } catch (err) {
+      console.error('Failed to dismiss', err);
+      toast.error(t('superAdmin.signalCenter.dismissFailed'));
     }
   };
 
@@ -200,11 +209,21 @@ export const SuperAdminSignalCenter: React.FC = () => {
           <div className="max-h-64 overflow-y-auto">
             {loading ? (
               <div className="p-6 text-center text-slate-500 dark:text-slate-400 text-xs">
-                Loading signals…
+                {t('superAdmin.signalCenter.loading')}
+              </div>
+            ) : error ? (
+              <div className="p-6 text-center text-xs">
+                <p className="text-danger-500 mb-2">{t('superAdmin.signalCenter.loadFailed')}</p>
+                <button
+                  onClick={() => fetchSignals()}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                >
+                  {t('common.retry')}
+                </button>
               </div>
             ) : notifications[selectedType].length === 0 ? (
               <div className="p-6 text-center text-slate-500 dark:text-slate-400 text-xs">
-                No active signals in this category.
+                {t('superAdmin.signalCenter.empty')}
               </div>
             ) : (
               <div className="divide-y divide-slate-200 dark:divide-white/5">

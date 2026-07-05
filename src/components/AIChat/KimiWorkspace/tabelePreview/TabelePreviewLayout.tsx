@@ -47,10 +47,10 @@ function SectionHeader({
   return (
     <div className="mb-4 flex items-center justify-between gap-3">
       <div>
-        <h2 id={id} className="text-lg font-semibold text-slate-950 dark:text-slate-100">
+        <h2 id={id} className="text-lg font-semibold text-c-text">
           {title}
         </h2>
-        {meta && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{meta}</p>}
+        {meta && <p className="mt-1 text-xs text-c-text-secondary">{meta}</p>}
       </div>
       {onToggle && (
         <button
@@ -58,7 +58,7 @@ function SectionHeader({
           aria-expanded={!isCollapsed}
           aria-controls={`${id}-content`}
           onClick={onToggle}
-          className="inline-flex items-center gap-1.5 rounded-hig-full border border-slate-300/80 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/30 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-200 dark:hover:bg-white/[0.11]"
+          className="inline-flex items-center gap-1.5 rounded-hig-full border border-c-border bg-c-surface-raised px-2.5 py-1 text-xs font-medium text-c-text hover:bg-c-border-subtle focus:outline-none focus:ring-2 focus:ring-sky-500/30/[0.11]/[0.075]/[0.11]"
         >
           {isCollapsed ? (
             <ChevronDown size={14} aria-hidden="true" />
@@ -76,11 +76,11 @@ function SectionHeader({
 
 function KpiCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-hig-md border border-slate-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
-      <p className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+    <div className="rounded-hig-md border border-c-border-subtle bg-c-surface p-4 shadow-sm">
+      <p className="text-xs font-medium uppercase tracking-[0.16em] text-c-text-secondary">
         {label}
       </p>
-      <p className="mt-2 text-2xl font-semibold text-slate-950 dark:text-slate-100">{value}</p>
+      <p className="mt-2 text-2xl font-semibold text-c-text">{value}</p>
     </div>
   );
 }
@@ -138,21 +138,21 @@ export function TabelePreviewLayout({
       aria-label={t('kimi.tabele.preview.documentLabel', {
         defaultValue: 'Tabele operational table preview',
       })}
-      className="mx-auto max-w-5xl rounded-hig-xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-navy-700 dark:bg-navy-950"
+      className="mx-auto max-w-5xl rounded-hig-xl border border-c-border-subtle bg-c-surface-raised p-4 shadow-sm"
     >
-      <div className="rounded-hig-lg border border-slate-200 bg-white px-6 py-7 shadow-sm dark:border-navy-700 dark:bg-navy-900 sm:px-8">
-        <header className="border-b border-slate-200 pb-6 dark:border-navy-700">
+      <div className="rounded-hig-lg border border-c-border-subtle bg-c-surface px-6 py-7 shadow-sm sm:px-8">
+        <header className="border-b border-c-border-subtle pb-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-hig-full border border-slate-300/80 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-200">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-hig-full border border-c-border bg-c-surface-raised px-3 py-1 text-xs font-medium text-c-text/[0.11]/[0.075]">
                 <Table2 size={14} aria-hidden="true" />
                 {t('kimi.tabele.preview.subtitle', { defaultValue: 'Operational Table' })}
               </div>
-              <h1 className="font-mono text-3xl font-semibold tracking-tight text-slate-950 dark:text-slate-100">
+              <h1 className="font-mono text-3xl font-semibold tracking-tight text-c-text">
                 {preview.title ||
                   t('kimi.tabele.preview.untitled', { defaultValue: 'Untitled table' })}
               </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-c-text-secondary">
                 {preview.summary ||
                   t('kimi.tabele.preview.coverDescription', {
                     defaultValue:
@@ -161,7 +161,7 @@ export function TabelePreviewLayout({
               </p>
             </div>
             <div className="flex flex-col items-start gap-2 sm:items-end">
-              <div className="flex items-center gap-2 rounded-hig-full border border-slate-300/80 bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-200">
+              <div className="flex items-center gap-2 rounded-hig-full border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-medium text-c-text/[0.11]/[0.075]">
                 <span className="h-2 w-2 rounded-hig-full bg-emerald-500" aria-hidden="true" />
                 {t('kimi.tabele.preview.livePreview', { defaultValue: 'Live preview' })}
               </div>
@@ -170,7 +170,7 @@ export function TabelePreviewLayout({
                   type="button"
                   onClick={onOpenBuilder}
                   data-testid="tabele-preview-open-grid"
-                  className="inline-flex items-center gap-2 rounded-hig-full bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:bg-sky-500 dark:hover:bg-sky-400"
+                  className="inline-flex items-center gap-2 rounded-hig-full bg-sky-600 px-4 py-1.5 text-xs font-semibold text-c-text shadow-sm transition-colors hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:bg-sky-500 dark:hover:bg-sky-400"
                 >
                   <Pencil size={14} aria-hidden="true" />
                   {t('kimi.tabele.preview.openGrid', { defaultValue: 'Open grid editor' })}
@@ -193,7 +193,7 @@ export function TabelePreviewLayout({
 
         <section
           aria-labelledby="tabele-preview-schema-heading"
-          className="border-t border-slate-200 py-6 dark:border-navy-700"
+          className="border-t border-c-border-subtle py-6"
         >
           <SectionHeader
             id="tabele-preview-schema-heading"
@@ -212,7 +212,7 @@ export function TabelePreviewLayout({
                   <TabeleSchemaBlock key={field.fieldId || field.name} field={field} />
                 ))
               ) : (
-                <p className="rounded-hig-md border border-dashed border-slate-300 p-4 text-sm text-slate-500 dark:border-navy-700 dark:text-slate-400">
+                <p className="rounded-hig-md border border-dashed border-c-border p-4 text-sm text-c-text-secondary">
                   {t('kimi.tabele.preview.emptySchema', {
                     defaultValue: 'No schema fields are available in this preview yet.',
                   })}
@@ -222,7 +222,7 @@ export function TabelePreviewLayout({
           ) : (
             <p
               id="tabele-preview-schema-heading-content"
-              className="rounded-hig-md border border-dashed border-slate-300 p-4 text-sm text-slate-500 dark:border-navy-700 dark:text-slate-400"
+              className="rounded-hig-md border border-dashed border-c-border p-4 text-sm text-c-text-secondary"
             >
               {t('kimi.tabele.preview.schemaCollapsed', {
                 defaultValue: 'Schema is collapsed for compact review.',
@@ -233,7 +233,7 @@ export function TabelePreviewLayout({
 
         <section
           aria-labelledby="tabele-preview-records-heading"
-          className="border-t border-slate-200 py-6 dark:border-navy-700"
+          className="border-t border-c-border-subtle py-6"
         >
           <SectionHeader
             id="tabele-preview-records-heading"
@@ -243,16 +243,16 @@ export function TabelePreviewLayout({
             })}
           />
           {tableData.columns.length > 0 ? (
-            <div className="overflow-hidden rounded-hig-lg border border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900">
+            <div className="overflow-hidden rounded-hig-lg border border-c-border-subtle bg-c-surface">
               <div className="overflow-x-auto">
                 <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full text-left text-xs">
-                  <thead className="bg-slate-100/95 dark:bg-navy-900">
+                  <thead className="bg-c-surface-raised">
                     <tr>
                       {tableData.columns.map((column) => (
                         <th
                           key={column}
                           scope="col"
-                          className="border-b border-slate-300/70 px-3 py-2 font-semibold text-slate-600 dark:border-white/[0.10] dark:text-slate-300"
+                          className="border-b border-c-border px-3 py-2 font-semibold text-c-text-secondary/[0.10]"
                         >
                           {column}
                         </th>
@@ -261,7 +261,7 @@ export function TabelePreviewLayout({
                         <th
                           scope="col"
                           data-testid="tabele-preview-provenance-header"
-                          className="border-b border-slate-300/70 px-3 py-2 font-semibold text-slate-600 dark:border-white/[0.10] dark:text-slate-300"
+                          className="border-b border-c-border px-3 py-2 font-semibold text-c-text-secondary/[0.10]"
                         >
                           {provenanceHeaderLabel}
                         </th>
@@ -274,12 +274,12 @@ export function TabelePreviewLayout({
                       return (
                         <tr
                           key={rowIndex}
-                          className="border-b border-slate-200/95 last:border-b-0 hover:bg-slate-100/80 dark:border-white/[0.085] dark:hover:bg-white/[0.04]"
+                          className="border-b border-c-border-subtle last:border-b-0 hover:bg-c-surface-raised/[0.085]/[0.04]"
                         >
                           {tableData.columns.map((column) => (
                             <td
                               key={column}
-                              className="max-w-[220px] truncate px-3 py-2 text-slate-700 dark:text-slate-300"
+                              className="max-w-[220px] truncate px-3 py-2 text-c-text"
                             >
                               {String(row[column] ?? '')}
                             </td>
@@ -299,7 +299,7 @@ export function TabelePreviewLayout({
                 </table>
               </div>
               {tableData.rows.length > 25 && (
-                <div className="border-t border-slate-200 px-3 py-2 text-center text-xs text-slate-500 dark:border-navy-700 dark:text-slate-400">
+                <div className="border-t border-c-border-subtle px-3 py-2 text-center text-xs text-c-text-secondary">
                   {t('kimi.tabele.preview.showingRows', {
                     defaultValue: 'Showing 25 of {{total}} rows',
                     total: tableData.rows.length,
@@ -308,9 +308,9 @@ export function TabelePreviewLayout({
               )}
             </div>
           ) : (
-            <div className="rounded-hig-lg border border-dashed border-slate-300 p-6 text-center dark:border-navy-700">
-              <Rows3 size={28} className="mx-auto text-slate-600" aria-hidden="true" />
-              <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+            <div className="rounded-hig-lg border border-dashed border-c-border p-6 text-center">
+              <Rows3 size={28} className="mx-auto text-c-text-secondary" aria-hidden="true" />
+              <p className="mt-3 text-sm text-c-text-secondary">
                 {t('kimi.tabele.preview.emptyRecords', {
                   defaultValue: 'No record sample is available in this preview yet.',
                 })}
@@ -320,7 +320,7 @@ export function TabelePreviewLayout({
                   type="button"
                   onClick={onOpenBuilder}
                   data-testid="tabele-preview-open-grid-empty"
-                  className="mt-4 inline-flex items-center gap-2 rounded-hig-full bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:bg-sky-500 dark:hover:bg-sky-400"
+                  className="mt-4 inline-flex items-center gap-2 rounded-hig-full bg-sky-600 px-4 py-1.5 text-xs font-semibold text-c-text shadow-sm transition-colors hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:bg-sky-500 dark:hover:bg-sky-400"
                 >
                   <Pencil size={14} aria-hidden="true" />
                   {t('kimi.tabele.preview.openGridEmpty', {
@@ -334,7 +334,7 @@ export function TabelePreviewLayout({
 
         <section
           aria-labelledby="tabele-preview-relations-heading"
-          className="border-t border-slate-200 py-6 dark:border-navy-700"
+          className="border-t border-c-border-subtle py-6"
         >
           <SectionHeader
             id="tabele-preview-relations-heading"
@@ -356,7 +356,7 @@ export function TabelePreviewLayout({
                   />
                 ))
               ) : (
-                <p className="rounded-hig-md border border-dashed border-slate-300 p-4 text-sm text-slate-500 dark:border-navy-700 dark:text-slate-400">
+                <p className="rounded-hig-md border border-dashed border-c-border p-4 text-sm text-c-text-secondary">
                   {t('kimi.tabele.preview.emptyRelations', {
                     defaultValue: 'No table relations are available in this preview yet.',
                   })}
@@ -366,7 +366,7 @@ export function TabelePreviewLayout({
           ) : (
             <p
               id="tabele-preview-relations-heading-content"
-              className="rounded-hig-md border border-dashed border-slate-300 p-4 text-sm text-slate-500 dark:border-navy-700 dark:text-slate-400"
+              className="rounded-hig-md border border-dashed border-c-border p-4 text-sm text-c-text-secondary"
             >
               {relations.length === 0
                 ? t('kimi.tabele.preview.noRelationsCollapsed', {
@@ -381,13 +381,13 @@ export function TabelePreviewLayout({
 
         <section
           aria-labelledby="tabele-preview-rationale-heading"
-          className="border-t border-slate-200 pt-6 dark:border-navy-700"
+          className="border-t border-c-border-subtle pt-6"
         >
           <div className="mb-4 flex items-center gap-2">
-            <Database size={18} className="text-slate-500" aria-hidden="true" />
+            <Database size={18} className="text-c-text-secondary" aria-hidden="true" />
             <h2
               id="tabele-preview-rationale-heading"
-              className="text-lg font-semibold text-slate-950 dark:text-slate-100"
+              className="text-lg font-semibold text-c-text"
             >
               {t('kimi.tabele.preview.rationaleTitle', { defaultValue: 'AI Rationale' })}
             </h2>
@@ -398,7 +398,7 @@ export function TabelePreviewLayout({
               onOpenProposalQueue={onOpenProposalQueue}
             />
           ) : (
-            <div className="rounded-hig-lg border border-dashed border-slate-300 p-5 text-sm text-slate-500 dark:border-navy-700 dark:text-slate-400">
+            <div className="rounded-hig-lg border border-dashed border-c-border p-5 text-sm text-c-text-secondary">
               {t('kimi.tabele.preview.emptyRationale', {
                 defaultValue: 'No AI rationale has been attached to this preview yet.',
               })}

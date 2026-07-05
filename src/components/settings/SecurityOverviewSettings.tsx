@@ -67,7 +67,7 @@ const SecurityScoreRing: React.FC<{ score: number; max: number }> = ({ score, ma
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (pct / 100) * circumference;
 
-  const color = pct >= 80 ? 'text-emerald-400' : pct >= 50 ? 'text-amber-400' : 'text-danger-400';
+  const color = pct >= 80 ? 'text-emerald-400' : pct >= 50 ? 'text-amber-400' : 'text-rose-400';
   const bgRing = 'text-white/[0.06]';
   const label =
     pct >= 80
@@ -102,7 +102,7 @@ const SecurityScoreRing: React.FC<{ score: number; max: number }> = ({ score, ma
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className={`text-2xl font-bold ${color}`}>{score}</span>
-          <span className="text-[10px] text-slate-600">/ {max}</span>
+          <span className="text-[10px] text-c-text-secondary">/ {max}</span>
         </div>
       </div>
       <span className={`text-xs font-semibold ${color}`}>{label}</span>
@@ -139,8 +139,8 @@ const StatusCard: React.FC<StatusCardProps> = ({
     onClick={onAction}
     className={cn(
       'flex items-center gap-3 w-full rounded-xl p-3.5',
-      'bg-white/[0.03] border border-white/[0.06]',
-      'hover:bg-white/[0.06] hover:border-white/[0.10] transition-all duration-200',
+      'bg-c-surface/[0.03] border border-white/[0.06]',
+      'hover:bg-c-surface/[0.06] hover:border-white/[0.10] transition-all duration-200',
       'text-left group'
     )}
   >
@@ -148,11 +148,11 @@ const StatusCard: React.FC<StatusCardProps> = ({
       <Icon size={18} className={iconColor} />
     </div>
     <div className="flex-1 min-w-0">
-      <p className="text-sm font-medium text-slate-200">{title}</p>
+      <p className="text-sm font-medium text-c-text-muted">{title}</p>
       <p className={cn('text-xs mt-0.5', statusColor)}>{status}</p>
     </div>
     {action && (
-      <div className="flex items-center gap-1 text-xs text-slate-500 group-hover:text-primary-400 transition-colors flex-shrink-0">
+      <div className="flex items-center gap-1 text-xs text-c-text-muted group-hover:text-c-accent transition-colors flex-shrink-0">
         <span className="hidden sm:inline">{action}</span>
         <ChevronRight size={14} />
       </div>
@@ -439,15 +439,15 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
   return (
     <div className="space-y-6">
       {/* ── Security Score + Status Cards ── */}
-      <div className="bg-white dark:bg-navy-800/50 rounded-xl border border-slate-200 dark:border-white/5 overflow-hidden">
+      <div className="bg-c-surface-raised rounded-xl border border-c-border-subtle overflow-hidden">
         <div className="p-6">
           <div className="flex items-start gap-6">
             <SecurityScoreRing score={score} max={securityChecks.length} />
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              <h3 className="text-lg font-semibold text-c-text">
                 {t('settings.security.overviewTitle', 'Security Overview')}
               </h3>
-              <p className="text-sm text-slate-600 mt-1">
+              <p className="text-sm text-c-text-secondary mt-1">
                 {t('settings.security.overviewDesc', 'Review and strengthen your account security')}
               </p>
               <div className="mt-4 space-y-1.5">
@@ -456,9 +456,9 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                     {check.met ? (
                       <CheckCircle size={14} className="text-emerald-400 flex-shrink-0" />
                     ) : (
-                      <X size={14} className="text-slate-500 flex-shrink-0" />
+                      <X size={14} className="text-c-text-muted flex-shrink-0" />
                     )}
-                    <span className={check.met ? 'text-slate-600' : 'text-slate-500'}>
+                    <span className={check.met ? 'text-c-text-secondary' : 'text-c-text-muted'}>
                       {check.label}
                     </span>
                   </div>
@@ -509,7 +509,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                 <button
                   type="button"
                   onClick={() => setShowPasswords(!showPasswords)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-c-text-muted hover:text-c-text-muted transition-colors"
                 >
                   {showPasswords ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -523,7 +523,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                     key={i}
                     className={cn(
                       'flex items-center gap-2 text-xs',
-                      req.met ? 'text-emerald-400' : 'text-slate-500'
+                      req.met ? 'text-emerald-400' : 'text-c-text-muted'
                     )}
                   >
                     {req.met ? <Check size={12} /> : <X size={12} />}
@@ -554,7 +554,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
               <button
                 type="submit"
                 disabled={!allReqsMet || !passwordsMatch || passwordLoading}
-                className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-c-accent hover:bg-c-accent text-white text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
               >
                 {passwordLoading && <Loader2 size={14} className="animate-spin" />}
                 {t('settings.password.update', 'Update Password')}
@@ -567,7 +567,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                   setNewPassword('');
                   setConfirmPassword('');
                 }}
-                className="px-4 py-2 text-sm text-slate-600 hover:text-white transition-colors"
+                className="px-4 py-2 text-sm text-c-text-secondary hover:text-c-text transition-colors"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -576,11 +576,11 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
         ) : (
           <StatusCard
             icon={Key}
-            iconColor="text-primary-400"
-            iconBg="bg-primary-500/10"
+            iconColor="text-c-accent"
+            iconBg="bg-c-accent-soft"
             title={t('settings.password.title', 'Password')}
             status={t('settings.security.passwordSet', 'Password is set')}
-            statusColor="text-slate-600"
+            statusColor="text-c-text-secondary"
             action={t('common.change', 'Change')}
             onAction={() => setActivePanel('password')}
           />
@@ -619,7 +619,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
             <button
               type="button"
               onClick={() => setDisableConfirm(true)}
-              className="text-xs text-slate-500 hover:text-danger-400 transition-colors"
+              className="text-xs text-c-text-muted hover:text-rose-400 transition-colors"
             >
               {t('security.mfa.disable', 'Disable 2FA')}
             </button>
@@ -629,14 +629,14 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
         {/* MFA Disable confirmation */}
         {disableConfirm && (
           <div className="space-y-4 max-w-md">
-            <div className="p-4 rounded-xl bg-danger-500/[0.08] border border-danger-500/20">
+            <div className="p-4 rounded-xl bg-rose-500/[0.08] border border-rose-500/20">
               <div className="flex items-start gap-3">
-                <AlertTriangle size={18} className="text-danger-400 mt-0.5 flex-shrink-0" />
+                <AlertTriangle size={18} className="text-rose-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-danger-300">
+                  <p className="text-sm font-medium text-rose-300">
                     {t('security.mfa.disableTitle', 'Disable Two-Factor Authentication?')}
                   </p>
-                  <p className="text-xs text-danger-400/70 mt-1">
+                  <p className="text-xs text-rose-400/70 mt-1">
                     {t(
                       'security.mfa.disableConfirmText',
                       'This will remove the extra security layer from your account.'
@@ -652,12 +652,12 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                 onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
                 maxLength={6}
                 placeholder="000000"
-                className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-danger-500 focus:border-transparent"
+                className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-c-surface-raised border border-c-border rounded-lg text-c-text focus:ring-2 focus:ring-rose-500 focus:border-transparent"
               />
               <button
                 onClick={disableMfa}
                 disabled={mfaLoading || verificationCode.length !== 6}
-                className="px-4 py-2 bg-danger-600 hover:bg-danger-500 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2"
               >
                 {mfaLoading && <Loader2 size={14} className="animate-spin" />}
                 {t('security.mfa.confirmDisable', 'Disable')}
@@ -668,12 +668,12 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                   setVerificationCode('');
                   setMfaError(null);
                 }}
-                className="px-4 py-2 text-sm text-slate-600 hover:text-white transition-colors"
+                className="px-4 py-2 text-sm text-c-text-secondary hover:text-c-text transition-colors"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
             </div>
-            {mfaError && <p className="text-xs text-danger-400">{mfaError}</p>}
+            {mfaError && <p className="text-xs text-rose-400">{mfaError}</p>}
           </div>
         )}
 
@@ -703,20 +703,20 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
               ].map((b) => (
                 <div
                   key={b.title}
-                  className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]"
+                  className="p-3 rounded-xl bg-c-surface/[0.03] border border-white/[0.06]"
                 >
-                  <div className="p-1.5 rounded-lg bg-primary-500/10 w-fit mb-2">
-                    <b.icon size={16} className="text-primary-400" />
+                  <div className="p-1.5 rounded-lg bg-c-accent-soft w-fit mb-2">
+                    <b.icon size={16} className="text-c-accent" />
                   </div>
-                  <p className="text-sm font-medium text-slate-200">{b.title}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{b.desc}</p>
+                  <p className="text-sm font-medium text-c-text-muted">{b.title}</p>
+                  <p className="text-xs text-c-text-muted mt-0.5">{b.desc}</p>
                 </div>
               ))}
             </div>
             <button
               onClick={startMfaSetup}
               disabled={mfaLoading}
-              className="w-full py-3 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-3 bg-c-accent hover:bg-c-accent text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {mfaLoading ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -725,7 +725,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
               )}
               {t('security.mfa.enable', 'Enable Two-Factor Authentication')}
             </button>
-            {mfaError && <p className="text-xs text-danger-400 text-center mt-2">{mfaError}</p>}
+            {mfaError && <p className="text-xs text-rose-400 text-center mt-2">{mfaError}</p>}
           </div>
         )}
 
@@ -734,27 +734,27 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
           <div className="space-y-5 max-w-lg">
             <StepProgress current={1} />
             <div className="flex flex-col sm:flex-row gap-6">
-              <div className="flex-shrink-0 bg-white rounded-xl p-3 w-fit self-center sm:self-start">
+              <div className="flex-shrink-0 bg-c-surface rounded-xl p-3 w-fit self-center sm:self-start">
                 {qrCode ? (
                   <img src={qrCode} alt="MFA QR Code" className="w-40 h-40" />
                 ) : (
                   <div className="w-40 h-40 flex items-center justify-center">
-                    <QrCode className="w-10 h-10 text-slate-600" />
+                    <QrCode className="w-10 h-10 text-c-text-secondary" />
                   </div>
                 )}
               </div>
               <div className="flex-1 space-y-4">
                 <div>
-                  <p className="text-xs font-medium text-slate-600 mb-1.5">
+                  <p className="text-xs font-medium text-c-text-secondary mb-1.5">
                     {t('security.mfa.cantScan', "Can't scan? Enter this code manually:")}
                   </p>
                   <div className="flex items-center gap-2">
-                    <code className="flex-1 bg-slate-50 dark:bg-navy-800 px-3 py-2 rounded-lg text-xs font-mono text-slate-700 dark:text-slate-300 select-all overflow-x-auto border border-slate-200 dark:border-white/5">
+                    <code className="flex-1 bg-c-surface-raised px-3 py-2 rounded-lg text-xs font-mono text-c-text-secondary select-all overflow-x-auto border border-c-border-subtle">
                       {showSecret ? secret : '•'.repeat(32)}
                     </code>
                     <button
                       onClick={() => setShowSecret(!showSecret)}
-                      className="p-1.5 text-slate-500 hover:text-slate-300"
+                      className="p-1.5 text-c-text-muted hover:text-c-text-muted"
                     >
                       {showSecret ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
@@ -763,7 +763,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                         navigator.clipboard.writeText(secret);
                         toast.success(t('common.copied', 'Copied!'));
                       }}
-                      className="p-1.5 text-slate-500 hover:text-slate-300"
+                      className="p-1.5 text-c-text-muted hover:text-c-text-muted"
                     >
                       <Copy size={14} />
                     </button>
@@ -771,7 +771,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                 </div>
                 <SettingsDivider />
                 <div>
-                  <p className="text-xs font-medium text-slate-600 mb-2">
+                  <p className="text-xs font-medium text-c-text-secondary mb-2">
                     {t('security.mfa.verifyTitle', 'Enter Verification Code')}
                   </p>
                   <div className="flex gap-2">
@@ -781,13 +781,13 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                       onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
                       maxLength={6}
                       placeholder="000000"
-                      className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-c-surface-raised border border-c-border rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
                       onKeyDown={(e) => e.key === 'Enter' && verifyMfa()}
                     />
                     <button
                       onClick={verifyMfa}
                       disabled={mfaLoading || verificationCode.length !== 6}
-                      className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2"
+                      className="px-4 py-2 bg-c-accent hover:bg-c-accent text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2"
                     >
                       {mfaLoading ? (
                         <Loader2 size={14} className="animate-spin" />
@@ -797,7 +797,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                       {t('security.mfa.verify', 'Verify')}
                     </button>
                   </div>
-                  {mfaError && <p className="text-xs text-danger-400 mt-2">{mfaError}</p>}
+                  {mfaError && <p className="text-xs text-rose-400 mt-2">{mfaError}</p>}
                 </div>
               </div>
             </div>
@@ -808,7 +808,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                 setVerificationCode('');
                 setMfaError(null);
               }}
-              className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+              className="text-xs text-c-text-muted hover:text-c-text-muted transition-colors"
             >
               {t('common.cancel', 'Cancel Setup')}
             </button>
@@ -841,20 +841,20 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-1.5 bg-slate-50 dark:bg-navy-900/50 p-3 rounded-xl border border-slate-200 dark:border-white/5">
+            <div className="grid grid-cols-2 gap-1.5 bg-c-surface-raised p-3 rounded-xl border border-c-border-subtle">
               {backupCodes.map((code, i) => (
                 <button
                   key={i}
                   onClick={() => copyCode(code, i)}
-                  className="flex items-center justify-between px-2.5 py-1.5 bg-slate-100 dark:bg-navy-800/50 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-800 transition-colors group text-left"
+                  className="flex items-center justify-between px-2.5 py-1.5 bg-c-surface-raised rounded-lg hover:bg-c-surface transition-colors group text-left"
                 >
-                  <code className="font-mono text-xs text-slate-600">{code}</code>
+                  <code className="font-mono text-xs text-c-text-secondary">{code}</code>
                   {copiedIndex === i ? (
                     <CheckCircle size={12} className="text-emerald-400" />
                   ) : (
                     <Copy
                       size={12}
-                      className="text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="text-c-text-secondary opacity-0 group-hover:opacity-100 transition-opacity"
                     />
                   )}
                 </button>
@@ -864,13 +864,13 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
             <div className="flex gap-2">
               <button
                 onClick={copyAllCodes}
-                className="flex-1 py-2 text-xs font-medium text-slate-600 hover:text-white hover:bg-white/5 rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                className="flex-1 py-2 text-xs font-medium text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors flex items-center justify-center gap-1.5"
               >
                 <Copy size={12} /> {t('security.mfa.copyAll', 'Copy All')}
               </button>
               <button
                 onClick={downloadCodes}
-                className="flex-1 py-2 text-xs font-medium text-slate-600 hover:text-white hover:bg-white/5 rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                className="flex-1 py-2 text-xs font-medium text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors flex items-center justify-center gap-1.5"
               >
                 <Download size={12} /> {t('security.mfa.download', 'Download')}
               </button>
@@ -878,7 +878,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
 
             <button
               onClick={completeMfaSetup}
-              className="w-full py-3 bg-white/[0.08] hover:bg-white/[0.12] text-white text-sm font-semibold rounded-xl transition-colors"
+              className="w-full py-3 bg-c-surface-raised hover:bg-c-surface text-c-text text-sm font-semibold rounded-xl transition-colors border border-c-border-subtle"
             >
               {t('security.mfa.savedCodes', 'I have saved my backup codes')}
             </button>
@@ -908,7 +908,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                 ? maskEmail(recoveryEmail)
                 : t('settings.recovery.notSet', 'Not configured')
             }
-            statusColor={recoveryEmail ? 'text-slate-600' : 'text-amber-400'}
+            statusColor={recoveryEmail ? 'text-c-text-secondary' : 'text-amber-400'}
             action={recoveryEmail ? t('common.change', 'Change') : t('common.add', 'Add')}
             onAction={() => setActivePanel('recovery-email')}
           />
@@ -920,7 +920,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
             iconBg="bg-emerald-500/10"
             title={t('settings.recovery.phone', 'Recovery Phone')}
             status={recoveryPhone || t('settings.recovery.notSet', 'Not configured')}
-            statusColor={recoveryPhone ? 'text-slate-600' : 'text-amber-400'}
+            statusColor={recoveryPhone ? 'text-c-text-secondary' : 'text-amber-400'}
             action={recoveryPhone ? t('common.change', 'Change') : t('common.add', 'Add')}
             onAction={() => setActivePanel('recovery-phone')}
           />
@@ -928,8 +928,8 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
           {/* Backup Codes */}
           <StatusCard
             icon={Key}
-            iconColor="text-primary-400"
-            iconBg="bg-primary-500/10"
+            iconColor="text-c-accent"
+            iconBg="bg-c-accent-soft"
             title={t('settings.recovery.backupCodes', 'Backup Codes')}
             status={
               recoveryBackupCount > 0
@@ -938,7 +938,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                   })
                 : t('settings.recovery.noCodes', 'No backup codes generated')
             }
-            statusColor={recoveryBackupCount > 0 ? 'text-slate-600' : 'text-amber-400'}
+            statusColor={recoveryBackupCount > 0 ? 'text-c-text-secondary' : 'text-amber-400'}
             action={
               recoveryBackupCount > 0
                 ? t('settings.recovery.regenerate', 'Regenerate')
@@ -975,7 +975,7 @@ const StepProgress: React.FC<{ current: 1 | 2 | 3 }> = ({ current }) => {
               <div
                 className={cn(
                   'w-8 h-0.5 rounded-full',
-                  isCompleted ? 'bg-emerald-500' : 'bg-white/[0.06]'
+                  isCompleted ? 'bg-emerald-500' : 'bg-c-surface/[0.06]'
                 )}
               />
             )}
@@ -986,8 +986,8 @@ const StepProgress: React.FC<{ current: 1 | 2 | 3 }> = ({ current }) => {
                   isCompleted
                     ? 'bg-emerald-500 text-white'
                     : isActive
-                      ? 'bg-navy-900 text-white'
-                      : 'bg-white/[0.06] text-slate-500'
+                      ? 'bg-c-accent text-white'
+                      : 'bg-c-surface/[0.06] text-c-text-muted'
                 )}
               >
                 {isCompleted ? <Check size={10} /> : num}
@@ -995,7 +995,7 @@ const StepProgress: React.FC<{ current: 1 | 2 | 3 }> = ({ current }) => {
               <span
                 className={cn(
                   'text-[10px] mt-1',
-                  isActive || isCompleted ? 'text-slate-600' : 'text-slate-500'
+                  isActive || isCompleted ? 'text-c-text-secondary' : 'text-c-text-muted'
                 )}
               >
                 {label}

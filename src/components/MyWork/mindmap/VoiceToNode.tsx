@@ -122,16 +122,16 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-md rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
+      <div className="w-full max-w-md rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
           <div className="flex items-center gap-2">
-            <Mic size={16} className="text-danger-500" />
-            <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+            <Mic size={16} className="text-c-danger" />
+            <h3 className="text-sm font-bold text-c-text dark:text-c-text">
               {isPl ? 'Mów pomysły' : 'Voice to Node'}
             </h3>
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mt-1">
             {isPl
               ? 'Mów swoje pomysły — AI rozdzieli je na osobne węzły.'
               : 'Speak your ideas — AI will split them into separate nodes.'}
@@ -144,7 +144,7 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
             {listening ? (
               <button
                 onClick={stopListening}
-                className="w-16 h-16 rounded-full bg-danger-500 hover:bg-danger-600 text-white flex items-center justify-center shadow-lg shadow-danger-500/30 transition-all animate-pulse"
+                className="w-16 h-16 rounded-full bg-c-danger hover:bg-c-danger text-c-text flex items-center justify-center shadow-lg shadow-danger-500/30 transition-all animate-pulse"
               >
                 <Square size={24} />
               </button>
@@ -152,14 +152,14 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
               <button
                 onClick={startListening}
                 disabled={locked}
-                className="w-16 h-16 rounded-full bg-gradient-to-br from-danger-500 to-danger-600 hover:from-danger-600 hover:to-danger-700 text-white flex items-center justify-center shadow-lg shadow-danger-500/20 transition-all disabled:opacity-40"
+                className="w-16 h-16 rounded-full bg-c-surface-raised from-danger-500 to-danger-600 hover:from-danger-600 hover:to-danger-700 text-c-text flex items-center justify-center shadow-lg shadow-danger-500/20 transition-all disabled:opacity-40"
               >
                 <Mic size={24} />
               </button>
             )}
           </div>
 
-          <div className="text-center text-[10px] text-slate-600 mb-4">
+          <div className="text-center text-[10px] text-c-text-secondary mb-4">
             {listening
               ? isPl
                 ? '🔴 Nagrywam... Mów swoje pomysły'
@@ -172,10 +172,10 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
           {/* Transcript */}
           {transcript && (
             <div className="mb-4">
-              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-1.5">
+              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1.5">
                 {isPl ? 'Transkrypcja' : 'Transcript'}
               </div>
-              <div className="p-3 rounded-xl bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30 text-[11px] text-slate-700 dark:text-slate-200 leading-relaxed">
+              <div className="p-3 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border text-[11px] text-c-text-secondary dark:text-c-text leading-relaxed">
                 {transcript}
               </div>
             </div>
@@ -184,17 +184,17 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
           {/* Parsed nodes */}
           {parsedNodes.length > 0 && (
             <div>
-              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-1.5">
+              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1.5">
                 {isPl ? 'Rozpoznane pomysły' : 'Detected ideas'} ({parsedNodes.length})
               </div>
               <div className="space-y-1 max-h-[200px] overflow-y-auto">
                 {parsedNodes.map((label, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center gap-2 p-2 rounded-xl bg-emerald-500/5 border border-emerald-400/10"
+                    className="flex items-center gap-2 p-2 rounded-xl bg-c-surface-raised border border-c-success"
                   >
-                    <Sparkles size={10} className="text-emerald-500 shrink-0" />
-                    <span className="text-[11px] text-slate-700 dark:text-slate-200">{label}</span>
+                    <Sparkles size={10} className="text-c-success shrink-0" />
+                    <span className="text-[11px] text-c-text-secondary dark:text-c-text">{label}</span>
                   </div>
                 ))}
               </div>
@@ -202,17 +202,17 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center gap-2">
+        <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border flex items-center gap-2">
           <button
             onClick={onClose}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
           <button
             onClick={handleApply}
             disabled={parsedNodes.length === 0 || locked}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-emerald-500/15 to-green-500/10 text-emerald-700 dark:text-emerald-300 hover:from-emerald-500/25 hover:to-green-500/15 border border-emerald-500/10 transition-all disabled:opacity-40"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-c-surface-raised text-c-success dark:text-c-success border border-c-success transition-all disabled:opacity-40"
           >
             <Sparkles size={12} />
             {isPl ? `Dodaj ${parsedNodes.length} pomysłów` : `Add ${parsedNodes.length} ideas`}

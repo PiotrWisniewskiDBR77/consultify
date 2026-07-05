@@ -345,6 +345,12 @@ let tableEnsured = false;
 
 async function ensureTokenTable(): Promise<void> {
   if (tableEnsured) return;
+  // Fail-soft: opportunistic idempotent DDL invoked first by the read paths
+  // (getStoredToken / getValidAccessToken / listConnectedIntegrations). Use
+  // fallback:true so a transient DDL failure can NEVER reject and bubble up as a
+  // bare HTTP 500 on the integration-status surfaces. tableEnsured is only set
+  // after all statements resolve, so a transient failure simply retries next
+  // call. Token INSERT/UPDATE writes keep their own fallback semantics.
   await dbRun(
     `
     CREATE TABLE IF NOT EXISTS integration_oauth_tokens (
@@ -364,15 +370,15 @@ async function ensureTokenTable(): Promise<void> {
     )
   `,
     [],
-    { fallback: false }
+    { fallback: true }
   );
   await dbRun(`CREATE INDEX IF NOT EXISTS idx_iot_user ON integration_oauth_tokens(user_id)`, [], {
-    fallback: false,
+    fallback: true,
   });
   await dbRun(
     `CREATE INDEX IF NOT EXISTS idx_iot_connector ON integration_oauth_tokens(connector_id)`,
     [],
-    { fallback: false }
+    { fallback: true }
   );
   tableEnsured = true;
 }

@@ -80,11 +80,11 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
   const statusIcon = (status: ConnectorRun['status']) => {
     switch (status) {
       case 'success':
-        return <Check size={14} className="text-emerald-500" />;
+        return <Check size={14} className="text-c-success" />;
       case 'failed':
         return <AlertTriangle size={14} className="text-danger-500" />;
       case 'running':
-        return <Loader2 size={14} className="animate-spin text-blue-500" />;
+        return <Loader2 size={14} className="animate-spin text-c-info" />;
     }
   };
 
@@ -104,15 +104,15 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
-          className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          className="p-1.5 rounded-lg text-c-text-secondary hover:text-c-text-muted hover:bg-c-surface-raised transition-colors"
         >
           <ArrowLeft size={16} />
         </button>
         <div>
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+          <h3 className="text-sm font-semibold text-c-text">
             {isPl ? 'Historia uruchomień' : 'Run History'}
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{connector.name}</p>
+          <p className="text-xs text-c-text-muted">{connector.name}</p>
         </div>
       </div>
 
@@ -134,34 +134,34 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
       {/* Run list */}
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
-          <Loader2 size={20} className="animate-spin text-slate-600" />
+          <Loader2 size={20} className="animate-spin text-c-text-secondary" />
         </div>
       ) : runs.length === 0 ? (
-        <p className="text-center text-sm text-slate-600 dark:text-slate-500 py-8">
+        <p className="text-center text-sm text-c-text-muted py-8">
           {isPl ? 'Brak uruchomień' : 'No runs yet'}
         </p>
       ) : (
-        <div className="rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden divide-y divide-slate-200 dark:divide-navy-800">
+        <div className="rounded-xl border border-c-border overflow-hidden divide-y divide-c-border-subtle">
           {runs.map((run) => {
             const isExpanded = expandedRun === run.id;
             return (
               <div key={run.id}>
                 <button
                   onClick={() => setExpandedRun(isExpanded ? null : run.id)}
-                  className="flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+                  className="flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-c-surface-raised transition-colors"
                 >
                   {statusIcon(run.status)}
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      <span className="text-xs font-medium text-c-text-muted">
                         {statusLabel(run.status)}
                       </span>
-                      <span className="text-[11px] text-slate-600 dark:text-slate-500">
+                      <span className="text-[11px] text-c-text-muted">
                         {formatTime(run.startedAt)}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-3 mt-0.5 text-[11px] text-c-text-muted">
                       <span className="inline-flex items-center gap-1">
                         <Clock size={10} />
                         {formatDuration(run.durationMs)}
@@ -171,7 +171,7 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
                         {isPl ? 'zaimportowanych' : 'imported'}
                       </span>
                       {run.recordsSkipped > 0 && (
-                        <span className="text-amber-500">
+                        <span className="text-c-warning">
                           {run.recordsSkipped} {isPl ? 'pominiętych' : 'skipped'}
                         </span>
                       )}
@@ -186,9 +186,9 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
                   {/* Running progress */}
                   {run.status === 'running' && (
                     <div className="w-20">
-                      <div className="h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                      <div className="h-1.5 rounded-full bg-c-surface-raised overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-blue-500 animate-pulse"
+                          className="h-full rounded-full bg-c-info animate-pulse"
                           style={{
                             width: run.recordsFetched
                               ? `${Math.min(100, Math.round((run.recordsImported / run.recordsFetched) * 100))}%`
@@ -201,9 +201,9 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
 
                   {run.error &&
                     (isExpanded ? (
-                      <ChevronDown size={14} className="text-slate-600" />
+                      <ChevronDown size={14} className="text-c-text-secondary" />
                     ) : (
-                      <ChevronRight size={14} className="text-slate-600" />
+                      <ChevronRight size={14} className="text-c-text-secondary" />
                     ))}
                 </button>
 
@@ -240,16 +240,16 @@ const StatCard: React.FC<{
 }> = ({ label, value, accent }) => {
   const accentCls =
     accent === 'green'
-      ? 'text-emerald-600 dark:text-emerald-400'
+      ? 'text-c-success'
       : accent === 'yellow'
-        ? 'text-amber-600 dark:text-amber-400'
+        ? 'text-c-warning'
         : accent === 'red'
           ? 'text-danger-600 dark:text-danger-400'
-          : 'text-slate-800 dark:text-white';
+          : 'text-c-text';
 
   return (
-    <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50 p-2.5 text-center">
-      <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">
+    <div className="rounded-lg border border-c-border bg-c-surface-raised p-2.5 text-center">
+      <p className="text-[10px] font-medium text-c-text-muted uppercase tracking-wider mb-0.5">
         {label}
       </p>
       <p className={`text-lg font-bold ${accentCls}`}>{value}</p>

@@ -14,7 +14,7 @@ export const FontSizeDropdown: React.FC<FontSizeDropdownProps> = ({
   onClose,
 }) => {
   return (
-    <div className="w-24 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl py-1">
+    <div className="w-24 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl py-1">
       {SIZES.map((s) => {
         const isActive = current === s;
         return (
@@ -26,8 +26,8 @@ export const FontSizeDropdown: React.FC<FontSizeDropdownProps> = ({
             }}
             className={`w-full px-3 py-1.5 text-left transition-colors ${
               isActive
-                ? 'bg-primary-500/8 text-primary-600 dark:text-primary-400 font-semibold'
-                : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
+                ? 'bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text font-semibold'
+                : 'text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
             }`}
             style={{ fontSize: Math.min(s, 20) }}
           >

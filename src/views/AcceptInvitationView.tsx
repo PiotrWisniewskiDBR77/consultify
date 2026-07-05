@@ -216,10 +216,10 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
 
   if (loading || validating) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-c-bg flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">Validating invitation...</p>
+          <Loader2 className="w-12 h-12 animate-spin text-c-accent mx-auto mb-4" />
+          <p className="text-c-text-secondary">Validating invitation...</p>
         </div>
       </div>
     );
@@ -227,16 +227,16 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
 
   if (error && !invitation) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-white flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-xl p-8 max-w-md w-full text-center">
-          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Invalid Invitation</h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6" role="alert" aria-live="assertive">
+      <div className="min-h-screen bg-c-bg flex items-center justify-center p-4">
+        <div className="bg-c-surface rounded-xl shadow-xl p-8 max-w-md w-full text-center">
+          <XCircle className="w-16 h-16 text-c-danger mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-c-text mb-2">Invalid Invitation</h1>
+          <p className="text-c-text-secondary mb-6" role="alert" aria-live="assertive">
             {error}
           </p>
           <a
             href="/"
-            className="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            className="inline-flex items-center px-6 py-3 bg-c-accent hover:opacity-90 text-white rounded-lg transition-opacity"
           >
             Go to Home
           </a>
@@ -247,17 +247,17 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-white flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-xl p-8 max-w-md w-full text-center">
-          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome!</h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
+      <div className="min-h-screen bg-c-bg flex items-center justify-center p-4">
+        <div className="bg-c-surface rounded-xl shadow-xl p-8 max-w-md w-full text-center">
+          <CheckCircle className="w-16 h-16 text-c-success mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-c-text mb-2">Welcome!</h1>
+          <p className="text-c-text-secondary mb-6">
             Your account has been created successfully. You can now log in to access your
             organization.
           </p>
           <a
             href="/login"
-            className="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            className="inline-flex items-center px-6 py-3 bg-c-accent hover:opacity-90 text-white rounded-lg transition-opacity"
           >
             Log In
           </a>
@@ -267,12 +267,12 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center p-4 [color-scheme:light]">
-      <div className="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden">
+    <div className="min-h-screen bg-c-bg flex items-center justify-center p-4 [color-scheme:light]">
+      <div className="bg-c-surface rounded-xl shadow-xl max-w-lg w-full overflow-hidden">
         {/* Header */}
-        <div className="bg-indigo-600 text-white p-6">
+        <div className="bg-c-accent text-white p-6">
           <h1 className="text-2xl font-bold mb-2">Join {invitation?.organizationName}</h1>
-          <p className="text-indigo-100">
+          <p className="text-white/80">
             You've been invited to join as a{' '}
             <span className="font-semibold">{invitation?.roleToAssign}</span>
             {invitation?.invitationType === InvitationType.PROJECT && invitation?.projectName && (
@@ -285,24 +285,24 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
         </div>
 
         {/* Invitation Details */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-c-border-subtle">
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-50 rounded-lg">
-                <Building2 className="w-5 h-5 text-indigo-600" />
+              <div className="p-2 bg-c-accent-soft rounded-lg">
+                <Building2 className="w-5 h-5 text-c-accent" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Organization</p>
-                <p className="font-medium text-gray-900">{invitation?.organizationName}</p>
+                <p className="text-xs text-c-text-muted">Organization</p>
+                <p className="font-medium text-c-text">{invitation?.organizationName}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-50 rounded-lg">
-                <Shield className="w-5 h-5 text-indigo-600" />
+              <div className="p-2 bg-c-accent-soft rounded-lg">
+                <Shield className="w-5 h-5 text-c-accent" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Role</p>
-                <p className="font-medium text-gray-900">{invitation?.roleToAssign}</p>
+                <p className="text-xs text-c-text-muted">Role</p>
+                <p className="font-medium text-c-text">{invitation?.roleToAssign}</p>
               </div>
             </div>
           </div>
@@ -311,7 +311,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {emailMismatch && (
-            <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-c-warning/10 border border-c-warning/30 text-c-warning px-4 py-3 rounded-lg text-sm">
               <p className="font-medium mb-1">Signed in with a different account</p>
               <p className="mb-3">
                 This invitation is for <span className="font-semibold">{invitation?.email}</span>.
@@ -320,7 +320,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
               <button
                 type="button"
                 onClick={handleSignOutAndContinue}
-                className="inline-flex items-center px-3 py-1.5 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
+                className="inline-flex items-center px-3 py-1.5 bg-c-warning text-white rounded-md hover:opacity-90 transition-opacity"
               >
                 Sign out and continue
               </button>
@@ -329,7 +329,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
 
           {error && (
             <div
-              className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 text-sm"
+              className="bg-c-danger/10 border border-c-danger/30 text-c-danger px-4 py-3 rounded-lg flex items-center gap-2 text-sm"
               role="alert"
               aria-live="assertive"
             >
@@ -342,7 +342,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
             <div>
               <label
                 htmlFor="enteredEmail"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-c-text-secondary mb-1"
               >
                 Your work email *
               </label>
@@ -354,16 +354,16 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 placeholder="you@vtsgroup.com"
                 autoComplete="email"
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
+                className="w-full px-4 py-2 border border-c-border rounded-lg focus:ring-2 focus:ring-c-focus focus:border-transparent bg-c-surface text-c-text placeholder:text-c-text-muted"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-c-text-muted">
                 Use the work email this invitation was sent to.
               </p>
             </div>
           ) : (
-            <div className="bg-gray-50 rounded-lg p-3 text-sm">
-              <span className="text-gray-600">Joining as:</span>{' '}
-              <span className="font-medium text-gray-900">{invitation?.email}</span>
+            <div className="bg-c-bg rounded-lg p-3 text-sm">
+              <span className="text-c-text-secondary">Joining as:</span>{' '}
+              <span className="font-medium text-c-text">{invitation?.email}</span>
             </div>
           )}
 
@@ -371,7 +371,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
             <div>
               <label
                 htmlFor="firstName"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                className="block text-sm font-medium text-c-text-secondary mb-1"
               >
                 First Name *
               </label>
@@ -380,14 +380,14 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 id="firstName"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
+                className="w-full px-4 py-2 border border-c-border rounded-lg focus:ring-2 focus:ring-c-focus focus:border-transparent bg-c-surface text-c-text placeholder:text-c-text-muted"
                 required
               />
             </div>
             <div>
               <label
                 htmlFor="lastName"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                className="block text-sm font-medium text-c-text-secondary mb-1"
               >
                 Last Name *
               </label>
@@ -396,7 +396,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 id="lastName"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
+                className="w-full px-4 py-2 border border-c-border rounded-lg focus:ring-2 focus:ring-c-focus focus:border-transparent bg-c-surface text-c-text placeholder:text-c-text-muted"
                 required
               />
             </div>
@@ -406,7 +406,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
             <div>
               <label
                 htmlFor="jobTitle"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                className="block text-sm font-medium text-c-text-secondary mb-1"
               >
                 Job Title *
               </label>
@@ -416,14 +416,14 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
                 placeholder="e.g. Production Manager"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
+                className="w-full px-4 py-2 border border-c-border rounded-lg focus:ring-2 focus:ring-c-focus focus:border-transparent bg-c-surface text-c-text placeholder:text-c-text-muted"
                 required
               />
             </div>
             <div>
               <label
                 htmlFor="siteLocation"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                className="block text-sm font-medium text-c-text-secondary mb-1"
               >
                 Country where you work{invitation?.requireProfile ? ' *' : ''}
               </label>
@@ -431,7 +431,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 id="siteLocation"
                 value={siteLocation}
                 onChange={(e) => setSiteLocation(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
+                className="w-full px-4 py-2 border border-c-border rounded-lg focus:ring-2 focus:ring-c-focus focus:border-transparent bg-c-surface text-c-text placeholder:text-c-text-muted"
                 required={invitation?.requireProfile === true}
               >
                 <option value="">Select a country…</option>
@@ -448,7 +448,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
             <div>
               <label
                 htmlFor="department"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                className="block text-sm font-medium text-c-text-secondary mb-1"
               >
                 Department *
               </label>
@@ -458,7 +458,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 placeholder="e.g. Operations"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
+                className="w-full px-4 py-2 border border-c-border rounded-lg focus:ring-2 focus:ring-c-focus focus:border-transparent bg-c-surface text-c-text placeholder:text-c-text-muted"
                 required
               />
             </div>
@@ -467,7 +467,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              className="block text-sm font-medium text-c-text-secondary mb-1"
             >
               Password *
             </label>
@@ -477,7 +477,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="At least 8 characters"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
+              className="w-full px-4 py-2 border border-c-border rounded-lg focus:ring-2 focus:ring-c-focus focus:border-transparent bg-c-surface text-c-text placeholder:text-c-text-muted"
               required
               minLength={8}
             />
@@ -486,7 +486,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
           <div>
             <label
               htmlFor="confirmPassword"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              className="block text-sm font-medium text-c-text-secondary mb-1"
             >
               Confirm Password *
             </label>
@@ -495,7 +495,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
+              className="w-full px-4 py-2 border border-c-border rounded-lg focus:ring-2 focus:ring-c-focus focus:border-transparent bg-c-surface text-c-text placeholder:text-c-text-muted"
               required
             />
           </div>
@@ -507,15 +507,15 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
               id="terms"
               checked={acceptedTerms}
               onChange={(e) => setAcceptedTerms(e.target.checked)}
-              className="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 rounded"
+              className="mt-1 h-4 w-4 text-c-accent focus:ring-c-focus border-c-border rounded"
             />
-            <label htmlFor="terms" className="text-sm text-gray-600 dark:text-gray-400">
+            <label htmlFor="terms" className="text-sm text-c-text-secondary">
               I agree to the{' '}
-              <a href="/legal/terms" className="text-indigo-600 hover:underline">
+              <a href="/legal/terms" className="text-c-accent hover:underline">
                 Terms of Service
               </a>{' '}
               and{' '}
-              <a href="/legal/privacy" className="text-indigo-600 hover:underline">
+              <a href="/legal/privacy" className="text-c-accent hover:underline">
                 Privacy Policy
               </a>
             </label>
@@ -525,7 +525,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
           <div className="flex gap-3 pt-2">
             <a
               href="/"
-              className="flex-1 px-4 py-3 bg-gray-100 dark:bg-navy-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 transition-colors font-medium text-center"
+              className="flex-1 px-4 py-3 bg-c-surface-raised text-c-text-secondary rounded-lg hover:bg-c-border-subtle transition-colors font-medium text-center"
             >
               Decline
             </a>
@@ -541,7 +541,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 !password ||
                 !acceptedTerms
               }
-              className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-3 bg-c-accent hover:opacity-90 text-white rounded-lg transition-opacity font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {submitting ? (
                 <>

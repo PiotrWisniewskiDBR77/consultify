@@ -278,7 +278,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
                 cardT.notePlaceholder ||
                 'Type your observations... AI will help you expand and format them.'
               }
-              className="w-full bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-lg p-3 text-sm text-navy-900 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20 transition-all min-h-[150px] resize-y"
+              className="w-full bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-lg p-3 text-sm text-navy-900 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-[color:var(--c-focus)] transition-all min-h-[150px] resize-y"
             />
           </div>
 

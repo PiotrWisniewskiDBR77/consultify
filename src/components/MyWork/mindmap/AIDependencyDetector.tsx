@@ -148,17 +148,17 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-2xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
+      <div className="w-full max-w-2xl rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
           <div>
             <div className="flex items-center gap-2">
-              <Network size={16} className="text-primary-500" />
-              <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+              <Network size={16} className="text-c-text-secondary" />
+              <h3 className="text-sm font-bold text-c-text dark:text-c-text">
                 {isPl ? 'AI: Wykrywanie zależności' : 'AI: Dependency Detection'}
               </h3>
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mt-1">
               {isPl
                 ? 'AI analizuje powiązania między nodami z różnych gałęzi.'
                 : 'AI analyzes relationships between nodes across different branches.'}
@@ -166,7 +166,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             <X size={16} />
           </button>
@@ -175,8 +175,8 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {dependencies.length === 0 && !loading && (
             <div className="text-center py-8">
-              <GitMerge size={36} className="text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
+              <GitMerge size={36} className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3" />
+              <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mb-4">
                 {isPl
                   ? 'Wykryj ukryte zależności między pomysłami.'
                   : 'Discover hidden dependencies between ideas.'}
@@ -184,7 +184,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
               <button
                 onClick={detectDependencies}
                 disabled={loading || locked}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary-500/15 to-crimson-500/10 text-[11px] font-bold text-primary-700 dark:text-primary-300 hover:from-primary-500/25 hover:to-crimson-500/15 transition-all disabled:opacity-40"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface text-[11px] font-bold text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-all disabled:opacity-40"
               >
                 <Network size={14} />
                 {isPl ? 'Analizuj zależności' : 'Analyze dependencies'}
@@ -194,8 +194,8 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
 
           {loading && (
             <div className="flex items-center justify-center gap-2 py-8">
-              <Loader2 size={16} className="animate-spin text-primary-500" />
-              <span className="text-[11px] text-slate-500">
+              <Loader2 size={16} className="animate-spin text-c-text-secondary" />
+              <span className="text-[11px] text-c-text-secondary">
                 {isPl ? 'Analizuję powiązania...' : 'Analyzing connections...'}
               </span>
             </div>
@@ -209,7 +209,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                 return (
                   <div
                     key={dep.id}
-                    className={`p-3 rounded-xl border transition-all ${isApplied ? 'border-emerald-400/30 bg-emerald-500/5' : 'border-slate-200/30 dark:border-navy-700/30 bg-slate-50/30 dark:bg-navy-950/10'}`}
+                    className={`p-3 rounded-xl border transition-all ${isApplied ? 'border-c-success bg-c-surface-raised' : 'border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface'}`}
                   >
                     <div className="flex items-center gap-2 mb-1.5">
                       <span
@@ -218,32 +218,32 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                       >
                         {isPl ? cfg.labelPl : cfg.label}
                       </span>
-                      <span className="text-[9px] text-slate-600">
+                      <span className="text-[9px] text-c-text-secondary">
                         {Math.round(dep.confidence * 100)}%
                       </span>
                       {isApplied && (
-                        <span className="text-[9px] text-emerald-500 font-bold ml-auto">ADDED</span>
+                        <span className="text-[9px] text-c-success font-bold ml-auto">ADDED</span>
                       )}
                     </div>
 
                     <div className="flex items-center gap-2 text-[11px]">
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-slate-700 dark:text-slate-200 truncate">
+                        <div className="font-medium text-c-text-secondary dark:text-c-text truncate">
                           {dep.sourceLabel}
                         </div>
-                        <div className="text-[9px] text-slate-600">{dep.sourceBranch}</div>
+                        <div className="text-[9px] text-c-text-secondary">{dep.sourceBranch}</div>
                       </div>
                       <ArrowRight size={14} style={{ color: cfg.color }} className="shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-slate-700 dark:text-slate-200 truncate">
+                        <div className="font-medium text-c-text-secondary dark:text-c-text truncate">
                           {dep.targetLabel}
                         </div>
-                        <div className="text-[9px] text-slate-600">{dep.targetBranch}</div>
+                        <div className="text-[9px] text-c-text-secondary">{dep.targetBranch}</div>
                       </div>
                     </div>
 
                     {dep.relationship && (
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+                      <div className="text-[10px] text-c-text-secondary dark:text-c-text-muted mt-1.5 leading-relaxed">
                         {dep.relationship}
                       </div>
                     )}
@@ -252,7 +252,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                       <button
                         onClick={() => handleApply(dep)}
                         disabled={locked}
-                        className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-40"
+                        className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-bold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors disabled:opacity-40"
                       >
                         <Plus size={9} />
                         {isPl ? 'Dodaj połączenie' : 'Add connection'}
@@ -262,11 +262,11 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                 );
               })}
 
-              <div className="flex items-center gap-2 pt-2 border-t border-slate-200/30 dark:border-navy-700/30">
+              <div className="flex items-center gap-2 pt-2 border-t border-c-border-subtle dark:border-c-border">
                 <button
                   onClick={detectDependencies}
                   disabled={loading}
-                  className="text-[10px] font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                  className="text-[10px] font-medium text-c-text-secondary hover:text-c-text-secondary dark:text-c-text-muted dark:hover:text-c-text transition-colors"
                 >
                   {isPl ? 'Ponowna analiza' : 'Re-analyze'}
                 </button>
@@ -274,7 +274,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                 <button
                   onClick={handleApplyAll}
                   disabled={locked || applied.size === dependencies.length}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/20 transition-colors disabled:opacity-40"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold bg-c-surface dark:bg-c-surface-raised text-c-text-secondary dark:text-c-text hover:bg-c-surface dark:hover:bg-c-surface-raised transition-colors disabled:opacity-40"
                 >
                   <Network size={12} />
                   {isPl ? 'Dodaj wszystkie' : 'Add all'}

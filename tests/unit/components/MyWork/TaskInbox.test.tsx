@@ -27,6 +27,9 @@ vi.mock('@/store/usePMOStore', () => ({
 vi.mock('framer-motion', () => ({
   motion: {
     div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    // ErrorState's retry <Button> renders motion.button — provide it so the
+    // error branch mounts instead of throwing "Element type is invalid".
+    button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
   },
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
@@ -113,6 +116,27 @@ describe('TaskInbox', () => {
     renderWithProviders(<TaskInbox onEditTask={mockOnEditTask} onCreateTask={mockOnCreateTask} />);
 
     await waitFor(() => {
+      expect(screen.getByText('No tasks found')).toBeInTheDocument();
+    });
+  });
+
+  it('shows error state with retry (not a blank/empty screen) when fetch fails', async () => {
+    const user = userEvent.setup();
+    (Api.getTasks as any).mockRejectedValueOnce(new Error('network down'));
+    renderWithProviders(<TaskInbox onEditTask={mockOnEditTask} onCreateTask={mockOnCreateTask} />);
+
+    // Actionable error, not the misleading "No tasks found" empty state.
+    await waitFor(() => {
+      expect(screen.getByText('Failed to load tasks')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('No tasks found')).not.toBeInTheDocument();
+
+    // Retry re-invokes the fetch and recovers to the normal empty state.
+    (Api.getTasks as any).mockResolvedValueOnce([]);
+    await user.click(screen.getByRole('button', { name: /try again/i }));
+
+    await waitFor(() => {
+      expect(Api.getTasks).toHaveBeenCalledTimes(2);
       expect(screen.getByText('No tasks found')).toBeInTheDocument();
     });
   });

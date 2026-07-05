@@ -185,7 +185,7 @@ const FilterDropdown: React.FC<{
               </button>
               <button
                 onClick={handleApply}
-                className="px-3 py-1 text-xs font-medium bg-primary-500 text-white rounded-lg hover:bg-primary-400 transition-colors"
+                className="px-3 py-1 text-xs font-medium bg-c-text text-c-bg rounded-lg hover:bg-c-text-secondary transition-colors"
               >
                 Apply
               </button>
@@ -563,7 +563,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                               selection.selectRowLabel ??
                               t('common.selectRow', isPolish ? 'Zaznacz wiersz' : 'Select row')
                             }
-                            className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500 cursor-pointer"
+                            className="h-3.5 w-3.5 rounded border-c-border text-c-info focus:ring-c-focus cursor-pointer"
                           />
                         ) : column.render ? (
                           column.render(row)

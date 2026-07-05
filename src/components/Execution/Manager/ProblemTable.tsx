@@ -59,8 +59,8 @@ function TypeBadge({ type }: { type: string }) {
     blocked_initiative: 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-400',
     overdue_decision: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
     pending_decision: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
-    unassigned_task: 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400',
-    no_owner: 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400',
+    unassigned_task: 'bg-blue-50/70 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400',
+    no_owner: 'bg-blue-50/70 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400',
     stale_item: 'bg-slate-100 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400',
   };
   const cls = colors[type] || 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400';
@@ -235,8 +235,8 @@ export function ProblemTable({
         label: t('manager.col.problem', 'Problem'),
         render: (r: any) => (
           <div className="min-w-0">
-            <p className="text-xs font-medium text-slate-900 dark:text-white truncate">{r.title}</p>
-            <p className="text-[10px] text-slate-600 dark:text-slate-500 truncate mt-0.5">
+            <p className="text-xs font-medium text-c-text truncate">{r.title}</p>
+            <p className="text-[10px] text-c-text-muted truncate mt-0.5">
               {r.rootCause}
             </p>
           </div>
@@ -269,12 +269,12 @@ export function ProblemTable({
           }
           if (r.daysOverdue !== null && r.daysOverdue < 0) {
             return (
-              <span className="text-xs tabular-nums text-slate-600">
+              <span className="text-xs tabular-nums text-c-text-secondary">
                 {t('manager.dueIn', 'in')} {Math.abs(r.daysOverdue)}d
               </span>
             );
           }
-          return <span className="text-xs text-slate-600 dark:text-slate-400">—</span>;
+          return <span className="text-xs text-c-text-muted">—</span>;
         },
       },
       {
@@ -288,7 +288,7 @@ export function ProblemTable({
               {r.impactCount} ↓
             </span>
           ) : (
-            <span className="text-xs text-slate-600 dark:text-slate-400">—</span>
+            <span className="text-xs text-c-text-muted">—</span>
           ),
       },
       {
@@ -296,7 +296,7 @@ export function ProblemTable({
         label: t('manager.col.owner', 'Owner'),
         width: '140px',
         render: (r: any) => (
-          <span className="text-xs text-slate-600 dark:text-slate-400 truncate block">
+          <span className="text-xs text-c-text-secondary truncate block">
             {r.ownerName || '—'}
           </span>
         ),
@@ -330,13 +330,13 @@ export function ProblemTable({
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       {/* Header: per-severity count badges (restored) + free-text search toggle. */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-c-border-subtle bg-c-surface">
         {/* Per-severity count badges */}
         <div className="flex items-center gap-1.5" data-testid="severity-counts">
           {(['critical', 'warning', 'info'] as const).map((sev) => (
             <span
               key={sev}
-              className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400"
+              className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border border-c-border bg-c-surface text-[11px] font-medium text-c-text-muted whitespace-nowrap"
               data-testid={`severity-count-${sev}`}
             >
               <span className={`w-2 h-2 rounded-full ${SEVERITY_DOT[sev]}`} />
@@ -350,15 +350,15 @@ export function ProblemTable({
 
         {/* Search toggle */}
         {searchOpen ? (
-          <div className="flex items-center gap-1 h-9 px-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800">
-            <Search size={14} className="text-slate-600 shrink-0" />
+          <div className="flex items-center gap-1 h-9 px-2 rounded-lg border border-c-border bg-c-surface-raised">
+            <Search size={14} className="text-c-text-muted shrink-0" />
             <input
               autoFocus
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('common.search', 'Search...')}
               aria-label={t('common.search', 'Search...')}
-              className="w-40 text-xs bg-transparent outline-none focus:ring-2 focus:ring-primary-500/30 text-slate-900 dark:text-white placeholder-slate-400"
+              className="w-40 text-xs bg-transparent outline-none focus:ring-2 focus:ring-c-focus text-c-text placeholder:text-c-text-muted"
             />
             <button
               type="button"
@@ -368,7 +368,7 @@ export function ProblemTable({
                 setSearchOpen(false);
               }}
             >
-              <X size={14} className="text-slate-600 hover:text-slate-600" />
+              <X size={14} className="text-c-text-muted hover:text-c-text-secondary" />
             </button>
           </div>
         ) : (
@@ -376,9 +376,9 @@ export function ProblemTable({
             type="button"
             aria-label={t('common.search', 'Search...')}
             onClick={() => setSearchOpen(true)}
-            className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-c-surface-raised"
           >
-            <Search size={14} className="text-slate-600" />
+            <Search size={14} className="text-c-text-muted" />
           </button>
         )}
       </div>

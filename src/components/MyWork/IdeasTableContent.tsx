@@ -41,6 +41,11 @@ import {
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import {
+  FOCUSED_ROW_CLASS,
+  PREVIEW_SELECTED_ROW_CLASS,
+  SELECTED_ROW_CLASS,
+} from '@/components/shared/selectionTokens';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
 import { CHIP_TONE_VAR, ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
@@ -55,7 +60,6 @@ import { ColumnResizer, FilterDropdown } from '@/components/ui/ResizableTable';
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import type { IdeaConvertTarget as SsotConvertTarget } from './ideaConvertTargets';
 import type { IdeaStage, MyIdea, SortDir, SortField } from './myIdeasTypes';
-import { SELECTED_ROW_CLASS, PREVIEW_SELECTED_ROW_CLASS, FOCUSED_ROW_CLASS } from '@/components/shared/selectionTokens';
 
 // Narrowed subset of the SSOT convert union (ideaConvertTargets.ts) — the row kebab
 // offers only these four live targets.
@@ -198,8 +202,7 @@ const TOOL_META: Record<
     label: 'Recommendation map',
     labelPl: 'Mapa rekomendacji',
     icon: Network,
-    badge:
-      'border border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-100',
+    badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     iconClass: 'text-primary-600 dark:text-primary-300',
     iconColorVar: 'var(--c-accent)',
   },
@@ -207,8 +210,7 @@ const TOOL_META: Record<
     label: 'Table',
     labelPl: 'Tabela',
     icon: Table2,
-    badge:
-      'border border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-100',
+    badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     iconClass: 'text-sky-600 dark:text-sky-300',
     iconColorVar: 'var(--c-info)',
   },
@@ -216,8 +218,7 @@ const TOOL_META: Record<
     label: 'Process Flow',
     labelPl: 'Proces',
     icon: Workflow,
-    badge:
-      'border border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-100',
+    badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     iconClass: 'text-emerald-600 dark:text-emerald-300',
     iconColorVar: 'var(--c-success)',
   },
@@ -225,8 +226,7 @@ const TOOL_META: Record<
     label: 'Whiteboard',
     labelPl: 'Whiteboard',
     icon: PenTool,
-    badge:
-      'border border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-100',
+    badge: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     iconClass: 'text-amber-600 dark:text-amber-300',
     iconColorVar: 'var(--c-warning)',
   },
@@ -294,7 +294,7 @@ function formatIdeaDate(idea: MyIdea) {
 function SortIndicator({ active, direction }: { active: boolean; direction: SortDir }) {
   if (!active) return null;
   return (
-    <span className="ml-1 inline-flex text-[10px] text-slate-600">
+    <span className="ml-1 inline-flex text-[10px] text-c-text-muted">
       {direction === 'asc' ? '↑' : '↓'}
     </span>
   );
@@ -519,7 +519,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
 
   const renderTagBadges = (tags?: string[], max = 2) => {
     if (!tags?.length) {
-      return <span className="text-[11px] text-slate-600">—</span>;
+      return <span className="text-[11px] text-c-text-muted">—</span>;
     }
 
     // Canonical neutral metadata chips (MetaChip) — tags are never colored (§N).
@@ -554,9 +554,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
 
     const metaTrailing = (
       <div className="flex flex-wrap items-center justify-end gap-1.5">
-        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-          {formatIdeaDate(idea)}
-        </span>
+        <span className="text-[11px] font-medium text-c-text-muted">{formatIdeaDate(idea)}</span>
       </div>
     );
 
@@ -578,7 +576,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
               {idea.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-navy-800 dark:text-slate-300"
+                  className="inline-flex items-center rounded-full bg-c-surface-raised px-1.5 py-0.5 text-[10px] font-medium text-c-text-secondary"
                 >
                   {tag}
                 </span>
@@ -589,13 +587,13 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
 
         <PreviewDetailsSection text={detailsText} label={isPolish ? 'Szczegóły' : 'Details'}>
           {contextParts.length > 0 ? (
-            <div className="mt-3 pt-3 border-t border-slate-200/50 dark:border-white/[0.06]">
-              <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+            <div className="mt-3 pt-3 border-t border-c-border-subtle">
+              <div className="text-[11px] font-semibold text-c-text-muted uppercase tracking-wider mb-2">
                 {isPolish ? 'Kontekst' : 'Context'}
               </div>
-              <div className="flex flex-wrap gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+              <div className="flex flex-wrap gap-2 text-[11px] text-c-text-secondary">
                 {contextParts.map((part) => (
-                  <span key={part} className="rounded-full bg-slate-100 px-2 py-1 dark:bg-navy-800">
+                  <span key={part} className="rounded-full bg-c-surface-raised px-2 py-1">
                     {part}
                   </span>
                 ))}
@@ -616,7 +614,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
     if (idea.sourceType) {
       relationItems.push({
         label: `${isPolish ? 'Źródło' : 'Source'}: ${idea.sourceType}`,
-        tone: 'text-slate-600 dark:text-slate-400',
+        tone: 'text-c-text-secondary',
       });
     }
 
@@ -656,7 +654,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
 
         {/* „Co dalej" — widoczny create-strip (§7.3a), nie ukryty dropdown */}
         <div>
-          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
             {isPolish ? 'Co dalej' : "What's next"}
           </div>
           <ConvertToOutputMenu
@@ -672,7 +670,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   };
 
   return (
-    <div className="flex-1 min-h-0 bg-white dark:bg-navy-950">
+    <div className="flex-1 min-h-0 bg-c-bg">
       <TableWithPreviewLayout<MyIdea>
         selectedId={previewIdeaId}
         selectedItem={previewIdea}
@@ -688,12 +686,12 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
         renderPreview={renderPreview}
         renderPreviewFooter={renderPreviewFooter}
       >
-        <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ 
-          className="w-full table-fixed bg-slate-50/40 dark:bg-navy-950"
+        <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */
+          className="w-full table-fixed bg-c-bg"
           style={{ minWidth: tableMinWidth }}
         >
-          <thead className="sticky top-0 z-10 bg-slate-100/95 shadow-[0_1px_0_rgba(15,23,42,0.08)] backdrop-blur dark:bg-navy-900 dark:shadow-[0_1px_0_rgba(255,255,255,0.10)]">
-            <tr className="border-b border-slate-300/70 dark:border-white/[0.10]">
+          <thead className="sticky top-0 z-10 bg-c-surface-raised shadow-[0_1px_0_rgba(15,23,42,0.08)] backdrop-blur dark:shadow-[0_1px_0_rgba(255,255,255,0.10)]">
+            <tr className="border-b border-c-border">
               <th className="px-2 py-3" style={{ width: columnWidths.select }}>
                 <button
                   onClick={() => {
@@ -705,10 +703,10 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   }}
                   className={`flex h-4 w-4 items-center justify-center rounded-[4px] border text-[10px] transition-all ${
                     allSelected
-                      ? 'border-navy-900 bg-navy-900 text-white'
+                      ? 'border-c-text bg-c-text text-c-surface'
                       : someSelected
-                        ? 'border-navy-900 bg-navy-900/50 text-white'
-                        : 'border-slate-400/70 bg-white/70 text-transparent opacity-20 hover:border-primary-500 hover:bg-white hover:text-slate-500 hover:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.03] dark:hover:bg-white/[0.07]'
+                        ? 'border-c-text bg-c-text/60 text-c-surface'
+                        : 'border-c-border-strong bg-white/70 text-transparent opacity-20 hover:border-c-border-strong hover:bg-white hover:text-c-text-muted hover:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.03] dark:hover:bg-white/[0.07]'
                   }`}
                   title={isPolish ? 'Zaznacz widoczne' : 'Select visible'}
                 >
@@ -716,12 +714,12 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                 </button>
               </th>
               <th
-                className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
                 style={{ width: columnWidths.title }}
               >
                 <button
                   onClick={() => onSort('title')}
-                  className="inline-flex items-center text-left transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                  className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary"
                 >
                   {isPolish ? 'Tytul' : 'Title'}
                   <SortIndicator active={sortField === 'title'} direction={sortDir} />
@@ -736,18 +734,18 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
               </th>
               {isColumnVisible('stage') ? (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
                   style={{ width: columnWidths.stage }}
                 >
                   <div className="flex items-center justify-start gap-1">
                     <button
                       onClick={() => onSort('stage')}
-                      className="inline-flex items-center text-left transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                      className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary"
                     >
                       <span
                         className={
                           (tableFilters.stage as string[] | undefined)?.length
-                            ? 'text-primary-500'
+                            ? 'text-c-text-secondary'
                             : ''
                         }
                       >
@@ -775,18 +773,18 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
               ) : null}
               {isColumnVisible('tags') ? (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
                   style={{ width: columnWidths.tags }}
                 >
                   <div className="flex items-center justify-start gap-1">
                     <button
                       onClick={() => onSort('tags')}
-                      className="inline-flex items-center text-left transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                      className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary"
                     >
                       <span
                         className={
                           (tableFilters.tags as string[] | undefined)?.length
-                            ? 'text-primary-500'
+                            ? 'text-c-text-secondary'
                             : ''
                         }
                       >
@@ -814,18 +812,18 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
               ) : null}
               {isColumnVisible('tool') ? (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
                   style={{ width: columnWidths.tool }}
                 >
                   <div className="flex items-center justify-start gap-1">
                     <button
                       onClick={() => onSort('tool')}
-                      className="inline-flex items-center text-left transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                      className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary"
                     >
                       <span
                         className={
                           (tableFilters.tool as string[] | undefined)?.length
-                            ? 'text-primary-500'
+                            ? 'text-c-text-secondary'
                             : ''
                         }
                       >
@@ -853,12 +851,12 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
               ) : null}
               {isColumnVisible('date') ? (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
                   style={{ width: columnWidths.date }}
                 >
                   <button
                     onClick={() => onSort('date')}
-                    className="inline-flex items-center text-left transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                    className="inline-flex items-center text-left transition-colors hover:text-c-text-secondary"
                   >
                     {isPolish ? 'Data' : 'Updated'}
                     <SortIndicator active={sortField === 'date'} direction={sortDir} />
@@ -873,7 +871,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                 </th>
               ) : null}
               <th
-                className="relative px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                className="relative px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-c-text-muted"
                 style={{ width: columnWidths.actions }}
               >
                 <div className="flex items-center justify-end normal-case tracking-normal">
@@ -918,11 +916,11 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
               const isPreviewSelected = previewIdeaId === idea.id;
               const isFocused = focusedIndex === index;
               const rowAccentClass = isPreviewSelected
-                ? 'bg-primary-600 dark:bg-primary-300'
+                ? 'bg-c-info'
                 : isFocused
-                  ? 'bg-primary-500 dark:bg-primary-300'
+                  ? 'bg-c-info'
                   : isChecked
-                    ? 'bg-primary-500 dark:bg-primary-300'
+                    ? 'bg-c-info'
                     : null;
               const selectionCheckboxVisibility =
                 isChecked || isPreviewSelected || isFocused
@@ -1121,18 +1119,18 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                     onFocusIndexChange(index);
                   }}
                   onDoubleClick={() => onOpenIdea(idea)}
-                  className={`group cursor-pointer border-b border-slate-200/95 transition-colors dark:border-white/[0.085] ${
+                  className={`group cursor-pointer border-b border-c-border-subtle transition-colors ${
                     isPreviewSelected
                       ? SELECTED_ROW_CLASS
                       : isChecked
                         ? SELECTED_ROW_CLASS
                         : isFocused
                           ? FOCUSED_ROW_CLASS
-                          : 'bg-white hover:bg-slate-100/80 hover:shadow-[inset_0_0_0_1px_rgba(148,163,184,0.22)] dark:bg-navy-950 dark:hover:bg-white/[0.04] dark:hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.10)]'
+                          : 'bg-c-surface hover:bg-slate-100/80 hover:shadow-[inset_0_0_0_1px_rgba(148,163,184,0.22)] dark:hover:bg-white/[0.04] dark:hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.10)]'
                   }`}
                 >
                   <td
-                    className="relative px-2 py-3 align-middle"
+                    className="relative px-2 py-2.5 align-middle"
                     style={{ width: columnWidths.select }}
                   >
                     {rowAccentClass ? (
@@ -1142,7 +1140,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       />
                     ) : null}
                     <label
-                      className={`inline-flex h-6 w-6 items-center justify-center rounded-md transition-all ${selectionCheckboxVisibility} hover:bg-slate-200/55 dark:hover:bg-white/[0.06]`}
+                      className={`inline-flex h-6 w-6 items-center justify-center rounded-md transition-all ${selectionCheckboxVisibility} hover:bg-black/[0.05] dark:hover:bg-white/[0.06]`}
                       aria-label={isPolish ? 'Zaznacz pomysł' : 'Select idea'}
                     >
                       <input
@@ -1153,11 +1151,11 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                           onToggleSelect(idea.id);
                         }}
                         onClick={(event) => event.stopPropagation()}
-                        className="h-3.5 w-3.5 rounded-[4px] border-slate-400/70 bg-transparent text-primary-500 shadow-none transition-all checked:border-primary-500 checked:bg-primary-500 checked:opacity-100 focus:ring-2 focus:ring-primary-500/25 focus:ring-offset-0 dark:border-white/[0.18] dark:bg-transparent dark:checked:bg-primary-500"
+                        className="h-3.5 w-3.5 rounded-[4px] border-c-border-strong bg-transparent text-c-info shadow-none transition-all checked:border-c-info checked:bg-c-info checked:opacity-100 focus:ring-2 focus:ring-c-focus focus:ring-offset-0 dark:border-white/[0.18] dark:bg-transparent dark:checked:bg-c-info"
                       />
                     </label>
                   </td>
-                  <td className="px-3 py-3 align-middle" style={{ width: columnWidths.title }}>
+                  <td className="px-3 py-2.5 align-middle" style={{ width: columnWidths.title }}>
                     <div className="flex items-center gap-1.5">
                       {onToggleFavorite ? (
                         <button
@@ -1176,7 +1174,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                                 : 'Star'
                           }
                           aria-pressed={isFavorite?.(idea.id) ?? false}
-                          className="shrink-0 rounded p-0.5 text-slate-600 transition-colors hover:text-amber-400 dark:text-slate-400"
+                          className="shrink-0 rounded p-0.5 text-c-text-muted transition-colors hover:text-amber-400"
                         >
                           <Star
                             size={14}
@@ -1184,19 +1182,19 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                           />
                         </button>
                       ) : null}
-                      <div className="truncate pr-4 text-sm font-semibold leading-5 text-slate-900 dark:text-slate-100">
+                      <div className="truncate pr-4 text-sm font-semibold leading-5 text-c-text">
                         {idea.title || (isPolish ? 'Bez tytulu' : 'Untitled')}
                       </div>
                     </div>
                     {showRowDescription && idea.body ? (
-                      <div className="mt-0.5 truncate pr-6 text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+                      <div className="mt-0.5 truncate pr-6 text-[11px] leading-4 text-c-text-muted">
                         {idea.body}
                       </div>
                     ) : null}
                   </td>
                   {isColumnVisible('stage') ? (
                     <td
-                      className="px-3 py-3 text-left align-middle"
+                      className="px-3 py-2.5 text-left align-middle"
                       style={{ width: columnWidths.stage }}
                     >
                       {renderStageBadge(idea.stage)}
@@ -1204,7 +1202,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   ) : null}
                   {isColumnVisible('tags') ? (
                     <td
-                      className="px-3 py-3 text-left align-middle"
+                      className="px-3 py-2.5 text-left align-middle"
                       style={{ width: columnWidths.tags }}
                     >
                       {renderTagBadges(idea.tags)}
@@ -1212,7 +1210,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   ) : null}
                   {isColumnVisible('tool') ? (
                     <td
-                      className="px-3 py-3 text-left align-middle"
+                      className="px-3 py-2.5 text-left align-middle"
                       style={{ width: columnWidths.tool }}
                     >
                       {renderToolBadge(idea.preferredTool)}
@@ -1220,14 +1218,14 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   ) : null}
                   {isColumnVisible('date') ? (
                     <td
-                      className="px-3 py-3 text-left align-middle text-[11px] font-medium leading-5 text-slate-500 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-400"
+                      className="px-3 py-2.5 text-left align-middle text-[11px] font-medium leading-5 text-c-text-muted group-hover:text-c-text-secondary"
                       style={{ width: columnWidths.date }}
                     >
                       {formatIdeaDate(idea)}
                     </td>
                   ) : null}
                   <td
-                    className="px-3 py-3 text-right align-middle"
+                    className="px-3 py-2.5 text-right align-middle"
                     style={{ width: columnWidths.actions }}
                     onClick={(event) => event.stopPropagation()}
                   >

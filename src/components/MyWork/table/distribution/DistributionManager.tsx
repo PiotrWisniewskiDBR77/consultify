@@ -239,32 +239,32 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
   if (showWizard) {
     return (
       <div className="flex h-full flex-col">
-        <div className="flex items-center gap-2 border-b border-slate-200 px-5 py-4 dark:border-navy-700">
+        <div className="flex items-center gap-2 border-b border-c-border-subtle px-5 py-4 border-c-border">
           <button
             onClick={resetWizard}
-            className="rounded-lg p-1 transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="rounded-lg p-1 transition-colors hover:bg-c-surface-raised"
           >
-            <ChevronLeft size={16} className="text-slate-600" />
+            <ChevronLeft size={16} className="text-c-text-secondary" />
           </button>
-          <Send size={16} className="text-pink-500" />
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+          <Send size={16} className="text-c-tag-4" />
+          <h3 className="text-sm font-semibold text-c-text">
             {isPl ? 'Nowa dystrybucja' : 'New Distribution'}
           </h3>
         </div>
 
         {/* Step indicator */}
-        <div className="flex items-center gap-1 border-b border-slate-200 px-5 py-3 dark:border-navy-800">
+        <div className="flex items-center gap-1 border-b border-c-border-subtle px-5 py-3 border-c-border">
           {WIZARD_STEPS.map((s, idx) => (
             <React.Fragment key={s.key}>
-              {idx > 0 && <ArrowRight size={10} className="text-slate-600" />}
+              {idx > 0 && <ArrowRight size={10} className="text-c-text-secondary" />}
               <button
                 onClick={() => idx <= stepIndex && setStep(s.key)}
                 className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors ${
                   idx === stepIndex
-                    ? 'bg-pink-500 text-white'
+                    ? 'bg-c-tag-4 text-c-text'
                     : idx < stepIndex
-                      ? 'bg-pink-50 text-pink-600 dark:bg-pink-900/20 dark:text-pink-400'
-                      : 'text-slate-600'
+                      ? 'bg-c-tag-4 text-c-tag-4 bg-c-tag-4 text-c-tag-4'
+                      : 'text-c-text-secondary'
                 }`}
               >
                 {isPl ? s.pl : s.en}
@@ -278,7 +278,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
           {step === 'what' && (
             <div className="space-y-4">
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
+                <label className="mb-1 block text-xs font-medium text-c-text-muted">
                   {isPl ? 'Nazwa dystrybucji' : 'Distribution name'}
                 </label>
                 <input
@@ -286,11 +286,11 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={isPl ? 'np. Raport tygodniowy' : 'e.g. Weekly Report'}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-900"
+                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border bg-c-surface"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
+                <label className="mb-1 block text-xs font-medium text-c-text-muted">
                   {isPl ? 'Co dystrybuować' : 'What to distribute'}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -301,8 +301,8 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                     }}
                     className={`rounded-xl border p-3 text-center text-xs font-medium transition-colors ${
                       sourceType === 'table'
-                        ? 'border-pink-500 bg-pink-50 text-pink-700 dark:border-pink-400 dark:bg-pink-900/20'
-                        : 'border-slate-200 text-slate-600 dark:border-navy-700'
+                        ? 'border-c-tag-4 bg-c-tag-4 text-c-tag-4 border-c-tag-4 bg-c-tag-4'
+                        : 'border-c-border-subtle text-c-text-secondary border-c-border'
                     }`}
                   >
                     <FileText size={16} className="mx-auto mb-1" />
@@ -312,8 +312,8 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                     onClick={() => setSourceType('view')}
                     className={`rounded-xl border p-3 text-center text-xs font-medium transition-colors ${
                       sourceType === 'view'
-                        ? 'border-pink-500 bg-pink-50 text-pink-700 dark:border-pink-400 dark:bg-pink-900/20'
-                        : 'border-slate-200 text-slate-600 dark:border-navy-700'
+                        ? 'border-c-tag-4 bg-c-tag-4 text-c-tag-4 border-c-tag-4 bg-c-tag-4'
+                        : 'border-c-border-subtle text-c-text-secondary border-c-border'
                     }`}
                   >
                     <Eye size={16} className="mx-auto mb-1" />
@@ -325,7 +325,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                 <select
                   value={sourceId}
                   onChange={(e) => setSourceId(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-900"
+                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border bg-c-surface"
                 >
                   <option value="">{isPl ? 'Wybierz widok...' : 'Select view...'}</option>
                   {views.map((v) => (
@@ -340,7 +340,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
 
           {step === 'format' && (
             <div className="space-y-4">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-c-text-muted">
                 {isPl ? 'Format eksportu' : 'Export Format'}
               </h4>
               <div className="grid grid-cols-3 gap-2">
@@ -350,8 +350,8 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                     onClick={() => setFormat(f.id)}
                     className={`rounded-xl border p-3 text-center text-xs font-medium transition-colors ${
                       format === f.id
-                        ? 'border-pink-500 bg-pink-50 text-pink-700 dark:border-pink-400 dark:bg-pink-900/20'
-                        : 'border-slate-200 text-slate-600 hover:border-slate-300 dark:border-navy-700'
+                        ? 'border-c-tag-4 bg-c-tag-4 text-c-tag-4 border-c-tag-4 bg-c-tag-4'
+                        : 'border-c-border-subtle text-c-text-secondary hover:border-c-border'
                     }`}
                   >
                     {f.label}
@@ -363,7 +363,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
 
           {step === 'channel' && (
             <div className="space-y-4">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-c-text-muted">
                 {isPl ? 'Kanał dostarczenia' : 'Delivery Channel'}
               </h4>
               <div className="grid grid-cols-2 gap-2">
@@ -378,8 +378,8 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       }}
                       className={`flex items-center gap-2 rounded-xl border p-3 text-xs font-medium transition-colors ${
                         channel === ch.id
-                          ? 'border-pink-500 bg-pink-50 text-pink-700 dark:border-pink-400 dark:bg-pink-900/20'
-                          : 'border-slate-200 text-slate-600 hover:border-slate-300 dark:border-navy-700'
+                          ? 'border-c-tag-4 bg-c-tag-4 text-c-tag-4 border-c-tag-4 bg-c-tag-4'
+                          : 'border-c-border-subtle text-c-text-secondary hover:border-c-border'
                       }`}
                     >
                       <Icon size={16} />
@@ -392,7 +392,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
               <div className="mt-3 space-y-2">
                 {channel === 'email' && (
                   <div>
-                    <label className="mb-1 block text-[11px] font-medium text-slate-500">
+                    <label className="mb-1 block text-[11px] font-medium text-c-text-muted">
                       {isPl ? 'Adresy email' : 'Email addresses'}
                     </label>
                     <input
@@ -400,13 +400,13 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       value={(channelConfig.to as string) || ''}
                       onChange={(e) => updateConfig('to', e.target.value)}
                       placeholder="user@example.com, team@example.com"
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs dark:border-navy-700 dark:bg-navy-900"
+                      className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-xs border-c-border bg-c-surface"
                     />
                   </div>
                 )}
                 {(channel === 'slack' || channel === 'teams') && (
                   <div>
-                    <label className="mb-1 block text-[11px] font-medium text-slate-500">
+                    <label className="mb-1 block text-[11px] font-medium text-c-text-muted">
                       Webhook URL
                     </label>
                     <input
@@ -414,13 +414,13 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       value={(channelConfig.webhookUrl as string) || ''}
                       onChange={(e) => updateConfig('webhookUrl', e.target.value)}
                       placeholder="https://hooks.slack.com/services/..."
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs dark:border-navy-700 dark:bg-navy-900"
+                      className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-xs border-c-border bg-c-surface"
                     />
                   </div>
                 )}
                 {channel === 'webhook' && (
                   <div>
-                    <label className="mb-1 block text-[11px] font-medium text-slate-500">
+                    <label className="mb-1 block text-[11px] font-medium text-c-text-muted">
                       Webhook URL
                     </label>
                     <input
@@ -428,7 +428,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       value={(channelConfig.url as string) || ''}
                       onChange={(e) => updateConfig('url', e.target.value)}
                       placeholder="https://api.example.com/webhook"
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs dark:border-navy-700 dark:bg-navy-900"
+                      className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-xs border-c-border bg-c-surface"
                     />
                   </div>
                 )}
@@ -438,7 +438,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
 
           {step === 'schedule' && (
             <div className="space-y-4">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-c-text-muted">
                 {isPl ? 'Harmonogram' : 'Schedule'}
               </h4>
               <div className="space-y-1.5">
@@ -448,24 +448,24 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                     onClick={() => setSchedule(s.value)}
                     className={`flex w-full items-center gap-2 rounded-xl border px-4 py-3 text-xs font-medium transition-colors ${
                       schedule === s.value
-                        ? 'border-pink-500 bg-pink-50 text-pink-700 dark:border-pink-400 dark:bg-pink-900/20'
-                        : 'border-slate-200 text-slate-600 hover:border-slate-300 dark:border-navy-700'
+                        ? 'border-c-tag-4 bg-c-tag-4 text-c-tag-4 border-c-tag-4 bg-c-tag-4'
+                        : 'border-c-border-subtle text-c-text-secondary hover:border-c-border'
                     }`}
                   >
-                    {schedule === s.value && <Check size={14} className="text-pink-500" />}
+                    {schedule === s.value && <Check size={14} className="text-c-tag-4" />}
                     <Clock
                       size={14}
-                      className={schedule === s.value ? 'text-pink-500' : 'text-slate-600'}
+                      className={schedule === s.value ? 'text-c-tag-4' : 'text-c-text-secondary'}
                     />
                     {isPl ? s.pl : s.en}
                     {s.value && (
-                      <span className="ml-auto text-[10px] text-slate-600">{s.value}</span>
+                      <span className="ml-auto text-[10px] text-c-text-secondary">{s.value}</span>
                     )}
                   </button>
                 ))}
               </div>
               <div>
-                <label className="mb-1 block text-[11px] font-medium text-slate-500">
+                <label className="mb-1 block text-[11px] font-medium text-c-text-muted">
                   {isPl ? 'Własny cron (opcjonalnie)' : 'Custom cron (optional)'}
                 </label>
                 <input
@@ -473,7 +473,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                   value={schedule}
                   onChange={(e) => setSchedule(e.target.value)}
                   placeholder="0 9 * * 1"
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs dark:border-navy-700 dark:bg-navy-900"
+                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-xs border-c-border bg-c-surface"
                 />
               </div>
             </div>
@@ -481,10 +481,10 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
 
           {step === 'review' && (
             <div className="space-y-4">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-c-text-muted">
                 {isPl ? 'Podsumowanie' : 'Summary'}
               </h4>
-              <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-navy-700 dark:bg-navy-900">
+              <div className="space-y-2 rounded-xl border border-c-border-subtle bg-c-surface-raised p-4 border-c-border bg-c-surface">
                 <SummaryRow label={isPl ? 'Nazwa' : 'Name'} value={name || '—'} />
                 <SummaryRow
                   label={isPl ? 'Źródło' : 'Source'}
@@ -504,12 +504,12 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
               </div>
 
               {/* Preview box */}
-              <div className="rounded-xl border border-dashed border-slate-300 bg-white p-4 dark:border-navy-600 dark:bg-navy-900">
-                <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <div className="rounded-xl border border-dashed border-c-border bg-c-surface p-4 border-c-border bg-c-surface">
+                <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-c-text-muted">
                   <Eye size={14} />
                   {isPl ? 'Podgląd' : 'Preview'}
                 </div>
-                <div className="text-[11px] text-slate-500">
+                <div className="text-[11px] text-c-text-muted">
                   {channel === 'email' && (
                     <p>
                       {isPl ? 'Email z załącznikiem' : 'Email with attachment'}{' '}
@@ -543,13 +543,13 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-slate-200 px-5 py-3 dark:border-navy-700">
+        <div className="flex items-center justify-between border-t border-c-border-subtle px-5 py-3 border-c-border">
           <button
             onClick={() => {
               if (stepIndex === 0) resetWizard();
               else setStep(WIZARD_STEPS[stepIndex - 1].key);
             }}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-slate-700"
+            className="rounded-lg px-3 py-1.5 text-xs font-medium text-c-text-muted transition-colors hover:text-c-text-secondary"
           >
             {stepIndex === 0 ? (isPl ? 'Anuluj' : 'Cancel') : isPl ? 'Wstecz' : 'Back'}
           </button>
@@ -557,7 +557,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
             <button
               onClick={handleCreate}
               disabled={creating}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-pink-500 px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-pink-600 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-c-tag-4 px-4 py-1.5 text-xs font-medium text-c-text transition-colors hover:bg-c-tag-4 disabled:opacity-50"
             >
               {creating && <Loader2 size={12} className="animate-spin" />}
               {isPl ? 'Utwórz dystrybucję' : 'Create Distribution'}
@@ -566,7 +566,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
             <button
               onClick={() => setStep(WIZARD_STEPS[stepIndex + 1].key)}
               disabled={step === 'what' && !name.trim()}
-              className="inline-flex items-center gap-1 rounded-lg bg-pink-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-pink-600 disabled:opacity-50"
+              className="inline-flex items-center gap-1 rounded-lg bg-c-tag-4 px-3 py-1.5 text-xs font-medium text-c-text transition-colors hover:bg-c-tag-4 disabled:opacity-50"
             >
               {isPl ? 'Dalej' : 'Next'}
               <ArrowRight size={12} />
@@ -581,25 +581,25 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-navy-700">
+      <div className="flex items-center justify-between border-b border-c-border-subtle px-5 py-4 border-c-border">
         <div className="flex items-center gap-2">
           <button
             onClick={onClose}
-            className="rounded-lg p-1 transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="rounded-lg p-1 transition-colors hover:bg-c-surface-raised"
           >
-            <ChevronLeft size={16} className="text-slate-600" />
+            <ChevronLeft size={16} className="text-c-text-secondary" />
           </button>
-          <Send size={18} className="text-pink-500" />
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+          <Send size={18} className="text-c-tag-4" />
+          <h3 className="text-sm font-semibold text-c-text">
             {isPl ? 'Dystrybucja' : 'Distributions'}
             {distributions.length > 0 && (
-              <span className="ml-1 font-normal text-slate-600">({distributions.length})</span>
+              <span className="ml-1 font-normal text-c-text-secondary">({distributions.length})</span>
             )}
           </h3>
         </div>
         <button
           onClick={() => setShowWizard(true)}
-          className="inline-flex items-center gap-1 rounded-lg bg-pink-50 px-2.5 py-1.5 text-xs font-medium text-pink-600 transition-colors hover:bg-pink-100 dark:bg-pink-500/10 dark:text-pink-400 dark:hover:bg-pink-500/20"
+          className="inline-flex items-center gap-1 rounded-lg bg-c-tag-4 px-2.5 py-1.5 text-xs font-medium text-c-tag-4 transition-colors hover:bg-c-tag-4 text-c-tag-4 hover:bg-c-tag-4"
         >
           <Plus size={12} />
           {isPl ? 'Nowa' : 'New'}
@@ -610,24 +610,24 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
       <div className="flex-1 overflow-y-auto p-5">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 size={20} className="animate-spin text-slate-600" />
+            <Loader2 size={20} className="animate-spin text-c-text-secondary" />
           </div>
         ) : distributions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mb-4 rounded-2xl bg-slate-100 p-4 dark:bg-navy-800">
-              <Send size={28} className="text-slate-600 dark:text-slate-500" />
+            <div className="mb-4 rounded-2xl bg-c-surface-raised p-4 bg-c-surface-raised">
+              <Send size={28} className="text-c-text-muted" />
             </div>
-            <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
+            <p className="mb-1 text-sm font-medium text-c-text-muted">
               {isPl ? 'Brak dystrybucji' : 'No distributions yet'}
             </p>
-            <p className="mb-4 max-w-xs text-xs text-slate-500 dark:text-slate-400">
+            <p className="mb-4 max-w-xs text-xs text-c-text-muted">
               {isPl
                 ? 'Automatycznie wysyłaj dane z tabeli przez email, Slack, Teams lub webhook.'
                 : 'Automatically send table data via email, Slack, Teams, or webhook.'}
             </p>
             <button
               onClick={() => setShowWizard(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-pink-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-pink-600"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-c-tag-4 px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-tag-4"
             >
               <Plus size={14} />
               {isPl ? 'Utwórz dystrybucję' : 'Create distribution'}
@@ -643,25 +643,25 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
               return (
                 <div
                   key={dist.id}
-                  className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 transition-colors hover:border-slate-300 dark:border-navy-700 dark:bg-navy-900 dark:hover:border-navy-600"
+                  className="group flex items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 transition-colors hover:border-c-border bg-c-surface hover:border-c-border"
                 >
                   <ChannelIcon
                     size={16}
-                    className="flex-shrink-0 text-slate-500 dark:text-slate-400"
+                    className="flex-shrink-0 text-c-text-muted"
                   />
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="truncate text-sm font-medium text-slate-800 dark:text-white">
+                      <span className="truncate text-sm font-medium text-c-text">
                         {dist.name}
                       </span>
                       {!dist.is_active && (
-                        <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                        <span className="rounded bg-c-warning px-1.5 py-0.5 text-[10px] text-c-warning bg-c-warning text-c-warning">
                           {isPl ? 'Wstrzymane' : 'Paused'}
                         </span>
                       )}
                     </div>
-                    <div className="mt-0.5 text-[10px] text-slate-600 dark:text-slate-500">
+                    <div className="mt-0.5 text-[10px] text-c-text-muted">
                       {dist.format?.toUpperCase()} · {isPl ? chDef.pl : chDef.en}
                       {dist.schedule && (
                         <>
@@ -683,7 +683,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                     <button
                       onClick={() => handleExecute(dist.id)}
                       disabled={isExecuting}
-                      className="rounded-lg p-1.5 text-pink-600 transition-colors hover:bg-pink-50 disabled:opacity-50 dark:text-pink-400 dark:hover:bg-pink-900/20"
+                      className="rounded-lg p-1.5 text-c-tag-4 transition-colors hover:bg-c-tag-4 disabled:opacity-50 text-c-tag-4 hover:bg-c-tag-4"
                       title={isPl ? 'Wyślij teraz' : 'Send now'}
                     >
                       {isExecuting ? (
@@ -696,8 +696,8 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       onClick={() => handleToggle(dist.id)}
                       className={`rounded-lg p-1.5 transition-colors ${
                         dist.is_active
-                          ? 'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20'
-                          : 'text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20'
+                          ? 'text-c-success hover:bg-c-success text-c-success hover:bg-c-success'
+                          : 'text-c-warning hover:bg-c-warning text-c-warning hover:bg-c-warning'
                       }`}
                       title={
                         dist.is_active ? (isPl ? 'Wstrzymaj' : 'Pause') : isPl ? 'Wznów' : 'Resume'
@@ -707,7 +707,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                     </button>
                     <button
                       onClick={() => handleDelete(dist.id)}
-                      className="rounded-lg p-1.5 text-danger-500 transition-colors hover:bg-danger-50 dark:text-danger-400 dark:hover:bg-danger-900/20"
+                      className="rounded-lg p-1.5 text-c-danger transition-colors hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger dark:hover:bg-[color-mix(in_srgb,var(--c-danger)_18%,transparent)]"
                       title={isPl ? 'Usuń' : 'Delete'}
                     >
                       <Trash2 size={12} />
@@ -725,8 +725,8 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
 
 const SummaryRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="flex items-center justify-between">
-    <span className="text-[11px] text-slate-500">{label}</span>
-    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{value}</span>
+    <span className="text-[11px] text-c-text-muted">{label}</span>
+    <span className="text-xs font-medium text-c-text-muted">{value}</span>
   </div>
 );
 

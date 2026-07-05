@@ -273,7 +273,7 @@ export const AccountTypesManager: React.FC<AccountTypesManagerProps> = ({
                   `bg-gradient-to-br ${colors.gradient}`
                 )}
               >
-                <Icon size={24} className="text-white" />
+                <Icon size={24} className="text-c-text" />
               </div>
 
               {/* Info */}
@@ -433,7 +433,7 @@ export const AccountTypesManager: React.FC<AccountTypesManagerProps> = ({
                     `bg-gradient-to-br ${colors.gradient}`
                   )}
                 >
-                  <Icon size={24} className="text-white" />
+                  <Icon size={24} className="text-c-text" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">

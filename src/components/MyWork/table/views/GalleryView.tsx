@@ -48,7 +48,7 @@ const GalleryCard = React.memo<{
 
   return (
     <div
-      className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-800 overflow-hidden cursor-pointer hover:shadow-lg hover:border-primary-300/60 dark:hover:border-primary-500/30 hover:-translate-y-0.5 transition-all group"
+      className="rounded-xl border border-c-border bg-c-surface-raised overflow-hidden cursor-pointer hover:shadow-lg hover:border-c-accent hover:-translate-y-0.5 transition-all group"
       onClick={() => onClick(record.id)}
     >
       {/* Cover area */}
@@ -63,7 +63,7 @@ const GalleryCard = React.memo<{
           style={{
             background: color
               ? `linear-gradient(135deg, ${color}30, ${color}10)`
-              : 'linear-gradient(135deg, #e0e7ff, #ede9fe)',
+              : 'linear-gradient(135deg, color-mix(in srgb, var(--c-tag-2) 18%, transparent), color-mix(in srgb, var(--c-tag-3) 14%, transparent))',
           }}
         >
           {emoji ? (
@@ -71,7 +71,7 @@ const GalleryCard = React.memo<{
           ) : (
             <span
               className={`${cardSize === 'large' ? 'text-xl' : 'text-lg'} font-bold opacity-30`}
-              style={{ color: color || '#6366f1' }}
+              style={{ color: color || 'var(--c-tag-2)' }}
             >
               {(record.data?.label || '?').charAt(0).toUpperCase()}
             </span>
@@ -82,7 +82,7 @@ const GalleryCard = React.memo<{
       {/* Content */}
       <div className={cardSize === 'small' ? 'p-2' : 'p-3'}>
         <div
-          className={`font-bold text-slate-800 dark:text-slate-200 truncate mb-1.5 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors ${
+          className={`font-bold text-c-text truncate mb-1.5 group-hover:text-c-accent transition-colors ${
             cardSize === 'small' ? 'text-[10px]' : 'text-xs'
           }`}
         >
@@ -99,12 +99,12 @@ const GalleryCard = React.memo<{
               const bgColor =
                 col.optionColors?.[String(val)] ||
                 SELECT_COLORS[(col.options || []).indexOf(String(val)) % SELECT_COLORS.length] ||
-                '#e0e7ff';
+                'color-mix(in srgb, var(--c-tag-2) 18%, transparent)';
               return (
                 <span
                   key={col.key}
                   className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold"
-                  style={{ backgroundColor: bgColor, color: '#334155' }}
+                  style={{ backgroundColor: bgColor, color: 'var(--c-text-secondary)' }}
                 >
                   {String(val)}
                 </span>
@@ -113,7 +113,7 @@ const GalleryCard = React.memo<{
 
             if (col.type === 'rating') {
               return (
-                <span key={col.key} className="inline-flex items-center gap-0.5 text-amber-500">
+                <span key={col.key} className="inline-flex items-center gap-0.5 text-c-warning">
                   <Star size={8} className="fill-amber-400" />
                   <span className="text-[8px] font-bold">{val}</span>
                 </span>
@@ -124,20 +124,20 @@ const GalleryCard = React.memo<{
               const pct = Math.min(Number(val) || 0, 100);
               return (
                 <div key={col.key} className="flex items-center gap-1">
-                  <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                  <div className="w-10 h-1 rounded-full bg-c-surface-raised overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${pct >= 80 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-danger-400'}`}
+                      className={`h-full rounded-full ${pct >= 80 ? 'bg-c-success' : pct >= 40 ? 'bg-c-warning' : 'bg-c-danger'}`}
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <span className="text-[8px] text-slate-600">{pct}%</span>
+                  <span className="text-[8px] text-c-text-secondary">{pct}%</span>
                 </div>
               );
             }
 
             if (col.type === 'checkbox') {
               return val ? (
-                <span key={col.key} className="text-[8px] text-emerald-500 font-bold">
+                <span key={col.key} className="text-[8px] text-c-success font-bold">
                   ✓
                 </span>
               ) : null;
@@ -146,7 +146,7 @@ const GalleryCard = React.memo<{
             if (col.type === 'date') {
               const dateStr = String(val).slice(0, 10);
               return (
-                <span key={col.key} className="text-[8px] text-slate-600 dark:text-slate-500">
+                <span key={col.key} className="text-[8px] text-c-text-muted">
                   {dateStr}
                 </span>
               );
@@ -155,7 +155,7 @@ const GalleryCard = React.memo<{
             return (
               <span
                 key={col.key}
-                className="text-[8px] text-slate-500 dark:text-slate-400 truncate max-w-[80px]"
+                className="text-[8px] text-c-text-muted truncate max-w-[80px]"
               >
                 {String(val)}
               </span>
@@ -192,12 +192,12 @@ export const GalleryView: React.FC<GalleryViewProps> = ({
 
   if (records.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-slate-600 dark:text-slate-500 gap-3 p-8">
-        <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-          <Image size={28} className="text-slate-600 dark:text-slate-400" />
+      <div className="flex-1 flex flex-col items-center justify-center text-c-text-muted gap-3 p-8">
+        <div className="w-16 h-16 rounded-2xl bg-c-surface-raised flex items-center justify-center">
+          <Image size={28} className="text-c-text-muted" />
         </div>
         <span className="text-sm font-medium">{isPl ? 'Brak elementów' : 'No records'}</span>
-        <span className="text-xs text-slate-600/70">
+        <span className="text-xs text-c-text-secondary">
           {isPl ? 'Dodaj pierwszy rekord, aby zobaczyć galerię' : 'Add a record to see the gallery'}
         </span>
       </div>

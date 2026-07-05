@@ -125,7 +125,7 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px] dark:bg-black/40"
+              className="fixed inset-0 z-dropdown bg-black/20 backdrop-blur-[2px] dark:bg-black/40"
               onClick={onClose}
             />
           )}
@@ -135,7 +135,7 @@ export const ReportCompactPanel: React.FC<ReportCompactPanelProps> = ({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 bottom-0 z-50 flex w-[440px] max-w-full flex-col border-l bg-white/95 shadow-2xl backdrop-blur-xl dark:border-white/[0.06] dark:bg-navy-950/95"
+            className="fixed right-0 top-0 bottom-0 z-overlay flex w-[440px] max-w-full flex-col border-l bg-white/95 shadow-2xl backdrop-blur-xl dark:border-white/[0.06] dark:bg-navy-950/95"
           >
             {/* RAG bar */}
             <div className={`h-1.5 w-full bg-gradient-to-r ${RAG_BAR[rag]}`} />

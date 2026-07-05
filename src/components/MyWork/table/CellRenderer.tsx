@@ -45,7 +45,7 @@ const TextCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
     value={String(value ?? '')}
     onChange={(e) => onChange(e.target.value)}
     disabled={locked}
-    className="w-full bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 px-1 py-0.5 focus:ring-2 focus:ring-blue-500/30 rounded"
+    className="w-full bg-transparent border-0 outline-none text-xs text-c-text px-1 py-0.5 focus:ring-2 focus:ring-blue-500/30 rounded"
     onClick={(e) => e.stopPropagation()}
   />
 );
@@ -58,7 +58,7 @@ const NumberCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
     value={value ?? ''}
     onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
     disabled={locked}
-    className="w-full bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 px-1 py-0.5 focus:ring-2 focus:ring-blue-500/30 rounded text-right tabular-nums"
+    className="w-full bg-transparent border-0 outline-none text-xs text-c-text px-1 py-0.5 focus:ring-2 focus:ring-blue-500/30 rounded text-right tabular-nums"
     onClick={(e) => e.stopPropagation()}
   />
 );
@@ -97,7 +97,7 @@ const SelectCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
         {!locked && <ChevronDown size={10} />}
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 w-36 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-1 max-h-48 overflow-auto">
+        <div className="absolute left-0 top-full mt-1 z-50 w-36 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-1 max-h-48 overflow-auto">
           {options.map((opt) => (
             <button
               key={opt}
@@ -105,7 +105,7 @@ const SelectCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
                 onChange(opt);
                 setOpen(false);
               }}
-              className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-2"
+              className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-c-surface-raised transition-colors flex items-center gap-2"
             >
               <span
                 className="w-3 h-3 rounded-sm flex-shrink-0"
@@ -123,7 +123,7 @@ const SelectCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
                 onChange(null);
                 setOpen(false);
               }}
-              className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] text-slate-600 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+              className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary hover:bg-c-surface-raised transition-colors"
             >
               Clear
             </button>
@@ -164,7 +164,7 @@ const MultiSelectCell: React.FC<CellProps> = ({ column, value, onChange, locked 
         disabled={locked}
         className="inline-flex items-center gap-0.5 flex-wrap max-w-full"
       >
-        {selected.length === 0 && <span className="text-[10px] text-slate-600">—</span>}
+        {selected.length === 0 && <span className="text-[10px] text-c-text-secondary">—</span>}
         {selected.map((s) => (
           <span
             key={s}
@@ -178,18 +178,18 @@ const MultiSelectCell: React.FC<CellProps> = ({ column, value, onChange, locked 
             {s}
           </span>
         ))}
-        {!locked && <ChevronDown size={10} className="text-slate-600 ml-0.5" />}
+        {!locked && <ChevronDown size={10} className="text-c-text-secondary ml-0.5" />}
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 w-40 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-1 max-h-48 overflow-auto">
+        <div className="absolute left-0 top-full mt-1 z-50 w-40 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-1 max-h-48 overflow-auto">
           {options.map((opt) => (
             <button
               key={opt}
               onClick={() => toggle(opt)}
-              className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-2"
+              className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-c-surface-raised transition-colors flex items-center gap-2"
             >
               <span
-                className={`w-3 h-3 rounded-sm border flex items-center justify-center ${selected.includes(opt) ? 'bg-navy-900 border-navy-900' : 'border-slate-300 dark:border-navy-600'}`}
+                className={`w-3 h-3 rounded-sm border flex items-center justify-center ${selected.includes(opt) ? 'bg-c-surface border-c-border' : 'border-c-border'}`}
               >
                 {selected.includes(opt) && <Check size={8} className="text-white" />}
               </span>
@@ -206,13 +206,13 @@ const MultiSelectCell: React.FC<CellProps> = ({ column, value, onChange, locked 
 
 const DateCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
   <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-    <Calendar size={11} className="text-slate-600 flex-shrink-0" />
+    <Calendar size={11} className="text-c-text-secondary flex-shrink-0" />
     <input
       type="date"
       value={value ? String(value).slice(0, 10) : ''}
       onChange={(e) => onChange(e.target.value || null)}
       disabled={locked}
-      className="bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500/30 rounded"
+      className="bg-transparent border-0 outline-none text-xs text-c-text focus:ring-2 focus:ring-blue-500/30 rounded"
     />
   </div>
 );
@@ -226,8 +226,8 @@ const CheckboxCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
       disabled={locked}
       className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
         value
-          ? 'bg-navy-900 border-navy-900 text-white'
-          : 'border-slate-300 dark:border-navy-600 hover:border-primary-400'
+          ? 'bg-c-text border-c-text text-c-bg'
+          : 'border-c-border hover:border-c-accent'
       }`}
     >
       {value && <Check size={12} />}
@@ -251,7 +251,7 @@ const RatingCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
           <Star
             size={14}
             className={
-              star <= rating ? 'text-amber-400 fill-amber-400' : 'text-slate-600 dark:text-navy-600'
+              star <= rating ? 'text-amber-400 fill-amber-400' : 'text-c-text-secondary'
             }
           />
         </button>
@@ -264,7 +264,7 @@ const RatingCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
 
 const PersonCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
   <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary-400 to-crimson-500 flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
+    <div className="w-5 h-5 rounded-full bg-c-accent flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
       {String(value || '?')
         .charAt(0)
         .toUpperCase()}
@@ -274,7 +274,7 @@ const PersonCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
       onChange={(e) => onChange(e.target.value)}
       disabled={locked}
       placeholder="—"
-      className="flex-1 bg-transparent border-0 outline-none text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500/30 rounded"
+      className="flex-1 bg-transparent border-0 outline-none text-xs text-c-text focus:ring-2 focus:ring-blue-500/30 rounded"
     />
   </div>
 );
@@ -295,7 +295,7 @@ const UrlCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
         href={String(value)}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-slate-600 hover:text-blue-500"
+        className="text-c-text-secondary hover:text-blue-500"
       >
         <ExternalLink size={11} />
       </a>
@@ -309,7 +309,7 @@ const ProgressCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
   const pct = Math.max(0, Math.min(100, Number(value) || 0));
   return (
     <div className="flex items-center gap-2 w-full" onClick={(e) => e.stopPropagation()}>
-      <div className="flex-1 h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+      <div className="flex-1 h-2 rounded-full bg-c-border-subtle overflow-hidden">
         <div
           className={`h-full rounded-full transition-all ${pct >= 80 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-danger-400'}`}
           style={{ width: `${pct}%` }}
@@ -322,9 +322,9 @@ const ProgressCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
         value={pct}
         onChange={(e) => onChange(Math.max(0, Math.min(100, Number(e.target.value) || 0)))}
         disabled={locked}
-        className="w-10 bg-transparent border-0 outline-none text-[10px] text-slate-600 dark:text-slate-300 text-right tabular-nums"
+        className="w-10 bg-transparent border-0 outline-none text-[10px] text-c-text-secondary text-right tabular-nums"
       />
-      <span className="text-[9px] text-slate-600">%</span>
+      <span className="text-[9px] text-c-text-secondary">%</span>
     </div>
   );
 };
@@ -334,7 +334,7 @@ const ProgressCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
 const FormulaCell: React.FC<CellProps> = ({ column, rowData }) => {
   const result = evaluateFormula(column.formula || '', rowData);
   return (
-    <span className="text-xs text-slate-600 dark:text-slate-300 tabular-nums font-medium px-1">
+    <span className="text-xs text-c-text-secondary tabular-nums font-medium px-1">
       {result}
     </span>
   );
@@ -344,13 +344,13 @@ const FormulaCell: React.FC<CellProps> = ({ column, rowData }) => {
 
 const AIGeneratedCell: React.FC<CellProps> = ({ value, onAIRefresh, locked }) => (
   <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-    <span className="flex-1 text-xs text-slate-700 dark:text-slate-300 truncate">
-      {value || <span className="text-slate-600 italic">AI pending...</span>}
+    <span className="flex-1 text-xs text-c-text truncate">
+      {value || <span className="text-c-text-secondary italic">AI pending...</span>}
     </span>
     {!locked && onAIRefresh && (
       <button
         onClick={onAIRefresh}
-        className="p-0.5 rounded text-primary-500 hover:bg-primary-500/10 transition-colors"
+        className="p-0.5 rounded text-c-accent hover:bg-c-accent-soft transition-colors"
         title="Regenerate"
       >
         <RefreshCw size={10} />
@@ -431,7 +431,7 @@ const StatusCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
         {!locked && <ChevronDown size={10} />}
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 w-40 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-1">
+        <div className="absolute left-0 top-full mt-1 z-50 w-40 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-1">
           {statusOptions.map((opt) => {
             const d = STATUS_DISPLAY[opt];
             return (
@@ -441,7 +441,7 @@ const StatusCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
                   onChange(opt);
                   setOpen(false);
                 }}
-                className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-2"
+                className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-c-surface-raised transition-colors flex items-center gap-2"
               >
                 <span
                   className="w-3 h-3 rounded-sm flex-shrink-0"
@@ -460,7 +460,7 @@ const StatusCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
 // ── System-managed cells (read-only) ────────────────────────────────────────
 
 const SystemTimestampCell: React.FC<CellProps> = ({ value }) => {
-  if (!value) return <span className="text-[10px] text-slate-600">—</span>;
+  if (!value) return <span className="text-[10px] text-c-text-secondary">—</span>;
   const d = new Date(value);
   const str = isNaN(d.getTime())
     ? String(value)
@@ -471,14 +471,14 @@ const SystemTimestampCell: React.FC<CellProps> = ({ value }) => {
         hour: '2-digit',
         minute: '2-digit',
       });
-  return <span className="text-[10px] text-slate-500 dark:text-slate-400 tabular-nums">{str}</span>;
+  return <span className="text-[10px] text-c-text-muted tabular-nums">{str}</span>;
 };
 
 const SystemUserCell: React.FC<CellProps> = ({ value }) => {
-  if (!value) return <span className="text-[10px] text-slate-600">—</span>;
+  if (!value) return <span className="text-[10px] text-c-text-secondary">—</span>;
   return (
-    <span className="inline-flex items-center gap-1 text-[10px] text-slate-600 dark:text-slate-300">
-      <span className="w-4 h-4 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-[8px] font-bold uppercase">
+    <span className="inline-flex items-center gap-1 text-[10px] text-c-text-secondary">
+      <span className="w-4 h-4 rounded-full bg-c-border-subtle flex items-center justify-center text-[8px] font-bold uppercase">
         {String(value).charAt(0)}
       </span>
       {String(value)}

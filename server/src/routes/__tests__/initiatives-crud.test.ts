@@ -392,4 +392,23 @@ describe('DELETE /api/initiatives/:id — hard delete (owner/org-scope)', () => 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
   });
+
+  it('the org OWNER can delete an initiative they do not own (200) — R3 golden-path fix', async () => {
+    // Regression: OWNER outranks ADMIN but does not contain the substring
+    // 'ADMIN', so the old `.includes('ADMIN')` check 403'd org owners.
+    currentRole = 'OWNER';
+    mockQueryFirst.mockResolvedValue({
+      id: INITIATIVE_ID,
+      owner_business_id: OTHER_USER,
+      owner_execution_id: OTHER_USER,
+      sponsor_id: OTHER_USER,
+      created_by: OTHER_USER,
+    });
+    mockQueryRun.mockResolvedValue({ changes: 1 });
+
+    const res = await request(app).delete(`/api/initiatives/${INITIATIVE_ID}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
 });

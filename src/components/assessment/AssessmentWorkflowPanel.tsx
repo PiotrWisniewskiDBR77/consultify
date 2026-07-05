@@ -114,8 +114,8 @@ const STATUS_CONFIG = {
   },
   REJECTED: {
     label: 'Rejected',
-    color: 'bg-danger-500',
-    textColor: 'text-danger-600 dark:text-danger-400',
+    color: 'bg-rose-500',
+    textColor: 'text-rose-600 dark:text-rose-400',
     icon: XCircle,
     description: 'Requires revision',
   },
@@ -272,7 +272,7 @@ export const AssessmentWorkflowPanel: React.FC<Props> = ({
               });
               loadWorkflowData();
             }}
-            className="mt-3 px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm rounded-lg hover:bg-navy-800"
+            className="mt-3 px-4 py-2 bg-c-text text-c-bg text-sm rounded-lg hover:bg-c-text-secondary"
           >
             Initialize Workflow
           </button>
@@ -333,7 +333,7 @@ export const AssessmentWorkflowPanel: React.FC<Props> = ({
                 </button>
                 <button
                   onClick={() => setShowRejectModal(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-danger-600 text-white text-sm rounded-lg hover:bg-danger-700 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 text-white text-sm rounded-lg hover:bg-rose-700 transition-colors"
                 >
                   <ThumbsDown size={14} />
                   Reject
@@ -363,14 +363,14 @@ export const AssessmentWorkflowPanel: React.FC<Props> = ({
 
         {/* Rejection Reason */}
         {workflow.status === 'REJECTED' && workflow.rejection_reason && (
-          <div className="mt-4 p-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg border border-danger-200 dark:border-danger-800">
+          <div className="mt-4 p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg border border-rose-200 dark:border-rose-800">
             <div className="flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-danger-600 dark:text-danger-400 mt-0.5" />
+              <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-danger-700 dark:text-danger-300">
+                <p className="text-sm font-medium text-rose-700 dark:text-rose-300">
                   Rejection Reason
                 </p>
-                <p className="text-xs text-danger-600 dark:text-danger-400 mt-1">
+                <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">
                   {workflow.rejection_reason}
                 </p>
               </div>
@@ -491,7 +491,7 @@ const WorkflowTimeline: React.FC<{ workflow: WorkflowStatus }> = ({ workflow }) 
                   isCompleted
                     ? 'bg-green-500'
                     : isRejected
-                      ? 'bg-danger-500'
+                      ? 'bg-rose-500'
                       : isCurrent
                         ? 'bg-blue-500'
                         : 'bg-slate-200 dark:bg-navy-700'
@@ -553,7 +553,7 @@ const ReviewsList: React.FC<{
         <div key={review.id} className="p-3 bg-slate-50 dark:bg-navy-800 rounded-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-navy-900 flex items-center justify-center text-white text-sm font-medium">
+              <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-sm font-medium">
                 {review.reviewer_role?.charAt(0) || 'R'}
               </div>
               <div>
@@ -574,7 +574,7 @@ const ReviewsList: React.FC<{
                     review.recommendation === 'APPROVE'
                       ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                       : review.recommendation === 'REJECT'
-                        ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400'
+                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
                         : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                   }`}
                 >
@@ -636,7 +636,7 @@ const VersionHistory: React.FC<{
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                 version.version === currentVersion
-                  ? 'bg-navy-900 text-white'
+                  ? 'bg-c-text text-c-bg'
                   : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
               }`}
             >
@@ -713,7 +713,7 @@ const SubmitForReviewModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
       <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md mx-4">
         <div className="p-4 border-b border-slate-200 dark:border-navy-700">
           <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Submit for Review</h3>
@@ -744,7 +744,7 @@ const SubmitForReviewModal: React.FC<{
                       : 'bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700'
                   }`}
                 >
-                  <div className="w-8 h-8 rounded-full bg-navy-900 flex items-center justify-center text-white text-sm">
+                  <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-sm">
                     {user.name?.charAt(0) || 'U'}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -796,7 +796,7 @@ const ApprovalModal: React.FC<{
   notes: string;
   onNotesChange: (notes: string) => void;
 }> = ({ onClose, onApprove, notes, onNotesChange }) => (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
     <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md mx-4">
       <div className="p-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-3">
@@ -851,11 +851,11 @@ const RejectModal: React.FC<{
   reason: string;
   onReasonChange: (reason: string) => void;
 }> = ({ onClose, onReject, reason, onReasonChange }) => (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
     <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md mx-4">
       <div className="p-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-danger-500 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-rose-500 flex items-center justify-center">
             <XCircle className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -869,7 +869,7 @@ const RejectModal: React.FC<{
 
       <div className="p-4">
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          Rejection Reason <span className="text-danger-500">*</span>
+          Rejection Reason <span className="text-rose-500">*</span>
         </label>
         <textarea
           value={reason}
@@ -890,7 +890,7 @@ const RejectModal: React.FC<{
         <button
           onClick={onReject}
           disabled={!reason.trim()}
-          className="px-4 py-2 text-sm bg-danger-600 text-white rounded-lg hover:bg-danger-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Reject Assessment
         </button>
@@ -904,7 +904,7 @@ const RestoreVersionModal: React.FC<{
   onClose: () => void;
   onRestore: () => void;
 }> = ({ version, onClose, onRestore }) => (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
     <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md mx-4">
       <div className="p-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-3">

@@ -206,7 +206,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
         createPortal(
           <>
             <div
-              className="fixed inset-0 z-[9998]"
+              className="fixed inset-0 z-context-menu"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -215,7 +215,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
             />
             <div
               ref={panelRef}
-              className="fixed z-[9999] min-w-[160px] rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 shadow-lg py-1 animate-in fade-in-0 zoom-in-95"
+              className="fixed z-context-menu min-w-[160px] rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 shadow-lg py-1 animate-in fade-in-0 zoom-in-95"
               role="menu"
               style={
                 panelPos
@@ -285,9 +285,9 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                             ) : null}
                             {hasSub ? (
                               expanded ? (
-                                <ChevronDown size={13} className="shrink-0 opacity-60" />
+                                <ChevronDown size={14} className="shrink-0 opacity-60" />
                               ) : (
-                                <ChevronRight size={13} className="shrink-0 opacity-60" />
+                                <ChevronRight size={14} className="shrink-0 opacity-60" />
                               )
                             ) : null}
                           </button>
@@ -307,7 +307,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                                     className={`w-full flex items-center gap-2 py-1.5 pl-8 pr-3 text-left text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${variantStyles[sub.variant || 'default']}`}
                                     role="menuitem"
                                   >
-                                    {SubIcon && <SubIcon size={13} className="shrink-0" />}
+                                    {SubIcon && <SubIcon size={14} className="shrink-0" />}
                                     <span className="min-w-0 flex-1 truncate">{sub.label}</span>
                                   </button>
                                 );

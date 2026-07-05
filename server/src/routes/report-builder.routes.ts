@@ -42,6 +42,7 @@ const {
 } = docxModule as any;
 import { upsertAssessmentReportForBuilder } from '../services/assessmentReportBuilderLinkService.js';
 import { getOrCreateBrandVoice, updateBrandVoice } from '../services/brandVoiceProfileService.js';
+import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { buildKnowledgeMap } from '../services/knowledgeMapService.js';
 import notificationService from '../services/notificationService.js';
 import { computeRagForReport } from '../services/ragLogicService.js';
@@ -5141,8 +5142,46 @@ router.post(
       const initiativeDescription =
         bodyDescription || (sectionContent ? sectionContent.slice(0, 500) : '');
 
-      const initiativeId = uuidv4();
+      let initiativeId = uuidv4();
       const now = new Date().toISOString();
+
+      // Uspójnienie F1.9 — przez kanoniczny lejek (DRAFT + name/title + lineage).
+      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+        const __r = await funnelCreateInitiative(
+          organizationId,
+          {
+            title: initiativeTitle,
+            projectId: reportData.report.projectId || null,
+            summary: initiativeDescription,
+            description: initiativeDescription,
+            ownerBusinessId: userId || null,
+            ownerExecutionId: userId || null,
+            sourceType: 'report',
+            sourceId: id,
+          },
+          { validate: false, actor: { id: userId } }
+        );
+        initiativeId = __r.id;
+        // Funnel nie zna report_id/created_by/updated_by — dośpiewujemy (best-effort).
+        try {
+          await dbRun(
+            `UPDATE initiatives SET report_id = ?, created_by = ?, updated_by = ?
+             WHERE id = ? AND organization_id = ?`,
+            [id, userId || 'system', userId || 'system', initiativeId, organizationId]
+          );
+        } catch {
+          /* report_id/created_by/updated_by columns may be absent */
+        }
+
+        logger.info('[ReportBuilder] Initiative created from section', {
+          reportId: id,
+          sectionKey,
+          initiativeId,
+        });
+
+        return res.json({ id: initiativeId, title: initiativeTitle, status: 'DRAFT' });
+      }
+
       let initiativeColumns: string[] = [];
       try {
         const info = await dbAll<Array<{ name?: string }>>(`PRAGMA table_info(initiatives)`, []);

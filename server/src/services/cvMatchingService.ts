@@ -9,6 +9,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import PDFParserService from './pdfParserService.js';
 import logger from '../utils/Logger.js';
 
 // ---------------------------------------------------------------------------
@@ -133,10 +134,8 @@ async function extractText(filePath: string, fileType: string): Promise<string> 
 
   if (fileType === 'pdf') {
     try {
-      const pdfParse = (await import('pdf-parse')).default as any;
       const buffer = fs.readFileSync(filePath);
-      const data = await pdfParse(buffer);
-      return String(data?.text || '');
+      return await PDFParserService.extractTextFromBuffer(buffer);
     } catch (err) {
       logger.warn(
         '[CVMatching] PDF parse failed, falling back to raw read:',

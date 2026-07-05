@@ -327,7 +327,10 @@ describe('ReferralToolsSection V8 campaign create seam', () => {
     });
 
     await act(async () => {
-      fireEvent.click(screen.getByTitle('Delete'));
+      fireEvent.click(screen.getByTitle('Actions'));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Delete' }));
     });
 
     await waitFor(() => {
@@ -349,7 +352,10 @@ describe('ReferralToolsSection V8 campaign create seam', () => {
     });
 
     await act(async () => {
-      fireEvent.click(screen.getByTitle('Delete'));
+      fireEvent.click(screen.getByTitle('Actions'));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Delete' }));
     });
 
     await waitFor(() => {

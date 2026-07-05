@@ -177,15 +177,15 @@ export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({ isPl, onAction, 
   };
 
   return (
-    <div className="w-[280px] max-h-[440px] overflow-y-auto rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl">
-      <div className="p-2 sticky top-0 bg-white dark:bg-navy-900 z-10">
+    <div className="w-[280px] max-h-[440px] overflow-y-auto rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl">
+      <div className="p-2 sticky top-0 bg-c-surface-raised dark:bg-c-surface z-10">
         <div className="relative">
-          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600" />
+          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-c-text-secondary" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={isPl ? 'Szukaj narzędzi…' : 'Search tools…'}
-            className="w-full pl-7 pr-2 py-1.5 text-[11px] rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200/40 dark:border-white/[0.04] text-slate-700 dark:text-slate-200 placeholder:text-slate-400 outline-none focus:ring-1 focus:ring-primary-500/30"
+            className="w-full pl-7 pr-2 py-1.5 text-[11px] rounded-lg bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border text-c-text-secondary dark:text-c-text placeholder:text-c-text-muted outline-none focus:ring-1 focus:ring-c-border"
             autoFocus
           />
         </div>
@@ -193,7 +193,7 @@ export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({ isPl, onAction, 
       <div className="px-1 pb-1.5">
         {Object.entries(grouped).map(([cat, items]) => (
           <div key={cat}>
-            <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">
+            <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
               {isPl ? CATEGORY_LABELS[cat]?.pl : CATEGORY_LABELS[cat]?.en}
             </div>
             {items.map((tool) => {
@@ -202,9 +202,9 @@ export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({ isPl, onAction, 
                 <button
                   key={tool.action}
                   onClick={() => dispatch(tool.action)}
-                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
                 >
-                  <Icon size={12} className="text-slate-600 shrink-0" />
+                  <Icon size={12} className="text-c-text-secondary shrink-0" />
                   {isPl ? tool.labelPl : tool.labelEn}
                 </button>
               );
@@ -212,7 +212,7 @@ export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({ isPl, onAction, 
           </div>
         ))}
         {filtered.length === 0 && (
-          <div className="px-2 py-4 text-[10px] text-slate-600 text-center">
+          <div className="px-2 py-4 text-[10px] text-c-text-secondary text-center">
             {isPl ? 'Brak wyników' : 'No results'}
           </div>
         )}

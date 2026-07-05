@@ -194,12 +194,12 @@ export const PushNotificationsSettings: React.FC<PushNotificationsSettingsProps>
         {/* Mobile push — no delivery backend yet, explicitly gated. */}
         <div className="flex items-start justify-between gap-4 opacity-90">
           <div className="flex items-start gap-3 flex-1">
-            <Smartphone size={18} className="text-slate-600 dark:text-slate-500 mt-0.5" />
+            <Smartphone size={18} className="text-c-text-secondary mt-0.5" />
             <div>
               <span className="text-sm font-medium text-white">
                 {t('settings.notifications.mobilePush', 'Mobile Push Notifications')}
               </span>
-              <p className="text-xs text-slate-600 dark:text-slate-500 mt-0.5">
+              <p className="text-xs text-c-text-secondary mt-0.5">
                 {t(
                   'settings.notifications.mobilePushDesc',
                   'Mobile push requires the Consultify mobile app, which is coming soon.'
@@ -207,7 +207,7 @@ export const PushNotificationsSettings: React.FC<PushNotificationsSettingsProps>
               </p>
             </div>
           </div>
-          <span className="inline-flex items-center rounded-full bg-white/5 px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-slate-500 flex-shrink-0">
+          <span className="inline-flex items-center rounded-full bg-c-surface-raised px-2.5 py-1 text-xs font-medium text-c-text-secondary flex-shrink-0">
             {t('common.comingSoon', 'Coming soon')}
           </span>
         </div>

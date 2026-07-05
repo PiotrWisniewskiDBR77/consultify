@@ -84,7 +84,7 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
 
   return (
     <div
-      className="absolute left-0 right-0 border-b border-slate-200/40 dark:border-navy-700/40"
+      className="absolute left-0 right-0 border-b border-c-border-subtle"
       style={{ top: idx * LANE_HEIGHT, height: LANE_HEIGHT, background: `${lane.color}15` }}
     >
       <div className="absolute left-2 top-1 z-10 flex items-center gap-1">
@@ -98,11 +98,11 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
               if (e.key === 'Enter') commit();
               if (e.key === 'Escape') setEditing(false);
             }}
-            className="text-[10px] font-semibold text-slate-700 dark:text-slate-200 bg-white/80 dark:bg-navy-800/80 rounded px-1 outline-none border border-primary-400"
+            className="text-[10px] font-semibold text-c-text-secondary bg-c-surface rounded px-1 outline-none border border-c-accent"
           />
         ) : (
           <div
-            className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 select-none cursor-pointer hover:text-slate-700 dark:hover:text-slate-200"
+            className="text-[10px] font-semibold text-c-text-muted select-none cursor-pointer hover:text-c-text-secondary"
             onDoubleClick={() => {
               if (!locked) {
                 setValue(lane.label);
@@ -128,27 +128,27 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
             {!isFirst && (
               <button
                 onClick={() => onMoveUp?.(lane.id)}
-                className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60"
+                className="p-0.5 rounded hover:bg-c-surface"
                 title="Move up"
               >
-                <ArrowDownUp size={9} className="text-slate-600 rotate-180" />
+                <ArrowDownUp size={9} className="text-c-text-secondary rotate-180" />
               </button>
             )}
             {!isLast && (
               <button
                 onClick={() => onMoveDown?.(lane.id)}
-                className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60"
+                className="p-0.5 rounded hover:bg-c-surface"
                 title="Move down"
               >
-                <ArrowDownUp size={9} className="text-slate-600" />
+                <ArrowDownUp size={9} className="text-c-text-secondary" />
               </button>
             )}
             <button
               onClick={() => setShowColorPicker(!showColorPicker)}
-              className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60"
+              className="p-0.5 rounded hover:bg-c-surface"
               title="Change color"
             >
-              <Palette size={9} className="text-slate-600" />
+              <Palette size={9} className="text-c-text-secondary" />
             </button>
             {laneCount > 1 && (
               <button
@@ -164,7 +164,7 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
       </div>
 
       {showColorPicker && !locked && (
-        <div className="absolute left-2 top-5 z-20 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg p-1.5 shadow-lg flex flex-wrap gap-1 w-[120px]">
+        <div className="absolute left-2 top-5 z-20 bg-c-surface border border-c-border-subtle rounded-lg p-1.5 shadow-lg flex flex-wrap gap-1 w-[120px]">
           {LANE_COLORS.map((c) => (
             <button
               key={c}
@@ -172,7 +172,7 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
                 onColorChange?.(lane.id, c);
                 setShowColorPicker(false);
               }}
-              className={`w-5 h-5 rounded-full border-2 transition-transform hover:scale-110 ${c === lane.color ? 'border-primary-500 scale-110' : 'border-transparent'}`}
+              className={`w-5 h-5 rounded-full border-2 transition-transform hover:scale-110 ${c === lane.color ? 'border-c-accent scale-110' : 'border-transparent'}`}
               style={{ backgroundColor: c }}
             />
           ))}
@@ -229,7 +229,7 @@ export const LaneSystem: React.FC<LaneSystemProps> = ({
         if (dragIdx < 0) return null;
         return (
           <div
-            className="absolute left-0 right-0 pointer-events-none border-2 border-primary-400/40 rounded-lg"
+            className="absolute left-0 right-0 pointer-events-none border-2 border-c-accent rounded-lg"
             style={{
               top: dragIdx * LANE_HEIGHT,
               height: LANE_HEIGHT,

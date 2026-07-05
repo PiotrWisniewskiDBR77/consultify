@@ -7,10 +7,35 @@
  */
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { I18nextProvider } from 'react-i18next';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import i18n from '../../../src/i18n';
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, fallback?: any) => {
+      const translations: Record<string, string> = {
+        'audit.newAuditProgram': 'New audit program',
+        'audit.egIso27001Readiness': 'e.g. ISO 27001 readiness',
+        'audit.defineObjectiveWhatToAsk': 'Define objective — what to ask',
+        'audit.close': 'Close',
+        'audit.cancel': 'Cancel',
+        'audit.back': 'Back',
+        'audit.next': 'Next',
+        'audit.createProgram': 'Create program',
+        'audit.custom': 'Custom',
+        'audit.startBlank': 'Start blank',
+        'audit.pickInterviewTemplates': 'Pick the interview templates this audit will ask.',
+        'audit.pickPeopleWhoFillSurveys': 'Pick the people who will fill the surveys.',
+        'audit.iso27001': 'ISO 27001',
+      };
+      if (typeof fallback === 'string') return fallback;
+      return translations[key] || key;
+    },
+    i18n: { language: 'en', changeLanguage: vi.fn() },
+  }),
+  Trans: ({ children }: any) => children,
+  I18nextProvider: ({ children }: any) => children,
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
 
 // ── Mocks ───────────────────────────────────────────────────────────────────
 
@@ -104,17 +129,15 @@ function renderWizard(props: {
     onClose,
     onCreated,
     ...render(
-      <I18nextProvider i18n={i18n}>
-        <div>
-          {/* Isolated wrapper so the modal overlay is findable in tests */}
-          <AuditOrchestratorWizardUnderTest
-            open={props.open ?? true}
-            onClose={onClose}
-            onCreated={onCreated}
-            initialPresetId={props.initialPresetId ?? null}
-          />
-        </div>
-      </I18nextProvider>
+      <div>
+        {/* Isolated wrapper so the modal overlay is findable in tests */}
+        <AuditOrchestratorWizardUnderTest
+          open={props.open ?? true}
+          onClose={onClose}
+          onCreated={onCreated}
+          initialPresetId={props.initialPresetId ?? null}
+        />
+      </div>
     ),
   };
 }

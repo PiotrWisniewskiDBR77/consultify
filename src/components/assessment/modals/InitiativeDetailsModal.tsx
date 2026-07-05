@@ -87,30 +87,30 @@ interface Initiative {
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   DRAFT: {
     label: 'Draft',
-    color: 'bg-slate-100 text-slate-600 dark:text-slate-400',
+    color: 'bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted',
     icon: <Clock size={14} />,
   },
   PROPOSED: {
     label: 'Proposed',
-    color: 'bg-amber-100 text-amber-700',
+    color: 'bg-[color-mix(in_srgb,var(--c-warning)_15%,transparent)] text-c-warning',
     icon: <Lightbulb size={14} />,
   },
   APPROVED: {
     label: 'Approved',
-    color: 'bg-green-100 text-green-700',
+    color: 'bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] text-c-success',
     icon: <CheckCircle2 size={14} />,
   },
   IN_PROGRESS: {
     label: 'In Progress',
-    color: 'bg-blue-100 text-blue-700',
+    color: 'bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] text-c-info',
     icon: <TrendingUp size={14} />,
   },
   COMPLETED: {
     label: 'Completed',
-    color: 'bg-primary-100 text-primary-700',
+    color: 'bg-c-accent-soft text-c-accent',
     icon: <Award size={14} />,
   },
-  PLANNED: { label: 'Planned', color: 'bg-blue-100 text-blue-700', icon: <MapPin size={14} /> },
+  PLANNED: { label: 'Planned', color: 'bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] text-c-info', icon: <MapPin size={14} /> },
 };
 
 const AXIS_LABELS: Record<string, string> = {
@@ -203,15 +203,15 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
   if (loading) {
     if (embedded) {
       return (
-        <div className="h-full flex items-center justify-center bg-white dark:bg-navy-900">
+        <div className="h-full flex items-center justify-center bg-c-surface">
           <LoadingState variant="spinner" />
         </div>
       );
     }
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white dark:bg-navy-900 rounded-xl p-8">
-          <Loader2 className="w-8 h-8 text-primary-500 animate-spin mx-auto" />
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
+        <div className="bg-c-surface rounded-xl p-8">
+          <Loader2 className="w-8 h-8 text-c-accent animate-spin mx-auto" />
         </div>
       </div>
     );
@@ -220,25 +220,25 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
   if (error || !initiative) {
     if (embedded) {
       return (
-        <div className="h-full flex flex-col items-center justify-center bg-white dark:bg-navy-900 p-8 text-center">
+        <div className="h-full flex flex-col items-center justify-center bg-c-surface p-8 text-center">
           <AlertCircle className="w-12 h-12 text-danger-400 mb-3" />
-          <p className="text-slate-500 dark:text-slate-400">
+          <p className="text-c-text-muted">
             {error || 'Nie znaleziono inicjatywy'}
           </p>
-          <button onClick={onClose} className="mt-4 text-primary-600 hover:underline">
+          <button onClick={onClose} className="mt-4 text-c-accent hover:underline">
             Zamknij
           </button>
         </div>
       );
     }
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white dark:bg-navy-900 rounded-xl p-8 text-center max-w-sm">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay p-4">
+        <div className="bg-c-surface rounded-xl p-8 text-center max-w-sm">
           <AlertCircle className="w-12 h-12 text-danger-400 mx-auto mb-3" />
-          <p className="text-slate-500 dark:text-slate-400">
+          <p className="text-c-text-muted">
             {error || 'Nie znaleziono inicjatywy'}
           </p>
-          <button onClick={onClose} className="mt-4 text-primary-600 hover:underline">
+          <button onClick={onClose} className="mt-4 text-c-accent hover:underline">
             Zamknij
           </button>
         </div>
@@ -251,10 +251,10 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
   // Content to be rendered (shared between modal and embedded modes)
   const content = (
     <div
-      className={`bg-white dark:bg-navy-900 ${embedded ? 'h-full' : 'rounded-xl w-full max-w-3xl max-h-[90vh] shadow-2xl'} overflow-hidden flex flex-col`}
+      className={`bg-c-surface ${embedded ? 'h-full' : 'rounded-xl w-full max-w-3xl max-h-[90vh] shadow-2xl'} overflow-hidden flex flex-col`}
     >
       {/* Header */}
-      <div className="shrink-0 px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-primary-50 to-white dark:from-primary-900/10 dark:to-navy-900">
+      <div className="shrink-0 px-6 py-4 border-b border-c-border-subtle bg-c-accent-soft">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0 pr-4">
             <div className="flex items-center gap-2 mb-1">
@@ -265,23 +265,23 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
                 {statusConfig.label}
               </span>
               {initiative.axis && (
-                <span className="px-2 py-0.5 bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 rounded-full text-xs">
+                <span className="px-2 py-0.5 bg-c-surface-raised text-c-text-secondary dark:text-c-text-muted rounded-full text-xs">
                   {AXIS_LABELS[initiative.axis] || initiative.axis}
                 </span>
               )}
             </div>
-            <h2 className="text-xl font-bold text-navy-900 dark:text-white truncate">
+            <h2 className="text-xl font-bold text-c-text truncate">
               {initiative.name}
             </h2>
             {initiative.area && (
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-sm text-c-text-muted mt-1">
                 Obszar: {initiative.area}
               </p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 text-c-text-muted hover:text-c-text-secondary dark:hover:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-white/10 rounded-lg transition-colors"
           >
             <X size={20} />
           </button>
@@ -292,39 +292,39 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {/* Financial Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-green-50 dark:bg-green-900/10 rounded-xl p-4 border border-green-200 dark:border-green-500/20">
-            <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-1">
+          <div className="bg-[color-mix(in_srgb,var(--c-success)_8%,transparent)] rounded-xl p-4 border border-c-success">
+            <div className="flex items-center gap-2 text-c-success mb-1">
               <TrendingUp size={16} />
               <span className="text-xs font-medium">ROI</span>
             </div>
-            <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+            <p className="text-2xl font-bold text-c-success">
               {initiative.expectedRoi ? `${initiative.expectedRoi}%` : '-'}
             </p>
           </div>
-          <div className="bg-primary-50 dark:bg-primary-900/10 rounded-xl p-4 border border-primary-200 dark:border-primary-500/20">
-            <div className="flex items-center gap-2 text-primary-600 dark:text-primary-400 mb-1">
+          <div className="bg-c-accent-soft rounded-xl p-4 border border-c-accent dark:border-c-accent">
+            <div className="flex items-center gap-2 text-c-accent dark:text-c-accent mb-1">
               <DollarSign size={16} />
               <span className="text-xs font-medium">Wartość biznesowa</span>
             </div>
-            <p className="text-2xl font-bold text-primary-700 dark:text-primary-300">
+            <p className="text-2xl font-bold text-c-accent dark:text-c-accent">
               {formatCurrency(initiative.businessValue)}
             </p>
           </div>
-          <div className="bg-blue-50 dark:bg-blue-900/10 rounded-xl p-4 border border-blue-200 dark:border-blue-500/20">
-            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-1">
+          <div className="bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)] rounded-xl p-4 border border-c-info">
+            <div className="flex items-center gap-2 text-c-info mb-1">
               <BarChart3 size={16} />
               <span className="text-xs font-medium">CAPEX</span>
             </div>
-            <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+            <p className="text-2xl font-bold text-c-info">
               {formatCurrency(initiative.costCapex)}
             </p>
           </div>
-          <div className="bg-amber-50 dark:bg-amber-900/10 rounded-xl p-4 border border-amber-200 dark:border-amber-500/20">
-            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 mb-1">
+          <div className="bg-[color-mix(in_srgb,var(--c-warning)_8%,transparent)] rounded-xl p-4 border-l-2 border-c-warning">
+            <div className="flex items-center gap-2 text-c-warning mb-1">
               <Calendar size={16} />
               <span className="text-xs font-medium">OPEX (rocznie)</span>
             </div>
-            <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">
+            <p className="text-2xl font-bold text-c-warning">
               {formatCurrency(initiative.costOpex)}
             </p>
           </div>
@@ -335,22 +335,22 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
           <div className="space-y-4">
             {initiative.summary && (
               <div>
-                <h3 className="text-sm font-semibold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
-                  <FileText size={16} className="text-primary-500" />
+                <h3 className="text-sm font-semibold text-c-text mb-2 flex items-center gap-2">
+                  <FileText size={16} className="text-c-accent" />
                   Opis
                 </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-navy-950 rounded-lg p-4">
+                <p className="text-sm text-c-text-secondary bg-c-surface-raised dark:bg-c-bg rounded-lg p-4">
                   {initiative.summary}
                 </p>
               </div>
             )}
             {initiative.hypothesis && (
               <div>
-                <h3 className="text-sm font-semibold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
-                  <Lightbulb size={16} className="text-amber-500" />
+                <h3 className="text-sm font-semibold text-c-text mb-2 flex items-center gap-2">
+                  <Lightbulb size={16} className="text-c-warning" />
                   Hipoteza
                 </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-300 bg-amber-50 dark:bg-amber-900/10 rounded-lg p-4 border border-amber-200 dark:border-amber-500/20">
+                <p className="text-sm text-c-text-secondary bg-[color-mix(in_srgb,var(--c-warning)_8%,transparent)] rounded-lg p-4 border-l-2 border-c-warning">
                   {initiative.hypothesis}
                 </p>
               </div>
@@ -360,22 +360,22 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
 
         {/* Timeline */}
         <div>
-          <h3 className="text-sm font-semibold text-navy-900 dark:text-white mb-3 flex items-center gap-2">
-            <Calendar size={16} className="text-blue-500" />
+          <h3 className="text-sm font-semibold text-c-text mb-3 flex items-center gap-2">
+            <Calendar size={16} className="text-c-info" />
             Harmonogram
           </h3>
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-3">
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Planowany start</p>
-              <p className="text-sm font-medium text-navy-900 dark:text-white">
+            <div className="bg-c-surface-raised dark:bg-c-bg rounded-lg p-3">
+              <p className="text-xs text-c-text-muted mb-1">Planowany start</p>
+              <p className="text-sm font-medium text-c-text">
                 {formatDate(initiative.plannedStartDate)}
               </p>
             </div>
-            <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-3">
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+            <div className="bg-c-surface-raised dark:bg-c-bg rounded-lg p-3">
+              <p className="text-xs text-c-text-muted mb-1">
                 Planowane zakończenie
               </p>
-              <p className="text-sm font-medium text-navy-900 dark:text-white">
+              <p className="text-sm font-medium text-c-text">
                 {formatDate(initiative.plannedEndDate)}
               </p>
             </div>
@@ -385,7 +385,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
         {/* Risk Assessment */}
         {initiative.keyRisks && initiative.keyRisks.length > 0 && (
           <div>
-            <h3 className="text-sm font-semibold text-navy-900 dark:text-white mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-c-text mb-3 flex items-center gap-2">
               <AlertTriangle size={16} className="text-danger-500" />
               Kluczowe ryzyka ({initiative.keyRisks.length})
             </h3>
@@ -408,38 +408,38 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
         {/* Owners */}
         {(initiative.ownerBusiness || initiative.ownerExecution) && (
           <div>
-            <h3 className="text-sm font-semibold text-navy-900 dark:text-white mb-3 flex items-center gap-2">
-              <User size={16} className="text-slate-500 dark:text-slate-400" />
+            <h3 className="text-sm font-semibold text-c-text mb-3 flex items-center gap-2">
+              <User size={16} className="text-c-text-muted" />
               Właściciele
             </h3>
             <div className="grid grid-cols-2 gap-4">
               {initiative.ownerBusiness && (
-                <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
-                  <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                    <span className="text-sm font-bold text-primary-600 dark:text-primary-400">
+                <div className="flex items-center gap-3 p-3 bg-c-surface-raised dark:bg-c-bg rounded-lg">
+                  <div className="w-10 h-10 rounded-full bg-c-accent-soft flex items-center justify-center">
+                    <span className="text-sm font-bold text-c-accent dark:text-c-accent">
                       {initiative.ownerBusiness.firstName?.charAt(0)}
                       {initiative.ownerBusiness.lastName?.charAt(0)}
                     </span>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Business Owner</p>
-                    <p className="text-sm font-medium text-navy-900 dark:text-white">
+                    <p className="text-xs text-c-text-muted">Business Owner</p>
+                    <p className="text-sm font-medium text-c-text">
                       {initiative.ownerBusiness.firstName} {initiative.ownerBusiness.lastName}
                     </p>
                   </div>
                 </div>
               )}
               {initiative.ownerExecution && (
-                <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                    <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                <div className="flex items-center gap-3 p-3 bg-c-surface-raised dark:bg-c-bg rounded-lg">
+                  <div className="w-10 h-10 rounded-full bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] flex items-center justify-center">
+                    <span className="text-sm font-bold text-c-info">
                       {initiative.ownerExecution.firstName?.charAt(0)}
                       {initiative.ownerExecution.lastName?.charAt(0)}
                     </span>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Execution Owner</p>
-                    <p className="text-sm font-medium text-navy-900 dark:text-white">
+                    <p className="text-xs text-c-text-muted">Execution Owner</p>
+                    <p className="text-sm font-medium text-c-text">
                       {initiative.ownerExecution.firstName} {initiative.ownerExecution.lastName}
                     </p>
                   </div>
@@ -451,12 +451,12 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
 
         {/* Source */}
         {initiative.assessmentName && (
-          <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-4 border border-slate-200 dark:border-navy-700">
-            <h3 className="text-sm font-semibold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
-              <Target size={16} className="text-primary-500" />
+          <div className="bg-c-surface-raised dark:bg-c-bg rounded-lg p-4 border border-c-border-subtle">
+            <h3 className="text-sm font-semibold text-c-text mb-2 flex items-center gap-2">
+              <Target size={16} className="text-c-accent" />
               Źródło
             </h3>
-            <div className="text-sm text-slate-600 dark:text-slate-300">
+            <div className="text-sm text-c-text-secondary">
               <p>
                 Assessment: <span className="font-medium">{initiative.assessmentName}</span>
               </p>
@@ -465,14 +465,14 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
         )}
 
         {/* Stats */}
-        <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-4 border-t border-slate-200 dark:border-navy-700">
+        <div className="flex items-center justify-between text-xs text-c-text-muted pt-4 border-t border-c-border-subtle">
           <span>Utworzono: {formatDate(initiative.createdAt)}</span>
           <span>{initiative.taskCount} zadań</span>
         </div>
       </div>
 
       {/* Actions Footer */}
-      <div className="shrink-0 px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
+      <div className="shrink-0 px-6 py-4 border-t border-c-border-subtle bg-c-surface-raised dark:bg-c-bg">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             {onDelete && initiative.status === 'DRAFT' && (
@@ -489,7 +489,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
             {onEdit && (
               <button
                 onClick={() => onEdit(initiative.id)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2 bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg text-sm font-medium transition-colors"
               >
                 <Edit size={16} />
                 Edytuj
@@ -498,7 +498,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
             {onApprove && (initiative.status === 'DRAFT' || initiative.status === 'PROPOSED') && (
               <button
                 onClick={() => onApprove(initiative.id)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2 bg-c-success hover:opacity-90 text-white rounded-lg text-sm font-medium transition-colors"
               >
                 <ThumbsUp size={16} />
                 Zatwierdź
@@ -507,7 +507,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
             {onAddToRoadmap && initiative.status === 'APPROVED' && (
               <button
                 onClick={() => onAddToRoadmap(initiative.id)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2 bg-c-text text-c-surface hover:opacity-90 rounded-lg text-sm font-medium transition-colors"
               >
                 <MapPin size={16} />
                 Dodaj do Roadmap
@@ -526,7 +526,7 @@ export const InitiativeDetailsModal: React.FC<InitiativeDetailsModalProps> = ({
 
   // Modal mode: wrap in overlay
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay p-4">
       {content}
     </div>
   );

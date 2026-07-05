@@ -62,7 +62,7 @@ export const TransformationScenarios: React.FC<TransformationScenariosProps> = (
       {/* Top Banner: AI Recommendation */}
       <div className="relative z-20 bg-gradient-to-r from-primary-50 to-white dark:from-primary-900/10 dark:to-navy-900 p-6 rounded-xl border border-primary-100 dark:border-navy-700 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm">
         <div className="flex gap-4 items-center">
-          <div className="w-12 h-12 rounded-xl bg-primary-600 text-white flex items-center justify-center shadow-lg shadow-primary-900/20">
+          <div className="w-12 h-12 rounded-xl bg-c-text text-c-bg flex items-center justify-center shadow-lg shadow-black/10">
             <BrainCircuit size={24} />
           </div>
           <div>

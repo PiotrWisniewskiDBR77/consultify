@@ -55,29 +55,29 @@ interface TableInfo {
 const MODULE_CONFIG = {
   results: {
     icon: Target,
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
-    borderColor: 'border-emerald-200 dark:border-emerald-500/20',
+    color: 'text-c-success',
+    bgColor: 'bg-c-success',
+    borderColor: 'border-c-success',
     betaModuleId: 'MODULE_BENEFITS',
   },
   finance: {
     icon: DollarSign,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50 dark:bg-blue-500/10',
-    borderColor: 'border-blue-200 dark:border-blue-500/20',
+    color: 'text-c-info',
+    bgColor: 'bg-c-info',
+    borderColor: 'border-c-info',
     betaModuleId: 'MODULE_ECONOMICS',
   },
   execution: {
     icon: Zap,
-    color: 'text-primary-600',
-    bgColor: 'bg-primary-50 dark:bg-primary-500/10',
-    borderColor: 'border-primary-200 dark:border-primary-500/20',
+    color: 'text-c-accent',
+    bgColor: 'bg-c-accent-soft',
+    borderColor: 'border-c-accent',
   },
   initiatives: {
     icon: Rocket,
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-50 dark:bg-amber-500/10',
-    borderColor: 'border-amber-200 dark:border-amber-500/20',
+    color: 'text-c-warning',
+    bgColor: 'bg-c-warning',
+    borderColor: 'border-c-warning',
   },
 } as const;
 
@@ -168,7 +168,7 @@ function ModuleLinkSection({
   }, [modelId, moduleKey, fieldMappings, selectedTableId, isPl, onSyncComplete]);
 
   const inputCls =
-    'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40';
+    'w-full rounded-lg border border-c-border bg-c-surface px-3 py-1.5 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-tag-2';
 
   return (
     <div className={`rounded-xl border ${cfg.borderColor} overflow-hidden`}>
@@ -182,37 +182,37 @@ function ModuleLinkSection({
           {isPl ? moduleLabels[moduleKey].pl : moduleLabels[moduleKey].en}
         </span>
         {status?.linked && (
-          <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600">
+          <span className="inline-flex items-center gap-1 text-[10px] text-c-success">
             <CheckCircle2 size={10} /> {isPl ? 'Połączono' : 'Linked'}
           </span>
         )}
         {expanded ? (
-          <ChevronUp size={14} className="text-slate-600" />
+          <ChevronUp size={14} className="text-c-text-secondary" />
         ) : (
-          <ChevronDown size={14} className="text-slate-600" />
+          <ChevronDown size={14} className="text-c-text-secondary" />
         )}
       </button>
 
       {/* Status bar */}
       {status && (
-        <div className="flex items-center gap-4 px-4 py-2 bg-slate-50 dark:bg-navy-900 border-t border-slate-200 dark:border-navy-800">
-          <span className="text-[10px] text-slate-500">
+        <div className="flex items-center gap-4 px-4 py-2 bg-c-surface border-t border-c-border">
+          <span className="text-[10px] text-c-text-muted">
             {status.linked ? (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400">{isPl ? 'Aktywne' : 'Active'}</span>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-success border border-c-success text-c-success">{isPl ? 'Aktywne' : 'Active'}</span>
             ) : (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400">{isPl ? 'Nieaktywne' : 'Inactive'}</span>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-surface-raised border border-c-border text-c-text-muted">{isPl ? 'Nieaktywne' : 'Inactive'}</span>
             )}
           </span>
           {status.lastSync && (
-            <span className="text-[10px] text-slate-600">
+            <span className="text-[10px] text-c-text-secondary">
               {isPl ? 'Ost. sync' : 'Last sync'}: {formatTimeAgo(status.lastSync)}
             </span>
           )}
-          <span className="text-[10px] text-slate-600">
+          <span className="text-[10px] text-c-text-secondary">
             {status.recordCount} {isPl ? 'rek.' : 'rec.'}
           </span>
           {status.errors.length > 0 && (
-            <span className="inline-flex items-center gap-1 text-[10px] text-danger-500">
+            <span className="inline-flex items-center gap-1 text-[10px] text-c-danger">
               <XCircle size={10} /> {status.errors.length} {isPl ? 'błędów' : 'errors'}
             </span>
           )}
@@ -221,10 +221,10 @@ function ModuleLinkSection({
 
       {/* Expanded mapping UI */}
       {expanded && (
-        <div className="px-4 py-3 space-y-3 border-t border-slate-200 dark:border-navy-800">
+        <div className="px-4 py-3 space-y-3 border-t border-c-border">
           {/* Select table */}
           <div>
-            <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+            <label className="block text-[11px] font-medium text-c-text-muted mb-1">
               {isPl ? 'Tabela źródłowa' : 'Source table'}
             </label>
             <select
@@ -247,14 +247,14 @@ function ModuleLinkSection({
           {/* Field mapping */}
           {selectedTable && (
             <div>
-              <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+              <label className="block text-[11px] font-medium text-c-text-muted mb-1">
                 {isPl ? 'Mapowanie pól' : 'Field mapping'}
               </label>
               <div className="space-y-1.5">
                 {targetFields.map((tf) => (
                   <div key={tf} className="flex items-center gap-2">
-                    <span className="text-[11px] text-slate-500 w-24 truncate">{tf}</span>
-                    <ArrowRight size={10} className="text-slate-600 flex-shrink-0" />
+                    <span className="text-[11px] text-c-text-muted w-24 truncate">{tf}</span>
+                    <ArrowRight size={10} className="text-c-text-secondary flex-shrink-0" />
                     <select
                       className={inputCls}
                       value={fieldMappings[tf] ?? ''}
@@ -287,11 +287,11 @@ function ModuleLinkSection({
                 ? 'Synchronizacja danych do modułu docelowego będzie dostępna wkrótce'
                 : 'Data sync to the target module is coming soon'
             }
-            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-200 dark:bg-navy-800 text-slate-500 dark:text-slate-400 cursor-not-allowed transition-colors"
+            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text-muted cursor-not-allowed transition-colors"
           >
             {isPl ? 'Wkrótce' : 'Coming soon'}
           </button>
-          <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center">
+          <p className="text-[10px] text-c-text-muted text-center">
             {isPl
               ? 'Mapowanie pól możesz przygotować już teraz — przesył danych włączymy w kolejnym wydaniu.'
               : 'You can prepare the field mapping now — data transfer ships in an upcoming release.'}
@@ -362,30 +362,30 @@ export const ConsultifyLinkPanel: React.FC<ConsultifyLinkPanelProps> = ({
   }, [loadData]);
 
   const inputCls =
-    'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40';
+    'w-full rounded-lg border border-c-border bg-c-surface px-3 py-1.5 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-tag-2';
 
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-c-border">
         <div>
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+          <h3 className="text-sm font-semibold text-c-text">
             {isPl ? 'Połączenie z Consultify' : 'Consultify Link'}
           </h3>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-[11px] text-c-text-muted mt-0.5">
             {isPl
               ? 'Połącz dane tabeli z modułami Consultify'
               : 'Connect table data to Consultify modules'}
           </p>
         </div>
-        <button onClick={onClose} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800">
-          <X size={16} className="text-slate-600" />
+        <button onClick={onClose} className="p-1 rounded hover:bg-c-surface-raised">
+          <X size={16} className="text-c-text-secondary" />
         </button>
       </div>
 
       {/* Model selector */}
-      <div className="px-5 py-3 border-b border-slate-200 dark:border-navy-800">
-        <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+      <div className="px-5 py-3 border-b border-c-border">
+        <label className="block text-[11px] font-medium text-c-text-muted mb-1">
           {isPl ? 'Model danych' : 'Data Model'}
         </label>
         <select
@@ -401,7 +401,7 @@ export const ConsultifyLinkPanel: React.FC<ConsultifyLinkPanelProps> = ({
           ))}
         </select>
         {models.length === 0 && !loading && (
-          <p className="text-[11px] text-slate-600 mt-1 italic">
+          <p className="text-[11px] text-c-text-secondary mt-1 italic">
             {isPl
               ? 'Utwórz model danych w zakładce Modele'
               : 'Create a data model in the Models tab first'}
@@ -413,7 +413,7 @@ export const ConsultifyLinkPanel: React.FC<ConsultifyLinkPanelProps> = ({
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="animate-spin text-slate-600" size={20} />
+            <Loader2 className="animate-spin text-c-text-secondary" size={20} />
           </div>
         ) : (
           (['results', 'finance', 'execution', 'initiatives'] as ModuleKey[])

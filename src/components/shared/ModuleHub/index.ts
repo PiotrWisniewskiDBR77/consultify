@@ -4,6 +4,7 @@
 
 export type { FilterChip } from './ActiveFilters';
 export { ActiveFilters } from './ActiveFilters';
+export { type BulkAction, BulkActionBar } from './BulkActionBar';
 export { DynamicTabs } from './DynamicTabs';
 export type { TableColumn, TableRow } from './FilterableTable';
 export { FilterableTable } from './FilterableTable';
@@ -38,3 +39,4 @@ export {
 } from './TableSettingsPopover';
 export * from './types';
 export { useModuleOpenDocuments } from './useModuleOpenDocuments';
+export { type TableSelectionApi, useTableSelection } from './useTableSelection';

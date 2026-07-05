@@ -104,7 +104,7 @@ export const TemplateLifecycleActions: React.FC<TemplateLifecycleActionsProps> =
       )}
       {pending && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-c-surface-raised backdrop-blur-sm p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby={`${testId}-dialog-title`}
@@ -113,11 +113,11 @@ export const TemplateLifecycleActions: React.FC<TemplateLifecycleActionsProps> =
             if (e.target === e.currentTarget) close();
           }}
         >
-          <div className="w-[420px] max-w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
+          <div className="w-[420px] max-w-full rounded-xl border border-c-border-subtle bg-c-surface shadow-2xl">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
               <h2
                 id={`${testId}-dialog-title`}
-                className="text-sm font-semibold text-slate-800 dark:text-slate-100"
+                className="text-sm font-semibold text-c-text"
               >
                 {pending === 'approve'
                   ? t('kimi.template.actions.approveTitle', 'Approve template')
@@ -126,7 +126,7 @@ export const TemplateLifecycleActions: React.FC<TemplateLifecycleActionsProps> =
               <button
                 type="button"
                 onClick={close}
-                className="text-slate-600 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-400 rounded p-1"
+                className="text-c-text-secondary hover:text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-c-focus rounded p-1"
                 aria-label={t('kimi.template.actions.close', 'Close')}
                 data-testid={`${testId}-dialog-close`}
               >
@@ -134,7 +134,7 @@ export const TemplateLifecycleActions: React.FC<TemplateLifecycleActionsProps> =
               </button>
             </div>
             <div className="px-4 py-3 space-y-3">
-              <p className="text-[12px] text-slate-600 dark:text-slate-300">
+              <p className="text-[12px] text-c-text-secondary">
                 {pending === 'approve'
                   ? t(
                       'kimi.template.actions.approveBody',
@@ -146,14 +146,14 @@ export const TemplateLifecycleActions: React.FC<TemplateLifecycleActionsProps> =
                     )}
               </p>
               <label className="block">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-c-text-secondary">
                   {t('kimi.template.actions.noteLabel', 'Note (optional)')}
                 </span>
                 <textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   rows={2}
-                  className="mt-1 w-full rounded-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-2 py-1.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-400 resize-none"
+                  className="mt-1 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 py-1.5 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus resize-none"
                   data-testid={`${testId}-dialog-note`}
                 />
               </label>
@@ -167,11 +167,11 @@ export const TemplateLifecycleActions: React.FC<TemplateLifecycleActionsProps> =
                 </p>
               )}
             </div>
-            <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-c-border-subtle">
               <button
                 type="button"
                 onClick={close}
-                className="px-3 py-1.5 rounded-md text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
+                className="px-3 py-1.5 rounded-md text-sm text-c-text-secondary hover:bg-c-surface-raised"
               >
                 {t('kimi.template.actions.cancel', 'Cancel')}
               </button>
@@ -181,7 +181,7 @@ export const TemplateLifecycleActions: React.FC<TemplateLifecycleActionsProps> =
                 onClick={() => {
                   void handleConfirm();
                 }}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold text-white disabled:opacity-50 ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold text-c-text disabled:opacity-50 ${
                   pending === 'approve'
                     ? 'bg-emerald-600 hover:bg-emerald-700'
                     : 'bg-amber-600 hover:bg-amber-700'

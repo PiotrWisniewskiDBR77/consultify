@@ -14,6 +14,7 @@ import {
   GATE_PERMISSIONS,
   GateType,
   getGateForTransition,
+  isScheduledOnward,
   isValidTransition,
   VALID_TRANSITIONS,
 } from '../constants/initiativeStatuses.js';
@@ -39,7 +40,6 @@ import {
   coerceInitiativeStatusForWrite,
   normalizeInitiativeDbStatusForRead,
 } from '../services/initiative/initiativeLifecycleCanon.js';
-import { notifyStatusChange } from '../services/initiative/initiativeNotificationService.js';
 import { validateCardContent } from '../services/initiative/initiativeCardValidators.js';
 import {
   addLinkedItem,
@@ -47,6 +47,7 @@ import {
   removeLinkedItem,
 } from '../services/initiative/initiativeLinkedItemsService.js';
 import { findSimilarInitiatives } from '../services/initiative/initiativeSimilarityService.js';
+import { handoffFromClosure } from '../services/executionResultsBridge.js';
 import notificationService from '../services/notificationService.js';
 import {
   calculateRiskScore,
@@ -65,6 +66,8 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
+import { recordHandoff as recordStageHandoff } from '../services/initiative/stageHandoffService.js';
 import type {
   CreateInitiativeRequest,
   UpdateInitiativeRequest,
@@ -438,6 +441,19 @@ export class InitiativeController {
       }
       sql += ` ORDER BY i.created_at DESC`;
 
+      const limitRaw = Number((req.query as any)?.limit);
+      const offsetRaw = Number((req.query as any)?.offset);
+      const pageLimit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 1000) : null;
+      const pageOffset = Number.isFinite(offsetRaw) && offsetRaw > 0 ? offsetRaw : 0;
+      if (pageLimit !== null) {
+        sql += ` LIMIT ?`;
+        params.push(pageLimit);
+        if (pageOffset > 0) {
+          sql += ` OFFSET ?`;
+          params.push(pageOffset);
+        }
+      }
+
       let rows: Record<string, unknown>[] = [];
       try {
         if (typeof qh.queryAll !== 'function') {
@@ -572,6 +588,29 @@ export class InitiativeController {
         return;
       }
 
+      // Uspójnienie F1 — single creation funnel (flag-gated rollout). When enabled,
+      // creation flows through createInitiativeService (one contract, DRAFT default,
+      // name+title). Route already ran validateBody(CreateInitiativeSchema) → validate:false.
+      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+        try {
+          const result = await funnelCreateInitiative(orgId, req.body as Record<string, unknown>, {
+            validate: false,
+            actor: {
+              id: req.user?.id,
+              ip: (req as { ip?: string }).ip,
+              userAgent: (req as { get?: (h: string) => string }).get?.('user-agent'),
+            },
+          });
+          res.json({ id: result.id, name: result.name, message: 'Initiative created' });
+        } catch (e) {
+          const err = e as { statusCode?: number; message?: string };
+          res
+            .status(err?.statusCode || 400)
+            .json({ error: err?.message || 'Failed to create initiative' });
+        }
+        return;
+      }
+
       const {
         projectId,
         title,
@@ -630,7 +669,7 @@ export class InitiativeController {
 
       const sql = `
             INSERT INTO initiatives (
-                id, organization_id, project_id, program_id, title, category, priority, impact, effort,
+                id, organization_id, project_id, program_id, title, name, category, priority, impact, effort,
                 axis, area, summary, hypothesis, status,
                 business_value, cost_capex, cost_opex, expected_roi,
                 value_driver, confidence_level, value_timing,
@@ -638,8 +677,8 @@ export class InitiativeController {
                 owner_business_id, owner_execution_id,
                 problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
                 source_type, source_id, action_contract_json, source_pack_json, evidence_refs_json,
-                created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                created_by, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
       try {
@@ -649,6 +688,7 @@ export class InitiativeController {
           projectId ?? null,
           programId ?? null,
           title,
+          title, // name mirrors title (legacy column, NOT NULL in older schemas)
           category ?? null,
           priority ?? 'medium',
           impact ?? 'medium',
@@ -682,6 +722,7 @@ export class InitiativeController {
           ),
           JSON.stringify(sourcePack && typeof sourcePack === 'object' ? sourcePack : {}),
           JSON.stringify(Array.isArray(evidenceRefs) ? evidenceRefs : []),
+          req.user?.id ?? null, // created_by
           now,
           now,
         ]);
@@ -694,8 +735,8 @@ export class InitiativeController {
                   owner_business_id, owner_execution_id,
                   problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
                   source_type, source_id,
-                  created_at, updated_at
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  created_by, created_at, updated_at
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `;
         await queryHelpers.queryRun(legacySql, [
           id,
@@ -723,6 +764,7 @@ export class InitiativeController {
           JSON.stringify(keyRisks || []),
           normalizedSourceType,
           normalizedSourceId || null,
+          req.user?.id ?? null, // created_by
           now,
           now,
         ]);
@@ -936,6 +978,16 @@ export class InitiativeController {
           updates.push(`${dbCol} = ?`);
           params.push(newVal ?? null);
         }
+      }
+
+      // Mirror name ↔ title: the funnel writes name=title on CREATE, so keep the
+      // two columns in lockstep on UPDATE too. The UI only ever edits `title`, and
+      // without this a rename would write `title` while leaving the canonical
+      // read-compat `name` column stale (name<>title drift). Only when a separate
+      // `name` column exists and `title` is the column actually being written.
+      if (body.title !== undefined && titleCol === 'title' && existingCols.has('name')) {
+        updates.push('name = ?');
+        params.push(body.title ?? null);
       }
 
       // Process JSON array fields
@@ -1235,7 +1287,11 @@ export class InitiativeController {
       // RBAC + gate enforcement (enterprise governance)
       // - Consultant can only SUBMIT_FOR_REVIEW for initiatives they authored (created_by)
       // - PM/Lead/PMO gate approvals move initiatives to global visibility (REVIEW)
-      const gate = getGateForTransition(currentStatus as any, nextStatus as any);
+      // CANCELLED is a lifecycle escape hatch — no gate, no AI soft-block, no readiness check.
+      const gate =
+        nextStatus === 'CANCELLED'
+          ? null
+          : getGateForTransition(currentStatus as any, nextStatus as any);
       if (gate) {
         const accessCtx = await resolveInitiativeAccessContext(orgId, id, actorId, req.user?.role);
         const isAdmin = accessCtx.effectiveRoles.includes('ADMIN');
@@ -1353,8 +1409,10 @@ export class InitiativeController {
         }
       }
 
-      // V4-INIT-01: Gate readiness blocking — block transition if blocking items exist
-      const blockingItems = await getBlockingReadinessItems(orgId, id);
+      // V4-INIT-01: Gate readiness blocking — block transition if blocking items exist.
+      // CANCELLED bypasses readiness (same as gate bypass above).
+      const blockingItems =
+        nextStatus === 'CANCELLED' ? [] : await getBlockingReadinessItems(orgId, id);
       if (blockingItems.length > 0) {
         try {
           const recipients = await getInitiativeNotificationRecipients(orgId, id);
@@ -1702,6 +1760,17 @@ export class InitiativeController {
         }
       }
 
+      // DEF-1 hardening (parytet z kanonicznym validateTransition): BLOCKED wymaga
+      // powodu. Wcześniej handler zapisywał blocked_reason=null bez walidacji — co
+      // rozjeżdżało się z modelem stanów. Dotyczy tylko PATCH /:id/status.
+      if (nextStatus === 'BLOCKED' && !String(reason ?? '').trim()) {
+        res.status(400).json({
+          error: 'Blocked status requires a reason',
+          rule: 'BLOCKED_REASON_REQUIRED',
+        });
+        return;
+      }
+
       if (
         ['EXECUTING', 'BLOCKED'].includes(currentStatus) &&
         nextStatus === 'DONE' &&
@@ -1944,22 +2013,16 @@ export class InitiativeController {
       const sql = `UPDATE initiatives SET ${lifecycleUpdates.join(', ')} WHERE id = ? AND organization_id = ?`;
       await queryHelpers.queryRun(sql, lifecycleParams);
 
-      // M13 Depth · Seria R (M13d) — notify watchers/owners of a SUCCESSFUL
-      // status change (existing notifications only cover gate-blocked failures).
-      // Fail-safe: a notification must never break the transition.
-      try {
-        const statusRecipients = await getInitiativeNotificationRecipients(orgId, id);
-        await notifyStatusChange(
-          orgId,
-          id,
-          currentStatus,
-          nextStatus,
-          statusRecipients.filter((uid: any) => uid && uid !== actorId),
-          { actorId }
-        );
-      } catch (e: any) {
-        logger.warn('[initiatives] R4 status-change notify skipped:', e?.message);
-      }
+      // Uspójnienie F2.2–2.5/2.7 — record the stage-boundary handoff (event + lineage)
+      // on every successful status transition. Fail-safe (never throws/blocks).
+      void recordStageHandoff(orgId, String(req.params.id), currentStatus, nextStatus, req.user?.id);
+
+      // M13 Depth · Seria R (M13d) — the status-change notification to
+      // watchers/owners is emitted by the canonical block below ("Emit
+      // notifications", type `initiative.status_changed`). A → BLOCKED
+      // transition is escalated there to CRITICAL severity carrying the reason.
+      // (Earlier a separate emitter here duplicated that notification — removed
+      // 2026-06-22 to fix the dubel; see finding_initiative_status_notification_dubel.)
 
       // Benefits tracking window defaults (best-effort; older schemas may not have these columns).
       if (currentStatus === 'DONE' && nextStatus === 'TRACKING') {
@@ -2059,6 +2122,22 @@ export class InitiativeController {
         // best-effort
       }
 
+      // M14 → M15 closure handoff (Decision B1b): on close (→ DONE), materialize
+      // the initiative's planned KPIs into the M15-readable benefits register.
+      // Fail-safe: a handoff error must NEVER block the status change (log + go).
+      // Idempotent inside the service, so a repeat DONE (or DONE→revert→DONE)
+      // does not create duplicate benefits.
+      if (currentStatus !== 'DONE' && nextStatus === 'DONE') {
+        try {
+          await handoffFromClosure(orgId, id, actorId || null);
+        } catch (handoffErr) {
+          logger.warn(
+            `[Initiative] M14→M15 closure handoff failed for ${id} — status change not blocked`,
+            handoffErr
+          );
+        }
+      }
+
       // Emit notifications (best-effort)
       try {
         const recipients = await getInitiativeNotificationRecipients(orgId, id);
@@ -2067,7 +2146,17 @@ export class InitiativeController {
           (currentStatus === 'SCHEDULED' && nextStatus === 'EXECUTING') ||
           (currentStatus === 'DONE' && nextStatus === 'TRACKING');
 
-        // 1. General status change notification to all stakeholders
+        // 1. General status change notification to all stakeholders.
+        // M13/R4: this is the SINGLE canonical status-change notification.
+        // A → BLOCKED transition is escalated to CRITICAL and carries the
+        // blocker reason (replaces the removed dedicated R4 emitter).
+        const statusSeverity: 'INFO' | 'WARNING' | 'CRITICAL' =
+          nextStatus === 'BLOCKED' ? 'CRITICAL' : nextStatus === 'CANCELLED' ? 'WARNING' : 'INFO';
+        const statusTitle = isModuleChange
+          ? 'Initiative moved to new module'
+          : nextStatus === 'BLOCKED'
+            ? 'Initiative blocked'
+            : 'Initiative status changed';
         await Promise.allSettled(
           recipients
             .filter((uid) => uid && uid !== actorId)
@@ -2076,15 +2165,14 @@ export class InitiativeController {
                 userId,
                 organizationId: orgId,
                 type: isModuleChange ? 'initiative.module_changed' : 'initiative.status_changed',
-                title: isModuleChange
-                  ? 'Initiative moved to new module'
-                  : 'Initiative status changed',
+                title: statusTitle,
                 body: `${initiativeName}: ${currentStatus} → ${nextStatus}${reason ? ` (${reason})` : ''}`,
                 entityType: 'initiative',
                 entityId: id,
                 actionUrl: '/initiatives',
                 actorId,
                 actorName,
+                severity: statusSeverity,
                 priority:
                   nextStatus === 'BLOCKED' || nextStatus === 'CANCELLED' ? 'high' : 'normal',
                 metadata: { from: currentStatus, to: nextStatus, reason, gate },
@@ -3476,9 +3564,11 @@ export class InitiativeController {
         .filter(Boolean)
         .map((v) => String(v));
       const isOwner = !!userId && ownerIds.includes(String(userId));
-      const isAdmin = String(role || '')
-        .toUpperCase()
-        .includes('ADMIN');
+      // Privileged roles: any *ADMIN* variant plus the organization OWNER —
+      // OWNER outranks ADMIN but does not contain the substring, so a plain
+      // `.includes('ADMIN')` locked org owners out of deleting initiatives.
+      const upperRole = String(role || '').toUpperCase();
+      const isAdmin = upperRole.includes('ADMIN') || upperRole === 'OWNER';
       if (!isOwner && !isAdmin) {
         res.status(403).json({
           error: 'Only the initiative owner or an organization admin can delete it',
@@ -6002,7 +6092,7 @@ export class InitiativeController {
           );
         }
       }
-      if (['SCHEDULED', 'EXECUTING', 'BLOCKED', 'DONE', 'TRACKING'].includes(currentStatus)) {
+      if (isScheduledOnward(currentStatus)) {
         const start = ini.planned_start_date || ini.start_date || null;
         const end = ini.planned_end_date || ini.end_date || null;
         addCheck(

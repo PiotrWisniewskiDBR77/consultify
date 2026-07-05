@@ -1114,7 +1114,14 @@ router.post(
       return;
     }
 
-    const result = await regenerateSlide(deckId, slideIndex, orgId);
+    // R4 — optional free-text per-slide rewrite directive.
+    const rawInstruction = (req.body as any)?.instruction;
+    const instruction =
+      typeof rawInstruction === 'string' && rawInstruction.trim().length > 0
+        ? rawInstruction.trim()
+        : undefined;
+
+    const result = await regenerateSlide(deckId, slideIndex, orgId, { instruction });
     res.json({ success: true, data: result });
   })
 );
