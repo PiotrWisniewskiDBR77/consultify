@@ -83,16 +83,16 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
   return (
     <div
       data-testid={testId}
-      className="w-[360px] max-w-[90vw] rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl"
+      className="w-[360px] max-w-[90vw] rounded-lg border border-c-border bg-c-surface shadow-xl"
       role="dialog"
       aria-label={isPl ? 'Źródła rekordu' : 'Record sources'}
     >
-      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-navy-700">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-c-border">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
             {isPl ? 'Pochodzenie' : 'Provenance'}
           </p>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+          <p className="text-[11px] text-c-text-muted">
             {active.length}/{MAX_SOURCES_PER_RECORD}
             {' · '}
             {isPl
@@ -104,7 +104,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-600 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-400 rounded p-0.5"
+            className="text-c-text-secondary hover:text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-c-focus rounded p-0.5"
             aria-label={isPl ? 'Zamknij' : 'Close'}
             data-testid={`${testId}-close`}
           >
@@ -115,13 +115,13 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
 
       <div className="max-h-[320px] overflow-y-auto px-2 py-2">
         {loading && (
-          <p className="text-[12px] text-slate-500 px-2 py-1">
+          <p className="text-[12px] text-c-text-muted px-2 py-1">
             {isPl ? 'Wczytywanie…' : 'Loading…'}
           </p>
         )}
         {!loading && error && (
           <p
-            className="text-[12px] text-danger-600 dark:text-danger-300 px-2 py-1"
+            className="text-[12px] text-c-danger px-2 py-1"
             role="alert"
             data-testid={`${testId}-error`}
           >
@@ -130,7 +130,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
         )}
         {!loading && !error && active.length === 0 && (
           <p
-            className="text-[12px] text-slate-500 px-2 py-3 text-center"
+            className="text-[12px] text-c-text-muted px-2 py-3 text-center"
             data-testid={`${testId}-empty`}
           >
             {isPl
@@ -150,19 +150,19 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
               <div
                 key={source.id}
                 data-testid={`${testId}-item`}
-                className="group flex items-start gap-2 px-2 py-2 rounded-md hover:bg-slate-50 dark:hover:bg-navy-800/50"
+                className="group flex items-start gap-2 px-2 py-2 rounded-md hover:bg-c-surface-raised"
               >
-                <span className="mt-0.5 text-slate-500 dark:text-slate-300" aria-hidden>
+                <span className="mt-0.5 text-c-text-muted" aria-hidden>
                   {sourceIcon(source.source_type)}
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-100">
+                    <span className="text-[12px] font-semibold text-c-text">
                       {label}
                     </span>
                     {source.confidence_contribution != null && (
                       <span
-                        className="text-[10px] tabular-nums text-slate-500 dark:text-slate-400"
+                        className="text-[10px] tabular-nums text-c-text-muted"
                         aria-label={isPl ? 'Wkład w pewność' : 'Confidence contribution'}
                       >
                         · {Math.round(Number(source.confidence_contribution) * 100)}%
@@ -170,7 +170,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
                     )}
                     {verifiedRecently && (
                       <span
-                        className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300"
+                        className="text-[10px] font-semibold text-c-success"
                         aria-label={isPl ? 'Niedawno zweryfikowano' : 'Recently verified'}
                       >
                         {isPl ? '✓ świeże' : '✓ fresh'}
@@ -179,7 +179,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
                   </div>
                   {source.source_uri && (
                     <a
-                      className="block text-[11px] text-primary-600 dark:text-primary-300 truncate hover:underline"
+                      className="block text-[11px] text-c-accent truncate hover:underline"
                       href={source.source_uri}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -188,7 +188,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
                       {source.source_uri}
                     </a>
                   )}
-                  <p className="text-[10px] text-slate-600 mt-0.5">
+                  <p className="text-[10px] text-c-text-secondary mt-0.5">
                     {isPl ? 'Dodał' : 'Added by'} {source.created_by} · {fmtDate(source.created_at)}
                     {source.last_verified_at && (
                       <>
@@ -206,7 +206,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
                         onClick={() => {
                           void onVerify(source);
                         }}
-                        className="p-1 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+                        className="p-1 rounded hover:bg-c-success text-c-success"
                         title={isPl ? 'Zweryfikuj teraz' : 'Verify now'}
                         aria-label={isPl ? 'Zweryfikuj' : 'Verify'}
                         data-testid={`${testId}-verify-${source.id}`}
@@ -220,7 +220,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
                         onClick={() => {
                           void onArchive(source);
                         }}
-                        className="p-1 rounded hover:bg-danger-50 dark:hover:bg-danger-900/30 text-danger-700 dark:text-danger-300"
+                        className="p-1 rounded hover:bg-[color-mix(in_srgb,var(--c-danger)_14%,transparent)] text-c-danger"
                         title={isPl ? 'Archiwizuj' : 'Archive'}
                         aria-label={isPl ? 'Archiwizuj' : 'Archive'}
                         data-testid={`${testId}-archive-${source.id}`}
@@ -236,8 +236,8 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
       </div>
 
       {!readOnly && onAddClick && (
-        <div className="px-3 py-2 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between">
-          <p className="text-[10px] text-slate-500 dark:text-slate-400">
+        <div className="px-3 py-2 border-t border-c-border flex items-center justify-between">
+          <p className="text-[10px] text-c-text-muted">
             {atCap
               ? isPl
                 ? `Limit ${MAX_SOURCES_PER_RECORD} aktywnych źródeł osiągnięty.`
@@ -250,7 +250,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
             type="button"
             disabled={atCap}
             onClick={onAddClick}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold bg-navy-900 hover:bg-navy-800 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 disabled:bg-slate-300 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold bg-c-surface hover:bg-c-surface-raised text-c-text bg-c-surface-raised text-c-text-secondary hover:bg-c-border-subtle disabled:bg-c-surface-raised disabled:cursor-not-allowed"
             data-testid={`${testId}-add`}
           >
             <Plus size={12} aria-hidden />

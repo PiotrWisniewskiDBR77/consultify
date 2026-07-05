@@ -203,7 +203,7 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
         aria-label="Loading security settings"
       >
         <Clock className="w-8 h-8 text-slate-300 animate-spin" />
-        <span className="text-sm text-slate-500 dark:text-slate-400">
+        <span className="text-sm text-c-text-muted">
           {t('admin.security.loading', 'Loading security settings...')}
         </span>
       </div>
@@ -213,11 +213,11 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
   return (
     <div className={`space-y-6 ${className}`}>
       <div>
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+        <h2 className="text-xl font-semibold text-c-text flex items-center gap-2">
           <Shield size={24} />
           {t('admin.security.title', 'Security Settings')}
         </h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-sm text-c-text-muted mt-1">
           {t('admin.security.desc', 'Configure security policies for your organization')}
         </p>
       </div>
@@ -229,17 +229,17 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
       ) : (
         <>
           {/* MFA Requirement */}
-          <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+          <div className="p-6 bg-c-surface rounded-xl border border-c-border-subtle">
             <div className="flex items-start justify-between">
               <div className="flex gap-4">
                 <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                   <Key className="text-blue-600 dark:text-blue-400" size={24} />
                 </div>
                 <div>
-                  <h3 className="font-medium text-slate-900 dark:text-white">
+                  <h3 className="font-medium text-c-text">
                     {t('admin.security.mfaTitle', 'Require Two-Factor Authentication')}
                   </h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-sm text-c-text-muted mt-1">
                     {t(
                       'admin.security.mfaDesc',
                       'All users must enable 2FA to access the platform'
@@ -254,23 +254,23 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
                   onChange={(e) => setMfaRequired(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-brand rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:bg-brand after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-brand rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:bg-brand after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
               </label>
             </div>
           </div>
 
           {/* SSO */}
-          <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+          <div className="p-6 bg-c-surface rounded-xl border border-c-border-subtle">
             <div className="flex items-start justify-between">
               <div className="flex gap-4">
                 <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
                   <Users className="text-primary-600 dark:text-primary-400" size={24} />
                 </div>
                 <div>
-                  <h3 className="font-medium text-slate-900 dark:text-white">
+                  <h3 className="font-medium text-c-text">
                     {t('admin.security.ssoTitle', 'Single Sign-On (SSO)')}
                   </h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-sm text-c-text-muted mt-1">
                     {t(
                       'admin.security.ssoDesc',
                       'Allow users to sign in with your identity provider'
@@ -285,13 +285,13 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
                   onChange={(e) => setSsoEnabled(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-brand rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:bg-brand after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-brand rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:bg-brand after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
               </label>
             </div>
 
             {ssoEnabled && (
-              <div className="mt-4 p-4 bg-slate-50 dark:bg-navy-700/50 rounded-lg">
-                <p className="text-sm text-slate-600 dark:text-slate-400">
+              <div className="mt-4 p-4 bg-c-surface-raised/50 rounded-lg">
+                <p className="text-sm text-c-text-secondary">
                   {t('admin.security.ssoConfig', 'Contact support to configure your SSO provider.')}
                 </p>
               </div>
@@ -299,23 +299,23 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
           </div>
 
           {/* Session Timeout */}
-          <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+          <div className="p-6 bg-c-surface rounded-xl border border-c-border-subtle">
             <div className="flex gap-4">
               <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
                 <Clock className="text-amber-600 dark:text-amber-400" size={24} />
               </div>
               <div className="flex-1">
-                <h3 className="font-medium text-slate-900 dark:text-white">
+                <h3 className="font-medium text-c-text">
                   {t('admin.security.sessionTitle', 'Session Timeout')}
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm text-c-text-muted mt-1">
                   {t('admin.security.sessionDesc', 'Automatically log out inactive users')}
                 </p>
                 <div className="mt-4">
                   <select
                     value={sessionTimeout}
                     onChange={(e) => setSessionTimeout(Number(e.target.value))}
-                    className="px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800"
+                    className="px-3 py-2 border border-c-border rounded-lg bg-c-surface"
                   >
                     <option value={15}>15 {t('common.minutes', 'minutes')}</option>
                     <option value={30}>30 {t('common.minutes', 'minutes')}</option>
@@ -329,16 +329,16 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
           </div>
 
           {/* IP Whitelist */}
-          <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+          <div className="p-6 bg-c-surface rounded-xl border border-c-border-subtle">
             <div className="flex gap-4">
               <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
                 <Lock className="text-green-600 dark:text-green-400" size={24} />
               </div>
               <div className="flex-1">
-                <h3 className="font-medium text-slate-900 dark:text-white">
+                <h3 className="font-medium text-c-text">
                   {t('admin.security.ipTitle', 'IP Whitelist')}
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm text-c-text-muted mt-1">
                   {t(
                     'admin.security.ipDesc',
                     'Restrict access to specific IP addresses (one per line)'
@@ -349,34 +349,34 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
                   onChange={(e) => setIpWhitelist(e.target.value)}
                   placeholder="192.168.1.0/24&#10;10.0.0.1"
                   rows={4}
-                  className="mt-4 w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 font-mono text-sm"
+                  className="mt-4 w-full px-3 py-2 border border-c-border rounded-lg bg-c-surface font-mono text-sm"
                 />
               </div>
             </div>
           </div>
 
           {/* Login Protection */}
-          <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+          <div className="p-6 bg-c-surface rounded-xl border border-c-border-subtle">
             <div className="flex gap-4">
               <div className="p-3 bg-danger-100 dark:bg-danger-900/30 rounded-lg">
                 <Shield className="text-danger-600 dark:text-danger-400" size={24} />
               </div>
               <div className="flex-1">
-                <h3 className="font-medium text-slate-900 dark:text-white">
+                <h3 className="font-medium text-c-text">
                   {t('admin.security.loginProtection', 'Login Protection')}
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm text-c-text-muted mt-1">
                   {t('admin.security.loginProtectionDesc', 'Protect against brute force attacks')}
                 </p>
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
+                    <label className="block text-sm text-c-text-secondary mb-1">
                       {t('admin.security.maxAttempts', 'Max Login Attempts')}
                     </label>
                     <select
                       value={loginMaxAttempts}
                       onChange={(e) => setLoginMaxAttempts(Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800"
+                      className="w-full px-3 py-2 border border-c-border rounded-lg bg-c-surface"
                     >
                       <option value={3}>3 attempts</option>
                       <option value={5}>5 attempts</option>
@@ -384,13 +384,13 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
+                    <label className="block text-sm text-c-text-secondary mb-1">
                       {t('admin.security.lockoutDuration', 'Lockout Duration')}
                     </label>
                     <select
                       value={lockoutDuration}
                       onChange={(e) => setLockoutDuration(Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800"
+                      className="w-full px-3 py-2 border border-c-border rounded-lg bg-c-surface"
                     >
                       <option value={15}>15 minutes</option>
                       <option value={30}>30 minutes</option>
@@ -405,16 +405,16 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
 
           {/* OAuth Provider Status */}
           {oauthStatus ? (
-            <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+            <div className="p-6 bg-c-surface rounded-xl border border-c-border-subtle">
               <div className="flex gap-4">
                 <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
                   <Zap className="text-primary-600 dark:text-primary-400" size={24} />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-medium text-slate-900 dark:text-white">
+                  <h3 className="font-medium text-c-text">
                     {t('admin.security.oauthProviders', 'OAuth Providers')}
                   </h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-sm text-c-text-muted mt-1">
                     {t('admin.security.oauthDesc', 'Social login providers for your users')}
                   </p>
                   <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -423,18 +423,18 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
                       className={`p-4 rounded-lg border ${
                         oauthStatus.google.configured
                           ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                          : 'bg-slate-50 dark:bg-navy-700/50 border-slate-200 dark:border-navy-600'
+                          : 'bg-c-surface-raised/50 border-c-border-subtle'
                       }`}
                     >
                       <div className="flex items-center gap-2">
                         {oauthStatus.google.configured ? (
                           <CheckCircle className="text-green-600 dark:text-green-400" size={18} />
                         ) : (
-                          <XCircle className="text-slate-400 dark:text-slate-500" size={18} />
+                          <XCircle className="text-c-text-muted" size={18} />
                         )}
-                        <span className="font-medium text-slate-900 dark:text-white">Google</span>
+                        <span className="font-medium text-c-text">Google</span>
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      <p className="text-xs text-c-text-muted mt-1">
                         {oauthStatus.google.configured ? 'Configured' : 'Not configured'}
                       </p>
                     </div>
@@ -444,20 +444,20 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
                       className={`p-4 rounded-lg border ${
                         oauthStatus.microsoft?.configured
                           ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                          : 'bg-slate-50 dark:bg-navy-700/50 border-slate-200 dark:border-navy-600'
+                          : 'bg-c-surface-raised/50 border-c-border-subtle'
                       }`}
                     >
                       <div className="flex items-center gap-2">
                         {oauthStatus.microsoft?.configured ? (
                           <CheckCircle className="text-green-600 dark:text-green-400" size={18} />
                         ) : (
-                          <XCircle className="text-slate-400 dark:text-slate-500" size={18} />
+                          <XCircle className="text-c-text-muted" size={18} />
                         )}
-                        <span className="font-medium text-slate-900 dark:text-white">
+                        <span className="font-medium text-c-text">
                           Microsoft
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      <p className="text-xs text-c-text-muted mt-1">
                         {oauthStatus.microsoft?.configured ? 'Configured' : 'Not configured'}
                       </p>
                     </div>
@@ -467,18 +467,18 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
                       className={`p-4 rounded-lg border ${
                         oauthStatus.linkedin.configured
                           ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                          : 'bg-slate-50 dark:bg-navy-700/50 border-slate-200 dark:border-navy-600'
+                          : 'bg-c-surface-raised/50 border-c-border-subtle'
                       }`}
                     >
                       <div className="flex items-center gap-2">
                         {oauthStatus.linkedin.configured ? (
                           <CheckCircle className="text-green-600 dark:text-green-400" size={18} />
                         ) : (
-                          <XCircle className="text-slate-400 dark:text-slate-500" size={18} />
+                          <XCircle className="text-c-text-muted" size={18} />
                         )}
-                        <span className="font-medium text-slate-900 dark:text-white">LinkedIn</span>
+                        <span className="font-medium text-c-text">LinkedIn</span>
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      <p className="text-xs text-c-text-muted mt-1">
                         {oauthStatus.linkedin.configured ? 'Configured' : 'Not configured'}
                       </p>
                     </div>
@@ -487,7 +487,7 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
               </div>
             </div>
           ) : oauthLoadError ? (
-            <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+            <div className="p-6 bg-c-surface rounded-xl border border-c-border-subtle">
               <div role="alert">
                 <DegradedState
                   title={ADMIN_SECURITY_COPY.oauthUnavailable}

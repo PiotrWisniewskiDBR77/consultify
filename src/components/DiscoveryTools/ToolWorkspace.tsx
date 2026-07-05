@@ -9,6 +9,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/shared/states';
+import { computeTensionCoverage, validateMoveSet } from '@/config/swot/swotTensionEngine';
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useToolAI } from '@/hooks/discovery/useToolAI';
 import { Api } from '@/services/api';
@@ -260,7 +262,30 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       });
       if (!accepted(data.tensions).length && !accepted(data.correlations).length)
         gaps.push('Missing strategic tensions');
+      else {
+        // OXFORD O3: tension coverage is enforced — types formable from accepted
+        // items must exist (SO/WO/ST/WT), structurally empty types are excused.
+        const coverage = computeTensionCoverage(data.items || [], data.tensions || []);
+        if (coverage.missing.length > 0) {
+          gaps.push(`Missing tension types: ${coverage.missing.join(', ')}`);
+        }
+      }
       if (!accepted(data.recommendedMoves).length) gaps.push('Missing recommended moves');
+      else {
+        // OXFORD O3 / CONCLUSION_LAYER W2: every move needs a trade-off and a
+        // rejected alternative — a recommendation without them is a list, not a decision.
+        const moveVerdict = validateMoveSet(
+          data.recommendedMoves || [],
+          data.items || [],
+          data.tensions || []
+        );
+        moveVerdict.perMove
+          .filter((m) => m.issues.length > 0)
+          .forEach((m) => {
+            const codes = Array.from(new Set(m.issues.map((issue) => issue.code))).join(', ');
+            gaps.push(`Move "${m.title}" fails W2 (${codes})`);
+          });
+      }
       if (
         !data.summary?.executiveSummary ||
         ['ai-proposed', 'rethinking', 'rejected'].includes(data.summary?.proposalStatus)
@@ -275,6 +300,77 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       Object.values(data.forces || {}).forEach((force: any) => {
         if (!force?.drivers?.length) gaps.push(`Missing drivers for ${force?.name}`);
       });
+    }
+    if (toolType === 'value-chain') {
+      if (!data.context?.industry) gaps.push('Missing industry');
+      if (!data.context?.valueChainScope) gaps.push('Missing value chain scope');
+      const scored = Object.values(data.activities || {}).filter(
+        (a: any) => a?.drivers?.length || a?.implication
+      );
+      if (!scored.length) gaps.push('Missing scored value-chain activities');
+      if (!accepted(data.levers).length) gaps.push('Missing margin levers');
+      if (!accepted(data.recommendedMoves).length) gaps.push('Missing recommended moves');
+      if (
+        !data.summary?.executiveSummary ||
+        ['ai-proposed', 'rethinking', 'rejected'].includes(data.summary?.proposalStatus)
+      ) {
+        gaps.push('Missing final source summary');
+      }
+      if (!accepted(data.outputCandidates).length) gaps.push('Missing output candidates');
+    }
+    if (toolType === 'capability-mapper') {
+      if (!data.context?.industry) gaps.push('Missing industry');
+      if (!data.context?.capabilityDomains) gaps.push('Missing capability domains');
+      if (!accepted(data.capabilities).length) gaps.push('Missing scored capabilities');
+      if (!accepted(data.gaps).length) gaps.push('Missing capability gaps');
+      if (!accepted(data.recommendedMoves).length) gaps.push('Missing recommended moves');
+      if (
+        !data.summary?.executiveSummary ||
+        ['ai-proposed', 'rethinking', 'rejected'].includes(data.summary?.proposalStatus)
+      ) {
+        gaps.push('Missing final source summary');
+      }
+      if (!accepted(data.outputCandidates).length) gaps.push('Missing output candidates');
+    }
+    if (toolType === 'ambition-decomposer') {
+      if (!data.context?.ambitionStatement) gaps.push('Missing ambition statement');
+      if (!accepted(data.themes).length) gaps.push('Missing strategic themes');
+      if (!accepted(data.priorities).length) gaps.push('Missing priorities');
+      if (!accepted(data.recommendedMoves).length) gaps.push('Missing recommended moves');
+      if (
+        !data.summary?.executiveSummary ||
+        ['ai-proposed', 'rethinking', 'rejected'].includes(data.summary?.proposalStatus)
+      ) {
+        gaps.push('Missing final source summary');
+      }
+      if (!accepted(data.outputCandidates).length) gaps.push('Missing output candidates');
+    }
+    if (toolType === 'focus-tradeoff') {
+      if (!data.context?.competingPriorities) gaps.push('Missing competing priorities');
+      if (!accepted(data.priorities).length) gaps.push('Missing scored priorities');
+      if (!accepted(data.tradeoffs).length) gaps.push('Missing trade-offs');
+      if (!accepted(data.recommendedMoves).length) gaps.push('Missing recommended moves');
+      if (
+        !data.summary?.executiveSummary ||
+        ['ai-proposed', 'rethinking', 'rejected'].includes(data.summary?.proposalStatus)
+      ) {
+        gaps.push('Missing final source summary');
+      }
+      if (!accepted(data.outputCandidates).length) gaps.push('Missing output candidates');
+    }
+    if (toolType === 'narrative-engine') {
+      if (!data.context?.audience) gaps.push('Missing audience');
+      if (!data.context?.coreMessage) gaps.push('Missing core message');
+      if (!accepted(data.pillars).length) gaps.push('Missing narrative pillars');
+      if (!accepted(data.threads).length) gaps.push('Missing storyline threads');
+      if (!accepted(data.recommendedMoves).length) gaps.push('Missing recommended moves');
+      if (
+        !data.summary?.executiveSummary ||
+        ['ai-proposed', 'rethinking', 'rejected'].includes(data.summary?.proposalStatus)
+      ) {
+        gaps.push('Missing final source summary');
+      }
+      if (!accepted(data.outputCandidates).length) gaps.push('Missing output candidates');
     }
     if (toolType === 'growth-paths') {
       if (!data.context?.goal || !data.context?.scope || !data.context?.successSignal) {
@@ -569,8 +665,11 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
 
   if (!currentSession) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-pulse text-slate-600">Loading...</div>
+      <div className="p-6">
+        <LoadingState
+          template="panel"
+          label={isPolish ? 'Ładowanie narzędzia…' : 'Loading tool…'}
+        />
       </div>
     );
   }
@@ -579,7 +678,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   const aiReviewCount = getAiReviewTotal(aiCardStatusCounts);
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950">
+    <div className="flex flex-col h-full bg-c-bg">
       {/* Tool Header */}
       <ToolHeader
         toolType={toolType}
@@ -692,19 +791,19 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
 
       {showRequestReviewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
-            <div className="p-6 border-b border-slate-200 dark:border-navy-700">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          <div className="bg-c-surface rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
+            <div className="p-6 border-b border-c-border-subtle">
+              <h3 className="text-lg font-semibold text-c-text">
                 {isPolish ? 'Request review' : 'Request review'}
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-sm text-c-text-muted mt-1">
                 {isPolish
                   ? 'Sprawdz kompletność i potwierdz wysłanie do review.'
                   : 'Check completeness and confirm sending to review.'}
               </p>
             </div>
             <div className="p-6 space-y-4">
-              <div className="text-sm text-slate-600 dark:text-slate-400">
+              <div className="text-sm text-c-text-secondary">
                 {reviewGaps.length === 0
                   ? isPolish
                     ? 'Brak braków w DoD.'
@@ -712,14 +811,14 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                   : `${isPolish ? 'Braki' : 'Gaps'}: ${reviewGaps.join(', ')}`}
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   {isPolish ? 'Decision Owner' : 'Decision Owner'}{' '}
                   {isPolish ? '(opcjonalnie)' : '(optional)'}
                 </label>
                 <select
                   value={reviewDecisionOwnerId}
                   onChange={(e) => setReviewDecisionOwnerId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid"
                 >
                   <option value="">{isPolish ? '-- Wybierz --' : '-- Select --'}</option>
                   {users.map((user) => (
@@ -730,18 +829,18 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   {isPolish ? 'Due date' : 'Due date'}
                 </label>
                 <input
                   type="date"
                   value={reviewDueDate}
                   onChange={(e) => setReviewDueDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text-secondary mb-1">
                   {isPolish ? 'Priorytet' : 'Priority'}
                 </label>
                 <select
@@ -749,7 +848,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                   onChange={(e) =>
                     setReviewPriority(e.target.value as 'low' | 'medium' | 'high' | 'critical')
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid"
                 >
                   <option value="low">{isPolish ? 'Niski' : 'Low'}</option>
                   <option value="medium">{isPolish ? 'Sredni' : 'Medium'}</option>
@@ -758,10 +857,10 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                 </select>
               </div>
             </div>
-            <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-3">
+            <div className="p-6 border-t border-c-border-subtle flex justify-end gap-3">
               <button
                 onClick={() => setShowRequestReviewModal(false)}
-                className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg"
+                className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
               >
                 {isPolish ? 'Anuluj' : 'Cancel'}
               </button>

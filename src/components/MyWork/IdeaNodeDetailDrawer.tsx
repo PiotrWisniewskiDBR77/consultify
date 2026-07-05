@@ -8,6 +8,7 @@
 import {
   AlertTriangle,
   ArrowRight,
+  AtSign,
   Bot,
   ChevronDown,
   ChevronRight,
@@ -30,6 +31,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api, getMapVersionFromPayload } from '@/services/api';
@@ -37,6 +39,11 @@ import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { getArtifactLabel } from '@/utils/artifactLinks';
 
 import type { AIProposalBatch, CanvasToolType } from './ideaSelectionTypes';
+import {
+  insertMentionIntoText,
+  renderMentionText,
+  useMentionAutocomplete,
+} from './mentionAutocomplete';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -191,13 +198,22 @@ const STATUS_CONFIG: Record<
   },
 };
 
-const TAG_COLORS = [
-  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
-  'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-  'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
-  'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300',
-  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+// Categorical tag chips — cycled by index (VA1 data-palette tokens).
+// Was crimson (bg-primary-*) + alarm-red (bg-danger-*) mixed in as if categories.
+// Now the semantic identity ramp (c-tag-*) as the CANONICAL category chip:
+// neutral raised surface + a hue-colored left border + the hue on the Hash icon
+// (both graphic markers, ≥3:1), LABEL stays neutral --c-text (guaranteed AA body).
+// NOTE: these --c-tag-* tokens are plain hex, so Tailwind's `/alpha` opacity
+// modifier (e.g. bg-c-tag-1/15) does NOT compile — use solid neutral surface +
+// hue border/icon instead. Tag hues are mid-tone: hue-as-text or white-on-fill
+// would fail AA body text — this border+icon pattern is the reference for chips.
+const TAG_COLORS: { chip: string; icon: string }[] = [
+  { chip: 'bg-c-surface-raised border border-c-tag-1 text-c-text', icon: 'text-c-tag-1' },
+  { chip: 'bg-c-surface-raised border border-c-tag-2 text-c-text', icon: 'text-c-tag-2' },
+  { chip: 'bg-c-surface-raised border border-c-tag-3 text-c-text', icon: 'text-c-tag-3' },
+  { chip: 'bg-c-surface-raised border border-c-tag-4 text-c-text', icon: 'text-c-tag-4' },
+  { chip: 'bg-c-surface-raised border border-c-tag-5 text-c-text', icon: 'text-c-tag-5' },
+  { chip: 'bg-c-surface-raised border border-c-tag-6 text-c-text', icon: 'text-c-tag-6' },
 ];
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -229,10 +245,22 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
   const [newTag, setNewTag] = useState('');
   const [newAttachmentUrl, setNewAttachmentUrl] = useState('');
   const [newComment, setNewComment] = useState('');
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const commentInputRef = useRef<HTMLTextAreaElement>(null);
   const [aiContext, setAiContext] = useState<AIContextResult | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [artifactLinks, setArtifactLinks] = useState<any[]>([]);
   const [artifactLoading, setArtifactLoading] = useState(false);
+
+  // @mention org-member autocomplete (shared with NodeCommentThread, B2b).
+  const {
+    mentionPool,
+    mentionQuery,
+    mentionSuggestions,
+    resolveMentionIds,
+    handleMentionInput,
+    closeMentionMenu,
+  } = useMentionAutocomplete(open);
 
   const [showEvidenceForm, setShowEvidenceForm] = useState(false);
   const [newEvidenceTitle, setNewEvidenceTitle] = useState('');
@@ -416,18 +444,48 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
     }
   }, []);
 
-  const handleAddComment = useCallback(() => {
-    if (!newComment.trim()) return;
-    const comment: NodeComment = {
-      id: `cmt-${Date.now()}`,
-      text: newComment.trim(),
-      createdAt: new Date().toISOString(),
-      userName: isPl ? 'Ja' : 'Me',
-    };
-    const comments = [...(nodeData.comments || []), comment];
-    onNodeDataChange(nodeId, { comments });
-    setNewComment('');
-  }, [isPl, newComment, nodeData.comments, nodeId, onNodeDataChange]);
+  const handleAddComment = useCallback(async () => {
+    const trimmed = newComment.trim();
+    if (!trimmed || commentSubmitting) return;
+
+    // Prefer resolved org-member user ids; fall back to bare name tokens.
+    // The server also re-resolves mentions from the raw text itself, so this
+    // is belt-and-suspenders — but sending them keeps the two paths consistent.
+    const mentions = resolveMentionIds(trimmed);
+    closeMentionMenu();
+    setCommentSubmitting(true);
+
+    try {
+      const res = await Api.addNodeComment(ideaId, nodeId, trimmed, mentions);
+      if (res?.comment) {
+        const comment: NodeComment = {
+          id: res.comment.id,
+          userName: res.comment.author,
+          text: res.comment.text,
+          createdAt: res.comment.createdAt,
+        };
+        const comments = [...(nodeData.comments || []), comment];
+        onNodeDataChange(nodeId, { comments });
+        setNewComment('');
+        commentInputRef.current?.focus();
+        return;
+      }
+    } catch {
+      toast.error(isPl ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
+    } finally {
+      setCommentSubmitting(false);
+    }
+  }, [
+    closeMentionMenu,
+    commentSubmitting,
+    ideaId,
+    isPl,
+    newComment,
+    nodeData.comments,
+    nodeId,
+    onNodeDataChange,
+    resolveMentionIds,
+  ]);
 
   const fetchAIContext = useCallback(async () => {
     if (!nodeData.label) return;
@@ -530,7 +588,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[80] flex justify-end">
+    <div className="fixed inset-0 z-modal flex justify-end">
       <div className="absolute inset-0 bg-black/20 dark:bg-black/40" onClick={onClose} />
       <div
         ref={drawerRef}
@@ -826,9 +884,9 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
               {(nodeData.tags || []).map((tag, i) => (
                 <span
                   key={tag}
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${TAG_COLORS[i % TAG_COLORS.length]}`}
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${TAG_COLORS[i % TAG_COLORS.length].chip}`}
                 >
-                  <Hash size={9} />
+                  <Hash size={9} className={TAG_COLORS[i % TAG_COLORS.length].icon} />
                   {tag}
                   {!locked && (
                     <button
@@ -1226,28 +1284,83 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                       {new Date(cmt.createdAt).toLocaleDateString()}
                     </span>
                   </div>
-                  <div className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                    {cmt.text}
+                  <div className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">
+                    {renderMentionText(cmt.text, mentionPool)}
                   </div>
                 </div>
               ))}
               <div className="flex items-start gap-1.5">
-                <textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleAddComment();
+                <div className="flex-1 relative">
+                  {mentionQuery !== null && mentionSuggestions.length > 0 && (
+                    <div
+                      role="listbox"
+                      aria-label={isPl ? 'Wspomnij osobę' : 'Mention a teammate'}
+                      className="absolute bottom-full left-0 mb-1 w-64 rounded-xl border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-800 shadow-lg max-h-40 overflow-y-auto z-overlay"
+                    >
+                      {mentionSuggestions.map((user) => (
+                        <button
+                          key={user.id}
+                          type="button"
+                          role="option"
+                          className="w-full text-left px-3 py-2 text-[11px] hover:bg-slate-50 dark:hover:bg-navy-700 flex items-center gap-2"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            const ta = commentInputRef.current;
+                            const body = newComment || '';
+                            const caretPos = ta?.selectionStart ?? body.length;
+                            const result = insertMentionIntoText(body, caretPos, user);
+                            if (!result) return;
+                            setNewComment(result.text);
+                            closeMentionMenu();
+                            requestAnimationFrame(() => {
+                              if (ta) {
+                                ta.focus();
+                                ta.setSelectionRange(result.caret, result.caret);
+                              }
+                            });
+                          }}
+                        >
+                          <div className="h-6 w-6 rounded-full bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300 flex items-center justify-center text-[9px] font-bold">
+                            {user.name.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="text-slate-700 dark:text-slate-300 truncate">
+                            {user.name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <textarea
+                    ref={commentInputRef}
+                    value={newComment}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setNewComment(val);
+                      const caret = e.target.selectionStart ?? val.length;
+                      handleMentionInput(val, caret);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape' && mentionQuery !== null) {
+                        e.preventDefault();
+                        closeMentionMenu();
+                        return;
+                      }
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleAddComment();
+                      }
+                    }}
+                    placeholder={
+                      isPl ? 'Dodaj komentarz... (@wzmianka)' : 'Add comment... (@mention)'
                     }
-                  }}
-                  placeholder={isPl ? 'Dodaj komentarz...' : 'Add comment...'}
-                  className="flex-1 text-[11px] bg-slate-50 dark:bg-navy-800 rounded-lg px-2.5 py-2 border border-slate-200 dark:border-navy-700 outline-none text-slate-600 dark:text-slate-400 placeholder:text-slate-400 resize-none"
-                  rows={2}
-                />
+                    className="w-full text-[11px] bg-slate-50 dark:bg-navy-800 rounded-lg pl-2.5 pr-6 py-2 border border-slate-200 dark:border-navy-700 outline-none text-slate-600 dark:text-slate-400 placeholder:text-slate-400 resize-none"
+                    rows={2}
+                  />
+                  <AtSign size={10} className="absolute right-2 bottom-2.5 text-slate-500" />
+                </div>
                 <button
                   onClick={handleAddComment}
-                  disabled={!newComment.trim()}
+                  disabled={!newComment.trim() || commentSubmitting}
                   className="p-2 rounded-lg text-primary-500 hover:bg-primary-500/10 transition-colors disabled:opacity-30"
                 >
                   <ArrowRight size={14} />

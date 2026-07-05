@@ -50,7 +50,7 @@ function ConvertToConfirmationContent({
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-sm text-slate-200">
+      <p className="text-sm text-c-text">
         {t('traceability.convertTo.createdFrom', {
           defaultValue: 'Created {{type}} from {{source}}',
           type: typeLabel,
@@ -65,7 +65,7 @@ function ConvertToConfirmationContent({
               onOpenOutput();
               toast.dismiss();
             }}
-            className="flex items-center gap-1.5 text-xs font-medium text-primary-400 hover:text-primary-300 hover:underline transition-colors"
+            className="flex items-center gap-1.5 text-xs font-medium text-c-accent hover:text-c-accent/80 hover:underline transition-colors"
           >
             <ExternalLink size={12} />
             {t('traceability.convertTo.openOutput', 'Open output')}
@@ -78,7 +78,7 @@ function ConvertToConfirmationContent({
               onOpenSession();
               toast.dismiss();
             }}
-            className="flex items-center gap-1.5 text-xs font-medium text-primary-400 hover:text-primary-300 hover:underline transition-colors"
+            className="flex items-center gap-1.5 text-xs font-medium text-c-accent hover:text-c-accent/80 hover:underline transition-colors"
           >
             <FileText size={12} />
             {t('traceability.convertTo.openSourceSession', 'Open source session')}
@@ -102,7 +102,7 @@ function ToastContent({
 
   return (
     <div
-      className={`rounded-lg bg-navy-800 border border-white/10 px-4 py-3 shadow-xl transition-all ${
+      className={`rounded-lg bg-c-surface-raised border border-c-border-subtle px-4 py-3 shadow-xl transition-all ${
         toastInstance.visible ? 'opacity-100' : 'opacity-0'
       }`}
     >

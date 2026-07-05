@@ -124,7 +124,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
       transition={{ duration: 0.3 }}
       className="col-span-full bg-slate-50/90 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl overflow-hidden"
     >
-      <div className="flex items-center gap-4 px-5 py-4">
+      <div className="flex items-center gap-4 px-5 py-3">
         {/* Back button */}
         <motion.button
           whileHover={{ scale: 1.05 }}

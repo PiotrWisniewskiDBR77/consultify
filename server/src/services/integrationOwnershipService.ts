@@ -1,6 +1,11 @@
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
 async function ensureIntegrationOwnershipTable(): Promise<void> {
+  // Fail-soft: opportunistic idempotent DDL invoked first by the read paths
+  // (getIntegrationOwner / listIntegrationOwnershipByOrg). Use fallback:true so a
+  // transient DDL failure can NEVER reject and bubble up as a bare HTTP 500 — the
+  // reads degrade to null / empty instead. The ownership UPSERT keeps
+  // fallback:false so real write failures still surface.
   await dbRun(
     `
       CREATE TABLE IF NOT EXISTS integration_ownership (
@@ -13,17 +18,17 @@ async function ensureIntegrationOwnershipTable(): Promise<void> {
       )
     `,
     [],
-    { fallback: false }
+    { fallback: true }
   );
   await dbRun(
     `CREATE INDEX IF NOT EXISTS idx_integration_ownership_org ON integration_ownership(organization_id)`,
     [],
-    { fallback: false }
+    { fallback: true }
   );
   await dbRun(
     `CREATE INDEX IF NOT EXISTS idx_integration_ownership_owner ON integration_ownership(owner_user_id)`,
     [],
-    { fallback: false }
+    { fallback: true }
   );
 }
 
@@ -58,7 +63,7 @@ export async function getIntegrationOwner(params: {
   const row = await dbGet<{ owner_user_id: string }>(
     `SELECT owner_user_id FROM integration_ownership WHERE integration_id = ? AND organization_id = ? LIMIT 1`,
     [params.integrationId, params.organizationId],
-    { fallback: false }
+    { fallback: true }
   );
   return row?.owner_user_id ? { ownerUserId: row.owner_user_id } : null;
 }
@@ -84,7 +89,7 @@ export async function listIntegrationOwnershipByOrg(organizationId: string): Pro
        WHERE organization_id = ?
        ORDER BY updated_at DESC`,
       [organizationId],
-      { fallback: false }
+      { fallback: true }
     )) || [];
 
   return rows.map((r) => ({

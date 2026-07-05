@@ -1,0 +1,32 @@
+{
+  "provider": "openrouter",
+  "model": "z-ai/glm-5.2",
+  "ranAt": "2026-06-23T20:14:07.316Z",
+  "avgScorePct": 89,
+  "rows": [
+    {
+      "module": "deck",
+      "id": "M19.S06",
+      "scorePct": 67,
+      "fallbackUsed": false,
+      "tierUsed": "PREMIUM",
+      "sec": "16.7s"
+    },
+    {
+      "module": "doc",
+      "id": "M18.S06",
+      "scorePct": 100,
+      "structureFallback": false,
+      "types": 6,
+      "sec": "70.4s"
+    },
+    {
+      "module": "table",
+      "id": "M20.S06",
+      "scorePct": 100,
+      "fallbackUsed": false,
+      "tierUsed": "PREMIUM",
+      "sec": "41.1s"
+    }
+  ]
+}

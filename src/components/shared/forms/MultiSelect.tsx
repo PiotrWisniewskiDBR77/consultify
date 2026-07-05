@@ -48,7 +48,7 @@ const TRIGGER_CLASS =
   'disabled:cursor-not-allowed disabled:opacity-60';
 
 const PANEL_CLASS =
-  'fixed z-[70] rounded-xl border border-slate-200/70 dark:border-white/[0.08] ' +
+  'fixed z-context-menu rounded-xl border border-slate-200/70 dark:border-white/[0.08] ' +
   'bg-white dark:bg-navy-800 shadow-[0_8px_30px_rgba(15,23,42,0.18)] focus:outline-none overflow-hidden';
 
 const CHIP_CLASS =

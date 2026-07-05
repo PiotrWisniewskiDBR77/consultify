@@ -30,6 +30,7 @@ import { useAppStore } from '../../../store/useAppStore';
 import { AppView } from '../../../types';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
+import { EmptyState, LoadingState } from '../../shared/states';
 import type {
   DataClass,
   ErrorCategory,
@@ -79,12 +80,12 @@ function ErrorCategoryBadge({
               : 'Unknown';
   const cls =
     category === 'billing'
-      ? 'bg-amber-500/10 text-amber-400'
+      ? 'bg-c-warning/10 text-c-warning'
       : category === 'auth' || category === 'missing_key'
-        ? 'bg-danger-500/10 text-danger-400'
+        ? 'bg-c-danger/10 text-c-danger'
         : category === 'rate_limit'
-          ? 'bg-yellow-500/10 text-yellow-400'
-          : 'bg-slate-500/10 text-slate-600';
+          ? 'bg-c-warning/10 text-c-warning'
+          : 'bg-c-surface-raised text-c-text-secondary';
   return (
     <span
       className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${cls}`}
@@ -124,22 +125,22 @@ function CapabilityIcons({ caps }: { caps: RegistryModel['capabilities'] }) {
   return (
     <div className="flex items-center gap-1">
       {caps.vision && (
-        <span title="Vision" className="p-1 rounded bg-blue-500/10 text-blue-400">
+        <span title="Vision" className="p-1 rounded bg-c-info/10 text-c-info">
           <Eye size={12} />
         </span>
       )}
       {caps.tools && (
-        <span title="Tools" className="p-1 rounded bg-amber-500/10 text-amber-400">
+        <span title="Tools" className="p-1 rounded bg-c-warning/10 text-c-warning">
           <Wrench size={12} />
         </span>
       )}
       {caps.streaming && (
-        <span title="Streaming" className="p-1 rounded bg-emerald-500/10 text-emerald-400">
+        <span title="Streaming" className="p-1 rounded bg-c-success/10 text-c-success">
           <Wifi size={12} />
         </span>
       )}
       {caps.jsonMode && (
-        <span title="JSON mode" className="p-1 rounded bg-primary-500/10 text-primary-400">
+        <span title="JSON mode" className="p-1 rounded bg-c-accent-soft text-c-accent">
           <Server size={12} />
         </span>
       )}
@@ -182,18 +183,18 @@ function ActionsMenu({
         disabled={disabled}
         aria-label={`Actions for ${model.name}`}
         title={disabled ? 'Model catalog is unavailable' : undefined}
-        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
+        className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors"
       >
-        <MoreVertical size={16} className="text-slate-600" />
+        <MoreVertical size={16} className="text-c-text-secondary" />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl z-20 py-1">
+        <div className="absolute right-0 top-full mt-1 w-48 bg-c-surface border border-c-border rounded-xl shadow-xl z-20 py-1">
           <button
             onClick={() => {
               onEdit(model);
               setOpen(false);
             }}
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised"
           >
             <Edit size={14} /> Edit
           </button>
@@ -202,7 +203,7 @@ function ActionsMenu({
               onToggleActive(model);
               setOpen(false);
             }}
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised"
           >
             {model.isActive ? <EyeOff size={14} /> : <Eye size={14} />}
             {model.isActive ? 'Deactivate' : 'Activate'}
@@ -212,17 +213,17 @@ function ActionsMenu({
               onTestConnection(model);
               setOpen(false);
             }}
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised"
           >
             <Wifi size={14} /> Test Connection
           </button>
-          <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
+          <div className="border-t border-c-border my-1" />
           <button
             onClick={() => {
               onDelete(model);
               setOpen(false);
             }}
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-danger-400 hover:bg-danger-500/10"
+            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-c-danger hover:bg-c-danger/10"
           >
             <Trash2 size={14} /> Delete
           </button>
@@ -272,58 +273,58 @@ function EditModelModal({ model, onClose, onSaved }: EditModelModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl max-w-lg w-full">
-        <div className="p-6 border-b border-slate-200 dark:border-navy-700">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Edit Model</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+      <div className="bg-c-surface rounded-xl shadow-2xl max-w-lg w-full">
+        <div className="p-6 border-b border-c-border">
+          <h2 className="text-xl font-bold text-c-text">Edit Model</h2>
+          <p className="text-sm text-c-text-muted mt-1">
             Update provider configuration for {model.name}
           </p>
         </div>
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               Name
             </label>
             <input
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+              className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">
                 Provider
               </label>
               <input
                 type="text"
                 value={form.provider}
                 onChange={(e) => setForm({ ...form, provider: e.target.value })}
-                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+                className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">
                 Model ID
               </label>
               <input
                 type="text"
                 value={form.model_id}
                 onChange={(e) => setForm({ ...form, model_id: e.target.value })}
-                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white font-mono text-sm"
+                className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border rounded-lg text-c-text font-mono text-sm"
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-c-text-secondary mb-1">
                 Tier
               </label>
               <select
                 value={form.tier}
                 onChange={(e) => setForm({ ...form, tier: e.target.value })}
-                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+                className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
               >
                 <option value="">No tier</option>
                 <option value="primary">Primary</option>
@@ -337,36 +338,36 @@ function EditModelModal({ model, onClose, onSaved }: EditModelModalProps) {
                   type="checkbox"
                   checked={form.is_active}
                   onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-indigo-600"
+                  className="w-4 h-4 rounded border-c-border-strong text-c-accent"
                 />
-                <span className="text-sm text-slate-700 dark:text-slate-300">Active</span>
+                <span className="text-sm text-c-text-secondary">Active</span>
               </label>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text-secondary mb-1">
               Description
             </label>
             <textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={3}
-              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+              className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
               placeholder="Optional description..."
             />
           </div>
         </div>
-        <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-3">
+        <div className="p-6 border-t border-c-border flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2.5 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
+            className="px-4 py-2.5 border border-c-border rounded-lg text-c-text-secondary hover:bg-c-surface-raised"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving || !form.name}
-            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
+            className="px-4 py-2.5 bg-c-accent hover:brightness-95 disabled:opacity-50 text-c-text rounded-lg font-medium flex items-center gap-2"
           >
             {saving ? <RefreshCw size={16} className="animate-spin" /> : <Edit size={16} />}
             Save Changes
@@ -552,8 +553,8 @@ export const ModelCatalogTable: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-indigo-500 animate-spin" />
+      <div className="p-6">
+        <LoadingState template="list" />
       </div>
     );
   }
@@ -563,11 +564,11 @@ export const ModelCatalogTable: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Database size={24} className="text-indigo-500" />
+          <h2 className="text-xl font-bold text-c-text flex items-center gap-2">
+            <Database size={24} className="text-c-info" />
             {t('modelRegistry.catalog.title', 'Model Catalog')}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             {t(
               'modelRegistry.catalog.description',
               'All registered models across TEXT_LLM, IMAGE_MODEL, and BUSINESS_MODEL kinds'
@@ -578,7 +579,7 @@ export const ModelCatalogTable: React.FC = () => {
           <button
             onClick={loadModels}
             disabled={loading}
-            className="p-2 text-slate-600 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
+            className="p-2 text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised rounded-lg transition-colors"
           >
             <RefreshCw size={18} />
           </button>
@@ -590,7 +591,7 @@ export const ModelCatalogTable: React.FC = () => {
             }}
             disabled={!!loadError}
             title={loadError || undefined}
-            className="flex items-center gap-2 px-4 h-9 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-sm font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 h-9 bg-c-accent hover:brightness-95 text-c-text rounded-full text-sm font-medium transition-colors disabled:opacity-50"
           >
             <Plus size={16} />
             {t('modelRegistry.catalog.addModel', 'Add Model')}
@@ -599,40 +600,40 @@ export const ModelCatalogTable: React.FC = () => {
       </div>
 
       {loadError ? (
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+        <div className="bg-c-surface rounded-xl border border-c-border p-6">
           <DegradedState title="Model catalog unavailable" description={loadError} />
         </div>
       ) : (
         <>
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-              <div className="text-sm text-slate-500 dark:text-slate-400">Total</div>
-              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+            <div className="bg-c-surface rounded-xl border border-c-border p-4">
+              <div className="text-sm text-c-text-muted">Total</div>
+              <div className="text-2xl font-bold text-c-text">
                 {models.length}
               </div>
             </div>
-            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-              <div className="text-sm text-slate-500 dark:text-slate-400">Active</div>
-              <div className="text-2xl font-bold text-emerald-500">
+            <div className="bg-c-surface rounded-xl border border-c-border p-4">
+              <div className="text-sm text-c-text-muted">Active</div>
+              <div className="text-2xl font-bold text-c-success">
                 {models.filter((m) => m.isActive).length}
               </div>
             </div>
-            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-              <div className="text-sm text-blue-400">TEXT_LLM</div>
-              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+            <div className="bg-c-surface rounded-xl border border-c-border p-4">
+              <div className="text-sm text-c-info">TEXT_LLM</div>
+              <div className="text-2xl font-bold text-c-text">
                 {models.filter((m) => m.kind === 'TEXT_LLM').length}
               </div>
             </div>
-            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-              <div className="text-sm text-primary-400">IMAGE_MODEL</div>
-              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+            <div className="bg-c-surface rounded-xl border border-c-border p-4">
+              <div className="text-sm text-c-accent">IMAGE_MODEL</div>
+              <div className="text-2xl font-bold text-c-text">
                 {models.filter((m) => m.kind === 'IMAGE_MODEL').length}
               </div>
             </div>
-            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-              <div className="text-sm text-amber-400">BUSINESS_MODEL</div>
-              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+            <div className="bg-c-surface rounded-xl border border-c-border p-4">
+              <div className="text-sm text-c-warning">BUSINESS_MODEL</div>
+              <div className="text-2xl font-bold text-c-text">
                 {models.filter((m) => m.kind === 'BUSINESS_MODEL').length}
               </div>
             </div>
@@ -643,7 +644,7 @@ export const ModelCatalogTable: React.FC = () => {
             <div className="relative flex-1 max-w-md">
               <Search
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-secondary"
               />
               <input
                 type="text"
@@ -654,14 +655,14 @@ export const ModelCatalogTable: React.FC = () => {
                   'Search by name, model ID, provider...'
                 )}
                 disabled={!!loadError}
-                className="w-full pl-10 pr-4 h-9 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm placeholder-slate-400"
+                className="w-full pl-10 pr-4 h-9 bg-c-surface border border-c-border rounded-lg text-c-text text-sm placeholder-c-text-muted"
               />
             </div>
             <select
               value={filterKind}
               onChange={(e) => setFilterKind(e.target.value as ModelKind | '')}
               disabled={!!loadError}
-              className="h-9 px-3 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
+              className="h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
             >
               <option value="">All Kinds</option>
               <option value="TEXT_LLM">TEXT_LLM</option>
@@ -673,8 +674,8 @@ export const ModelCatalogTable: React.FC = () => {
               disabled={!!loadError}
               className={`flex items-center gap-2 px-3 h-9 border rounded-lg text-sm transition-colors ${
                 showFilters
-                  ? 'bg-indigo-600 border-indigo-500 text-white'
-                  : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700'
+                  ? 'bg-c-accent border-c-accent text-c-text'
+                  : 'bg-c-surface border-c-border text-c-text-secondary hover:bg-c-surface-raised'
               }`}
             >
               <Filter size={14} />
@@ -683,15 +684,15 @@ export const ModelCatalogTable: React.FC = () => {
           </div>
 
           {showFilters && (
-            <div className="grid grid-cols-3 gap-4 p-4 bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-slate-200 dark:border-navy-700">
+            <div className="grid grid-cols-3 gap-4 p-4 bg-c-surface-raised rounded-xl border border-c-border">
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-xs text-c-text-muted mb-1">
                   Provider Type
                 </label>
                 <select
                   value={filterProviderType}
                   onChange={(e) => setFilterProviderType(e.target.value as ProviderType | '')}
-                  className="w-full h-9 px-3 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
+                  className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
                 >
                   <option value="">All</option>
                   <option value="direct">Direct</option>
@@ -701,13 +702,13 @@ export const ModelCatalogTable: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-xs text-c-text-muted mb-1">
                   Health Status
                 </label>
                 <select
                   value={filterHealth}
                   onChange={(e) => setFilterHealth(e.target.value as HealthStatus | '')}
-                  className="w-full h-9 px-3 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
+                  className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
                 >
                   <option value="">All</option>
                   <option value="healthy">Healthy</option>
@@ -717,13 +718,13 @@ export const ModelCatalogTable: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <label className="block text-xs text-c-text-muted mb-1">
                   Status
                 </label>
                 <select
                   value={filterActive}
                   onChange={(e) => setFilterActive(e.target.value as '' | 'active' | 'inactive')}
-                  className="w-full h-9 px-3 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
+                  className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
                 >
                   <option value="">All</option>
                   <option value="active">Active</option>
@@ -734,64 +735,64 @@ export const ModelCatalogTable: React.FC = () => {
           )}
 
           {/* Table */}
-          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+          <div className="bg-c-surface rounded-xl border border-c-border overflow-hidden">
             <div className="overflow-x-auto">
               <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-navy-700">
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  <tr className="border-b border-c-border">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                       Name
                     </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                       Provider
                     </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                       Kind
                     </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                       Status
                     </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                       Health
                     </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                       Capabilities
                     </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                       Regions
                     </th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                       Cost/1k
                     </th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                       Latency
                     </th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
+                <tbody className="divide-y divide-c-border">
                   {filteredModels.map((model) => (
                     <tr
                       key={model.id}
-                      className={`hover:bg-slate-50 dark:hover:bg-navy-900/50 transition-colors ${
+                      className={`hover:bg-c-surface-raised transition-colors ${
                         !model.isActive ? 'opacity-50' : ''
                       }`}
                     >
                       <td className="px-4 py-3">
                         <div>
-                          <div className="font-medium text-slate-900 dark:text-white text-sm">
+                          <div className="font-medium text-c-text text-sm">
                             {model.name}
                           </div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                          <div className="text-xs text-c-text-muted font-mono">
                             {model.modelId}
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         <div>
-                          <div className="text-sm text-slate-700 dark:text-slate-300">
+                          <div className="text-sm text-c-text-secondary">
                             {model.originVendor}
                           </div>
                           <ProviderTypeBadge type={model.providerType} />
@@ -804,8 +805,8 @@ export const ModelCatalogTable: React.FC = () => {
                         <span
                           className={`px-2 py-1 rounded text-xs font-medium ${
                             model.isActive
-                              ? 'bg-emerald-500/10 text-emerald-500'
-                              : 'bg-slate-500/10 text-slate-500'
+                              ? 'bg-c-success/10 text-c-success'
+                              : 'bg-c-text-muted/10 text-c-text-muted'
                           }`}
                         >
                           {model.isActive ? 'Active' : 'Inactive'}
@@ -823,7 +824,7 @@ export const ModelCatalogTable: React.FC = () => {
                       <td className="px-4 py-3">
                         <CapabilityIcons caps={model.capabilities} />
                         {model.capabilities.contextWindow > 0 && (
-                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          <div className="text-xs text-c-text-muted mt-0.5">
                             {formatContextWindow(model.capabilities.contextWindow)} ctx
                           </div>
                         )}
@@ -833,7 +834,7 @@ export const ModelCatalogTable: React.FC = () => {
                           {model.executionRegions.map((region) => (
                             <span
                               key={region}
-                              className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 dark:bg-navy-700 rounded text-xs text-slate-600 dark:text-slate-400"
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-c-surface-raised rounded text-xs text-c-text-secondary"
                             >
                               <Globe size={10} />
                               {region}
@@ -842,12 +843,12 @@ export const ModelCatalogTable: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <span className="text-sm text-slate-700 dark:text-slate-300">
+                        <span className="text-sm text-c-text-secondary">
                           {model.costPer1k ? `$${model.costPer1k.toFixed(4)}` : '—'}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <span className="text-sm text-slate-700 dark:text-slate-300">
+                        <span className="text-sm text-c-text-secondary">
                           {model.avgLatencyMs
                             ? model.avgLatencyMs < 1000
                               ? `${model.avgLatencyMs}ms`
@@ -869,12 +870,14 @@ export const ModelCatalogTable: React.FC = () => {
                   ))}
                   {filteredModels.length === 0 && (
                     <tr>
-                      <td
-                        colSpan={10}
-                        className="px-4 py-12 text-center text-slate-500 dark:text-slate-400"
-                      >
-                        <Database size={32} className="mx-auto mb-3 opacity-40" />
-                        <p>No models match your filters</p>
+                      <td colSpan={10} className="px-4 py-12">
+                        <EmptyState
+                          variant="filter"
+                          icon={Database}
+                          title="No models match your filters"
+                          description="Try a different search term or clear the active filters."
+                          compact
+                        />
                       </td>
                     </tr>
                   )}

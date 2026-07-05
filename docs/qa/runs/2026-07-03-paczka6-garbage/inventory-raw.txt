@@ -1,0 +1,138 @@
+=== ORG CLASS COUNTS ===
+SESSION_CLONE	183
+OTHER	177
+ATELIER_CANONICAL	1
+
+=== initiatives (label=name) ===
+total rows: 1399
+MARKED (garbage-named) by org class:
+  OTHER	17
+  sample OTHER-org marked:
+    269286ca-9a18-45af-bc0d-1f8b876d831f | E2E UIInitiative UIInit-kq9l9s | DBR77
+    d50610fe-d9ce-4c78-b5e3-f649236369b6 | E2E Initiative Init-03g7x1 | DBR77
+    4b9d0571-ab8e-47e8-987f-192efd40c393 | E2E Initiative Init-fyx3vb | DBR77
+    19be07a6-9400-477d-baeb-53169c895339 | delete test | DBR77
+    a3467264-82d5-43bd-ba89-a211c92ef1c1 | E2E UIInitiative UIInit-8owxk1 | DBR77
+    14c49689-f343-40f9-aa09-b83c430b04d2 | E2E Initiative Init-765ueb | DBR77
+    fcf64e9c-7f37-44ae-b947-c28316c0ae4d | QA Smoke General Analysis 2026-05-04T15:30:20.635Z | DBR77
+    8b3de6e9-64a5-45d8-8984-d9db4df1552e | E2E Initiative Init-m3ziyr | DBR77
+    d0dc280c-24a5-404a-8ec8-a0298fc0a3ca | E2E Initiative Init-fqyfzc | DBR77
+    da65f946-c88b-4993-b20d-f61deaf398c3 | E2E UIInitiative UIInit-yq8dyo | DBR77
+    ef696a3e-8990-4c2c-a64a-34c30b228258 | E2E UIInitiative UIInit-gzr69o | DBR77
+    73190630-b335-4164-b6e7-3baf70a83755 | M05-E2E-CV-Init-y3sbhb | DBR77
+
+=== initiative_kpis (label=name) ===
+total rows: 11
+MARKED (garbage-named) by org class:
+  OTHER	5
+  sample OTHER-org marked:
+    f2a26105-25c1-4b39-8dcd-438a33f88668 | E2E KPI 1782326203494 | DBR77
+    3a7f88aa-1974-4003-8e03-8f3aa8ded7e8 | E2E KPI 1782494920708 | DBR77
+    0e4a5cd5-d6ea-475b-a406-ef55e208d767 | E2E KPI 1782325840777 | DBR77
+    d7b2d463-aa19-44dc-a3b8-7fe119ac2cc5 | E2E KPI 1782325989462 | DBR77
+    63a5f994-45fd-40ce-af9e-4beb462ec5f0 | E2E KPI 1782326127960 | DBR77
+
+=== benefits_register (label=name) ===
+total rows: 16
+MARKED (garbage-named) by org class:
+  OTHER	13
+  sample OTHER-org marked:
+    27279e0b-8a9d-416e-b7d5-d3bfb24af893 | E2E benefit 1782325660502 | DBR77
+    fbc27b88-c93c-4b2d-8ee1-dfd637d0b698 | E2E benefit 1782325681842 | DBR77
+    c7fe7b30-6db7-46a7-8c86-658a0e49d9e0 | E2E benefit 1782325757623 | DBR77
+    406d848c-bd13-47ba-acad-05dae8619468 | E2E benefit 1782325778414 | DBR77
+    0a1a28a8-a456-4e85-b5e5-bb9aab369f98 | E2E benefit 1782325840777 | DBR77
+    1d70c45c-a62d-4b94-9f89-3b421ffe418a | E2E benefit 1782325868690 | DBR77
+    d0c31721-3202-49f7-8d3a-6cb31fcdb204 | E2E benefit 1782325950952 | DBR77
+    5d84e65f-0e67-4993-84cc-ac40b1f81062 | E2E benefit 1782325989462 | DBR77
+    80729d56-6e4e-4ecb-9db9-0658ebf0edb1 | E2E benefit 1782326069936 | DBR77
+    c3ab312c-1272-427b-908f-9fe3f7800f82 | E2E benefit 1782326127960 | DBR77
+    1d82021d-6b1d-4286-937d-671db0c82449 | E2E benefit 1782326203494 | DBR77
+    a2f72864-8d67-4498-8e33-8b12a5865aa7 | E2E benefit 1782494920441 | DBR77
+
+=== financial_models (label=name) ===
+total rows: 19
+MARKED (garbage-named) by org class:
+  OTHER	4
+  sample OTHER-org marked:
+    143ddfc9-8b00-4734-890e-a35156ce7d9e | M16-THROWAWAY-Model DELETE | DBR77
+    c92ca377-3d26-431d-9c2c-7e432872ee2f | M16-THROWAWAY-Model DELETE | DBR77
+    211ccf37-6d3d-46ab-9715-1976c15f6baa | M16-THROWAWAY-Model DELETE | DBR77
+    1a46ae7f-dd0a-4d63-b71a-3c654605f68a | M16-THROWAWAY-Model DELETE | DBR77
+
+=== financial_statements (label=entity_name) ===
+total rows: 13
+MARKED (garbage-named) by org class:
+  (none)
+
+=== report_builder_reports (label=title) ===
+total rows: 15
+MARKED (garbage-named) by org class:
+  OTHER	6
+  sample OTHER-org marked:
+    4ceb1a24-ff88-4bab-a388-346b7254028a | E2E ToReport-1rg1mc | DBR77
+    121bb19b-58a5-4e13-8c02-24c5a20f56d5 | E2E ToReport-o02fs3 | DBR77
+    ff848990-8d5d-484c-8dc8-55eba51be76f | E2E ToReport-rbwe7v | DBR77
+    47ecca3f-b6b0-49fe-a314-a65940aa3193 | E2E ToReport-3oc8pg | DBR77
+    c9f75c86-631f-4cb7-a3f5-cfeaddcaab92 | E2E ToReport-zgbwzj | DBR77
+    6f58ec01-40c3-4e62-bcb9-61077f4ec2e6 | E2E ToReport-2bayi9 | DBR77
+
+=== presentation_decks (label=title) ===
+total rows: 53
+MARKED (garbage-named) by org class:
+  OTHER	7
+  sample OTHER-org marked:
+    c7fe7caab3734d80b86195721556dbdb | E2E ToPresentation-ozr5h2 | DBR77
+    96892bcabc574177b54836b0aa1b1429 | E2E ToPresentation-4hnhjk | DBR77
+    2fbc5a45024a4d4d85c3a6816050c66b | Gotowość AI — smoke test | DBR77
+    23b26677fc6c4af789da22ddf483ddc1 | E2E ToPresentation-lcjajt | DBR77
+    3893e57523a54950a2da50910720c0a1 | E2E ToPresentation-2l92h2 | DBR77
+    c0e534d98f744827abcffa9eeaeb3ff5 | E2E ToPresentation-7i6rhe | DBR77
+    2d40a6cda422414b93cac77ce52f0dd9 | E2E ToPresentation-5z5auk | DBR77
+
+=== v8_output_artifacts (label=title_snapshot) ===
+total rows: 254
+MARKED (garbage-named) by org class:
+  OTHER	13
+  sample OTHER-org marked:
+    bf749e57-0ffe-4d55-b856-bbbb49f24d00 | Gotowość AI — smoke test | DBR77
+    00495a1d-f7a6-4669-99c6-bf811c28e29a | E2E ToReport-3oc8pg | DBR77
+    3575f9d9-dd99-4153-8f6d-96b9f4bb07fc | E2E ToPresentation-lcjajt | DBR77
+    bf8df98c-a501-47d4-8725-f2d5a3c8e3ac | E2E ToReport-zgbwzj | DBR77
+    988a7b91-44e2-43b8-b985-4150590aecff | E2E ToPresentation-2l92h2 | DBR77
+    2423c357-bdcc-4637-bab8-0b710ba24611 | E2E ToReport-2bayi9 | DBR77
+    64d6d2fd-56a3-43ad-be60-18d2eaac8460 | E2E ToPresentation-7i6rhe | DBR77
+    a9c01ec0-3e65-41bc-aaa5-30cbbd7f5f61 | E2E ToReport-1rg1mc | DBR77
+    58cfd2c0-52a1-45be-b03b-9265862a5173 | E2E ToPresentation-5z5auk | DBR77
+    21a388f9-0c83-4088-a630-24f507b7aa2a | E2E ToReport-o02fs3 | DBR77
+    a1496dfc-d68b-4d2b-876c-87c516d457da | E2E ToPresentation-ozr5h2 | DBR77
+    139df153-6534-40ed-a4d1-3655e37d8816 | E2E ToReport-rbwe7v | DBR77
+
+=== tp_tables (label=name) ===
+total rows: 81
+MARKED (garbage-named), no org col: 0
+
+=== initiatives status breakdown (OTHER orgs only) ===
+  DRAFT	148
+  PLANNING	8
+  EXECUTING	5
+  REVIEW	5
+  SCHEDULED	3
+  APPROVED	3
+  BLOCKED	2
+  CANCELLED	1
+
+=== initiatives duplicate names (>=3, OTHER orgs) ===
+  32x | Optymalizacja kosztów logistyki magazynu | DBR77
+  12x | F1-26 from assessment | DBR77
+  11x | F3 Rich Card Initiative | DBR77
+  3x | ERP System Modernization | DBR77
+  3x | Data Analytics Platform | DBR77
+  3x | Cybersecurity Enhancement Program | DBR77
+  3x | IoT Sensor Network Deployment | DBR77
+  3x | Quality Management System 4.0 | DBR77
+  3x | RPA Implementation | DBR77
+  3x | Cloud Migration Phase 2 | DBR77
+  3x | Digital Performance Management | DBR77
+  3x | Automated Changeover Optimization | DBR77
+  3x | DevOps Transformation | DBR77

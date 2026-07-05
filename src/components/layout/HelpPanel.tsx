@@ -105,10 +105,10 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50 z-40 transition-opacity" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/50 z-dropdown transition-opacity" onClick={onClose} />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 h-full w-96 bg-white dark:bg-gray-900 z-50 shadow-2xl transform transition-transform duration-300 ease-out flex flex-col">
+      <div className="fixed right-0 top-0 h-full w-96 bg-white dark:bg-gray-900 z-overlay shadow-2xl transform transition-transform duration-300 ease-out flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">

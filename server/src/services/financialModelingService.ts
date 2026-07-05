@@ -937,31 +937,24 @@ export async function persistComputeResult(
   await dbRun(`DELETE FROM financial_model_validations WHERE model_id = ?`, [modelId]);
 
   // Save outputs
+  let outputsInserted = 0;
+  let outputsFailed = 0;
+  let firstOutputError: string | null = null;
   for (const period of result.periods) {
     for (const [type, lines] of [
       ['P&L', period.pl],
       ['BS', period.bs],
       ['CF', period.cf],
     ] as const) {
-      const isEstimated = type === 'CF';
       for (const [code, value] of Object.entries(lines)) {
         try {
-          await dbRun(
-            `INSERT INTO financial_model_outputs (id, model_id, period_date, period_label, statement_type, line_code, line_name, value, scenario, is_estimated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              uuidv4(),
-              modelId,
-              period.date,
-              period.label,
-              type,
-              code,
-              LINE_NAMES[code] || code,
-              round2(value as number),
-              scenario,
-              isEstimated,
-            ]
-          );
-        } catch {
+          // NOTE: neither migration (571 / 20260228) defines an `is_estimated`
+          // column, so the previous primary INSERT (which listed it) failed on
+          // EVERY row. Under Postgres that aborts the surrounding transaction,
+          // making the catch-fallback AND every later insert (incl. validations)
+          // silently no-op → compute "succeeded" but financial_model_outputs and
+          // financial_model_validations stayed empty (hollow 200). Insert only
+          // real columns; no per-row is_estimated.
           await dbRun(
             `INSERT INTO financial_model_outputs (id, model_id, period_date, period_label, statement_type, line_code, line_name, value, scenario) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
@@ -976,10 +969,23 @@ export async function persistComputeResult(
               scenario,
             ]
           );
+          outputsInserted++;
+        } catch (err) {
+          outputsFailed++;
+          if (!firstOutputError) firstOutputError = err instanceof Error ? err.message : String(err);
         }
       }
     }
   }
+
+  logger.info('[financialModeling] persistComputeResult outputs', {
+    modelId,
+    scenario,
+    periods: result.periods.length,
+    outputsInserted,
+    outputsFailed,
+    firstOutputError,
+  });
 
   // Save validations
   for (const v of result.validations) {
@@ -1121,6 +1127,69 @@ export async function createModel(params: {
     }
   }
   return id;
+}
+
+/**
+ * Re-pull the historical lines from a model's bound source statement / pack and
+ * merge them back into the model's assumptions (S6.4d — "refresh from source").
+ *
+ * Only the seeded baseline + opening balances + seed metadata are refreshed;
+ * any other assumption keys the user edited are preserved by mergeAssumptions.
+ * Throws when the model has no source, is approved (immutable), or the source no
+ * longer passes the critical-line gate — the route maps those to 400/404.
+ */
+export async function reseedModelFromSource(
+  modelId: string,
+  orgId: string
+): Promise<{ seededFrom: 'statement' | 'statement_pack'; missingBaselineLines: string[] }> {
+  const model = await getModel(modelId, orgId);
+  if (!model) throw new Error('Model not found');
+  if (String(model.status || '').toLowerCase() === 'approved') {
+    throw new Error('Cannot refresh an approved model. Create a new version instead.');
+  }
+
+  const packId = model.source_statement_pack_id;
+  const statementId = model.source_statement_id;
+  if (!packId && !statementId) {
+    throw new Error('Model has no source statement to refresh from');
+  }
+
+  const seeded = packId
+    ? await buildSeededAssumptionsFromPack(orgId, String(packId))
+    : await buildSeededAssumptionsFromStatement(orgId, String(statementId));
+
+  const existing =
+    typeof model.assumptions_json === 'string'
+      ? JSON.parse(model.assumptions_json)
+      : model.assumptions_json || {};
+
+  // Refresh strategy: the freshly-seeded values win for the seeded keys and
+  // baseline, but we start from the user's existing assumptions so unrelated
+  // edits survive. mergeAssumptions keeps seedSource/seedStatus from its first
+  // argument, so re-apply the FRESH seed metadata explicitly.
+  const refreshed = {
+    ...mergeAssumptions(existing, seeded.assumptions),
+    seedSource: seeded.assumptions.seedSource,
+    seedStatus: seeded.assumptions.seedStatus,
+  };
+
+  await dbRun(
+    `UPDATE financial_models SET assumptions_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+    [JSON.stringify(refreshed), modelId, orgId]
+  );
+
+  const seedType = (seeded.assumptions?.seedSource as any)?.type as
+    | 'statement'
+    | 'statement_pack'
+    | undefined;
+  const missingBaselineLines = Array.isArray((seeded.assumptions?.seedStatus as any)?.missingBaselineLines)
+    ? ((seeded.assumptions?.seedStatus as any).missingBaselineLines as string[])
+    : [];
+
+  return {
+    seededFrom: seedType || (packId ? 'statement_pack' : 'statement'),
+    missingBaselineLines,
+  };
 }
 
 export async function getModel(modelId: string, orgId?: string): Promise<any> {

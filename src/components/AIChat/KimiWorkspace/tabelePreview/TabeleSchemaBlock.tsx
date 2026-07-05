@@ -42,29 +42,37 @@ export function TabeleSchemaBlock({ field, onClickProposal }: TabeleSchemaBlockP
     <Component
       type={canOpenProposal ? 'button' : undefined}
       onClick={canOpenProposal ? () => onClickProposal?.(field.proposalId as string) : undefined}
-      className={`group w-full rounded-hig-md border border-slate-200 bg-white px-4 py-3 text-left transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500/30 dark:border-navy-700 dark:bg-navy-900 dark:hover:bg-navy-800/50 ${
+      className={`group w-full rounded-hig-md border border-c-border-subtle bg-c-surface px-4 py-3 text-left transition-colors hover:bg-c-surface-raised focus:outline-none focus:ring-2 focus:ring-sky-500/30 ${
         canOpenProposal ? 'cursor-pointer' : ''
       }`}
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <code className="font-mono text-sm font-semibold text-slate-950 dark:text-slate-100">
+          <code className="font-mono text-sm font-semibold text-c-text">
             {field.name || t('kimi.tabele.schema.unnamedField', { defaultValue: 'unnamed_field' })}
           </code>
-          <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-            {field.proposalId
-              ? t('kimi.tabele.schema.proposalCaption', {
-                  defaultValue: 'Linked to schema proposal {{proposalId}}',
-                  proposalId: field.proposalId,
-                })
-              : t('kimi.tabele.schema.caption', {
-                  defaultValue: 'Schema field rendered as an operational table document block',
-                })}
+          <p className="mt-1 text-xs leading-relaxed text-c-text-secondary">
+            {field.description?.trim()
+              ? field.description.trim()
+              : field.proposalId
+                ? t('kimi.tabele.schema.proposalCaption', {
+                    defaultValue: 'Linked to schema proposal {{proposalId}}',
+                    proposalId: field.proposalId,
+                  })
+                : // No authored description: show an honest, field-derived caption
+                  // (the field's own type token) instead of a shared boilerplate
+                  // placeholder that read identically on every row (HOTFIX #62 UI-M6).
+                  t('kimi.tabele.schema.typeCaption', {
+                    defaultValue: '{{fieldType}} field',
+                    fieldType: field.fieldType || t('kimi.tabele.schema.defaultType', {
+                      defaultValue: 'text',
+                    }),
+                  })}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-hig-full border border-slate-300/80 bg-slate-100 px-2.5 py-1 font-mono text-xs font-medium text-slate-800 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-100">
+          <span className="rounded-hig-full border border-c-border bg-c-surface-raised px-2.5 py-1 font-mono text-xs font-medium text-c-text/[0.11]/[0.075]">
             {field.fieldType || t('kimi.tabele.schema.defaultType', { defaultValue: 'text' })}
           </span>
           <span

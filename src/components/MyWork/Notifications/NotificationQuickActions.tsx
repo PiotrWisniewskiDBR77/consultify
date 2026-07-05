@@ -148,7 +148,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
             e.stopPropagation();
             onOpenDecision(notification.relatedObjectId!);
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-500 hover:bg-primary-600 text-white text-xs font-medium rounded-lg transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-c-text hover:bg-c-text-secondary text-c-bg text-xs font-medium rounded-lg transition-colors"
         >
           <Scale size={12} />
           {isPolish ? 'Otwórz dokument' : 'Open document'}
@@ -215,7 +215,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
               e.stopPropagation();
               onApplyRecommendation();
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-500 hover:bg-primary-600 text-white text-xs font-medium rounded-lg transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-c-text hover:bg-c-text-secondary text-c-bg text-xs font-medium rounded-lg transition-colors"
           >
             <Sparkles size={12} />
             {t('notifications.actions.apply', 'Apply')}

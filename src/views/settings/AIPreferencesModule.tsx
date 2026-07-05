@@ -56,7 +56,7 @@ const ResponseStyleSettings: React.FC<{
               onClick={() => setResponseLength(len)}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 responseLength === len
-                  ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950'
+                  ? 'bg-purple-600 text-white'
                   : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20'
               }`}
             >
@@ -78,7 +78,7 @@ const ResponseStyleSettings: React.FC<{
               onClick={() => setTone(t_)}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 tone === t_
-                  ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950'
+                  ? 'bg-purple-600 text-white'
                   : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20'
               }`}
             >
@@ -100,7 +100,7 @@ const ResponseStyleSettings: React.FC<{
               onClick={() => setFormat(f)}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 format === f
-                  ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950'
+                  ? 'bg-purple-600 text-white'
                   : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20'
               }`}
             >

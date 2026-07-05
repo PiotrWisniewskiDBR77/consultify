@@ -7,7 +7,16 @@
  */
 import { type Page, expect, test } from '@playwright/test';
 
-import { bootstrap, createIdea, exitEdit, nodeCount, openMindmap, selectRoot, shot } from './_m06';
+import {
+  bootstrap,
+  createIdea,
+  exitEdit,
+  nodeCount,
+  openMindmap,
+  selectNodeByIndex,
+  selectRoot,
+  shot,
+} from './_m06';
 
 async function freshMap(page: Page, tag: string) {
   const { token } = await bootstrap(page);
@@ -34,14 +43,12 @@ test.describe('M06 §9 — Gramatyka klawiaturowa', () => {
     await page.waitForTimeout(900);
     await page.keyboard.type('Sibling2');
     await exitEdit(page);
-    // Select first child node.
-    const firstChild = page.locator('.react-flow__node').nth(1);
-    if (!(await firstChild.isVisible().catch(() => false))) {
+    // Select first child node (fit + force-click).
+    if (!(await selectNodeByIndex(page, 1))) {
       await shot(page, '9.1-arrow-nav');
       test.skip(true, 'Not enough nodes to test sibling navigation — canvas interaction flaky in headless');
       return;
     }
-    await firstChild.click();
     await page.waitForTimeout(300);
     const selectedBefore = await page.locator('.react-flow__node.selected').count();
     await page.keyboard.press('ArrowDown');
@@ -56,13 +63,11 @@ test.describe('M06 §9 — Gramatyka klawiaturowa', () => {
     await freshMap(page, '9.2');
     await addChild(page, 'SiblingA');
     const before = await nodeCount(page);
-    const child = page.locator('.react-flow__node').nth(1);
-    if (!(await child.isVisible().catch(() => false))) {
+    if (!(await selectNodeByIndex(page, 1))) {
       await shot(page, '9.2-alt-arrow-reorder');
       test.skip(true, 'Child node not available for Alt+Arrow reorder test — canvas headless flake');
       return;
     }
-    await child.click();
     await page.waitForTimeout(300);
     const syncP = page
       .waitForResponse((r) => /\/map\/sync/.test(r.url()), { timeout: 8000 })
@@ -156,13 +161,11 @@ test.describe('M06 §9 — Gramatyka klawiaturowa', () => {
     await freshMap(page, '9.6');
     await addChild(page, 'CopyMe');
     const before = await nodeCount(page);
-    const child = page.locator('.react-flow__node').nth(1);
-    if (!(await child.isVisible().catch(() => false))) {
+    if (!(await selectNodeByIndex(page, 1))) {
       await shot(page, '9.6-copy-paste');
       test.skip(true, 'Child node not available for copy-paste test — canvas headless');
       return;
     }
-    await child.click();
     await page.waitForTimeout(300);
     await page.keyboard.press('ControlOrMeta+c');
     await page.waitForTimeout(300);

@@ -130,7 +130,53 @@ export const AppProviders: React.FC<AppProvidersProps> = React.memo(({ children 
                   ) : (
                     children
                   )}
-                  <Toaster position="bottom-right" />
+                  {/*
+                    Brand-anatomy defaults for every react-hot-toast call site
+                    (700+). Surfaces + text come from the canonical `c.*`
+                    semantic tokens (light/dark auto via CSS vars); severity
+                    icons use c-success / c-danger / c-accent. Presentation
+                    only — no delivery/dedup logic touched.
+                  */}
+                  <Toaster
+                    position="bottom-right"
+                    gutter={10}
+                    containerClassName="!z-toast"
+                    toastOptions={{
+                      duration: 4000,
+                      // Canonical semantic tokens (c.*) — resolved from CSS vars
+                      // in src/index.css (:root + .dark), so no hardcoded colors.
+                      style: {
+                        maxWidth: 'min(420px, calc(100vw - 2rem))',
+                        padding: '10px 14px',
+                        borderRadius: '12px',
+                        fontSize: '14px',
+                        lineHeight: '1.4',
+                        background: 'var(--c-surface-raised)',
+                        color: 'var(--c-text)',
+                        border: '1px solid var(--c-border)',
+                        boxShadow: '0 10px 40px rgba(0,0,0,0.14)',
+                      },
+                      success: {
+                        iconTheme: {
+                          primary: 'var(--c-success)',
+                          secondary: 'var(--c-surface-raised)',
+                        },
+                      },
+                      error: {
+                        duration: 6000,
+                        iconTheme: {
+                          primary: 'var(--c-danger)',
+                          secondary: 'var(--c-surface-raised)',
+                        },
+                      },
+                      loading: {
+                        iconTheme: {
+                          primary: 'var(--c-accent)',
+                          secondary: 'var(--c-surface-raised)',
+                        },
+                      },
+                    }}
+                  />
                 </HelpProvider>
               </TourProvider>
             </AutoSaveProvider>

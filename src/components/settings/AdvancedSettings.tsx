@@ -310,11 +310,11 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Settings size={28} className="text-slate-500 dark:text-slate-400" />
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
+            <Settings size={28} className="text-c-text-muted" />
             {t('settings.advanced.title', 'Advanced Settings')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t(
               'settings.advanced.description',
               'Developer tools, API access, and advanced options'
@@ -324,7 +324,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-c-surface hover:bg-c-surface text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {saving ? t('settings.saving', 'Saving...') : t('settings.save', 'Save Changes')}
@@ -332,17 +332,17 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
       </div>
 
       {/* Personal API Keys */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-amber-100 dark:bg-amber-500/20 rounded-lg">
               <Key size={20} className="text-amber-600 dark:text-amber-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              <h3 className="text-lg font-semibold text-c-text">
                 {t('settings.advanced.apiKeys', 'Personal API Keys')}
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.advanced.apiKeysDescription',
                   'Create API keys for programmatic access'
@@ -374,40 +374,40 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
             {apiKeys.map((apiKey) => (
               <div
                 key={apiKey.id}
-                className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg"
+                className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg"
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-slate-900 dark:text-white">
+                    <span className="font-medium text-c-text">
                       {apiKey.name}
                     </span>
                     {apiKey.permissions.map((perm) => (
                       <span
                         key={perm}
-                        className="px-2 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded"
+                        className="px-2 py-0.5 text-xs bg-c-surface-raised text-c-text-secondary rounded"
                       >
                         {perm}
                       </span>
                     ))}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    <code className="text-sm font-mono text-slate-500 dark:text-slate-400">
+                    <code className="text-sm font-mono text-c-text-muted">
                       {visibleKeys.has(apiKey.id) ? apiKey.key : maskKey(apiKey.key)}
                     </code>
                     <button
                       onClick={() => toggleKeyVisibility(apiKey.id)}
-                      className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded"
+                      className="p-1 hover:bg-c-surface-raised rounded"
                     >
                       {visibleKeys.has(apiKey.id) ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
                     <button
                       onClick={() => copyToClipboard(apiKey.key)}
-                      className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded"
+                      className="p-1 hover:bg-c-surface-raised rounded"
                     >
                       <Copy size={14} />
                     </button>
                   </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
+                  <p className="text-xs text-c-text-secondary mt-1">
                     {t('settings.advanced.created', 'Created')}:{' '}
                     {new Date(apiKey.createdAt).toLocaleDateString()}
                     {apiKey.lastUsed &&
@@ -416,7 +416,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 </div>
                 <button
                   onClick={() => handleDeleteAPIKey(apiKey.id)}
-                  className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg transition-colors"
+                  className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
                 >
                   <Trash2 size={18} />
                 </button>
@@ -427,8 +427,8 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
       </div>
 
       {/* Export Preferences */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <FileDown size={20} className="text-blue-500" />
           {t('settings.advanced.exportPreferences', 'Export Preferences')}
         </h3>
@@ -437,10 +437,10 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
           {/* Default Format */}
           <div className="flex items-center justify-between">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300">
+              <label className="block font-medium text-c-text-secondary">
                 {t('settings.advanced.defaultFormat', 'Default Export Format')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t('settings.advanced.defaultFormatDescription', 'Format used when exporting data')}
               </p>
             </div>
@@ -452,7 +452,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                   e.target.value as AdvancedPreferences['defaultExportFormat']
                 )
               }
-              className="px-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+              className="px-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text"
             >
               <option value="pdf">PDF</option>
               <option value="csv">CSV</option>
@@ -462,12 +462,12 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
           </div>
 
           {/* Include Attachments */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-c-border-subtle dark:border-navy-700">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300">
+              <label className="block font-medium text-c-text-secondary">
                 {t('settings.advanced.includeAttachments', 'Include Attachments')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.advanced.includeAttachmentsDescription',
                   'Export files attached to tasks'
@@ -479,22 +479,22 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 updatePreference('includeAttachments', !preferences.includeAttachments)
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.includeAttachments ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.includeAttachments ? 'bg-blue-600' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`${preferences.includeAttachments ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                className={`${preferences.includeAttachments ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
               />
             </button>
           </div>
 
           {/* Date Range */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-c-border-subtle dark:border-navy-700">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300">
+              <label className="block font-medium text-c-text-secondary">
                 {t('settings.advanced.dateRange', 'Default Date Range')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t('settings.advanced.dateRangeDescription', 'Default range for data exports')}
               </p>
             </div>
@@ -506,7 +506,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                   e.target.value as AdvancedPreferences['exportDateRange']
                 )
               }
-              className="px-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+              className="px-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text"
             >
               <option value="all">{t('settings.advanced.allTime', 'All Time')}</option>
               <option value="30days">{t('settings.advanced.30days', 'Last 30 Days')}</option>
@@ -518,17 +518,17 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
       </div>
 
       {/* Keyboard Shortcuts */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary-100 dark:bg-primary-500/20 rounded-lg">
-              <Keyboard size={20} className="text-primary-600 dark:text-primary-400" />
+            <div className="p-2 bg-c-accent-soft dark:bg-c-accent-soft rounded-lg">
+              <Keyboard size={20} className="text-c-accent" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              <h3 className="text-lg font-semibold text-c-text">
                 {t('settings.advanced.keyboardShortcuts', 'Keyboard Shortcuts')}
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.advanced.keyboardShortcutsDescription',
                   'Quick actions using your keyboard'
@@ -542,12 +542,12 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
             }
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
               preferences.keyboardShortcutsEnabled
-                ? 'bg-navy-900'
-                : 'bg-slate-200 dark:bg-slate-700'
+                ? 'bg-c-accent'
+                : 'bg-c-surface-raised'
             }`}
           >
             <span
-              className={`${preferences.keyboardShortcutsEnabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+              className={`${preferences.keyboardShortcutsEnabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
             />
           </button>
         </div>
@@ -557,20 +557,20 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
             {KEYBOARD_SHORTCUTS.map((shortcut, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg"
+                className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg"
               >
                 <div>
-                  <span className="font-medium text-slate-700 dark:text-slate-300">
+                  <span className="font-medium text-c-text-secondary">
                     {t(`settings.advanced.shortcuts.${shortcut.id}`, shortcut.action)}
                   </span>
-                  <span className="text-xs text-slate-600 dark:text-slate-500 ml-2">
+                  <span className="text-xs text-c-text-secondary ml-2">
                     {t(
                       `settings.advanced.shortcutCategories.${shortcut.category}`,
                       shortcut.category
                     )}
                   </span>
                 </div>
-                <kbd className="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded text-sm font-mono text-slate-600 dark:text-slate-400">
+                <kbd className="px-2 py-1 bg-c-surface-raised rounded text-sm font-mono text-c-text-secondary">
                   {shortcut.shortcut}
                 </kbd>
               </div>
@@ -580,12 +580,12 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
       </div>
 
       {/* Connected Accounts */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Link2 size={20} className="text-blue-500" />
           {t('settings.advanced.connectedAccounts', 'Connected Accounts')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+        <p className="text-sm text-c-text-muted mb-4">
           {t(
             'settings.advanced.connectedAccountsDescription',
             'Accounts linked for single sign-on'
@@ -603,8 +603,8 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
       </div>
 
       {/* Developer Options */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Code size={20} className="text-green-500" />
           {t('settings.advanced.developerOptions', 'Developer Options')}
         </h3>
@@ -613,10 +613,10 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
           {/* Developer Mode */}
           <div className="flex items-center justify-between">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300">
+              <label className="block font-medium text-c-text-secondary">
                 {t('settings.advanced.developerMode', 'Developer Mode')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t(
                   'settings.advanced.developerModeDescription',
                   'Enable advanced debugging features'
@@ -628,11 +628,11 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 updatePreference('enableDeveloperMode', !preferences.enableDeveloperMode)
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.enableDeveloperMode ? 'bg-green-600' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.enableDeveloperMode ? 'bg-green-600' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`${preferences.enableDeveloperMode ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                className={`${preferences.enableDeveloperMode ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
               />
             </button>
           </div>
@@ -640,12 +640,12 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
           {preferences.enableDeveloperMode && (
             <>
               {/* Show Debug Info */}
-              <div className="flex items-center justify-between pl-6 pt-4 border-t border-slate-200 dark:border-navy-700">
+              <div className="flex items-center justify-between pl-6 pt-4 border-t border-c-border-subtle dark:border-navy-700">
                 <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300">
+                  <label className="block font-medium text-c-text-secondary">
                     {t('settings.advanced.showDebugInfo', 'Show Debug Info')}
                   </label>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-c-text-muted">
                     {t(
                       'settings.advanced.showDebugInfoDescription',
                       'Display technical information in UI'
@@ -655,11 +655,11 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 <button
                   onClick={() => updatePreference('showDebugInfo', !preferences.showDebugInfo)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    preferences.showDebugInfo ? 'bg-green-600' : 'bg-slate-200 dark:bg-slate-700'
+                    preferences.showDebugInfo ? 'bg-green-600' : 'bg-c-surface-raised'
                   }`}
                 >
                   <span
-                    className={`${preferences.showDebugInfo ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                    className={`${preferences.showDebugInfo ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
                   />
                 </button>
               </div>
@@ -667,10 +667,10 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
               {/* Log API Requests */}
               <div className="flex items-center justify-between pl-6">
                 <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300">
+                  <label className="block font-medium text-c-text-secondary">
                     {t('settings.advanced.logAPIRequests', 'Log API Requests')}
                   </label>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-c-text-muted">
                     {t(
                       'settings.advanced.logAPIRequestsDescription',
                       'Log all API calls to console'
@@ -680,11 +680,11 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 <button
                   onClick={() => updatePreference('logAPIRequests', !preferences.logAPIRequests)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    preferences.logAPIRequests ? 'bg-green-600' : 'bg-slate-200 dark:bg-slate-700'
+                    preferences.logAPIRequests ? 'bg-green-600' : 'bg-c-surface-raised'
                   }`}
                 >
                   <span
-                    className={`${preferences.logAPIRequests ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                    className={`${preferences.logAPIRequests ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
                   />
                 </button>
               </div>
@@ -692,13 +692,13 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
           )}
 
           {/* Beta Features */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between pt-4 border-t border-c-border-subtle dark:border-navy-700">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+              <label className="block font-medium text-c-text-secondary flex items-center gap-2">
                 <Shield size={16} className="text-amber-500" />
                 {t('settings.advanced.betaFeatures', 'Beta Features')}
               </label>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-c-text-muted">
                 {t('settings.advanced.betaFeaturesDescription', 'Try experimental features early')}
               </p>
             </div>
@@ -707,11 +707,11 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 updatePreference('enableBetaFeatures', !preferences.enableBetaFeatures)
               }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                preferences.enableBetaFeatures ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-700'
+                preferences.enableBetaFeatures ? 'bg-amber-500' : 'bg-c-surface-raised'
               }`}
             >
               <span
-                className={`${preferences.enableBetaFeatures ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
+                className={`${preferences.enableBetaFeatures ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-c-surface transition-transform`}
               />
             </button>
           </div>
@@ -721,7 +721,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
       {/* New API Key Modal */}
       {showNewKeyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white dark:bg-navy-800 rounded-xl max-w-md w-full p-6 shadow-2xl">
+          <div className="bg-c-surface rounded-xl max-w-md w-full p-6 shadow-2xl">
             {newlyCreatedKey ? (
               <>
                 <div className="flex items-center gap-3 mb-4">
@@ -729,10 +729,10 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                     <Check size={24} className="text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                    <h3 className="text-lg font-bold text-c-text">
                       {t('settings.advanced.keyCreatedTitle', 'API Key Created')}
                     </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-c-text-muted">
                       {t(
                         'settings.advanced.keyCreatedMessage',
                         "Save this key - it won't be shown again"
@@ -753,8 +753,8 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                   </div>
                 </div>
 
-                <div className="bg-slate-100 dark:bg-navy-900 p-4 rounded-lg mb-4">
-                  <code className="text-sm font-mono text-slate-900 dark:text-white break-all">
+                <div className="bg-c-surface-raised p-4 rounded-lg mb-4">
+                  <code className="text-sm font-mono text-c-text break-all">
                     {newlyCreatedKey}
                   </code>
                 </div>
@@ -772,7 +772,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                       setShowNewKeyModal(false);
                       setNewlyCreatedKey(null);
                     }}
-                    className="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600"
+                    className="flex-1 px-4 py-2 bg-c-surface-raised text-c-text-secondary rounded-lg hover:bg-c-surface-raised"
                   >
                     {t('common.done', 'Done')}
                   </button>
@@ -780,13 +780,13 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
               </>
             ) : (
               <>
-                <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">
+                <h3 className="text-lg font-bold mb-4 text-c-text">
                   {t('settings.advanced.createKey', 'Create API Key')}
                 </h3>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    <label className="block text-sm font-medium text-c-text-secondary mb-2">
                       {t('settings.advanced.keyName', 'Key Name')}
                     </label>
                     <input
@@ -794,12 +794,12 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                       value={newKeyName}
                       onChange={(e) => setNewKeyName(e.target.value)}
                       placeholder={t('settings.advanced.keyNamePlaceholder', 'e.g. My Integration')}
-                      className="w-full px-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+                      className="w-full px-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    <label className="block text-sm font-medium text-c-text-secondary mb-2">
                       {t('settings.advanced.permissions', 'Permissions')}
                     </label>
                     <div className="space-y-2">
@@ -815,9 +815,9 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                                 setNewKeyPermissions((prev) => prev.filter((p) => p !== perm));
                               }
                             }}
-                            className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-amber-600 focus:ring-amber-500"
+                            className="w-4 h-4 rounded border-c-border dark:border-navy-700 text-amber-600 focus:ring-amber-500"
                           />
-                          <span className="text-sm text-slate-700 dark:text-slate-300 capitalize">
+                          <span className="text-sm text-c-text-secondary capitalize">
                             {perm}
                           </span>
                         </label>
@@ -829,7 +829,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                 <div className="flex gap-3 justify-end mt-6">
                   <button
                     onClick={() => setShowNewKeyModal(false)}
-                    className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"
+                    className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised rounded-lg"
                   >
                     {t('common.cancel', 'Cancel')}
                   </button>
@@ -857,13 +857,13 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
     const isConnected = !!account;
 
     return (
-      <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
+      <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
         <div className="flex items-center gap-3">
           <span className="text-2xl">{getProviderIcon(provider)}</span>
           <div>
-            <span className="font-medium text-slate-700 dark:text-slate-300">{name}</span>
+            <span className="font-medium text-c-text-secondary">{name}</span>
             {isConnected && (
-              <p className="text-xs text-slate-500 dark:text-slate-400">{account.email}</p>
+              <p className="text-xs text-c-text-muted">{account.email}</p>
             )}
           </div>
         </div>
@@ -874,7 +874,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
             </span>
             <button
               onClick={() => handleDisconnectAccount(provider)}
-              className="p-2 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg"
+              className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
             >
               <Trash2 size={16} />
             </button>

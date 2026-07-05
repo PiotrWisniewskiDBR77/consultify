@@ -149,6 +149,13 @@
     "trends": {
       "title": "Ewolucja Wyniku w Czasie",
       "noData": "Brak danych historycznych. Wykonuj ponowne oceny, aby śledzić trendy."
+    },
+    "drdRadar": {
+      "title": "Profil dojrzałości",
+      "subtitle": "Stan obecny vs. cel (N+1) w każdym wymiarze",
+      "current": "Stan obecny",
+      "target": "Cel (N+1)",
+      "gap": "Luka"
     }
   }
 }

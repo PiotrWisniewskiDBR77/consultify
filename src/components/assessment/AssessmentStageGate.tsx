@@ -181,7 +181,7 @@ export const AssessmentStageGate: React.FC<Props> = ({
       border: 'border-blue-500',
     },
     purple: {
-      bg: 'bg-navy-900',
+      bg: 'bg-primary-500',
       light: 'bg-primary-100 dark:bg-primary-900/30',
       text: 'text-primary-600 dark:text-primary-400',
       border: 'border-primary-500',
@@ -218,7 +218,7 @@ export const AssessmentStageGate: React.FC<Props> = ({
       <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-slate-50 to-white dark:from-navy-800 dark:to-navy-900">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-navy-900 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-primary-500 flex items-center justify-center">
               <Shield className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -474,19 +474,19 @@ const GateDetailsPanel: React.FC<{
             className={`flex items-center gap-2 p-2 rounded-lg ${
               criterion.isMet
                 ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
-                : 'bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800'
+                : 'bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800'
             }`}
           >
             {criterion.isMet ? (
               <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
             ) : (
-              <XCircle className="w-4 h-4 text-danger-600 dark:text-danger-400 flex-shrink-0" />
+              <XCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0" />
             )}
             <span
               className={`text-sm ${
                 criterion.isMet
                   ? 'text-green-700 dark:text-green-300'
-                  : 'text-danger-700 dark:text-danger-300'
+                  : 'text-rose-700 dark:text-rose-300'
               }`}
             >
               {criterion.criterion}

@@ -37,16 +37,16 @@ function indicatorColor(
   score: number | null | undefined,
   status: ValidationStatus | null | undefined
 ): string | null {
-  if (status === 'flagged') return '#d97706'; // amber-600
-  if (status === 'verified') return '#059669'; // emerald-600
+  if (status === 'flagged') return 'var(--c-warning)';
+  if (status === 'verified') return 'var(--c-success)';
   if (score === null || score === undefined || !Number.isFinite(score)) {
     // unverified + no score → no signal worth surfacing in the gutter
     return null;
   }
   const v = clamp01(score);
-  if (v < 0.4) return '#dc2626'; // red-600
-  if (v < 0.65) return '#d97706'; // amber-600
-  return '#059669'; // emerald-600
+  if (v < 0.4) return 'var(--c-danger)';
+  if (v < 0.65) return 'var(--c-warning)';
+  return 'var(--c-success)';
 }
 
 const RowGutterIndicatorBase: React.FC<RowGutterIndicatorProps> = ({

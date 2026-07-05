@@ -17,36 +17,36 @@ const FUNNEL_STAGES = [
     key: 'idea',
     labelPl: 'Pomysł',
     labelEn: 'Idea',
-    color: '#94a3b8',
-    bg: 'bg-slate-100 dark:bg-slate-800/30',
+    color: 'var(--c-tag-8)',
+    bg: 'bg-c-surface-raised dark:bg-c-surface',
   },
   {
     key: 'exploring',
     labelPl: 'Eksploracja',
     labelEn: 'Exploring',
-    color: '#3b82f6',
-    bg: 'bg-blue-100 dark:bg-blue-900/30',
+    color: 'var(--c-info)',
+    bg: 'bg-c-info dark:bg-c-info',
   },
   {
     key: 'validated',
     labelPl: 'Zwalidowany',
     labelEn: 'Validated',
     color: 'var(--c-success)',
-    bg: 'bg-emerald-100 dark:bg-emerald-900/30',
+    bg: 'bg-c-success dark:bg-c-success',
   },
   {
     key: 'ready_to_convert',
     labelPl: 'Gotowy',
     labelEn: 'Ready',
     color: 'var(--c-warning)',
-    bg: 'bg-amber-100 dark:bg-amber-900/30',
+    bg: 'bg-c-warning dark:bg-c-warning',
   },
   {
     key: 'converted',
     labelPl: 'Skonwertowany',
     labelEn: 'Converted',
-    color: '#6366f1',
-    bg: 'bg-primary-100 dark:bg-primary-900/30',
+    color: 'var(--c-tag-2)',
+    bg: 'bg-c-accent dark:bg-c-accent',
   },
 ];
 
@@ -104,20 +104,20 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[92] bg-white/95 dark:bg-navy-950/95 backdrop-blur-xl flex flex-col">
+    <div className="fixed inset-0 z-[92] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-c-border-subtle dark:border-c-border">
         <button
           onClick={onClose}
-          className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:text-c-text-muted dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
         >
           <ChevronLeft size={16} />
         </button>
-        <BarChart3 size={16} className="text-amber-500" />
-        <h2 className="text-sm font-bold text-slate-800 dark:text-white">
+        <BarChart3 size={16} className="text-c-warning" />
+        <h2 className="text-sm font-bold text-c-text dark:text-c-text">
           {isPl ? 'Lejek pomysłów' : 'Idea Funnel'}
         </h2>
-        <span className="text-[10px] text-slate-600 ml-auto">
+        <span className="text-[10px] text-c-text-secondary ml-auto">
           {total} {isPl ? 'pomysłów' : 'ideas'} · {overallConversion}%{' '}
           {isPl ? 'konwersja' : 'conversion'}
         </span>
@@ -139,15 +139,15 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
                     style={{ paddingLeft: `${idx * 3}%`, paddingRight: `${idx * 3}%` }}
                   >
                     <div
-                      className={`flex-1 py-4 px-5 rounded-xl ${stage.bg} border border-slate-200/30 dark:border-navy-700/30 transition-all`}
+                      className={`flex-1 py-4 px-5 rounded-xl ${stage.bg} border border-c-border-subtle dark:border-c-border transition-all`}
                       style={{ borderLeftColor: stage.color, borderLeftWidth: 4 }}
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-[12px] font-bold text-slate-700 dark:text-slate-200">
+                          <div className="text-[12px] font-bold text-c-text-secondary dark:text-c-text">
                             {isPl ? stage.labelPl : stage.labelEn}
                           </div>
-                          <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          <div className="text-[10px] text-c-text-secondary dark:text-c-text-muted mt-0.5">
                             {count} {isPl ? 'pomysłów' : 'ideas'} ({pct}%)
                           </div>
                         </div>
@@ -158,7 +158,7 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
                         </div>
                       </div>
                       {/* Progress bar */}
-                      <div className="mt-2 h-2 rounded-full bg-slate-200/50 dark:bg-navy-700/50 overflow-hidden">
+                      <div className="mt-2 h-2 rounded-full bg-c-surface-raised dark:bg-c-surface overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all duration-700"
                           style={{ width: `${pct}%`, backgroundColor: stage.color }}
@@ -169,7 +169,7 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
 
                   {idx < FUNNEL_STAGES.length - 1 && (
                     <div className="flex justify-center py-1">
-                      <ArrowDown size={16} className="text-slate-600 dark:text-slate-400" />
+                      <ArrowDown size={16} className="text-c-text-secondary dark:text-c-text-muted" />
                     </div>
                   )}
                 </React.Fragment>
@@ -178,8 +178,8 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
           </div>
 
           {/* Branch breakdown */}
-          <div className="mt-8 pt-6 border-t border-slate-200/40 dark:border-navy-700/40">
-            <h3 className="text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-3 flex items-center gap-2">
+          <div className="mt-8 pt-6 border-t border-c-border-subtle dark:border-c-border">
+            <h3 className="text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted mb-3 flex items-center gap-2">
               <TrendingUp size={14} />
               {isPl ? 'Konwersja per gałąź' : 'Conversion per branch'}
             </h3>
@@ -187,23 +187,23 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
               {branchStats.map(([bk, stats]) => (
                 <div
                   key={bk}
-                  className="p-3 rounded-xl bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30"
+                  className="p-3 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border"
                 >
-                  <div className="text-[11px] font-bold text-slate-700 dark:text-slate-200 capitalize">
+                  <div className="text-[11px] font-bold text-c-text-secondary dark:text-c-text capitalize">
                     {bk}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] text-slate-500">{stats.total} total</span>
-                    <span className="text-[10px] text-emerald-600 font-bold">
+                    <span className="text-[10px] text-c-text-secondary">{stats.total} total</span>
+                    <span className="text-[10px] text-c-success font-bold">
                       {stats.converted} converted
                     </span>
-                    <span className="text-[9px] text-slate-600">
+                    <span className="text-[9px] text-c-text-secondary">
                       ({stats.total > 0 ? Math.round((stats.converted / stats.total) * 100) : 0}%)
                     </span>
                   </div>
-                  <div className="mt-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                  <div className="mt-1.5 h-1.5 rounded-full bg-c-surface-raised dark:bg-c-surface overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-emerald-500 transition-all"
+                      className="h-full rounded-full bg-c-success transition-all"
                       style={{
                         width: `${stats.total > 0 ? (stats.converted / stats.total) * 100 : 0}%`,
                       }}

@@ -24,7 +24,7 @@ export const TeamHealthBar: React.FC<Props> = ({ tasks, teamName = 'Team' }) => 
 
   if (blockedRatio > 0.1 || overdueRatio > 0.15) {
     healthStatus = 'Critical';
-    color = 'bg-danger-500';
+    color = 'bg-rose-500';
   } else if (blockedRatio > 0.05 || overdueRatio > 0.05) {
     healthStatus = 'At Risk';
     color = 'bg-amber-500';
@@ -42,13 +42,13 @@ export const TeamHealthBar: React.FC<Props> = ({ tasks, teamName = 'Team' }) => 
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-danger-50 dark:bg-danger-900/10 p-2 rounded border border-danger-100 dark:border-danger-500/10 flex items-center gap-3">
-          <div className="p-1.5 bg-danger-100 dark:bg-danger-500/20 rounded text-danger-600 dark:text-danger-400">
+        <div className="bg-rose-50 dark:bg-rose-900/10 p-2 rounded border border-rose-100 dark:border-rose-500/10 flex items-center gap-3">
+          <div className="p-1.5 bg-rose-100 dark:bg-rose-500/20 rounded text-rose-600 dark:text-rose-400">
             <AlertCircle size={16} />
           </div>
           <div>
-            <div className="text-lg font-bold text-danger-700 dark:text-danger-400">{overdue}</div>
-            <div className="text-[10px] text-danger-500 dark:text-danger-400/70 uppercase font-medium">
+            <div className="text-lg font-bold text-rose-700 dark:text-rose-400">{overdue}</div>
+            <div className="text-[10px] text-rose-500 dark:text-rose-400/70 uppercase font-medium">
               Overdue
             </div>
           </div>

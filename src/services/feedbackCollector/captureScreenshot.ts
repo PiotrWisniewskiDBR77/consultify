@@ -39,6 +39,14 @@ const SENSITIVE_INPUT_TYPES = new Set([
 
 function shouldRedactNode(node: Node): boolean {
   if (!(node instanceof Element)) return false;
+  // Feedback #64133ece — the report panel (and its dimming backdrop) are
+  // still mounted in document.body while the screenshot is taken, so an
+  // un-excluded capture shows the panel/backdrop covering the real page
+  // instead of the content the user is trying to report. html-to-image's
+  // filter fully omits matched nodes from the render, which — since the
+  // clone re-lays out the tree from scratch rather than compositing
+  // z-index layers — reveals the underlying page content in their place.
+  if (node.hasAttribute('data-feedback-capture-exclude')) return true;
   if (node.hasAttribute('data-feedback-redact')) return true;
   const tag = node.tagName.toLowerCase();
   if (tag === 'input') {

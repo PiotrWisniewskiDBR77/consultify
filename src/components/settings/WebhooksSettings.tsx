@@ -415,11 +415,11 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
     <div className={`space-y-6 ${className}`}>
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
             <Webhook size={20} />
             {t('settings.webhooks.title', 'Webhooks')}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             {t('settings.webhooks.desc', 'Receive real-time notifications via HTTP callbacks.')}
           </p>
         </div>
@@ -439,13 +439,13 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
 
       {/* New Webhook Form */}
       {showNew && !loadError && (
-        <div className="p-6 bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 space-y-4">
-          <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+        <div className="p-6 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700 space-y-4">
+          <h4 className="text-sm font-semibold text-c-text">
             {t('settings.webhooks.createNew', 'Create New Webhook')}
           </h4>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">
               {t('settings.webhooks.name', 'Name')} <span className="text-danger-500">*</span>
             </label>
             <input
@@ -453,12 +453,12 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
               value={newWebhook.name}
               onChange={(e) => setNewWebhook((prev) => ({ ...prev, name: e.target.value }))}
               placeholder={t('settings.webhooks.namePlaceholder', 'My Webhook')}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+              className="w-full px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg bg-c-surface text-c-text"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">
               {t('settings.webhooks.url', 'Endpoint URL')} <span className="text-danger-500">*</span>
             </label>
             <input
@@ -466,12 +466,12 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
               value={newWebhook.url}
               onChange={(e) => setNewWebhook((prev) => ({ ...prev, url: e.target.value }))}
               placeholder="https://api.example.com/webhook"
-              className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white font-mono text-sm"
+              className="w-full px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg bg-c-surface text-c-text font-mono text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">
               {t('settings.webhooks.events', 'Events')} <span className="text-danger-500">*</span>
             </label>
             <div className="flex flex-wrap gap-2">
@@ -482,7 +482,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                   className={`px-3 py-1 text-sm rounded-full transition-colors ${
                     newWebhook.events.includes(event)
                       ? 'bg-navy-900 text-white'
-                      : 'bg-white dark:bg-navy-700 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300'
+                      : 'bg-c-surface border border-c-border dark:border-navy-600 text-c-text-secondary'
                   }`}
                 >
                   {event}
@@ -492,7 +492,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text-secondary mb-2">
               {t('settings.webhooks.signatureSecret', 'Signature Secret')} (Optional)
             </label>
             <input
@@ -502,9 +502,9 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                 setNewWebhook((prev) => ({ ...prev, signatureSecret: e.target.value }))
               }
               placeholder={t('settings.webhooks.secretPlaceholder', 'HMAC secret for verification')}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white font-mono text-sm"
+              className="w-full px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg bg-c-surface text-c-text font-mono text-sm"
             />
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-xs text-c-text-muted mt-1">
               {t(
                 'settings.webhooks.secretHint',
                 'Used to verify webhook authenticity via HMAC signature'
@@ -536,7 +536,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                   filterRules: {},
                 });
               }}
-              className="px-4 py-2 border border-slate-300 dark:border-navy-600 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700"
+              className="px-4 py-2 border border-c-border dark:border-navy-600 rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700"
             >
               {t('common.cancel', 'Cancel')}
             </button>
@@ -566,14 +566,14 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
             return (
               <div
                 key={webhook.id}
-                className="bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 overflow-hidden"
+                className="bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700 overflow-hidden"
               >
                 {/* Webhook Header */}
                 <div className="p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-slate-900 dark:text-white">
+                        <h4 className="font-semibold text-c-text">
                           {webhook.name || t('settings.webhooks.unnamed', 'Unnamed Webhook')}
                         </h4>
                         {webhook.active ? (
@@ -583,11 +583,11 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                         )}
                         {webhook.version && <MetaChip label={`v${webhook.version}`} />}
                       </div>
-                      <code className="text-sm text-slate-600 dark:text-slate-300 font-mono break-all">
+                      <code className="text-sm text-c-text-secondary font-mono break-all">
                         {webhook.url}
                       </code>
                       {webhook.lastTriggered && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        <p className="text-xs text-c-text-muted mt-1">
                           {t('settings.webhooks.lastTriggered', 'Last triggered')}:{' '}
                           {new Date(webhook.lastTriggered).toLocaleString()}
                         </p>
@@ -597,7 +597,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                       <button
                         onClick={() => testWebhook(webhook.id)}
                         disabled={testingWebhook === webhook.id}
-                        className="p-2 text-slate-500 dark:text-slate-400 hover:text-brand rounded-lg transition-colors disabled:opacity-50"
+                        className="p-2 text-c-text-muted hover:text-brand rounded-lg transition-colors disabled:opacity-50"
                         title={t('settings.webhooks.test', 'Send test event')}
                       >
                         {testingWebhook === webhook.id ? (
@@ -613,7 +613,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                         className={`p-2 rounded-lg transition-colors ${
                           showSettings === webhook.id
                             ? 'bg-navy-900 text-white'
-                            : 'text-slate-500 dark:text-slate-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
+                            : 'text-c-text-muted hover:text-brand hover:bg-c-surface-raised dark:hover:bg-navy-700'
                         }`}
                         title={t('common.settings', 'Settings')}
                       >
@@ -621,7 +621,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                       </button>
                       <button
                         onClick={() => setSelectedWebhook(isExpanded ? null : webhook.id)}
-                        className="p-2 text-slate-500 dark:text-slate-400 hover:text-brand rounded-lg transition-colors"
+                        className="p-2 text-c-text-muted hover:text-brand rounded-lg transition-colors"
                         title={t('settings.webhooks.viewDeliveries', 'View deliveries')}
                       >
                         {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -649,7 +649,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                   </div>
 
                   {/* Features Indicators */}
-                  <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="flex items-center gap-4 text-xs text-c-text-muted">
                     {webhook.signatureSecret && (
                       <div className="flex items-center gap-1">
                         <Shield size={12} />
@@ -678,14 +678,14 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
 
                 {/* Advanced Settings */}
                 {showWebhookSettings && settings && (
-                  <div className="px-4 pb-4 border-t border-slate-200 dark:border-navy-700 pt-4 space-y-4">
-                    <h5 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  <div className="px-4 pb-4 border-t border-c-border-subtle dark:border-navy-700 pt-4 space-y-4">
+                    <h5 className="text-sm font-semibold text-c-text">
                       {t('settings.webhooks.advancedSettings', 'Advanced Settings')}
                     </h5>
 
                     {/* Signature Secret */}
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      <label className="block text-xs font-medium text-c-text-secondary mb-1">
                         {t('settings.webhooks.signatureSecret', 'Signature Secret')}
                       </label>
                       <input
@@ -701,18 +701,18 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                           }))
                         }
                         placeholder={t('settings.webhooks.secretPlaceholder', 'HMAC secret')}
-                        className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg font-mono"
+                        className="w-full px-3 py-2 text-sm bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg font-mono"
                       />
                     </div>
 
                     {/* Retry Configuration */}
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      <label className="block text-xs font-medium text-c-text-secondary mb-2">
                         {t('settings.webhooks.retryConfig', 'Retry Configuration')}
                       </label>
                       <div className="space-y-2">
                         <div>
-                          <label className="text-xs text-slate-600 dark:text-slate-400">
+                          <label className="text-xs text-c-text-secondary">
                             {t('settings.webhooks.maxRetries', 'Max Retries')}
                           </label>
                           <input
@@ -732,11 +732,11 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                                 },
                               }))
                             }
-                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg"
+                            className="w-full px-3 py-2 text-sm bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg"
                           />
                         </div>
                         <div>
-                          <label className="text-xs text-slate-600 dark:text-slate-400">
+                          <label className="text-xs text-c-text-secondary">
                             {t('settings.webhooks.backoffStrategy', 'Backoff Strategy')}
                           </label>
                           <select
@@ -753,7 +753,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                                 },
                               }))
                             }
-                            className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg"
+                            className="w-full px-3 py-2 text-sm bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg"
                           >
                             <option value="linear">
                               {t('settings.webhooks.linear', 'Linear')}
@@ -768,7 +768,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
 
                     {/* Event Filtering */}
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      <label className="block text-xs font-medium text-c-text-secondary mb-1">
                         {t('settings.webhooks.eventFilters', 'Event Filters')} (JSONPath)
                       </label>
                       <textarea
@@ -783,7 +783,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                           } catch {}
                         }}
                         rows={4}
-                        className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg font-mono"
+                        className="w-full px-3 py-2 text-sm bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg font-mono"
                         placeholder='{"eventType": "task.created", "conditions": []}'
                       />
                     </div>
@@ -798,7 +798,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                       </button>
                       <button
                         onClick={() => setShowSettings(null)}
-                        className="px-3 py-2 border border-slate-200 dark:border-navy-700 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 text-sm"
+                        className="px-3 py-2 border border-c-border-subtle dark:border-navy-700 rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700 text-sm"
                       >
                         {t('common.cancel', 'Cancel')}
                       </button>
@@ -808,20 +808,20 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
 
                 {/* Delivery Timeline */}
                 {isExpanded && (
-                  <div className="px-4 pb-4 border-t border-slate-200 dark:border-navy-700 pt-4">
+                  <div className="px-4 pb-4 border-t border-c-border-subtle dark:border-navy-700 pt-4">
                     <div className="flex items-center justify-between mb-3">
-                      <h5 className="text-sm font-semibold text-slate-900 dark:text-white">
+                      <h5 className="text-sm font-semibold text-c-text">
                         {t('settings.webhooks.deliveryHistory', 'Delivery History')}
                       </h5>
                       <button
                         onClick={() => fetchDeliveries(webhook.id)}
-                        className="p-1 text-slate-500 dark:text-slate-400 hover:text-brand rounded"
+                        className="p-1 text-c-text-muted hover:text-brand rounded"
                       >
                         <RefreshCw size={14} />
                       </button>
                     </div>
                     {webhookDeliveries.length === 0 ? (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-4">
+                      <p className="text-xs text-c-text-muted text-center py-4">
                         {t('settings.webhooks.noDeliveries', 'No deliveries yet')}
                       </p>
                     ) : (
@@ -834,7 +834,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                                 ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'
                                 : delivery.status === 'failed'
                                   ? 'bg-danger-50/50 dark:bg-danger-900/10 border-danger-200 dark:border-danger-900/30'
-                                  : 'bg-slate-50 dark:bg-navy-800/50 border-slate-200 dark:border-navy-700'
+                                  : 'bg-c-surface-raised border-c-border-subtle dark:border-navy-700'
                             }`}
                           >
                             <div className="flex items-start justify-between">
@@ -845,18 +845,18 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                                   ) : (
                                     <XCircle size={14} className="text-danger-500" />
                                   )}
-                                  <span className="text-xs font-medium text-slate-900 dark:text-white">
+                                  <span className="text-xs font-medium text-c-text">
                                     {delivery.event_type}
                                   </span>
                                   {delivery.retry_count > 0 && (
-                                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                                    <span className="text-xs text-c-text-muted">
                                       ({t('settings.webhooks.retry', 'retry')}{' '}
                                       {delivery.retry_count})
                                     </span>
                                   )}
                                 </div>
                                 {delivery.response_code && (
-                                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                                  <p className="text-xs text-c-text-secondary">
                                     {delivery.response_code} • {delivery.response_time_ms}ms
                                   </p>
                                 )}
@@ -867,7 +867,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                                 )}
                               </div>
                               <div className="text-right">
-                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                <p className="text-xs text-c-text-muted">
                                   {new Date(delivery.created_at).toLocaleString()}
                                 </p>
                                 {delivery.status === 'failed' && (

@@ -37,8 +37,64 @@ export function KpiTile(props: KpiTileProps, tokens: DesignTokens): RenderedElem
     });
   }
 
-  // KPI Value
+  // W7 anti-sparseness: na wysokim kafelku (Dashboard, h≈3) wyśrodkuj pionowo
+  // blok wartość+etykieta+trend i powiększ liczbę-hero, żeby kafelek oddychał.
+  // Na niskim kafelku (Exec strip, h≈0.9) zachowaj dotychczasowe proporcje.
+  const isTall = p.h >= 1.6;
   const valueColor = kpi.status ? statusColor(kpi.status, tokens) : tokens.colors.primary;
+
+  if (isTall) {
+    // Większy obszar wartości (valign:middle + fit:shrink w atomicu KpiValue
+    // sprawia, że hero-liczba urośnie do tej wysokości) → liczba czytelniejsza.
+    const valueH = Math.min(p.h * 0.5, 1.4);
+    const labelH = 0.3;
+    const trendH = kpi.trend ? 0.3 : 0;
+    const gap = 0.08;
+    const stackH = valueH + gap + labelH + (kpi.trend ? gap + trendH : 0);
+    let y = p.y + Math.max(0.1, (p.h - stackH) / 2);
+
+    elements.push(
+      KpiValue(
+        {
+          value: kpi.value,
+          unit: kpi.unit,
+          color: valueColor,
+          position: { x: p.x + 0.1, y, w: p.w - 0.2, h: valueH },
+        },
+        tokens
+      )
+    );
+    y += valueH + gap;
+
+    elements.push(
+      KpiLabel(
+        {
+          text: kpi.name,
+          position: { x: p.x + 0.1, y, w: p.w - 0.2, h: labelH },
+        },
+        tokens
+      )
+    );
+    y += labelH;
+
+    if (kpi.trend) {
+      y += gap;
+      elements.push(
+        TrendIndicator(
+          {
+            trend: kpi.trend,
+            delta: kpi.delta,
+            position: { x: p.x + 0.1, y, w: p.w - 0.2, h: trendH },
+          },
+          tokens
+        )
+      );
+    }
+
+    return elements;
+  }
+
+  // KPI Value (compact tile)
   elements.push(
     KpiValue(
       {

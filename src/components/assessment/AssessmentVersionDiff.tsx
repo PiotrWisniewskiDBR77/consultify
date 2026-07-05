@@ -188,7 +188,7 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
         <div className="bg-white dark:bg-navy-900 rounded-xl p-8 max-w-md">
-          <div className="flex items-center gap-3 text-danger-500 mb-4">
+          <div className="flex items-center gap-3 text-rose-500 mb-4">
             <AlertCircle className="w-6 h-6" />
             <span className="font-semibold">Błąd</span>
           </div>
@@ -287,7 +287,7 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                   totalActualChange > 0
                     ? 'text-green-600'
                     : totalActualChange < 0
-                      ? 'text-danger-600'
+                      ? 'text-rose-600'
                       : 'text-slate-600 dark:text-slate-400'
                 }`}
               >
@@ -309,7 +309,7 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                   totalTargetChange > 0
                     ? 'text-green-600'
                     : totalTargetChange < 0
-                      ? 'text-danger-600'
+                      ? 'text-rose-600'
                       : 'text-slate-600 dark:text-slate-400'
                 }`}
               >
@@ -366,7 +366,7 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                                 diff.actualChange > 0
                                   ? 'text-green-600'
                                   : diff.actualChange < 0
-                                    ? 'text-danger-600'
+                                    ? 'text-rose-600'
                                     : 'text-slate-600 dark:text-slate-300'
                               }`}
                             >
@@ -377,7 +377,7 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                                 className={`text-xs px-1.5 py-0.5 rounded ${
                                   diff.actualChange > 0
                                     ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                    : 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400'
+                                    : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
                                 }`}
                               >
                                 {diff.actualChange > 0 ? '+' : ''}
@@ -397,7 +397,7 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                                 diff.targetChange > 0
                                   ? 'text-green-600'
                                   : diff.targetChange < 0
-                                    ? 'text-danger-600'
+                                    ? 'text-rose-600'
                                     : 'text-slate-600 dark:text-slate-300'
                               }`}
                             >

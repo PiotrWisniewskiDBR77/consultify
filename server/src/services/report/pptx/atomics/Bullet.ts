@@ -32,6 +32,10 @@ export function Bullet(props: BulletProps, tokens: DesignTokens): RenderedElemen
         y: props.position.y,
         w: props.position.w,
         h: props.position.h,
+        // Lists read top-down: anchor to the top of the box. Without this
+        // pptxgenjs centres the rows vertically, leaving a large gap between a
+        // header and a short list (the disconnected-roadmap bug).
+        valign: 'top',
       });
     },
   };

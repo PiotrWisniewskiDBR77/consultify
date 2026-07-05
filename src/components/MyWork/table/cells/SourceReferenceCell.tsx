@@ -58,7 +58,7 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
   if (value == null || value === '') {
     return (
       <span
-        className="inline-flex items-center gap-1 px-1 text-xs text-slate-600 dark:text-slate-500 italic"
+        className="inline-flex items-center gap-1 px-1 text-xs text-c-text-muted italic"
         data-testid="source-ref-empty"
       >
         <Anchor size={10} className="flex-shrink-0" />
@@ -73,7 +73,7 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
       <button
         type="button"
         onClick={() => onOpenSource?.(value)}
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/20 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-c-success bg-c-success text-[10px] font-semibold text-c-success hover:bg-c-success transition-colors"
         data-testid="source-ref-internal"
         data-source-id={value}
         title={`Internal source ${value}`}
@@ -90,7 +90,7 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
     if (!allowExternal) {
       return (
         <span
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-danger-200 dark:border-danger-800/50 bg-danger-50 dark:bg-danger-900/20 text-[10px] font-semibold text-danger-700 dark:text-danger-300"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-c-danger bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-[10px] font-semibold text-c-danger"
           data-testid="source-ref-blocked"
           title="External sources not allowed for this field"
         >
@@ -102,7 +102,7 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
     if (trimmed.length === 0 || trimmed.length > MAX_EXTERNAL_URL) {
       return (
         <span
-          className="inline-flex items-center gap-1 text-xs text-danger-600 dark:text-danger-400 px-1"
+          className="inline-flex items-center gap-1 text-xs text-c-danger px-1"
           data-testid="source-ref-invalid"
           title={`source_reference value invalid (length ${trimmed.length})`}
         >
@@ -115,7 +115,7 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
         href={trimmed}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-sky-200 dark:border-sky-800/50 bg-sky-50 dark:bg-sky-900/20 text-[10px] font-semibold text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-colors max-w-full"
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-c-info bg-c-info text-[10px] font-semibold text-c-info hover:bg-c-info transition-colors max-w-full"
         data-testid="source-ref-external"
         data-href={trimmed}
         title={trimmed}
@@ -137,7 +137,7 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
         <button
           type="button"
           onClick={() => onOpenSource?.(sid)}
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/20 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-c-success bg-c-success text-[10px] font-semibold text-c-success hover:bg-c-success transition-colors"
           data-testid="source-ref-internal"
           data-source-id={sid}
           title={`Internal source ${sid}`}
@@ -152,7 +152,7 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
       if (!allowExternal) {
         return (
           <span
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-danger-200 dark:border-danger-800/50 bg-danger-50 dark:bg-danger-900/20 text-[10px] font-semibold text-danger-700 dark:text-danger-300"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-c-danger bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-[10px] font-semibold text-c-danger"
             data-testid="source-ref-blocked"
             title="External sources not allowed for this field"
           >
@@ -166,7 +166,7 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
           href={ext}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-sky-200 dark:border-sky-800/50 bg-sky-50 dark:bg-sky-900/20 text-[10px] font-semibold text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/40 transition-colors max-w-full"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-c-info bg-c-info text-[10px] font-semibold text-c-info hover:bg-c-info transition-colors max-w-full"
           data-testid="source-ref-external"
           data-href={ext}
           title={ext}
@@ -181,7 +181,7 @@ export const SourceReferenceCell: React.FC<SourceReferenceCellProps> = ({
 
   return (
     <span
-      className="inline-flex items-center gap-1 text-xs text-danger-600 dark:text-danger-400 px-1"
+      className="inline-flex items-center gap-1 text-xs text-c-danger px-1"
       data-testid="source-ref-invalid"
       title="source_reference value has unrecognized shape"
     >

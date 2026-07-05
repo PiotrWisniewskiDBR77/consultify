@@ -12,6 +12,7 @@ const mockQueryRun = vi.fn();
 const mockGetTableColumns = vi.fn();
 const mockResolveInitiativeAccessContext = vi.fn();
 const mockGetBlockingReadinessItems = vi.fn();
+const mockHandoffFromClosure = vi.fn();
 
 vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
   queryAll: (...args: unknown[]) => mockQueryAll(...args),
@@ -45,6 +46,11 @@ vi.mock('uuid', () => ({
   v4: () => 'initiative-uuid-123',
 }));
 
+vi.mock('../../../../server/src/services/executionResultsBridge.js', () => ({
+  handoffFromClosure: (...args: unknown[]) => mockHandoffFromClosure(...args),
+  CLOSURE_HANDOFF_SOURCE: 'M14_CLOSURE_HANDOFF',
+}));
+
 describe('InitiativeController', () => {
   let mockReq: any;
   let mockRes: any;
@@ -55,6 +61,8 @@ describe('InitiativeController', () => {
     mockResolveInitiativeAccessContext.mockReset();
     mockGetTableColumns.mockReset();
     mockGetBlockingReadinessItems.mockReset();
+    mockHandoffFromClosure.mockReset();
+    mockHandoffFromClosure.mockResolvedValue({ created: 0, skipped: 0, considered: 0 });
     mockGetTableColumns.mockResolvedValue([
       { name: 'status' },
       { name: 'updated_at' },
@@ -81,6 +89,7 @@ describe('InitiativeController', () => {
       user: {
         id: 'user-123',
         organizationId: 'org-123',
+        role: 'ADMIN',
       },
       params: {},
       query: {},
@@ -413,6 +422,98 @@ describe('InitiativeController', () => {
       await InitiativeController.updateInitiativeStatus(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(401);
+    });
+
+    // ---- M14 → M15 closure handoff wiring (Decision B1b) --------------------
+    // Drives a real EXECUTING → DONE close through the controller and asserts
+    // the closure handoff is invoked, and that a handoff failure never blocks
+    // the status change (fail-safe try/catch).
+    const setupCloseToDone = () => {
+      mockReq.params.id = 'i1';
+      mockReq.body = { status: 'DONE' };
+      // decisions table absent → no pending execution-gate decisions block.
+      mockGetTableColumns.mockImplementation(async (table: string) => {
+        if (table === 'decisions') return [];
+        return [
+          { name: 'status' },
+          { name: 'updated_at' },
+          { name: 'done_at' },
+          { name: 'done_by' },
+          { name: 'completed_at' },
+          { name: 'updated_by' },
+        ];
+      });
+      mockQueryOne.mockResolvedValue({
+        status: 'EXECUTING',
+        name: 'Closing Initiative',
+        created_by: 'user-123',
+      });
+      mockQueryAll.mockResolvedValue([]);
+      mockQueryRun.mockResolvedValue({ changes: 1 });
+      mockResolveInitiativeAccessContext.mockResolvedValue({
+        effectiveRoles: ['ADMIN'],
+        steeringBoard: { enabled: false, memberType: null },
+        roleAssignments: [],
+        projectId: null,
+      });
+    };
+
+    it('invokes closure handoff (M14→M15) on EXECUTING → DONE', async () => {
+      setupCloseToDone();
+      mockHandoffFromClosure.mockResolvedValue({ created: 2, skipped: 0, considered: 2 });
+
+      const { InitiativeController } =
+        await import('../../../../server/src/controllers/InitiativeController.js');
+      await InitiativeController.updateInitiativeStatus(mockReq, mockRes, mockNext);
+
+      expect(mockHandoffFromClosure).toHaveBeenCalledWith('org-123', 'i1', 'user-123');
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'DONE', message: 'Status updated' })
+      );
+    });
+
+    it('(4) handoff failure does NOT block the status change (fail-safe)', async () => {
+      setupCloseToDone();
+      mockHandoffFromClosure.mockRejectedValue(new Error('benefits service down'));
+
+      const { InitiativeController } =
+        await import('../../../../server/src/controllers/InitiativeController.js');
+      await InitiativeController.updateInitiativeStatus(mockReq, mockRes, mockNext);
+
+      // Status UPDATE still ran…
+      const statusUpdateCall = mockQueryRun.mock.calls.find((call) =>
+        String(call[0] || '').includes('UPDATE initiatives SET')
+      );
+      expect(statusUpdateCall).toBeTruthy();
+      // …and the response is the successful status change, not an error.
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'DONE', message: 'Status updated' })
+      );
+      expect(mockRes.status).not.toHaveBeenCalledWith(500);
+    });
+
+    it('does NOT invoke closure handoff for non-DONE transitions', async () => {
+      mockReq.params.id = 'i1';
+      mockReq.body = { status: 'PENDING_REVIEW', reason: 'Ready' };
+      mockQueryOne.mockResolvedValue({
+        status: 'DRAFT',
+        name: 'Test',
+        created_by: 'user-123',
+      });
+      mockQueryRun.mockResolvedValue({ changes: 1 });
+      mockQueryAll.mockResolvedValue([]);
+      mockResolveInitiativeAccessContext.mockResolvedValue({
+        effectiveRoles: ['ADMIN'],
+        steeringBoard: { enabled: false, memberType: null },
+        roleAssignments: [],
+        projectId: null,
+      });
+
+      const { InitiativeController } =
+        await import('../../../../server/src/controllers/InitiativeController.js');
+      await InitiativeController.updateInitiativeStatus(mockReq, mockRes, mockNext);
+
+      expect(mockHandoffFromClosure).not.toHaveBeenCalled();
     });
   });
 

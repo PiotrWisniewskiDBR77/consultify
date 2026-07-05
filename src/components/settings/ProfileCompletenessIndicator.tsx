@@ -74,8 +74,8 @@ export const ProfileCompletenessIndicator: React.FC<ProfileCompletenessIndicator
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <TrendingUp size={16} className="text-slate-500 dark:text-slate-400" />
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <TrendingUp size={16} className="text-c-text-muted" />
+          <span className="text-sm font-medium text-c-text-secondary">
             {t('settings.profile.completeness.title', 'Profile Completion')}
           </span>
         </div>
@@ -83,7 +83,7 @@ export const ProfileCompletenessIndicator: React.FC<ProfileCompletenessIndicator
           className={`text-sm font-bold ${
             completionData.percentage >= 100
               ? 'text-green-600 dark:text-green-400'
-              : 'text-slate-600 dark:text-slate-400'
+              : 'text-c-text-secondary'
           }`}
         >
           {completionData.percentage}%
@@ -91,7 +91,7 @@ export const ProfileCompletenessIndicator: React.FC<ProfileCompletenessIndicator
       </div>
 
       {/* Progress Bar */}
-      <div className="w-full h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+      <div className="w-full h-2 bg-c-surface-raised rounded-full overflow-hidden">
         <div
           className={`h-full transition-all duration-500 ${getColorClass(completionData.percentage)}`}
           style={{ width: `${completionData.percentage}%` }}
@@ -101,7 +101,7 @@ export const ProfileCompletenessIndicator: React.FC<ProfileCompletenessIndicator
       {/* Details */}
       {showDetails && (
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex items-center justify-between text-xs text-c-text-muted">
             <span>
               {completionData.completed} / {completionData.total}{' '}
               {t('settings.profile.completeness.items', 'items completed')}
@@ -109,15 +109,15 @@ export const ProfileCompletenessIndicator: React.FC<ProfileCompletenessIndicator
           </div>
 
           {completionData.incomplete.length > 0 && (
-            <div className="pt-2 border-t border-slate-200 dark:border-navy-700">
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+            <div className="pt-2 border-t border-c-border-subtle dark:border-navy-700">
+              <p className="text-xs text-c-text-muted mb-2">
                 {t('settings.profile.completeness.missing', 'Missing items')}:
               </p>
               <div className="flex flex-wrap gap-1">
                 {completionData.incomplete.map((item) => (
                   <span
                     key={item.id}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 rounded text-xs"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 bg-c-surface-raised text-c-text-secondary rounded text-xs"
                   >
                     <Circle size={10} />
                     {t(`settings.profile.completeness.${item.id}`, item.id)}

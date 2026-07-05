@@ -250,18 +250,18 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
   if (view === 'create' || view === 'edit') {
     return (
       <div className="flex h-full flex-col">
-        <div className="flex items-center gap-2 border-b border-slate-200 px-5 py-4 dark:border-navy-700">
+        <div className="flex items-center gap-2 border-b border-c-border-subtle px-5 py-4 border-c-border">
           <button
             onClick={() => {
               setView('list');
               setEditTarget(null);
             }}
-            className="rounded-lg p-1 transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="rounded-lg p-1 transition-colors hover:bg-c-surface-raised"
           >
-            <ChevronLeft size={16} className="text-slate-600" />
+            <ChevronLeft size={16} className="text-c-text-secondary" />
           </button>
-          <Zap size={16} className="text-amber-500" />
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+          <Zap size={16} className="text-c-warning" />
+          <h3 className="text-sm font-semibold text-c-text">
             {view === 'edit'
               ? isPl
                 ? 'Edytuj automatyzację'
@@ -306,29 +306,29 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
   if (view === 'history' && historyTarget) {
     return (
       <div className="flex h-full flex-col">
-        <div className="flex items-center gap-2 border-b border-slate-200 px-5 py-4 dark:border-navy-700">
+        <div className="flex items-center gap-2 border-b border-c-border-subtle px-5 py-4 border-c-border">
           <button
             onClick={() => {
               setView('list');
               setHistoryTarget(null);
             }}
-            className="rounded-lg p-1 transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="rounded-lg p-1 transition-colors hover:bg-c-surface-raised"
           >
-            <ChevronLeft size={16} className="text-slate-600" />
+            <ChevronLeft size={16} className="text-c-text-secondary" />
           </button>
-          <Clock size={16} className="text-blue-500" />
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+          <Clock size={16} className="text-c-info" />
+          <h3 className="text-sm font-semibold text-c-text">
             {isPl ? 'Historia uruchomień' : 'Run History'}
-            <span className="ml-1 font-normal text-slate-600">— {historyTarget.name}</span>
+            <span className="ml-1 font-normal text-c-text-secondary">— {historyTarget.name}</span>
           </h3>
         </div>
         <div className="flex-1 overflow-y-auto p-5">
           {runsLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 size={20} className="animate-spin text-slate-600" />
+              <Loader2 size={20} className="animate-spin text-c-text-secondary" />
             </div>
           ) : runs.length === 0 ? (
-            <div className="py-12 text-center text-xs text-slate-600">
+            <div className="py-12 text-center text-xs text-c-text-secondary">
               {isPl ? 'Brak historii uruchomień.' : 'No run history yet.'}
             </div>
           ) : (
@@ -336,20 +336,20 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
               {runs.map((run) => (
                 <div
                   key={run.id}
-                  className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-navy-700 dark:bg-navy-900"
+                  className="flex items-start gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 border-c-border bg-c-surface"
                 >
                   <div className="mt-0.5 flex-shrink-0">
                     {run.status === 'completed' && (
-                      <CheckCircle2 size={16} className="text-emerald-500" />
+                      <CheckCircle2 size={16} className="text-c-success" />
                     )}
-                    {run.status === 'failed' && <XCircle size={16} className="text-danger-500" />}
+                    {run.status === 'failed' && <XCircle size={16} className="text-c-danger" />}
                     {run.status === 'running' && (
-                      <Loader2 size={16} className="animate-spin text-blue-500" />
+                      <Loader2 size={16} className="animate-spin text-c-info" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-slate-800 dark:text-white">
+                      <span className="text-xs font-medium text-c-text">
                         {run.status === 'completed'
                           ? isPl
                             ? 'Sukces'
@@ -363,14 +363,14 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                               : 'Running'}
                       </span>
                       {run.duration_ms != null && (
-                        <span className="text-[10px] text-slate-600">{run.duration_ms}ms</span>
+                        <span className="text-[10px] text-c-text-secondary">{run.duration_ms}ms</span>
                       )}
                     </div>
-                    <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                    <div className="mt-0.5 text-[11px] text-c-text-muted">
                       {formatTime(run.started_at)}
                     </div>
                     {run.error && (
-                      <div className="mt-1.5 flex items-start gap-1.5 rounded-lg bg-danger-50 px-2.5 py-1.5 text-[11px] text-danger-600 dark:bg-danger-900/20 dark:text-danger-400">
+                      <div className="mt-1.5 flex items-start gap-1.5 rounded-lg bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] px-2.5 py-1.5 text-[11px] text-c-danger bg-[color-mix(in_srgb,var(--c-danger)_18%,transparent)] text-c-danger">
                         <AlertTriangle size={12} className="mt-0.5 flex-shrink-0" />
                         <span className="break-all">{run.error}</span>
                       </div>
@@ -389,25 +389,25 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-navy-700">
+      <div className="flex items-center justify-between border-b border-c-border-subtle px-5 py-4 border-c-border">
         <div className="flex items-center gap-2">
           <button
             onClick={onClose}
-            className="rounded-lg p-1 transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="rounded-lg p-1 transition-colors hover:bg-c-surface-raised"
           >
-            <ChevronLeft size={16} className="text-slate-600" />
+            <ChevronLeft size={16} className="text-c-text-secondary" />
           </button>
-          <Zap size={18} className="text-amber-500" />
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+          <Zap size={18} className="text-c-warning" />
+          <h3 className="text-sm font-semibold text-c-text">
             {isPl ? 'Automatyzacje' : 'Automations'}
             {automations.length > 0 && (
-              <span className="ml-1 font-normal text-slate-600">({automations.length})</span>
+              <span className="ml-1 font-normal text-c-text-secondary">({automations.length})</span>
             )}
           </h3>
         </div>
         <button
           onClick={() => setView('create')}
-          className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:hover:bg-amber-500/20"
+          className="inline-flex items-center gap-1 rounded-lg bg-c-warning px-2.5 py-1.5 text-xs font-medium text-c-warning transition-colors hover:bg-c-warning text-c-warning hover:bg-c-warning"
         >
           <Plus size={12} />
           {isPl ? 'Nowa' : 'New'}
@@ -418,24 +418,24 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
       <div className="flex-1 overflow-y-auto p-5">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 size={20} className="animate-spin text-slate-600" />
+            <Loader2 size={20} className="animate-spin text-c-text-secondary" />
           </div>
         ) : automations.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mb-4 rounded-2xl bg-slate-100 p-4 dark:bg-navy-800">
-              <Zap size={28} className="text-slate-600 dark:text-slate-500" />
+            <div className="mb-4 rounded-2xl bg-c-surface-raised p-4 bg-c-surface-raised">
+              <Zap size={28} className="text-c-text-muted" />
             </div>
-            <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
+            <p className="mb-1 text-sm font-medium text-c-text-muted">
               {isPl ? 'Brak automatyzacji' : 'No automations yet'}
             </p>
-            <p className="mb-4 max-w-xs text-xs text-slate-500 dark:text-slate-400">
+            <p className="mb-4 max-w-xs text-xs text-c-text-muted">
               {isPl
                 ? 'Automatyzuj powtarzalne zadania — aktualizuj rekordy, wysyłaj powiadomienia i więcej.'
                 : 'Automate repetitive tasks — update records, send notifications, and more.'}
             </p>
             <button
               onClick={() => setView('create')}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-600"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-c-warning px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-warning"
             >
               <Plus size={14} />
               {isPl ? 'Utwórz automatyzację' : 'Create automation'}
@@ -446,13 +446,13 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
             {automations.map((auto) => (
               <div
                 key={auto.id}
-                className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 transition-colors hover:border-slate-300 dark:border-navy-700 dark:bg-navy-900 dark:hover:border-navy-600"
+                className="group flex items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 transition-colors hover:border-c-border bg-c-surface hover:border-c-border"
               >
                 {/* Status dot */}
                 <div className="flex-shrink-0">
                   <div
                     className={`h-2 w-2 rounded-full ${
-                      auto.enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
+                      auto.enabled ? 'bg-c-success' : 'bg-c-surface-raised'
                     }`}
                   />
                 </div>
@@ -460,18 +460,18 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                 {/* Info */}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-medium text-slate-800 dark:text-white">
+                    <span className="truncate text-sm font-medium text-c-text">
                       {auto.name}
                     </span>
                     {!auto.enabled && (
-                      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600 dark:bg-navy-800">
+                      <span className="rounded bg-c-surface-raised px-1.5 py-0.5 text-[10px] text-c-text-secondary bg-c-surface-raised">
                         {isPl ? 'Wstrzymana' : 'Paused'}
                       </span>
                     )}
                   </div>
-                  <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="mt-0.5 text-[11px] text-c-text-muted">
                     {triggerDescription(auto, !!isPl)}
-                    <span className="ml-2 text-slate-600">
+                    <span className="ml-2 text-c-text-secondary">
                       → {auto.actions.length} {isPl ? 'akcji' : 'action(s)'}
                     </span>
                   </div>
@@ -481,12 +481,12 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                 <button
                   onClick={() => handleToggle(auto)}
                   className={`relative h-5 w-9 flex-shrink-0 rounded-full transition-colors ${
-                    auto.enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
+                    auto.enabled ? 'bg-c-success' : 'bg-c-surface-raised'
                   }`}
                   title={auto.enabled ? (isPl ? 'Wyłącz' : 'Disable') : isPl ? 'Włącz' : 'Enable'}
                 >
                   <span
-                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-c-surface shadow transition-transform ${
                       auto.enabled ? 'translate-x-4' : 'translate-x-0.5'
                     }`}
                   />
@@ -496,7 +496,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                 <div className="relative flex-shrink-0">
                   <button
                     onClick={() => setMenuOpen(menuOpen === auto.id ? null : auto.id)}
-                    className="rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-navy-800 dark:hover:text-slate-300"
+                    className="rounded-lg p-1.5 text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text-muted"
                   >
                     <MoreHorizontal size={16} />
                   </button>
@@ -504,7 +504,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                   {menuOpen === auto.id && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
-                      <div className="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-slate-200 bg-white py-1 shadow-xl dark:border-navy-700 dark:bg-navy-900">
+                      <div className="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-c-border-subtle bg-c-surface py-1 shadow-xl border-c-border bg-c-surface">
                         <MenuBtn
                           icon={<Play size={13} />}
                           label={isPl ? 'Uruchom teraz' : 'Run now'}
@@ -530,7 +530,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                             setView('edit');
                           }}
                         />
-                        <div className="my-1 border-t border-slate-200 dark:border-navy-800" />
+                        <div className="my-1 border-t border-c-border" />
                         <MenuBtn
                           icon={<Trash2 size={13} />}
                           label={isPl ? 'Usuń' : 'Delete'}
@@ -565,8 +565,8 @@ const MenuBtn: React.FC<{
     onClick={onClick}
     className={`flex w-full items-center gap-2 px-3 py-1.5 text-xs font-medium transition-colors ${
       danger
-        ? 'text-danger-600 hover:bg-danger-50 dark:text-danger-400 dark:hover:bg-danger-500/10'
-        : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-navy-800'
+        ? 'text-c-danger hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger hover:bg-c-danger'
+        : 'text-c-text-secondary hover:bg-c-surface-raised text-c-text-muted hover:bg-c-surface-raised'
     }`}
   >
     {icon}

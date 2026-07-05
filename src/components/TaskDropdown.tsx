@@ -155,7 +155,7 @@ export const TaskDropdown = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white dark:bg-navy-900 rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden z-[100] transform transition-all duration-200 origin-top-right animate-in fade-in zoom-in-95">
+        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white dark:bg-navy-900 rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden z-toast transform transition-all duration-200 origin-top-right animate-in fade-in zoom-in-95">
           {/* Header */}
           <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between bg-white/50 dark:bg-black/20 backdrop-blur-sm">
             <div className="flex items-center gap-2">

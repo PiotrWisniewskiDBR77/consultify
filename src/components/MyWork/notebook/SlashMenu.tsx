@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   CalendarDays,
   CheckSquare,
-  ChevronRight,
   Code,
   Columns2,
   Columns3,
@@ -30,6 +29,8 @@ import { useTranslation } from 'react-i18next';
 
 import type { AICommandType } from './AIInlineResponse';
 
+type SlashGroupId = 'basic' | 'insert' | 'ai' | 'create';
+
 interface SlashCommand {
   id: string;
   label: string;
@@ -41,6 +42,43 @@ interface SlashCommand {
   action: (editor: Editor) => void;
   aiCommand?: AICommandType;
 }
+
+const SLASH_GROUP_ORDER: SlashGroupId[] = ['basic', 'insert', 'ai', 'create'];
+
+const SLASH_GROUP_LABELS: Record<SlashGroupId, { en: string; pl: string }> = {
+  basic: { en: 'Basic blocks', pl: 'Podstawowe' },
+  insert: { en: 'Insert', pl: 'Wstaw' },
+  ai: { en: 'AI', pl: 'AI' },
+  create: { en: 'Create', pl: 'Utwórz' },
+};
+
+// Group derived from command id (keeps the 23 command objects untouched).
+const SLASH_GROUP_OF: Record<string, SlashGroupId> = {
+  h1: 'basic',
+  h2: 'basic',
+  h3: 'basic',
+  bullet: 'basic',
+  ordered: 'basic',
+  todo: 'basic',
+  quote: 'basic',
+  callout: 'basic',
+  warning: 'basic',
+  toggle: 'basic',
+  divider: 'basic',
+  code: 'basic',
+  image: 'insert',
+  date: 'insert',
+  columns: 'insert',
+  table: 'insert',
+  'ai-ask': 'ai',
+  'ai-expand': 'ai',
+  'ai-challenge': 'ai',
+  'ai-action': 'ai',
+  'create-task': 'create',
+  'create-decision': 'create',
+  'save-as-idea': 'create',
+};
+const slashGroupOf = (id: string): SlashGroupId => SLASH_GROUP_OF[id] ?? 'basic';
 
 const ICON_SIZE = 16;
 
@@ -227,7 +265,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'AI: Zapytaj',
     description: "Ask AI about your note's context",
     descriptionPl: 'Zapytaj AI o kontekst notatki',
-    icon: <MessageCircle size={ICON_SIZE} className="text-primary-500" />,
+    icon: <MessageCircle size={ICON_SIZE} className="text-c-text-muted" />,
     keywords: ['ask', 'ai', 'question', 'pytanie', 'zapytaj'],
     action: () => {},
     aiCommand: 'ask',
@@ -238,7 +276,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'AI: Rozwiń',
     description: 'AI expands and elaborates on your content',
     descriptionPl: 'AI rozwija i wzbogaca Twoją treść',
-    icon: <Sparkles size={ICON_SIZE} className="text-primary-500" />,
+    icon: <Sparkles size={ICON_SIZE} className="text-c-text-muted" />,
     keywords: ['expand', 'ai', 'elaborate', 'rozwin', 'wzbogac'],
     action: () => {},
     aiCommand: 'expand',
@@ -249,7 +287,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'AI: Podważ',
     description: 'AI asks critical questions about your content',
     descriptionPl: 'AI zadaje krytyczne pytania o Twoją treść',
-    icon: <ShieldQuestion size={ICON_SIZE} className="text-primary-500" />,
+    icon: <ShieldQuestion size={ICON_SIZE} className="text-c-text-muted" />,
     keywords: ['challenge', 'ai', 'critical', 'question', 'podwaz', 'krytyczne'],
     action: () => {},
     aiCommand: 'challenge',
@@ -260,7 +298,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'AI: Następne kroki',
     description: 'AI proposes concrete next steps',
     descriptionPl: 'AI proponuje konkretne następne kroki',
-    icon: <Zap size={ICON_SIZE} className="text-primary-500" />,
+    icon: <Zap size={ICON_SIZE} className="text-c-text-muted" />,
     keywords: ['action', 'ai', 'next', 'steps', 'kroki', 'plan'],
     action: () => {},
     aiCommand: 'action',
@@ -272,7 +310,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'Utwórz zadanie',
     description: 'Create a task from the current context',
     descriptionPl: 'Utwórz zadanie z bieżącego kontekstu',
-    icon: <CheckSquare size={ICON_SIZE} className="text-emerald-500" />,
+    icon: <CheckSquare size={ICON_SIZE} className="text-c-success" />,
     keywords: ['task', 'todo', 'zadanie', 'create', 'utworz'],
     action: (editor) => {
       const sel = editor.state.selection;
@@ -288,7 +326,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'Utwórz decyzję',
     description: 'Create a decision from the current context',
     descriptionPl: 'Utwórz decyzję z bieżącego kontekstu',
-    icon: <Scale size={ICON_SIZE} className="text-amber-500" />,
+    icon: <Scale size={ICON_SIZE} className="text-c-warning" />,
     keywords: ['decision', 'decyzja', 'decide', 'decide'],
     action: (editor) => {
       const sel = editor.state.selection;
@@ -304,7 +342,7 @@ const COMMANDS: SlashCommand[] = [
     labelPl: 'Zapisz jako pomysł',
     description: 'Save selected text as a new idea',
     descriptionPl: 'Zapisz zaznaczony tekst jako nowy pomysł',
-    icon: <Lightbulb size={ICON_SIZE} className="text-yellow-500" />,
+    icon: <Lightbulb size={ICON_SIZE} className="text-c-warning" />,
     keywords: ['idea', 'pomysl', 'save', 'zapisz'],
     action: (editor) => {
       const sel = editor.state.selection;
@@ -386,6 +424,14 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
     );
   }, [state.query]);
 
+  // Keyboard nav must follow the VISUAL (grouped) order, not the flat COMMANDS
+  // order — otherwise the highlight jumps between groups because COMMANDS
+  // interleaves insert/ai/create items among the basic ones.
+  const orderedItems = useMemo(
+    () => SLASH_GROUP_ORDER.flatMap((g) => filteredItems.filter((c) => slashGroupOf(c.id) === g)),
+    [filteredItems]
+  );
+
   useEffect(() => {
     setSelectedIdx(0);
   }, [state.query]);
@@ -418,20 +464,20 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
 
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSelectedIdx((prev) => (prev + 1) % Math.max(filteredItems.length, 1));
+        setSelectedIdx((prev) => (prev + 1) % Math.max(orderedItems.length, 1));
         return;
       }
 
       if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setSelectedIdx((prev) => (prev - 1 + filteredItems.length) % Math.max(filteredItems.length, 1));
+        setSelectedIdx((prev) => (prev - 1 + orderedItems.length) % Math.max(orderedItems.length, 1));
         return;
       }
 
       if (e.key === 'Enter') {
         e.preventDefault();
-        if (filteredItems[selectedIdx]) {
-          executeCommand(filteredItems[selectedIdx]);
+        if (orderedItems[selectedIdx]) {
+          executeCommand(orderedItems[selectedIdx]);
         }
         return;
       }
@@ -439,7 +485,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
 
     document.addEventListener('keydown', handleKeyDown, true);
     return () => document.removeEventListener('keydown', handleKeyDown, true);
-  }, [state.open, filteredItems, selectedIdx, executeCommand, onClose]);
+  }, [state.open, orderedItems, selectedIdx, executeCommand, onClose]);
 
   if (!state.open || filteredItems.length === 0) return null;
 
@@ -450,44 +496,63 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
   return (
     <div
       ref={menuRef}
-      className="absolute z-50 w-64 max-h-72 overflow-y-auto rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg"
+      className="absolute z-50 w-72 max-h-80 overflow-y-auto rounded-xl border border-c-border bg-c-surface shadow-lg py-1"
       style={{ top, left }}
     >
-      <div className="p-1">
-        {filteredItems.map((cmd, idx) => (
-          <button
-            key={cmd.id}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              executeCommand(cmd);
-            }}
-            onMouseEnter={() => setSelectedIdx(idx)}
-            className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-              idx === selectedIdx
-                ? 'bg-primary-500/10 text-primary-700 dark:text-primary-300'
-                : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
-            }`}
-          >
-            <span className="shrink-0 text-slate-500 dark:text-slate-400">{cmd.icon}</span>
-            <div className="min-w-0">
-              <div className="font-medium text-sm">{isPolish ? cmd.labelPl : cmd.label}</div>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                {isPolish ? cmd.descriptionPl : cmd.description}
-              </div>
+      {SLASH_GROUP_ORDER.map((groupId) => {
+        const groupItems = filteredItems.filter((c) => slashGroupOf(c.id) === groupId);
+        if (groupItems.length === 0) return null;
+        const groupLabel = SLASH_GROUP_LABELS[groupId];
+        return (
+          <div key={groupId} className="px-1">
+            <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-muted">
+              {isPolish ? groupLabel.pl : groupLabel.en}
             </div>
-            {cmd.aiCommand ? (
-              <span className="ml-auto shrink-0 text-[10px] font-medium text-primary-500 dark:text-primary-400 bg-primary-500/10 px-1.5 py-0.5 rounded">
-                AI
-              </span>
-            ) : cmd.id === 'h1' ||
-              cmd.id === 'todo' ||
-              cmd.id === 'callout' ||
-              cmd.id === 'toggle' ? (
-              <ChevronRight size={12} className="ml-auto shrink-0 text-slate-600" />
-            ) : null}
-          </button>
-        ))}
-      </div>
+            {groupItems.map((cmd) => {
+              const idx = orderedItems.indexOf(cmd);
+              const isActive = idx === selectedIdx;
+              return (
+                <button
+                  key={cmd.id}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    executeCommand(cmd);
+                  }}
+                  onMouseEnter={() => setSelectedIdx(idx)}
+                  className={`w-full flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors ${
+                    isActive
+                      ? 'bg-c-surface-raised'
+                      : 'hover:bg-c-surface-raised'
+                  }`}
+                >
+                  <span
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${
+                      cmd.aiCommand
+                        ? 'border-c-border bg-c-surface-raised text-c-text-secondary'
+                        : 'border-c-border bg-c-surface text-c-text-muted'
+                    }`}
+                  >
+                    {cmd.icon}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium text-[13px] text-c-text">
+                      {isPolish ? cmd.labelPl : cmd.label}
+                    </span>
+                    <span className="block truncate text-[11px] text-c-text-muted">
+                      {isPolish ? cmd.descriptionPl : cmd.description}
+                    </span>
+                  </span>
+                  {cmd.aiCommand ? (
+                    <span className="ml-auto shrink-0 rounded bg-c-surface-raised px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-c-text-muted">
+                      AI
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 };

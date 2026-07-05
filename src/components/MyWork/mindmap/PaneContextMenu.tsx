@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef } from 'react';
 
+import { ContextMenuPortal } from './ContextMenuPortal';
 import { MENU_CONTAINER_CLASS, type MenuItemBase, menuItemClass } from './contextMenuTypes';
 
 export interface PaneContextMenuProps {
@@ -172,8 +173,9 @@ export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
   const clampedY = Math.min(y, window.innerHeight - items.length * 34 - 20);
 
   return (
-    <div ref={ref} className={MENU_CONTAINER_CLASS} style={{ left: clampedX, top: clampedY }}>
-      {items.map((item) => {
+    <ContextMenuPortal>
+      <div ref={ref} className={MENU_CONTAINER_CLASS} style={{ left: clampedX, top: clampedY }}>
+        {items.map((item) => {
         const Icon = item.icon;
         return (
           <React.Fragment key={item.id}>
@@ -183,20 +185,21 @@ export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
               onClick={() => handleClick(item.id)}
               className={`w-full flex items-center gap-2.5 px-3 py-[7px] text-left text-[11px] font-medium transition-colors ${menuItemClass(item)}`}
             >
-              <Icon size={13} className="text-slate-600 dark:text-slate-500 shrink-0" />
+              <Icon size={13} className="text-c-text-secondary dark:text-c-text-secondary shrink-0" />
               <span className="flex-1">{isPl ? item.labelPl : item.labelEn}</span>
               {item.shortcut && (
-                <span className="text-[9px] text-slate-600 dark:text-slate-500 font-mono ml-3">
+                <span className="text-[9px] text-c-text-secondary dark:text-c-text-secondary font-mono ml-3">
                   {item.shortcut}
                 </span>
               )}
             </button>
             {item.dividerAfter && (
-              <div className="my-1 mx-2 h-px bg-slate-200/40 dark:bg-white/[0.04]" />
+              <div className="my-1 mx-2 h-px bg-c-surface-raised dark:bg-c-surface-raised" />
             )}
           </React.Fragment>
         );
       })}
-    </div>
+      </div>
+    </ContextMenuPortal>
   );
 };

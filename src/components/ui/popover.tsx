@@ -71,10 +71,10 @@ const PopoverContent = React.forwardRef<
 
   return (
     <>
-      <div className="fixed inset-0 z-40" onClick={() => context.setOpen(false)} />
+      <div className="fixed inset-0 z-dropdown" onClick={() => context.setOpen(false)} />
       <div
         ref={ref}
-        className={`absolute z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95 top-full mt-2 ${alignClass} ${className || ''}`}
+        className={`absolute z-dropdown w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95 top-full mt-2 ${alignClass} ${className || ''}`}
         style={{ marginTop: sideOffset }}
         {...props}
       />

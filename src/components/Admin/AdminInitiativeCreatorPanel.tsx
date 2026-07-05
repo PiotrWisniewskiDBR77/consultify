@@ -243,7 +243,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
           <Lightbulb className="w-6 h-6 text-amber-500" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-white">
+          <h2 className="text-lg font-semibold text-c-text">
             {t('admin.initiativeCreator.title', 'Kreator inicjatyw')}
           </h2>
           <p className="text-sm text-slate-400">
@@ -266,7 +266,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
             <div
               className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-colors ${
                 step === s
-                  ? 'bg-navy-900 text-white'
+                  ? 'bg-c-text text-c-bg'
                   : ['select', 'configure', 'running', 'done'].indexOf(step) > i
                     ? 'bg-primary-500/20 text-primary-400'
                     : 'bg-white/5 text-slate-500'
@@ -309,7 +309,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                 placeholder={t('admin.initiativeCreator.searchPlaceholder', 'Szukaj oceny...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-primary-500/50"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-c-text placeholder-slate-500 focus:outline-none focus:border-primary-500/50"
               />
             </div>
 
@@ -329,7 +329,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                       <Building2 className="w-4 h-4 text-slate-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-white truncate">{assessment.name}</p>
+                      <p className="font-medium text-c-text truncate">{assessment.name}</p>
                       {assessment.projectName && (
                         <p className="text-xs text-slate-500 mt-0.5">{assessment.projectName}</p>
                       )}
@@ -377,7 +377,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                 <CheckCircle2 className="w-4 h-4 text-primary-400" />
                 <span className="text-sm font-medium text-primary-300">Wybrana ocena</span>
               </div>
-              <p className="text-white font-medium">{selectedAssessment.name}</p>
+              <p className="text-c-text font-medium">{selectedAssessment.name}</p>
             </div>
 
             {/* Methodology */}
@@ -398,7 +398,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                     }`}
                   >
                     <p
-                      className={`font-medium ${methodologyId === m.id ? 'text-primary-300' : 'text-white'}`}
+                      className={`font-medium ${methodologyId === m.id ? 'text-primary-300' : 'text-c-text'}`}
                     >
                       {m.name}
                     </p>
@@ -419,7 +419,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                 max={100}
                 value={requestedCount}
                 onChange={(e) => setRequestedCount(parseInt(e.target.value) || 20)}
-                className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary-500/50"
+                className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-c-text focus:outline-none focus:border-primary-500/50"
               />
             </div>
 
@@ -451,7 +451,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                   'admin.initiativeCreator.consultantBriefPlaceholder',
                   'Np. skup się na automatyzacji procesów...'
                 )}
-                className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-primary-500/50 resize-none"
+                className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-c-text placeholder-slate-500 focus:outline-none focus:border-primary-500/50 resize-none"
               />
             </div>
 
@@ -496,7 +496,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary-500/20 flex items-center justify-center">
               <Loader2 className="w-8 h-8 text-primary-400 animate-spin" />
             </div>
-            <h3 className="text-lg font-medium text-white mb-2">
+            <h3 className="text-lg font-medium text-c-text mb-2">
               {t('admin.initiativeCreator.generating', 'Generowanie inicjatyw...')}
             </h3>
             {progress && (
@@ -506,7 +506,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
                 </p>
                 <div className="w-64 mx-auto h-2 bg-white/10 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-navy-900 transition-all"
+                    className="h-full bg-c-surface transition-all"
                     style={{
                       width: `${(progress.generatedCount / progress.requestedCount) * 100}%`,
                     }}
@@ -529,7 +529,7 @@ export const AdminInitiativeCreatorPanel: React.FC = () => {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
               <CheckCircle2 className="w-8 h-8 text-emerald-400" />
             </div>
-            <h3 className="text-lg font-medium text-white mb-2">
+            <h3 className="text-lg font-medium text-c-text mb-2">
               {t('admin.initiativeCreator.completed', 'Generowanie zakończone!')}
             </h3>
             <p className="text-slate-400 mb-6">

@@ -11,6 +11,9 @@ import { useTranslation } from 'react-i18next';
 
 import { getStatusActions, getStatusMeta } from '@/services/initiativeLifecycle';
 
+import { CardBlockRenderer } from '../cards/CardBlockRenderer';
+import { buildControlCardSpec } from '../cards/cardSpecBuilders';
+
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
@@ -41,6 +44,26 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
   const moduleConfig = MODULE_CONFIG[currentModule];
   const priorityConfig =
     PRIORITY_CONFIG[priority as keyof typeof PRIORITY_CONFIG] || PRIORITY_CONFIG.medium;
+
+  // F3 (D11) display layer — generic CardBlockRenderer preview. ADDITIVE: a
+  // read-only "as it reads" governance summary built from the SAME resolved
+  // human labels shown above (never codes). Does not replace the edit UI.
+  const owner = (initiative as any)?.owner ?? (initiative as any)?.ownerName ?? (initiative as any)?.owner_name;
+  const controlCardSpec = buildControlCardSpec(
+    {
+      module: isPolish ? moduleConfig.labelPl : moduleConfig.label,
+      status: statusMeta.label,
+      priority: isPolish ? priorityConfig.labelPl : priorityConfig.label,
+      owner,
+    },
+    {
+      title: t('initiatives.controlSection.control'),
+      moduleLabel: t('initiatives.controlSection.currentModule'),
+      statusLabel: 'Status',
+      priorityLabel: t('initiatives.controlSection.priority'),
+      ownerLabel: t('initiatives.controlSection.owner'),
+    }
+  );
 
   return (
     <CollapsibleSection
@@ -163,6 +186,17 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
             ))}
           </div>
         )}
+
+        {/* F3 (D11) display layer — generic CardBlockRenderer preview.
+            ADDITIVE: a read-only governance summary built from the same
+            resolved labels. Status/priority/module are effectively always
+            present, so this renders unconditionally below the edit UI. */}
+        <div className="pt-3 border-t border-slate-200 dark:border-navy-700">
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
+            {t('initiatives.controlSection.control')}
+          </div>
+          <CardBlockRenderer spec={controlCardSpec} showTitle={false} />
+        </div>
       </div>
     </CollapsibleSection>
   );

@@ -382,7 +382,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                     >
                       {lang.label}
                       {languageMatches(lang.code) && (
-                        <div className="w-1.5 h-1.5 rounded-full bg-navy-900 dark:bg-white" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-c-accent" />
                       )}
                     </button>
                   ))}

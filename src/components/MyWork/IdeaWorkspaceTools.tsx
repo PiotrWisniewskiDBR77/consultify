@@ -1,11 +1,14 @@
 /**
- * IdeaWorkspaceTools — Right-side tool panel for Idea Map Workspace.
+ * IdeaWorkspaceTools — Right-side inspector for the Idea Map Workspace.
  *
- * Collapsible accordion sections:
- *   1. Problem — title + description + save/accept
- *   2. Status  — stage selector, completeness, save status, evidence
- *   3. Convert — initiative, tasks, decision, chat, report, presentation, action plan, RAID
- *   4. Metadata — branch, area, priority
+ * Editor Shell Canon §2 PRAWA (UI-L16): ≤5 visible sections; primary open, secondary
+ * collapsed. Metadata (branch/area/priority) is folded into Status as a sub-group so
+ * the inspector stays at 5 top-level sections per tool:
+ *   1. Problem  — title + description + save/accept                (primary, open)
+ *   2. Status   — stage, completeness, evidence, + Metadata subgroup (primary, open)
+ *   3. Convert  — initiative, tasks, decision, report, deck, …      (secondary, collapsed)
+ *   4. Inspector — tool-specific (Map/Process/Whiteboard) properties (primary, open)
+ *   5. Health   — tool-specific health score                        (secondary, collapsed)
  */
 import {
   Activity,
@@ -37,7 +40,13 @@ import {
   IDEA_STAGES_V5,
   normalizeStageToV5,
 } from './ideaEntryTypes';
-import { IDEA_CONVERT_TARGETS, type IdeaConvertTarget } from './ideaConvertTargets';
+import {
+  IDEA_CONVERT_GROUP_LABELS,
+  IDEA_CONVERT_GROUP_ORDER,
+  IDEA_CONVERT_TARGETS,
+  type IdeaConvertGroup,
+  type IdeaConvertTarget,
+} from './ideaConvertTargets';
 import type { CanvasToolType, IdeaWorkspaceSelection } from './ideaSelectionTypes';
 import { MapHealthScore } from './mindmap/MapHealthScore';
 import { MindmapInspector } from './mindmap/MindmapInspector';
@@ -271,12 +280,19 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   const convertActions = IDEA_CONVERT_TARGETS.map((t) => ({
     id: t.id,
     status: t.status,
+    group: t.group,
     labelPl: t.labelPl,
     labelEn: t.labelEn,
     descPl: t.descPl,
     descEn: t.descEn,
     ...CONVERT_VISUALS[t.id],
   }));
+  // UI-L9: cluster the flat list into 3 legible groups (working actions · doc generators · AI models)
+  const convertGroups = IDEA_CONVERT_GROUP_ORDER.map((g: IdeaConvertGroup) => ({
+    group: g,
+    label: isPl ? IDEA_CONVERT_GROUP_LABELS[g].pl : IDEA_CONVERT_GROUP_LABELS[g].en,
+    items: convertActions.filter((a) => a.group === g),
+  })).filter((g) => g.items.length > 0);
 
   if (!open) return null;
 
@@ -455,6 +471,92 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               seedText={seedText}
             />
           )}
+
+          {/*
+           * UI-L16 (Editor Shell Canon §2 PRAWA): metadata (branch/area/priority)
+           * is folded into Status as a secondary sub-group instead of a 6th top-level
+           * section — keeping the inspector at ≤5 visible sections.
+           */}
+          <div className="pt-1 border-t border-slate-200/50 dark:border-white/[0.04]">
+            <div className="text-[10px] font-medium text-slate-600 dark:text-slate-500 mb-1.5">
+              {isPl ? 'Metadane' : 'Metadata'}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {/* Branch pill */}
+              {branchEditing ? (
+                <input
+                  ref={branchRef}
+                  value={branch}
+                  onChange={(e) => onBranchChange(e.target.value)}
+                  onBlur={handleBranchBlur}
+                  onKeyDown={(e) => e.key === 'Enter' && handleBranchBlur()}
+                  placeholder={isPl ? 'Gałąź…' : 'Branch…'}
+                  autoFocus
+                  className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-primary-400 text-slate-700 dark:text-slate-300 outline-none w-28"
+                />
+              ) : (
+                <button
+                  onClick={() => setBranchEditing(true)}
+                  className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+                >
+                  <GitBranch size={11} className="text-slate-600 shrink-0" />
+                  {branch || (isPl ? 'Gałąź' : 'Branch')}
+                </button>
+              )}
+
+              {/* Area pill */}
+              {areaEditing ? (
+                <input
+                  ref={areaRef}
+                  value={area}
+                  onChange={(e) => onAreaChange(e.target.value)}
+                  onBlur={handleAreaBlur}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAreaBlur()}
+                  placeholder={isPl ? 'Obszar…' : 'Area…'}
+                  autoFocus
+                  className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-primary-400 text-slate-700 dark:text-slate-300 outline-none w-28"
+                />
+              ) : (
+                <button
+                  onClick={() => setAreaEditing(true)}
+                  className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+                >
+                  {area || (isPl ? 'Obszar' : 'Area')}
+                </button>
+              )}
+
+              {/* Priority badge */}
+              <div className="relative">
+                <button
+                  onClick={() => setPriorityOpen((v) => !v)}
+                  className={`inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-medium transition-colors ${PRIORITY_COLORS[normalizedPriority]}`}
+                >
+                  {currentPriorityLabel}
+                  <ChevronDown size={10} className="opacity-60" />
+                </button>
+                {priorityOpen && (
+                  <div className="absolute top-full left-0 mt-1 z-[120] w-32 rounded-xl bg-white dark:bg-navy-900 shadow-xl py-1">
+                    {priorityOptions.map((o) => (
+                      <button
+                        key={o.value}
+                        onClick={() => handlePrioritySelect(o.value)}
+                        className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
+                          o.value === normalizedPriority
+                            ? 'font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/5'
+                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block w-2 h-2 rounded-full mr-2 ${PRIORITY_COLORS[o.value].split(' ')[0]}`}
+                        />
+                        {o.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </Section>
 
@@ -467,125 +569,71 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               : `Convert selection (${selection.count})`}
           </div>
         )}
-        <div className="grid grid-cols-1 gap-1.5">
-          {convertActions.map(
-            ({ id, status, icon: Icon, labelPl, labelEn, descPl, descEn, gradient, textColor }) => {
-              const isSoon = status === 'soon';
-              // `soon` targets have no server handler — keep them visible but inert so we never
-              // fire a request that returns a raw 400 (CANON §4). `live` targets convert for real.
-              return (
-                <button
-                  key={id}
-                  onClick={() => !isSoon && onConvert(id)}
-                  disabled={isDraft || isSoon}
-                  aria-disabled={isDraft || isSoon}
-                  title={isSoon ? (isPl ? 'Wkrótce' : 'Coming soon') : undefined}
-                  className="group relative flex items-center gap-2.5 px-3 py-2 rounded-xl overflow-hidden transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-100 group-hover:opacity-80 transition-opacity`}
-                  />
-                  <div
-                    className={`relative w-6 h-6 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center ${textColor} shrink-0`}
-                  >
-                    <Icon size={12} />
-                  </div>
-                  <div className="relative flex-1 min-w-0 text-left">
-                    <div className={`text-[11px] font-semibold ${textColor} flex items-center gap-1.5`}>
-                      {isPl ? labelPl : labelEn}
-                      {isSoon && (
-                        <span className="text-[8px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-200/70 dark:bg-navy-700 rounded px-1 py-px">
-                          {isPl ? 'Wkrótce' : 'Soon'}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[9px] text-slate-600 dark:text-slate-500">
-                      {isPl ? descPl : descEn}
-                    </div>
-                  </div>
-                </button>
-              );
-            }
-          )}
-        </div>
-      </Section>
-
-      {/* ── 4. Metadata ── */}
-      <Section title={isPl ? 'Metadane' : 'Metadata'} icon={<GitBranch size={12} />}>
-        <div className="flex flex-wrap gap-1.5">
-          {/* Branch pill */}
-          {branchEditing ? (
-            <input
-              ref={branchRef}
-              value={branch}
-              onChange={(e) => onBranchChange(e.target.value)}
-              onBlur={handleBranchBlur}
-              onKeyDown={(e) => e.key === 'Enter' && handleBranchBlur()}
-              placeholder={isPl ? 'Gałąź…' : 'Branch…'}
-              autoFocus
-              className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-primary-400 text-slate-700 dark:text-slate-300 outline-none w-28"
-            />
-          ) : (
-            <button
-              onClick={() => setBranchEditing(true)}
-              className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
-            >
-              <GitBranch size={11} className="text-slate-600 shrink-0" />
-              {branch || (isPl ? 'Gałąź' : 'Branch')}
-            </button>
-          )}
-
-          {/* Area pill */}
-          {areaEditing ? (
-            <input
-              ref={areaRef}
-              value={area}
-              onChange={(e) => onAreaChange(e.target.value)}
-              onBlur={handleAreaBlur}
-              onKeyDown={(e) => e.key === 'Enter' && handleAreaBlur()}
-              placeholder={isPl ? 'Obszar…' : 'Area…'}
-              autoFocus
-              className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-primary-400 text-slate-700 dark:text-slate-300 outline-none w-28"
-            />
-          ) : (
-            <button
-              onClick={() => setAreaEditing(true)}
-              className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-medium bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
-            >
-              {area || (isPl ? 'Obszar' : 'Area')}
-            </button>
-          )}
-
-          {/* Priority badge */}
-          <div className="relative">
-            <button
-              onClick={() => setPriorityOpen((v) => !v)}
-              className={`inline-flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-medium transition-colors ${PRIORITY_COLORS[normalizedPriority]}`}
-            >
-              {currentPriorityLabel}
-              <ChevronDown size={10} className="opacity-60" />
-            </button>
-            {priorityOpen && (
-              <div className="absolute top-full left-0 mt-1 z-[120] w-32 rounded-xl bg-white dark:bg-navy-900 shadow-xl py-1">
-                {priorityOptions.map((o) => (
-                  <button
-                    key={o.value}
-                    onClick={() => handlePrioritySelect(o.value)}
-                    className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
-                      o.value === normalizedPriority
-                        ? 'font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/5'
-                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block w-2 h-2 rounded-full mr-2 ${PRIORITY_COLORS[o.value].split(' ')[0]}`}
-                    />
-                    {o.label}
-                  </button>
-                ))}
+        <div className="space-y-3">
+          {convertGroups.map(({ group, label, items }) => (
+            <div key={group}>
+              {/* Group separator + label */}
+              <div className="mb-1.5 flex items-center gap-2">
+                <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  {label}
+                </span>
+                <span className="h-px flex-1 bg-slate-200/60 dark:bg-white/[0.05]" />
               </div>
-            )}
-          </div>
+              <div className="grid grid-cols-1 gap-1.5">
+                {items.map(
+                  ({
+                    id,
+                    status,
+                    icon: Icon,
+                    labelPl,
+                    labelEn,
+                    descPl,
+                    descEn,
+                    gradient,
+                    textColor,
+                  }) => {
+                    const isSoon = status === 'soon';
+                    // `soon` targets have no server handler — keep them visible but inert so we never
+                    // fire a request that returns a raw 400 (CANON §4). `live` targets convert for real.
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => !isSoon && onConvert(id)}
+                        disabled={isDraft || isSoon}
+                        aria-disabled={isDraft || isSoon}
+                        title={isSoon ? (isPl ? 'Wkrótce' : 'Coming soon') : undefined}
+                        className="group relative flex items-center gap-2.5 px-3 py-2 rounded-xl overflow-hidden transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <div
+                          className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-100 group-hover:opacity-80 transition-opacity`}
+                        />
+                        <div
+                          className={`relative w-6 h-6 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center ${textColor} shrink-0`}
+                        >
+                          <Icon size={12} />
+                        </div>
+                        <div className="relative flex-1 min-w-0 text-left">
+                          <div
+                            className={`text-[11px] font-semibold ${textColor} flex items-center gap-1.5`}
+                          >
+                            {isPl ? labelPl : labelEn}
+                            {isSoon && (
+                              <span className="text-[8px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-200/70 dark:bg-navy-700 rounded px-1 py-px">
+                                {isPl ? 'Wkrótce' : 'Soon'}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[9px] text-slate-600 dark:text-slate-500">
+                            {isPl ? descPl : descEn}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  }
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </Section>
 

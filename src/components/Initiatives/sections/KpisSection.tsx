@@ -22,6 +22,8 @@ import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 
+import { CardBlockRenderer } from '../cards/CardBlockRenderer';
+import { buildKpisCardSpec } from '../cards/cardSpecBuilders';
 import { extractInitiativeKpiRows } from '../initiativeKpiContract';
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
@@ -196,7 +198,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
     setIsAIProposing(true);
     try {
       const aiLanguage = isPolish ? 'pl' : 'en';
-      const targetLanguageName = isPolish ? 'Polish' : 'English';
+      const targetLanguageName = t('initiatives.kpisSection.english');
       const existingKpisCompact = kpis.slice(0, 80).map((k) => ({
         id: String(k.id),
         name: String(k.name || ''),
@@ -729,6 +731,31 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
     [duplicateKpi, isPolish, kpiMenuId, readonly, removeKpi, startEditKpi, t]
   );
 
+  // F3 (D11) display layer — generic CardBlockRenderer preview.
+  // ADDITIVE: a read-only "as it reads" table built from the same live KPI
+  // state, shown only once there are KPIs. Does not replace the edit table.
+  const kpisCardSpec = useMemo(
+    () =>
+      buildKpisCardSpec(
+        kpis.map((k) => ({
+          name: toEnglishKpiName(k.name, isPolish),
+          unit: k.unit,
+          baseline: k.baseline,
+          current: k.current,
+          target: k.target,
+        })),
+        {
+          title: t('initiatives.kpisSection.kpisAndBenefits'),
+          columnName: 'KPI',
+          columnBaseline: 'Baseline',
+          columnCurrent: t('initiatives.kpisSection.current'),
+          columnTarget: 'Target',
+          columnUnit: t('initiatives.kpisSection.unit'),
+        }
+      ),
+    [kpis, isPolish, t]
+  );
+
   return (
     <>
       {/* AI proposal modal (triggered from top CTA bar) */}
@@ -1178,6 +1205,18 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
               striped
               emptyMessage={t('initiatives.kpisSection.noKpis')}
             />
+          )}
+
+          {/* F3 (D11) display layer — generic CardBlockRenderer preview.
+              ADDITIVE: a read-only "as it reads" view built from the same data,
+              shown only once there are KPIs. Does not replace the edit table. */}
+          {kpis.length > 0 && (
+            <div className="pt-3 border-t border-slate-200 dark:border-navy-700">
+              <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
+                {t('initiatives.kpisSection.kpisAndBenefits')}
+              </div>
+              <CardBlockRenderer spec={kpisCardSpec} showTitle={false} />
+            </div>
           )}
         </div>
       </CollapsibleSection>

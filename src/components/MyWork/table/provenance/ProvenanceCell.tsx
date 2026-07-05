@@ -194,7 +194,7 @@ export const ProvenanceCell: React.FC<ProvenanceCellProps> = ({
       <button
         type="button"
         onClick={() => setPopoverOpen((v) => !v)}
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-primary-400"
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border border-c-border text-c-text-muted hover:bg-c-surface-raised focus:outline-none focus:ring-2 focus:ring-c-focus"
         aria-haspopup="dialog"
         aria-expanded={popoverOpen}
         data-testid={`${testId}-sources-toggle`}

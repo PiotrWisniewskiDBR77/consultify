@@ -253,7 +253,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
         {!isRunning && sessionTime === 0 && (
           <button
             onClick={startTimer}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition-colors"
+            className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-c-text text-c-bg font-medium hover:bg-c-text-secondary transition-colors"
           >
             <Play size={18} />
             <span>{isPolish ? 'Start' : 'Start'}</span>
@@ -283,7 +283,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
           <>
             <button
               onClick={startTimer}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-c-text text-c-bg font-medium hover:bg-c-text-secondary transition-colors"
             >
               <Play size={18} />
               <span>{isPolish ? 'Kontynuuj' : 'Resume'}</span>

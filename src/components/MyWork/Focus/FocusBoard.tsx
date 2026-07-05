@@ -68,17 +68,17 @@ const DailyStatCard: React.FC<{
     orange:
       'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/30',
     slate:
-      'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700/30',
+      'bg-c-surface-raised text-c-text-secondary border-c-border-subtle',
     purple:
-      'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-800/30',
+      'bg-c-info/10 text-c-info border-c-info/20',
   };
 
   const iconBgClasses = {
     green: 'bg-green-100 dark:bg-green-900/30',
     blue: 'bg-blue-100 dark:bg-blue-900/30',
     orange: 'bg-amber-100 dark:bg-amber-900/30',
-    slate: 'bg-slate-100 dark:bg-slate-700/30',
-    purple: 'bg-primary-100 dark:bg-primary-900/30',
+    slate: 'bg-c-surface-raised',
+    purple: 'bg-c-info/15',
   };
 
   return (
@@ -90,15 +90,15 @@ const DailyStatCard: React.FC<{
       <div className="flex items-center gap-3">
         <div className={`p-2 rounded-lg ${iconBgClasses[color]}`}>{icon}</div>
         <div>
-          <p className="text-2xl font-bold text-navy-900 dark:text-white">
+          <p className="text-2xl font-bold text-c-text">
             {value}
             {suffix && (
-              <span className="text-sm font-normal text-slate-600 dark:text-slate-500 ml-1">
+              <span className="text-sm font-normal text-c-text-muted ml-1">
                 {suffix}
               </span>
             )}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
+          <p className="text-xs text-c-text-muted">{label}</p>
         </div>
       </div>
     </motion.div>
@@ -112,7 +112,7 @@ const focusTips = [
   {
     icon: Brain,
     tip: 'Start with your hardest task when your energy is highest',
-    color: 'text-primary-500',
+    color: 'text-c-info',
   },
   { icon: Target, tip: 'Limit yourself to 3-5 important tasks per day', color: 'text-blue-500' },
   { icon: Coffee, tip: 'Take breaks every 90 minutes to maintain focus', color: 'text-amber-500' },
@@ -180,20 +180,20 @@ const FocusTaskCard: React.FC<{
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -20, height: 0 }}
       className={`
-                group relative bg-white dark:bg-navy-900 rounded-xl border
+                group relative bg-c-surface rounded-xl border
                 ${
                   task.isCompleted
                     ? 'border-green-200 dark:border-green-800/30 bg-green-50/50 dark:bg-green-900/10'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-brand/30 dark:hover:border-brand/20'
+                    : 'border-c-border-subtle hover:border-c-border-strong'
                 }
-                ${isDragging ? 'focus-task-dragging shadow-xl ring-2 ring-brand' : 'shadow-sm'}
+                ${isDragging ? 'focus-task-dragging shadow-hig-lg opacity-70 ring-1 ring-c-border-strong' : 'shadow-sm'}
                 transition-all duration-200 cursor-pointer
             `}
     >
       <div className="flex items-start gap-3 p-4">
         {/* Drag Handle */}
         <div className="shrink-0 pt-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
-          <GripVertical size={16} className="text-slate-600 dark:text-slate-400" />
+          <GripVertical size={16} className="text-c-text-muted" />
         </div>
 
         {/* Completion Toggle */}
@@ -207,7 +207,7 @@ const FocusTaskCard: React.FC<{
           {task.isCompleted ? (
             <CheckCircle size={22} className="text-green-500" />
           ) : (
-            <Circle size={22} className="text-slate-600 hover:text-brand transition-colors" />
+            <Circle size={22} className="text-c-text-muted hover:text-c-text transition-colors" />
           )}
         </button>
 
@@ -217,7 +217,7 @@ const FocusTaskCard: React.FC<{
             <div className="flex-1 min-w-0">
               {/* Initiative */}
               {task.initiativeName && (
-                <span className="text-[10px] text-primary-600 dark:text-primary-400 font-medium">
+                <span className="text-[10px] text-c-info font-medium">
                   {task.initiativeName}
                 </span>
               )}
@@ -225,7 +225,7 @@ const FocusTaskCard: React.FC<{
               {/* Title */}
               <h4
                 className={`text-sm font-semibold truncate ${
-                  task.isCompleted ? 'text-slate-600 line-through' : 'text-navy-900 dark:text-white'
+                  task.isCompleted ? 'text-c-text-muted line-through' : 'text-c-text'
                 }`}
               >
                 {task.title}
@@ -239,7 +239,7 @@ const FocusTaskCard: React.FC<{
                 onRemove(task.taskId);
               }}
               aria-label={t('myWork.focus.removeFromFocus', 'Remove from focus')}
-              className="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-danger-50 dark:hover:bg-danger-900/20 text-slate-600 dark:text-slate-500 hover:text-danger-500 transition-all"
+              className="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-danger-50 dark:hover:bg-danger-900/20 text-c-text-muted hover:text-danger-500 transition-all"
             >
               <X size={14} />
             </button>
@@ -257,7 +257,7 @@ const FocusTaskCard: React.FC<{
               />
             )}
             {task.estimatedMinutes && (
-              <span className="text-[10px] text-slate-600 dark:text-slate-500 flex items-center gap-1">
+              <span className="text-[10px] text-c-text-muted flex items-center gap-1">
                 <Clock size={10} />
                 {task.estimatedMinutes} min
               </span>
@@ -288,7 +288,7 @@ const TimeBlockSection: React.FC<{
 
   return (
     <div
-      className={`rounded-xl overflow-hidden border border-slate-200 dark:border-navy-700 ${config.gradient}`}
+      className={`rounded-xl overflow-hidden border border-c-border-subtle ${config.gradient}`}
     >
       {/* Header */}
       <button
@@ -296,14 +296,14 @@ const TimeBlockSection: React.FC<{
         className="w-full flex items-center justify-between p-3 hover:bg-white/50 dark:hover:bg-white/5 transition-colors"
       >
         <div className="flex items-center gap-2">
-          <span className="text-slate-600 dark:text-slate-300">{config.icon}</span>
-          <span className="font-semibold text-navy-900 dark:text-white">
+          <span className="text-c-text-secondary">{config.icon}</span>
+          <span className="font-semibold text-c-text">
             {t(`myWork.focus.timeBlock.${block}`, config.label)}
           </span>
-          <span className="text-xs text-slate-600 dark:text-slate-500">{config.time}</span>
+          <span className="text-xs text-c-text-muted">{config.time}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500 dark:text-slate-400">
+          <span className="text-xs text-c-text-muted">
             {completedCount}/{tasks.length}
           </span>
           {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -334,7 +334,7 @@ const TimeBlockSection: React.FC<{
                   ))}
                 </Reorder.Group>
               ) : (
-                <div className="text-center py-4 text-sm text-slate-600 dark:text-slate-500">
+                <div className="text-center py-4 text-sm text-c-text-muted">
                   {t('myWork.focus.noTasksInBlock', 'No tasks in this block')}
                 </div>
               )}
@@ -547,10 +547,10 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
             <Target size={22} />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-navy-900 dark:text-white">
+            <h2 className="text-lg font-bold text-c-text">
               {t('myWork.focus.title', "Today's Focus")}
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-c-text-muted">
               {new Date().toLocaleDateString('pl-PL', {
                 weekday: 'long',
                 day: 'numeric',
@@ -563,14 +563,14 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
         {/* Stats & AI Button */}
         <div className="flex items-center gap-3">
           {/* Progress */}
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-white/5 rounded-lg">
-            <div className="w-16 h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-c-surface-raised rounded-lg">
+            <div className="w-16 h-1.5 bg-c-border-subtle rounded-full overflow-hidden">
               <div
                 className="h-full bg-green-500 transition-all duration-500"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+            <span className="text-xs font-medium text-c-text-secondary">
               {completedCount}/{totalCount}
             </span>
           </div>
@@ -647,15 +647,15 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20 rounded-xl border border-primary-200/50 dark:border-primary-800/30 p-8 text-center"
+            className="bg-c-surface rounded-xl border border-c-border-subtle p-8 text-center"
           >
-            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary-500 to-crimson-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25">
-              <Target size={32} className="text-white" />
+            <div className="w-16 h-16 mx-auto mb-4 bg-c-surface-raised rounded-xl flex items-center justify-center">
+              <Target size={32} className="text-c-text-secondary" />
             </div>
-            <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
+            <h3 className="text-xl font-bold text-c-text mb-2">
               {t('myWork.focus.empty.title', 'Plan Your Focus')}
             </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 max-w-md mx-auto">
+            <p className="text-sm text-c-text-secondary mb-6 max-w-md mx-auto">
               {t(
                 'myWork.focus.empty.description',
                 'Select up to 5 tasks to focus on today. AI can help you prioritize based on deadlines and importance.'
@@ -678,7 +678,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
               </button>
               <button
                 onClick={() => onNavigateToInbox?.()}
-                className="inline-flex items-center gap-2 p-4 py-2.5 rounded-xl bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors"
+                className="inline-flex items-center gap-2 p-4 py-2.5 rounded-xl bg-c-surface border border-c-border text-c-text-secondary font-medium hover:bg-c-surface-raised transition-colors"
               >
                 <Plus size={18} />
                 {t('myWork.focus.addFromInbox', 'Add from Inbox')}
@@ -691,9 +691,9 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4"
+            className="bg-c-surface rounded-xl border border-c-border-subtle p-4"
           >
-            <h4 className="text-sm font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+            <h4 className="text-sm font-bold text-c-text mb-4 flex items-center gap-2">
               <Sparkles size={16} className="text-primary-500" />
               {t('myWork.focus.tips.title', 'Tips for productive focus')}
             </h4>
@@ -704,10 +704,10 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 + i * 0.1 }}
-                  className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-navy-800/50 rounded-lg"
+                  className="flex items-start gap-3 p-3 bg-c-surface-raised rounded-lg"
                 >
                   <tip.icon size={18} className={`${tip.color} shrink-0 mt-0.5`} />
-                  <span className="text-sm text-slate-600 dark:text-slate-300">
+                  <span className="text-sm text-c-text-secondary">
                     {t(`myWork.focus.tips.tip${i + 1}`, tip.tip)}
                   </span>
                 </motion.div>
@@ -724,35 +724,35 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800/30 rounded-xl p-4"
+            className="bg-c-info/10 border border-c-info/20 rounded-xl p-4"
           >
             <div className="flex items-center gap-2 mb-3">
               <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
-              <h3 className="font-semibold text-primary-900 dark:text-primary-200">
+              <h3 className="font-semibold text-c-text">
                 {t('myWork.focus.aiSuggestions', 'AI Suggestions')}
               </h3>
             </div>
-            <p className="text-sm text-primary-700 dark:text-primary-300 mb-3">
+            <p className="text-sm text-c-text-secondary mb-3">
               {suggestions.reasoning}
             </p>
             <div className="space-y-2">
               {suggestions.suggestedTasks.slice(0, 3).map((suggestion) => (
                 <div
                   key={suggestion.taskId}
-                  className="flex items-center justify-between p-3 bg-white dark:bg-navy-900 rounded-lg border border-primary-200 dark:border-primary-800/30"
+                  className="flex items-center justify-between p-3 bg-c-surface rounded-lg border border-c-border-subtle"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-navy-900 dark:text-white truncate">
+                    <p className="text-sm font-medium text-c-text truncate">
                       {suggestion.title}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                    <p className="text-xs text-c-text-muted truncate">
                       {suggestion.reason}
                     </p>
                   </div>
                   <button
                     onClick={() => onAddToFocus?.(suggestion.taskId, suggestion.suggestedTimeBlock)}
                     disabled={tasks.length >= MAX_FOCUS_TASKS}
-                    className="shrink-0 ml-3 p-2 rounded-lg bg-primary-100 hover:bg-primary-200 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 text-primary-600 dark:text-primary-400 transition-colors disabled:opacity-50"
+                    className="shrink-0 ml-3 p-2 rounded-lg bg-c-info/15 hover:bg-c-info/25 text-c-info transition-colors disabled:opacity-50"
                   >
                     <Plus size={16} />
                   </button>
@@ -764,24 +764,24 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
       </AnimatePresence>
 
       {/* Execution Score */}
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+            <p className="text-xs text-c-text-muted uppercase tracking-wider mb-1">
               {t('myWork.focus.executionScore', 'Execution Score')}
             </p>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-navy-900 dark:text-white">
+              <span className="text-3xl font-bold text-c-text">
                 {executionScore}
               </span>
-              <span className="text-sm text-slate-600 dark:text-slate-500">/ 100</span>
+              <span className="text-sm text-c-text-muted">/ 100</span>
             </div>
           </div>
           <div
             className="w-16 h-16 execution-score-ring flex items-center justify-center"
             style={{ '--score-percent': `${executionScore}%` } as React.CSSProperties}
           >
-            <div className="w-12 h-12 rounded-full bg-white dark:bg-navy-900 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-c-surface flex items-center justify-center">
               <Target size={20} className="text-green-500" />
             </div>
           </div>

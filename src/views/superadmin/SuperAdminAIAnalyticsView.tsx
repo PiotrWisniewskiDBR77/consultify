@@ -201,12 +201,12 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
         </div>
 
         {/* Cache Hit Rate */}
-        <div className="bg-navy-900 border border-white/10 rounded-xl p-4">
+        <div className="bg-c-surface border border-white/10 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-slate-400 dark:text-slate-500 text-sm">Cache Hit Rate</span>
             <Database className="text-primary-400" size={20} />
           </div>
-          <p className="text-3xl font-bold text-white">
+          <p className="text-3xl font-bold text-c-text">
             {((stats?.cache?.hitRate || 0) * 100).toFixed(1)}%
           </p>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -216,12 +216,12 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
         </div>
 
         {/* Tokens Saved */}
-        <div className="bg-navy-900 border border-white/10 rounded-xl p-4">
+        <div className="bg-c-surface border border-white/10 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-slate-400 dark:text-slate-500 text-sm">Tokens Saved (Cache)</span>
             <DollarSign className="text-blue-400" size={20} />
           </div>
-          <p className="text-3xl font-bold text-white">
+          <p className="text-3xl font-bold text-c-text">
             {formatNumber(stats?.cache?.estimatedTokensSaved || 0)}
           </p>
           <p className="text-sm text-green-400 mt-1">
@@ -233,7 +233,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Organizations */}
-        <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
+        <div className="bg-c-surface border border-white/10 rounded-xl p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <BarChart3 className="text-blue-400" size={20} />
             Top Organizations by Token Usage
@@ -250,21 +250,21 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
                           ? 'bg-slate-400 text-black'
                           : idx === 2
                             ? 'bg-amber-700 text-white'
-                            : 'bg-navy-700 text-slate-400 dark:text-slate-500'
+                            : 'bg-c-surface-raised text-slate-400 dark:text-slate-500'
                     }`}
                   >
                     {idx + 1}
                   </span>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-white font-medium text-sm truncate max-w-[200px]">
+                      <span className="text-c-text font-medium text-sm truncate max-w-[200px]">
                         {org.organizationId.slice(0, 8)}...
                       </span>
                       <span className="text-slate-400 dark:text-slate-500 text-sm">
                         {formatNumber(org.tokensMonth)} tokens
                       </span>
                     </div>
-                    <div className="w-full bg-navy-700 rounded-full h-2 mt-1">
+                    <div className="w-full bg-c-surface-raised rounded-full h-2 mt-1">
                       <div
                         className="bg-gradient-to-r from-blue-500 to-primary-500 h-2 rounded-full"
                         style={{
@@ -282,7 +282,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
         </div>
 
         {/* Active Providers */}
-        <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
+        <div className="bg-c-surface border border-white/10 rounded-xl p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Gauge className="text-green-400" size={20} />
             Active LLM Providers
@@ -292,7 +292,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
               providers.map((provider) => (
                 <div
                   key={provider.id}
-                  className="flex items-center justify-between p-3 bg-navy-800 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg"
                 >
                   <div className="flex items-center gap-3">
                     <div
@@ -301,7 +301,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
                       }`}
                     />
                     <div>
-                      <p className="text-white font-medium text-sm">{provider.name}</p>
+                      <p className="text-c-text font-medium text-sm">{provider.name}</p>
                       <p className="text-slate-500 dark:text-slate-400 text-xs">
                         {provider.provider}
                       </p>
@@ -326,14 +326,14 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
       </div>
 
       {/* System Checks */}
-      <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
+      <div className="bg-c-surface border border-white/10 rounded-xl p-6">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Clock className="text-yellow-400" size={20} />
           System Health Checks
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {diagnostics?.checks?.map((check, idx) => (
-            <div key={idx} className="flex items-center gap-3 p-3 bg-navy-800 rounded-lg">
+            <div key={idx} className="flex items-center gap-3 p-3 bg-c-surface-raised rounded-lg">
               {check.status === 'OK' ? (
                 <CheckCircle className="text-green-500 shrink-0" size={18} />
               ) : check.status === 'FAILED' ? (
@@ -344,7 +344,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
                 <Activity className="text-blue-400 shrink-0" size={18} />
               )}
               <div>
-                <p className="text-white text-sm font-medium">
+                <p className="text-c-text text-sm font-medium">
                   {check.name.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
                 </p>
                 <p className="text-slate-500 dark:text-slate-400 text-xs">
@@ -358,7 +358,7 @@ export const SuperAdminAIAnalyticsView: React.FC = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
+      <div className="bg-c-surface border border-white/10 rounded-xl p-6">
         <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
         <div className="flex flex-wrap gap-3">
           <button

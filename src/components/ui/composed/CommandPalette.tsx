@@ -24,18 +24,23 @@ import {
   Briefcase,
   Calculator,
   CheckCircle,
+  ClipboardCheck,
   Clock,
   Command,
   CreditCard,
   FileText,
+  GitBranch,
   Layout,
   Lightbulb,
+  ListChecks,
+  Loader2,
   MessageSquare,
   Palette,
   Rocket,
   Search,
   Settings,
   Shield,
+  StickyNote,
   Users,
   Zap,
 } from 'lucide-react';
@@ -49,7 +54,9 @@ import React, {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 
+import { Api } from '../../../services/api';
 import { AppView } from '../../../types';
 
 // ============================================
@@ -61,7 +68,7 @@ export interface CommandItem {
   label: string;
   description?: string;
   icon?: React.ReactNode;
-  category: 'navigation' | 'action' | 'settings' | 'recent';
+  category: 'navigation' | 'action' | 'settings' | 'recent' | 'search';
   keywords?: string[];
   shortcut?: string;
   onSelect: () => void;
@@ -75,6 +82,96 @@ interface CommandPaletteContextValue {
   registerCommands: (commands: CommandItem[]) => void;
   unregisterCommands: (ids: string[]) => void;
 }
+
+// ============================================
+// GLOBAL SEARCH (HARVARD H6.12)
+// ============================================
+
+/** Entity types returned by GET /api/search. Mirrors backend globalSearchService. */
+type SearchEntityType =
+  | 'initiative'
+  | 'task'
+  | 'decision'
+  | 'idea'
+  | 'note'
+  | 'artifact'
+  | 'assessment';
+
+interface SearchHit {
+  type: SearchEntityType;
+  id: string;
+  title: string;
+  updatedAt: string | null;
+}
+
+interface SearchResponse {
+  query: string;
+  total: number;
+  groups: Partial<Record<SearchEntityType, SearchHit[]>>;
+}
+
+/**
+ * Per-entity presentation + destination. v1 navigates to the entity's module
+ * view (list); deep per-id linking is left to the modules that already own it.
+ */
+const SEARCH_ENTITY_META: Record<
+  SearchEntityType,
+  { view: AppView; icon: React.ReactNode; labelKey: string; labelDefault: string }
+> = {
+  initiative: {
+    view: AppView.PORTFOLIO_ROADMAP,
+    icon: <Lightbulb size={18} />,
+    labelKey: 'commandPalette.entity.initiative',
+    labelDefault: 'Initiative',
+  },
+  task: {
+    view: AppView.MY_WORK,
+    icon: <ListChecks size={18} />,
+    labelKey: 'commandPalette.entity.task',
+    labelDefault: 'Task',
+  },
+  decision: {
+    view: AppView.MY_WORK,
+    icon: <CheckCircle size={18} />,
+    labelKey: 'commandPalette.entity.decision',
+    labelDefault: 'Decision',
+  },
+  idea: {
+    view: AppView.MY_WORK,
+    icon: <GitBranch size={18} />,
+    labelKey: 'commandPalette.entity.idea',
+    labelDefault: 'Idea',
+  },
+  note: {
+    view: AppView.MY_WORK,
+    icon: <StickyNote size={18} />,
+    labelKey: 'commandPalette.entity.note',
+    labelDefault: 'Note',
+  },
+  artifact: {
+    view: AppView.PRESENTATIONS,
+    icon: <FileText size={18} />,
+    labelKey: 'commandPalette.entity.artifact',
+    labelDefault: 'Output',
+  },
+  assessment: {
+    view: AppView.ASSESSMENT_DRD,
+    icon: <ClipboardCheck size={18} />,
+    labelKey: 'commandPalette.entity.assessment',
+    labelDefault: 'Assessment',
+  },
+};
+
+/** Order in which entity groups are rendered. */
+const SEARCH_ENTITY_ORDER: SearchEntityType[] = [
+  'initiative',
+  'task',
+  'decision',
+  'idea',
+  'note',
+  'artifact',
+  'assessment',
+];
 
 // ============================================
 // CONTEXT
@@ -307,7 +404,11 @@ interface CommandPaletteDialogProps {
   commands: CommandItem[];
   recentCommands: string[];
   onCommandSelect: (command: CommandItem) => void;
+  onNavigate: (view: AppView) => void;
 }
+
+const SEARCH_DEBOUNCE_MS = 220;
+const MIN_SEARCH_LEN = 2;
 
 const CommandPaletteDialog: React.FC<CommandPaletteDialogProps> = ({
   isOpen,
@@ -315,11 +416,62 @@ const CommandPaletteDialog: React.FC<CommandPaletteDialogProps> = ({
   commands,
   recentCommands,
   onCommandSelect,
+  onNavigate,
 }) => {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [searchHits, setSearchHits] = useState<SearchHit[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+
+  // Debounced global (cross-module) entity search against GET /api/search.
+  useEffect(() => {
+    const term = query.trim();
+    if (term.length < MIN_SEARCH_LEN) {
+      setSearchHits([]);
+      setSearchLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setSearchLoading(true);
+    const handle = setTimeout(async () => {
+      try {
+        const res = await Api.get(`/search?q=${encodeURIComponent(term)}`);
+        const data = (res?.data ?? res) as SearchResponse;
+        if (cancelled) return;
+        const hits: SearchHit[] = [];
+        for (const type of SEARCH_ENTITY_ORDER) {
+          for (const hit of data?.groups?.[type] ?? []) hits.push({ ...hit, type });
+        }
+        setSearchHits(hits);
+      } catch {
+        if (!cancelled) setSearchHits([]);
+      } finally {
+        if (!cancelled) setSearchLoading(false);
+      }
+    }, SEARCH_DEBOUNCE_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
+  }, [query]);
+
+  // Turn raw search hits into selectable command items (grouped after commands).
+  const searchItems = useMemo<CommandItem[]>(() => {
+    return searchHits.map((hit) => {
+      const meta = SEARCH_ENTITY_META[hit.type];
+      return {
+        id: `search-${hit.type}-${hit.id}`,
+        label: hit.title,
+        description: t(meta.labelKey, meta.labelDefault),
+        icon: meta.icon,
+        category: 'search',
+        onSelect: () => onNavigate(meta.view),
+      };
+    });
+  }, [searchHits, onNavigate, t]);
 
   // Filter commands based on query
   const filteredCommands = useMemo(() => {
@@ -331,17 +483,20 @@ const CommandPaletteDialog: React.FC<CommandPaletteDialogProps> = ({
     }
 
     const lowerQuery = query.toLowerCase();
-    return commands.filter((cmd) => {
+    const matchedCommands = commands.filter((cmd) => {
       const matchLabel = cmd.label.toLowerCase().includes(lowerQuery);
       const matchDesc = cmd.description?.toLowerCase().includes(lowerQuery);
       const matchKeywords = cmd.keywords?.some((k) => k.toLowerCase().includes(lowerQuery));
       return matchLabel || matchDesc || matchKeywords;
     });
-  }, [commands, query, recentCommands]);
+    // Live entity search results render first, then static commands.
+    return [...searchItems, ...matchedCommands];
+  }, [commands, query, recentCommands, searchItems]);
 
-  // Group commands by category
+  // Group commands by category (search first).
   const groupedCommands = useMemo(() => {
     const groups: Record<string, CommandItem[]> = {
+      search: [],
       recent: [],
       navigation: [],
       action: [],
@@ -403,13 +558,15 @@ const CommandPaletteDialog: React.FC<CommandPaletteDialogProps> = ({
   }, [selectedIndex]);
 
   const categoryLabels: Record<string, string> = {
-    recent: 'Recent',
-    navigation: 'Navigation',
-    action: 'Actions',
-    settings: 'Settings',
+    search: t('commandPalette.category.search', 'Search results'),
+    recent: t('commandPalette.category.recent', 'Recent'),
+    navigation: t('commandPalette.category.navigation', 'Navigation'),
+    action: t('commandPalette.category.action', 'Actions'),
+    settings: t('commandPalette.category.settings', 'Settings'),
   };
 
   const categoryIcons: Record<string, React.ReactNode> = {
+    search: <Search size={14} />,
     recent: <Clock size={14} />,
     navigation: <Layout size={14} />,
     action: <Zap size={14} />,
@@ -424,7 +581,7 @@ const CommandPaletteDialog: React.FC<CommandPaletteDialogProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[9999] flex items-start justify-center pt-[15vh]"
+          className="fixed inset-0 z-modal flex items-start justify-center pt-[15vh]"
           initial="hidden"
           animate="visible"
           exit="hidden"
@@ -455,9 +612,19 @@ const CommandPaletteDialog: React.FC<CommandPaletteDialogProps> = ({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Search commands..."
+                placeholder={t(
+                  'commandPalette.placeholder',
+                  'Search commands, initiatives, tasks, notes…'
+                )}
                 className="flex-1 bg-transparent text-navy-900 dark:text-white placeholder-slate-400 outline-none text-base"
               />
+              {searchLoading && (
+                <Loader2
+                  size={16}
+                  className="animate-spin text-slate-400 flex-shrink-0"
+                  aria-hidden="true"
+                />
+              )}
               <kbd className="hidden sm:flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-500 bg-slate-100 dark:bg-white/5 rounded-lg">
                 <Command size={12} />K
               </kbd>
@@ -467,7 +634,9 @@ const CommandPaletteDialog: React.FC<CommandPaletteDialogProps> = ({
             <div ref={listRef} className="max-h-[50vh] overflow-y-auto py-2">
               {filteredCommands.length === 0 ? (
                 <div className="px-4 py-8 text-center text-slate-600 dark:text-slate-500">
-                  No commands found for "{query}"
+                  {searchLoading
+                    ? t('commandPalette.searching', 'Searching…')
+                    : t('commandPalette.noResults', 'No results found for "{{query}}"', { query })}
                 </div>
               ) : (
                 Object.entries(groupedCommands).map(([category, items]) => {
@@ -585,11 +754,18 @@ export const CommandPaletteProvider: React.FC<CommandPaletteProviderProps> = ({
     return [...defaults, ...customCommands];
   }, [onNavigate, customCommands]);
 
-  // Global keyboard shortcut
+  // Global keyboard shortcut (Cmd/Ctrl+K).
+  // Yields to a local, more-specific palette (e.g. the Idea Map palette) when
+  // one is mounted, so the two never open at once on the same view.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd+K (Mac) or Ctrl+K (Windows)
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        if (
+          typeof document !== 'undefined' &&
+          document.querySelector('[data-local-command-palette]')
+        ) {
+          return; // a scoped palette owns Cmd+K here
+        }
         e.preventDefault();
         setIsOpen((prev) => !prev);
       }
@@ -645,6 +821,10 @@ export const CommandPaletteProvider: React.FC<CommandPaletteProviderProps> = ({
         commands={allCommands}
         recentCommands={recentCommands}
         onCommandSelect={handleCommandSelect}
+        onNavigate={(view) => {
+          onNavigate(view);
+          close();
+        }}
       />
     </CommandPaletteContext.Provider>
   );

@@ -276,16 +276,16 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
   };
 
   return (
-    <div className="bg-gray-900 rounded-xl border border-gray-700 overflow-hidden">
+    <div className="bg-c-surface rounded-xl border border-c-border overflow-hidden">
       {/* Tabs */}
-      <div className="flex border-b border-gray-700">
+      <div className="flex border-b border-c-border">
         <button
           onClick={() => setActiveTab('upload')}
           className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors
                         ${
                           activeTab === 'upload'
-                            ? 'bg-gray-800 text-emerald-400 border-b-2 border-emerald-400'
-                            : 'text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+                            ? 'bg-c-surface-raised text-c-success border-b-2 border-c-success'
+                            : 'text-c-text-secondary dark:text-c-text-muted hover:text-c-text-muted hover:bg-c-surface-raised'
                         }`}
         >
           <Upload size={18} />
@@ -296,8 +296,8 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
           className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors
                         ${
                           activeTab === 'youtube'
-                            ? 'bg-gray-800 text-danger-400 border-b-2 border-danger-400'
-                            : 'text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+                            ? 'bg-c-surface-raised text-c-danger border-b-2 border-c-danger'
+                            : 'text-c-text-secondary dark:text-c-text-muted hover:text-c-text-muted hover:bg-c-surface-raised'
                         }`}
         >
           <Youtube size={18} />
@@ -308,8 +308,8 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
           className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors
                         ${
                           activeTab === 'url'
-                            ? 'bg-gray-800 text-blue-400 border-b-2 border-blue-400'
-                            : 'text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+                            ? 'bg-c-surface-raised text-c-info border-b-2 border-c-info'
+                            : 'text-c-text-secondary dark:text-c-text-muted hover:text-c-text-muted hover:bg-c-surface-raised'
                         }`}
         >
           <Globe size={18} />
@@ -332,8 +332,8 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
               className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all
                                 ${
                                   isDragging
-                                    ? 'border-emerald-400 bg-emerald-400/10'
-                                    : 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
+                                    ? 'border-c-success bg-[color-mix(in_srgb,var(--c-success)_12%,transparent)]'
+                                    : 'border-c-border hover:border-c-border-strong hover:bg-c-surface-raised'
                                 }`}
             >
               <input
@@ -347,22 +347,22 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 
               <div className="flex flex-col items-center gap-3">
                 <div
-                  className={`p-3 rounded-full ${isDragging ? 'bg-emerald-400/20' : 'bg-gray-700'}`}
+                  className={`p-3 rounded-full ${isDragging ? 'bg-[color-mix(in_srgb,var(--c-success)_18%,transparent)]' : 'bg-c-surface-raised'}`}
                 >
                   <Upload
                     size={24}
                     className={
                       isDragging
-                        ? 'text-emerald-400'
-                        : 'text-gray-600 dark:text-gray-500 dark:text-gray-400'
+                        ? 'text-c-success'
+                        : 'text-c-text-secondary dark:text-c-text-muted'
                     }
                   />
                 </div>
                 <div>
-                  <p className="text-gray-200 font-medium">
+                  <p className="text-c-text-muted font-medium">
                     {isDragging ? 'Drop files here' : 'Drag & drop files or click to browse'}
                   </p>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+                  <p className="text-c-text-muted text-sm mt-1">
                     PDF, Word, Excel, PowerPoint, Audio, Video, Images
                   </p>
                 </div>
@@ -372,21 +372,21 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
             {/* Selected Files */}
             {files.length > 0 && (
               <div className="mt-4 space-y-2">
-                <p className="text-gray-600 dark:text-gray-500 dark:text-gray-400 text-sm">
+                <p className="text-c-text-secondary dark:text-c-text-muted text-sm">
                   {files.length} file(s) selected
                 </p>
                 <div className="max-h-48 overflow-y-auto space-y-2">
                   {files.map((file, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-2"
+                      className="flex items-center justify-between bg-c-surface-raised rounded-lg px-4 py-2"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-gray-600 dark:text-gray-500 dark:text-gray-400">
+                        <span className="text-c-text-secondary dark:text-c-text-muted">
                           {getFileIcon(file.name)}
                         </span>
-                        <span className="text-gray-200 text-sm truncate max-w-xs">{file.name}</span>
-                        <span className="text-gray-500 dark:text-gray-400 text-xs">
+                        <span className="text-c-text-muted text-sm truncate max-w-xs">{file.name}</span>
+                        <span className="text-c-text-muted text-xs">
                           {(file.size / 1024 / 1024).toFixed(1)} MB
                         </span>
                       </div>
@@ -395,7 +395,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                           e.stopPropagation();
                           removeFile(index);
                         }}
-                        className="text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-danger-400 transition-colors"
+                        className="text-c-text-secondary dark:text-c-text-muted hover:text-c-danger transition-colors"
                       >
                         <X size={16} />
                       </button>
@@ -405,7 +405,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                 <button
                   onClick={processFiles}
                   disabled={processing}
-                  className="w-full mt-4 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-600
+                  className="w-full mt-4 bg-c-success hover:opacity-90 disabled:bg-c-border
                                         text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
                   {processing ? (
@@ -429,24 +429,24 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
         {activeTab === 'youtube' && (
           <div className="space-y-4">
             <div>
-              <label className="block text-gray-600 dark:text-gray-500 dark:text-gray-400 text-sm mb-2">
+              <label className="block text-c-text-secondary dark:text-c-text-muted text-sm mb-2">
                 YouTube Video URL
               </label>
               <div className="relative">
                 <Youtube
                   size={18}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-danger-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-c-danger"
                 />
                 <input
                   type="text"
                   value={youtubeUrl}
                   onChange={(e) => setYoutubeUrl(e.target.value)}
                   placeholder="https://youtube.com/watch?v=..."
-                  className="w-full bg-gray-800 border border-gray-600 rounded-lg pl-10 pr-4 py-3
-                                        text-gray-200 placeholder-gray-500 focus:outline-none focus:border-danger-400"
+                  className="w-full bg-c-surface-raised border border-c-border rounded-lg pl-10 pr-4 py-3
+                                        text-c-text-muted placeholder-c-text-muted focus:outline-none focus:border-c-danger"
                 />
               </div>
-              <p className="text-gray-500 dark:text-gray-400 text-xs mt-2">
+              <p className="text-c-text-muted text-xs mt-2">
                 Supports: youtube.com, youtu.be, YouTube Shorts
               </p>
             </div>
@@ -454,7 +454,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
             <button
               onClick={processYouTube}
               disabled={processing || !youtubeUrl.trim() || !isYouTubeUrl(youtubeUrl)}
-              className="w-full bg-danger-600 hover:bg-danger-500 disabled:bg-gray-600
+              className="w-full bg-c-danger hover:opacity-90 disabled:bg-c-border
                                 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               {processing ? (
@@ -476,24 +476,24 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
         {activeTab === 'url' && (
           <div className="space-y-4">
             <div>
-              <label className="block text-gray-600 dark:text-gray-500 dark:text-gray-400 text-sm mb-2">
+              <label className="block text-c-text-secondary dark:text-c-text-muted text-sm mb-2">
                 Web Page URL
               </label>
               <div className="relative">
                 <Link2
                   size={18}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-c-info"
                 />
                 <input
                   type="text"
                   value={webUrl}
                   onChange={(e) => setWebUrl(e.target.value)}
                   placeholder="https://example.com/article"
-                  className="w-full bg-gray-800 border border-gray-600 rounded-lg pl-10 pr-4 py-3
-                                        text-gray-200 placeholder-gray-500 focus:outline-none focus:border-blue-400"
+                  className="w-full bg-c-surface-raised border border-c-border rounded-lg pl-10 pr-4 py-3
+                                        text-c-text-muted placeholder-c-text-muted focus:outline-none focus:border-c-info"
                 />
               </div>
-              <p className="text-gray-500 dark:text-gray-400 text-xs mt-2">
+              <p className="text-c-text-muted text-xs mt-2">
                 Extracts main content, title, and metadata from web pages
               </p>
             </div>
@@ -501,7 +501,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
             <button
               onClick={processUrl}
               disabled={processing || !webUrl.trim() || !webUrl.startsWith('http')}
-              className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600
+              className="w-full bg-c-info hover:opacity-90 disabled:bg-c-border
                                 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               {processing ? (
@@ -521,37 +521,37 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
 
         {/* Processing Progress */}
         {processing && currentProgress && (
-          <div className="mt-4 p-3 bg-gray-800 rounded-lg flex items-center gap-3">
-            <Loader2 size={16} className="animate-spin text-emerald-400" />
-            <span className="text-gray-600 text-sm">{currentProgress}</span>
+          <div className="mt-4 p-3 bg-c-surface-raised rounded-lg flex items-center gap-3">
+            <Loader2 size={16} className="animate-spin text-c-success" />
+            <span className="text-c-text-secondary text-sm">{currentProgress}</span>
           </div>
         )}
 
         {/* Results */}
         {results.length > 0 && (
           <div className="mt-4 space-y-2">
-            <p className="text-gray-600 dark:text-gray-500 dark:text-gray-400 text-sm font-medium">
+            <p className="text-c-text-secondary dark:text-c-text-muted text-sm font-medium">
               Results
             </p>
             {results.map((result, index) => (
               <div
                 key={index}
                 className={`p-3 rounded-lg flex items-start gap-3
-                                    ${result.success ? 'bg-emerald-900/30 border border-emerald-700' : 'bg-danger-900/30 border border-danger-700'}`}
+                                    ${result.success ? 'bg-[color-mix(in_srgb,var(--c-success)_15%,transparent)] border border-c-success' : 'bg-[color-mix(in_srgb,var(--c-danger)_15%,transparent)] border border-c-danger'}`}
               >
                 {result.success ? (
-                  <CheckCircle size={18} className="text-emerald-400 mt-0.5" />
+                  <CheckCircle size={18} className="text-c-success mt-0.5" />
                 ) : (
-                  <AlertCircle size={18} className="text-danger-400 mt-0.5" />
+                  <AlertCircle size={18} className="text-c-danger mt-0.5" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm ${result.success ? 'text-emerald-300' : 'text-danger-300'}`}>
+                  <p className={`text-sm ${result.success ? 'text-c-success' : 'text-c-danger'}`}>
                     {result.success
                       ? result.metadata?.filename || result.metadata?.title || 'Content processed'
                       : result.error || 'Processing failed'}
                   </p>
                   {result.success && result.metadata && (
-                    <p className="text-xs text-gray-600 dark:text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs text-c-text-secondary dark:text-c-text-muted mt-1">
                       {result.metadata.wordCount?.toLocaleString()} words •
                       {result.metadata.processingTimeMs
                         ? ` ${(result.metadata.processingTimeMs / 1000).toFixed(1)}s`
@@ -566,8 +566,8 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-3 bg-gray-800/50 border-t border-gray-700">
-        <p className="text-gray-500 dark:text-gray-400 text-xs text-center">
+      <div className="px-6 py-3 bg-c-surface-raised border-t border-c-border">
+        <p className="text-c-text-muted text-xs text-center">
           Max file size: 100MB • Audio/Video: max 60 min • Supported: PDF, Word, Excel, PowerPoint,
           Audio, Video, Images, YouTube, Web URLs
         </p>

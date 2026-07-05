@@ -60,8 +60,8 @@ const ARTIFACT_ICON_MAP: Record<string, React.ElementType> = {
 };
 
 const ARTIFACT_COLOR_MAP: Record<string, string> = {
-  initiative: 'text-primary-400',
-  initiative_portfolio: 'text-primary-400',
+  initiative: 'text-c-accent',
+  initiative_portfolio: 'text-c-accent',
   task: 'text-blue-400',
   execution_tasks: 'text-blue-400',
   decision: 'text-amber-400',
@@ -139,8 +139,8 @@ const SourceTraceabilityPanel: React.FC<SourceTraceabilityPanelProps> = ({
   if (sortedRefs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-        <Database className="h-10 w-10 text-white/20 mb-3" />
-        <p className="text-sm text-white/50">
+        <Database className="h-10 w-10 text-c-text mb-3" />
+        <p className="text-sm text-c-text">
           {isPl ? 'Brak powiązanych źródeł danych.' : 'No linked data sources.'}
         </p>
       </div>
@@ -149,11 +149,11 @@ const SourceTraceabilityPanel: React.FC<SourceTraceabilityPanelProps> = ({
 
   return (
     <div className="flex flex-col gap-1 py-2">
-      <div className="px-4 pb-2 mb-1 border-b border-white/5">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-white/40">
+      <div className="px-4 pb-2 mb-1 border-b border-c-border">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-c-text">
           {isPl ? 'Źródła danych' : 'Data Sources'}
         </h3>
-        <p className="text-[11px] text-white/30 mt-0.5">
+        <p className="text-[11px] text-c-text mt-0.5">
           {isPl
             ? `${sortedRefs.length} artefaktów powiązanych z raportem`
             : `${sortedRefs.length} artifacts linked to report`}
@@ -162,35 +162,35 @@ const SourceTraceabilityPanel: React.FC<SourceTraceabilityPanelProps> = ({
 
       {sortedRefs.map((ref) => {
         const Icon = ARTIFACT_ICON_MAP[ref.artifact_type] || FileText;
-        const colorClass = ARTIFACT_COLOR_MAP[ref.artifact_type] || 'text-white/50';
+        const colorClass = ARTIFACT_COLOR_MAP[ref.artifact_type] || 'text-c-text';
         const sectionCount = ref.usedInSections?.length ?? 0;
 
         return (
           <div
             key={ref.artifact_id}
-            className="group mx-2 rounded-xl px-3 py-2.5 hover:bg-white/[0.04] transition-colors"
+            className="group mx-2 rounded-xl px-3 py-2.5 hover:bg-c-surface/[0.04] transition-colors"
           >
             <div className="flex items-start gap-2.5">
               <div
-                className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] ${colorClass}`}
+                className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-c-surface/[0.06] ${colorClass}`}
               >
                 <Icon className="h-3.5 w-3.5" />
               </div>
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-medium text-white/90 truncate">
+                  <span className="text-sm font-medium text-c-text truncate">
                     {ref.artifact_name || ref.artifact_id}
                   </span>
-                  <ExternalLink className="h-3 w-3 text-white/20 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                  <ExternalLink className="h-3 w-3 text-c-text opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                 </div>
 
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-[11px] text-white/40">
+                  <span className="text-[11px] text-c-text">
                     {formatArtifactType(ref.artifact_type, isPl)}
                   </span>
                   {sectionCount > 0 && (
-                    <span className="text-[11px] text-white/30">
+                    <span className="text-[11px] text-c-text">
                       ·{' '}
                       {isPl
                         ? `${sectionCount} sekcji`
@@ -200,7 +200,7 @@ const SourceTraceabilityPanel: React.FC<SourceTraceabilityPanelProps> = ({
                 </div>
 
                 {ref.lastUsed && (
-                  <div className="text-[10px] text-white/25 mt-0.5">
+                  <div className="text-[10px] text-c-text mt-0.5">
                     {isPl ? 'Użyto: ' : 'Used: '}
                     {formatDate(ref.lastUsed)}
                   </div>
@@ -211,7 +211,7 @@ const SourceTraceabilityPanel: React.FC<SourceTraceabilityPanelProps> = ({
                     {ref.usedInSections.slice(0, 4).map((sec) => (
                       <span
                         key={sec.sectionKey}
-                        className="inline-block rounded-md bg-white/[0.05] px-1.5 py-0.5 text-[10px] text-white/35"
+                        className="inline-block rounded-md bg-c-surface/[0.05] px-1.5 py-0.5 text-[10px] text-c-text"
                         title={sec.sectionTitle}
                       >
                         {sec.sectionTitle.length > 20
@@ -220,7 +220,7 @@ const SourceTraceabilityPanel: React.FC<SourceTraceabilityPanelProps> = ({
                       </span>
                     ))}
                     {ref.usedInSections.length > 4 && (
-                      <span className="text-[10px] text-white/25">
+                      <span className="text-[10px] text-c-text">
                         +{ref.usedInSections.length - 4}
                       </span>
                     )}
@@ -230,7 +230,7 @@ const SourceTraceabilityPanel: React.FC<SourceTraceabilityPanelProps> = ({
 
               <button
                 className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md
-                           text-white/20 hover:text-white/60 hover:bg-white/[0.06]
+                           text-c-text hover:text-c-text hover:bg-c-surface/[0.06]
                            opacity-0 group-hover:opacity-100 transition-all"
                 title={isPl ? 'Odśwież ze źródła' : 'Refresh from source'}
                 onClick={() => {

@@ -15,7 +15,9 @@ import {
   Table2,
   X,
 } from 'lucide-react';
+import type { TFunction } from 'i18next';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
@@ -66,12 +68,16 @@ const CANVAS_KINDS: WorkCanvasKind[] = [
   'deck',
 ];
 
-const QUICK_PROMPTS = [
-  'Zrób z tej rozmowy krótką notatkę po prawej stronie.',
-  'Zamień to w tabelę priorytetów.',
-  'Przygotuj checklistę działań.',
-  'Uruchom głębsze badanie i pokaż evidence.',
-];
+type TFn = TFunction;
+
+function buildQuickPrompts(t: TFn): string[] {
+  return [
+    t('canvas.workShell.quickPromptNote', 'Turn this conversation into a short note on the right.'),
+    t('canvas.workShell.quickPromptTable', 'Turn this into a priority table.'),
+    t('canvas.workShell.quickPromptChecklist', 'Prepare an action checklist.'),
+    t('canvas.workShell.quickPromptResearch', 'Run deeper research and show the evidence.'),
+  ];
+}
 
 function createCanvasId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
@@ -120,27 +126,40 @@ function inferCanvasKind(message: string): WorkCanvasKind {
   return 'markdown';
 }
 
-function titleFromMessage(message: string): string {
+function titleFromMessage(message: string, t: TFn): string {
   const clean = message.replace(/\s+/g, ' ').trim();
-  if (!clean) return 'Untitled work canvas';
+  if (!clean) return t('canvas.workShell.untitledCanvas', 'Untitled work canvas');
   return clean.length > 64 ? `${clean.slice(0, 61)}...` : clean;
 }
 
-function buildDraftContent(kind: WorkCanvasKind, message: string): WorkCanvasDraft['content'] {
-  const goal = message.trim() || 'Nowy temat roboczy';
+function buildDraftContent(
+  kind: WorkCanvasKind,
+  message: string,
+  t: TFn
+): WorkCanvasDraft['content'] {
+  const goal = message.trim() || t('canvas.workShell.seed.newTopic', 'New working topic');
   if (kind === 'table') {
+    const colArea = t('canvas.workShell.seed.colArea', 'Area');
+    const colQuestion = t('canvas.workShell.seed.colQuestion', 'Question');
+    const colNextStep = t('canvas.workShell.seed.colNextStep', 'Next step');
     return {
-      columns: ['Area', 'Question', 'Next step'],
+      columns: [colArea, colQuestion, colNextStep],
       rows: [
         {
-          Area: 'Context',
-          Question: goal,
-          'Next step': 'Doprecyzować zakres i właściciela.',
+          [colArea]: t('canvas.workShell.seed.rowContext', 'Context'),
+          [colQuestion]: goal,
+          [colNextStep]: t('canvas.workShell.seed.rowContextStep', 'Clarify scope and owner.'),
         },
         {
-          Area: 'Evidence',
-          Question: 'Jakie źródła potwierdzają kierunek?',
-          'Next step': 'Dodać źródła lub uruchomić deep research.',
+          [colArea]: t('canvas.workShell.seed.rowEvidence', 'Evidence'),
+          [colQuestion]: t(
+            'canvas.workShell.seed.rowEvidenceQuestion',
+            'Which sources confirm the direction?'
+          ),
+          [colNextStep]: t(
+            'canvas.workShell.seed.rowEvidenceStep',
+            'Add sources or run deep research.'
+          ),
         },
       ],
     };
@@ -148,11 +167,22 @@ function buildDraftContent(kind: WorkCanvasKind, message: string): WorkCanvasDra
 
   if (kind === 'checklist') {
     return [
-      { id: 'scope', label: 'Doprecyzować cel i zakres pracy.', checked: false },
-      { id: 'sources', label: 'Dodać źródła, założenia i ograniczenia.', checked: false },
+      {
+        id: 'scope',
+        label: t('canvas.workShell.seed.checkScope', 'Clarify the goal and scope of the work.'),
+        checked: false,
+      },
+      {
+        id: 'sources',
+        label: t('canvas.workShell.seed.checkSources', 'Add sources, assumptions and constraints.'),
+        checked: false,
+      },
       {
         id: 'decision',
-        label: 'Ustalić, czy wynik ma stać się ideą, inicjatywą albo taskiem.',
+        label: t(
+          'canvas.workShell.seed.checkDecision',
+          'Decide whether the result should become an idea, initiative or task.'
+        ),
         checked: false,
       },
     ];
@@ -162,9 +192,9 @@ function buildDraftContent(kind: WorkCanvasKind, message: string): WorkCanvasDra
     return {
       mission: goal,
       questions: [
-        'Jakie fakty są już potwierdzone?',
-        'Jakie założenia wymagają sprawdzenia?',
-        'Jakie decyzje powinny wynikać z badania?',
+        t('canvas.workShell.seed.questionFacts', 'Which facts are already confirmed?'),
+        t('canvas.workShell.seed.questionAssumptions', 'Which assumptions need validation?'),
+        t('canvas.workShell.seed.questionDecisions', 'Which decisions should the research drive?'),
       ],
       allowedSources: ['web', 'attachment', 'product', 'org'],
       status: 'planned',
@@ -174,41 +204,58 @@ function buildDraftContent(kind: WorkCanvasKind, message: string): WorkCanvasDra
   if (kind === 'decision') {
     return {
       recommendation: goal,
-      options: ['Proceed with a small governed proposal', 'Run more discovery first'],
-      assumptions: ['Decision is based on the current conversation until sources are attached.'],
-      risks: ['Missing source confidence can block trusted/final state.'],
+      options: [
+        t('canvas.workShell.seed.optionProceed', 'Proceed with a small governed proposal'),
+        t('canvas.workShell.seed.optionDiscovery', 'Run more discovery first'),
+      ],
+      assumptions: [
+        t(
+          'canvas.workShell.seed.assumptionConversation',
+          'Decision is based on the current conversation until sources are attached.'
+        ),
+      ],
+      risks: [
+        t(
+          'canvas.workShell.seed.riskConfidence',
+          'Missing source confidence can block trusted/final state.'
+        ),
+      ],
       confidence: 0.62,
     };
   }
 
   if (kind === 'document' || kind === 'sheet' || kind === 'deck') {
-    return `# ${titleFromMessage(goal)}
+    return `# ${titleFromMessage(goal, t)}
 
-This is a right-side Work Canvas draft. Keep the chat open on the left and shape this output here before saving, approving or exporting it through governed actions.
+${t(
+  'canvas.workShell.seed.kimiIntro',
+  'This is a right-side Work Canvas draft. Keep the chat open on the left and shape this output here before saving, approving or exporting it through governed actions.'
+)}
 
-## Request
+## ${t('canvas.workShell.seed.requestHeading', 'Request')}
 
 ${goal}
 `;
   }
 
-  return `# ${titleFromMessage(goal)}
+  return `# ${titleFromMessage(goal, t)}
 
-## Working Note
+## ${t('canvas.workShell.seed.workingNoteHeading', 'Working Note')}
 
 ${goal}
 
-## Next Questions
+## ${t('canvas.workShell.seed.nextQuestionsHeading', 'Next Questions')}
 
-- What decision should this support?
-- Which sources or company context should be attached?
-- Should this become an idea, initiative, task or project brief?
+- ${t('canvas.workShell.seed.nextQuestionDecision', 'What decision should this support?')}
+- ${t('canvas.workShell.seed.nextQuestionSources', 'Which sources or company context should be attached?')}
+- ${t('canvas.workShell.seed.nextQuestionTarget', 'Should this become an idea, initiative, task or project brief?')}
 `;
 }
 
 function createDraft(
   conversationId: string,
   message: string,
+  t: TFn,
   kind = inferCanvasKind(message),
   projectId?: string | null
 ): WorkCanvasDraft {
@@ -217,8 +264,8 @@ function createDraft(
     id: createCanvasId(),
     conversationId,
     kind,
-    title: titleFromMessage(message),
-    content: buildDraftContent(kind, message),
+    title: titleFromMessage(message, t),
+    content: buildDraftContent(kind, message, t),
     saveState: 'unsaved',
     lifecycleState: 'draft',
     dirtyState: 'dirty',
@@ -227,13 +274,13 @@ function createDraft(
     sources: [
       {
         id: 'conversation',
-        label: 'Current conversation',
+        label: t('canvas.workShell.currentConversation', 'Current conversation'),
         confidence: 0.78,
       },
     ],
     provenance: {
       conversationId,
-      sourceSummary: 'Current conversation',
+      sourceSummary: t('canvas.workShell.currentConversation', 'Current conversation'),
     },
     clientId: null,
     projectId: projectId || null,
@@ -244,22 +291,34 @@ function createDraft(
   };
 }
 
-function workCanvasErrorMessage(error: any, fallback: string): string {
+function workCanvasErrorMessage(error: any, fallback: string, t: TFn): string {
   const code = error?.data?.code || error?.data?.error?.code || error?.code;
   if (code === 'CANVAS_CAPABILITY_REQUIRED') {
-    return 'Nie masz wymaganej capability do tej akcji canvas.';
+    return t(
+      'canvas.workShell.errCapabilityRequired',
+      'You do not have the required capability for this canvas action.'
+    );
   }
   if (code === 'CANVAS_PROJECT_SCOPE_REQUIRED') {
-    return 'Ten canvas wymaga członkostwa w projekcie.';
+    return t('canvas.workShell.errProjectScope', 'This canvas requires project membership.');
   }
   if (code === 'STALE_CANVAS_PROPOSAL') {
-    return 'Proposal jest nieaktualny, bo canvas zmienił się po jego utworzeniu. Wygeneruj proposal ponownie.';
+    return t(
+      'canvas.workShell.errStaleProposal',
+      'The proposal is stale because the canvas changed after it was created. Generate the proposal again.'
+    );
   }
   if (code === 'V8_ARTIFACT_SAVE_FAILED') {
-    return 'V8 artifact runtime nie zmaterializował wyniku. Canvas oznaczono jako failed.';
+    return t(
+      'canvas.workShell.errArtifactSaveFailed',
+      'The V8 artifact runtime did not materialize the result. The canvas was marked as failed.'
+    );
   }
   if (code === 'CANVAS_ACTOR_REQUIRED') {
-    return 'Nie można zatwierdzić proposal bez poprawnego kontekstu użytkownika.';
+    return t(
+      'canvas.workShell.errActorRequired',
+      'The proposal cannot be approved without a valid user context.'
+    );
   }
   return error?.message || fallback;
 }
@@ -294,17 +353,18 @@ function downloadTextFile(filename: string, content: string) {
 }
 
 function ReadBackView({ readBack }: { readBack: Record<string, unknown> }) {
+  const { t } = useTranslation();
   const rows = [
-    ['Target', readBack.target],
-    ['Target id', readBack.targetObjectId],
-    ['Status', readBack.status],
-    ['Entity status', readBack.entityStatus],
-    ['Project', readBack.projectId],
-    ['Owner', readBack.ownerId],
-    ['Assignee', readBack.assigneeId],
-    ['Artifact', readBack.artifactId],
-    ['Run', readBack.artifactRunId],
-    ['Audit', readBack.auditEventId],
+    [t('canvas.workShell.readBack.target', 'Target'), readBack.target],
+    [t('canvas.workShell.readBack.targetId', 'Target id'), readBack.targetObjectId],
+    [t('canvas.workShell.readBack.status', 'Status'), readBack.status],
+    [t('canvas.workShell.readBack.entityStatus', 'Entity status'), readBack.entityStatus],
+    [t('canvas.workShell.readBack.project', 'Project'), readBack.projectId],
+    [t('canvas.workShell.readBack.owner', 'Owner'), readBack.ownerId],
+    [t('canvas.workShell.readBack.assignee', 'Assignee'), readBack.assigneeId],
+    [t('canvas.workShell.readBack.artifact', 'Artifact'), readBack.artifactId],
+    [t('canvas.workShell.readBack.run', 'Run'), readBack.artifactRunId],
+    [t('canvas.workShell.readBack.audit', 'Audit'), readBack.auditEventId],
   ].filter(([, value]) => value !== undefined && value !== null && value !== '');
 
   return (
@@ -441,12 +501,13 @@ function ResearchCanvas({
   content: WorkCanvasResearchContent;
   onResearchSessionSelected: (session: ResearchSessionView | null) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-500/30 dark:bg-indigo-500/10">
         <div className="flex items-center gap-2 text-sm font-semibold text-indigo-700 dark:text-indigo-200">
           <FlaskConical size={16} />
-          Deep research mission
+          {t('canvas.workShell.researchMission', 'Deep research mission')}
         </div>
         <p className="mt-2 text-sm text-indigo-900 dark:text-indigo-100">{content.mission}</p>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -462,7 +523,9 @@ function ResearchCanvas({
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/[0.03]">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Research questions</h3>
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+          {t('canvas.workShell.researchQuestions', 'Research questions')}
+        </h3>
         <ul className="mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-200">
           {content.questions.map((question) => (
             <li key={question} className="flex gap-2">
@@ -475,11 +538,12 @@ function ResearchCanvas({
 
       <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 dark:border-white/10 dark:bg-navy-950/60">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          Governed research runtime
+          {t('canvas.workShell.governedResearchRuntime', 'Governed research runtime')}
         </p>
         {draft.researchSessionId ? (
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Linked session: <span className="font-semibold">{draft.researchSessionId}</span>
+            {t('canvas.workShell.linkedSession', 'Linked session')}:{' '}
+            <span className="font-semibold">{draft.researchSessionId}</span>
           </p>
         ) : null}
         <div className="mt-3 max-h-[520px] overflow-auto rounded-xl bg-white dark:bg-navy-900">
@@ -496,17 +560,18 @@ function ResearchCanvas({
 }
 
 function DecisionCanvas({ content }: { content: WorkCanvasDecisionContent }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
         <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-200">
-          Recommendation
+          {t('canvas.workShell.recommendation', 'Recommendation')}
         </p>
         <p className="mt-2 text-sm text-amber-950 dark:text-amber-50">{content.recommendation}</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 p-4 dark:border-white/10">
-          <h3 className="text-sm font-semibold">Options</h3>
+          <h3 className="text-sm font-semibold">{t('canvas.workShell.options', 'Options')}</h3>
           <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
             {content.options.map((option) => (
               <li key={option}>- {option}</li>
@@ -514,7 +579,9 @@ function DecisionCanvas({ content }: { content: WorkCanvasDecisionContent }) {
           </ul>
         </div>
         <div className="rounded-2xl border border-slate-200 p-4 dark:border-white/10">
-          <h3 className="text-sm font-semibold">Assumptions and risks</h3>
+          <h3 className="text-sm font-semibold">
+            {t('canvas.workShell.assumptionsRisks', 'Assumptions and risks')}
+          </h3>
           <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
             {[...content.assumptions, ...content.risks].map((item) => (
               <li key={item}>- {item}</li>
@@ -523,10 +590,10 @@ function DecisionCanvas({ content }: { content: WorkCanvasDecisionContent }) {
         </div>
       </div>
       <p className="text-xs text-slate-500 dark:text-slate-400">
-        Confidence:{' '}
+        {t('canvas.workShell.confidence', 'Confidence')}:{' '}
         {typeof content.confidence === 'number'
           ? `${Math.round(content.confidence * 100)}%`
-          : 'not set'}
+          : t('canvas.workShell.notSet', 'not set')}
       </p>
     </div>
   );
@@ -541,18 +608,28 @@ function SourceCanvas({ draft }: { draft: WorkCanvasDraft }) {
 }
 
 function KimiLaneCanvas({ draft }: { draft: WorkCanvasDraft }) {
+  const { t } = useTranslation();
   const label =
     draft.kind === 'sheet'
-      ? 'Sheet canvas'
+      ? t('canvas.workShell.sheetCanvas', 'Sheet canvas')
       : draft.kind === 'deck'
-        ? 'Deck canvas'
-        : 'Document canvas';
+        ? t('canvas.workShell.deckCanvas', 'Deck canvas')
+        : t('canvas.workShell.documentCanvas', 'Document canvas');
   const helper =
     draft.kind === 'sheet'
-      ? 'Use the left chat to shape rows, assumptions and formulas. This right side stays the governed canvas preview.'
+      ? t(
+          'canvas.workShell.sheetHelper',
+          'Use the left chat to shape rows, assumptions and formulas. This right side stays the governed canvas preview.'
+        )
       : draft.kind === 'deck'
-        ? 'Use the left chat to shape the storyline and slide outline. This right side stays the governed canvas preview.'
-        : 'Use the left chat to shape the document. This right side stays the governed canvas preview.';
+        ? t(
+            'canvas.workShell.deckHelper',
+            'Use the left chat to shape the storyline and slide outline. This right side stays the governed canvas preview.'
+          )
+        : t(
+            'canvas.workShell.documentHelper',
+            'Use the left chat to shape the document. This right side stays the governed canvas preview.'
+          );
 
   return (
     <div className="space-y-4">
@@ -617,6 +694,7 @@ function CanvasRenderer({
 }
 
 export function WorkCanvasShell() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const activeConversationId = useConversationStore((state) => state.activeConversationId);
@@ -630,7 +708,8 @@ export function WorkCanvasShell() {
   const [draft, setDraft] = React.useState<WorkCanvasDraft | null>(() =>
     createDraft(
       'pending-conversation',
-      'Start a company work note',
+      t('canvas.workShell.startNote', 'Start a company work note'),
+      t,
       requestedKind && CANVAS_KINDS.includes(requestedKind) ? requestedKind : 'markdown',
       activeConversationProjectId
     )
@@ -651,7 +730,7 @@ export function WorkCanvasShell() {
     () =>
       createWorkspaceContext(AppView.AI_OS_WORK_CANVAS, 'canvas', {
         entityId: draft?.id,
-        entityName: draft?.title || 'Work Canvas',
+        entityName: draft?.title || t('canvas.workShell.workCanvas', 'Work Canvas'),
         entityData: {
           canvasKind: draft?.kind || 'markdown',
           saveState: draft?.saveState || 'unsaved',
@@ -681,7 +760,13 @@ export function WorkCanvasShell() {
         })
         .catch((error: any) => {
           if (!cancelled)
-            setErrorMessage(workCanvasErrorMessage(error, 'Canvas draft load failed.'));
+            setErrorMessage(
+              workCanvasErrorMessage(
+                error,
+                t('canvas.workShell.errDraftLoad', 'Canvas draft load failed.'),
+                t
+              )
+            );
         });
       return () => {
         cancelled = true;
@@ -699,18 +784,22 @@ export function WorkCanvasShell() {
         setDraft(drafts[0]);
       })
       .catch(() => {
-        if (!cancelled) setErrorMessage('Nie udało się odświeżyć listy canvas draftów.');
+        if (!cancelled)
+          setErrorMessage(
+            t('canvas.workShell.errDraftListRefresh', 'Could not refresh the canvas draft list.')
+          );
       });
     return () => {
       cancelled = true;
     };
-  }, [activeConversationProjectId, conversationId, draftIdParam]);
+  }, [activeConversationProjectId, conversationId, draftIdParam, t]);
 
   const handleMessageSent = React.useCallback(
     async (message: string) => {
       const nextDraft = createDraft(
         conversationId,
         message,
+        t,
         inferCanvasKind(message),
         activeConversationProjectId
       );
@@ -736,10 +825,16 @@ export function WorkCanvasShell() {
           { replace: true }
         );
       } catch (error: any) {
-        setErrorMessage(workCanvasErrorMessage(error, 'Canvas draft could not be persisted.'));
+        setErrorMessage(
+          workCanvasErrorMessage(
+            error,
+            t('canvas.workShell.errDraftPersist', 'Canvas draft could not be persisted.'),
+            t
+          )
+        );
       }
     },
-    [activeConversationProjectId, conversationId, navigate]
+    [activeConversationProjectId, conversationId, navigate, t]
   );
 
   const switchKind = (kind: WorkCanvasKind) => {
@@ -747,8 +842,8 @@ export function WorkCanvasShell() {
       navigate(`/ai/work-canvas?kind=${kind}&conversationId=${encodeURIComponent(conversationId)}`);
     }
     setDraft((current) => {
-      const seed = current?.title || 'New work canvas';
-      return createDraft(conversationId, seed, kind, activeConversationProjectId);
+      const seed = current?.title || t('canvas.workShell.newWorkCanvas', 'New work canvas');
+      return createDraft(conversationId, seed, t, kind, activeConversationProjectId);
     });
     setProposal(null);
   };
@@ -789,7 +884,13 @@ export function WorkCanvasShell() {
       setDraft(result.data);
       setSaveReadBack(result.readBack || null);
     } catch (error: any) {
-      setErrorMessage(workCanvasErrorMessage(error, 'Save as artifact failed.'));
+      setErrorMessage(
+        workCanvasErrorMessage(
+          error,
+          t('canvas.workShell.errSaveArtifact', 'Save as artifact failed.'),
+          t
+        )
+      );
       setDraft((current) => (current ? { ...current, saveState: 'failed' } : current));
     } finally {
       setIsBusy(false);
@@ -820,7 +921,13 @@ export function WorkCanvasShell() {
           : current
       );
     } catch (error: any) {
-      setErrorMessage(workCanvasErrorMessage(error, 'Conversion proposal failed.'));
+      setErrorMessage(
+        workCanvasErrorMessage(
+          error,
+          t('canvas.workShell.errConversionProposal', 'Conversion proposal failed.'),
+          t
+        )
+      );
     } finally {
       setIsBusy(false);
     }
@@ -837,7 +944,15 @@ export function WorkCanvasShell() {
           : await WorkCanvasApi.rejectProposal(proposal.id, 'Rejected from Work Canvas');
       setProposal(result.data);
     } catch (error: any) {
-      setErrorMessage(workCanvasErrorMessage(error, `Proposal ${decision} failed.`));
+      setErrorMessage(
+        workCanvasErrorMessage(
+          error,
+          decision === 'approve'
+            ? t('canvas.workShell.errProposalApprove', 'Proposal approve failed.')
+            : t('canvas.workShell.errProposalReject', 'Proposal reject failed.'),
+          t
+        )
+      );
     } finally {
       setIsBusy(false);
     }
@@ -846,8 +961,11 @@ export function WorkCanvasShell() {
   const Icon = draft ? kindIcon(draft.kind) : Sparkles;
   const isSaved = draft?.saveState === 'saved';
   const versionLabel = draft?.artifactVersion
-    ? `Version ${draft.artifactVersion}`
-    : 'Draft version';
+    ? t('canvas.workShell.versionLabel', {
+        defaultValue: 'Version {{version}}',
+        version: draft.artifactVersion,
+      })
+    : t('canvas.workShell.draftVersion', 'Draft version');
   // W2-T5 — markdown content updates from the TipTap editor. Updates local
   // state immediately and debounces a server-side `updateDraft` call so a
   // burst of keystrokes makes one network round-trip. Skips persistence on a
@@ -864,11 +982,17 @@ export function WorkCanvasShell() {
         const persisted = draft;
         if (!persisted || persisted.id.startsWith('work-canvas-')) return;
         void WorkCanvasApi.updateDraft(persisted.id, { content: nextMd }).catch((error: any) => {
-          setErrorMessage(workCanvasErrorMessage(error, 'Canvas changes could not be saved.'));
+          setErrorMessage(
+            workCanvasErrorMessage(
+              error,
+              t('canvas.workShell.errChangesSave', 'Canvas changes could not be saved.'),
+              t
+            )
+          );
         });
       }, 600);
     },
-    [draft]
+    [draft, t]
   );
   React.useEffect(
     () => () => {
@@ -901,10 +1025,16 @@ export function WorkCanvasShell() {
         researchSessionId: session.sessionId,
         content: draftToPersist.content,
       }).catch((error: any) => {
-        setErrorMessage(workCanvasErrorMessage(error, 'Research session link could not be saved.'));
+        setErrorMessage(
+          workCanvasErrorMessage(
+            error,
+            t('canvas.workShell.errResearchLink', 'Research session link could not be saved.'),
+            t
+          )
+        );
       });
     }, 0);
-  }, []);
+  }, [t]);
 
   const copyCurrentDraft = async () => {
     if (!draft) return;
@@ -923,13 +1053,19 @@ export function WorkCanvasShell() {
 
   const improveCurrentDraft = () => {
     setErrorMessage(
-      'Improve is queued as an AI proposal action; no canvas content was changed without approval.'
+      t(
+        'canvas.workShell.improveQueued',
+        'Improve is queued as an AI proposal action; no canvas content was changed without approval.'
+      )
     );
   };
 
   const highlightCurrentDraft = () => {
     setErrorMessage(
-      'Highlight mode is queued as a review action; assumptions and missing sources will be marked after approval.'
+      t(
+        'canvas.workShell.highlightQueued',
+        'Highlight mode is queued as a review action; assumptions and missing sources will be marked after approval.'
+      )
     );
   };
   const isKimiKind =
@@ -945,11 +1081,11 @@ export function WorkCanvasShell() {
         <UnifiedChatPanel
           mode="split"
           workspaceContext={workspaceContext}
-          title="Company AI Chat"
+          title={t('canvas.workShell.chatTitle', 'Company AI Chat')}
           showModeToggle={false}
           showHistoryTrigger={true}
           showFocusMode={true}
-          quickPrompts={QUICK_PROMPTS}
+          quickPrompts={buildQuickPrompts(t)}
           onMessageSent={handleMessageSent}
           systemPrompt="You are helping the user turn conversation into a structured Consultify Work Canvas. Prefer concise business outputs with sources, assumptions and next actions."
         />
@@ -958,7 +1094,7 @@ export function WorkCanvasShell() {
           onClick={() => setMobileChatOpen(false)}
           className="absolute right-3 top-3 rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white lg:hidden"
         >
-          Close chat
+          {t('canvas.workShell.closeChat', 'Close chat')}
         </button>
       </aside>
 
@@ -971,7 +1107,7 @@ export function WorkCanvasShell() {
                 Consultify Work Canvas
               </div>
               <h1 className="mt-1 truncate text-lg font-semibold text-slate-950 dark:text-white">
-                {draft?.title || 'No active canvas'}
+                {draft?.title || t('canvas.workShell.noActiveCanvas', 'No active canvas')}
               </h1>
             </div>
 
@@ -982,7 +1118,7 @@ export function WorkCanvasShell() {
                 className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 lg:hidden"
               >
                 <MessageSquare size={13} />
-                Chat
+                {t('canvas.workShell.chat', 'Chat')}
               </button>
               {CANVAS_KINDS.map((kind) => (
                 <button
@@ -995,7 +1131,7 @@ export function WorkCanvasShell() {
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15'
                   }`}
                 >
-                  {kind}
+                  {t(`canvas.workShell.kind.${kind}`, kind)}
                 </button>
               ))}
               <button
@@ -1005,7 +1141,7 @@ export function WorkCanvasShell() {
                 className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
               >
                 <Save size={13} />
-                Save artifact
+                {t('canvas.workShell.saveArtifact', 'Save artifact')}
               </button>
             </div>
           </div>
@@ -1021,7 +1157,7 @@ export function WorkCanvasShell() {
                   className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:border-indigo-400"
                 >
                   {target === 'idea' ? <Lightbulb size={13} /> : <Sparkles size={13} />}
-                  {WORK_CANVAS_TARGET_LABEL[target]}
+                  {t(`canvas.workShell.target.${target}`, WORK_CANVAS_TARGET_LABEL[target])}
                 </button>
               ))}
             </div>
@@ -1035,28 +1171,34 @@ export function WorkCanvasShell() {
                 type="button"
                 onClick={() => setVersionIndex((value) => Math.max(0, value - 1))}
                 disabled
-                title="Version history will load from artifact history in a later runtime step."
+                title={t(
+                  'canvas.workShell.versionHistoryPending',
+                  'Version history will load from artifact history in a later runtime step.'
+                )}
                 className="rounded-full border border-slate-200 px-2 py-1 font-semibold text-slate-600 dark:border-white/10 dark:text-slate-500"
               >
-                Prev
+                {t('canvas.workShell.prev', 'Prev')}
               </button>
               <button
                 type="button"
                 onClick={() => setVersionIndex((value) => value + 1)}
                 disabled
-                title="Version history will load from artifact history in a later runtime step."
+                title={t(
+                  'canvas.workShell.versionHistoryPending',
+                  'Version history will load from artifact history in a later runtime step.'
+                )}
                 className="rounded-full border border-slate-200 px-2 py-1 font-semibold text-slate-600 dark:border-white/10 dark:text-slate-500"
               >
-                Next
+                {t('canvas.workShell.next', 'Next')}
               </button>
               <span className="h-3 w-px bg-slate-300 dark:bg-white/10" />
               <span>
-                Save:{' '}
+                {t('canvas.workShell.saveLabel', 'Save')}:{' '}
                 <strong className="text-slate-700 dark:text-slate-200">{draft?.saveState}</strong>
               </span>
               <span className="h-3 w-px bg-slate-300 dark:bg-white/10" />
               <span>
-                Lifecycle:{' '}
+                {t('canvas.workShell.lifecycleLabel', 'Lifecycle')}:{' '}
                 <strong className="text-slate-700 dark:text-slate-200">
                   {draft?.lifecycleState}
                 </strong>
@@ -1075,9 +1217,10 @@ export function WorkCanvasShell() {
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-navy-900">
               {isKimiKind ? (
                 <div className="mb-4 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-xs text-indigo-800 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-100">
-                  This lane now uses the shared split screen: chat on the left, canvas preview on
-                  the right. Native KIMI export remains available through the dedicated lane
-                  runtime.
+                  {t(
+                    'canvas.workShell.kimiLaneBanner',
+                    'This lane now uses the shared split screen: chat on the left, canvas preview on the right. Native KIMI export remains available through the dedicated lane runtime.'
+                  )}
                 </div>
               ) : null}
               {draft ? (
@@ -1093,7 +1236,7 @@ export function WorkCanvasShell() {
                       }`}
                     >
                       <Eye size={13} />
-                      Preview
+                      {t('canvas.workShell.preview', 'Preview')}
                     </button>
                     <button
                       type="button"
@@ -1105,7 +1248,7 @@ export function WorkCanvasShell() {
                       }`}
                     >
                       <Code2 size={13} />
-                      Source
+                      {t('canvas.workShell.source', 'Source')}
                     </button>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -1115,7 +1258,7 @@ export function WorkCanvasShell() {
                       className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-white/10 dark:text-slate-200"
                     >
                       <Copy size={13} />
-                      Copy
+                      {t('canvas.workShell.copy', 'Copy')}
                     </button>
                     <button
                       type="button"
@@ -1123,21 +1266,21 @@ export function WorkCanvasShell() {
                       className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-white/10 dark:text-slate-200"
                     >
                       <Download size={13} />
-                      Download
+                      {t('canvas.workShell.download', 'Download')}
                     </button>
                     <button
                       type="button"
                       onClick={highlightCurrentDraft}
                       className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:border-amber-400/40 dark:text-amber-100"
                     >
-                      Highlight
+                      {t('canvas.workShell.highlight', 'Highlight')}
                     </button>
                     <button
                       type="button"
                       onClick={improveCurrentDraft}
                       className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 px-3 py-1.5 text-xs font-semibold text-indigo-700 dark:border-indigo-400/40 dark:text-indigo-100"
                     >
-                      Improve
+                      {t('canvas.workShell.improve', 'Improve')}
                     </button>
                   </div>
                 </div>
@@ -1152,9 +1295,14 @@ export function WorkCanvasShell() {
               ) : (
                 <div className="flex min-h-[420px] flex-col items-center justify-center text-center">
                   <Sparkles className="text-slate-600" size={32} />
-                  <h2 className="mt-3 text-lg font-semibold">Start working with AI</h2>
+                  <h2 className="mt-3 text-lg font-semibold">
+                    {t('canvas.workShell.emptyTitle', 'Start working with AI')}
+                  </h2>
                   <p className="mt-2 max-w-md text-sm text-slate-500 dark:text-slate-400">
-                    Ask the chat to create a note, table, checklist or research brief.
+                    {t(
+                      'canvas.workShell.emptyHint',
+                      'Ask the chat to create a note, table, checklist or research brief.'
+                    )}
                   </p>
                 </div>
               )}
@@ -1163,11 +1311,13 @@ export function WorkCanvasShell() {
             <aside className="space-y-4">
               <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-navy-900">
                 <h2 className="text-sm font-semibold text-slate-950 dark:text-white">
-                  Governance preview
+                  {t('canvas.workShell.governancePreview', 'Governance preview')}
                 </h2>
                 <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                  Lightweight chips stay simple in UI, but every durable conversion is treated as a
-                  preview/proposal before it becomes a business mutation.
+                  {t(
+                    'canvas.workShell.governanceHint',
+                    'Lightweight chips stay simple in UI, but every durable conversion is treated as a preview/proposal before it becomes a business mutation.'
+                  )}
                 </p>
                 {proposal ? (
                   <div className="mt-4 rounded-2xl border border-indigo-200 bg-indigo-50 p-3 dark:border-indigo-500/30 dark:bg-indigo-500/10">
@@ -1180,7 +1330,7 @@ export function WorkCanvasShell() {
                           {proposal.summary}
                         </p>
                         <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-200">
-                          Status: {proposal.status}
+                          {t('canvas.workShell.statusLabel', 'Status')}: {proposal.status}
                         </p>
                         {proposal.readBack ? <ReadBackView readBack={proposal.readBack} /> : null}
                       </div>
@@ -1188,7 +1338,7 @@ export function WorkCanvasShell() {
                         type="button"
                         onClick={() => setProposal(null)}
                         className="rounded-full p-1 text-indigo-500 hover:bg-indigo-100 dark:hover:bg-white/10"
-                        aria-label="Dismiss proposal"
+                        aria-label={t('canvas.workShell.dismissProposal', 'Dismiss proposal')}
                       >
                         <X size={14} />
                       </button>
@@ -1201,7 +1351,7 @@ export function WorkCanvasShell() {
                           disabled={isBusy}
                           className="rounded-full bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
                         >
-                          Approve proposal
+                          {t('canvas.workShell.approveProposal', 'Approve proposal')}
                         </button>
                         <button
                           type="button"
@@ -1209,20 +1359,23 @@ export function WorkCanvasShell() {
                           disabled={isBusy}
                           className="rounded-full border border-indigo-200 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-400/40 dark:text-indigo-100 dark:hover:bg-white/10"
                         >
-                          Reject
+                          {t('canvas.workShell.reject', 'Reject')}
                         </button>
                       </div>
                     ) : null}
                   </div>
                 ) : (
                   <p className="mt-4 rounded-2xl border border-dashed border-slate-300 p-3 text-xs text-slate-500 dark:border-white/10 dark:text-slate-400">
-                    Select Idea, Initiative, Task or Brief to create a proposal preview.
+                    {t(
+                      'canvas.workShell.selectTargetHint',
+                      'Select Idea, Initiative, Task or Brief to create a proposal preview.'
+                    )}
                   </p>
                 )}
                 {saveReadBack ? (
                   <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-500/30 dark:bg-emerald-500/10">
                     <p className="text-sm font-semibold text-emerald-950 dark:text-emerald-100">
-                      Artifact read-back
+                      {t('canvas.workShell.artifactReadBack', 'Artifact read-back')}
                     </p>
                     <ReadBackView readBack={saveReadBack} />
                   </div>
@@ -1231,22 +1384,24 @@ export function WorkCanvasShell() {
 
               <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-navy-900">
                 <h2 className="text-sm font-semibold text-slate-950 dark:text-white">
-                  Artifact runtime
+                  {t('canvas.workShell.artifactRuntime', 'Artifact runtime')}
                 </h2>
                 <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                  Use the existing V8 runtime for governed document/sheet/presentation
-                  materialization.
+                  {t(
+                    'canvas.workShell.artifactRuntimeHint',
+                    'Use the existing V8 runtime for governed document/sheet/presentation materialization.'
+                  )}
                 </p>
                 <div className="mt-3 flex items-center gap-2">
                   {isSaved ? (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200">
                       <Check size={13} />
-                      Saved
+                      {t('canvas.workShell.saved', 'Saved')}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-200">
                       <Loader2 size={13} />
-                      Draft
+                      {t('canvas.workShell.draft', 'Draft')}
                     </span>
                   )}
                   <V8ArtifactRunControl
@@ -1264,7 +1419,9 @@ export function WorkCanvasShell() {
               </div>
 
               <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-navy-900">
-                <h2 className="text-sm font-semibold text-slate-950 dark:text-white">Sources</h2>
+                <h2 className="text-sm font-semibold text-slate-950 dark:text-white">
+                  {t('canvas.workShell.sources', 'Sources')}
+                </h2>
                 <div className="mt-3 space-y-2">
                   {(draft?.sources || []).map((source) => (
                     <div
@@ -1275,10 +1432,10 @@ export function WorkCanvasShell() {
                         {source.label}
                       </p>
                       <p className="mt-1 text-slate-500 dark:text-slate-400">
-                        Confidence:{' '}
+                        {t('canvas.workShell.confidence', 'Confidence')}:{' '}
                         {typeof source.confidence === 'number'
                           ? `${Math.round(source.confidence * 100)}%`
-                          : 'not set'}
+                          : t('canvas.workShell.notSet', 'not set')}
                       </p>
                     </div>
                   ))}

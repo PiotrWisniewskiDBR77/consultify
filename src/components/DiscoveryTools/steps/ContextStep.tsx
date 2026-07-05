@@ -1253,7 +1253,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                           onClick={() => setSelectedDeepDive(option.label)}
                           className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors ${
                             active
-                              ? 'border-primary-400 bg-primary-500 text-white'
+                              ? 'border-c-text bg-c-text text-c-bg'
                               : 'border-primary-300/50 bg-white/80 text-primary-800 dark:border-primary-900/40 dark:bg-white/[0.04] dark:text-primary-200'
                           }`}
                         >
@@ -1267,7 +1267,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                       type="button"
                       onClick={() => handleImplementMissionFeedback(blockId)}
                       disabled={!selectedDeepDive}
-                      className="inline-flex rounded-2xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex rounded-2xl bg-c-text px-4 py-2 text-sm font-medium text-c-bg transition-colors hover:bg-c-text-secondary disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {labelsUi.implement}
                     </button>
@@ -1365,7 +1365,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                         <span
                           className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
                             active
-                              ? 'border-primary-500 bg-primary-500 text-white'
+                              ? 'border-c-text bg-c-text text-c-bg'
                               : 'border-slate-300 text-slate-600 dark:border-slate-600'
                           }`}
                         >
@@ -1644,7 +1644,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                           <span
                             className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
                               active
-                                ? 'border-primary-500 bg-primary-500 text-white'
+                                ? 'border-c-text bg-c-text text-c-bg'
                                 : 'border-slate-300 text-slate-600 dark:border-slate-600'
                             }`}
                           >
@@ -1875,7 +1875,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                   type="button"
                   onClick={onGenerateFullSession}
                   disabled={isGenerating}
-                  className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-c-text px-5 py-3 text-sm font-semibold text-c-bg transition-colors hover:bg-c-text-secondary disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Sparkles className={`h-4 w-4 ${isGenerating ? 'animate-pulse' : ''}`} />
                   {isGenerating

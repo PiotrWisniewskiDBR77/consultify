@@ -44,15 +44,16 @@ interface MiniCanvasProps {
 
 type ToolType = 'pen' | 'rect' | 'circle' | 'arrow' | 'eraser';
 
+// Drawing ink palette — categorical data colors from the token identity palette.
 const STROKE_COLORS = [
-  '#1e293b',
-  '#f43f5e',
-  '#3b82f6',
-  '#10b981',
-  '#f59e0b',
-  '#6366f1',
-  '#ec4899',
-  '#3b82f6',
+  'var(--c-text)',
+  'var(--c-tag-4)',
+  'var(--c-tag-1)',
+  'var(--c-tag-12)',
+  'var(--c-tag-9)',
+  'var(--c-tag-2)',
+  'var(--c-tag-11)',
+  'var(--c-tag-10)',
 ];
 
 export const MiniCanvas: React.FC<MiniCanvasProps> = ({
@@ -322,17 +323,17 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
   ];
 
   return (
-    <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 overflow-hidden bg-white dark:bg-navy-950">
+    <div className="rounded-2xl border border-c-border-subtle overflow-hidden bg-c-surface">
       {/* Toolbar */}
       {!locked && (
-        <div className="flex items-center gap-1 px-3 py-2 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-900/50">
+        <div className="flex items-center gap-1 px-3 py-2 border-b border-c-border-subtle bg-c-surface-raised">
           {TOOLS.map((t) => {
             const Icon = t.icon;
             return (
               <button
                 key={t.id}
                 onClick={() => setTool(t.id)}
-                className={`p-1.5 rounded-lg transition-colors ${tool === t.id ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                className={`p-1.5 rounded-lg transition-colors ${tool === t.id ? 'bg-c-accent-soft text-c-accent' : 'text-c-text-muted hover:text-c-text-secondary'}`}
                 title={t.label}
               >
                 <Icon size={13} />
@@ -340,7 +341,7 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
             );
           })}
 
-          <div className="w-px h-4 bg-slate-200 dark:bg-navy-700 mx-1" />
+          <div className="w-px h-4 bg-c-border-subtle mx-1" />
 
           {/* Colors */}
           <div className="flex items-center gap-0.5">
@@ -348,25 +349,25 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
               <button
                 key={c}
                 onClick={() => setColor(c)}
-                className={`w-4 h-4 rounded-full border-2 transition-transform hover:scale-110 ${color === c ? 'border-slate-400 dark:border-slate-300 scale-110' : 'border-transparent'}`}
+                className={`w-4 h-4 rounded-full border-2 transition-transform hover:scale-110 ${color === c ? 'border-c-border-strong scale-110' : 'border-transparent'}`}
                 style={{ backgroundColor: c }}
               />
             ))}
           </div>
 
-          <div className="w-px h-4 bg-slate-200 dark:bg-navy-700 mx-1" />
+          <div className="w-px h-4 bg-c-border-subtle mx-1" />
 
           {/* Stroke width */}
           <button
             onClick={() => setStrokeWidth(Math.max(1, strokeWidth - 1))}
-            className="p-1 rounded text-slate-600 hover:text-slate-600"
+            className="p-1 rounded text-c-text-muted hover:text-c-text-secondary"
           >
             <Minus size={11} />
           </button>
-          <span className="text-[9px] text-slate-500 w-4 text-center">{strokeWidth}</span>
+          <span className="text-[9px] text-c-text-muted w-4 text-center">{strokeWidth}</span>
           <button
             onClick={() => setStrokeWidth(Math.min(8, strokeWidth + 1))}
-            className="p-1 rounded text-slate-600 hover:text-slate-600"
+            className="p-1 rounded text-c-text-muted hover:text-c-text-secondary"
           >
             <Plus size={11} />
           </button>
@@ -376,21 +377,21 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
           <button
             onClick={handleUndo}
             disabled={undoStack.length === 0}
-            className="p-1 rounded text-slate-600 hover:text-slate-600 disabled:opacity-30"
+            className="p-1 rounded text-c-text-muted hover:text-c-text-secondary disabled:opacity-30"
           >
             <Undo2 size={12} />
           </button>
           <button
             onClick={handleRedo}
             disabled={redoStack.length === 0}
-            className="p-1 rounded text-slate-600 hover:text-slate-600 disabled:opacity-30"
+            className="p-1 rounded text-c-text-muted hover:text-c-text-secondary disabled:opacity-30"
           >
             <Redo2 size={12} />
           </button>
           <button
             onClick={handleClear}
             disabled={value.length === 0}
-            className="p-1 rounded text-slate-600 hover:text-danger-500 disabled:opacity-30"
+            className="p-1 rounded text-c-text-muted hover:text-c-danger disabled:opacity-30"
           >
             <Trash2 size={12} />
           </button>
@@ -402,7 +403,7 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
         ref={svgRef}
         width={width}
         height={height}
-        className="cursor-crosshair bg-white dark:bg-navy-950"
+        className="cursor-crosshair bg-c-surface"
         onMouseDown={handlePointerDown}
         onMouseMove={handlePointerMove}
         onMouseUp={handlePointerUp}
@@ -411,7 +412,7 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
         {/* Grid dots */}
         <defs>
           <pattern id="mini-grid" width="20" height="20" patternUnits="userSpaceOnUse">
-            <circle cx="1" cy="1" r="0.5" fill="#e2e8f0" className="dark:fill-navy-700" />
+            <circle cx="1" cy="1" r="0.5" fill="var(--c-border-subtle)" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#mini-grid)" />

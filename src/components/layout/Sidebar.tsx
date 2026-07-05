@@ -145,7 +145,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({
   return createPortal(
     <div
       ref={menuRef}
-      className={`fixed z-[9999] w-64 py-2 rounded-xl shadow-2xl border ${bgColor} ${borderColor} transition-opacity duration-200 ease-out ${isPositioned ? 'opacity-100' : 'opacity-0'}`}
+      className={`fixed z-context-menu w-64 py-2 rounded-xl shadow-2xl border ${bgColor} ${borderColor} transition-opacity duration-200 ease-out ${isPositioned ? 'opacity-100' : 'opacity-0'}`}
       style={{ top: position.top, left: position.left }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
@@ -630,6 +630,20 @@ export const Sidebar: React.FC = () => {
       >
         <button
           data-chat-toggle={item.id === 'AI_CHAT' ? 'true' : undefined}
+          aria-haspopup={hasSubItems ? 'menu' : undefined}
+          aria-expanded={hasSubItems ? activeFloating?.id === item.id : undefined}
+          onFocus={(e) => {
+            // Keyboard users: open the flyout when the parent item receives focus
+            if (hasSubItems || !showFull) {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setActiveFloating({
+                id: item.id,
+                rect,
+                items: item.subItems || [],
+                title: item.label,
+              });
+            }
+          }}
           onClick={() => {
             console.log('[Sidebar-old] Button clicked:', item.id, item.viewId);
 
@@ -729,7 +743,7 @@ export const Sidebar: React.FC = () => {
                 </span>
               )}
               {isCompleted && !isActive && <CheckCircle2 size={14} className="text-green-500/80" />}
-              {isLocked && <Lock size={12} className="text-slate-600 dark:text-slate-500" />}
+              {isLocked && <Lock size={14} className="text-slate-600 dark:text-slate-500" />}
               {hasSubItems && (
                 <span
                   className={`text-slate-600 dark:text-slate-400 transition-transform ${activeFloating?.id === item.id ? 'translate-x-1' : ''}`}
@@ -757,7 +771,8 @@ export const Sidebar: React.FC = () => {
       {/* Mobile/Tablet Overlay - shown when sidebar is open on touch devices */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-navy-950/80 backdrop-blur-sm z-40 lg:hidden"
+          aria-hidden="true"
+          className="fixed inset-0 bg-navy-950/80 backdrop-blur-sm z-overlay lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -766,7 +781,7 @@ export const Sidebar: React.FC = () => {
       <div
         data-tour="sidebar-nav"
         className={`
-          fixed inset-y-0 left-0 z-50
+          fixed inset-y-0 left-0 z-modal
           bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl
           border-r border-slate-200 dark:border-navy-700 shadow-2xl
           flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)]
@@ -803,6 +818,8 @@ export const Sidebar: React.FC = () => {
 
               <button
                 onClick={toggleSidebarCollapse}
+                aria-label={t('sidebar.collapse', 'Collapse')}
+                aria-expanded={true}
                 className={`
                   p-2 rounded-lg transition-colors
                   text-slate-600 dark:text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:bg-navy-800/30
@@ -820,6 +837,8 @@ export const Sidebar: React.FC = () => {
               </span>
               <button
                 onClick={toggleSidebarCollapse}
+                aria-label={t('sidebar.expand', 'Expand')}
+                aria-expanded={false}
                 className={`
                   p-2 rounded-lg transition-colors flex justify-center items-center
                   text-slate-600 dark:text-slate-500 hover:text-navy-900 hover:bg-slate-100 dark:hover:bg-navy-800/30
@@ -834,7 +853,10 @@ export const Sidebar: React.FC = () => {
         </div>
 
         {/* Scrollable Navigation */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10 scrollbar-track-transparent">
+        <nav
+          aria-label={t('sidebar.mainNavigation', 'Main navigation')}
+          className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10 scrollbar-track-transparent"
+        >
           {/* PMO Phase Indicator - Always visible */}
           <div className={`${showFull ? 'px-3 pt-4' : 'px-2 pt-4'}`}>
             <PhaseIndicator compact={!showFull} />
@@ -867,7 +889,7 @@ export const Sidebar: React.FC = () => {
                 ${!showFull ? 'justify-center px-0' : 'px-3'} `}
               title={t('sidebar.logOut')}
             >
-              <LogOut size={18} />
+              <LogOut size={16} />
               {showFull && <span>{t('sidebar.logOut')}</span>}
             </button>
           </div>

@@ -3,13 +3,13 @@ import {
   Bot,
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Edit2,
   ExternalLink,
   Flower2,
   Folder,
   FolderMinus,
-  FolderPlus,
   GitBranch,
   Lightbulb,
   Link2,
@@ -48,7 +48,8 @@ import {
 } from '@/components/shared/PreviewPane';
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
-import { ErrorState, LoadingState } from '@/components/ui/primitives';
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
+import { ErrorState } from '@/components/ui/primitives';
 import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
 import { CHIP_TONE_VAR, ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
 import type { FilterOption, TableFilters } from '@/components/ui/ResizableTable';
@@ -65,6 +66,7 @@ import { bucketIdeaStageForList, type IdeaStageV5, normalizeStageToV5 } from './
 import { IdeasTableContent } from './IdeasTableContent';
 import type {
   IdeasBulkBarPayload,
+  IdeasHomeShellPayload,
   IdeaStage,
   IdeasViewMode,
   MyIdea,
@@ -102,6 +104,11 @@ interface MyIdeasListContentProps {
     promoted: number;
   }) => void;
   onBulkBarChange?: (payload: IdeasBulkBarPayload | null) => void;
+  /**
+   * S1-U1: publishes folders/starred/recents state UP so the hub's Command Row
+   * absorbs them as dropdown chips (single dynamic line, no extra rows).
+   */
+  onHomeShellChange?: (payload: IdeasHomeShellPayload | null) => void;
   refreshTrigger?: number;
 }
 
@@ -154,7 +161,8 @@ const STAGE_CONFIG: Record<
     color: 'text-danger-500',
     bgColor: 'bg-danger-500/10 dark:bg-danger-500/15',
     borderColor: 'border-danger-400/30 dark:border-danger-500/20',
-    badgeBg: 'border border-danger-200/70 bg-danger-50 dark:border-danger-300/15 dark:bg-danger-300/10',
+    badgeBg:
+      'border border-danger-200/70 bg-danger-50 dark:border-danger-300/15 dark:bg-danger-300/10',
     badgeText: 'text-danger-800 dark:text-danger-200',
   },
 };
@@ -179,8 +187,7 @@ const TOOL_CONFIG: Record<
     borderColor: 'border-blue-400/30',
     label: 'Recommendation map',
     labelPl: 'Mapa rekomendacji',
-    badgeClass:
-      'border border-slate-200/70 bg-slate-100/80 text-slate-700 dark:border-white/[0.06] dark:bg-white/[0.06] dark:text-slate-200',
+    badgeClass: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     badgeIconClass: 'text-primary-600 dark:text-primary-300',
   },
   table: {
@@ -190,8 +197,7 @@ const TOOL_CONFIG: Record<
     borderColor: 'border-sky-400/30',
     label: 'Table',
     labelPl: 'Tabela',
-    badgeClass:
-      'border border-slate-200/70 bg-slate-100/80 text-slate-700 dark:border-white/[0.06] dark:bg-white/[0.06] dark:text-slate-200',
+    badgeClass: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     badgeIconClass: 'text-sky-600 dark:text-sky-300',
   },
   process_flow: {
@@ -201,8 +207,7 @@ const TOOL_CONFIG: Record<
     borderColor: 'border-emerald-400/30',
     label: 'Process Flow',
     labelPl: 'Proces',
-    badgeClass:
-      'border border-slate-200/70 bg-slate-100/80 text-slate-700 dark:border-white/[0.06] dark:bg-white/[0.06] dark:text-slate-200',
+    badgeClass: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     badgeIconClass: 'text-emerald-600 dark:text-emerald-300',
   },
   whiteboard: {
@@ -212,8 +217,7 @@ const TOOL_CONFIG: Record<
     borderColor: 'border-amber-400/30',
     label: 'Whiteboard',
     labelPl: 'Whiteboard',
-    badgeClass:
-      'border border-slate-200/70 bg-slate-100/80 text-slate-700 dark:border-white/[0.06] dark:bg-white/[0.06] dark:text-slate-200',
+    badgeClass: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
     badgeIconClass: 'text-amber-600 dark:text-amber-300',
   },
 };
@@ -341,6 +345,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   onCreateIdea,
   onCountsChange,
   onBulkBarChange,
+  onHomeShellChange,
   refreshTrigger,
 }) => {
   const { t, i18n } = useTranslation();
@@ -509,109 +514,50 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     [activeFolderId, fetchIdeas, isPolish]
   );
 
-  // M2/C: home-shell bar (folders + starred + recents) shared across the
-  // table / grid / garden views so the home is consistent everywhere.
-  const homeShellBar = (
-    <>
-      {/* folders bar (only once the folders endpoint is live) */}
-      {foldersAvailable && (
-        <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3">
-          <button
-            type="button"
-            onClick={() => setActiveFolderId(null)}
-            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
-              !activeFolderId
-                ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-300'
-                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
-            }`}
-          >
-            {isPolish ? 'Wszystkie' : 'All'}
-          </button>
-          {folders.map((f) => (
-            <span key={f.id} className="inline-flex items-center">
-              <button
-                type="button"
-                onClick={() => setActiveFolderId(f.id)}
-                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
-                  activeFolderId === f.id
-                    ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-300'
-                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
-                }`}
-              >
-                <Folder size={12} />
-                <span className="max-w-[140px] truncate">{f.name}</span>
-              </button>
-              {activeFolderId === f.id && (
-                <button
-                  type="button"
-                  onClick={() => handleDeleteFolder(f.id)}
-                  title={isPolish ? 'Usuń folder' : 'Delete folder'}
-                  aria-label={isPolish ? 'Usuń folder' : 'Delete folder'}
-                  className="ml-0.5 rounded-full p-0.5 text-slate-600 hover:text-danger-500"
-                >
-                  <X size={12} />
-                </button>
-              )}
-            </span>
-          ))}
-          <button
-            type="button"
-            onClick={handleCreateFolder}
-            className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-500 hover:bg-slate-50 dark:border-navy-600 dark:text-slate-400 dark:hover:bg-navy-800"
-          >
-            <FolderPlus size={12} />
-            {isPolish ? 'Nowy folder' : 'New folder'}
-          </button>
-        </div>
-      )}
-      {/* "Starred only" filter toggle (shown once anything is starred) */}
-      {(showStarredOnly || ideas.some((i) => isFavorite(i.id))) && (
-        <div className="px-4 pt-3">
-          <button
-            type="button"
-            onClick={() => setShowStarredOnly((v) => !v)}
-            aria-pressed={showStarredOnly}
-            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-              showStarredOnly
-                ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300'
-                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
-            }`}
-          >
-            <Star size={13} className={showStarredOnly ? 'fill-amber-400 text-amber-400' : ''} />
-            {isPolish ? 'Tylko oznaczone' : 'Starred only'}
-          </button>
-        </div>
-      )}
-      {/* "Recently opened" rail (localStorage-backed, per device) */}
-      {recentIdeas.length > 0 && (
-        <div className="px-4 pt-3" data-testid="ideas-recents-rail">
-          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
-            {isPolish ? 'Ostatnio otwierane' : 'Recently opened'}
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {recentIdeas.map((idea) => {
-              const tc = getToolConfig(idea.preferredTool);
-              const ToolIcon = tc.icon;
-              return (
-                <button
-                  key={idea.id}
-                  type="button"
-                  onClick={() => openIdea(idea.id, idea)}
-                  title={idea.title || ''}
-                  className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800"
-                >
-                  <ToolIcon size={13} className="text-slate-600" />
-                  <span className="max-w-[160px] truncate">
-                    {idea.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </>
+  // S1-U1: folders + starred + recents are NOT extra rows above the table any
+  // more — the state is published UP to the hub, which absorbs it into the
+  // single Command Row (Menu 3) as dropdown chips.
+  const starredCount = useMemo(
+    () => ideas.reduce((acc, i) => acc + (isFavorite(i.id) ? 1 : 0), 0),
+    [ideas, isFavorite]
   );
+
+  useEffect(() => {
+    if (!onHomeShellChange) return;
+    onHomeShellChange({
+      foldersAvailable,
+      folders,
+      activeFolderId,
+      starredCount,
+      showStarredOnly,
+      recents: recentIdeas.map((idea) => ({
+        id: idea.id,
+        title: idea.title || (isPolish ? 'Bez tytułu' : 'Untitled'),
+      })),
+      selectFolder: (folderId) => setActiveFolderId(folderId),
+      createFolder: handleCreateFolder,
+      deleteFolder: handleDeleteFolder,
+      toggleStarredOnly: () => setShowStarredOnly((v) => !v),
+      openRecent: (ideaId) => {
+        const idea = ideas.find((i) => i.id === ideaId);
+        if (idea) openIdea(idea.id, idea);
+      },
+    });
+    return () => onHomeShellChange(null);
+  }, [
+    onHomeShellChange,
+    foldersAvailable,
+    folders,
+    activeFolderId,
+    starredCount,
+    showStarredOnly,
+    recentIdeas,
+    ideas,
+    isPolish,
+    handleCreateFolder,
+    handleDeleteFolder,
+    openIdea,
+  ]);
 
   useEffect(() => {
     const counts = {
@@ -824,7 +770,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     setSelectedIds((prev) => {
       const next = new Set<string>();
       for (const id of prev) if (visibleIdeaIds.has(id)) next.add(id);
-      return next;
+      // Keep the previous identity when nothing was pruned — a fresh Set every
+      // pass re-renders and can loop when upstream memo identities are unstable.
+      return next.size === prev.size ? prev : next;
     });
   }, [visibleIdeaIds]);
 
@@ -1217,7 +1165,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       { label: isPolish ? tc.labelPl : tc.label, icon: tc.icon },
     ];
     const metaTrailing = (
-      <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+      <span className="text-[11px] font-medium text-c-text-muted">
         {idea.updatedAt
           ? new Date(idea.updatedAt).toLocaleDateString()
           : idea.createdAt
@@ -1249,7 +1197,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     if ((idea as any).sourceType) {
       relationItems.push({
         label: `${isPolish ? 'Źródło' : 'Source'}: ${(idea as any).sourceType}`,
-        tone: 'text-slate-600 dark:text-slate-400',
+        tone: 'text-c-text-secondary',
       });
     }
     const actionRows: ActionRow[] = [
@@ -1280,12 +1228,12 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     return (
       <div className="space-y-0">
         <PreviewAIHintStrip hints={aiHints} />
-        <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+        <div className="border-t border-c-border-subtle my-3" />
         <PreviewRelations
           items={relationItems}
           emptyLabel={isPolish ? 'Brak powiązań' : 'No linked documents'}
         />
-        <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+        <div className="border-t border-c-border-subtle my-3" />
         <PreviewActionBar rows={actionRows} />
         <div className="mt-2">
           <ConvertToOutputMenu
@@ -1493,8 +1441,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   if (loading) {
     return (
-      <div className="w-full flex items-center justify-center" style={{ minHeight: 300 }}>
-        <LoadingState variant="spinner" />
+      <div className="w-full p-4" style={{ minHeight: 300 }}>
+        <SharedLoadingState template="list" rows={6} />
       </div>
     );
   }
@@ -1517,26 +1465,26 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       onClick={() => !converting && setConvertIdea(null)}
     >
       <div
-        className="w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-navy-900 shadow-2xl"
+        className="w-full max-w-xl overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200/60 dark:border-white/[0.06]">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-primary-500" />
-            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+            <div className="text-sm font-semibold text-c-text">
               {isPolish ? 'Konwertuj pomysł' : 'Convert idea'}
             </div>
           </div>
           <button
             onClick={() => setConvertIdea(null)}
             disabled={converting}
-            className="p-1 rounded-md text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors disabled:opacity-50"
+            className="p-1 rounded-md text-c-text-muted hover:text-c-text-secondary transition-colors disabled:opacity-50"
           >
             <X size={16} />
           </button>
         </div>
         <div className="px-5 py-4 space-y-3">
-          <div className="text-xs text-slate-500 dark:text-slate-400">{convertIdea.title}</div>
+          <div className="text-xs text-c-text-muted">{convertIdea.title}</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {[
               {
@@ -1572,27 +1520,27 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                 key={target}
                 onClick={() => handleConvert(target)}
                 disabled={converting}
-                className="text-left p-3 rounded-xl border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors disabled:opacity-60"
+                className="text-left p-3 rounded-xl border border-c-border hover:bg-black/[0.04] dark:hover:bg-white/[0.03] transition-colors disabled:opacity-60"
               >
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                <div className="flex items-center gap-2 text-sm font-semibold text-c-text-secondary">
                   <Icon size={16} className={color} />
                   {label}
                 </div>
-                <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{desc}</div>
+                <div className="mt-1 text-[11px] text-c-text-muted">{desc}</div>
               </button>
             ))}
           </div>
         </div>
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200/60 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-c-border-subtle bg-c-surface-raised">
           <button
             onClick={() => setConvertIdea(null)}
             disabled={converting}
-            className="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-50"
+            className="px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:text-c-text transition-colors disabled:opacity-50"
           >
             {isPolish ? 'Zamknij' : 'Close'}
           </button>
           {converting && (
-            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-2 text-xs text-c-text-muted">
               <Loader2 size={14} className="animate-spin" />
               {isPolish ? 'Tworzę…' : 'Creating…'}
             </div>
@@ -1610,26 +1558,26 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       onClick={() => !bulkBusy && setTagModalOpen(false)}
     >
       <div
-        className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-navy-900 shadow-2xl"
+        className="w-full max-w-lg overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200/60 dark:border-white/[0.06]">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Tag size={16} className="text-amber-500" />
-            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+            <div className="text-sm font-semibold text-c-text">
               {isPolish ? 'Dodaj tag' : 'Add tag'}
             </div>
           </div>
           <button
             onClick={() => setTagModalOpen(false)}
             disabled={bulkBusy}
-            className="p-1 rounded-md text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors disabled:opacity-50"
+            className="p-1 rounded-md text-c-text-muted hover:text-c-text-secondary transition-colors disabled:opacity-50"
           >
             <X size={16} />
           </button>
         </div>
         <div className="px-5 py-4 space-y-3">
-          <div className="text-xs text-slate-500 dark:text-slate-400">
+          <div className="text-xs text-c-text-muted">
             {isPolish
               ? `Zostanie dodany do ${selectedIds.size} pomysłów`
               : `Will be added to ${selectedIds.size} ideas`}
@@ -1638,15 +1586,15 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
             placeholder={isPolish ? 'np. backlog' : 'e.g. backlog'}
-            className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+            className="w-full h-10 px-3 rounded-xl border border-c-border bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
             autoFocus
           />
         </div>
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200/60 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]">
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-c-border-subtle bg-c-surface-raised">
           <button
             onClick={() => setTagModalOpen(false)}
             disabled={bulkBusy}
-            className="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-50"
+            className="px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:text-c-text transition-colors disabled:opacity-50"
           >
             {isPolish ? 'Anuluj' : 'Cancel'}
           </button>
@@ -1665,28 +1613,67 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   // ── Empty state ──
 
-  const renderEmpty = () => (
-    <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
-      <div className="relative mb-4">
-        <Flower2 size={48} className="text-amber-400" />
-        <Sparkles size={16} className="absolute -top-1 -right-1 text-amber-500 animate-pulse" />
+  // Empty state is context-aware: an empty *folder* must NOT show the global
+  // "Idea Garden awaits" CTA (misleading when ALL=110). It shows a folder-scoped
+  // message plus a clear way back to "All".
+  const activeFolder = activeFolderId
+    ? (folders.find((f) => f.id === activeFolderId) ?? null)
+    : null;
+
+  const renderEmpty = () => {
+    if (activeFolder) {
+      return (
+        <div
+          className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-c-border-subtle rounded-xl"
+          data-testid="ideas-folder-empty"
+        >
+          <div className="relative mb-4">
+            <Folder size={44} className="text-c-text-muted" />
+          </div>
+          <h3 className="text-lg font-medium text-c-text-secondary mb-2">
+            {isPolish ? 'Ten folder jest pusty' : 'This folder is empty'}
+          </h3>
+          <p className="text-sm text-c-text-muted mb-4 max-w-md">
+            {isPolish
+              ? `Nie przypisano jeszcze żadnych pomysłów do „${activeFolder.name}". Przypisz istniejące pomysły z menu ⋮ albo wróć do wszystkich.`
+              : `No ideas assigned to "${activeFolder.name}" yet. Assign existing ideas from the ⋮ menu, or go back to all.`}
+          </p>
+          <button
+            type="button"
+            onClick={() => setActiveFolderId(null)}
+            data-testid="ideas-folder-empty-back"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors duration-150 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 dark:border-navy-600 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800"
+          >
+            <ChevronLeft size={15} />
+            {isPolish ? 'Wróć do wszystkich' : 'Back to all ideas'}
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-c-border-subtle rounded-xl">
+        <div className="relative mb-4">
+          <Flower2 size={48} className="text-amber-400" />
+          <Sparkles size={16} className="absolute -top-1 -right-1 text-amber-500 animate-pulse" />
+        </div>
+        <h3 className="text-lg font-medium text-c-text-secondary mb-2">
+          {isPolish ? 'Twój ogród pomysłów czeka' : 'Your Idea Garden awaits'}
+        </h3>
+        <p className="text-sm text-c-text-muted mb-4 max-w-md">
+          {isPolish
+            ? 'Zasiej pierwszy pomysł — AI pomoże go rozwinąć, zbada kontekst i zaproponuje kreatywne warianty.'
+            : 'Plant your first idea — AI will help it grow, research context, and propose creative variants.'}
+        </p>
+        <button
+          onClick={onCreateIdea}
+          className="inline-flex h-9 items-center justify-center rounded-full border border-c-text bg-c-text px-4 text-sm font-semibold text-c-bg transition-colors duration-150 hover:bg-c-text-secondary active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 dark:border-c-text dark:bg-c-text dark:hover:bg-c-text-secondary"
+        >
+          {isPolish ? 'Zasiej pomysł' : 'Plant an idea'}
+        </button>
       </div>
-      <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">
-        {isPolish ? 'Twój ogród pomysłów czeka' : 'Your Idea Garden awaits'}
-      </h3>
-      <p className="text-sm text-slate-500 mb-4 max-w-md">
-        {isPolish
-          ? 'Zasiej pierwszy pomysł — AI pomoże go rozwinąć, zbada kontekst i zaproponuje kreatywne warianty.'
-          : 'Plant your first idea — AI will help it grow, research context, and propose creative variants.'}
-      </p>
-      <button
-        onClick={onCreateIdea}
-        className="inline-flex h-9 items-center justify-center rounded-full border border-primary-500/30 bg-primary-600 px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-primary-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 dark:border-primary-400/20 dark:bg-primary-500/80 dark:hover:bg-primary-500"
-      >
-        {isPolish ? 'Zasiej pomysł' : 'Plant an idea'}
-      </button>
-    </div>
-  );
+    );
+  };
 
   // ── Sort indicator ──
 
@@ -1697,21 +1684,20 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   if (viewMode === 'table') {
     if (sortedIdeas.length === 0) {
       return (
-        <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950 p-4">
+        <div className="w-full h-full overflow-y-auto bg-c-bg p-4">
           {convertModal}
           {tagModal}
           {confirmDialog}
-          <div className="mt-4">{renderEmpty()}</div>
+          <div className="mt-4 px-4 pb-4">{renderEmpty()}</div>
         </div>
       );
     }
 
     return (
-      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-white dark:bg-navy-950">
+      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-c-bg">
         {convertModal}
         {tagModal}
         {confirmDialog}
-        {homeShellBar}
         {/* Match Tasks/Inbox: bounded height so table scrolls inside row and preview stays viewport-high */}
         <div className="flex flex-col flex-1 min-h-0">
           <IdeasTableContent
@@ -1772,20 +1758,20 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   if (viewMode === 'grid') {
     if (sortedIdeas.length === 0) {
       return (
-        <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950 p-4">
+        <div className="w-full h-full overflow-y-auto bg-c-bg p-4">
           {convertModal}
           {tagModal}
-          <div className="mt-4">{renderEmpty()}</div>
+          {confirmDialog}
+          <div className="mt-4 px-4 pb-4">{renderEmpty()}</div>
         </div>
       );
     }
 
     return (
-      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-white dark:bg-navy-950">
+      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-c-bg">
         {convertModal}
         {tagModal}
         {confirmDialog}
-        {homeShellBar}
         <div className="flex flex-col flex-1 min-h-0">
           <TableWithPreviewLayout<MyIdea>
             selectedId={previewIdeaId}
@@ -1826,10 +1812,12 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                       }}
                       className={[
                         'group relative cursor-pointer rounded-xl p-4 text-left',
-                        'border border-slate-200/60 dark:border-white/[0.06]',
-                        'bg-white dark:bg-navy-900',
+                        'border border-c-border-subtle',
+                        'bg-c-surface',
                         'hover:shadow-md hover:-translate-y-px transition-all duration-150',
-                        isPreviewSelected || isSelected ? 'ring-2 ring-slate-400/50 dark:ring-white/20' : '',
+                        isPreviewSelected || isSelected
+                          ? 'ring-2 ring-c-border-strong dark:ring-white/20'
+                          : '',
                       ].join(' ')}
                     >
                       {/* Zone 1 — Badge row (stage · tool) + kebab */}
@@ -1850,7 +1838,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                             className={`rounded p-0.5 transition-opacity ${
                               isFavorite(idea.id)
                                 ? 'text-amber-400 opacity-100'
-                                : 'text-slate-600 opacity-0 hover:text-amber-400 group-hover:opacity-100 focus:opacity-100 dark:text-slate-400'
+                                : 'text-c-text-muted opacity-0 hover:text-amber-400 group-hover:opacity-100 focus:opacity-100'
                             }`}
                           >
                             <Star
@@ -1867,7 +1855,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
                       {/* Zone 2 — Title */}
                       <h4
-                        className="font-semibold text-sm text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug"
+                        className="font-semibold text-sm text-c-text line-clamp-2 leading-snug"
                         title={idea.title || ''}
                       >
                         {idea.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
@@ -1875,18 +1863,16 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
                       {/* Zone 3 — Description (when available) */}
                       {idea.body && (
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-                          {idea.body}
-                        </p>
+                        <p className="mt-1 text-xs text-c-text-muted line-clamp-2">{idea.body}</p>
                       )}
 
                       {/* Zone 4 — Stats footer: tags · updated date */}
-                      <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-white/[0.05] mt-3 pt-3">
+                      <div className="flex items-center justify-between gap-2 text-[11px] text-c-text-muted border-t border-c-border-subtle mt-3 pt-3">
                         <div className="min-w-0 flex-1">
                           {(idea.tags || []).length > 0 ? (
                             renderTagBadges(idea.tags, 2)
                           ) : (
-                            <span className="text-slate-400 dark:text-slate-500">—</span>
+                            <span className="text-c-text-muted">—</span>
                           )}
                         </div>
                         <span className="shrink-0">
@@ -1916,30 +1902,30 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   if (sortedIdeas.length === 0) {
     return (
-      <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950 p-4">
+      <div className="w-full h-full overflow-y-auto bg-c-bg p-4">
         {convertModal}
         {tagModal}
-        {renderEmpty()}
+        {confirmDialog}
+        <div className="p-4">{renderEmpty()}</div>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950">
+    <div className="w-full h-full overflow-y-auto bg-c-bg">
       {convertModal}
       {tagModal}
       {confirmDialog}
-      {homeShellBar}
       <div className="p-4 space-y-4">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-gradient-to-br from-amber-400/20 to-primary-400/20 dark:from-amber-500/15 dark:to-primary-500/15">
             <Tag size={20} className="text-amber-500" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+            <h2 className="text-sm font-semibold text-c-text">
               {isPolish ? 'Pomysły wg tagów' : 'Ideas by Tags'}
             </h2>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+            <p className="text-[11px] text-c-text-muted">
               {isPolish
                 ? `${tagGroups.length} grup · ${sortedIdeas.length} pomysłów`
                 : `${tagGroups.length} groups · ${sortedIdeas.length} ideas`}
@@ -1950,30 +1936,26 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         {tagGroups.map(([tag, groupIdeas]) => {
           const isCollapsed = collapsedTags.has(tag);
           return (
-            <div
-              key={tag}
-              className="rounded-xl border border-slate-200/60 dark:border-navy-700/50 overflow-hidden"
-            >
+            <div key={tag} className="rounded-xl border border-c-border-subtle overflow-hidden">
               <button
                 onClick={() => toggleTagCollapse(tag)}
-                className="w-full flex items-center gap-2.5 px-4 py-3 bg-slate-50/80 dark:bg-navy-900/50 hover:bg-slate-100/80 dark:hover:bg-navy-800/50 transition-colors text-left"
+                aria-expanded={!isCollapsed}
+                className="w-full flex items-center gap-2.5 px-4 py-3 bg-c-surface-raised hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition-colors text-left"
               >
                 {isCollapsed ? (
-                  <ChevronRight size={14} className="text-slate-600" />
+                  <ChevronRight size={14} className="text-c-text-muted" />
                 ) : (
-                  <ChevronDown size={14} className="text-slate-600" />
+                  <ChevronDown size={14} className="text-c-text-muted" />
                 )}
                 <Tag size={14} className="text-amber-500" />
-                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  {tag}
-                </span>
+                <span className="text-sm font-semibold text-c-text-secondary">{tag}</span>
                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
                   {groupIdeas.length}
                 </span>
               </button>
 
               {!isCollapsed && (
-                <div className="divide-y divide-slate-200 dark:divide-navy-800/50">
+                <div className="divide-y divide-c-border-subtle">
                   {groupIdeas.map((idea) => {
                     const stage = (idea.stage || 'spark') as IdeaStage;
                     const tc = getToolConfig(idea.preferredTool);
@@ -1991,13 +1973,13 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                             openIdea(idea.id, idea);
                           }
                         }}
-                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/60 dark:hover:bg-navy-800/30 cursor-pointer transition-colors"
+                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/70 dark:hover:bg-white/[0.03] cursor-pointer transition-colors"
                       >
                         <div className={`flex-shrink-0 p-1.5 rounded-lg ${tc.bgColor}`}>
                           <ToolIcon size={14} className={tc.color} />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                          <div className="text-sm font-medium text-c-text truncate">
                             {idea.title}
                           </div>
                         </div>
@@ -2013,7 +1995,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                             className={`rounded p-0.5 transition-colors ${
                               isFavorite(idea.id)
                                 ? 'text-amber-400'
-                                : 'text-slate-600 hover:text-amber-400 dark:text-slate-400'
+                                : 'text-c-text-muted hover:text-amber-400'
                             }`}
                           >
                             <Star
@@ -2035,7 +2017,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                             <Workflow size={10} />
                             Flow
                           </button>
-                          <span className="text-[10px] text-slate-600 whitespace-nowrap">
+                          <span className="text-[10px] text-c-text-muted whitespace-nowrap">
                             {idea.updatedAt
                               ? new Date(idea.updatedAt).toLocaleDateString()
                               : idea.createdAt

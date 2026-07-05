@@ -199,7 +199,7 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
             variant="secondary"
             size="sm"
             onClick={onManageSeats}
-            className="mt-2 bg-white/20 text-white hover:bg-white/30 border-0"
+            className="mt-2 bg-white/20 text-c-text hover:bg-white/30 border-0"
           >
             <Plus size={14} />
             {t('admin.billing.seats.addSeats', 'Add Seats')}

@@ -213,7 +213,7 @@ export const TabeleMelsView: React.FC<TabeleMelsViewProps> = ({
   ) : (
     <div className="px-6 py-12 max-w-[1024px] mx-auto" data-testid="tabele-mels-canvas-empty">
       {emptyState ?? (
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-secondary">
           {t('tabele.emptyState', 'No artifact loaded yet.')}
         </p>
       )}

@@ -22,8 +22,19 @@ import { z } from 'zod';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireOrgAccess, requireOrgRole } from '../middleware/rbac.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
-import { getLinkagesByInitiative } from '../services/v8/financeIntegrationService.js';
+import {
+  createEconomicsLinkage,
+  getLinkagesByInitiative,
+} from '../services/v8/financeIntegrationService.js';
+import {
+  getInitiativeFunnel,
+  getInitiativeLineage,
+} from '../services/initiative/initiativeLineageService.js';
 import { proposeCandidates as runPropose } from '../services/initiative/proposeEngineService.js';
+import {
+  checkPortfolioMece,
+  type MeceExistingInitiative,
+} from '../services/initiative/portfolioMeceService.js';
 import {
   createSuggestedChange,
   listSuggestedChanges,
@@ -231,6 +242,53 @@ router.get(
   })
 );
 
+/**
+ * POST /api/initiatives/:initiativeId/economics-links
+ *
+ * Create a finance ↔ initiative linkage ("Powiąż" action in FinanceHub).
+ * Body: { financeModelRef, linkageType?, status? }
+ * financeModelRef = any finance entity ref string (model id, analysis id, etc.)
+ */
+const CreateLinkageSchema = z.object({
+  financeModelRef: z.string().min(1).max(500),
+  linkageType: z
+    .enum(['financial_model', 'budget', 'analysis', 'valuation', 'investment_case'])
+    .optional()
+    .default('financial_model'),
+  status: z.enum(['not_started', 'in_progress', 'complete']).optional().default('not_started'),
+});
+
+router.post(
+  '/:initiativeId/economics-links',
+  requireOrgRole('user'),
+  validateBody(CreateLinkageSchema),
+  asyncHandler(async (req: any, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const initiativeId = String(req.params.initiativeId || '');
+    if (!initiativeId) {
+      res.status(400).json({ error: 'initiativeId is required' });
+      return;
+    }
+    if (!(await initiativeExistsInOrg(initiativeId, orgId))) {
+      res.status(404).json({ error: 'Initiative not found' });
+      return;
+    }
+    const { financeModelRef, linkageType, status } = req.body as z.infer<typeof CreateLinkageSchema>;
+    const linkage = await createEconomicsLinkage({
+      organizationId: orgId,
+      initiativeId,
+      financeModelRef,
+      linkageType,
+      status,
+    });
+    res.status(201).json({ linkage });
+  })
+);
+
 // ==========================================
 // FEATURE 2 — PROPOSE ENGINE
 // ==========================================
@@ -273,6 +331,153 @@ router.post(
     }
 
     res.json({ candidates });
+  })
+);
+
+// ==========================================
+// FEATURE 4 — PORTFOLIO MECE CHECK (uspójnienie F3.7)
+// ==========================================
+
+const ValidatePortfolioMeceSchema = z.object({
+  candidates: z
+    .array(
+      z.object({
+        title: z.string().min(1).max(2000),
+        description: z.string().max(20000).optional().nullable(),
+        goalKey: z.string().max(255).optional().nullable(),
+      })
+    )
+    .min(1)
+    .max(50),
+});
+
+/**
+ * POST /api/initiatives/validate-portfolio-mece
+ *
+ * Validate a batch of candidate initiatives against the org's EXISTING portfolio
+ * for MECE (overlaps + goalKey coverage gaps). Loads the existing initiatives
+ * org-scoped, runs the pure {@link checkPortfolioMece}, returns the verdict.
+ * Advisory only — never mutates anything.
+ */
+router.post(
+  '/validate-portfolio-mece',
+  requireOrgRole('user'),
+  validateBody(ValidatePortfolioMeceSchema),
+  asyncHandler(async (req: any, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    let existing: MeceExistingInitiative[] = [];
+    try {
+      const rows = await queryHelpers.queryAll(
+        `SELECT id,
+                COALESCE(title, name, '') AS title,
+                COALESCE(summary, '')     AS summary,
+                COALESCE(goal_key, '')    AS goal_key
+           FROM initiatives
+          WHERE organization_id = ?
+            AND UPPER(COALESCE(status, '')) NOT IN ('CANCELLED', 'ARCHIVED')
+          LIMIT 500`,
+        [orgId]
+      );
+      existing = (rows as any[]).map((r) => ({
+        id: String(r.id),
+        title: String(r.title || ''),
+        summary: String(r.summary || ''),
+        goalKey: String(r.goal_key || '') || undefined,
+      }));
+    } catch {
+      // Schema drift (e.g. no goal_key column) → fall back to title/summary only,
+      // so the check still runs (overlaps by similarity) instead of 500-ing.
+      try {
+        const rows = await queryHelpers.queryAll(
+          `SELECT id,
+                  COALESCE(title, name, '') AS title,
+                  COALESCE(summary, '')     AS summary
+             FROM initiatives
+            WHERE organization_id = ?
+              AND UPPER(COALESCE(status, '')) NOT IN ('CANCELLED', 'ARCHIVED')
+            LIMIT 500`,
+          [orgId]
+        );
+        existing = (rows as any[]).map((r) => ({
+          id: String(r.id),
+          title: String(r.title || ''),
+          summary: String(r.summary || ''),
+        }));
+      } catch {
+        existing = [];
+      }
+    }
+
+    const candidates = (req.body.candidates as any[]).map((c) => ({
+      title: String(c.title || ''),
+      description: c.description ?? undefined,
+      goalKey: c.goalKey ?? undefined,
+    }));
+
+    const result = checkPortfolioMece(existing, candidates);
+    res.json(result);
+  })
+);
+
+// ==========================================
+// FEATURE 5 — CHAIN OBSERVABILITY (uspójnienie F5.1 + F5.2)
+// ==========================================
+
+/**
+ * GET /api/initiatives/funnel/stats
+ *
+ * F5.2 — org-wide funnel: counts per status, per source_type, and the
+ * created → in-execution → tracking conversion of the whole portfolio.
+ * Read-only, org-scoped. Registered BEFORE /:id/lineage so the literal
+ * "funnel" segment is never captured as an :id.
+ */
+router.get(
+  '/funnel/stats',
+  requireOrgRole('user'),
+  asyncHandler(async (req: any, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const funnel = await getInitiativeFunnel(orgId);
+    res.json(funnel);
+  })
+);
+
+/**
+ * GET /api/initiatives/:id/lineage
+ *
+ * F5.1 — the chain for one initiative: source (analysis/insight/idea) →
+ * initiative → execution → results (tracked benefits/KPIs). Read-only,
+ * org-scoped; 404 when the initiative does not resolve in the caller's org.
+ */
+router.get(
+  '/:id/lineage',
+  requireOrgRole('user'),
+  asyncHandler(async (req: any, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const initiativeId = String(req.params.id || '');
+    if (!initiativeId) {
+      res.status(400).json({ error: 'id is required' });
+      return;
+    }
+
+    const lineage = await getInitiativeLineage(orgId, initiativeId);
+    if (!lineage) {
+      res.status(404).json({ error: 'Initiative not found' });
+      return;
+    }
+    res.json(lineage);
   })
 );
 

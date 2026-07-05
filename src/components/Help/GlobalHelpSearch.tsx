@@ -138,7 +138,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[9999] flex items-start justify-center pt-[10vh]"
+        className="fixed inset-0 z-modal flex items-start justify-center pt-[10vh]"
       >
         {/* Backdrop */}
         <motion.div

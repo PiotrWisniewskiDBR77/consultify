@@ -164,7 +164,7 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-              <ShieldCheck size={24} className="text-white" />
+              <ShieldCheck size={24} className="text-c-text" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">

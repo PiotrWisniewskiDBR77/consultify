@@ -15,6 +15,7 @@ import { getCompletenessConfig } from '@/components/shared/NModeCompleteness/com
 import type { PortfolioInitiative } from '@/types';
 
 import type { InitiativeCompletenessRow } from './CompletenessAnalysis';
+import { classifyLoad, computeUtilizationPercent, isActiveLoadStatus } from './resourceLoadMath';
 import type {
   AnalysisIssue,
   DependencyLink,
@@ -56,39 +57,60 @@ export function usePortfolioAnalysisData(
   return useMemo(() => {
     const idToName = new Map(initiatives.map((i) => [i.id, i.name]));
 
-    // Resources: derive from ownerBusiness + ownerExecution
-    const resourceMap = new Map<string, { name: string; role: string; initIds: string[] }>();
+    // Resources: derive from ownerBusiness + ownerExecution.
+    // `initIds`       = every initiative the person owns (shown in the UI list).
+    // `activeInitIds` = subset that counts toward CONCURRENT load (non-terminal,
+    //                   non-draft) — this is what utilization is measured against.
+    // A Set guards against the same initiative being counted twice for one owner.
+    const resourceMap = new Map<
+      string,
+      { name: string; role: string; initIds: string[]; activeInitIds: Set<string> }
+    >();
+    const addOwnership = (
+      id: string,
+      name: string,
+      role: string,
+      initiative: PortfolioInitiative
+    ) => {
+      const r =
+        resourceMap.get(id) ??
+        ({ name, role, initIds: [], activeInitIds: new Set<string>() } as {
+          name: string;
+          role: string;
+          initIds: string[];
+          activeInitIds: Set<string>;
+        });
+      if (!r.initIds.includes(initiative.id)) r.initIds.push(initiative.id);
+      if (isActiveLoadStatus(initiative.status)) r.activeInitIds.add(initiative.id);
+      resourceMap.set(id, r);
+    };
     for (const i of initiatives) {
       const ownerId = i.ownerBusiness?.id ?? (i as any).ownerBusinessId;
       const execId = i.ownerExecution?.id ?? (i as any).ownerExecutionId;
       if (ownerId) {
-        const r = resourceMap.get(ownerId) ?? {
-          name: i.ownerBusiness
-            ? `${i.ownerBusiness.firstName} ${i.ownerBusiness.lastName}`
-            : ownerId,
-          role: 'Business Owner',
-          initIds: [] as string[],
-        };
-        r.initIds.push(i.id);
-        resourceMap.set(ownerId, r);
+        addOwnership(
+          ownerId,
+          i.ownerBusiness ? `${i.ownerBusiness.firstName} ${i.ownerBusiness.lastName}` : ownerId,
+          'Business Owner',
+          i
+        );
       }
       if (execId && execId !== ownerId) {
-        const r = resourceMap.get(execId) ?? {
-          name: i.ownerExecution
-            ? `${i.ownerExecution.firstName} ${i.ownerExecution.lastName}`
-            : execId,
-          role: 'Execution Owner',
-          initIds: [] as string[],
-        };
-        r.initIds.push(i.id);
-        resourceMap.set(execId, r);
+        addOwnership(
+          execId,
+          i.ownerExecution ? `${i.ownerExecution.firstName} ${i.ownerExecution.lastName}` : execId,
+          'Execution Owner',
+          i
+        );
       }
     }
 
     const allocations: ResourceAllocation[] = Array.from(resourceMap.entries()).map(([id, r]) => {
-      const util = r.initIds.length * 100; // 100% per initiative
-      const status: ResourceAllocation['status'] =
-        util > 100 ? 'overallocated' : util < 50 ? 'underutilized' : 'ok';
+      // Utilization = concurrent ACTIVE-ownership load vs. a sane capacity — NOT
+      // 100% × (owned count). Bounded + guarded in resourceLoadMath so real
+      // overload (e.g. 200%) stays visible while the 4500% unit artefact is gone.
+      const util = computeUtilizationPercent(r.activeInitIds.size);
+      const status = classifyLoad(util);
       return {
         resourceId: id,
         resourceName: r.name,

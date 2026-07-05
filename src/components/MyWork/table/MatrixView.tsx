@@ -77,28 +77,31 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
       {
         labelEn: 'Quick Wins',
         labelPl: 'Szybkie wygrane',
-        color: 'bg-emerald-500/10 border-emerald-500/20',
+        color:
+          'bg-[color-mix(in_srgb,var(--c-success)_10%,transparent)] border-[color-mix(in_srgb,var(--c-success)_22%,transparent)]',
         xRange: [midX, maxX],
         yRange: [minY, midY],
       },
       {
         labelEn: 'Major Projects',
         labelPl: 'Duże projekty',
-        color: 'bg-amber-500/10 border-amber-500/20',
+        color:
+          'bg-[color-mix(in_srgb,var(--c-warning)_10%,transparent)] border-[color-mix(in_srgb,var(--c-warning)_22%,transparent)]',
         xRange: [midX, maxX],
         yRange: [midY, maxY],
       },
       {
         labelEn: 'Fill-ins',
         labelPl: 'Uzupełnienia',
-        color: 'bg-slate-500/5 border-slate-500/10',
+        color: 'bg-c-surface-raised border-c-border-subtle',
         xRange: [minX, midX],
         yRange: [minY, midY],
       },
       {
         labelEn: 'Thankless Tasks',
         labelPl: 'Niewdzięczne zadania',
-        color: 'bg-danger-500/10 border-danger-500/20',
+        color:
+          'bg-[color-mix(in_srgb,var(--c-danger)_10%,transparent)] border-[color-mix(in_srgb,var(--c-danger)_22%,transparent)]',
         xRange: [minX, midX],
         yRange: [midY, maxY],
       },
@@ -174,7 +177,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
         {onAxisChange && axisOptions.length > 0 ? (
           <>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
                 X:
               </span>
               <select
@@ -183,7 +186,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                   const col = axisOptions.find((c) => c.key === e.target.value);
                   if (col) onAxisChange('x', col);
                 }}
-                className="text-[10px] font-medium px-2 py-1 rounded-lg bg-white/80 dark:bg-navy-900/80 border border-slate-200/60 dark:border-navy-700/60 text-slate-700 dark:text-slate-300"
+                className="text-[10px] font-medium px-2 py-1 rounded-lg bg-c-surface border border-c-border text-c-text-secondary"
               >
                 {axisOptions.map((c) => (
                   <option key={c.key} value={c.key}>
@@ -193,7 +196,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
               </select>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
                 Y:
               </span>
               <select
@@ -202,7 +205,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                   const col = axisOptions.find((c) => c.key === e.target.value);
                   if (col) onAxisChange('y', col);
                 }}
-                className="text-[10px] font-medium px-2 py-1 rounded-lg bg-white/80 dark:bg-navy-900/80 border border-slate-200/60 dark:border-navy-700/60 text-slate-700 dark:text-slate-300"
+                className="text-[10px] font-medium px-2 py-1 rounded-lg bg-c-surface border border-c-border text-c-text-secondary"
               >
                 {axisOptions.map((c) => (
                   <option key={c.key} value={c.key}>
@@ -213,7 +216,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
             </div>
           </>
         ) : (
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
             {yAxis.header} / {xAxis.header}
           </span>
         )}
@@ -221,7 +224,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
 
       <div className="flex-1 flex">
         <div className="flex items-center justify-center w-6">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 -rotate-90 whitespace-nowrap">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted -rotate-90 whitespace-nowrap">
             ← {xAxis.header}
           </span>
         </div>
@@ -234,7 +237,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                 quadrantRefs.current[idx] = r;
               }}
               className={`rounded-2xl border p-3 ${q.color} flex flex-col overflow-hidden relative ${
-                dropQuadrant === idx ? 'ring-2 ring-primary-400 dark:ring-primary-500' : ''
+                dropQuadrant === idx ? 'ring-2 ring-c-focus' : ''
               }`}
               onDragOver={handleDragOver}
               onDragEnter={() => dragNodeId && setDropQuadrant(idx)}
@@ -244,9 +247,9 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                 handleDrop(idx, e);
               }}
             >
-              <div className="text-[10px] font-bold text-slate-600 dark:text-slate-300 mb-2 flex-shrink-0">
+              <div className="text-[10px] font-bold text-c-text-secondary mb-2 flex-shrink-0">
                 {isPl ? q.labelPl : q.labelEn}
-                <span className="ml-1 text-slate-600">({nodesByQuadrant[idx].length})</span>
+                <span className="ml-1 text-c-text-muted">({nodesByQuadrant[idx].length})</span>
               </div>
               <div className="flex-1 min-h-[100px] relative">
                 {nodesByQuadrant[idx].map((node) => (
@@ -258,8 +261,8 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                       handleDragStart(node.id);
                     }}
                     onClick={() => onNodeClick?.(node.id)}
-                    className={`absolute text-left px-2.5 py-1.5 rounded-xl bg-white/80 dark:bg-navy-950/80 border border-slate-200/40 dark:border-navy-700/40 hover:shadow-md transition-shadow ${
-                      dragNodeId === node.id ? 'opacity-40 scale-95 border-primary-400' : ''
+                    className={`absolute text-left px-2.5 py-1.5 rounded-xl bg-c-surface border border-c-border-subtle hover:shadow-md transition-shadow ${
+                      dragNodeId === node.id ? 'opacity-40 scale-95 border-c-accent' : ''
                     }`}
                     style={{
                       left: `${positionsByNode[node.id]?.left ?? 5}%`,
@@ -271,17 +274,17 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                     {!locked && onFieldChange && (
                       <GripVertical
                         size={10}
-                        className="absolute left-1 top-1/2 -translate-y-1/2 text-slate-600 dark:text-navy-600 cursor-grab"
+                        className="absolute left-1 top-1/2 -translate-y-1/2 text-c-text-muted cursor-grab"
                       />
                     )}
-                    <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
+                    <div className="text-[11px] font-medium text-c-text truncate">
                       {node.data?.label || node.id}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[9px] text-slate-600">
+                      <span className="text-[9px] text-c-text-muted">
                         {xAxis.header}: {node.data?.[xAxis.key] ?? '—'}
                       </span>
-                      <span className="text-[9px] text-slate-600">
+                      <span className="text-[9px] text-c-text-muted">
                         {yAxis.header}: {node.data?.[yAxis.key] ?? '—'}
                       </span>
                     </div>
@@ -289,7 +292,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                 ))}
                 {nodesByQuadrant[idx].length === 0 && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[10px] text-slate-600">
+                    <span className="text-[10px] text-c-text-muted">
                       {isPl ? 'Brak elementów' : 'No items'}
                     </span>
                   </div>

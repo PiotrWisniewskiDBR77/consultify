@@ -969,3 +969,190 @@ Moduł M20 jest gotowy do oznaczenia jako **TESTED** gdy:
 10. **§10 Flagi:** QA/SourcePack/Conversion UI niewidoczne, BE żywe (API odpowiada), stary komentarz route-header udokumentowany jako P3-doc.
 11. **§12 Przekrojowe:** 0 błędów w Console, PL/EN OK, dark mode brak artefaktów koloru, A11y keyboard OK.
 12. **Znane długi (NIE blokują DoD):** L-02 SSO plaintext, L-03 share_password, L-07 testy auto mock-only, L-08 niema degradacja flag-OFF, L-09 PublicViewPage EN-only, L-10 322 hex w data-grid.
+
+---
+
+## Testy manualne — Generatory Deliverable (premium TABLE quality)
+
+> **Sekcja DOŁOŻONA 2026-06-23.** To NIE są testy istniejącej Table Platform (§1–§13 wyżej — grid/widoki/formuły/automatyzacje). To testy NOWEJ warstwy **„Generatory Deliverable" (premium TABLE)**: AI generuje **typowany schemat** (B4) + **conditional formatting** (R5/X2) + **wierny eksport `.xlsx`** (X2). Cel: Piotr testuje jakość premium TABLE do 100% i odbiera ją rubryką.
+>
+> **Grounding:** SSOT `docs/product/DELIVERABLES_GENERATORS_SPEC.md` · plany `docs/qa/deliverables/test-plan/{B,R,X}-series.md` · 30 scenariuszy `docs/qa/deliverables/scenarios/M20_TABLES.md` · rubryka odbioru `Harvard/wdrozenie-100/DELIVERABLES_QUALITY_RUBRIC.md` §4 (tabela) · teczka `Harvard/wdrozenie-100/M20-tabele-studio.md` sekcja „Generatory Deliverable" (EPIK G1-G5).
+>
+> **Tagi:** `[MANUAL]` ręczna weryfikacja · `[FLAG]` zależne od flagi premium · `[DB]` dowód w bazie/pliku.
+
+### §P0. Prawda i preconditions (przeczytaj PRZED testami)
+
+**Stan (zweryfikowany żywym LLM Sonnet 4.6, 2026-06-23):**
+- Premium TABLE (B4) **DZIAŁA ~100% code-side:** 30/30 scenariuszy M20 zsweepowane do 100%; S01/S06/S07/S16 niezależnie 100% PREMIUM. Avg `scorePct` table = 87% (`runs/2026-06-22-live-pilot-sonnet46.json`).
+- **Naprawiony bug data-loss:** `normalizeSeedRows` filtrował klucze seed-rowów ścisłą równością vs sanityzowany klucz pola → klucze `camelCase` z LLM **CICHO ODRZUCANE** → **puste kolumny** w zmaterializowanej tabeli. FIX = canonical key reconciliation. Ślad bug PRZED/po widoczny w `runs/2026-06-22-VTS-generated.md` §3.
+- **NIE wpięte w żywe UI.** Premium = za flagą `ENABLE_DELIVERABLES_PREMIUM` (`deliverableGenerationTier.ts:13`, default **OFF**); generatory niewpięte w pipeline UI (chat→canvas→studio→grid). Jakość mierzona przez **harness/flagę**, NIE kliknięcia.
+
+**Dwie warstwy testów (NIE myl):**
+- **Warstwa 1 — Scoring-auto / Export-fidelity — WYKONALNE DZIŚ** (bez deploya): runner FT-6 na żywym LLM + scoring engine; vitest parsujący wygenerowany `.xlsx` (XML).
+- **Warstwa 2 — Manual-UI / „otwórz w Excel" — WYMAGA WPIĘCIA/DEPLOYA**: przelot przez żywy pipeline UI za flagą ON + screenshot + head-to-head. ⚠️ **Nie wolno twierdzić, że jakość UI potwierdzona, dopóki nie ma żywego LLM przez UI.**
+
+**Preconditions — jak włączyć premium (warstwa 1, DZIŚ):**
+1. `[FLAG]` Klucz LLM ze stagingu Railway (lokalnie brak — patrz `finding_deliverables_ft6_pilot_blocker`; bez klucza mierzysz PODŁOGĘ deterministyczną, nie mózg).
+2. Runner (NIE vitest — SDK structured pada pod vitest): z repo root:
+   ```bash
+   ANTHROPIC_API_KEY=<klucz-staging> ENABLE_DELIVERABLES_PREMIUM=true \
+     node --import tsx scripts/deliverables/live-pilot-ft6.mts
+   ```
+   Runner ustawia `DOTENV_IGNORE_LOCAL=1` → NIE dotyka `.env.local` (=PROD centerbeam), NIE inicjalizuje DB. Bezpieczny.
+3. Artefakt: JSON → `docs/qa/deliverables/runs/<data>-live-pilot-<model>.json` (`byModule[table].avgScorePct`, `rows[].scorePct/passed/failures/sample.fields/fieldTypes/seedRows`).
+4. Export-fidelity (zero klucza, lokalny vitest): `npx vitest run tests/unit/deliverables/workbookBuilderCf.test.ts`.
+
+**Preconditions — warstwa 2 (Manual-UI, dopiero po wpięciu):**
+1. `ENABLE_DELIVERABLES_PREMIUM=true` na Railway staging (build env).
+2. Generatory premium wpięte w pipeline UI (chat→canvas→studio→grid).
+3. Deploy + login (`E2E_OWNER_EMAIL/PASSWORD`, `E2E_BASE_URL`). Headless zostawia canvas Ideas w skeletonie → R5 weryfikuj w REALNEJ przeglądarce (`finding_m09_live_test_gates`).
+
+**Format raportu (każdy scenariusz daje rubryczne 3 oceny — `DELIVERABLES_QUALITY_RUBRIC.md` §6):**
+```
+[PASS/FAIL/SKIP] PT-XX — Opis
+  Kompletność: ✅/❌  Merytoryka: ✅/❌  Grafika: ✅/❌  → werdykt
+  Dowód: <JSON scorePct / XML fragment / screenshot / Excel screenshot>
+```
+
+---
+
+### §P1. B4 — typowany schemat + kolory + KOMPLETNE seed rows
+
+#### PT-01 — Tabela ryzyk (risk register) → typy + hex severity `[FLAG]` `[DB]` — **TESTOWALNE DZIŚ (warstwa 1)**
+- **Mapowanie:** B4-S01 · M20 S05/S17 · EPIK G1.1/G1.2.
+- **Precondition:** runner premium ON (§P0). Golden: `TABLE_SCENARIOS` S05 (lub S17 dla iconSet).
+- **Kroki:**
+  1. Odpal runner FT-6 (komenda §P0) z intentem „Tabela ryzyk projektu ERP: nazwa, severity (Low/Med/High), likelihood, mitygacja".
+  2. Otwórz JSON wyniku → `rows[table].sample.fields` / `fieldTypes`.
+- **Oczekiwane:**
+  - severity = `singleSelect` z 3 opcjami (Low/Med/High); KAŻDA opcja ma **hex** (`requireSelectColors`).
+  - Semantyka traffic-light: Low=green `#16A34A`, Med=amber `#D97706`, High=red `#DC2626` (`expectTrafficLightColors`).
+  - ≥1 typed field (nie sam `singleLineText`); typy ∈ katalog.
+- **Dowód:** JSON `rows[table].sample.fieldTypes` + `failures` puste dla `requireSelectColors`/`requireFieldType`. `scorePct` ≥ próg Q1 (≥85%).
+
+#### PT-02 — Portfolio projektów (Airtable-style) → 8 pól, 2 selecty kolorowe `[FLAG]` `[DB]` — **DZIŚ**
+- **Mapowanie:** M20 S07 · EPIK G1.1/G1.2.
+- **Precondition:** runner premium ON. Golden S07.
+- **Kroki:** runner z intentem „Portfolio 8 projektów: nazwa, owner, status (To Do/In Progress/Review/Done), priority (P0/P1/P2/P3), start_date, end_date, budget (currency), progress (percent)".
+- **Oczekiwane:**
+  - 8 pól; 2× `singleSelect` (status, priority) z kolorami; 2× `date`, 1× `currency`, 1× `percent`.
+  - priority colors: P0=red/critical, P1=amber, P2=blue, P3=gray. status traffic-light gradient.
+- **Dowód:** JSON `sample.fields/fieldTypes`; `scorePct` S07 = 100% (re-zweryfikowany PREMIUM).
+
+#### PT-03 — **REGRESJA bug data-loss: ZERO pustych kolumn** `[FLAG]` `[DB]` — **DZIŚ (krytyczny)**
+- **Mapowanie:** B4-S04 · EPIK G1.3 · WG-03 (teczka).
+- **Tło:** `normalizeSeedRows` cicho odrzucał klucze `camelCase` z LLM → puste kolumny przy poprawnym nagłówku. Ten test to **regresja fixa** (canonical key reconciliation).
+- **Precondition:** runner premium ON. Dowolny golden z ≥4 typowanymi kolumnami (S06/S07/S16).
+- **Kroki:**
+  1. Odpal runner → otwórz JSON `rows[table].sample.seedRows`.
+  2. Dla KAŻDEJ typowanej kolumny ze schematu policz, ile seed-rowów ma niepustą wartość w tej kolumnie.
+- **Oczekiwane (PASS):** **każda** typowana kolumna ma wartości we **wszystkich** seed-rowach (≥N). Zero kolumn, gdzie nagłówek istnieje, a wszystkie komórki puste.
+- **Jak rozpoznać REGRESJĘ (FAIL):** otwórz `runs/2026-06-22-VTS-generated.md` §3 (tabela 11 pól × 8 wierszy) — tam PRZED-fix kolumny „Indeks gotowości / Najsłabszy wymiar / Główna bariera / Termin docelowy" są **puste** mimo wypełnionych „Dział/Liczba respondentów/Frekwencja/Priorytet/Właściciel/Pewność/Status". Jeśli świeży run pokazuje TEN wzorzec (pełny nagłówek + pusta kolumna pod spodem) = bug wrócił. **W UI/Excel objaw:** kolumna z nazwą, ale całkowicie pusta — łatwo przeoczyć przy „ładnym" nagłówku.
+- **Dowód:** JSON `sample.seedRows` z liczbą niepustych komórek per kolumna; porównanie z liczbą pól.
+
+#### PT-04 — `numFmt` mapowany z typu (budżet→currency, %→percent) `[FLAG]` — **DZIŚ**
+- **Mapowanie:** B4-S02 · M20 S02 · EPIK G1.4.
+- **Kroki:** runner z golden „budżet projektu: kategoria, plan, wykonanie, % realizacji".
+- **Oczekiwane:** 2× `currency` (numFmt `#,##0.00`), 1× `percent` (`0.00%`); `minTypedFields` ✓.
+- **Dowód:** JSON `sample.fields`; pełna weryfikacja numFmt w pliku → PT-09.
+
+#### PT-05 — Multi-sheet TYLKO gdy explicit (budżet 4 sheety) `[FLAG]` — **DZIŚ**
+- **Mapowanie:** M20 S26/S27 · EPIK G1.5.
+- **Kroki:** (a) runner z „Roczny budżet: Sheet1=Summary, Sheet2=OpEx, Sheet3=CapEx, Sheet4=HC, cross-sheet formulas". (b) runner z prostym intentem (S01 lista zadań).
+- **Oczekiwane:** (a) 4 sheety + Summary z cross-sheet formułą (`=OpEx!B10+CapEx!B10`); (b) 1 sheet (B4 NIE rozdmuchuje do multi-sheet bez explicit).
+- **Dowód:** JSON sheets count.
+
+#### PT-06 — Fallback gdy flaga OFF = STANDARD (fail-open) `[FLAG]` — **DZIŚ**
+- **Mapowanie:** B4-S07 · B5-S02 · EPIK G1.6/G4.1.
+- **Kroki:** runner z `ENABLE_DELIVERABLES_PREMIUM=false`.
+- **Oczekiwane:** `fallbackUsed=true`, `tierUsed='STANDARD'`, schema deterministyczny waliduje, **brak crasha**. Premium ON → `tierUsed='PREMIUM'`, `source='llm'`, `fallbackUsed=false`.
+- **Dowód:** 2 JSON-y (PREMIUM vs STANDARD) z `tierUsed`.
+
+---
+
+### §P2. R5 — Conditional Formatting w GridView + formuły AST
+
+#### PT-07 — CF reguła >X → czerwony + formuła SUM/IF `[MANUAL]` `[FLAG]` — **warstwa 1 code-side DZIŚ; UI PENDING wpięcia**
+- **Mapowanie:** R5-S01/S03/S04 · M20 S16/S19 · EPIK G2.1/G2.2.
+- **Precondition (UI):** flaga premium ON na środowisku + wpięcie + `/my-work` → narzędzie Tabela (`IdeaTableTool`). **Headless = skeleton → testuj w realnej przeglądarce** (`finding_m09_live_test_gates`).
+- **Kroki (UI, po wpięciu):**
+  1. Otwórz tabelę z kolumną liczbową. Panel CF → dodaj regułę „wartość > X → tło czerwone".
+  2. W kolumnie formuły wpisz `SUM(...)` w `FormulaEditor`; potem `IF(warunek, A, B)`.
+- **Oczekiwane:** komórki >X mają czerwone tło (computed `background-color` lub klasa CF); formuła SUM = poprawna suma, IF = poprawna gałąź, brak błędu AST.
+- **DZIŚ (code-side):** `formulaEngineCore` (parytet FE/BE) — sprawdź w teście jednostkowym/integ; CF schema w `WorkbookSchema.ts`.
+- **Dowód:** screenshot gridu (UI) / wynik testu (code). **Mark: UI PENDING wpięcia.**
+
+#### PT-08 — CF persyst po reload (config JSONB widoku) `[MANUAL]` `[FLAG]` `[DB]` — **PENDING wpięcia**
+- **Mapowanie:** R5-S05/S06 · EPIK G2.3 · FT-2.
+- **Kroki (UI):** dodaj regułę CF → poczekaj na PATCH zapisujący `config` widoku → odśwież (F5) → poczekaj na hydrate gridu.
+- **Oczekiwane:** reguły CF wczytane z `config` JSONB widoku, kolory wracają. **Regresja autosave-race:** brak 2× POST→409 (patrz `finding_m07_canvas_hydrate_loading`).
+- **Dowód:** `[DB]` `config` JSONB aktywnego widoku zawiera regułę CF; screenshot przed/po reload. **Mark: PENDING wpięcia + live przeglądarka.**
+
+---
+
+### §P3. X2 — eksport `.xlsx` z REALNYM CF + formatami (ExcelJS, nie fasada)
+
+#### PT-09 — `.xlsx` zawiera CF + bgColor w XML (export-fidelity) `[DB]` — **TESTOWALNE DZIŚ (vitest)**
+- **Mapowanie:** X2-S01-S06 · M20 S16-S25 · EPIK G3.1/G3.2.
+- **Precondition:** brak (lokalny vitest, zero deploya/klucza).
+- **Kroki:** `npx vitest run tests/unit/deliverables/workbookBuilderCf.test.ts`.
+- **Oczekiwane:**
+  - `xl/worksheets/sheet1.xml` (JSZip) zawiera `<conditionalFormatting>` + `databar` / `colorScale` (3-color ARGB `FFDC2626`/`FFF59E0B`/`FF16A34A`) / `iconSet`(`3TrafficLights`) / `cellIs`(`greaterThan`).
+  - **Demaskacja fasady:** `xl/styles.xml` zawiera `FF<HEX>` bgColor (SheetJS by to ZGUBIŁ).
+- **Dowód:** wynik vitest (asercje na XML).
+
+#### PT-10 — `numFmt` waluta/data + nagłówek bold/freeze w pliku `[DB]` — **DZIŚ (vitest, dopisanie)**
+- **Mapowanie:** X2-S07/S08/S09 · EPIK G3.3.
+- **Kroki:** rozszerz `workbookBuilderCf.test.ts` o kolumnę `type:'currency'` i `type:'date'` + header bold+freeze; parsuj `styles.xml`/`sheet1.xml`.
+- **Oczekiwane:** `numFmt` z maską waluty (`#,##0.00`/`zł`) i daty (builtin id lub `yyyy-mm-dd`); `<pane>` freeze + bold w styles.
+- **Dowód:** wynik vitest.
+
+#### PT-11 — Bez CF nadal builduje (PK magic, fail-open) `[DB]` — **DZIŚ**
+- **Mapowanie:** X2-S10 · EPIK G3.4 · FT-8.
+- **Kroki:** `buildWorkbookBuffer(schema bez CF)`.
+- **Oczekiwane:** Buffer `>1000` bajtów, magic `0x50 0x4B` (PK). Brak chromium dla render-path → `unavailable` (no-throw).
+- **Dowód:** Buffer w teście.
+
+#### PT-12 — **„Otwórz w Excel"** — plik bez „repair", CF/kolory/formaty widoczne `[MANUAL]` — **computer-use (półautomat)**
+- **Mapowanie:** X2-M01-M06 · MQ-T8 (rubryka §4D) · EPIK G3.5 · FT-7.
+- **Precondition:** wyeksportowany `.xlsx` (z runnera/UI). To **JEDYNA** ścieżka dowodząca „Excel nie pokazuje 'repair' i CF się renderuje".
+- **Kroki:**
+  1. `mcp__computer-use__open_application` Excel (lub Numbers) → otwórz wyeksportowany plik.
+  2. `screenshot`.
+- **Oczekiwane:** plik otwiera się **bez** dialogu „repair"; widoczne: kolory komórek, data-bar/colorScale CF, symbol waluty + separatory, daty jako daty (sortowalne, nie tekst), nagłówek pogrubiony + freeze działa.
+- **Dowód:** screenshot pulpitu (computer-use) → `docs/qa/screens/deliverables-X-<data>/`. **Mark: wymaga realnego Excela/Numbers.**
+
+---
+
+### §P4. Head-to-head vs Airtable (odbiór jakości graficznej)
+
+#### PT-13 — Golden VTS u nas vs Airtable, ta sama rubryka `[MANUAL]` `[FLAG]` — **PENDING live render + ocena ekspercka**
+- **Mapowanie:** B4-S08 · MQ-T10 (rubryka §4C/§4D) · EPIK G5.1 · Q3=VTS golden.
+- **Precondition:** wygenerowany schemat VTS (już jest: `runs/2026-06-22-VTS-generated.md` §3, 11 pól × 8 wierszy — ale UWAGA: pokazuje ślad bug data-loss, użyj ŚWIEŻEGO runu po fixie) + eksport XLSX (WorkbookBuilder) lub zrzut gridu. Ten sam intent w Airtable.
+- **Kroki:**
+  1. Wygeneruj tabelę VTS (golden Q3) premium ON → eksport XLSX (PT-09/PT-12) lub screenshot gridu.
+  2. Zbuduj tę samą tabelę w Airtable (ręcznie / import).
+  3. Oceń OBA tą samą rubryką graficzną (`DELIVERABLES_QUALITY_RUBRIC.md` §4C): G1 typowanie, G2 kolory statusu, G3 styl tabel/CF, G4 format liczb/dat/waluty, G6 striping. Skala 1-5 (lub 0/1/2).
+- **Oczekiwane (odbiór):** **nasz wynik ≥ Airtable na KAŻDYM wymiarze graficznym** (warunek odbioru §4 rubryki). Dodatkowo: K1 typy, K2 seed z realnych danych, M1 trafność schematu, M4 seed realistyczny.
+- **Dowód:** tabela ocen (markdown) per oś nasz vs Airtable + mediana + podpis (Piotr/QA) + 2× artefakt (nasz XLSX/PNG vs Airtable PNG) → `docs/qa/deliverables/runs/<data>/h2h-table/`. **Mark: część programowa (eksport) DZIŚ; ocena 1-5 = ekspercka, NIE auto.**
+
+#### PT-14 — CF na żywo (dodaj regułę → koloruje w gridzie I w eksporcie) `[MANUAL]` `[FLAG]` — **PENDING wpięcia**
+- **Mapowanie:** MQ-T9 (rubryka §4D) · R5+X2 · EPIK G2/G3.
+- **Kroki (UI):** w gridzie dodaj regułę CF → sprawdź kolor w gridzie → eksportuj XLSX → otwórz w Excel (PT-12).
+- **Oczekiwane:** ta sama reguła koloruje komórki w gridzie I jest obecna w `.xlsx` (parytet ekran↔plik).
+- **Dowód:** screenshot gridu + screenshot Excel. **Mark: PENDING wpięcia.**
+
+---
+
+### §P5. Mapa pokrycia premium TABLE (epik → scenariusz → wykonalność)
+
+| EPIK (teczka) | Scenariusze | Warstwa | Wykonalność |
+|---|---|---|---|
+| G1 — B4 typy+kolory+seed | PT-01..PT-06 | 1 (Scoring-auto) | **DZIŚ** (runner + klucz staging) |
+| G1.3 — regresja data-loss | PT-03 | 1 | **DZIŚ** (krytyczny — zero pustych kolumn) |
+| G2 — R5 CF+formuły | PT-07, PT-08 | code DZIŚ / UI PENDING | code-side teraz; UI po wpięciu (live przeglądarka) |
+| G3 — X2 eksport fidelity | PT-09..PT-11 | 1 (Export-fidelity-vitest) | **DZIŚ** (zero deploya/klucza) |
+| G3.5 — „otwórz w Excel" | PT-12 | Manual (computer-use) | **DZIŚ** (półautomat, realny Excel) |
+| G5 — head-to-head Airtable | PT-13, PT-14 | Manual + ekspercka | PENDING live render + ocena 1-5 |
+
+**Odbiór (Etap 8 →UI):** każdy PT daje 3 oceny (Kompletność · Merytoryka · Grafika); head-to-head ≥ Airtable na każdym G = dowód „dorównaliśmy/wygraliśmy". „Jakość premium UI potwierdzona" wymaga żywego LLM przez UI (deploy flagi Railway + wpięcie + live-verify wg reguły „Verify before claiming").

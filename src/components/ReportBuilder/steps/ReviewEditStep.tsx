@@ -147,21 +147,21 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
   }, [currentContent]);
 
   return (
-    <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+    <div className="border border-c-border-subtle rounded-lg overflow-hidden">
       {/* Header */}
       <div
-        className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 cursor-pointer"
+        className="flex items-center justify-between p-4 bg-c-surface-raised cursor-pointer"
         onClick={() => !isEditing && setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-3">
           {isExpanded ? (
-            <ChevronDown className="w-5 h-5 text-slate-600" />
+            <ChevronDown className="w-5 h-5 text-c-text-secondary" />
           ) : (
-            <ChevronRight className="w-5 h-5 text-slate-600" />
+            <ChevronRight className="w-5 h-5 text-c-text-secondary" />
           )}
           <div>
-            <h4 className="font-medium text-slate-900 dark:text-white">{section.title}</h4>
-            <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
+            <h4 className="font-medium text-c-text">{section.title}</h4>
+            <div className="text-xs text-c-text-secondary flex items-center gap-2 mt-0.5">
               <span>
                 {section.length} • {section.language}
               </span>
@@ -180,7 +180,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
             <>
               <button
                 onClick={handleCopy}
-                className="p-2 text-slate-600 hover:text-slate-600 hover:bg-white dark:hover:bg-slate-700 rounded"
+                className="p-2 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface rounded"
                 title={isPl ? 'Kopiuj' : 'Copy'}
               >
                 <Copy className="w-4 h-4" />
@@ -188,7 +188,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
               <button
                 onClick={() => setShowRegeneratePrompt(true)}
                 disabled={isRegenerating}
-                className="flex items-center gap-1 px-2 py-1.5 text-sm text-slate-600 hover:bg-white dark:hover:bg-slate-700 rounded"
+                className="flex items-center gap-1 px-2 py-1.5 text-sm text-c-text-secondary hover:bg-c-surface rounded"
               >
                 {isRegenerating ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -199,7 +199,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
               </button>
               <button
                 onClick={handleStartEdit}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-c-text rounded hover:bg-blue-700"
               >
                 <Edit3 className="w-4 h-4" />
                 {isPl ? 'Edytuj' : 'Edit'}
@@ -217,20 +217,20 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                className="w-full h-64 p-4 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white font-mono text-sm focus:ring-2 focus:ring-blue-500 resize-y"
+                className="w-full h-64 p-4 border border-c-border-subtle rounded-lg bg-c-surface text-c-text font-mono text-sm focus:ring-2 focus:ring-blue-500 resize-y"
               />
               <div className="flex items-center justify-end gap-2">
                 <button
                   onClick={handleCancelEdit}
                   disabled={isSaving}
-                  className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+                  className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
                 >
                   {isPl ? 'Anuluj' : 'Cancel'}
                 </button>
                 <button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-c-text rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
                   {isSaving ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -258,15 +258,15 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
       {/* Regenerate Prompt Modal */}
       {showRegeneratePrompt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md mx-4">
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-              <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
+              <h3 className="font-semibold text-c-text flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-blue-500" />
                 {isPl ? 'Regeneruj Sekcję' : 'Regenerate Section'}
               </h3>
               <button
                 onClick={() => setShowRegeneratePrompt(false)}
-                className="text-slate-600 hover:text-slate-600"
+                className="text-c-text-secondary hover:text-c-text-secondary"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -274,7 +274,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
 
             <div className="p-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-c-text mb-1">
                   {isPl ? 'Dodatkowe Wskazówki (opcjonalnie)' : 'Additional Guidance (optional)'}
                 </label>
                 <textarea
@@ -286,22 +286,22 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
                       : 'E.g., "Use more formal language", "Add more technical details"...'
                   }
                   rows={3}
-                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 resize-none"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 p-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-end gap-2 p-4 border-t border-c-border-subtle">
               <button
                 onClick={() => setShowRegeneratePrompt(false)}
-                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+                className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
               >
                 {isPl ? 'Anuluj' : 'Cancel'}
               </button>
               <button
                 onClick={handleRegenerate}
                 disabled={isRegenerating}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-c-text rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 {isRegenerating ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -357,7 +357,7 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
 
   // Render full preview
   const renderPreview = () => (
-    <div className="bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-slate-700 p-8 prose prose-slate dark:prose-invert max-w-none">
+    <div className="bg-c-surface rounded-lg border border-c-border-subtle p-8 prose prose-slate dark:prose-invert max-w-none">
       {enabledSections.map((section) => (
         <div key={section.sectionKey} className="mb-8">
           <h2>{section.title}</h2>
@@ -373,15 +373,15 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
     <div className="space-y-6">
       {/* View Mode Toggle */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+        <div className="flex items-center gap-2 p-1 bg-c-surface-raised rounded-lg">
           <button
             onClick={() => setViewMode('edit')}
             className={`
               flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all
               ${
                 viewMode === 'edit'
-                  ? 'bg-white dark:bg-navy-900 text-slate-900 dark:text-white shadow'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  ? 'bg-c-surface text-c-text shadow'
+                  : 'text-c-text-secondary hover:text-c-text'
               }
             `}
           >
@@ -394,8 +394,8 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
               flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all
               ${
                 viewMode === 'preview'
-                  ? 'bg-white dark:bg-navy-900 text-slate-900 dark:text-white shadow'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  ? 'bg-c-surface text-c-text shadow'
+                  : 'text-c-text-secondary hover:text-c-text'
               }
             `}
           >
@@ -491,7 +491,7 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
               <button
                 onClick={onFinalize}
                 disabled={isLoading}
-                className="mt-4 flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50"
+                className="mt-4 flex items-center gap-2 px-6 py-2 bg-green-600 text-c-text rounded-lg font-medium hover:bg-green-700 disabled:opacity-50"
               >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -527,7 +527,7 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
                   <button
                     onClick={onSendBack}
                     disabled={isLoading}
-                    className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                    className="px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text hover:bg-c-surface-raised disabled:opacity-50"
                   >
                     {isPl ? 'Odeślij do poprawek' : 'Send back'}
                   </button>
@@ -536,7 +536,7 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
                   <button
                     onClick={onApprove}
                     disabled={isLoading}
-                    className="flex items-center gap-2 px-5 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                    className="flex items-center gap-2 px-5 py-2 rounded-lg bg-green-600 text-c-text hover:bg-green-700 disabled:opacity-50"
                   >
                     <Check className="w-4 h-4" />
                     {isPl ? 'Zatwierdź' : 'Approve'}
@@ -568,7 +568,7 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
               <button
                 onClick={onMarkSentInternal}
                 disabled={isLoading}
-                className="mt-4 flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                className="mt-4 flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 text-c-text hover:bg-blue-700 disabled:opacity-50"
               >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -602,7 +602,7 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
               <button
                 onClick={onMarkSentExternal}
                 disabled={isLoading}
-                className="mt-4 flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                className="mt-4 flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 text-c-text hover:bg-blue-700 disabled:opacity-50"
               >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

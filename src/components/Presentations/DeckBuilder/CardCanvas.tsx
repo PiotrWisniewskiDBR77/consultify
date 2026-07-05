@@ -1,17 +1,9 @@
-import { Layout, Plus, RefreshCw, Sparkles } from 'lucide-react';
+import { Plus, RefreshCw, Sparkles } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { DeckCard } from '../wizard/types';
 import { CardRenderer } from './CardRenderer';
-
-const LAYOUTS = [
-  { id: 'full', label: 'Full', icon: '▢' },
-  { id: 'left-right', label: 'Left / Right', icon: '▤' },
-  { id: 'right-left', label: 'Right / Left', icon: '▥' },
-  { id: 'top-bottom', label: 'Top / Bottom', icon: '▦' },
-  { id: 'overlay', label: 'Overlay', icon: '▣' },
-];
 
 interface CardCanvasProps {
   cards: DeckCard[];
@@ -20,8 +12,12 @@ interface CardCanvasProps {
   onSelectCard: (index: number) => void;
   onBlockClick?: (cardId: string, blockId: string) => void;
   onAddCard?: (atIndex: number) => void;
-  onRegenerateCard?: (cardIndex: number) => Promise<void>;
-  onChangeLayout?: (cardIndex: number, layoutId: string) => void;
+  /**
+   * R4 — Free-text AI rewrite of a single slide. `instruction` is the optional
+   * author directive ("make this punchier", "add a risk callout"…). Empty =
+   * plain regenerate of the slide's narrative copy.
+   */
+  onRewriteCard?: (cardIndex: number, instruction?: string) => Promise<void>;
   speakerNotes?: string;
   showNotes: boolean;
   animationsEnabled?: boolean;
@@ -34,8 +30,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
   onSelectCard,
   onBlockClick,
   onAddCard,
-  onRegenerateCard,
-  onChangeLayout,
+  onRewriteCard,
   speakerNotes,
   showNotes,
   animationsEnabled = true,
@@ -44,7 +39,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [regeneratingIndex, setRegeneratingIndex] = useState<number | null>(null);
-  const [layoutMenuIndex, setLayoutMenuIndex] = useState<number | null>(null);
+  const [instructions, setInstructions] = useState<Record<number, string>>({});
 
   useEffect(() => {
     const el = cardRefs.current[activeCardIndex];
@@ -53,8 +48,23 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
     }
   }, [activeCardIndex]);
 
+  const runRewrite = (index: number, instruction?: string) => {
+    if (!onRewriteCard || regeneratingIndex === index) return;
+    setRegeneratingIndex(index);
+    onRewriteCard(index, instruction).finally(() => {
+      setRegeneratingIndex(null);
+      if (instruction) {
+        setInstructions((prev) => {
+          const next = { ...prev };
+          delete next[index];
+          return next;
+        });
+      }
+    });
+  };
+
   return (
-    <div className="flex-1 overflow-hidden flex flex-col bg-slate-100 dark:bg-navy-950">
+    <div className="flex-1 overflow-hidden flex flex-col bg-c-bg">
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-8 py-6 space-y-4">
         {cards.map((card, index) => (
           <React.Fragment key={card.card_id}>
@@ -63,14 +73,14 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
               <div className="flex items-center justify-center gap-2 py-1 opacity-0 hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => onAddCard(index)}
-                  className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-slate-600 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10"
+                  className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised"
                 >
                   <Plus size={10} />
                   {t('presentations.builder.addBlank', 'Blank')}
                 </button>
                 <button
                   onClick={() => onAddCard(index)}
-                  className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-slate-600 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10"
+                  className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised"
                 >
                   <Sparkles size={10} />
                   {t('presentations.builder.addAi', 'AI')}
@@ -93,57 +103,18 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                 onBlockClick={(blockId) => onBlockClick?.(card.card_id, blockId)}
                 animationsEnabled={animationsEnabled}
               />
-              {(onRegenerateCard || onChangeLayout) && (
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center gap-1">
-                  {onChangeLayout && (
-                    <div className="relative">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setLayoutMenuIndex((prev) => (prev === index ? null : index));
-                        }}
-                        title={t('presentations.builder.alternativeLayout', 'Alternative layout')}
-                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 border border-slate-200 dark:border-navy-600 shadow-lg"
-                      >
-                        <Layout size={11} />
-                      </button>
-                      {layoutMenuIndex === index && (
-                        <div
-                          className="absolute top-full mt-1 right-0 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-xl p-1.5 flex gap-1 z-50"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {LAYOUTS.map((l) => (
-                            <button
-                              key={l.id}
-                              onClick={() => {
-                                onChangeLayout(index, l.id);
-                                setLayoutMenuIndex(null);
-                              }}
-                              className={`w-8 h-7 rounded border text-[10px] font-mono flex items-center justify-center ${
-                                card.layout_id === l.id
-                                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10 text-primary-600'
-                                  : 'border-slate-200 dark:border-navy-700 text-slate-500 hover:border-slate-300 dark:hover:border-navy-500'
-                              }`}
-                              title={l.label}
-                            >
-                              {l.icon}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {onRegenerateCard && (
+              {onRewriteCard && (
+                <>
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center gap-1">
                     <button
+                      data-testid="deck-regenerate-slide"
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (regeneratingIndex === index) return;
-                        setRegeneratingIndex(index);
-                        onRegenerateCard(index).finally(() => setRegeneratingIndex(null));
+                        runRewrite(index);
                       }}
                       disabled={regeneratingIndex === index}
                       title={t('presentations.builder.regenerateSlide', 'Regenerate slide')}
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium bg-c-text text-c-surface hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
                     >
                       <RefreshCw
                         size={11}
@@ -153,8 +124,51 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                         ? t('presentations.builder.regenerating', 'Regenerating…')
                         : t('presentations.builder.regenerateSlide', 'Regenerate')}
                     </button>
-                  )}
-                </div>
+                  </div>
+
+                  {/* R4 — inline free-text rewrite input (appears on hover) */}
+                  <div
+                    className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[min(28rem,90%)] opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center gap-1.5 bg-c-surface border border-c-border-subtle rounded-lg shadow-lg px-2 py-1.5">
+                      <Sparkles size={13} className="text-c-accent shrink-0" />
+                      <input
+                        type="text"
+                        value={instructions[index] ?? ''}
+                        disabled={regeneratingIndex === index}
+                        onChange={(e) =>
+                          setInstructions((prev) => ({ ...prev, [index]: e.target.value }))
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const value = (instructions[index] ?? '').trim();
+                            if (value) runRewrite(index, value);
+                          }
+                        }}
+                        placeholder={t(
+                          'presentations.builder.rewritePlaceholder',
+                          'Przerób ten slajd…'
+                        )}
+                        className="flex-1 text-sm bg-transparent border-none outline-none text-c-text placeholder:text-c-text-muted disabled:opacity-60"
+                      />
+                      <button
+                        onClick={() => {
+                          const value = (instructions[index] ?? '').trim();
+                          if (value) runRewrite(index, value);
+                        }}
+                        disabled={regeneratingIndex === index || !(instructions[index] ?? '').trim()}
+                        title={t('presentations.builder.rewriteSlide', 'Rewrite slide')}
+                        className="shrink-0 px-2 py-1 rounded-md text-[11px] font-medium bg-c-accent-soft0 text-c-text hover:bg-c-accent-soft disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {regeneratingIndex === index
+                          ? t('presentations.builder.regenerating', 'Regenerating…')
+                          : t('presentations.builder.rewriteSend', 'Send')}
+                      </button>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           </React.Fragment>
@@ -163,8 +177,8 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
 
       {/* Speaker Notes */}
       {showNotes && (
-        <div className="h-32 border-t border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-3 overflow-y-auto">
-          <p className="text-[10px] font-medium text-slate-600 uppercase mb-1">
+        <div className="h-32 border-t border-c-border bg-c-surface p-3 overflow-y-auto">
+          <p className="text-[10px] font-medium text-c-text-secondary uppercase mb-1">
             {t('presentations.builder.bottomBar.notes', 'Speaker Notes')}
           </p>
           <textarea
@@ -174,7 +188,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
               'presentations.builder.notesPlaceholder',
               'Speaker notes for this slide...'
             )}
-            className="w-full text-sm text-slate-700 dark:text-slate-300 bg-transparent border-none outline-none focus:ring-1 focus:ring-primary-500/20 resize-none"
+            className="w-full text-sm text-c-text-secondary bg-transparent border-none outline-none focus:ring-1 focus:ring-c-focus resize-none"
             rows={4}
           />
         </div>

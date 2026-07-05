@@ -53,6 +53,7 @@ import {
   RecordROIRealizationParamsSchema,
 } from '../../types/resultsROIContinuity.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { getTableColumns } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
 import { eventBus } from '../event/EventBus.js';
 import { send as sendNotification } from '../notificationService.js';
@@ -1592,7 +1593,7 @@ export async function getResultsKpiCatalog(
     `SELECT
        m.id,
        m.initiative_id,
-       i.name AS initiative_name,
+       COALESCE(NULLIF(i.name, ''), NULLIF(i.title, '')) AS initiative_name,
        i.status AS initiative_status,
        m.kpi_id,
        ik.name AS kpi_name,
@@ -2065,8 +2066,35 @@ interface ReconciliationVarianceRow {
   updated_at: string;
   kpi_name: string | null;
   initiative_id: string | null;
+  unit: string | null;
   projected_value: number | null;
   realized_value: number | null;
+  // Engine-persisted reconciliation (resultsFinanceReconciliationService). When
+  // present these are unit-normalised to the finance basis and carry a real
+  // deviation + CONCLUSION_LAYER — preferred over the legacy monetary heuristic.
+  eng_driver_key?: string | null;
+  eng_projected_value?: number | null;
+  eng_realized_value?: number | null;
+  eng_deviation_absolute?: number | null;
+  eng_deviation_percent?: number | null;
+  eng_conclusion_json?: string | null;
+}
+
+/**
+ * A KPI unit is *monetary* when its target_value and the summed
+ * `v8_roi_realization_entries` (which record currency deltas/savings) share a
+ * comparable basis. Percentage / ratio / count units do NOT — comparing an OEE
+ * target of 85 (%) against a summed monetary realized value of €138,000 yields a
+ * nonsensical +162252% variance. For non-monetary units we still surface the
+ * projected value but suppress the fabricated monetary variance/mismatch.
+ */
+const NON_MONETARY_UNIT_RE =
+  /^\s*(%|percent|percentage|pct|pp|ppt|pts?|points?|ratio|score|index|nps|csat|days?|day|hrs?|hours?|months?|weeks?|szt\.?|pcs?|count|qty|units?|x)\s*$/i;
+
+export function isMonetaryUnit(unit: string | null | undefined): boolean {
+  const u = (unit ?? '').trim();
+  if (!u) return true; // no unit → assume monetary (legacy default)
+  return !NON_MONETARY_UNIT_RE.test(u);
 }
 
 /** Rounds to 2 decimals; treats |x| < 1e-9 as 0 to avoid float noise. */
@@ -2103,9 +2131,32 @@ export async function getReconciliationOverview(
     params.push(kpiId);
   }
 
+  // Engine columns (resultsFinanceReconciliationService via migration 20260703)
+  // are only present after that migration runs. Guard the SELECT so this read
+  // still works on pre-migration schemas / mock DBs.
+  let reconCols = new Set<string>();
+  try {
+    reconCols = await getTableColumns('v8_kpi_finance_reconciliations');
+  } catch {
+    reconCols = new Set<string>();
+  }
+  const hasEngineCols =
+    reconCols.has('deviation_absolute') && reconCols.has('conclusion_json');
+  const engineSelect = hasEngineCols
+    ? `,
+       r.driver_key AS eng_driver_key,
+       r.projected_value AS eng_projected_value,
+       r.realized_value AS eng_realized_value,
+       r.deviation_absolute AS eng_deviation_absolute,
+       r.deviation_percent AS eng_deviation_percent,
+       r.conclusion_json AS eng_conclusion_json`
+    : '';
+
   // LEFT JOIN to the KPI definition (projected = target_value) and a correlated
   // subquery sum of realized entries. All joins are org-scoped so a foreign-org
-  // KPI/realization can never bleed into another org's variance.
+  // KPI/realization can never bleed into another org's variance. When the
+  // reconciliation ENGINE has persisted a unit-normalised deviation (+ CONCLUSION
+  // layer), those columns are preferred over the legacy monetary heuristic.
   const rows = await dbAll<ReconciliationVarianceRow>(
     `SELECT
        r.reconciliation_id,
@@ -2117,12 +2168,13 @@ export async function getReconciliationOverview(
        r.updated_at,
        k.name AS kpi_name,
        k.initiative_id AS initiative_id,
+       k.unit AS unit,
        k.target_value AS projected_value,
        (
          SELECT SUM(e.realized_value)
          FROM v8_roi_realization_entries e
          WHERE e.organization_id = r.organization_id AND e.kpi_id = r.kpi_id
-       ) AS realized_value
+       ) AS realized_value${engineSelect}
      FROM v8_kpi_finance_reconciliations r
      LEFT JOIN v8_kpi_definitions k
        ON k.kpi_id = r.kpi_id AND k.organization_id = r.organization_id
@@ -2136,19 +2188,58 @@ export async function getReconciliationOverview(
   let mismatchCount = 0;
 
   const items: ReconciliationVarianceItem[] = (rows || []).map((row) => {
-    const projectedValue = row.projected_value != null ? Number(row.projected_value) : null;
-    const realizedValue = row.realized_value != null ? Number(row.realized_value) : null;
+    const unit = row.unit != null && String(row.unit).trim() ? String(row.unit).trim() : null;
 
+    // PREFER the engine's persisted deviation when present: it is unit-normalised
+    // to a single finance basis (no "% vs €" fabrications) and carries a
+    // CONCLUSION_LAYER. Detected by a non-null engine deviation OR conclusion.
+    const engineReconciled =
+      row.eng_deviation_absolute != null || row.eng_conclusion_json != null;
+
+    let projectedValue: number | null;
+    let realizedValue: number | null;
     let varianceAbsolute: number | null = null;
     let variancePercent: number | null = null;
     let hasMismatch = false;
-    if (projectedValue != null && realizedValue != null) {
-      varianceAbsolute = round2(realizedValue - projectedValue);
-      variancePercent =
-        projectedValue !== 0
-          ? round2((varianceAbsolute / Math.abs(projectedValue)) * 100)
+    let conclusion: unknown | null = null;
+    let driverKey: string | null = null;
+
+    if (engineReconciled) {
+      driverKey =
+        row.eng_driver_key != null && String(row.eng_driver_key).trim()
+          ? String(row.eng_driver_key)
           : null;
-      hasMismatch = varianceAbsolute !== 0;
+      projectedValue = row.eng_projected_value != null ? Number(row.eng_projected_value) : null;
+      realizedValue = row.eng_realized_value != null ? Number(row.eng_realized_value) : null;
+      varianceAbsolute =
+        row.eng_deviation_absolute != null ? Number(row.eng_deviation_absolute) : null;
+      variancePercent =
+        row.eng_deviation_percent != null ? Number(row.eng_deviation_percent) : null;
+      hasMismatch = varianceAbsolute != null && varianceAbsolute !== 0;
+      if (row.eng_conclusion_json) {
+        try {
+          conclusion = JSON.parse(String(row.eng_conclusion_json));
+        } catch {
+          conclusion = null;
+        }
+      }
+    } else {
+      const monetary = isMonetaryUnit(unit);
+      projectedValue = row.projected_value != null ? Number(row.projected_value) : null;
+      // The realized side sums `v8_roi_realization_entries` (currency deltas), so it
+      // is only comparable to `target_value` when the KPI is measured in money.
+      realizedValue = monetary && row.realized_value != null ? Number(row.realized_value) : null;
+
+      // Only compute a variance when both sides share a monetary basis. A percentage
+      // KPI (e.g. OEE 85%) vs a summed €-realized value is not a real variance.
+      if (monetary && projectedValue != null && realizedValue != null) {
+        varianceAbsolute = round2(realizedValue - projectedValue);
+        variancePercent =
+          projectedValue !== 0
+            ? round2((varianceAbsolute / Math.abs(projectedValue)) * 100)
+            : null;
+        hasMismatch = varianceAbsolute !== 0;
+      }
     }
     if (hasMismatch) mismatchCount += 1;
 
@@ -2161,6 +2252,7 @@ export async function getReconciliationOverview(
       reconciliationId: row.reconciliation_id,
       kpiId: row.kpi_id,
       kpiName: row.kpi_name ?? null,
+      unit,
       initiativeId: row.initiative_id ?? null,
       financeRef: row.finance_ref,
       reconciliationStatus: status,
@@ -2170,6 +2262,9 @@ export async function getReconciliationOverview(
       varianceAbsolute,
       variancePercent,
       hasMismatch,
+      driverKey,
+      conclusion,
+      engineReconciled,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };

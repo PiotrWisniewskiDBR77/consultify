@@ -50,7 +50,7 @@ const statusConfig: Record<
   away: { label: 'Away', color: 'bg-amber-500', icon: Clock },
   busy: { label: 'Busy', color: 'bg-danger-500', icon: Circle },
   dnd: { label: 'Do Not Disturb', color: 'bg-danger-600', icon: Moon },
-  offline: { label: 'Offline', color: 'bg-slate-400', icon: Circle },
+  offline: { label: 'Offline', color: 'bg-c-text-muted', icon: Circle },
 };
 
 export const QuickProfileCard: React.FC<QuickProfileCardProps> = ({
@@ -114,14 +114,14 @@ export const QuickProfileCard: React.FC<QuickProfileCardProps> = ({
   };
 
   return (
-    <div className={cn('p-4 border-b border-slate-200 dark:border-navy-700', className)}>
+    <div className={cn('p-4 border-b border-c-border-subtle dark:border-navy-700', className)}>
       {/* Profile Info */}
       <div className="flex items-start gap-3">
         {/* Avatar with edit overlay */}
         <div className="relative group">
           <Avatar className="w-14 h-14 ring-2 ring-white dark:ring-navy-800 shadow-sm">
             <AvatarImage src={currentUser.avatarUrl} alt={displayName} />
-            <AvatarFallback className="bg-gradient-to-br from-primary-500 to-primary-600 text-white font-semibold text-lg">
+            <AvatarFallback className="bg-gradient-to-br from-c-accent-soft to-c-accent-soft text-white font-semibold text-lg">
               {userInitials}
             </AvatarFallback>
           </Avatar>
@@ -142,9 +142,9 @@ export const QuickProfileCard: React.FC<QuickProfileCardProps> = ({
 
         {/* Name and role */}
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-slate-900 dark:text-white truncate">{displayName}</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{roleDisplay}</p>
-          <div className="flex items-center gap-1 mt-1 text-xs text-slate-600 dark:text-slate-500">
+          <h3 className="font-semibold text-c-text truncate">{displayName}</h3>
+          <p className="text-sm text-c-text-muted truncate">{roleDisplay}</p>
+          <div className="flex items-center gap-1 mt-1 text-xs text-c-text-secondary">
             <Clock className="w-3 h-3" />
             <span>{localTime} local time</span>
           </div>
@@ -158,7 +158,7 @@ export const QuickProfileCard: React.FC<QuickProfileCardProps> = ({
             <Button
               variant="outline"
               size="sm"
-              className="w-full justify-between bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600"
+              className="w-full justify-between bg-c-surface border-c-border-subtle dark:border-navy-600"
             >
               <div className="flex items-center gap-2">
                 <span className={cn('w-2 h-2 rounded-full', statusConfig[presenceStatus].color)} />
@@ -166,7 +166,7 @@ export const QuickProfileCard: React.FC<QuickProfileCardProps> = ({
                   {t(`settings.status.${presenceStatus}`, statusConfig[presenceStatus].label)}
                 </span>
               </div>
-              <ChevronDown className="w-4 h-4 text-slate-600 dark:text-slate-500" />
+              <ChevronDown className="w-4 h-4 text-c-text-secondary" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
@@ -183,12 +183,12 @@ export const QuickProfileCard: React.FC<QuickProfileCardProps> = ({
                     <span className={cn('w-2 h-2 rounded-full', config.color)} />
                     <span>{t(`settings.status.${status}`, config.label)}</span>
                   </div>
-                  {isActive && <Check className="w-4 h-4 text-primary-600" />}
+                  {isActive && <Check className="w-4 h-4 text-c-accent" />}
                 </DropdownMenuItem>
               );
             })}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-slate-500 dark:text-slate-400">
+            <DropdownMenuItem className="text-c-text-muted">
               <Clock className="w-4 h-4 mr-2" />
               {t('settings.status.setCustom', 'Set a custom status...')}
             </DropdownMenuItem>
@@ -202,7 +202,7 @@ export const QuickProfileCard: React.FC<QuickProfileCardProps> = ({
           variant="ghost"
           size="sm"
           onClick={onEditProfile}
-          className="flex-1 text-xs text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400"
+          className="flex-1 text-xs text-c-text-secondary hover:text-c-accent"
         >
           <Edit2 className="w-3 h-3 mr-1" />
           {t('settings.profile.edit', 'Edit Profile')}
@@ -213,7 +213,7 @@ export const QuickProfileCard: React.FC<QuickProfileCardProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              className="flex-1 text-xs text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400"
+              className="flex-1 text-xs text-c-text-secondary hover:text-c-accent"
             >
               <Eye className="w-3 h-3 mr-1" />
               {t('settings.profile.viewAs', 'View as...')}

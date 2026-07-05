@@ -186,7 +186,7 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/90">
+      <div className="fixed inset-0 z-toast flex items-center justify-center bg-slate-900/90">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
       </div>
     );
@@ -198,7 +198,7 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/90 p-4">
+    <div className="fixed inset-0 z-toast flex items-center justify-center bg-slate-900/90 p-4">
       <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="p-6 border-b border-slate-200 dark:border-slate-700">

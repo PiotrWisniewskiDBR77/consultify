@@ -25,9 +25,46 @@ export type DemoSession = {
   user: Record<string, unknown>;
 };
 
-/** Register a fresh demo user (unique per call) and return its auth token.
- *  Retries on transient 5xx (staging DB hiccups are known). */
+const TEST_SUPPORT_KEY = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
+
+/**
+ * Mint a full WRITE-ACCESS (non-demo) session via test-support bootstrap.
+ *
+ * register-demo returns a DEMO session, and demo mode is read-only at the server
+ * (POST /map/sync → 403 DEMO_READ_ONLY). That made every persistence scenario
+ * (§2.1 sync=200, §15.6 reload-persists) fail even though the canvas worked
+ * client-side. Bootstrap creates a real org + ADMIN member and signs a non-demo
+ * token, so writes are allowed — mirroring the M07 interactions harness.
+ *
+ * Returns null when test-support is disabled (e.g. plain staging without the
+ * flag); callers fall back to register-demo (read-only is still enough for the
+ * many read-only scenarios).
+ */
+async function bootstrapSession(page: Page): Promise<DemoSession | null> {
+  const runId = `m06-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`;
+  try {
+    const resp = await page.request.post('/api/test-support/bootstrap', {
+      headers: { 'x-test-support-key': TEST_SUPPORT_KEY, 'content-type': 'application/json' },
+      data: { runId, role: 'ADMIN' },
+      timeout: 45000,
+    });
+    if (!resp.ok()) return null;
+    const json = (await resp.json()) as { token?: string; userId?: string };
+    const token = String(json.token || '');
+    if (!token) return null;
+    return { token, user: { id: json.userId, email: `e2e+${runId}@local.test` } };
+  } catch {
+    return null;
+  }
+}
+
+/** Authenticate a fresh user (unique per call) and return its auth token.
+ *  Prefers a write-access bootstrap session; falls back to read-only
+ *  register-demo. Retries on transient 5xx (staging DB hiccups are known). */
 export async function registerDemo(page: Page): Promise<DemoSession> {
+  const bootstrapped = await bootstrapSession(page);
+  if (bootstrapped) return bootstrapped;
+
   let lastErr = '';
   for (let attempt = 0; attempt < 6; attempt += 1) {
     const nonce = `${Date.now()}-${attempt}-${Math.floor(Math.random() * 1e6)}`;
@@ -145,9 +182,28 @@ export async function createIdea(
   throw new Error('unreachable');
 }
 
-/** Full bootstrap: register → inject → land on dashboard (tour skipped). */
+/**
+ * Module-level cached demo session. register-demo creates a user + demo org + triggers an
+ * org-context snapshot rebuild — doing it once per TEST (128×) saturates the staging pool and
+ * hangs the backend. With workers=1 this module is shared across all M06 specs in the run, so we
+ * register ONCE and every test reuses the token (each still creates its own isolated idea).
+ */
+let _cachedSession: DemoSession | null = null;
+
+export async function getSharedSession(page: Page): Promise<DemoSession> {
+  if (_cachedSession && _cachedSession.token) return _cachedSession;
+  _cachedSession = await registerDemo(page);
+  return _cachedSession;
+}
+
+/** Drop the cached session (call on a 401 so the next bootstrap re-registers). */
+export function resetSharedSession(): void {
+  _cachedSession = null;
+}
+
+/** Full bootstrap: reuse shared session → inject → land on dashboard (tour skipped). */
 export async function bootstrap(page: Page): Promise<{ token: string; session: DemoSession }> {
-  const session = await registerDemo(page);
+  const session = await getSharedSession(page);
   await injectSession(page, session);
   await page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 45000 });
   await dismissTour(page);
@@ -185,7 +241,7 @@ export async function openSession(
   browser: import('@playwright/test').Browser
 ): Promise<{ page: Page; token: string; ideaId: string }> {
   const page = await browser.newPage();
-  const session = await registerDemo(page);
+  const session = await getSharedSession(page);
   await injectSession(page, session);
   await page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 45000 });
   await dismissTour(page);
@@ -194,12 +250,39 @@ export async function openSession(
   return { page, token: session.token, ideaId };
 }
 
-/** Select the root (first) node on the canvas, robustly. */
+/** Fit all nodes into the viewport (CanvasZoomControls "Fit view" button).
+ *  After adding several children the root drifts off-screen, so react-flow refuses to
+ *  click it ("outside of viewport") even with force:true. Fit first → nodes in view. */
+export async function fitView(page: Page): Promise<void> {
+  const btn = page.getByRole('button', { name: /Fit view|Dopasuj widok/i }).first();
+  if (await btn.isVisible().catch(() => false)) {
+    await btn.click({ force: true }).catch(() => {});
+    await page.waitForTimeout(550); // fit animation
+  }
+}
+
+/** Select the root (first) node on the canvas, robustly.
+ *  fitView() brings it on-screen; force:true bypasses react-flow's transform/animation
+ *  actionability wait — we only need it selected for keyboard grammar. */
 export async function selectRoot(page: Page) {
   const node = page.locator('.react-flow__node').first();
   await node.waitFor({ state: 'visible', timeout: 30000 });
-  await node.click();
+  await fitView(page);
+  // Headless viewport can be smaller than the fitted graph bounds; if the node still
+  // resolves off-viewport, swallow it — downstream selection-state guards honest-skip.
+  await node.click({ force: true }).catch(() => {});
   return node;
+}
+
+/** Select the nth canvas node robustly (fit + force-click past react-flow actionability).
+ *  Returns true if the node existed and was clicked, false if not present (caller honest-skips). */
+export async function selectNodeByIndex(page: Page, idx: number): Promise<boolean> {
+  const node = page.locator('.react-flow__node').nth(idx);
+  if (!(await node.isVisible().catch(() => false))) return false;
+  await fitView(page);
+  await node.click({ force: true }).catch(() => {});
+  await page.waitForTimeout(250);
+  return true;
 }
 
 /** Exit any inline-edit mode (textarea) so keyboard grammar shortcuts apply. */

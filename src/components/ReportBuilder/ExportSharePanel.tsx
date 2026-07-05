@@ -291,7 +291,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
         <button
           onClick={handleExportPdf}
           disabled={exportDisabled}
-          className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
+          className="flex items-center gap-2 px-3 py-2 text-sm bg-c-surface border border-c-border-subtle rounded-lg hover:bg-c-surface-raised disabled:opacity-50"
         >
           {isLoading || qualityLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -306,7 +306,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
           <button
             onClick={handleExportPptx}
             disabled={exportDisabled}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-c-surface border border-c-border-subtle rounded-lg hover:bg-c-surface-raised disabled:opacity-50"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -322,7 +322,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
           <button
             onClick={handleExportWord}
             disabled={exportDisabled}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-c-surface border border-c-border-subtle rounded-lg hover:bg-c-surface-raised disabled:opacity-50"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -337,7 +337,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
         <button
           onClick={() => setShowShareModal(true)}
           disabled={!canShare}
-          className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-600 text-c-text rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           title={
             !canShare ? (isPl ? 'Raport musi być wygenerowany' : 'Report must be generated') : ''
           }
@@ -349,17 +349,17 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
 
       {/* Share Modal */}
       {showShareModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-              <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
+              <h3 className="font-semibold text-c-text flex items-center gap-2">
                 <Share2 className="w-5 h-5 text-blue-500" />
                 {isPl ? 'Udostępnij Raport' : 'Share Report'}
               </h3>
               <button
                 onClick={() => setShowShareModal(false)}
-                className="text-slate-600 hover:text-slate-600"
+                className="text-c-text-secondary hover:text-c-text-secondary"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -368,13 +368,13 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
               {/* Create New Link Section */}
               <div className="space-y-4">
-                <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                <h4 className="text-sm font-medium text-c-text">
                   {isPl ? 'Utwórz nowy link' : 'Create New Link'}
                 </h4>
 
                 {/* Password */}
                 <div>
-                  <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
+                  <label className="block text-sm text-c-text-secondary mb-1">
                     <Lock className="w-3 h-3 inline mr-1" />
                     {isPl ? 'Hasło (opcjonalne)' : 'Password (optional)'}
                   </label>
@@ -387,13 +387,13 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                         ? 'Pozostaw puste dla publicznego dostępu'
                         : 'Leave empty for public access'
                     }
-                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                    className="w-full px-3 py-2 text-sm border border-c-border-subtle rounded-lg bg-c-surface text-c-text"
                   />
                 </div>
 
                 {/* Expiration */}
                 <div>
-                  <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
+                  <label className="block text-sm text-c-text-secondary mb-1">
                     <Calendar className="w-3 h-3 inline mr-1" />
                     {isPl ? 'Wygasa po (dni)' : 'Expires after (days)'}
                   </label>
@@ -407,13 +407,13 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                         : 'Leave empty for no expiration'
                     }
                     min={1}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                    className="w-full px-3 py-2 text-sm border border-c-border-subtle rounded-lg bg-c-surface text-c-text"
                   />
                 </div>
 
                 {/* Custom Message */}
                 <div>
-                  <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">
+                  <label className="block text-sm text-c-text-secondary mb-1">
                     <FileText className="w-3 h-3 inline mr-1" />
                     {isPl ? 'Wiadomość (opcjonalna)' : 'Message (optional)'}
                   </label>
@@ -424,17 +424,17 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                     placeholder={
                       isPl ? 'Np. "Raport dla zarządu"' : 'E.g., "Report for management"'
                     }
-                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                    className="w-full px-3 py-2 text-sm border border-c-border-subtle rounded-lg bg-c-surface text-c-text"
                   />
                 </div>
 
                 {/* Branding Toggle */}
-                <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer">
+                <label className="flex items-center gap-2 text-sm text-c-text-secondary cursor-pointer">
                   <input
                     type="checkbox"
                     checked={showBranding}
                     onChange={(e) => setShowBranding(e.target.checked)}
-                    className="rounded border-slate-300"
+                    className="rounded border-c-border"
                   />
                   {isPl ? 'Pokaż branding Consultify' : 'Show Consultify branding'}
                 </label>
@@ -442,7 +442,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                 <button
                   onClick={handleCreateLink}
                   disabled={isCreatingLink}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-c-text rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
                   {isCreatingLink ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -455,16 +455,16 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
 
               {/* Existing Links Section */}
               <div className="space-y-3">
-                <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                <h4 className="text-sm font-medium text-c-text">
                   {isPl ? 'Aktywne linki' : 'Active Links'}
                 </h4>
 
                 {isLoadingLinks ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-slate-600" />
+                    <Loader2 className="w-6 h-6 animate-spin text-c-text-secondary" />
                   </div>
                 ) : shareLinks.length === 0 ? (
-                  <div className="text-center py-8 text-slate-500">
+                  <div className="text-center py-8 text-c-text-secondary">
                     {isPl ? 'Brak aktywnych linków' : 'No active links'}
                   </div>
                 ) : (
@@ -472,17 +472,17 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                     {shareLinks.map((link) => (
                       <div
                         key={link.id}
-                        className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-slate-700"
+                        className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg border border-c-border-subtle"
                       >
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 text-sm text-slate-900 dark:text-white">
+                          <div className="flex items-center gap-2 text-sm text-c-text">
                             <Link2 className="w-4 h-4 text-blue-500 flex-shrink-0" />
                             <span className="truncate font-mono text-xs">{link.url}</span>
                             {link.hasPassword && (
                               <Lock className="w-3 h-3 text-amber-500 flex-shrink-0" />
                             )}
                           </div>
-                          <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                          <div className="flex items-center gap-3 mt-1 text-xs text-c-text-secondary">
                             <span className="flex items-center gap-1">
                               <Eye className="w-3 h-3" />
                               {link.viewCount} {isPl ? 'wyświetleń' : 'views'}
@@ -500,7 +500,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                         <div className="flex items-center gap-1 ml-2">
                           <button
                             onClick={() => handleCopyLink(link)}
-                            className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+                            className="p-2 text-c-text-secondary hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
                             title={isPl ? 'Kopiuj link' : 'Copy link'}
                           >
                             {copiedLinkId === link.id ? (
@@ -511,7 +511,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                           </button>
                           <button
                             onClick={() => handleRevokeLink(link.id)}
-                            className="p-2 text-slate-600 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded"
+                            className="p-2 text-c-text-secondary hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded"
                             title={isPl ? 'Usuń link' : 'Revoke link'}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -525,10 +525,10 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="p-4 border-t border-c-border-subtle">
               <button
                 onClick={() => setShowShareModal(false)}
-                className="w-full px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+                className="w-full px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
               >
                 {isPl ? 'Zamknij' : 'Close'}
               </button>

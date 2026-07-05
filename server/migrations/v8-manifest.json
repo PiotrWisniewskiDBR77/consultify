@@ -52,6 +52,7 @@
     { "file": "20260324_v8_shadow_comparisons.sql", "order": 47 },
     { "file": "20260324_v81_artifact_substrate_wave1.sql", "order": 48 },
     { "file": "20260324_v81_artifact_runs_wave1.sql", "order": 49 },
-    { "file": "20260324_v81_sheet_artifact_wave2.sql", "order": 50 }
+    { "file": "20260324_v81_sheet_artifact_wave2.sql", "order": 50 },
+    { "file": "20260702_v81_artifact_draft_flag.sql", "order": 51 }
   ]
 }

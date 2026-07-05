@@ -63,10 +63,10 @@ export const FloatingAIPopover: React.FC<FloatingAIPopoverProps> = ({
   };
 
   return (
-    <div className="w-52 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl py-1">
+    <div className="w-52 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl py-1">
       {hint && (
-        <div className="px-3 py-2 border-b border-slate-200/30 dark:border-white/[0.04]">
-          <div className="text-[10px] text-primary-600 dark:text-primary-400 font-medium flex items-center gap-1">
+        <div className="px-3 py-2 border-b border-c-border-subtle dark:border-c-border">
+          <div className="text-[10px] text-c-text-secondary dark:text-c-text-muted font-medium flex items-center gap-1">
             <Sparkles size={10} />
             {hint}
           </div>
@@ -77,21 +77,21 @@ export const FloatingAIPopover: React.FC<FloatingAIPopoverProps> = ({
           onOpenChatAboutNode();
           onClose();
         }}
-        className="w-full flex items-center gap-2 px-2 py-2 text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/5 transition-colors"
+        className="w-full flex items-center gap-2 px-2 py-2 text-[11px] font-semibold text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
       >
         <MessageCircle size={12} className="shrink-0" />
         {isPl ? 'Zapytaj AI o ten węzeł' : 'Ask AI about this node'}
       </button>
-      <div className="border-t border-slate-200/30 dark:border-white/[0.04] my-0.5" />
+      <div className="border-t border-c-border-subtle dark:border-c-border my-0.5" />
       {AI_ACTIONS.map((a) => {
         const Icon = a.iconEl;
         return (
           <button
             key={a.action}
             onClick={() => dispatch(a.action)}
-            className="w-full flex items-center gap-2 px-2 py-1.5 text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+            className="w-full flex items-center gap-2 px-2 py-1.5 text-[11px] text-c-text-secondary dark:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
           >
-            <Icon size={12} className="text-primary-400 shrink-0" />
+            <Icon size={12} className="text-c-text-secondary shrink-0" />
             {isPl ? a.labelPl : a.labelEn}
           </button>
         );

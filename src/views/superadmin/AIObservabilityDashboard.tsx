@@ -85,13 +85,13 @@ const MetricCard: React.FC<{
   sub?: string;
   color?: string;
 }> = ({ icon, label, value, sub, color = 'text-blue-400' }) => (
-  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+  <div className="rounded-xl border border-c-border bg-c-surface p-4">
     <div className="flex items-center gap-2 mb-2">
       <span className={color}>{icon}</span>
-      <span className="text-xs text-white/50 uppercase tracking-wide">{label}</span>
+      <span className="text-xs text-c-text-muted uppercase tracking-wide">{label}</span>
     </div>
-    <div className="text-2xl font-bold text-white">{value}</div>
-    {sub && <div className="text-xs text-white/40 mt-1">{sub}</div>}
+    <div className="text-2xl font-bold text-c-text">{value}</div>
+    {sub && <div className="text-xs text-c-text-muted mt-1">{sub}</div>}
   </div>
 );
 
@@ -132,13 +132,13 @@ const AIObservabilityDashboard: React.FC = () => {
   }
 
   if (!metrics) {
-    return <div className="text-white/50 text-center py-12">No observability data available</div>;
+    return <div className="text-c-text-muted text-center py-12">No observability data available</div>;
   }
 
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+        <h1 className="text-2xl font-bold text-c-text flex items-center gap-3">
           <Activity className="w-7 h-7 text-blue-400" />
           AI Observability Dashboard
         </h1>
@@ -150,7 +150,7 @@ const AIObservabilityDashboard: React.FC = () => {
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 range === r
                   ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                  : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10'
+                  : 'bg-c-surface text-c-text-muted border border-c-border hover:bg-c-surface-raised'
               }`}
             >
               {r}
@@ -158,9 +158,9 @@ const AIObservabilityDashboard: React.FC = () => {
           ))}
           <button
             onClick={fetchData}
-            className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+            className="p-2 rounded-lg bg-c-surface border border-c-border hover:bg-c-surface-raised transition-colors"
           >
-            <RefreshCw className={`w-4 h-4 text-white/50 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 text-c-text-muted ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
@@ -185,7 +185,7 @@ const AIObservabilityDashboard: React.FC = () => {
                 >
                   {alert.severity}
                 </span>
-                <span className="text-white/70">
+                <span className="text-c-text-secondary">
                   {alert.metric}:{' '}
                   {typeof alert.currentValue === 'number' && alert.currentValue < 1
                     ? pct(alert.currentValue)
@@ -242,60 +242,60 @@ const AIObservabilityDashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Grounding & Confidence */}
-        <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-          <h3 className="text-sm font-semibold text-white/70 uppercase tracking-wide mb-4 flex items-center gap-2">
+        <div className="rounded-xl border border-c-border bg-c-surface p-5">
+          <h3 className="text-sm font-semibold text-c-text-secondary uppercase tracking-wide mb-4 flex items-center gap-2">
             <FileSearch className="w-4 h-4 text-primary-400" /> Grounding & Citation
           </h3>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-white/50 text-sm">Grounding Score</span>
-              <span className="text-white font-medium">
+              <span className="text-c-text-muted text-sm">Grounding Score</span>
+              <span className="text-c-text font-medium">
                 {pct(metrics.grounding.avgGroundingScore)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-white/50 text-sm">Confidence Score</span>
-              <span className="text-white font-medium">
+              <span className="text-c-text-muted text-sm">Confidence Score</span>
+              <span className="text-c-text font-medium">
                 {pct(metrics.grounding.avgConfidenceScore)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-white/50 text-sm">Citation Accuracy</span>
-              <span className="text-white font-medium">
+              <span className="text-c-text-muted text-sm">Citation Accuracy</span>
+              <span className="text-c-text font-medium">
                 {pct(metrics.grounding.avgCitationAccuracy)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-white/50 text-sm">Total Validated</span>
-              <span className="text-white font-medium">{metrics.grounding.totalValidated}</span>
+              <span className="text-c-text-muted text-sm">Total Validated</span>
+              <span className="text-c-text font-medium">{metrics.grounding.totalValidated}</span>
             </div>
           </div>
         </div>
 
         {/* RAG Performance */}
-        <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-          <h3 className="text-sm font-semibold text-white/70 uppercase tracking-wide mb-4 flex items-center gap-2">
+        <div className="rounded-xl border border-c-border bg-c-surface p-5">
+          <h3 className="text-sm font-semibold text-c-text-secondary uppercase tracking-wide mb-4 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-blue-400" /> RAG Performance
           </h3>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-white/50 text-sm">Avg Groundedness</span>
-              <span className="text-white font-medium">{pct(metrics.rag.avgGroundedness)}</span>
+              <span className="text-c-text-muted text-sm">Avg Groundedness</span>
+              <span className="text-c-text font-medium">{pct(metrics.rag.avgGroundedness)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-white/50 text-sm">Avg Chunks Used</span>
-              <span className="text-white font-medium">{metrics.rag.avgChunksUsed.toFixed(1)}</span>
+              <span className="text-c-text-muted text-sm">Avg Chunks Used</span>
+              <span className="text-c-text font-medium">{metrics.rag.avgChunksUsed.toFixed(1)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-white/50 text-sm">Retrieval Latency</span>
-              <span className="text-white font-medium">{ms(metrics.rag.retrievalLatencyMs)}</span>
+              <span className="text-c-text-muted text-sm">Retrieval Latency</span>
+              <span className="text-c-text font-medium">{ms(metrics.rag.retrievalLatencyMs)}</span>
             </div>
           </div>
         </div>
 
         {/* Eval Regression Gate */}
-        <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-          <h3 className="text-sm font-semibold text-white/70 uppercase tracking-wide mb-4 flex items-center gap-2">
+        <div className="rounded-xl border border-c-border bg-c-surface p-5">
+          <h3 className="text-sm font-semibold text-c-text-secondary uppercase tracking-wide mb-4 flex items-center gap-2">
             {metrics.evalRegression.passesGate ? (
               <CheckCircle className="w-4 h-4 text-green-400" />
             ) : (
@@ -305,7 +305,7 @@ const AIObservabilityDashboard: React.FC = () => {
           </h3>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-white/50 text-sm">Status</span>
+              <span className="text-c-text-muted text-sm">Status</span>
               <span
                 className={`font-medium ${metrics.evalRegression.passesGate ? 'text-green-400' : 'text-danger-400'}`}
               >
@@ -317,8 +317,8 @@ const AIObservabilityDashboard: React.FC = () => {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-white/50 text-sm">Last Run</span>
-              <span className="text-white font-medium text-xs">
+              <span className="text-c-text-muted text-sm">Last Run</span>
+              <span className="text-c-text font-medium text-xs">
                 {metrics.evalRegression.lastRunDate
                   ? new Date(metrics.evalRegression.lastRunDate).toLocaleDateString()
                   : 'Never'}
@@ -328,23 +328,23 @@ const AIObservabilityDashboard: React.FC = () => {
         </div>
 
         {/* Tool Calls */}
-        <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-          <h3 className="text-sm font-semibold text-white/70 uppercase tracking-wide mb-4 flex items-center gap-2">
+        <div className="rounded-xl border border-c-border bg-c-surface p-5">
+          <h3 className="text-sm font-semibold text-c-text-secondary uppercase tracking-wide mb-4 flex items-center gap-2">
             <Wrench className="w-4 h-4 text-amber-400" /> Tool Calls
           </h3>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-white/50 text-sm">Total Calls</span>
-              <span className="text-white font-medium">{metrics.tools.totalCalls}</span>
+              <span className="text-c-text-muted text-sm">Total Calls</span>
+              <span className="text-c-text font-medium">{metrics.tools.totalCalls}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-white/50 text-sm">Success Rate</span>
-              <span className="text-white font-medium">{pct(metrics.tools.successRate)}</span>
+              <span className="text-c-text-muted text-sm">Success Rate</span>
+              <span className="text-c-text font-medium">{pct(metrics.tools.successRate)}</span>
             </div>
             {metrics.tools.byTool.slice(0, 5).map((t) => (
               <div key={t.tool} className="flex justify-between text-xs">
-                <span className="text-white/40 truncate max-w-[60%]">{t.tool}</span>
-                <span className="text-white/60">
+                <span className="text-c-text-muted truncate max-w-[60%]">{t.tool}</span>
+                <span className="text-c-text-secondary">
                   {t.count}x ({pct(t.successRate)})
                 </span>
               </div>
@@ -353,45 +353,45 @@ const AIObservabilityDashboard: React.FC = () => {
         </div>
 
         {/* Cost Breakdown */}
-        <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-          <h3 className="text-sm font-semibold text-white/70 uppercase tracking-wide mb-4 flex items-center gap-2">
+        <div className="rounded-xl border border-c-border bg-c-surface p-5">
+          <h3 className="text-sm font-semibold text-c-text-secondary uppercase tracking-wide mb-4 flex items-center gap-2">
             <DollarSign className="w-4 h-4 text-green-400" /> Cost by Model
           </h3>
           <div className="space-y-2">
             {metrics.cost.byModel.slice(0, 6).map((m) => (
               <div key={m.model} className="flex justify-between text-sm">
-                <span className="text-white/50 truncate max-w-[55%]">{m.model}</span>
-                <span className="text-white font-medium">
+                <span className="text-c-text-muted truncate max-w-[55%]">{m.model}</span>
+                <span className="text-c-text font-medium">
                   {usd(m.totalUsd)} ({m.count}x)
                 </span>
               </div>
             ))}
             {metrics.cost.byModel.length === 0 && (
-              <span className="text-white/30 text-sm">No data</span>
+              <span className="text-c-text-muted text-sm">No data</span>
             )}
           </div>
         </div>
 
         {/* Quality Trend */}
-        <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-          <h3 className="text-sm font-semibold text-white/70 uppercase tracking-wide mb-4 flex items-center gap-2">
+        <div className="rounded-xl border border-c-border bg-c-surface p-5">
+          <h3 className="text-sm font-semibold text-c-text-secondary uppercase tracking-wide mb-4 flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-blue-400" /> Quality Trend
           </h3>
           <div className="space-y-1 max-h-48 overflow-y-auto">
             {metrics.quality.trend.map((t) => (
               <div key={t.date} className="flex items-center gap-2 text-xs">
-                <span className="text-white/40 w-20">{t.date}</span>
-                <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
+                <span className="text-c-text-muted w-20">{t.date}</span>
+                <div className="flex-1 h-2 bg-c-surface rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full bg-blue-500/70"
                     style={{ width: `${(t.avgScore * 100).toFixed(0)}%` }}
                   />
                 </div>
-                <span className="text-white/50 w-14 text-right">{pct(t.avgScore)}</span>
+                <span className="text-c-text-muted w-14 text-right">{pct(t.avgScore)}</span>
               </div>
             ))}
             {metrics.quality.trend.length === 0 && (
-              <span className="text-white/30 text-sm">No data</span>
+              <span className="text-c-text-muted text-sm">No data</span>
             )}
           </div>
         </div>

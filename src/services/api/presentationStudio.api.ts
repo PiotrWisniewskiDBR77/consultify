@@ -381,11 +381,21 @@ async function studioGet<T>(path: string): Promise<T> {
   return json.data;
 }
 
-async function studioPost<T>(path: string, body: unknown): Promise<T> {
+// Heavy Studio LLM ops (preview/plan/generate) legitimately exceed the 20s
+// default hard timeout; callers pass a larger `timeoutMs` to avoid a spurious
+// client-side "Request timed out" (see finding baseclient_20s_timeout).
+const STUDIO_HEAVY_TIMEOUT_MS = 120000;
+
+async function studioPost<T>(
+  path: string,
+  body: unknown,
+  opts?: { timeoutMs?: number }
+): Promise<T> {
   const res = await fetchWithRetry(`${STUDIO_BASE}${path}`, {
     method: 'POST',
     headers: getHeaders(),
     body: body ? JSON.stringify(body) : undefined,
+    ...(opts?.timeoutMs ? { timeoutMs: opts.timeoutMs } : {}),
   });
   const json = await handleResponse<{ success: boolean; data: T; error?: string; code?: string }>(
     res,
@@ -413,11 +423,16 @@ interface StudioTypedEnvelope<T> {
   preview?: GeneratePreviewResponse;
 }
 
-async function studioPostTyped<T>(path: string, body: unknown): Promise<T> {
+async function studioPostTyped<T>(
+  path: string,
+  body: unknown,
+  opts?: { timeoutMs?: number }
+): Promise<T> {
   const res = await fetchWithRetry(`${STUDIO_BASE}${path}`, {
     method: 'POST',
     headers: getHeaders(),
     body: body ? JSON.stringify(body) : undefined,
+    ...(opts?.timeoutMs ? { timeoutMs: opts.timeoutMs } : {}),
   });
   let json: StudioTypedEnvelope<T> | null = null;
   try {
@@ -448,16 +463,24 @@ async function studioPostTyped<T>(path: string, body: unknown): Promise<T> {
 
 export const PresentationStudioApi = {
   previewSourcePack: (input: SourcePackPreviewRequest) =>
-    studioPost<SourcePackPreviewResponse>('/source-pack/preview', input),
+    studioPost<SourcePackPreviewResponse>('/source-pack/preview', input, {
+      timeoutMs: STUDIO_HEAVY_TIMEOUT_MS,
+    }),
 
   previewNarrativePlan: (input: NarrativePlanPreviewRequest) =>
-    studioPost<NarrativePlanPreviewResponse>('/narrative-plan/preview', input),
+    studioPost<NarrativePlanPreviewResponse>('/narrative-plan/preview', input, {
+      timeoutMs: STUDIO_HEAVY_TIMEOUT_MS,
+    }),
 
   previewTemplatePlan: (input: TemplatePlanPreviewRequest) =>
-    studioPost<TemplatePlanPreviewResponse>('/template-architect/preview', input),
+    studioPost<TemplatePlanPreviewResponse>('/template-architect/preview', input, {
+      timeoutMs: STUDIO_HEAVY_TIMEOUT_MS,
+    }),
 
   previewGenerate: (input: GeneratePreviewRequest) =>
-    studioPost<GeneratePreviewResponse>('/generate/preview', input),
+    studioPost<GeneratePreviewResponse>('/generate/preview', input, {
+      timeoutMs: STUDIO_HEAVY_TIMEOUT_MS,
+    }),
 
   /**
    * Phase A of the mutating generate flow: request a single-use approval
@@ -466,7 +489,9 @@ export const PresentationStudioApi = {
    * a populated `preview` when generation would not proceed.
    */
   requestApproval: (input: RequestApprovalRequest) =>
-    studioPostTyped<RequestApprovalResponse>('/generate/request-approval', input),
+    studioPostTyped<RequestApprovalResponse>('/generate/request-approval', input, {
+      timeoutMs: STUDIO_HEAVY_TIMEOUT_MS,
+    }),
 
   /**
    * Phase B of the mutating generate flow: redeem a ticket and persist a
@@ -478,7 +503,9 @@ export const PresentationStudioApi = {
    * `PRECONDITION_REQUIRED` when the ticket id is missing.
    */
   executeGenerate: (input: ExecuteGenerateRequest) =>
-    studioPostTyped<ExecuteGenerateResponse>('/generate', input),
+    studioPostTyped<ExecuteGenerateResponse>('/generate', input, {
+      timeoutMs: STUDIO_HEAVY_TIMEOUT_MS,
+    }),
 
   /**
    * S9 — Tenant-scoped enumeration of source artifacts the user can attach
@@ -494,13 +521,16 @@ export const PresentationStudioApi = {
   },
 
   /**
-   * E3 — Per-slide AI regeneration. Uses saved ContextPack snapshot (narrative slides)
-   * or rebuilds from existing unified_json. Does NOT touch other slides.
+   * E3 / R4 — Per-slide AI regeneration. Uses saved ContextPack snapshot
+   * (narrative slides) or rebuilds from existing unified_json. Does NOT touch
+   * other slides. Pass `instruction` for a free-text rewrite of any slide;
+   * the server returns the rebuilt FE-shaped `card` for in-place `updateCard`.
    */
-  regenerateSlide: (deckId: string, slideIndex: number) =>
-    studioPostTyped<{ slide: Record<string, unknown> }>(
+  regenerateSlide: (deckId: string, slideIndex: number, instruction?: string) =>
+    studioPostTyped<{ slide: Record<string, unknown>; card?: Record<string, unknown> }>(
       `/decks/${encodeURIComponent(deckId)}/slides/${encodeURIComponent(String(slideIndex))}/regenerate`,
-      {}
+      instruction && instruction.trim().length > 0 ? { instruction: instruction.trim() } : {},
+      { timeoutMs: STUDIO_HEAVY_TIMEOUT_MS }
     ),
 };
 

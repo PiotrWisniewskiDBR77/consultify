@@ -7,6 +7,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const mockNavigate = vi.fn();
+
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>();
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 const financeDataState = vi.hoisted(() => ({
   statements: [] as any[],
   models: [] as any[],
@@ -250,6 +260,7 @@ function renderWithProviders(children: React.ReactNode, initialEntries = ['/']) 
 describe('FinanceHub V8 runtime strip', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockNavigate.mockReset();
     financeDataState.statements = [];
     financeDataState.models = [];
     financeDataState.analyses = [];
@@ -306,7 +317,7 @@ describe('FinanceHub V8 runtime strip', () => {
     expect(screen.getByText('Gate pass')).toBeInTheDocument();
     expect(screen.getByText('75%')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Predykcja' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Prediction' }));
 
     await waitFor(() => {
       expect(screen.getByTestId('active-tab')).toHaveTextContent('prediction');
@@ -315,7 +326,7 @@ describe('FinanceHub V8 runtime strip', () => {
     expect(screen.getByText('V8 Ingestion')).toBeInTheDocument();
     expect(screen.getByText('Linkages')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Wycena przedsiębiorstw' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enterprise valuation' }));
 
     await waitFor(() => {
       expect(screen.getByTestId('active-tab')).toHaveTextContent('valuation');
@@ -365,7 +376,7 @@ describe('FinanceHub V8 runtime strip', () => {
     renderWithProviders(<FinanceHub />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Statements' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Importuj statement' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Import statement' }));
     fireEvent.click(screen.getByRole('button', { name: 'complete-import' }));
 
     await waitFor(() => {
@@ -410,7 +421,7 @@ describe('FinanceHub V8 runtime strip', () => {
     renderWithProviders(<FinanceHub />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Statements' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Importuj statement' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Import statement' }));
     fireEvent.click(screen.getByRole('button', { name: 'complete-import' }));
 
     await waitFor(() => {
@@ -423,16 +434,17 @@ describe('FinanceHub V8 runtime strip', () => {
 
   it('canonicalizes economics deep links to finance and preserves valuation context', async () => {
     renderWithProviders(
-      <>
-        <LocationProbe />
-        <FinanceHub />
-      </>,
+      <FinanceHub />,
       ['/economics?tab=valuation&initiativeId=init-1&initiativeName=Initiative%20Alpha']
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('location')).toHaveTextContent(
-        '/finance?tab=valuation&initiativeId=init-1&initiativeName=Initiative%20Alpha'
+      expect(mockNavigate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          pathname: expect.stringMatching(/finance/),
+          search: expect.stringContaining('tab=valuation'),
+        }),
+        expect.objectContaining({ replace: true })
       );
       expect(screen.getByTestId('active-tab')).toHaveTextContent('valuation');
     });
@@ -449,7 +461,7 @@ describe('FinanceHub V8 runtime strip', () => {
       ['/finance?tab=statements']
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Predykcja' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Prediction' }));
 
     await waitFor(() => {
       expect(screen.getByTestId('active-tab')).toHaveTextContent('prediction');

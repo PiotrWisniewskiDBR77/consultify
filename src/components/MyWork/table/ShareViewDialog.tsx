@@ -62,41 +62,41 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[170] flex items-center justify-center bg-black/20 backdrop-blur-[2px]"
+      className="fixed inset-0 z-context-menu flex items-center justify-center bg-black/20 backdrop-blur-[2px]"
       onClick={onClose}
     >
       <div
-        className="w-[440px] bg-white dark:bg-navy-950 rounded-2xl border border-slate-200 dark:border-navy-700 shadow-2xl p-6"
+        className="w-[440px] bg-c-surface rounded-2xl border border-c-border-subtle shadow-2xl p-6"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Share2 size={16} className="text-primary-500" />
+            <Share2 size={16} className="text-c-accent" />
             <h3 className="font-semibold text-sm">{isPl ? 'Udostępnij widok' : 'Share View'}</h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="p-1 rounded hover:bg-c-surface-raised"
           >
             <X size={14} />
           </button>
         </div>
 
-        <p className="text-xs text-slate-500 mb-4">{viewName}</p>
+        <p className="text-xs text-c-text-muted mb-4">{viewName}</p>
 
         {/* Toggle */}
-        <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-slate-50 dark:bg-navy-900">
+        <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-c-surface-raised">
           <span className="text-sm">{isPl ? 'Udostępnianie włączone' : 'Sharing enabled'}</span>
           <button
             onClick={handleToggleShare}
             disabled={loading}
             className={`w-10 h-5 rounded-full transition-colors ${
-              shared ? 'bg-navy-900' : 'bg-slate-300 dark:bg-navy-600'
+              shared ? 'bg-c-surface' : 'bg-c-surface'
             }`}
           >
             <div
-              className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${
+              className={`w-4 h-4 rounded-full bg-c-surface shadow transition-transform ${
                 shared ? 'translate-x-5' : 'translate-x-0.5'
               }`}
             />
@@ -110,11 +110,11 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
               <input
                 readOnly
                 value={shareUrl}
-                className="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900"
+                className="flex-1 px-3 py-2 text-xs rounded-lg border border-c-border-subtle bg-c-surface-raised"
               />
               <button
                 onClick={handleCopy}
-                className="p-2 rounded-lg bg-primary-100 dark:bg-primary-800/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 transition-colors"
+                className="p-2 rounded-lg bg-c-accent-soft text-c-accent hover:bg-c-accent transition-colors"
               >
                 {copied ? <Check size={14} /> : <Copy size={14} />}
               </button>
@@ -122,7 +122,7 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
 
             {/* Password */}
             <div className="mb-3">
-              <label className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
+              <label className="flex items-center gap-1.5 text-xs text-c-text-muted mb-1">
                 <Lock size={12} />
                 {isPl ? 'Hasło (opcjonalne)' : 'Password (optional)'}
               </label>
@@ -131,13 +131,13 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={isPl ? 'Zostaw puste = bez hasła' : 'Leave empty = no password'}
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-c-border-subtle bg-c-surface"
               />
             </div>
 
             {/* Expiration */}
             <div className="mb-3">
-              <label className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
+              <label className="flex items-center gap-1.5 text-xs text-c-text-muted mb-1">
                 <Calendar size={12} />
                 {isPl ? 'Wygasa' : 'Expires'}
               </label>
@@ -145,7 +145,7 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
                 type="datetime-local"
                 value={expiresAt}
                 onChange={(e) => setExpiresAt(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-c-border-subtle bg-c-surface"
               />
             </div>
           </>

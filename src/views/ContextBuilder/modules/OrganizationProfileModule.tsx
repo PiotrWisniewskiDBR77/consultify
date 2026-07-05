@@ -598,7 +598,7 @@ const ChipSelector: React.FC<{
         onClick={() => {
           onChange(value.includes(opt) ? value.filter((v) => v !== opt) : [...value, opt]);
         }}
-        className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${value.includes(opt) ? 'bg-primary-100 border-primary-300 text-primary-700 dark:bg-primary-900/30 dark:border-primary-500/30 dark:text-primary-300' : 'bg-slate-50 border-slate-200 text-slate-600 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-400 hover:border-primary-300'}`}
+        className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${value.includes(opt) ? 'bg-primary-100 border-primary-300 text-primary-700 dark:bg-primary-900/30 dark:border-primary-500/30 dark:text-primary-300' : 'bg-c-bg border-c-border-subtle text-c-text-secondary dark:bg-navy-950 dark:border-navy-700 dark:text-c-text-muted hover:border-primary-300'}`}
       >
         {opt}
       </button>
@@ -607,8 +607,8 @@ const ChipSelector: React.FC<{
 );
 
 const inputCls =
-  'w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none text-sm';
-const labelCls = 'block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5';
+  'w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none text-sm';
+const labelCls = 'block text-sm font-medium text-c-text-secondary mb-1.5';
 
 // ─── Main Component ───
 
@@ -749,7 +749,7 @@ export const OrganizationProfileModule: React.FC = () => {
   }> = ({ id, title, icon, badge }) => (
     <button
       onClick={() => toggleSection(id)}
-      className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-950 transition-colors"
+      className="w-full flex items-center justify-between p-4 bg-c-surface-raised/50 rounded-lg hover:bg-c-surface-raised transition-colors"
     >
       <div className="flex items-center gap-3">
         <div className="text-primary-500">{icon}</div>
@@ -783,7 +783,7 @@ export const OrganizationProfileModule: React.FC = () => {
             <Building2 className="text-primary-500" size={22} />
             {t('organization.profile.title', 'Organization Profile')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
+          <p className="text-c-text-muted text-sm mt-0.5">
             {t(
               'organization.profile.subtitle',
               'Define your organization context for AI-powered insights'
@@ -792,7 +792,7 @@ export const OrganizationProfileModule: React.FC = () => {
         </div>
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <div className="text-xs text-slate-500 dark:text-slate-400">Completeness</div>
+            <div className="text-xs text-c-text-muted">Completeness</div>
             <div className="text-lg font-bold text-navy-900 dark:text-white">{completeness}%</div>
           </div>
           <div className="w-12 h-12 relative">
@@ -839,10 +839,10 @@ export const OrganizationProfileModule: React.FC = () => {
                 AI Guide
               </span>
             </h4>
-            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+            <p className="text-xs text-c-text-secondary mt-1 leading-relaxed">
               {teresaHint.message}
             </p>
-            <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
+            <p className="text-[10px] text-c-text-secondary mt-0.5">
               Used by: {teresaHint.downstream}
             </p>
           </div>
@@ -858,7 +858,7 @@ export const OrganizationProfileModule: React.FC = () => {
           </button>
           <button
             onClick={() => setShowTeresa(false)}
-            className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 p-1"
+            className="text-c-text-secondary hover:text-c-text-secondary dark:hover:text-slate-300 p-1"
           >
             <span className="sr-only">Dismiss</span>&times;
           </button>
@@ -888,7 +888,7 @@ export const OrganizationProfileModule: React.FC = () => {
 
       {/* Document extraction proposals (Phase 3.4) */}
       {docExtractProposals.length > 0 && (
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-primary-200 dark:border-primary-700 p-4 space-y-3">
+        <div className="bg-c-surface rounded-xl border border-primary-200 dark:border-primary-700 p-4 space-y-3">
           <h4 className="text-sm font-semibold text-navy-900 dark:text-white flex items-center gap-2">
             <Sparkles size={16} className="text-primary-500" />
             Teresa extracted these fields from your document
@@ -896,10 +896,10 @@ export const OrganizationProfileModule: React.FC = () => {
           {docExtractProposals.map((proposal, idx) => (
             <div
               key={idx}
-              className={`flex items-center gap-3 p-2 rounded-lg border ${proposal.accepted === true ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700' : proposal.accepted === false ? 'bg-slate-50 border-slate-200 dark:bg-navy-950 dark:border-navy-700 opacity-50' : 'bg-white border-slate-200 dark:bg-navy-900 dark:border-navy-700'}`}
+              className={`flex items-center gap-3 p-2 rounded-lg border ${proposal.accepted === true ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700' : proposal.accepted === false ? 'bg-c-bg border-c-border-subtle dark:bg-navy-950 dark:border-navy-700 opacity-50' : 'bg-c-surface border-c-border-subtle dark:bg-navy-900 dark:border-navy-700'}`}
             >
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                <div className="text-xs font-medium text-c-text-muted">
                   {proposal.label}
                 </div>
                 <div className="text-sm text-navy-900 dark:text-white truncate">
@@ -916,7 +916,7 @@ export const OrganizationProfileModule: React.FC = () => {
                   </button>
                   <button
                     onClick={() => applyProposal(idx, false)}
-                    className="px-2 py-1 bg-slate-300 text-slate-700 text-xs rounded hover:bg-slate-400 dark:bg-slate-600 dark:text-slate-200"
+                    className="px-2 py-1 bg-slate-300 text-c-text-secondary text-xs rounded hover:bg-slate-400 dark:bg-slate-600 dark:text-slate-200"
                   >
                     Reject
                   </button>
@@ -943,7 +943,7 @@ export const OrganizationProfileModule: React.FC = () => {
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={extracting}
-          className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-200 rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-c-surface border border-c-border-subtle hover:bg-c-surface-raised text-c-text-secondary rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
         >
           {extracting ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
           Extract from document
@@ -961,7 +961,7 @@ export const OrganizationProfileModule: React.FC = () => {
         />
         <button
           onClick={() => setShowReadiness((prev) => !prev)}
-          className={`flex items-center gap-2 px-4 py-2 border rounded-lg font-medium text-sm transition-colors ${showReadiness ? 'bg-primary-50 border-primary-300 text-primary-700 dark:bg-primary-900/30 dark:border-primary-500/30 dark:text-primary-300' : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700'}`}
+          className={`flex items-center gap-2 px-4 py-2 border rounded-lg font-medium text-sm transition-colors ${showReadiness ? 'bg-primary-50 border-primary-300 text-primary-700 dark:bg-primary-900/30 dark:border-primary-500/30 dark:text-primary-300' : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised'}`}
         >
           <Target size={16} />
           Readiness {readyCount}/{readiness.length}
@@ -970,7 +970,7 @@ export const OrganizationProfileModule: React.FC = () => {
 
       {/* Downstream readiness indicators (Phase 3.3) */}
       {showReadiness && (
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
           <h4 className="text-sm font-semibold text-navy-900 dark:text-white mb-3 flex items-center gap-2">
             <Target size={16} className="text-primary-500" />
             Module Readiness
@@ -979,21 +979,21 @@ export const OrganizationProfileModule: React.FC = () => {
             {readiness.map((r) => (
               <div
                 key={r.module}
-                className={`flex items-center gap-2 p-2 rounded-lg border text-sm ${r.ready ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700' : 'bg-slate-50 border-slate-200 dark:bg-navy-950 dark:border-navy-700'}`}
+                className={`flex items-center gap-2 p-2 rounded-lg border text-sm ${r.ready ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700' : 'bg-c-bg border-c-border-subtle dark:bg-navy-950 dark:border-navy-700'}`}
               >
                 {r.ready ? (
                   <CheckCircle size={14} className="text-green-500 shrink-0" />
                 ) : (
-                  <AlertCircle size={14} className="text-slate-600 shrink-0" />
+                  <AlertCircle size={14} className="text-c-text-secondary shrink-0" />
                 )}
                 <div className="flex-1 min-w-0">
                   <span
-                    className={`text-xs font-medium ${r.ready ? 'text-green-700 dark:text-green-400' : 'text-slate-600 dark:text-slate-400'}`}
+                    className={`text-xs font-medium ${r.ready ? 'text-green-700 dark:text-green-400' : 'text-c-text-secondary'}`}
                   >
                     {r.label}
                   </span>
                   {!r.ready && r.missing.length > 0 && (
-                    <span className="text-[10px] text-slate-600 dark:text-slate-500 ml-1">
+                    <span className="text-[10px] text-c-text-secondary ml-1">
                       needs: {r.missing.join(', ')}
                     </span>
                   )}
@@ -1006,11 +1006,11 @@ export const OrganizationProfileModule: React.FC = () => {
 
       <div className="space-y-3">
         {/* Section 1: Organization Type */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
           <SectionHeader id="type" title="Organization Type" icon={<Building2 size={18} />} />
           {expandedSections.type && (
-            <div className="p-5 border-t border-slate-200 dark:border-navy-700">
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+            <div className="p-5 border-t border-c-border-subtle">
+              <p className="text-xs text-c-text-muted mb-4">
                 Select the type that best describes your organization. This determines which
                 questions are most relevant.
               </p>
@@ -1027,14 +1027,14 @@ export const OrganizationProfileModule: React.FC = () => {
                         setExpandedSections((prev) => ({ ...prev, type: false, identity: true }));
                       }}
                     />
-                    <div className="h-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-navy-950/50 hover:border-primary-300 transition-all flex flex-col items-center text-center peer-checked:ring-2 peer-checked:ring-primary-500 peer-checked:border-transparent peer-checked:bg-white dark:peer-checked:bg-navy-800">
-                      <div className="text-slate-500 dark:text-slate-400 mb-2 peer-checked:text-primary-600">
+                    <div className="h-full p-3 rounded-xl border border-c-border-subtle bg-c-bg/50 dark:bg-navy-950/50 hover:border-primary-300 transition-all flex flex-col items-center text-center peer-checked:ring-2 peer-checked:ring-primary-500 peer-checked:border-transparent peer-checked:bg-c-surface dark:peer-checked:bg-navy-800">
+                      <div className="text-c-text-muted mb-2 peer-checked:text-primary-600">
                         {ot.icon}
                       </div>
                       <div className="font-semibold text-sm text-navy-900 dark:text-white">
                         {ot.label}
                       </div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                      <div className="text-[10px] text-c-text-muted mt-1">
                         {ot.hint}
                       </div>
                     </div>
@@ -1046,10 +1046,10 @@ export const OrganizationProfileModule: React.FC = () => {
         </div>
 
         {/* Section 2: Identity & Scale */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
           <SectionHeader id="identity" title="Identity & Scale" icon={<Briefcase size={18} />} />
           {expandedSections.identity && (
-            <div className="p-5 border-t border-slate-200 dark:border-navy-700 space-y-4">
+            <div className="p-5 border-t border-c-border-subtle space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Industry *</label>
@@ -1164,7 +1164,7 @@ export const OrganizationProfileModule: React.FC = () => {
 
         {/* Section 3: Production (MANUFACTURING only — §11.4) */}
         {showProductionSection(orgType) && (
-          <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+          <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
             <SectionHeader
               id="production"
               title="Production & Operations"
@@ -1172,7 +1172,7 @@ export const OrganizationProfileModule: React.FC = () => {
               badge="Manufacturing"
             />
             {expandedSections.production && (
-              <div className="p-5 border-t border-slate-200 dark:border-navy-700 space-y-4">
+              <div className="p-5 border-t border-c-border-subtle space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className={labelCls}>Production Archetype</label>
@@ -1228,10 +1228,10 @@ export const OrganizationProfileModule: React.FC = () => {
         {/* Section 4: Operating Model (conditional per §11.4) */}
         {showOperatingSection(orgType) &&
           (showDeliveryModel(orgType) || showRevenueModel(orgType) || showCoreSystems(orgType)) && (
-            <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+            <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
               <SectionHeader id="operating" title="Operating Model" icon={<Factory size={18} />} />
               {expandedSections.operating && (
-                <div className="p-5 border-t border-slate-200 dark:border-navy-700 space-y-4">
+                <div className="p-5 border-t border-c-border-subtle space-y-4">
                   {showDeliveryModel(orgType) && (
                     <div>
                       <label className={labelCls}>Delivery Model</label>
@@ -1284,10 +1284,10 @@ export const OrganizationProfileModule: React.FC = () => {
           )}
 
         {/* Section 5: Strategic Position (Universal) */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
           <SectionHeader id="strategic" title="Strategic Position" icon={<Target size={18} />} />
           {expandedSections.strategic && (
-            <div className="p-5 border-t border-slate-200 dark:border-navy-700 space-y-4">
+            <div className="p-5 border-t border-c-border-subtle space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Competitive Position</label>
@@ -1354,10 +1354,10 @@ export const OrganizationProfileModule: React.FC = () => {
         </div>
 
         {/* Section 6: Digital & Technology (Universal) */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
           <SectionHeader id="digital" title="Digital & Technology" icon={<Cpu size={18} />} />
           {expandedSections.digital && (
-            <div className="p-5 border-t border-slate-200 dark:border-navy-700 space-y-4">
+            <div className="p-5 border-t border-c-border-subtle space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Digital Maturity (1-7)</label>
@@ -1422,10 +1422,10 @@ export const OrganizationProfileModule: React.FC = () => {
         </div>
 
         {/* Section 7: Market & Competition (Universal) */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
           <SectionHeader id="market" title="Market & Competition" icon={<TrendingUp size={18} />} />
           {expandedSections.market && (
-            <div className="p-5 border-t border-slate-200 dark:border-navy-700 space-y-4">
+            <div className="p-5 border-t border-c-border-subtle space-y-4">
               <div>
                 <label className={labelCls}>Primary Markets</label>
                 <CommaInput
@@ -1474,15 +1474,15 @@ export const OrganizationProfileModule: React.FC = () => {
         </div>
 
         {/* Section 8: Communication & AI Preferences */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
           <SectionHeader
             id="communication"
             title="Communication & AI Preferences"
             icon={<MessageSquare size={18} />}
           />
           {expandedSections.communication && (
-            <div className="p-5 border-t border-slate-200 dark:border-navy-700 space-y-4">
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+            <div className="p-5 border-t border-c-border-subtle space-y-4">
+              <p className="text-xs text-c-text-muted">
                 These settings help Teresa adapt her communication style to match your
                 organization's culture.
               </p>
@@ -1523,10 +1523,10 @@ export const OrganizationProfileModule: React.FC = () => {
         </div>
 
         {/* Section 9: Constraints & Risk (Universal) */}
-        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
           <SectionHeader id="constraints" title="Constraints & Risk" icon={<Shield size={18} />} />
           {expandedSections.constraints && (
-            <div className="p-5 border-t border-slate-200 dark:border-navy-700 space-y-4">
+            <div className="p-5 border-t border-c-border-subtle space-y-4">
               <div>
                 <label className={labelCls}>Regulatory Environment</label>
                 <ChipSelector
@@ -1542,7 +1542,7 @@ export const OrganizationProfileModule: React.FC = () => {
                     <button
                       key={r.value}
                       onClick={() => update('risk_appetite', r.value)}
-                      className={`flex-1 p-3 rounded-lg border text-center text-sm transition-colors ${profile.risk_appetite === r.value ? 'bg-primary-100 border-primary-300 text-primary-700 dark:bg-primary-900/30 dark:border-primary-500/30 dark:text-primary-300' : 'bg-slate-50 border-slate-200 text-slate-600 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-400 hover:border-primary-300'}`}
+                      className={`flex-1 p-3 rounded-lg border text-center text-sm transition-colors ${profile.risk_appetite === r.value ? 'bg-primary-100 border-primary-300 text-primary-700 dark:bg-primary-900/30 dark:border-primary-500/30 dark:text-primary-300' : 'bg-c-bg border-c-border-subtle text-c-text-secondary dark:bg-navy-950 dark:border-navy-700 dark:text-c-text-muted hover:border-primary-300'}`}
                     >
                       {r.label}
                     </button>
@@ -1575,7 +1575,7 @@ export const OrganizationProfileModule: React.FC = () => {
       </div>
 
       {/* Bottom save */}
-      <div className="flex justify-end gap-3 pt-3 border-t border-slate-200 dark:border-navy-700">
+      <div className="flex justify-end gap-3 pt-3 border-t border-c-border-subtle">
         <button
           onClick={handleSave}
           disabled={saving}

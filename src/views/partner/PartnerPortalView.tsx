@@ -250,7 +250,7 @@ const DashboardSection: React.FC = () => {
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4"
+              className="bg-c-surface rounded-xl border border-c-border-subtle p-4"
             >
               <div className="h-4 bg-slate-200 dark:bg-navy-700 rounded w-2/3 mb-3" />
               <div className="h-8 bg-slate-200 dark:bg-navy-700 rounded w-1/2 mb-2" />
@@ -329,17 +329,17 @@ const DashboardSection: React.FC = () => {
       {/* Welcome Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
+          <h2 className="text-2xl font-semibold text-c-text">
             {t('partner.dashboard.welcome', 'Welcome back, Partner')}
           </h2>
-          <p className="text-slate-600">
+          <p className="text-c-text-secondary">
             {t('partner.dashboard.subtitle', "Here's your partnership overview")}
           </p>
         </div>
         <button
           onClick={fetchDashboard}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-navy-900 dark:hover:text-white transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-c-text-secondary hover:text-navy-900 dark:hover:text-white transition-colors disabled:opacity-50"
         >
           <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
           {t('common.refresh', 'Refresh')}
@@ -351,21 +351,21 @@ const DashboardSection: React.FC = () => {
         {stats.map((stat, index) => (
           <div
             key={index}
-            className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4"
+            className="bg-c-surface rounded-xl border border-c-border-subtle p-4"
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30">
                 <stat.icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
               </div>
-              <span className="text-sm text-slate-600">{stat.label}</span>
+              <span className="text-sm text-c-text-secondary">{stat.label}</span>
             </div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
+            <p className="text-2xl font-bold text-c-text">{stat.value}</p>
             <p
               className={cn(
                 'text-sm mt-1',
                 stat.changeType === 'positive' && 'text-emerald-600 dark:text-emerald-400',
                 stat.changeType === 'negative' && 'text-danger-400',
-                stat.changeType === 'neutral' && 'text-slate-600'
+                stat.changeType === 'neutral' && 'text-c-text-secondary'
               )}
             >
               {stat.change}
@@ -384,18 +384,18 @@ const DashboardSection: React.FC = () => {
       )}
 
       {/* Quick Actions */}
-      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
+        <h3 className="text-lg font-semibold text-c-text mb-4">
           {t('partner.dashboard.quickActions', 'Quick Actions')}
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {quickActions.map((action, index) => (
             <button
               key={index}
-              className="flex flex-col items-center gap-2 p-4 rounded-lg bg-slate-100 dark:bg-navy-700/50 hover:bg-primary-900/20 transition-colors group"
+              className="flex flex-col items-center gap-2 p-4 rounded-lg bg-c-surface-raised/50 hover:bg-primary-900/20 transition-colors group"
             >
-              <action.icon className="w-6 h-6 text-slate-600 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-primary-600 dark:group-hover:text-primary-400">
+              <action.icon className="w-6 h-6 text-c-text-secondary group-hover:text-primary-600 dark:group-hover:text-primary-400" />
+              <span className="text-sm font-medium text-c-text-secondary group-hover:text-primary-600 dark:group-hover:text-primary-400">
                 {action.label}
               </span>
             </button>
@@ -406,10 +406,10 @@ const DashboardSection: React.FC = () => {
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Activity */}
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <Clock className="w-5 h-5 text-slate-500" />
+            <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
+              <Clock className="w-5 h-5 text-c-text-muted" />
               {t('partner.dashboard.recentActivity', 'Recent Activity')}
             </h3>
             <button className="text-sm text-primary-600 dark:text-primary-400 hover:underline">
@@ -421,17 +421,17 @@ const DashboardSection: React.FC = () => {
               recentActivity.map((activity, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-slate-100/50 dark:bg-navy-700/30"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-c-surface-raised/50 dark:bg-navy-700/30"
                 >
-                  <div className="w-2 h-2 rounded-full bg-navy-900 dark:bg-white" />
+                  <div className="w-2 h-2 rounded-full bg-navy-900 dark:bg-c-surface" />
                   <div className="flex-1">
-                    <p className="text-sm text-slate-900 dark:text-white">{activity.text}</p>
-                    <p className="text-xs text-slate-600">{activity.time}</p>
+                    <p className="text-sm text-c-text">{activity.text}</p>
+                    <p className="text-xs text-c-text-secondary">{activity.time}</p>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-slate-600 text-center py-4">
+              <p className="text-sm text-c-text-secondary text-center py-4">
                 {t('partner.dashboard.noActivity', 'No recent activity')}
               </p>
             )}
@@ -439,10 +439,10 @@ const DashboardSection: React.FC = () => {
         </div>
 
         {/* Certification Progress */}
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <GraduationCap className="w-5 h-5 text-slate-500" />
+            <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
+              <GraduationCap className="w-5 h-5 text-c-text-muted" />
               {t('partner.dashboard.certificationProgress', 'Certification Progress')}
             </h3>
             <span className="text-sm text-primary-600 dark:text-primary-400 font-medium">
@@ -455,21 +455,21 @@ const DashboardSection: React.FC = () => {
               certificationCourses.map((cert, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-slate-100/50 dark:bg-navy-700/30"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-c-surface-raised/50 dark:bg-navy-700/30"
                 >
                   {cert.status === 'completed' ? (
                     <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                   ) : cert.status === 'in-progress' ? (
                     <div className="w-5 h-5 rounded-full border-2 border-primary-500 border-t-transparent animate-spin" />
                   ) : (
-                    <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-600" />
+                    <div className="w-5 h-5 rounded-full border-2 border-c-border" />
                   )}
                   <span
                     className={cn(
                       'text-sm flex-1',
-                      cert.status === 'completed' && 'text-slate-900 dark:text-white',
+                      cert.status === 'completed' && 'text-c-text',
                       cert.status === 'in-progress' && 'text-primary-600 dark:text-primary-400',
-                      cert.status === 'locked' && 'text-slate-500'
+                      cert.status === 'locked' && 'text-c-text-muted'
                     )}
                   >
                     {cert.name}
@@ -482,7 +482,7 @@ const DashboardSection: React.FC = () => {
                 </div>
               ))
             ) : (
-              <p className="text-sm text-slate-600 text-center py-4">
+              <p className="text-sm text-c-text-secondary text-center py-4">
                 {t('partner.dashboard.noCertifications', 'No certifications available')}
               </p>
             )}
@@ -722,7 +722,7 @@ const MetricsSection: React.FC = () => {
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4"
+              className="bg-c-surface rounded-xl border border-c-border-subtle p-4"
             >
               <div className="h-4 bg-slate-200 dark:bg-navy-700 rounded w-2/3 mb-3" />
               <div className="h-8 bg-slate-200 dark:bg-navy-700 rounded w-1/2 mb-2" />
@@ -803,17 +803,17 @@ const MetricsSection: React.FC = () => {
 
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-c-text">
             {t('partner.metrics.title', 'Partnership Metrics')}
           </h2>
-          <p className="text-slate-600">
+          <p className="text-c-text-secondary">
             {t('partner.metrics.subtitle', 'Key performance indicators for your partnership')}
           </p>
         </div>
         <button
           onClick={fetchMetrics}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-navy-900 dark:hover:text-white transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-c-text-secondary hover:text-navy-900 dark:hover:text-white transition-colors disabled:opacity-50"
         >
           <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
           {t('common.refresh', 'Refresh')}
@@ -824,10 +824,10 @@ const MetricsSection: React.FC = () => {
         {metrics.map((metric, index) => (
           <div
             key={index}
-            className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4"
+            className="bg-c-surface rounded-xl border border-c-border-subtle p-4"
           >
-            <p className="text-sm text-slate-600 mb-2">{metric.label}</p>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{metric.value}</p>
+            <p className="text-sm text-c-text-secondary mb-2">{metric.label}</p>
+            <p className="text-2xl font-bold text-c-text">{metric.value}</p>
             <div className="flex items-center gap-2 mt-2">
               <span
                 className={cn(
@@ -837,7 +837,7 @@ const MetricsSection: React.FC = () => {
               >
                 {metric.change}
               </span>
-              <span className="text-xs text-slate-500">{metric.period}</span>
+              <span className="text-xs text-c-text-muted">{metric.period}</span>
             </div>
           </div>
         ))}
@@ -855,8 +855,8 @@ const MetricsSection: React.FC = () => {
       {/* Performance Score and Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Performance Score */}
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
+          <h3 className="text-lg font-semibold text-c-text mb-4">
             {t('partner.metrics.performanceScore', 'Partner Performance Score')}
           </h3>
           <div className="flex items-center justify-center">
@@ -880,21 +880,21 @@ const MetricsSection: React.FC = () => {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-bold text-slate-900 dark:text-white">
+                <span className="text-3xl font-bold text-c-text">
                   {metricsData?.performance?.score || 0}
                 </span>
-                <span className="text-sm text-slate-600">/ 100</span>
+                <span className="text-sm text-c-text-secondary">/ 100</span>
               </div>
             </div>
           </div>
-          <p className="text-center text-sm text-slate-600 mt-4">
+          <p className="text-center text-sm text-c-text-secondary mt-4">
             {metricsData?.performance?.ranking || 'Calculating...'}
           </p>
         </div>
 
         {/* Performance Breakdown */}
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
+          <h3 className="text-lg font-semibold text-c-text mb-4">
             {t('partner.metrics.scoreBreakdown', 'Score Breakdown')}
           </h3>
           <div className="space-y-4">
@@ -922,8 +922,8 @@ const MetricsSection: React.FC = () => {
             ].map((item, index) => (
               <div key={index}>
                 <div className="flex items-center justify-between text-sm mb-1">
-                  <span className="text-slate-600">{item.label}</span>
-                  <span className="font-medium text-slate-900 dark:text-white">{item.score}%</span>
+                  <span className="text-c-text-secondary">{item.label}</span>
+                  <span className="font-medium text-c-text">{item.score}%</span>
                 </div>
                 <div className="w-full h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                   <div
@@ -938,8 +938,8 @@ const MetricsSection: React.FC = () => {
       </div>
 
       {/* Revenue Chart Placeholder */}
-      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4">
           {t('partner.metrics.revenueOverTime', 'Revenue Over Time')}
         </h3>
         {metricsData?.revenue?.byMonth && metricsData.revenue.byMonth.length > 0 ? (
@@ -960,8 +960,8 @@ const MetricsSection: React.FC = () => {
         ) : (
           <div className="flex items-center justify-center h-40">
             <div className="text-center">
-              <BarChart3 className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-              <p className="text-slate-600">
+              <BarChart3 className="w-12 h-12 text-c-text-secondary mx-auto mb-4" />
+              <p className="text-c-text-secondary">
                 {t('partner.metrics.noRevenueData', 'No revenue data available yet')}
               </p>
             </div>
@@ -1104,10 +1104,10 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
   // Loading skeleton for table
   const TableSkeleton = () => (
     <div className="animate-pulse">
-      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <div className="bg-slate-100 dark:bg-navy-700/50 h-12" />
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
+        <div className="bg-c-surface-raised/50 h-12" />
         {[1, 2, 3].map((i) => (
-          <div key={i} className="flex gap-4 p-4 border-t border-slate-200 dark:border-navy-700">
+          <div key={i} className="flex gap-4 p-4 border-t border-c-border-subtle">
             <div className="w-10 h-10 bg-slate-200 dark:bg-navy-700 rounded-lg" />
             <div className="flex-1 space-y-2">
               <div className="h-4 bg-slate-200 dark:bg-navy-700 rounded w-1/3" />
@@ -1140,10 +1140,10 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-c-text">
               {t('partner.clients.organizations', 'Client Organizations')}
             </h2>
-            <p className="text-slate-600">
+            <p className="text-c-text-secondary">
               {t(
                 'partner.clients.organizationsDesc',
                 'Manage organizations under your partnership'
@@ -1153,7 +1153,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
           <div className="flex gap-2">
             <button
               onClick={fetchData}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-navy-900 dark:hover:text-white transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-c-text-secondary hover:text-navy-900 dark:hover:text-white transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
             </button>
@@ -1163,10 +1163,10 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
             <button
               disabled
               title={t('partner.clientAccess.featureSoon', 'Wkrótce dostępne')}
-              className="inline-flex h-9 cursor-not-allowed items-center gap-2 rounded-lg bg-slate-200 px-4 text-sm font-medium text-slate-500 dark:bg-navy-800 dark:text-slate-400"
+              className="inline-flex h-9 cursor-not-allowed items-center gap-2 rounded-lg bg-slate-200 px-4 text-sm font-medium text-c-text-muted dark:bg-navy-800 dark:text-c-text-muted"
             >
               {t('partner.clients.addOrganization', 'Add Organization')}
-              <span className="rounded bg-slate-300/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-navy-700 dark:text-slate-300">
+              <span className="rounded bg-slate-300/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary dark:bg-navy-700 dark:text-slate-300">
                 {t('partner.common.comingSoon', 'Wkrótce')}
               </span>
             </button>
@@ -1185,7 +1185,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                   <div className="w-10 h-10 shrink-0 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
                     <Building2 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                   </div>
-                  <span className="font-medium text-slate-900 dark:text-white truncate">
+                  <span className="font-medium text-c-text truncate">
                     {org.name}
                   </span>
                 </div>
@@ -1196,7 +1196,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
               label: t('partner.clients.col.industry', 'Industry'),
               width: '160px',
               render: (org) => (
-                <span className="text-sm text-slate-600 dark:text-slate-400">{org.industry}</span>
+                <span className="text-sm text-c-text-secondary">{org.industry}</span>
               ),
             },
             {
@@ -1205,7 +1205,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
               width: '90px',
               align: 'right',
               render: (org) => (
-                <span className="text-sm text-slate-600 dark:text-slate-400">{org.users}</span>
+                <span className="text-sm text-c-text-secondary">{org.users}</span>
               ),
             },
             {
@@ -1214,7 +1214,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
               width: '90px',
               align: 'right',
               render: (org) => (
-                <span className="text-sm text-slate-600 dark:text-slate-400">{org.projects}</span>
+                <span className="text-sm text-c-text-secondary">{org.projects}</span>
               ),
             },
             {
@@ -1223,7 +1223,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
               width: '110px',
               align: 'right',
               render: (org) => (
-                <span className="text-sm text-slate-700 dark:text-slate-200">
+                <span className="text-sm text-c-text-secondary">
                   {org.assessmentScore}/5
                 </span>
               ),
@@ -1262,16 +1262,16 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-c-text">
               {t('partner.clients.projects', 'Active Projects')}
             </h2>
-            <p className="text-slate-600">
+            <p className="text-c-text-secondary">
               {t('partner.clients.projectsDesc', 'Transformation projects in progress')}
             </p>
           </div>
           <button
             onClick={fetchData}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-navy-900 dark:hover:text-white transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-c-text-secondary hover:text-navy-900 dark:hover:text-white transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             {t('common.refresh', 'Refresh')}
@@ -1279,9 +1279,9 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
         </div>
 
         {projects.length === 0 ? (
-          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
-            <FolderKanban className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-600">
+          <div className="bg-c-surface rounded-xl border border-c-border-subtle p-8 text-center">
+            <FolderKanban className="w-12 h-12 text-c-text-secondary mx-auto mb-4" />
+            <p className="text-c-text-secondary">
               {t('partner.clients.noProjects', 'No active projects yet')}
             </p>
           </div>
@@ -1290,12 +1290,12 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
             {projects.map((project) => (
               <div
                 key={project.id}
-                className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4 hover:border-primary-700 transition-colors"
+                className="bg-c-surface rounded-xl border border-c-border-subtle p-4 hover:border-primary-700 transition-colors"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <h4 className="font-medium text-slate-900 dark:text-white">{project.name}</h4>
-                    <p className="text-sm text-slate-600">{project.clientName}</p>
+                    <h4 className="font-medium text-c-text">{project.name}</h4>
+                    <p className="text-sm text-c-text-secondary">{project.clientName}</p>
                   </div>
                   <span className="px-2 py-1 text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded">
                     {project.framework}
@@ -1303,8 +1303,8 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                 </div>
                 <div className="mt-4">
                   <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="text-slate-600">Progress</span>
-                    <span className="font-medium text-slate-900 dark:text-white">
+                    <span className="text-c-text-secondary">Progress</span>
+                    <span className="font-medium text-c-text">
                       {project.progress}%
                     </span>
                   </div>
@@ -1316,7 +1316,7 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
                   </div>
                 </div>
                 {project.targetEndDate && (
-                  <p className="text-xs text-slate-500 mt-3">
+                  <p className="text-xs text-c-text-muted mt-3">
                     Target: {new Date(project.targetEndDate).toLocaleDateString()}
                   </p>
                 )}
@@ -1336,18 +1336,18 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-c-text">
             {t('partner.clients.users', 'User Management')}
           </h2>
-          <p className="text-slate-600">
+          <p className="text-c-text-secondary">
             {t('partner.clients.usersDesc', 'Manage users across client organizations')}
           </p>
         </div>
       </div>
       {organizations.length === 0 ? (
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
-          <Users className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <p className="text-slate-600">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-8 text-center">
+          <Users className="w-12 h-12 text-c-text-secondary mx-auto mb-4" />
+          <p className="text-c-text-secondary">
             {t('partner.clients.usersEmpty', 'Select an organization to manage users')}
           </p>
         </div>
@@ -1356,18 +1356,18 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
           {organizations.map((org) => (
             <div
               key={org.id}
-              className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4 flex items-center justify-between hover:border-primary-700 cursor-pointer transition-colors"
+              className="bg-c-surface rounded-xl border border-c-border-subtle p-4 flex items-center justify-between hover:border-primary-700 cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
                   <Building2 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 </div>
                 <div>
-                  <span className="font-medium text-slate-900 dark:text-white">{org.name}</span>
-                  <p className="text-sm text-slate-600">{org.users} users</p>
+                  <span className="font-medium text-c-text">{org.name}</span>
+                  <p className="text-sm text-c-text-secondary">{org.users} users</p>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-slate-500" />
+              <ChevronRight className="w-5 h-5 text-c-text-muted" />
             </div>
           ))}
         </div>
@@ -1567,7 +1567,7 @@ const CertificationSection: React.FC<{
       {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
-          className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4"
+          className="bg-c-surface rounded-xl border border-c-border-subtle p-4"
         >
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-slate-200 dark:bg-navy-700 rounded-xl" />
@@ -1625,10 +1625,10 @@ const CertificationSection: React.FC<{
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-c-text">
               {t('partner.certification.learningPath', 'Ścieżka nauki')}
             </h2>
-            <p className="text-slate-600">
+            <p className="text-c-text-secondary">
               {t(
                 'partner.certification.learningPathDesc',
                 'Complete courses to earn certifications'
@@ -1637,7 +1637,7 @@ const CertificationSection: React.FC<{
           </div>
           <button
             onClick={fetchCertifications}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-navy-900 dark:hover:text-white transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-c-text-secondary hover:text-navy-900 dark:hover:text-white transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             {t('common.refresh', 'Refresh')}
@@ -1645,9 +1645,9 @@ const CertificationSection: React.FC<{
         </div>
 
         {certifications.length === 0 ? (
-          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
-            <GraduationCap className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-600">
+          <div className="bg-c-surface rounded-xl border border-c-border-subtle p-8 text-center">
+            <GraduationCap className="w-12 h-12 text-c-text-secondary mx-auto mb-4" />
+            <p className="text-c-text-secondary">
               {t('partner.certification.noCourses', 'Brak dostępnych kursów')}
             </p>
           </div>
@@ -1664,10 +1664,10 @@ const CertificationSection: React.FC<{
                 <div
                   key={course.id}
                   className={cn(
-                    'bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-5',
+                    'bg-c-surface rounded-xl border border-c-border-subtle p-5',
                     status === 'locked'
-                      ? 'border-slate-200 dark:border-navy-700 opacity-60'
-                      : 'border-slate-200 dark:border-navy-700'
+                      ? 'border-c-border-subtle opacity-60'
+                      : 'border-c-border-subtle'
                   )}
                 >
                   <div className="flex items-start gap-4">
@@ -1678,14 +1678,14 @@ const CertificationSection: React.FC<{
                           'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600',
                         status === 'in-progress' &&
                           'bg-primary-100 dark:bg-primary-900/30 text-primary-600',
-                        status === 'locked' && 'bg-slate-200 dark:bg-navy-700 text-slate-500'
+                        status === 'locked' && 'bg-slate-200 dark:bg-navy-700 text-c-text-muted'
                       )}
                     >
                       {status === 'completed' ? <CheckCircle2 className="w-6 h-6" /> : index + 1}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-slate-900 dark:text-white">
+                        <h4 className="font-medium text-c-text">
                           {course.name}
                         </h4>
                         <span
@@ -1695,17 +1695,17 @@ const CertificationSection: React.FC<{
                               'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600',
                             status === 'in-progress' &&
                               'bg-primary-100 dark:bg-primary-900/30 text-primary-600',
-                            status === 'locked' && 'bg-slate-200 dark:bg-navy-700 text-slate-500'
+                            status === 'locked' && 'bg-slate-200 dark:bg-navy-700 text-c-text-muted'
                           )}
                         >
                           {getDisplayStatus(course.status)}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-600 mt-1">
+                      <p className="text-sm text-c-text-secondary mt-1">
                         {course.track} / {course.level}{' '}
                         {course.targetTier ? `• ${course.targetTier}` : ''}
                       </p>
-                      <div className="flex items-center gap-4 mt-3 text-sm text-slate-600">
+                      <div className="flex items-center gap-4 mt-3 text-sm text-c-text-secondary">
                         <span className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
                           {course.duration}
@@ -1717,7 +1717,7 @@ const CertificationSection: React.FC<{
                       </div>
                       <div className="mt-2 flex flex-wrap gap-2 text-xs">
                         {course.examMode && (
-                          <span className="px-2 py-1 rounded-full bg-slate-100 dark:bg-navy-700 text-slate-500">
+                          <span className="px-2 py-1 rounded-full bg-c-surface-raised text-c-text-muted">
                             {course.examMode === 'review' ? 'Operator review' : 'Exam-based'}
                           </span>
                         )}
@@ -1735,8 +1735,8 @@ const CertificationSection: React.FC<{
                       {status !== 'locked' && (
                         <div className="mt-3">
                           <div className="flex items-center justify-between text-sm mb-1">
-                            <span className="text-slate-600">Progress</span>
-                            <span className="font-medium text-slate-900 dark:text-white">
+                            <span className="text-c-text-secondary">Progress</span>
+                            <span className="font-medium text-c-text">
                               {course.progress}%
                             </span>
                           </div>
@@ -1761,14 +1761,14 @@ const CertificationSection: React.FC<{
                         {docHref && (
                           <button
                             onClick={() => navigate(docHref)}
-                            className="px-4 py-2 border border-slate-300 dark:border-navy-600 text-sm font-medium rounded-lg text-slate-700 dark:text-slate-200 hover:border-primary-500 hover:text-primary-600 transition-colors"
+                            className="px-4 py-2 border border-c-border text-sm font-medium rounded-lg text-c-text-secondary hover:border-primary-500 hover:text-primary-600 transition-colors"
                           >
                             Open guide
                           </button>
                         )}
                       </div>
                       {isExpanded && modules.length > 0 && (
-                        <div className="mt-4 space-y-3 border-t border-slate-200 dark:border-navy-700 pt-4">
+                        <div className="mt-4 space-y-3 border-t border-c-border-subtle pt-4">
                           {modules.map((module) => {
                             const moduleDocHref =
                               (module.articleSlug &&
@@ -1777,25 +1777,25 @@ const CertificationSection: React.FC<{
                             return (
                               <div
                                 key={module.id}
-                                className="rounded-lg bg-slate-50 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700 p-3"
+                                className="rounded-lg bg-c-surface-raised/40 border border-c-border-subtle p-3"
                               >
                                 <div className="flex items-start justify-between gap-3">
                                   <div>
-                                    <div className="font-medium text-slate-900 dark:text-white">
+                                    <div className="font-medium text-c-text">
                                       {module.order}. {module.name}
                                     </div>
                                     {module.description && (
-                                      <p className="mt-1 text-sm text-slate-500">
+                                      <p className="mt-1 text-sm text-c-text-muted">
                                         {module.description}
                                       </p>
                                     )}
                                   </div>
-                                  <span className="text-xs text-slate-600">
+                                  <span className="text-xs text-c-text-secondary">
                                     {module.minutes ? `${module.minutes} min` : module.moduleKind}
                                   </span>
                                 </div>
                                 <div className="mt-3 flex flex-wrap gap-2">
-                                  <span className="px-2 py-1 rounded-full bg-slate-200 dark:bg-navy-700 text-xs text-slate-600 dark:text-slate-300">
+                                  <span className="px-2 py-1 rounded-full bg-slate-200 dark:bg-navy-700 text-xs text-c-text-secondary">
                                     {module.status}
                                   </span>
                                   {module.reviewRequired && (
@@ -1819,7 +1819,7 @@ const CertificationSection: React.FC<{
                         </div>
                       )}
                       {status === 'locked' && (
-                        <p className="mt-3 text-xs text-slate-500">
+                        <p className="mt-3 text-xs text-c-text-muted">
                           Complete previous courses to unlock
                         </p>
                       )}
@@ -1844,10 +1844,10 @@ const CertificationSection: React.FC<{
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-c-text">
             {t('partner.certification.exams', 'Egzaminy certyfikacyjne')}
           </h2>
-          <p className="text-slate-600">
+          <p className="text-c-text-secondary">
             {t(
               'partner.certification.examsDesc',
               'Zdaj egzaminy, aby zdobyć oficjalne certyfikaty'
@@ -1859,7 +1859,7 @@ const CertificationSection: React.FC<{
             {examCourses.map((course) => (
               <div
                 key={course.id}
-                className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4"
+                className="bg-c-surface rounded-xl border border-c-border-subtle p-4"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -1867,10 +1867,10 @@ const CertificationSection: React.FC<{
                       <FileText className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                     </div>
                     <div>
-                      <h4 className="font-medium text-slate-900 dark:text-white">
+                      <h4 className="font-medium text-c-text">
                         {course.name} Exam
                       </h4>
-                      <p className="text-sm text-slate-600">
+                      <p className="text-sm text-c-text-secondary">
                         {course.certificateId
                           ? 'Passed'
                           : course.examEligible
@@ -1884,7 +1884,7 @@ const CertificationSection: React.FC<{
                       Passed
                     </span>
                   ) : !course.examEligible ? (
-                    <span className="px-3 py-1 bg-slate-200 dark:bg-navy-700 text-slate-500 text-sm font-medium rounded-full">
+                    <span className="px-3 py-1 bg-slate-200 dark:bg-navy-700 text-c-text-muted text-sm font-medium rounded-full">
                       Locked
                     </span>
                   ) : (
@@ -1900,9 +1900,9 @@ const CertificationSection: React.FC<{
             ))}
           </div>
         ) : (
-          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
-            <FileText className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-600">
+          <div className="bg-c-surface rounded-xl border border-c-border-subtle p-8 text-center">
+            <FileText className="w-12 h-12 text-c-text-secondary mx-auto mb-4" />
+            <p className="text-c-text-secondary">
               {t(
                 'partner.certification.examsEmpty',
                 'Ukończ ścieżkę nauki, aby odblokować egzaminy'
@@ -1913,10 +1913,10 @@ const CertificationSection: React.FC<{
 
         {examOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-3xl bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4 md:p-6">
+            <div className="w-full max-w-3xl bg-c-surface rounded-xl border border-c-border-subtle p-4 md:p-6">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  <h3 className="text-lg font-semibold text-c-text">
                     {(() => {
                       const certName = certifications.find((c) => c.id === examCertId)?.name;
                       return certName
@@ -1924,7 +1924,7 @@ const CertificationSection: React.FC<{
                         : t('partner.certification.examTitle', 'Egzamin certyfikacyjny');
                     })()}
                   </h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-c-text-muted">
                     {examDeadlineAt
                       ? `${t('partner.certification.deadline', 'Termin')}: ${new Date(examDeadlineAt).toLocaleTimeString()}`
                       : t('common.loading', 'Ładowanie…')}
@@ -1932,29 +1932,29 @@ const CertificationSection: React.FC<{
                 </div>
                 <button
                   onClick={closeExam}
-                  className="px-3 py-2 rounded-lg text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                  className="px-3 py-2 rounded-lg text-sm text-c-text-muted hover:text-c-text dark:hover:text-white"
                 >
                   {t('common.close', 'Close')}
                 </button>
               </div>
 
               {examQuestions.length === 0 ? (
-                <div className="mt-4 text-sm text-slate-500">Loading...</div>
+                <div className="mt-4 text-sm text-c-text-muted">Loading...</div>
               ) : (
                 <div className="mt-4 space-y-4 max-h-[60vh] overflow-auto pr-1">
                   {examQuestions.map((q: any, idx: number) => (
                     <div
                       key={q.id}
-                      className="rounded-lg border border-slate-200 dark:border-navy-700 p-3"
+                      className="rounded-lg border border-c-border-subtle p-3"
                     >
-                      <div className="font-medium text-slate-900 dark:text-white">
+                      <div className="font-medium text-c-text">
                         {idx + 1}. {q.text}
                       </div>
                       <div className="mt-2 space-y-2">
                         {(q.options || []).map((opt: any) => (
                           <label
                             key={opt.id}
-                            className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer"
+                            className="flex items-start gap-2 text-sm text-c-text-secondary cursor-pointer"
                           >
                             <input
                               type="radio"
@@ -2016,10 +2016,10 @@ const CertificationSection: React.FC<{
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-c-text">
             {t('partner.certification.certificates', 'Twoje certyfikaty')}
           </h2>
-          <p className="text-slate-600">
+          <p className="text-c-text-secondary">
             {t(
               'partner.certification.certificatesDesc',
               'Pobieraj i udostępniaj swoje certyfikaty'
@@ -2028,15 +2028,15 @@ const CertificationSection: React.FC<{
         </div>
         <button
           onClick={fetchCertifications}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-navy-900 dark:hover:text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-c-text-secondary hover:text-navy-900 dark:hover:text-white transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
         </button>
       </div>
       {completedWithCerts.length === 0 ? (
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
-          <Award className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <p className="text-slate-600">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-8 text-center">
+          <Award className="w-12 h-12 text-c-text-secondary mx-auto mb-4" />
+          <p className="text-c-text-secondary">
             {t(
               'partner.certification.noCertificates',
               'Complete courses and pass exams to earn certificates'
@@ -2048,24 +2048,24 @@ const CertificationSection: React.FC<{
           {completedWithCerts.map((cert) => (
             <div
               key={cert.id}
-              className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4 hover:border-primary-700 transition-colors"
+              className="bg-c-surface rounded-xl border border-c-border-subtle p-4 hover:border-primary-700 transition-colors"
             >
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-crimson-600 dark:bg-crimson-700 flex items-center justify-center">
                   <Award className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-medium text-slate-900 dark:text-white">{cert.name}</h4>
-                  <p className="text-sm text-slate-600">
+                  <h4 className="font-medium text-c-text">{cert.name}</h4>
+                  <p className="text-sm text-c-text-secondary">
                     Issued:{' '}
                     {cert.completedAt ? new Date(cert.completedAt).toLocaleDateString() : 'N/A'}
                   </p>
                   {cert.validUntil && (
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-c-text-muted mt-1">
                       Valid until: {new Date(cert.validUntil).toLocaleDateString()}
                     </p>
                   )}
-                  <p className="text-xs text-slate-500 mt-1">ID: {cert.certificateId}</p>
+                  <p className="text-xs text-c-text-muted mt-1">ID: {cert.certificateId}</p>
                 </div>
                 <button
                   onClick={() => {
@@ -2080,7 +2080,7 @@ const CertificationSection: React.FC<{
                     }
                     window.open(url, '_blank');
                   }}
-                  className="p-2 text-slate-500 hover:text-primary-600 dark:hover:text-primary-400"
+                  className="p-2 text-c-text-muted hover:text-primary-600 dark:hover:text-primary-400"
                 >
                   <Download className="w-5 h-5" />
                 </button>
@@ -2193,7 +2193,7 @@ const ResourcesSection: React.FC<{
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4 flex items-center gap-4"
+              className="bg-c-surface rounded-xl border border-c-border-subtle p-4 flex items-center gap-4"
             >
               <div className="w-12 h-12 bg-slate-200 dark:bg-navy-700 rounded-lg" />
               <div className="flex-1 space-y-2">
@@ -2234,16 +2234,16 @@ const ResourcesSection: React.FC<{
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-c-text">
             {titles[subsection]}
           </h2>
-          <p className="text-slate-600">
+          <p className="text-c-text-secondary">
             {t('partner.resources.desc', 'Pobierz materiały dla swojego partnerstwa')}
           </p>
         </div>
         <button
           onClick={fetchResources}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-navy-900 dark:hover:text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-c-text-secondary hover:text-navy-900 dark:hover:text-white transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
         </button>
@@ -2252,8 +2252,8 @@ const ResourcesSection: React.FC<{
       {subsection === 'documentation' &&
         (docsBridge.length > 0 || academyHighlights.length > 0) && (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+            <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
+              <h3 className="text-base font-semibold text-c-text">
                 Canonical partner docs
               </h3>
               <div className="mt-3 space-y-3">
@@ -2261,19 +2261,19 @@ const ResourcesSection: React.FC<{
                   <button
                     key={doc.id}
                     onClick={() => navigate(doc.href)}
-                    className="w-full flex items-center justify-between rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-3 text-left hover:border-primary-500 transition-colors"
+                    className="w-full flex items-center justify-between rounded-lg border border-c-border-subtle px-3 py-3 text-left hover:border-primary-500 transition-colors"
                   >
-                    <span className="text-sm font-medium text-slate-900 dark:text-white">
+                    <span className="text-sm font-medium text-c-text">
                       {doc.title}
                     </span>
-                    <ExternalLink className="w-4 h-4 text-slate-600" />
+                    <ExternalLink className="w-4 h-4 text-c-text-secondary" />
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+            <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
+              <h3 className="text-base font-semibold text-c-text">
                 Academy status bridge
               </h3>
               <div className="mt-3 space-y-3">
@@ -2284,15 +2284,15 @@ const ResourcesSection: React.FC<{
                   return (
                     <div
                       key={item.id}
-                      className="rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-3"
+                      className="rounded-lg border border-c-border-subtle px-3 py-3"
                     >
                       <div className="flex items-center justify-between gap-3">
-                        <div className="text-sm font-medium text-slate-900 dark:text-white">
+                        <div className="text-sm font-medium text-c-text">
                           {item.track} / {item.level}
                         </div>
-                        <div className="text-xs text-slate-600">{item.progress}%</div>
+                        <div className="text-xs text-c-text-secondary">{item.progress}%</div>
                       </div>
-                      <div className="mt-1 text-xs text-slate-500">
+                      <div className="mt-1 text-xs text-c-text-muted">
                         {item.status}
                         {item.reviewState ? ` • ${item.reviewState}` : ''}
                       </div>
@@ -2314,9 +2314,9 @@ const ResourcesSection: React.FC<{
         )}
 
       {items.length === 0 ? (
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
-          <FileText className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <p className="text-slate-600">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-8 text-center">
+          <FileText className="w-12 h-12 text-c-text-secondary mx-auto mb-4" />
+          <p className="text-c-text-secondary">
             {t('partner.resources.empty', 'Brak materiałów w tej kategorii')}
           </p>
         </div>
@@ -2326,23 +2326,23 @@ const ResourcesSection: React.FC<{
             <div
               key={item.id}
               onClick={() => handleDownload(item.id, item.title)}
-              className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4 flex items-center gap-4 hover:border-primary-700 transition-colors cursor-pointer group"
+              className="bg-c-surface rounded-xl border border-c-border-subtle p-4 flex items-center gap-4 hover:border-primary-700 transition-colors cursor-pointer group"
             >
               <div className="w-12 h-12 rounded-lg bg-slate-200 dark:bg-navy-700 flex items-center justify-center">
-                <FileText className="w-6 h-6 text-slate-500" />
+                <FileText className="w-6 h-6 text-c-text-muted" />
               </div>
               <div className="flex-1">
-                <h4 className="font-medium text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400">
+                <h4 className="font-medium text-c-text group-hover:text-primary-600 dark:group-hover:text-primary-400">
                   {item.title}
                 </h4>
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-c-text-secondary">
                   {item.type} • {item.size}
                 </p>
               </div>
               {downloading === item.id ? (
                 <RefreshCw className="w-5 h-5 text-primary-600 animate-spin" />
               ) : (
-                <Download className="w-5 h-5 text-slate-500 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
+                <Download className="w-5 h-5 text-c-text-muted group-hover:text-primary-600 dark:group-hover:text-primary-400" />
               )}
             </div>
           ))}
@@ -2608,7 +2608,7 @@ const ProfileSection: React.FC<{
   const LoadingSkeleton = () => (
     <div className="space-y-6 animate-pulse">
       <div className="h-8 bg-slate-200 dark:bg-navy-700 rounded w-1/4" />
-      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
         <div className="grid grid-cols-2 gap-6">
           {[1, 2, 3, 4].map((i) => (
             <div key={i}>
@@ -2642,69 +2642,69 @@ const ProfileSection: React.FC<{
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-c-text">
               {t('partner.profile.companyInfo', 'Informacje o firmie')}
             </h2>
-            <p className="text-slate-600">
+            <p className="text-c-text-secondary">
               {t('partner.profile.companyInfoDesc', 'Zarządzaj danymi swojej firmy')}
             </p>
           </div>
           <button
             onClick={fetchOrganization}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-navy-900 dark:hover:text-white transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-c-text-secondary hover:text-navy-900 dark:hover:text-white transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6 space-y-6">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 Company Name
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 Tax ID / VAT
               </label>
               <input
                 type="text"
                 value={formData.taxId}
                 onChange={(e) => setFormData((prev) => ({ ...prev, taxId: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 Contact Email
               </label>
               <input
                 type="email"
                 value={formData.contactEmail}
                 onChange={(e) => setFormData((prev) => ({ ...prev, contactEmail: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 Phone
               </label>
               <input
                 type="tel"
                 value={formData.contactPhone}
                 onChange={(e) => setFormData((prev) => ({ ...prev, contactPhone: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-c-text-secondary mb-2">
                 Website
               </label>
               <input
@@ -2712,7 +2712,7 @@ const ProfileSection: React.FC<{
                 value={formData.website}
                 onChange={(e) => setFormData((prev) => ({ ...prev, website: e.target.value }))}
                 placeholder="https://"
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               />
             </div>
           </div>
@@ -2735,10 +2735,10 @@ const ProfileSection: React.FC<{
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-c-text">
             {t('partner.profile.specializations', 'Specjalizacje')}
           </h2>
-          <p className="text-slate-600">
+          <p className="text-c-text-secondary">
             {t(
               'partner.profile.specializationsDesc',
               'Wybierz frameworki, w których się specjalizujesz'
@@ -2746,7 +2746,7 @@ const ProfileSection: React.FC<{
           </p>
         </div>
 
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
             {allFrameworks.map((fw) => (
               <button
@@ -2756,19 +2756,19 @@ const ProfileSection: React.FC<{
                   'p-4 rounded-xl border-2 text-center transition-all',
                   selectedSpecializations.includes(fw)
                     ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                    : 'border-slate-200 dark:border-navy-700 hover:border-primary-300'
+                    : 'border-c-border-subtle hover:border-primary-300'
                 )}
               >
                 <Target
                   className={cn(
                     'w-8 h-8 mx-auto mb-2',
-                    selectedSpecializations.includes(fw) ? 'text-primary-600' : 'text-slate-500'
+                    selectedSpecializations.includes(fw) ? 'text-primary-600' : 'text-c-text-muted'
                   )}
                 />
                 <span
                   className={cn(
                     'font-medium',
-                    selectedSpecializations.includes(fw) ? 'text-primary-600' : 'text-slate-600'
+                    selectedSpecializations.includes(fw) ? 'text-primary-600' : 'text-c-text-secondary'
                   )}
                 >
                   {fw}
@@ -2795,20 +2795,20 @@ const ProfileSection: React.FC<{
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-c-text">
             {t('partner.profile.regions', 'Regiony działalności')}
           </h2>
-          <p className="text-slate-600">
+          <p className="text-c-text-secondary">
             {t('partner.profile.regionsDesc', 'Wybierz regiony, w których działasz')}
           </p>
         </div>
 
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {allRegions.map((region) => (
               <label
                 key={region}
-                className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-navy-700 cursor-pointer hover:bg-slate-100/50 dark:hover:bg-navy-700/30"
+                className="flex items-center gap-3 p-3 rounded-lg border border-c-border-subtle cursor-pointer hover:bg-c-surface-raised/50 dark:hover:bg-navy-700/30"
               >
                 <input
                   type="checkbox"
@@ -2816,7 +2816,7 @@ const ProfileSection: React.FC<{
                   onChange={() => toggleRegion(region)}
                   className="rounded text-primary-600 focus:ring-primary-500"
                 />
-                <span className="text-slate-600 dark:text-slate-300">{region}</span>
+                <span className="text-c-text-secondary">{region}</span>
               </label>
             ))}
           </div>
@@ -2839,10 +2839,10 @@ const ProfileSection: React.FC<{
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+        <h2 className="text-xl font-semibold text-c-text">
           {t('partner.profile.publicListing', 'Publiczna wizytówka')}
         </h2>
-        <p className="text-slate-600">
+        <p className="text-c-text-secondary">
           {t(
             'partner.profile.publicListingDesc',
             'Zarządzaj swoją widocznością w katalogu partnerów'
@@ -2850,11 +2850,11 @@ const ProfileSection: React.FC<{
         </p>
       </div>
 
-      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h4 className="font-medium text-slate-900 dark:text-white">Directory Visibility</h4>
-            <p className="text-sm text-slate-600">
+            <h4 className="font-medium text-c-text">Directory Visibility</h4>
+            <p className="text-sm text-c-text-secondary">
               Show your profile in the public partner directory
             </p>
           </div>
@@ -2869,25 +2869,25 @@ const ProfileSection: React.FC<{
           >
             <span
               className={cn(
-                'inline-block h-4 w-4 transform rounded-full bg-slate-50 dark:bg-navy-900 transition',
+                'inline-block h-4 w-4 transform rounded-full bg-c-surface-raised transition',
                 publicListingEnabled ? 'translate-x-6' : 'translate-x-1'
               )}
             />
           </button>
         </div>
 
-        <div className="border-t border-slate-200 dark:border-navy-700 pt-6">
-          <h4 className="font-medium text-slate-900 dark:text-white mb-4">Preview</h4>
-          <div className="bg-slate-100/50 dark:bg-navy-700/30 rounded-xl p-4">
+        <div className="border-t border-c-border-subtle pt-6">
+          <h4 className="font-medium text-c-text mb-4">Preview</h4>
+          <div className="bg-c-surface-raised/50 dark:bg-navy-700/30 rounded-xl p-4">
             <div className="flex items-start gap-4">
               <div className="w-16 h-16 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
                 <Building2 className="w-8 h-8 text-primary-600" />
               </div>
               <div>
-                <h5 className="font-semibold text-slate-900 dark:text-white">
+                <h5 className="font-semibold text-c-text">
                   {organization?.name || 'Your Company'}
                 </h5>
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-c-text-secondary">
                   {organization?.tier || 'Partner'} •{' '}
                   {selectedRegions.join(', ') || 'No regions selected'}
                 </p>
@@ -2902,7 +2902,7 @@ const ProfileSection: React.FC<{
                       </span>
                     ))
                   ) : (
-                    <span className="text-xs text-slate-500">No specializations selected</span>
+                    <span className="text-xs text-c-text-muted">No specializations selected</span>
                   )}
                 </div>
               </div>
@@ -3236,10 +3236,10 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
       ) : !isConnected ? (
         <div className="space-y-6">
           <div className="rounded-xl border border-primary-200 bg-primary-50 p-6 dark:border-primary-700/50 dark:bg-primary-900/20">
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-c-text">
               {t('partner.connect.title', 'Connect your partner profile')}
             </h2>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            <p className="mt-2 text-sm text-c-text-secondary">
               {t(
                 'partner.connect.desc',
                 'Connect your partner profile to your account to access the directory and profile settings.'
@@ -3249,7 +3249,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
             {selfConnectEnabled ? (
               <div className="mt-5 grid gap-3 md:grid-cols-2">
                 <label className="block">
-                  <span className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <span className="block text-xs font-semibold uppercase tracking-wider text-c-text-muted">
                     {t('partner.connect.companyName', 'Nazwa firmy')}
                   </span>
                   <input
@@ -3260,7 +3260,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
                       'partner.connect.companyNamePlaceholder',
                       'np. DBR77 Consulting'
                     )}
-                    className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+                    className="mt-2 w-full rounded-lg border border-c-border-subtle bg-c-surface px-4 py-2 text-sm text-c-text focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                   />
                 </label>
 
@@ -3269,7 +3269,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
                     type="button"
                     onClick={handleConnectPartnerProfile}
                     disabled={connecting}
-                    className="w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700 disabled:opacity-60"
+                    className="w-full rounded-lg bg-c-text px-4 py-2.5 text-sm font-semibold text-c-bg transition hover:bg-c-text-secondary disabled:opacity-60"
                   >
                     {connecting
                       ? t('partner.connect.connecting', 'Łączenie…')

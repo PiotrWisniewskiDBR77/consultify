@@ -36,7 +36,7 @@ export const BenchmarkComparison: React.FC<BenchmarkComparisonProps> = ({
                   ? 'bg-blue-100 text-blue-700'
                   : percentile >= 25
                     ? 'bg-yellow-100 text-yellow-700'
-                    : 'bg-danger-100 text-danger-700'
+                    : 'bg-rose-100 text-rose-700'
             }`}
           >
             {percentile >= 90
@@ -69,9 +69,9 @@ export const BenchmarkComparison: React.FC<BenchmarkComparisonProps> = ({
         {isAbove ? (
           <TrendingUp className="w-5 h-5 text-green-500" />
         ) : (
-          <TrendingDown className="w-5 h-5 text-danger-500" />
+          <TrendingDown className="w-5 h-5 text-rose-500" />
         )}
-        <span className={`text-sm font-medium ${isAbove ? 'text-green-600' : 'text-danger-600'}`}>
+        <span className={`text-sm font-medium ${isAbove ? 'text-green-600' : 'text-rose-600'}`}>
           {isAbove ? '+' : ''}
           {deltaPercentage}% vs. benchmark
         </span>

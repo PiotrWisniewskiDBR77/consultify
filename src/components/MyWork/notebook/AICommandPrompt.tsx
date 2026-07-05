@@ -133,9 +133,9 @@ export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
 
   return (
     <div
-      className={`flex items-center gap-2 rounded-lg border border-primary-200/60 dark:border-primary-800/40 bg-primary-50/50 dark:bg-primary-950/20 px-3 py-1.5 ${className}`}
+      className={`flex items-center gap-2 rounded-lg border border-c-border/60 dark:border-slate-800/40 bg-c-surface-raised px-3 py-1.5 ${className}`}
     >
-      <Sparkles size={14} className="shrink-0 text-primary-500 dark:text-primary-400" />
+      <Sparkles size={14} className="shrink-0 text-c-text-muted" />
       <input
         ref={inputRef}
         type="text"
@@ -146,12 +146,12 @@ export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
         onBlur={onBlur}
         placeholder={isPl ? PLACEHOLDER_PL : PLACEHOLDER_EN}
         disabled={isGenerating}
-        className="flex-1 min-w-0 bg-transparent text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none"
+        className="flex-1 min-w-0 bg-transparent text-sm text-c-text placeholder:text-c-text-muted outline-none"
       />
       <button
         onClick={execute}
         disabled={!command.trim() || isGenerating}
-        className="p-1.5 rounded-md bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
+        className="p-1.5 rounded-md bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised0/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
         title={isPl ? 'Wykonaj polecenie' : 'Execute command'}
       >
         {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}

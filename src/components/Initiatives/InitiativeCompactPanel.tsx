@@ -382,7 +382,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
         toast.error(
           t(
             'initiatives.toast.cannotApprove',
-            'Nie można zatwierdzić — brakuje wymaganych pól:\n• {{errors}}',
+            'Cannot approve — required fields are missing:\n• {{errors}}',
             { errors: approvalErrors.join('\n• ') }
           ),
           { duration: 6000 }
@@ -397,14 +397,14 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
         action.targetStatus
       );
       if (!transition || !transition.canCurrentUserExecute) {
-        toast.error(t('initiatives.toast.statusChangeFailed', 'Zmiana statusu nie powiodła się'));
+        toast.error(t('initiatives.toast.statusChangeFailed', 'Status change failed'));
         return;
       }
       if (blockingItems.length > 0) {
         toast.error(
           t(
             'initiatives.toast.cannotApprove',
-            'Nie można zatwierdzić — brakuje wymaganych pól:\n• {{errors}}',
+            'Cannot approve — required fields are missing:\n• {{errors}}',
             { errors: blockingItems.join('\n• ') }
           ),
           { duration: 6000 }
@@ -415,7 +415,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
       // The backend exposes a dedicated status endpoint.
       const truth = await updateInitiativeStatusWriteTruth(id, action.targetStatus);
       toast.success(
-        t('initiatives.toast.statusChangedLabel', 'Status zmieniony na {{label}}', {
+        t('initiatives.toast.statusChangedLabel', 'Status changed to {{label}}', {
           label: action.label,
         })
       );
@@ -437,7 +437,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
       fetchData();
     } catch (e: any) {
       toast.error(
-        e?.message || t('initiatives.toast.statusChangeFailed', 'Zmiana statusu nie powiodła się')
+        e?.message || t('initiatives.toast.statusChangeFailed', 'Status change failed')
       );
     }
   };
@@ -539,7 +539,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
         </div>
       </div>
 
-      {/* Next Step CTA — "jaki jest kolejny krok z daną inicjatywą" */}
+      {/* Next Step CTA — "what is the next step for this initiative" */}
       {nextStepInfo && initiative && (
         <div className="flex-shrink-0 px-4 py-2.5 border-b border-slate-200 dark:border-navy-800 bg-primary-50/50 dark:bg-primary-900/10">
           <div className="flex items-center justify-between mb-1">
@@ -789,7 +789,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-40 flex justify-end"
+          className="fixed inset-0 z-dropdown flex justify-end"
         >
           <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
           <div className="relative">{panelContent}</div>

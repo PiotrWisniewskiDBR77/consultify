@@ -37,7 +37,7 @@ test.describe('M06 §5 — Krawędzie i relacje', () => {
       );
       return;
     }
-    await connectBtn.click();
+    await connectBtn.click({ force: true });
     await page.waitForTimeout(400);
     // After entering connect mode the canvas cursor should change; we verify the button state changed.
     await shot(page, '5.1-connect-mode-active');

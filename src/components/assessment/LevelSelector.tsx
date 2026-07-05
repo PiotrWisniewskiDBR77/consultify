@@ -103,7 +103,7 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
                                                 px-4 py-3 text-xs font-bold rounded-xl border transition-all
                                                 ${
                                                   isTarget
-                                                    ? 'bg-primary-600 border-primary-500 text-white shadow-lg shadow-primary-600/20'
+                                                    ? 'bg-c-text border-c-text text-c-bg shadow-lg shadow-black/10'
                                                     : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 dark:text-slate-500 active:bg-primary-600/20 active:border-primary-500/50'
                                                 }
                                             `}

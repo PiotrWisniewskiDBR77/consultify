@@ -30,12 +30,30 @@ import {
 } from '../../../../services/admaStructure';
 import { computeADMATransformationScores } from '../../../../services/admaTransformations';
 import { ADMAAssessmentData, ADMAPillarId } from '../../../../types';
+import { buildADMAConclusionModel } from '../../../../services/report/admaConclusion';
+import {
+  buildAdmaConclusionPayload,
+  pushReportConclusion,
+  type ReportConclusionSource,
+} from '../../../../services/report/conclusionPush';
+import {
+  ConclusionExecutiveSummary,
+  ConclusionGapCards,
+  FoFRoadBar,
+} from '../ConclusionSummary';
+import { MaturityPathwaySection } from '../MaturityPathwaySection';
 
 interface ADMAReportTemplateProps {
   data: ADMAAssessmentData;
   organizationName?: string;
   assessmentDate?: string;
   showLegalNotice?: boolean;
+  /**
+   * CONCLUSION_LAYER bridge: when provided, the W1 conclusion model built for
+   * this report is persisted as a Conclusion candidate (fail-safe push via
+   * POST /api/conclusions — a failure never affects rendering).
+   */
+  conclusionSource?: ReportConclusionSource;
 }
 
 const getPillarIcon = (pillarId: ADMAPillarId) => {
@@ -67,6 +85,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
   organizationName = 'Organization',
   assessmentDate,
   showLegalNotice = true,
+  conclusionSource,
 }) => {
   // Calculate pillar scores
   const pillarScores = (Object.keys(ADMA_PILLARS) as ADMAPillarId[]).map((pillarId) => ({
@@ -100,6 +119,41 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
     ),
     fofBenchmark: 4.0,
   });
+
+  // Conclusion layer (WNIOSKOWA) — deterministic, engine-grounded (OXFORD O2.2).
+  const conclusion = buildADMAConclusionModel(data, 'pl', 4.0);
+
+  // CONCLUSION_LAYER bridge: persist the W1 verdict as a Conclusion candidate
+  // when the caller identifies the source assessment. Fail-safe by contract.
+  React.useEffect(() => {
+    if (!conclusionSource?.assessmentId) return;
+    void pushReportConclusion(buildAdmaConclusionPayload(conclusion, conclusionSource));
+    // Re-push only when the source identity changes — the model is deterministic per data.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conclusionSource?.assessmentId]);
+  const execVM = {
+    headline: conclusion.executiveSummary.headline,
+    k1_state: conclusion.executiveSummary.k1_state,
+    k2_meaning: conclusion.executiveSummary.k2_meaning,
+    k3_threeGaps: conclusion.executiveSummary.k3_threeGaps,
+    k4_whatFirst: conclusion.executiveSummary.k4_whatFirst,
+    k5_effect: conclusion.executiveSummary.k5_effect,
+    confidence: conclusion.executiveSummary.confidence,
+  };
+  const gapCardVMs = conclusion.gapCards.map((c) => ({
+    title: `${c.dimensionName} (${c.pillarName})`,
+    badge: `${c.current} → ${c.target} · luka ${c.gap}`,
+    whatIs: c.whatIs,
+    whatItMeans: c.whatItMeans,
+    whatToDo: c.whatToDo,
+    effect: c.effect,
+  }));
+  const fofItemVMs = conclusion.fofRoad.all.map((t) => ({
+    name: t.name,
+    current: t.current,
+    gapToFoF: t.gapToFoF,
+    atOrAboveFoF: t.atOrAboveFoF,
+  }));
 
   return (
     <div className="bg-white dark:bg-navy-950 min-h-full p-8 print:p-0">
@@ -138,11 +192,45 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
         </div>
       )}
 
-      {/* Executive Summary */}
+      {/* Executive Summary — WNIOSKOWA (answer-first verdict, K1→K2→K3→K4) */}
       <section className="mb-8">
         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
           <Target size={20} />
           Podsumowanie Wykonawcze
+        </h2>
+        <ConclusionExecutiveSummary vm={execVM} language="pl" />
+      </section>
+
+      {/* Road to Factory of the Future (FoF≥4) — explicit bar */}
+      <section className="mb-8">
+        <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+          <TrendingUp size={20} />
+          Droga do Factory of the Future (FoF ≥ 4)
+        </h2>
+        <FoFRoadBar
+          benchmark={conclusion.fofRoad.benchmark}
+          items={fofItemVMs}
+          summary={conclusion.fofRoad.summary}
+          language="pl"
+        />
+      </section>
+
+      {/* Key Gaps — co jest → co znaczy → co robić → efekt */}
+      {gapCardVMs.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+            <TrendingUp size={20} />
+            Kluczowe Luki — Priorytety
+          </h2>
+          <ConclusionGapCards cards={gapCardVMs} language="pl" />
+        </section>
+      )}
+
+      {/* Score Snapshot (supporting evidence for the verdict above) */}
+      <section className="mb-8">
+        <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
+          <BarChart3 size={20} />
+          Wyniki (dowód)
         </h2>
         <div className="grid grid-cols-6 gap-4">
           {/* Overall Score */}
@@ -468,6 +556,17 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
           })}
         </div>
       </section>
+
+      {/* Maturity Pathway (N → N+1) — co zrobić, by przejść wyżej */}
+      <MaturityPathwaySection
+        framework="adma"
+        language="pl"
+        dimensions={dimensionsWithGaps.map((d) => ({
+          dimensionId: d.id,
+          currentLevel: d.current,
+          targetLevel: d.target,
+        }))}
+      />
 
       {/* Maturity Level Legend */}
       <section className="mb-8">

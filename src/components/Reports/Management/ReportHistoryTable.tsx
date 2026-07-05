@@ -81,7 +81,7 @@ const reportTypeLabels = {
   },
   STEERING_COMMITTEE: {
     label: 'Steering Committee',
-    color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
+    color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
   },
   PORTFOLIO_HEALTH: {
     label: 'Portfolio Health',
@@ -115,7 +115,7 @@ const statusLabels: Record<ManagementReportStatus, { label: string; color: strin
   },
   APPROVED: {
     label: 'Approved',
-    color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
+    color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
   },
   ARCHIVED: {
     label: 'Archived',
@@ -150,21 +150,21 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
   };
   return (
     <div
-      className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden ${className}`}
+      className={`bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden ${className}`}
     >
       {/* Header with filters */}
-      <div className="px-4 py-3 border-b border-slate-100 dark:border-navy-700 flex flex-wrap items-center justify-between gap-4">
-        <h3 className="font-semibold text-navy-900 dark:text-white flex items-center gap-2">
+      <div className="px-4 py-3 border-b border-c-border-subtle flex flex-wrap items-center justify-between gap-4">
+        <h3 className="font-semibold text-c-text flex items-center gap-2">
           <FileText size={18} />
           Report History
-          <span className="px-2 py-0.5 text-xs font-medium bg-slate-100 dark:bg-navy-800/40 dark:bg-white/10 rounded-full">
+          <span className="px-2 py-0.5 text-xs font-medium bg-c-surface-raised rounded-full">
             {total || reports.length}
           </span>
         </h3>
 
         {onFilterChange && (
           <div className="flex items-center gap-2">
-            <Filter size={14} className="text-slate-400 dark:text-slate-500" />
+            <Filter size={14} className="text-c-text-muted" />
 
             {/* Type Filter */}
             <div className="relative">
@@ -176,7 +176,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                     reportType: (e.target.value as ManagementReportType) || undefined,
                   })
                 }
-                className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-c-surface border border-c-border rounded-lg focus:outline-none focus:ring-2 focus:ring-c-focus"
               >
                 <option value="">All Types</option>
                 <option value="TEAM_MEETING">Team Meeting</option>
@@ -187,7 +187,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
               </select>
               <ChevronDown
                 size={14}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-c-text-muted pointer-events-none"
               />
             </div>
 
@@ -201,7 +201,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                     scope: (e.target.value as ManagementReportScope) || undefined,
                   })
                 }
-                className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-c-surface border border-c-border rounded-lg focus:outline-none focus:ring-2 focus:ring-c-focus"
               >
                 <option value="">All Scopes</option>
                 <option value="PROJECT">Project</option>
@@ -209,7 +209,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
               </select>
               <ChevronDown
                 size={14}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-c-text-muted pointer-events-none"
               />
             </div>
 
@@ -223,7 +223,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                     status: (e.target.value as ManagementReportStatus) || undefined,
                   })
                 }
-                className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-c-surface border border-c-border rounded-lg focus:outline-none focus:ring-2 focus:ring-c-focus"
               >
                 <option value="">All Status</option>
                 <option value="DRAFT">Draft</option>
@@ -232,7 +232,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
               </select>
               <ChevronDown
                 size={14}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-c-text-muted pointer-events-none"
               />
             </div>
           </div>
@@ -244,31 +244,31 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
         {loading ? (
           <table /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */  className="w-full">
             <thead>
-              <tr className="bg-slate-50 dark:bg-navy-800/50">
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <tr className="bg-c-surface-raised">
+                <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider">
                   Title
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider w-16">
+                <th className="px-4 py-3 text-center text-xs font-medium text-c-text-muted uppercase tracking-wider w-16">
                   Ver.
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-c-text-muted uppercase tracking-wider">
                   Type
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-c-text-muted uppercase tracking-wider">
                   Scope
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-c-text-muted uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider">
                   Generated
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-c-text-muted uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+            <tbody className="divide-y divide-c-border-subtle">
               {[1, 2, 3, 4, 5].map((i) => (
                 <ReportHistoryRowSkeleton key={i} />
               ))}
@@ -276,62 +276,62 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
           </table>
         ) : reports.length === 0 ? (
           <div className="p-8 text-center">
-            <FileText size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-            <p className="text-slate-500 dark:text-slate-400">No reports found.</p>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <FileText size={48} className="mx-auto text-c-text-muted mb-3" />
+            <p className="text-c-text-muted">No reports found.</p>
+            <p className="text-sm text-c-text-muted">
               Generate your first report to see it here.
             </p>
           </div>
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="bg-slate-50 dark:bg-navy-800/50">
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <tr className="bg-c-surface-raised">
+                <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider">
                   Title
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider w-16">
+                <th className="px-4 py-3 text-center text-xs font-medium text-c-text-muted uppercase tracking-wider w-16">
                   Ver.
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-c-text-muted uppercase tracking-wider">
                   Type
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-c-text-muted uppercase tracking-wider">
                   Scope
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-c-text-muted uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-c-text-muted uppercase tracking-wider">
                   Generated
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-c-text-muted uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+            <tbody className="divide-y divide-c-border-subtle">
               {reports.map((report) => {
                 const typeBadge =
                   reportTypeLabels[report.reportType] || reportTypeLabels.TEAM_MEETING;
                 return (
                   <tr
                     key={report.id}
-                    className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                    className="hover:bg-c-surface-raised transition-colors"
                   >
                     <td className="px-4 py-3">
                       <div>
-                        <div className="font-medium text-navy-900 dark:text-white">
+                        <div className="font-medium text-c-text">
                           {report.title}
                         </div>
                         {report.projectName && (
-                          <div className="text-sm text-slate-500 dark:text-slate-400">
+                          <div className="text-sm text-c-text-muted">
                             {report.projectName}
                           </div>
                         )}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-mono font-medium bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 rounded">
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-mono font-medium bg-c-surface-raised text-c-text-secondary rounded">
                         v{report.versionLabel || report.versionNumber || '1.0'}
                       </span>
                     </td>
@@ -355,11 +355,11 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                        <Calendar size={14} className="text-slate-400 dark:text-slate-500" />
+                      <div className="flex items-center gap-2 text-sm text-c-text-secondary">
+                        <Calendar size={14} className="text-c-text-muted" />
                         {new Date(report.createdAt).toLocaleDateString()}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      <div className="flex items-center gap-2 text-xs text-c-text-muted mt-1">
                         <User size={12} />
                         {report.generatedByName}
                       </div>
@@ -369,37 +369,37 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                         {onViewReport && (
                           <button
                             onClick={() => onViewReport(report.id)}
-                            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                            className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors"
                             title="View report"
                           >
-                            <Eye size={16} className="text-slate-500 dark:text-slate-400" />
+                            <Eye size={16} className="text-c-text-muted" />
                           </button>
                         )}
                         {onDownloadPDF && report.pdfPath && (
                           <button
                             onClick={() => onDownloadPDF(report.id)}
-                            className="p-2 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
+                            className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors"
                             title="Download PDF"
                           >
-                            <FileText size={16} className="text-danger-500" />
+                            <FileText size={16} className="text-c-text-muted" />
                           </button>
                         )}
                         {onDownloadPPTX && report.pptxPath && (
                           <button
                             onClick={() => onDownloadPPTX(report.id)}
-                            className="p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
+                            className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors"
                             title="Download PPTX"
                           >
-                            <Download size={16} className="text-amber-500" />
+                            <Download size={16} className="text-c-text-muted" />
                           </button>
                         )}
                         {onShare && (
                           <button
                             onClick={() => onShare(report.id)}
-                            className="p-2 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+                            className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors"
                             title="Share"
                           >
-                            <Share2 size={16} className="text-primary-500" />
+                            <Share2 size={16} className="text-c-text-muted" />
                           </button>
                         )}
                         {/* B5.4: Rename report */}
@@ -411,10 +411,10 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                                 onRenameReport(report.id, newTitle.trim());
                               }
                             }}
-                            className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                            className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors"
                             title="Rename"
                           >
-                            <FileText size={16} className="text-blue-500" />
+                            <FileText size={16} className="text-c-text-muted" />
                           </button>
                         )}
                       </div>
@@ -429,8 +429,8 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
 
       {/* Pagination Footer */}
       {totalPages > 1 && !loading && (
-        <div className="px-4 py-3 border-t border-slate-100 dark:border-navy-700 flex items-center justify-between">
-          <div className="text-sm text-slate-500 dark:text-slate-400">
+        <div className="px-4 py-3 border-t border-c-border-subtle flex items-center justify-between">
+          <div className="text-sm text-c-text-muted">
             Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of {total}{' '}
             reports
           </div>
@@ -438,18 +438,18 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
             <button
               onClick={() => handlePageChange(1)}
               disabled={!canGoPrev}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               title="First page"
             >
-              <ChevronsLeft size={16} className="text-slate-500 dark:text-slate-400" />
+              <ChevronsLeft size={16} className="text-c-text-muted" />
             </button>
             <button
               onClick={() => handlePageChange(page - 1)}
               disabled={!canGoPrev}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               title="Previous page"
             >
-              <ChevronLeft size={16} className="text-slate-500 dark:text-slate-400" />
+              <ChevronLeft size={16} className="text-c-text-muted" />
             </button>
 
             {/* Page numbers */}
@@ -471,8 +471,8 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                     onClick={() => handlePageChange(pageNum)}
                     className={`min-w-[32px] h-8 px-2 rounded-lg text-sm font-medium transition-colors ${
                       page === pageNum
-                        ? 'bg-navy-900 text-white'
-                        : 'hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
+                        ? 'bg-c-text text-c-surface'
+                        : 'hover:bg-c-surface-raised text-c-text-secondary'
                     }`}
                   >
                     {pageNum}
@@ -484,18 +484,18 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
             <button
               onClick={() => handlePageChange(page + 1)}
               disabled={!canGoNext}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               title="Next page"
             >
-              <ChevronRight size={16} className="text-slate-500 dark:text-slate-400" />
+              <ChevronRight size={16} className="text-c-text-muted" />
             </button>
             <button
               onClick={() => handlePageChange(totalPages)}
               disabled={!canGoNext}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="p-2 hover:bg-c-surface-raised rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               title="Last page"
             >
-              <ChevronsRight size={16} className="text-slate-500 dark:text-slate-400" />
+              <ChevronsRight size={16} className="text-c-text-muted" />
             </button>
           </div>
         </div>

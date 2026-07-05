@@ -75,7 +75,7 @@ export const PresentMode: React.FC<PresentModeProps> = ({
 
   if (presenterView) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-slate-900 flex">
+      <div className="fixed inset-0 z-[9999] bg-c-bg flex">
         {/* Main slide */}
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="w-full max-w-4xl">
@@ -84,10 +84,10 @@ export const PresentMode: React.FC<PresentModeProps> = ({
         </div>
 
         {/* Side panel: notes + next slide + timer */}
-        <div className="w-80 bg-slate-800 flex flex-col border-l border-slate-700">
+        <div className="w-80 bg-c-surface flex flex-col border-l border-c-border">
           {/* Timer */}
-          <div className="px-4 py-3 border-b border-slate-700">
-            <div className="flex items-center justify-between text-white">
+          <div className="px-4 py-3 border-b border-c-border">
+            <div className="flex items-center justify-between text-c-text">
               <span className="text-xs opacity-60">
                 {currentIndex + 1} / {cards.length}
               </span>
@@ -97,8 +97,8 @@ export const PresentMode: React.FC<PresentModeProps> = ({
 
           {/* Next slide preview */}
           {nextCard && (
-            <div className="p-4 border-b border-slate-700">
-              <p className="text-[10px] text-slate-600 uppercase mb-2">Next slide</p>
+            <div className="p-4 border-b border-c-border">
+              <p className="text-[10px] text-c-text-secondary uppercase mb-2">Next slide</p>
               <div className="pointer-events-none opacity-80">
                 <CardRenderer card={nextCard} colorSetId={colorSetId} scale={0.3} />
               </div>
@@ -107,31 +107,31 @@ export const PresentMode: React.FC<PresentModeProps> = ({
 
           {/* Speaker notes */}
           <div className="flex-1 p-4 overflow-y-auto">
-            <p className="text-[10px] text-slate-600 uppercase mb-2">Speaker Notes</p>
-            <p className="text-sm text-slate-600 whitespace-pre-wrap">
+            <p className="text-[10px] text-c-text-secondary uppercase mb-2">Speaker Notes</p>
+            <p className="text-sm text-c-text-secondary whitespace-pre-wrap">
               {currentCard.speaker_notes || 'No notes for this slide.'}
             </p>
           </div>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between p-3 border-t border-slate-700">
+          <div className="flex items-center justify-between p-3 border-t border-c-border">
             <button
               onClick={goPrev}
               disabled={currentIndex === 0}
-              className="p-2 rounded-lg text-white hover:bg-slate-700 disabled:opacity-30"
+              className="p-2 rounded-lg text-c-text hover:bg-c-surface-raised disabled:opacity-30"
             >
               <ChevronLeft size={20} />
             </button>
             <button
               onClick={onExit}
-              className="p-2 rounded-lg text-slate-600 hover:bg-slate-700 hover:text-white"
+              className="p-2 rounded-lg text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
             >
               <X size={20} />
             </button>
             <button
               onClick={goNext}
               disabled={currentIndex === cards.length - 1}
-              className="p-2 rounded-lg text-white hover:bg-slate-700 disabled:opacity-30"
+              className="p-2 rounded-lg text-c-text hover:bg-c-surface-raised disabled:opacity-30"
             >
               <ChevronRight size={20} />
             </button>
@@ -148,9 +148,9 @@ export const PresentMode: React.FC<PresentModeProps> = ({
       onClick={goNext}
     >
       {/* Progress bar */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-slate-800">
+      <div className="absolute top-0 left-0 right-0 h-1 bg-c-surface">
         <div
-          className="h-full bg-navy-900 transition-all duration-300"
+          className="h-full bg-c-surface transition-all duration-300"
           style={{ width: `${((currentIndex + 1) / cards.length) * 100}%` }}
         />
       </div>
@@ -174,11 +174,11 @@ export const PresentMode: React.FC<PresentModeProps> = ({
             goPrev();
           }}
           disabled={currentIndex === 0}
-          className="p-2 rounded-full bg-white/10 text-white/80 hover:bg-white/20 disabled:opacity-30 backdrop-blur-sm"
+          className="p-2 rounded-full bg-c-surface text-c-text hover:bg-c-surface disabled:opacity-30 backdrop-blur-sm"
         >
           <ChevronLeft size={20} />
         </button>
-        <span className="text-sm text-white/60 font-mono">
+        <span className="text-sm text-c-text font-mono">
           {currentIndex + 1} / {cards.length}
         </span>
         <button
@@ -187,7 +187,7 @@ export const PresentMode: React.FC<PresentModeProps> = ({
             goNext();
           }}
           disabled={currentIndex === cards.length - 1}
-          className="p-2 rounded-full bg-white/10 text-white/80 hover:bg-white/20 disabled:opacity-30 backdrop-blur-sm"
+          className="p-2 rounded-full bg-c-surface text-c-text hover:bg-c-surface disabled:opacity-30 backdrop-blur-sm"
         >
           <ChevronRight size={20} />
         </button>
@@ -199,7 +199,7 @@ export const PresentMode: React.FC<PresentModeProps> = ({
           e.stopPropagation();
           onExit();
         }}
-        className="absolute top-4 right-4 p-2 rounded-full bg-white/10 text-white/80 hover:bg-white/20 backdrop-blur-sm"
+        className="absolute top-4 right-4 p-2 rounded-full bg-c-surface text-c-text hover:bg-c-surface backdrop-blur-sm"
       >
         <X size={20} />
       </button>
@@ -219,7 +219,7 @@ const PresenterTimer: React.FC = () => {
   const seconds = elapsed % 60;
 
   return (
-    <span className="text-lg font-mono text-white">
+    <span className="text-lg font-mono text-c-text">
       {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
     </span>
   );

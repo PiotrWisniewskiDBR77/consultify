@@ -27,6 +27,7 @@ import ReactFlow, {
 } from 'reactflow';
 
 import { Api } from '@/services/api';
+import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 
@@ -38,9 +39,11 @@ import {
   useIdeaMapSync,
 } from './canvas/useIdeaMapSync';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
+import { useCanvasKeyboard } from './canvas/useIdeasToolKeyboard';
 import { type DrawingPath, IdeaDrawingLayer } from './IdeaDrawingLayer';
 import { IdeaScenesManager, type Scene } from './IdeaScenesManager';
 import {
+  type AIProposal,
   type AIProposalBatch,
   type CanvasBgPattern,
   type CanvasToolType,
@@ -57,13 +60,16 @@ import { IdeaProposalReview } from './IdeaProposalReview';
 import { IdeaSlashCommandMenu } from './IdeaSlashCommandMenu';
 import { applySmartLayout, type LayoutAlgorithm } from './layout/IdeaSmartLayout';
 import { CollaborationOverlay } from './mindmap/CollaborationOverlay';
-import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { useConfirmDialog } from './shared/ConfirmDialog';
+import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { whiteboardEdgeTypes, whiteboardNodeTypes } from './whiteboard/nodes/nodeTypes';
 import { STICKY_COLORS, useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
 import { useWhiteboardCollab } from './whiteboard/useWhiteboardCollab';
 import { useWhiteboardNodes } from './whiteboard/useWhiteboardNodes';
-import { useWhiteboardQuickActions } from './whiteboard/useWhiteboardQuickActions';
+import {
+  useWhiteboardQuickActions,
+  type WhiteboardAIGeneratorType,
+} from './whiteboard/useWhiteboardQuickActions';
 import {
   createWhiteboardActivityEntry,
   createWhiteboardHistoryEntry,
@@ -73,6 +79,7 @@ import {
   type FacilitationPhase,
   getSemanticTypeLabel,
   inferWhiteboardSemanticType,
+  resolveConvertOutcomeType,
   type WhiteboardActivityEntry,
   type WhiteboardClassification,
   type WhiteboardHistoryEntry,
@@ -83,10 +90,20 @@ import {
   type WhiteboardVoteEntry,
 } from './whiteboard/whiteboardContracts';
 import { WhiteboardEmptyState } from './whiteboard/WhiteboardEmptyState';
+import { uploadWhiteboardImageWithFallback } from './whiteboard/whiteboardImageUpload';
 import {
   getWhiteboardModeCopy,
   getWhiteboardShortcuts,
 } from './whiteboard/whiteboardInteractionGrammar';
+import {
+  applyProposalNodeMoves,
+  applyProposalNodeUpdates,
+  isWbNodeKind,
+  resolveProposalEdges,
+  toWbNodeKind,
+  type WbNodeKind,
+} from './whiteboard/whiteboardProposalPatch';
+import { toggleReaction } from './whiteboard/whiteboardReactions';
 import { WhiteboardSelectionBar } from './whiteboard/WhiteboardSelectionBar';
 import { WhiteboardSessionPanel } from './whiteboard/WhiteboardSessionPanel';
 import { WhiteboardToolbar } from './whiteboard/WhiteboardToolbar';
@@ -171,19 +188,22 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
     const rfEl = containerRef.current?.closest('.react-flow');
     if (!rfEl) return;
     const handler = (e: Event) => {
-      const vp = (e as CustomEvent).detail;
-      if (
-        vp &&
-        typeof vp.x === 'number' &&
-        typeof vp.y === 'number' &&
-        typeof vp.zoom === 'number'
+      const detail = (e as CustomEvent).detail;
+      // If fit flag is set, use fitView instead of setViewport
+      if (detail?.fit) {
+        fitView({ padding: detail.padding || 0.2, duration: detail.duration || 300 });
+      } else if (
+        detail &&
+        typeof detail.x === 'number' &&
+        typeof detail.y === 'number' &&
+        typeof detail.zoom === 'number'
       ) {
-        setViewport(vp, { duration: 600 });
+        setViewport(detail, { duration: 600 });
       }
     };
     rfEl.addEventListener('idea-whiteboard-set-viewport', handler);
     return () => rfEl.removeEventListener('idea-whiteboard-set-viewport', handler);
-  }, [setViewport]);
+  }, [setViewport, fitView]);
 
   // A6: zoom-to-fit shortcuts (Cmd/Ctrl+0 and Shift+1) — consistent with the
   // Mind Map and Process Flow tools. Whiteboard previously had neither.
@@ -232,22 +252,29 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
             return;
           }
 
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            const dataUrl = ev.target?.result as string;
-            if (!dataUrl) return;
-            const center = getCenter();
+          const center = getCenter();
+          const label = file.name || 'Pasted image';
+          void uploadWhiteboardImageWithFallback(file).then((result) => {
+            if (!result.uploaded) {
+              toast(
+                t(
+                  'myWork.whiteboard.errors.imageUploadFallback',
+                  'Image saved locally (offline) — storage upload unavailable'
+                ),
+                { icon: '⚠️' }
+              );
+            }
             onExternalInsert?.([
               {
                 kind: 'image',
-                label: file.name || 'Pasted image',
-                src: dataUrl,
+                label,
+                imageUrl: result.imageUrl,
+                src: result.src,
                 width: 300,
                 position: center,
               },
             ]);
-          };
-          reader.readAsDataURL(file);
+          });
           return;
         }
       }
@@ -293,21 +320,28 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
               );
               continue;
             }
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-              const dataUrl = ev.target?.result as string;
-              if (!dataUrl) return;
+            const dropPosition = { x: pos.x + i * 30, y: pos.y + i * 30 };
+            void uploadWhiteboardImageWithFallback(file).then((result) => {
+              if (!result.uploaded) {
+                toast(
+                  t(
+                    'myWork.whiteboard.errors.imageUploadFallback',
+                    'Image saved locally (offline) — storage upload unavailable'
+                  ),
+                  { icon: '⚠️' }
+                );
+              }
               onExternalInsert?.([
                 {
                   kind: 'image',
                   label: file.name,
-                  src: dataUrl,
+                  imageUrl: result.imageUrl,
+                  src: result.src,
                   width: 250,
-                  position: { x: pos.x + i * 30, y: pos.y + i * 30 },
+                  position: dropPosition,
                 },
               ]);
-            };
-            reader.readAsDataURL(file);
+            });
           } else {
             onExternalInsert?.([
               {
@@ -380,8 +414,9 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
           externalOnContextMenu?.(event);
         }}
         {...getIdeasToolInteractionProps('whiteboard', { locked })}
+        deleteKeyCode={null}
         fitView
-        className="bg-slate-100/80 dark:bg-[#0b1020]"
+        className="bg-c-surface-raised"
         defaultEdgeOptions={{ type: 'labeled' }}
         onMoveEnd={(_event: unknown, viewport: { x: number; y: number; zoom: number }) =>
           onViewportChange?.(viewport)
@@ -412,23 +447,24 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
               if (n.type === 'kpiBadge') {
                 const s = n.data?.status;
                 return s === 'on_track'
-                  ? '#34d399'
+                  ? 'var(--c-success)'
                   : s === 'off_track'
-                    ? '#f87171'
+                    ? 'var(--c-danger)'
                     : s === 'at_risk'
-                      ? '#fbbf24'
-                      : '#94a3b8';
+                      ? 'var(--c-warning)'
+                      : 'var(--c-text-muted)';
               }
-              if (n.type === 'scoreNode') return '#6366f1';
-              if (n.type === 'progressNode') return '#60a5fa';
-              if (n.type === 'summaryCard') return '#a78bfa';
-              if (n.type === 'frameNode') return isDarkCanvas ? '#0f172a' : '#f1f5f9';
-              if (n.type === 'shapeNode') return n.data?.bgColor || '#e0e7ff';
-              if (n.type === 'groupNode') return isDarkCanvas ? '#1e1b4b' : '#f8fafc';
-              return isDarkCanvas ? '#1e293b' : '#e2e8f0';
+              if (n.type === 'scoreNode') return 'var(--c-tag-2)';
+              if (n.type === 'progressNode') return 'var(--c-info)';
+              if (n.type === 'summaryCard') return 'var(--c-tag-3)';
+              if (n.type === 'frameNode') return 'var(--c-surface-raised)';
+              if (n.type === 'shapeNode')
+                return n.data?.bgColor || 'color-mix(in srgb, var(--c-tag-2) 20%, transparent)';
+              if (n.type === 'groupNode') return 'var(--c-surface)';
+              return 'var(--c-border-subtle)';
             }}
             maskColor={isDarkCanvas ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.08)'}
-            className="!bg-white/80 dark:!bg-navy-900/80 !border-slate-200 dark:!border-white/[0.06] !rounded-xl"
+            className="!bg-c-surface !border-c-border-subtle !rounded-xl"
           />
         )}
         <CanvasZoomControls
@@ -446,43 +482,6 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
 
 // ── Main component ───────────────────────────────────────────────────────────
 
-type WbNodeKind =
-  | 'sticky'
-  | 'text'
-  | 'group'
-  | 'shape_rectangle'
-  | 'shape_circle'
-  | 'shape_diamond'
-  | 'shape_hexagon'
-  | 'frame'
-  | 'image'
-  | 'link'
-  | 'kpi_badge'
-  | 'score'
-  | 'progress'
-  | 'summary';
-
-const WB_NODE_KINDS: WbNodeKind[] = [
-  'sticky',
-  'text',
-  'group',
-  'shape_rectangle',
-  'shape_circle',
-  'shape_diamond',
-  'shape_hexagon',
-  'frame',
-  'image',
-  'link',
-  'kpi_badge',
-  'score',
-  'progress',
-  'summary',
-];
-
-function isWbNodeKind(value: unknown): value is WbNodeKind {
-  return typeof value === 'string' && WB_NODE_KINDS.includes(value as WbNodeKind);
-}
-
 type WhiteboardQuickStart = 'brainstorm' | 'affinity' | 'workshop';
 
 type WhiteboardCanvasSnapshot = {
@@ -496,7 +495,11 @@ type WhiteboardExternalInsert =
   | {
       kind: 'image';
       label: string;
-      src: string;
+      // A6: exactly one of these is set — `imageUrl` for storage-backed
+      // uploads, `src` (inline base64) for the pre-A6 / fallback path.
+      // ImageNode renders `data.imageUrl || data.src` so both work identically.
+      src?: string;
+      imageUrl?: string;
       width?: number;
       position?: { x: number; y: number };
     }
@@ -589,7 +592,7 @@ interface IdeaWhiteboardToolProps {
 export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   open,
   ideaId,
-  locked = false,
+  locked: lockedProp = false,
   refreshToken,
   onSaved,
   onSelectionChange,
@@ -625,6 +628,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   const [drawingPaths, setDrawingPaths] = useState<DrawingPath[]>([]);
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [sessionState, setSessionState] = useState<WhiteboardSessionState>(DEFAULT_SESSION_STATE);
+  // B1 (M09): an 'observer' in an active facilitation session is view-only. This folds into
+  // the existing `locked` mechanism already threaded through every mutation site below, so
+  // node creation / drag / resize / edit / draw are all disabled without touching each call
+  // site. Server-side enforcement (my-work.routes.ts, WHITEBOARD_OBSERVER_READONLY) is the
+  // real gate; this is the UX so an observer isn't left wondering why edits silently 403.
+  const isObserver = sessionState.role === 'observer';
+  const locked = lockedProp || isObserver;
   const [sharePolicy, setSharePolicy] = useState<WhiteboardSharePolicy>(DEFAULT_SHARE_POLICY);
   const [libraryItems, setLibraryItems] = useState<WhiteboardLibraryItem[]>([]);
   const [outcomeRegistry, setOutcomeRegistry] = useState<WhiteboardOutcomeRecord[]>([]);
@@ -670,6 +680,68 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     });
   // M09 L-02: realtime graph sync (org-scoped WS, mirrors M06 Mind Map).
   const collab = useWhiteboardCollab({ currentUserId, setNodes, setEdges });
+  // useWhiteboardCollab returns a fresh object literal each render, but its inner
+  // callbacks ARE memoized. Depend on the stable callback (not the object) so
+  // handleToggleReaction — and therefore hydrate, which lists it — stays stable.
+  // Depending on `collab` directly re-creates hydrate every render, which re-fires
+  // the hydrate effect and its setSessionState → infinite render loop (B4×B1).
+  const { broadcastNodeUpdate: collabBroadcastNodeUpdate } = collab;
+
+  // B4: emoji reactions on nodes. Gated behind the (previously-dead)
+  // session.reactionsEnabled flag + an active facilitation session. Toggling a
+  // reaction mutates the node's own `data.reactions`, which persists through the
+  // existing setNodes → onGraphChange → /map autosave path (no new endpoint),
+  // and broadcasts via the existing collab `update_node` op so collaborators see
+  // it live (reuse only — no new WS message type).
+  const handleToggleReaction = useCallback(
+    (nodeId: string, emoji: string) => {
+      // Observers (B1 read-only) must not mutate the board — reacting is a write.
+      if (locked) return;
+      setNodes((nds) => {
+        let updated: Node | null = null;
+        const next = nds.map((n) => {
+          if (n.id !== nodeId) return n;
+          const nextReactions = toggleReaction(n.data?.reactions, emoji, currentUserId);
+          updated = { ...n, data: { ...n.data, reactions: nextReactions } };
+          return updated;
+        });
+        if (updated) {
+          // Broadcast only the persistable slice (id + data.reactions); the
+          // collab receiver shallow-merges node + node.data.
+          collabBroadcastNodeUpdate({
+            id: (updated as Node).id,
+            data: { reactions: (updated as Node).data?.reactions },
+          } as Node);
+        }
+        return next;
+      });
+    },
+    [collabBroadcastNodeUpdate, currentUserId, locked, setNodes]
+  );
+
+  // Reactions are live only during an active facilitation session with the flag on.
+  // Observers (B1 read-only) never get the reaction affordance — reacting is a write.
+  const reactionsActive = Boolean(sessionState.active && sessionState.reactionsEnabled && !locked);
+  // Ref mirror so the (open-scoped) hydrate closure can seed reactionsEnabled with
+  // the current value without taking reactionsActive as a dep (which would trigger a
+  // full re-hydrate/network fetch every time the flag flips). The sync effect below
+  // keeps live nodes correct after hydration.
+  const reactionsActiveRef = useRef(reactionsActive);
+  reactionsActiveRef.current = reactionsActive;
+
+  // Hydration injects reactionsEnabled once; keep every node's copy in sync when
+  // the session flag flips mid-board so the affordance appears/disappears live.
+  useEffect(() => {
+    setNodes((nds) => {
+      if (nds.every((n) => Boolean(n.data?.reactionsEnabled) === reactionsActive)) return nds;
+      return nds.map((n) =>
+        Boolean(n.data?.reactionsEnabled) === reactionsActive
+          ? n
+          : { ...n, data: { ...n.data, reactionsEnabled: reactionsActive } }
+      );
+    });
+  }, [reactionsActive, setNodes]);
+
   const lastSnapshotRef = useRef<WhiteboardCanvasSnapshot | null>(null);
   const undoStackRef = useRef<WhiteboardCanvasSnapshot[]>([]);
   const redoStackRef = useRef<WhiteboardCanvasSnapshot[]>([]);
@@ -835,11 +907,18 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
   const didPersistRef = useRef(false);
   const stickyColorCounter = useRef(0);
+  // Guard against re-entrant hydration. The hydrate effect re-runs whenever `hydrate`'s
+  // identity or `refreshToken` changes; on a saturated connection pool a second hydrate
+  // could fire before the GET /map of the first resolves, piling up pending requests and
+  // wedging the board on the skeleton forever. One fetch in flight at a time.
+  const hydrateInFlightRef = useRef(false);
 
   // ── Hydrate ──────────────────────────────────────────────────────────────
 
   const hydrate = useCallback(async () => {
     if (!open) return;
+    if (hydrateInFlightRef.current) return;
+    hydrateInFlightRef.current = true;
     setLoading(true);
     try {
       const res = await Api.getMyIdeaMap(ideaId, { language: i18n.language });
@@ -872,6 +951,12 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
                 )
               );
             },
+            // B4: reaction wiring. `reactionsEnabled` is refreshed by a
+            // dedicated effect whenever the session flag flips; the persisted
+            // `reactions` array survives via the normalizedNode.data spread.
+            currentUserId,
+            reactionsEnabled: reactionsActiveRef.current,
+            onToggleReaction: handleToggleReaction,
           };
           if (normalizedNode?.type === 'frameNode') {
             nodeData.onCollapseToggle = (next: boolean) => {
@@ -1004,8 +1089,19 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       setExtensions({});
     } finally {
       setLoading(false);
+      hydrateInFlightRef.current = false;
     }
-  }, [i18n.language, ideaId, isPl, open, setEdges, setNodes, toolSessionId]);
+  }, [
+    currentUserId,
+    handleToggleReaction,
+    i18n.language,
+    ideaId,
+    isPl,
+    open,
+    setEdges,
+    setNodes,
+    toolSessionId,
+  ]);
 
   useEffect(() => {
     if (!open) return;
@@ -1081,6 +1177,24 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     [buildWhiteboardExtensions, edges, extensions, nodes]
   );
 
+  // B1 (M09): read THIS user's own role row from the shared session (tool_facilitation_roles).
+  // Returns 'observer' | 'facilitator' | 'participant' | null. Best-effort: any failure → null
+  // so we fall back to the facilitator_id-derived default and never wrongly lock the board.
+  const resolveMyAssignedRole = useCallback(
+    async (sessionId: string): Promise<string | null> => {
+      try {
+        const res: any = await Api.facilitationGetRoles(sessionId);
+        const roles: any[] = Array.isArray(res?.roles) ? res.roles : [];
+        const mine = roles.find((r) => String(r?.user_id ?? r?.userId ?? '') === currentUserId);
+        const roleName = String(mine?.role_name ?? mine?.roleName ?? '').toLowerCase();
+        return roleName || null;
+      } catch {
+        return null;
+      }
+    },
+    [currentUserId]
+  );
+
   const ensureFacilitationSession = useCallback(async () => {
     if (sessionState.sessionId) return sessionState.sessionId;
     // Idempotent on the server (M09 L-04): a 2nd participant on the same board resolves
@@ -1097,8 +1211,17 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     // self-assigned on the client; joiners become participants automatically.
     const server: any = await Api.facilitationGetSession(sessionId).catch(() => null);
     const facilitatorId = String(server?.facilitator_id || server?.facilitatorId || '');
+    // B1 (M09): a facilitator can assign THIS user the 'observer' role; that assignment
+    // (tool_facilitation_roles) overrides the facilitator_id-derived default so the board
+    // renders read-only. Roles table wins for 'observer'; otherwise fall back to the
+    // creator-vs-joiner default (facilitator / participant).
+    const assignedRole = await resolveMyAssignedRole(sessionId);
     const serverRole =
-      facilitatorId && facilitatorId === currentUserId ? 'facilitator' : 'participant';
+      assignedRole === 'observer'
+        ? 'observer'
+        : facilitatorId && facilitatorId === currentUserId
+          ? 'facilitator'
+          : 'participant';
     const rawTimer = server?.timer_state ?? server?.timerState;
     const timerState: Record<string, unknown> =
       rawTimer && typeof rawTimer === 'object'
@@ -1144,7 +1267,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       }).catch(() => toast.error(t('myWork.whiteboard.errors.roleChangeFailed')));
     }
     return sessionId;
-  }, [currentUserId, ideaId, sessionState.sessionId, t, toolSessionId]);
+  }, [currentUserId, ideaId, resolveMyAssignedRole, sessionState.sessionId, t, toolSessionId]);
 
   const syncFacilitationVotes = useCallback(
     async (sessionId: string) => {
@@ -1576,6 +1699,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             )
           );
         },
+        // B4: seed reactions wiring on freshly-created nodes too — otherwise a
+        // node added mid-session (after the one-shot hydrate/flag-flip sync
+        // effect ran) would silently lack `onToggleReaction`/`currentUserId`
+        // and never render the affordance even while a session is active.
+        currentUserId,
+        reactionsEnabled: reactionsActiveRef.current,
+        onToggleReaction: handleToggleReaction,
         ...(extraData || {}),
       };
       delete nodeData.position;
@@ -1665,7 +1795,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       }
       return newNode;
     },
-    [isPl, locked]
+    [currentUserId, handleToggleReaction, isPl, locked, setNodes]
   );
 
   const createOutcomeRecord = useCallback(
@@ -1716,7 +1846,10 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             'image',
             {
               label: item.label,
-              src: item.src,
+              // A6: pass through whichever the upload path produced. ImageNode
+              // reads `data.imageUrl || data.src`, so only one needs to be set.
+              ...(item.imageUrl ? { imageUrl: item.imageUrl } : {}),
+              ...(item.src ? { src: item.src } : {}),
               width: item.width ?? 300,
               position: item.position,
               semanticType: 'image',
@@ -1794,6 +1927,21 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   const addElement = useCallback(
     (kind: WbNodeKind, extraData?: Record<string, unknown>) => {
       if (locked) return;
+
+      // P13 Limit enforcement: warn at 200, block at 500
+      if (nodes.length >= 200) {
+        toast(t('myWork.whiteboard.errors.objectLimitWarning'), {
+          icon: '⚠️',
+          duration: 3000,
+        });
+      }
+      if (nodes.length >= 500) {
+        toast.error(t('myWork.whiteboard.errors.objectLimitReached'), {
+          duration: 3000,
+        });
+        return;
+      }
+
       pushUndoSnapshot();
       const newNode = createNode(kind, extraData, nodes.length);
       setNodes((prev: Node[]) => [...prev, newNode]);
@@ -1826,10 +1974,12 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       currentUserId,
       isPl,
       locked,
+      nodes,
       nodes.length,
       pushUndoSnapshot,
       registerOutcomeRecord,
       setNodes,
+      t,
     ]
   );
 
@@ -1970,6 +2120,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     });
 
   // ── Quick action listener (extracted to useWhiteboardQuickActions) ───────
+  // AI runner is defined below (needs handleGenerateProposal); bridged via ref
+  // like the hook's own internal latest-handler pattern.
+  const runAIActionRef = useRef<(generatorType: WhiteboardAIGeneratorType) => void>(() => {});
   useWhiteboardQuickActions({
     open,
     handlers: {
@@ -1992,6 +2145,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       cycleGovernance,
       undo: undoWhiteboard,
       redo: redoWhiteboard,
+      runAIAction: (generatorType) => runAIActionRef.current(generatorType),
     },
   });
 
@@ -2134,6 +2288,41 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     return () => window.clearInterval(interval);
   }, [open, sessionState.sessionId, sessionState.votingOpen, syncFacilitationVotes]);
 
+  // B1 (M09): resolve THIS user's facilitation role as soon as the board opens, so an
+  // 'observer' the facilitator locked is rendered read-only WITHOUT them first having to
+  // interact with a facilitation control. We only ADOPT the session locally when the user
+  // is an observer — for facilitator/participant we leave the lazy join path unchanged
+  // (facilitation stays dormant until they actually use it), preserving existing behavior.
+  useEffect(() => {
+    if (!open || sessionState.sessionId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        // READ-ONLY: resolves an existing active session without creating one, so simply
+        // opening the board never spawns a facilitation row (facilitation stays lazy).
+        const resolved: any = await Api.facilitationResolveByTool(toolSessionId);
+        const session = resolved?.session;
+        const sessionId = String(session?.id || '');
+        if (!sessionId || cancelled) return;
+        const assignedRole = await resolveMyAssignedRole(sessionId);
+        if (cancelled || assignedRole !== 'observer') return;
+        setSessionState((prev) => ({
+          ...prev,
+          active: true,
+          sessionId,
+          toolSessionId,
+          role: 'observer',
+          updatedAt: Date.now(),
+        }));
+      } catch {
+        /* best-effort: never block opening the board */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, sessionState.sessionId, toolSessionId, resolveMyAssignedRole]);
+
   // M09 L-04: live cross-participant sync of facilitation state. While the session is
   // active, re-read the SHARED server session so a 2nd participant sees the facilitator's
   // phase / voting / timer / role changes without a reload (votes are polled separately
@@ -2146,8 +2335,17 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       const server: any = await Api.facilitationGetSession(sessionId).catch(() => null);
       if (cancelled || !server) return;
       const facilitatorId = String(server.facilitator_id || server.facilitatorId || '');
+      // B1 (M09): honor a facilitator-assigned 'observer' role on every poll so it is not
+      // clobbered back to 'participant' by the facilitator_id default (which would silently
+      // re-enable editing for someone the facilitator locked to view-only).
+      const assignedRole = await resolveMyAssignedRole(sessionId);
+      if (cancelled) return;
       const serverRole =
-        facilitatorId && facilitatorId === currentUserId ? 'facilitator' : 'participant';
+        assignedRole === 'observer'
+          ? 'observer'
+          : facilitatorId && facilitatorId === currentUserId
+            ? 'facilitator'
+            : 'participant';
       const rawTimer = server.timer_state ?? server.timerState;
       let timerState: Record<string, unknown> = {};
       if (rawTimer && typeof rawTimer === 'object') timerState = rawTimer;
@@ -2183,7 +2381,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [open, sessionState.sessionId, sessionState.active, currentUserId]);
+  }, [open, sessionState.sessionId, sessionState.active, currentUserId, resolveMyAssignedRole]);
 
   useEffect(() => {
     if (!open) return;
@@ -2267,18 +2465,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       if (!outputId || nodeIds.length === 0) return;
       const linkedNodes = nodes.filter((node) => nodeIds.includes(node.id));
       linkedNodes.forEach((node) => {
-        const semanticType = String(
-          node.data?.semanticType || ''
-        ) as WhiteboardOutcomeRecord['type'];
-        if (
-          semanticType === 'cluster' ||
-          semanticType === 'theme' ||
-          semanticType === 'outcome' ||
-          semanticType === 'decision' ||
-          semanticType === 'action'
-        ) {
+        // A4: resolve via node semantics with a target-derived fallback so generic
+        // nodes (plain sticky/text) converted from the SelectionBar still get an
+        // outcomeRegistry entry with the exportedTo ref (no silent skip).
+        const outcomeType = resolveConvertOutcomeType(node, target);
+        if (outcomeType) {
           registerOutcomeRecord(
-            createOutcomeRecord(semanticType, node, nodeIds, {
+            createOutcomeRecord(outcomeType, node, nodeIds, {
               exportedToId: outputId,
               exportedToType: target,
             })
@@ -2541,6 +2734,82 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   );
 
   // ── AI Proposals (Propose→Accept) ──────────────────────────────────────────
+  // Inserts proposal nodes+edges preserving the patch topology: proposal node ids
+  // are remapped to fresh canvas ids so patch edges stay connected.
+  const insertProposalGraph = useCallback(
+    (
+      addNodes: NonNullable<AIProposal['patch']['addNodes']>,
+      addEdges: NonNullable<AIProposal['patch']['addEdges']>
+    ) => {
+      if (!addNodes.length && !addEdges.length) return;
+      pushUndoSnapshot();
+      const idMap = new Map<string, string>();
+      const created: Node[] = [];
+      addNodes.forEach((an, index) => {
+        const node = createNode(
+          toWbNodeKind(an.type),
+          {
+            ...(an.label ? { label: an.label } : {}),
+            ...(an.position && { position: an.position }),
+            ...(an.data || {}),
+          },
+          nodes.length + index
+        );
+        if (an.id) idMap.set(String(an.id), node.id);
+        created.push(node);
+      });
+      if (created.length) {
+        setNodes((prev: Node[]) => [...prev, ...created]);
+        for (const node of created) collab.broadcastNodeAdd(node);
+      }
+      const existingIds = new Set(nodes.map((node) => node.id));
+      const resolvedEdges = resolveProposalEdges(addEdges, idMap, existingIds);
+      if (resolvedEdges.length) {
+        setEdges((prev: Edge[]) => [...prev, ...(resolvedEdges as Edge[])]);
+      }
+    },
+    [collab, createNode, nodes, pushUndoSnapshot, setEdges, setNodes]
+  );
+
+  // Applies an ACCEPTED proposal patch to the canvas. Only ever called from the
+  // review flow (whiteboardCanon AC-05: generate→preview→apply, no silent apply).
+  const applyProposalPatch = useCallback(
+    (p: AIProposal) => {
+      insertProposalGraph(p.patch?.addNodes || [], p.patch?.addEdges || []);
+      // wb_to_table (cross-tool preview): insert generated row nodes as stickies
+      const generatedRowNodes = (p.patch?.extensions as any)?.table?.generatedRowNodes;
+      if (Array.isArray(generatedRowNodes) && generatedRowNodes.length) {
+        insertProposalGraph(
+          generatedRowNodes.map((rn: any) => ({
+            id: String(rn?.id || ''),
+            label: String(rn?.data?.label || ''),
+            type: rn?.type,
+            position: rn?.position,
+            data: rn?.data || {},
+          })),
+          []
+        );
+      }
+      // wb_name_clusters: rename existing nodes (merge data, keep callbacks)
+      if (p.patch?.updateNodes?.length) {
+        const updateNodes = p.patch.updateNodes;
+        setNodes((nds: Node[]) => applyProposalNodeUpdates(nds, updateNodes));
+      }
+      // whiteboard_organize: reposition existing nodes
+      if (p.patch?.moveNodes?.length) {
+        const moveNodes = p.patch.moveNodes;
+        setNodes((nds: Node[]) => applyProposalNodeMoves(nds, moveNodes));
+      }
+      // Cross-tool proposals (wb_to_map_branches → mindmap, wb_to_table → table):
+      // no tool switching here — the preview lands on the whiteboard and the
+      // resultSummary tells the user where to continue.
+      if (p.generatorStatus === 'cross-tool' && p.resultSummary) {
+        toast(p.resultSummary, { icon: 'ℹ️' });
+      }
+    },
+    [insertProposalGraph, setNodes]
+  );
+
   const handleAcceptProposal = useCallback(
     (proposalId: string) => {
       if (!proposalBatch) return;
@@ -2555,15 +2824,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         (p) => p.id === proposalId && p.status === 'accepted'
       );
       for (const p of accepted) {
-        if (p.patch?.addNodes?.length) {
-          for (const an of p.patch.addNodes) {
-            addElement(an.type as any, {
-              label: an.label,
-              ...(an.position && { position: an.position }),
-              ...(an.data || {}),
-            });
-          }
-        }
+        applyProposalPatch(p);
       }
       appendActivity(
         createWhiteboardActivityEntry(
@@ -2574,7 +2835,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       );
       toast.success(t('myWork.whiteboard.ai.proposalApplied'));
     },
-    [addElement, appendActivity, currentUserId, isPl, proposalBatch]
+    [applyProposalPatch, appendActivity, currentUserId, isPl, proposalBatch]
   );
 
   const handleRejectProposal = useCallback(
@@ -2610,21 +2871,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     };
     setProposalBatch(updated);
     for (const p of updated.proposals.filter((pr) => pr.status === 'accepted')) {
-      if (p.patch?.addNodes?.length) {
-        for (const an of p.patch.addNodes) {
-          addElement(an.type as any, {
-            label: an.label,
-            ...(an.position && { position: an.position }),
-            ...(an.data || {}),
-          });
-        }
-      }
+      applyProposalPatch(p);
     }
     appendActivity(
       createWhiteboardActivityEntry('ai', t('myWork.whiteboard.ai.acceptedAll'), currentUserId)
     );
     toast.success(t('myWork.whiteboard.ai.allProposalsApplied'));
-  }, [addElement, appendActivity, currentUserId, isPl, proposalBatch]);
+  }, [applyProposalPatch, appendActivity, currentUserId, isPl, proposalBatch]);
 
   const handleRejectAllProposals = useCallback(() => {
     setProposalBatch((prev) => {
@@ -2655,8 +2908,102 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     [appendActivity, currentUserId, isPl]
   );
 
+  // ── AI quick actions (wb_* facilitation generators) ───────────────────────
+  // generate → preview (IdeaProposalReview) → apply; never applied silently (AC-05).
+  const aiActionPendingRef = useRef(false);
+  const runWhiteboardAIAction = useCallback(
+    async (generatorType: WhiteboardAIGeneratorType) => {
+      if (locked || aiActionPendingRef.current) return;
+      if (nodes.length === 0) {
+        toast.error(t('myWork.whiteboard.ai.needsElements'));
+        return;
+      }
+      aiActionPendingRef.current = true;
+      const toastId = toast.loading(t('myWork.whiteboard.ai.generating'));
+      try {
+        const batch = await generateAIProposal({
+          ideaId,
+          generatorType,
+          tool: 'whiteboard',
+          context: {
+            seedText: ideaSeedText,
+            title: ideaTitle,
+            existingNodes: nodes.map((node) => ({
+              id: node.id,
+              type: node.type,
+              position: node.position,
+              data: { label: node.data?.label, semanticType: node.data?.semanticType },
+            })),
+            existingEdges: edges.map((edge) => ({
+              id: edge.id,
+              source: edge.source,
+              target: edge.target,
+            })),
+            language: i18n.language || 'en',
+            ...(selectedNodeIds.length > 0 && {
+              selection: {
+                type: 'nodes',
+                count: selectedNodeIds.length,
+                ids: selectedNodeIds,
+                primaryId: selectedNodeIds[0],
+              },
+            }),
+          },
+        });
+        if (!batch.proposals.length) {
+          toast.error(t('myWork.whiteboard.ai.noProposals'));
+          return;
+        }
+        handleGenerateProposal(batch);
+      } catch (error: any) {
+        toast.error(error?.message || t('myWork.whiteboard.ai.generateFailed'));
+      } finally {
+        toast.dismiss(toastId);
+        aiActionPendingRef.current = false;
+      }
+    },
+    [
+      edges,
+      handleGenerateProposal,
+      i18n.language,
+      ideaId,
+      ideaSeedText,
+      ideaTitle,
+      locked,
+      nodes,
+      selectedNodeIds,
+    ]
+  );
+  runAIActionRef.current = runWhiteboardAIAction;
+
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
 
+  // P3: shared grammar (Delete/Ctrl+Z/S/D/0/A/Shift+Z)
+  useCanvasKeyboard({
+    toolType: 'whiteboard',
+    enabled: open,
+    locked: locked || false,
+    callbacks: {
+      onSave: handleSave,
+      onUndo: undoWhiteboard,
+      onRedo: redoWhiteboard,
+      onSelectAll: () => setNodes((nds) => nds.map((n) => ({ ...n, selected: true }))),
+      onDeleteSelected: deleteSelected,
+      onDuplicate: duplicateSelected,
+      onFitView: () => {
+        // Dispatch viewport event to fit-to-view (fitView is not available outside ReactFlowProvider)
+        const rfContainer = document.querySelector('.react-flow');
+        if (rfContainer) {
+          const evt = new CustomEvent('idea-whiteboard-set-viewport', {
+            detail: { padding: 0.2, duration: 300, fit: true },
+          });
+          rfContainer.dispatchEvent(evt);
+        }
+      },
+    },
+  });
+
+  // WB-specific shortcuts + Ctrl+S typing-safe fallback
   useEffect(() => {
     if (!open) return;
     const isEditing = () => {
@@ -2668,6 +3015,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       );
     };
     const handler = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
       if (e.key === '?' && !e.metaKey && !e.ctrlKey && !isEditing()) {
         e.preventDefault();
         setShortcutsHelpOpen((prev) => !prev);
@@ -2700,27 +3048,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           return;
         }
       }
+      // Typing-safe fallback: fires even when an input is focused
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
         handleSave();
         return;
       }
       if (isEditing()) return;
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'z') {
-        e.preventDefault();
-        redoWhiteboard();
-        return;
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
-        e.preventDefault();
-        undoWhiteboard();
-        return;
-      }
-      if ((e.key === 'Delete' || e.key === 'Backspace') && !locked) {
-        e.preventDefault();
-        deleteSelected();
-        return;
-      }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'g') {
         e.preventDefault();
         ungroupSelected();
@@ -2729,11 +3063,6 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'g') {
         e.preventDefault();
         groupSelected();
-        return;
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a') {
-        e.preventDefault();
-        setNodes((nds) => nds.map((n) => ({ ...n, selected: true })));
         return;
       }
       if (e.key === '/' && !e.metaKey && !e.ctrlKey) {
@@ -2746,17 +3075,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     return () => window.removeEventListener('keydown', handler);
   }, [
     contextMenuPos,
-    deleteSelected,
     groupSelected,
     handleSave,
-    locked,
     open,
     proposalBatch,
-    redoWhiteboard,
     setBoardMode,
     shortcutsHelpOpen,
     slashMenuOpen,
-    undoWhiteboard,
     ungroupSelected,
     whiteboardMode,
   ]);
@@ -2814,6 +3139,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     [displayNodes, locked]
   );
   const selectedCount = selectedNodes.length;
+  // A4: selectedNodeIds is already computed once at component top (from nodes'
+  // selected flag) and is in scope here; reuse it for the SelectionBar convert
+  // dispatch instead of redeclaring it.
   const hasSelectedFrame = selectedNodes.some(
     (node: Node) => node.type === 'frameNode' || node.type === 'groupNode'
   );
@@ -2822,7 +3150,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
   return (
     <div
-      className="w-full h-full flex flex-col bg-white dark:bg-navy-950"
+      className="w-full h-full flex flex-col bg-c-surface"
       role="region"
       aria-label={t('myWork.whiteboard.regionLabel')}
     >
@@ -2877,17 +3205,17 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       {loading ? (
         <div className="flex-1 flex flex-col gap-4 p-6">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-32 bg-slate-100 dark:bg-navy-800 rounded-xl animate-pulse" />
-            <div className="h-8 w-24 bg-slate-100 dark:bg-navy-800 rounded-xl animate-pulse" />
-            <div className="h-8 w-20 bg-slate-100 dark:bg-navy-800 rounded-xl animate-pulse" />
+            <div className="h-8 w-32 bg-c-surface-raised rounded-xl animate-pulse" />
+            <div className="h-8 w-24 bg-c-surface-raised rounded-xl animate-pulse" />
+            <div className="h-8 w-20 bg-c-surface-raised rounded-xl animate-pulse" />
           </div>
           <div className="flex-1 grid grid-cols-3 gap-4">
-            <div className="h-40 bg-slate-100 dark:bg-navy-800 rounded-2xl animate-pulse" />
-            <div className="h-32 bg-slate-100 dark:bg-navy-800 rounded-2xl animate-pulse mt-8" />
-            <div className="h-36 bg-slate-100 dark:bg-navy-800 rounded-2xl animate-pulse mt-4" />
-            <div className="h-28 bg-slate-100 dark:bg-navy-800 rounded-2xl animate-pulse" />
-            <div className="h-44 bg-slate-100 dark:bg-navy-800 rounded-2xl animate-pulse" />
-            <div className="h-24 bg-slate-100 dark:bg-navy-800 rounded-2xl animate-pulse mt-6" />
+            <div className="h-40 bg-c-surface-raised rounded-2xl animate-pulse" />
+            <div className="h-32 bg-c-surface-raised rounded-2xl animate-pulse mt-8" />
+            <div className="h-36 bg-c-surface-raised rounded-2xl animate-pulse mt-4" />
+            <div className="h-28 bg-c-surface-raised rounded-2xl animate-pulse" />
+            <div className="h-44 bg-c-surface-raised rounded-2xl animate-pulse" />
+            <div className="h-24 bg-c-surface-raised rounded-2xl animate-pulse mt-6" />
           </div>
         </div>
       ) : (
@@ -2907,8 +3235,31 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
           {/* Idea lifecycle stage badge */}
           {ideaStage && (
-            <div className="absolute top-2 right-2 z-20 px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-white/[0.06] text-slate-600 dark:text-slate-300 shadow-sm">
+            <div className="absolute top-2 right-2 z-20 px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-c-surface backdrop-blur-sm border border-c-border-subtle text-c-text-secondary shadow-sm">
               {ideaStage}
+            </div>
+          )}
+
+          {/* B1 (M09): observer read-only badge — signals why board interactions are disabled */}
+          {isObserver && (
+            <div
+              data-testid="whiteboard-observer-badge"
+              className="absolute top-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-c-surface backdrop-blur-sm border border-c-border-subtle text-c-text-secondary shadow-sm"
+            >
+              <svg
+                className="w-3 h-3"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              {isPl ? 'Obserwator — tylko podgląd' : 'Observer — view only'}
             </div>
           )}
 
@@ -2918,6 +3269,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             selectedCount={selectedCount}
             hasSelectedFrame={hasSelectedFrame}
             ideaId={ideaId}
+            selectedNodeIds={selectedNodeIds}
             onAlignNodes={alignNodes}
             onDistributeNodes={distributeNodes}
             onGroupSelected={groupSelected}
@@ -2986,19 +3338,22 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           )}
 
           {outlineImportOpen && (
-            <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/20 backdrop-blur-[1px]">
-              <div className="w-full max-w-lg rounded-2xl border border-slate-200/70 bg-white p-4 shadow-2xl dark:border-white/[0.08] dark:bg-navy-950/95 dark:shadow-[0_0_40px_rgba(0,0,0,0.5)]">
-                <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+            <div
+              className="absolute inset-0 z-30 flex items-center justify-center backdrop-blur-[1px]"
+              style={{ backgroundColor: 'color-mix(in srgb, var(--c-bg) 45%, transparent)' }}
+            >
+              <div className="w-full max-w-lg rounded-2xl border border-c-border-subtle bg-c-surface p-4 shadow-2xl dark:shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+                <div className="text-sm font-semibold text-c-text">
                   {t('myWork.whiteboard.outlineImport.title')}
                 </div>
-                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                <div className="mt-1 text-xs text-c-text-muted">
                   {t('myWork.whiteboard.outlineImport.description')}
                 </div>
                 <textarea
                   value={outlineImportValue}
                   onChange={(event) => setOutlineImportValue(event.target.value)}
                   rows={8}
-                  className="mt-3 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-slate-400 dark:border-navy-700 dark:bg-navy-950 dark:text-slate-100"
+                  className="mt-3 w-full rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm text-c-text outline-none focus:border-c-border-strong"
                   placeholder={t('myWork.whiteboard.outlineImport.placeholder')}
                 />
                 <div className="mt-3 flex items-center justify-end gap-2">
@@ -3008,14 +3363,14 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
                       setOutlineImportOpen(false);
                       setOutlineImportValue('');
                     }}
-                    className="rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-navy-800"
+                    className="rounded-xl px-3 py-2 text-xs font-semibold text-c-text-secondary hover:bg-c-surface-raised"
                   >
                     {t('myWork.whiteboard.outlineImport.cancel')}
                   </button>
                   <button
                     type="button"
                     onClick={applyOutlineImport}
-                    className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
+                    className="rounded-xl bg-c-accent px-3 py-2 text-xs font-semibold text-white hover:brightness-110"
                   >
                     {t('myWork.whiteboard.outlineImport.confirm')}
                   </button>

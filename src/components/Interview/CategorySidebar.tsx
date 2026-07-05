@@ -60,8 +60,8 @@ export const CATEGORY_CONFIG: Record<
     labelEn: 'Strategy',
     labelPl: 'Strategia',
     icon: Target,
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+    color: 'text-[var(--c-tag-1)]',
+    bgColor: 'bg-c-tag-1/12',
     descriptionEn: 'Business goals, vision, strategic directions',
     descriptionPl: 'Cele biznesowe, wizja, kierunki strategiczne',
   },
@@ -69,8 +69,8 @@ export const CATEGORY_CONFIG: Record<
     labelEn: 'Operations',
     labelPl: 'Operacje',
     icon: Settings,
-    color: 'text-green-600 dark:text-green-400',
-    bgColor: 'bg-green-100 dark:bg-green-900/30',
+    color: 'text-[var(--c-tag-3)]',
+    bgColor: 'bg-c-tag-3/12',
     descriptionEn: 'Operational processes, efficiency, bottlenecks',
     descriptionPl: 'Procesy operacyjne, efektywność, bottlenecki',
   },
@@ -78,8 +78,8 @@ export const CATEGORY_CONFIG: Record<
     labelEn: 'Digital',
     labelPl: 'Cyfryzacja',
     icon: Monitor,
-    color: 'text-primary-600 dark:text-primary-400',
-    bgColor: 'bg-primary-100 dark:bg-primary-900/30',
+    color: 'text-[var(--c-tag-5)]',
+    bgColor: 'bg-c-tag-5/12',
     descriptionEn: 'Digital maturity, IT systems, automation',
     descriptionPl: 'Dojrzałość cyfrowa, systemy IT, automatyzacja',
   },
@@ -87,8 +87,8 @@ export const CATEGORY_CONFIG: Record<
     labelEn: 'People',
     labelPl: 'Ludzie',
     icon: Users,
-    color: 'text-amber-600 dark:text-amber-400',
-    bgColor: 'bg-amber-100 dark:bg-amber-900/30',
+    color: 'text-[var(--c-tag-7)]',
+    bgColor: 'bg-c-tag-7/12',
     descriptionEn: 'Competencies, culture, change readiness',
     descriptionPl: 'Kompetencje, kultura, gotowość na zmiany',
   },
@@ -96,8 +96,8 @@ export const CATEGORY_CONFIG: Record<
     labelEn: 'Finance',
     labelPl: 'Finanse',
     icon: DollarSign,
-    color: 'text-emerald-600 dark:text-emerald-400',
-    bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
+    color: 'text-[var(--c-tag-9)]',
+    bgColor: 'bg-c-tag-9/12',
     descriptionEn: 'Budgets, financial constraints, ROI expectations',
     descriptionPl: 'Budżety, ograniczenia finansowe, ROI expectations',
   },
@@ -105,8 +105,8 @@ export const CATEGORY_CONFIG: Record<
     labelEn: 'General',
     labelPl: 'Ogólne',
     icon: ClipboardList,
-    color: 'text-slate-600 dark:text-slate-400',
-    bgColor: 'bg-slate-100 dark:bg-slate-900/30',
+    color: 'text-[var(--c-text-secondary)]',
+    bgColor: 'bg-[var(--c-surface-raised)]',
     descriptionEn: 'General assessment questions',
     descriptionPl: 'Ogólne pytania diagnostyczne',
   },
@@ -140,20 +140,20 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
   const completedCategories = progress.filter((p) => p.isComplete).length;
 
   return (
-    <div className="w-64 shrink-0 bg-white dark:bg-navy-900 border-r border-slate-200 dark:border-navy-700 flex flex-col h-full">
+    <div className="w-64 shrink-0 bg-[var(--c-surface)] border-r border-[var(--c-border-subtle)] flex flex-col h-full">
       {/* Session Header */}
-      <div className="p-4 border-b border-slate-200 dark:border-navy-700">
-        <h2 className="font-bold text-navy-900 dark:text-white truncate">{sessionName}</h2>
+      <div className="p-4 border-b border-[var(--c-border-subtle)]">
+        <h2 className="font-bold text-[var(--c-text)] truncate">{sessionName}</h2>
         <div className="flex items-center gap-2 mt-1">
           <span
             className={`
-            px-2 py-0.5 text-xs font-medium rounded-full
+            px-2 py-0.5 text-xs font-medium rounded-token-pill
             ${
               sessionStatus === 'completed'
-                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                ? 'bg-c-success/12 text-[var(--c-success)]'
                 : sessionStatus === 'active'
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                  : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                  ? 'bg-c-info/12 text-[var(--c-info)]'
+                  : 'bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)]'
             }
           `}
           >
@@ -168,7 +168,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
                 : sessionStatus}
           </span>
           {lastUpdated && (
-            <span className="text-xs text-slate-500 dark:text-slate-500 truncate">
+            <span className="text-xs text-[var(--c-text-muted)] truncate">
               {new Date(lastUpdated).toLocaleDateString()}
             </span>
           )}
@@ -176,22 +176,22 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
       </div>
 
       {/* Overall Progress */}
-      <div className="p-4 border-b border-slate-200 dark:border-navy-700">
+      <div className="p-4 border-b border-[var(--c-border-subtle)]">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <span className="text-sm font-medium text-[var(--c-text)]">
             {isPolish ? 'Postęp' : 'Progress'}
           </span>
-          <span className="text-sm text-slate-500 dark:text-slate-400">
+          <span className="text-sm text-[var(--c-text-muted)]">
             {completedCategories}/5 {isPolish ? 'kategorii' : 'categories'}
           </span>
         </div>
-        <div className="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
+        <div className="h-2 bg-[var(--c-border-subtle)] rounded-token-pill overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full transition-all duration-500"
+            className="h-full bg-[var(--c-success)] rounded-token-pill transition-all duration-500"
             style={{ width: `${overallPercent}%` }}
           />
         </div>
-        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+        <p className="mt-1 text-xs text-[var(--c-text-secondary)]">
           {answeredQuestions}/{totalQuestions} {isPolish ? 'pytań' : 'questions'} ({overallPercent}
           %)
         </p>
@@ -214,34 +214,34 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
                 key={category}
                 onClick={() => onCategoryChange(category)}
                 className={`
-                  w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all
+                  w-full flex items-center gap-3 px-3 py-2.5 rounded-token-md text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]
                   ${
                     isActive
-                      ? 'bg-slate-100 dark:bg-navy-800 ring-1 ring-slate-300 dark:ring-navy-600'
+                      ? 'bg-[var(--c-surface-raised)] ring-1 ring-[var(--c-border)]'
                       : isComplete
-                        ? 'bg-emerald-50 dark:bg-emerald-900/10 hover:bg-emerald-100 dark:hover:bg-emerald-900/20'
-                        : 'hover:bg-slate-50 dark:hover:bg-white/5'
+                        ? 'bg-c-success/8 hover:bg-c-success/12'
+                        : 'hover:bg-[var(--c-surface-raised)]'
                   }
                 `}
               >
                 <div
                   className={`
-                    w-8 h-8 rounded-lg flex items-center justify-center shrink-0
+                    w-8 h-8 rounded-token-md flex items-center justify-center shrink-0
                     ${
                       isComplete
-                        ? 'bg-emerald-100 dark:bg-emerald-900/30'
+                        ? 'bg-c-success/12'
                         : isActive
                           ? config.bgColor
-                          : 'bg-slate-100 dark:bg-slate-800'
+                          : 'bg-[var(--c-surface-raised)]'
                     }
                   `}
                 >
                   {isComplete ? (
-                    <Check size={16} className="text-emerald-600 dark:text-emerald-400" />
+                    <Check size={16} className="text-[var(--c-success)]" />
                   ) : (
                     <Icon
                       size={16}
-                      className={isActive ? config.color : 'text-slate-500 dark:text-slate-500'}
+                      className={isActive ? config.color : 'text-[var(--c-text-muted)]'}
                     />
                   )}
                 </div>
@@ -251,16 +251,16 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
                       text-sm font-medium block
                       ${
                         isComplete
-                          ? 'text-emerald-700 dark:text-emerald-400'
+                          ? 'text-[var(--c-success)]'
                           : isActive
-                            ? 'text-navy-900 dark:text-white'
-                            : 'text-slate-700 dark:text-slate-400'
+                            ? 'text-[var(--c-text)]'
+                            : 'text-[var(--c-text-secondary)]'
                       }
                     `}
                   >
                     {isPolish ? config.labelPl : config.labelEn}
                   </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-500">
+                  <span className="text-xs text-[var(--c-text-muted)]">
                     {answered}/{total} {isPolish ? 'odp.' : 'ans.'}
                   </span>
                 </div>
@@ -268,7 +268,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
                   size={16}
                   className={`
                     shrink-0 transition-transform
-                    ${isActive ? 'text-slate-500 rotate-90' : 'text-slate-600 dark:text-slate-400'}
+                    ${isActive ? 'text-[var(--c-text-muted)] rotate-90' : 'text-[var(--c-text-muted)]'}
                   `}
                 />
               </button>
@@ -278,8 +278,8 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
       </div>
 
       {/* Footer info */}
-      <div className="p-3 border-t border-slate-200 dark:border-navy-700">
-        <p className="text-xs text-slate-500 dark:text-slate-500 text-center">
+      <div className="p-3 border-t border-[var(--c-border-subtle)]">
+        <p className="text-xs text-[var(--c-text-muted)] text-center">
           {isPolish ? 'Tylko fakty - bez rekomendacji' : 'Facts only - no recommendations'}
         </p>
       </div>

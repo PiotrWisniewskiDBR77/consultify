@@ -516,7 +516,7 @@ const DLPView: React.FC = () => {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b border-slate-700">
+      <div className="flex gap-4 border-b border-c-border">
         <button
           onClick={() => setActiveTab('policies')}
           className={`pb-3 px-1 text-sm font-medium transition-colors ${
@@ -623,7 +623,7 @@ const DLPView: React.FC = () => {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="px-2 py-1 bg-slate-700 rounded text-xs">
+                          <span className="px-2 py-1 bg-c-surface-raised rounded text-xs">
                             {getPolicyTypeLabel(policy.policyType)}
                           </span>
                         </td>
@@ -755,7 +755,7 @@ const DLPView: React.FC = () => {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="px-2 py-1 bg-slate-700 rounded text-xs font-mono">
+                          <span className="px-2 py-1 bg-c-surface-raised rounded text-xs font-mono">
                             {violation.violationType}
                           </span>
                         </td>
@@ -799,7 +799,7 @@ const DLPView: React.FC = () => {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Policy name"
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                    className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm"
                   />
                 </div>
                 <div>
@@ -809,7 +809,7 @@ const DLPView: React.FC = () => {
                   <select
                     value={formData.policyType}
                     onChange={(e) => setFormData({ ...formData, policyType: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                    className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm"
                   >
                     {POLICY_TYPES.map((t) => (
                       <option key={t.value} value={t.value}>
@@ -827,7 +827,7 @@ const DLPView: React.FC = () => {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Policy description"
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm h-20 resize-none"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm h-20 resize-none"
                 />
               </div>
               <div>
@@ -837,7 +837,7 @@ const DLPView: React.FC = () => {
                 <select
                   value={formData.enforcementAction}
                   onChange={(e) => setFormData({ ...formData, enforcementAction: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm"
                 >
                   {ENFORCEMENT_ACTIONS.map((a) => (
                     <option key={a.value} value={a.value}>
@@ -848,7 +848,7 @@ const DLPView: React.FC = () => {
               </div>
 
               {/* Rules Section */}
-              <div className="border-t border-slate-700 pt-4">
+              <div className="border-t border-c-border pt-4">
                 <h4 className="font-medium mb-3">Detection Rules</h4>
 
                 {/* Existing Rules */}
@@ -857,7 +857,7 @@ const DLPView: React.FC = () => {
                     {formData.rules.map((rule, index) => (
                       <div
                         key={index}
-                        className="flex items-center justify-between p-3 bg-slate-800 rounded-lg"
+                        className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg"
                       >
                         <div>
                           <p className="font-medium">{rule.name}</p>
@@ -878,7 +878,7 @@ const DLPView: React.FC = () => {
                 )}
 
                 {/* Add Rule Form */}
-                <div className="p-3 bg-slate-800/50 rounded-lg space-y-3">
+                <div className="p-3 bg-c-surface-raised/50 rounded-lg space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
@@ -889,7 +889,7 @@ const DLPView: React.FC = () => {
                         value={newRule.name}
                         onChange={(e) => setNewRule({ ...newRule, name: e.target.value })}
                         placeholder="e.g., Credit Card Numbers"
-                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                        className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm"
                       />
                     </div>
                     <div>
@@ -899,7 +899,7 @@ const DLPView: React.FC = () => {
                       <select
                         value={newRule.severity}
                         onChange={(e) => setNewRule({ ...newRule, severity: e.target.value })}
-                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                        className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm"
                       >
                         {SEVERITY_LEVELS.map((s) => (
                           <option key={s} value={s}>
@@ -918,7 +918,7 @@ const DLPView: React.FC = () => {
                       value={newRule.pattern}
                       onChange={(e) => setNewRule({ ...newRule, pattern: e.target.value })}
                       placeholder="e.g., \d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}"
-                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm font-mono"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm font-mono"
                     />
                   </div>
                   <div>
@@ -930,13 +930,13 @@ const DLPView: React.FC = () => {
                       value={newRule.keywords}
                       onChange={(e) => setNewRule({ ...newRule, keywords: e.target.value })}
                       placeholder="e.g., ssn, social security, password"
-                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm"
                     />
                   </div>
                   <button
                     onClick={handleAddRule}
                     disabled={!newRule.name}
-                    className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg disabled:opacity-50"
+                    className="flex items-center gap-2 px-3 py-2 text-sm bg-c-surface-raised hover:bg-slate-600 rounded-lg disabled:opacity-50"
                   >
                     <Plus className="w-4 h-4" />
                     Add Rule
@@ -956,7 +956,7 @@ const DLPView: React.FC = () => {
                     rules: [],
                   });
                 }}
-                className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg"
+                className="px-4 py-2 text-sm bg-c-surface-raised hover:bg-slate-600 rounded-lg"
               >
                 Cancel
               </button>

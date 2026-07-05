@@ -29,42 +29,17 @@ interface AiClassificationCellProps {
 // - distinguishable in dense rows
 // - free of raw hex (Tailwind utility classes only)
 // - paired light/dark variants
-const TONE_RING: Array<{ bg: string; text: string; border: string }> = [
-  {
-    bg: 'bg-sky-100 dark:bg-sky-900/30',
-    text: 'text-sky-700 dark:text-sky-300',
-    border: 'border-sky-200 dark:border-sky-800/50',
-  },
-  {
-    bg: 'bg-indigo-100 dark:bg-indigo-900/30',
-    text: 'text-indigo-700 dark:text-indigo-300',
-    border: 'border-indigo-200 dark:border-indigo-800/50',
-  },
-  {
-    bg: 'bg-primary-100 dark:bg-primary-900/30',
-    text: 'text-primary-700 dark:text-primary-300',
-    border: 'border-primary-200 dark:border-primary-800/50',
-  },
-  {
-    bg: 'bg-fuchsia-100 dark:bg-fuchsia-900/30',
-    text: 'text-fuchsia-700 dark:text-fuchsia-300',
-    border: 'border-fuchsia-200 dark:border-fuchsia-800/50',
-  },
-  {
-    bg: 'bg-emerald-100 dark:bg-emerald-900/30',
-    text: 'text-emerald-700 dark:text-emerald-300',
-    border: 'border-emerald-200 dark:border-emerald-800/50',
-  },
-  {
-    bg: 'bg-amber-100 dark:bg-amber-900/30',
-    text: 'text-amber-700 dark:text-amber-300',
-    border: 'border-amber-200 dark:border-amber-800/50',
-  },
-  {
-    bg: 'bg-danger-100 dark:bg-danger-900/30',
-    text: 'text-danger-700 dark:text-danger-300',
-    border: 'border-danger-200 dark:border-danger-800/50',
-  },
+// Categorical identity palette (c-tag-*) — labels carry no semantic meaning,
+// so we never borrow c-success/-warning/-danger here. Blue-first ordering.
+// A tint bg is built via color-mix (alpha suffixes on c-* tokens are banned).
+const TONE_VARS = [
+  '--c-tag-1',
+  '--c-tag-2',
+  '--c-tag-3',
+  '--c-tag-4',
+  '--c-tag-6',
+  '--c-tag-9',
+  '--c-tag-11',
 ];
 
 export const AiClassificationCell: React.FC<AiClassificationCellProps> = ({
@@ -79,7 +54,7 @@ export const AiClassificationCell: React.FC<AiClassificationCellProps> = ({
   if (value == null || value === '') {
     return (
       <span
-        className="inline-flex items-center gap-1 px-1 text-xs text-slate-600 dark:text-slate-500 italic"
+        className="inline-flex items-center gap-1 px-1 text-xs text-c-text-muted italic"
         data-testid="ai-classification-pending"
       >
         <Sparkles size={10} className="flex-shrink-0" />
@@ -94,7 +69,11 @@ export const AiClassificationCell: React.FC<AiClassificationCellProps> = ({
   if (index < 0) {
     return (
       <span
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-danger-200 dark:border-danger-800/50 text-[10px] font-semibold text-danger-700 dark:text-danger-300 bg-danger-50 dark:bg-danger-900/20"
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-semibold text-c-danger"
+        style={{
+          borderColor: 'var(--c-danger)',
+          backgroundColor: 'color-mix(in srgb, var(--c-danger) 12%, transparent)',
+        }}
         data-testid="ai-classification-invalid"
         title={`Classification value '${str}' is not in configured classes`}
       >
@@ -104,7 +83,7 @@ export const AiClassificationCell: React.FC<AiClassificationCellProps> = ({
     );
   }
 
-  const tone = TONE_RING[index % TONE_RING.length];
+  const toneVar = TONE_VARS[index % TONE_VARS.length];
   const Icon = manualOverride ? UserCheck : Sparkles;
   const tooltip = manualOverride
     ? `Classification ${str} · manual_override = true`
@@ -112,7 +91,12 @@ export const AiClassificationCell: React.FC<AiClassificationCellProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-semibold ${tone.bg} ${tone.text} ${tone.border}`}
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-semibold"
+      style={{
+        color: `var(${toneVar})`,
+        borderColor: `var(${toneVar})`,
+        backgroundColor: `color-mix(in srgb, var(${toneVar}) 12%, transparent)`,
+      }}
       data-testid="ai-classification-chip"
       data-class={str}
       data-manual-override={manualOverride ? 'true' : 'false'}

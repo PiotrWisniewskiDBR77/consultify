@@ -8,6 +8,11 @@
 import { FrameworkRBACService } from '../services/frameworkRBACService.js';
 import logger from '../utils/Logger.js';
 
+// Validation constants
+const MAX_FRAMEWORK_KEY_LEN = 64;
+const MAX_ID_LEN = 128;
+const MAX_STATUS_LEN = 128;
+
 // Base permissions for general roles
 const hasPermission = (user, action, resource) => {
   const permissions = {
@@ -29,8 +34,17 @@ const hasPermission = (user, action, resource) => {
     VIEWER: ['assessment:read'],
   };
 
-  const userRole = user.role === undefined || user.role === null ? 'VIEWER' : user.role;
-  const userPermissions = permissions[userRole] || [];
+  // Normalize role: trim whitespace, uppercase; blank/missing → VIEWER
+  let rawRole = user.role;
+  let normalizedRole: string;
+  if (rawRole === undefined || rawRole === null) {
+    normalizedRole = 'VIEWER';
+  } else {
+    const trimmed = String(rawRole).trim();
+    normalizedRole = trimmed === '' ? 'VIEWER' : trimmed.toUpperCase();
+  }
+
+  const userPermissions = permissions[normalizedRole] || permissions['VIEWER'] || [];
 
   // Super admin has all permissions
   if (userPermissions.includes('*')) return true;
@@ -43,10 +57,12 @@ const hasPermission = (user, action, resource) => {
 const assessmentRBAC = (action) => {
   return (req, res, next) => {
     if (!req.user) {
+      if (res.headersSent) return;
       return res.status(401).json({ error: 'Authentication required' });
     }
 
     if (!hasPermission(req.user, action, 'assessment')) {
+      if (res.headersSent) return;
       return res.status(403).json({
         error: 'Insufficient permissions',
         required: `assessment:${action}`,
@@ -68,61 +84,137 @@ const assessmentRBAC = (action) => {
  */
 const multiFrameworkRBAC = (action) => {
   return async (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Authentication required' });
+    // Guard: user accessor might throw
+    let user: any;
+    try {
+      user = req.user;
+    } catch (_e) {
+      if (!res.headersSent) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      return;
     }
 
-    // Get framework from params, query, or body
-    const framework = req.params.framework || req.query.framework || req.body.framework;
+    if (!user) {
+      if (!res.headersSent) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      return;
+    }
+
+    // Get framework from params/query/body — any accessor might throw
+    let framework: string | undefined;
+    try {
+      framework = req.params.framework || req.query.framework || req.body?.framework;
+    } catch (_e) {
+      // Accessor failed — treat as no framework, fall back to general allow
+      if (!res.headersSent) {
+        if (!hasPermission(user, action, 'assessment')) {
+          return res.status(403).json({
+            error: 'Insufficient permissions',
+            required: `assessment:${action}`,
+            userRole: user.role,
+          });
+        }
+        return next();
+      }
+      return;
+    }
+
+    // Validate framework key length
+    if (framework && framework.length > MAX_FRAMEWORK_KEY_LEN) {
+      if (!res.headersSent) {
+        return res.status(400).json({ error: 'Invalid framework identifier' });
+      }
+      return;
+    }
 
     // If no framework specified, fall back to general assessment RBAC
     if (!framework) {
-      if (!hasPermission(req.user, action, 'assessment')) {
+      if (res.headersSent) return;
+      if (!hasPermission(user, action, 'assessment')) {
         return res.status(403).json({
           error: 'Insufficient permissions',
           required: `assessment:${action}`,
-          userRole: req.user.role,
+          userRole: user.role,
         });
       }
       return next();
     }
 
+    // Validate projectId length
+    let projectId: string | undefined;
+    try {
+      projectId = req.params.projectId;
+    } catch (_e) {
+      projectId = undefined;
+    }
+
+    if (projectId !== undefined && projectId !== null && String(projectId).length > MAX_ID_LEN) {
+      if (!res.headersSent) {
+        return res.status(400).json({ error: 'Invalid project or organization identifier' });
+      }
+      return;
+    }
+
+    // Resolve organizationId — organization_id accessor might throw
+    let organizationId: string | undefined;
+    try {
+      organizationId = user.organization_id;
+    } catch (_e) {
+      try {
+        organizationId = user.organizationId;
+      } catch (_e2) {
+        organizationId = undefined;
+      }
+    }
+
+    // Coerce user id to string
+    const userId = user.id !== undefined && user.id !== null ? String(user.id) : user.id;
+
     try {
       // Check framework-specific permissions
       const hasFrameworkPerm = await FrameworkRBACService.hasPermission(
-        req.user.id,
+        userId,
         framework.toUpperCase(),
         action,
         {
-          organizationId: req.user.organization_id,
-          projectId: req.params.projectId,
+          organizationId,
+          projectId: projectId !== undefined ? projectId : undefined,
         }
       );
 
       if (!hasFrameworkPerm) {
         // Fall back to general permissions
-        if (!hasPermission(req.user, action, 'assessment')) {
-          return res.status(403).json({
-            error: 'Insufficient permissions',
-            required: `${framework.toLowerCase()}:${action}`,
-            userRole: req.user.role,
-            framework,
-          });
+        if (!hasPermission(user, action, 'assessment')) {
+          if (!res.headersSent) {
+            return res.status(403).json({
+              error: 'Insufficient permissions',
+              required: `${framework.toLowerCase()}:${action}`,
+              userRole: user.role,
+              framework,
+            });
+          }
+          return;
         }
       }
 
-      next();
+      if (!res.headersSent) {
+        next();
+      }
     } catch (error) {
       logger.error('[MultiFrameworkRBAC] Error:', error.message);
       // Fall back to general permissions on error
-      if (!hasPermission(req.user, action, 'assessment')) {
-        return res.status(403).json({
-          error: 'Insufficient permissions',
-          required: `assessment:${action}`,
-          userRole: req.user.role,
-        });
+      if (!res.headersSent) {
+        if (!hasPermission(user, action, 'assessment')) {
+          return res.status(403).json({
+            error: 'Insufficient permissions',
+            required: `assessment:${action}`,
+            userRole: user.role,
+          });
+        }
+        next();
       }
-      next();
     }
   };
 };
@@ -136,17 +228,30 @@ const requireFrameworkApprover = (framework) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
+    // Resolve the framework to use
+    let resolvedFramework: string | undefined;
+    try {
+      resolvedFramework = framework || req.params.framework || req.query.framework;
+    } catch (_e) {
+      resolvedFramework = framework;
+    }
+
+    // Validate framework key length
+    if (resolvedFramework && resolvedFramework.length > MAX_FRAMEWORK_KEY_LEN) {
+      return res.status(400).json({ error: 'Invalid framework identifier' });
+    }
+
     try {
       const canApprove = await FrameworkRBACService.canApprove(
         req.user.id,
-        framework || req.params.framework || req.query.framework
+        resolvedFramework
       );
 
       if (!canApprove) {
         return res.status(403).json({
           error: 'Approval permission denied',
-          message: `User is not authorized to approve ${framework} assessments`,
-          framework,
+          message: `User is not authorized to approve ${resolvedFramework} assessments`,
+          framework: resolvedFramework,
         });
       }
 
@@ -167,17 +272,30 @@ const requireFrameworkCertifier = (framework) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
+    // Resolve the framework to use
+    let resolvedFramework: string | undefined;
+    try {
+      resolvedFramework = framework || req.params.framework || req.query.framework;
+    } catch (_e) {
+      resolvedFramework = framework;
+    }
+
+    // Validate framework key length
+    if (resolvedFramework && resolvedFramework.length > MAX_FRAMEWORK_KEY_LEN) {
+      return res.status(400).json({ error: 'Invalid framework identifier' });
+    }
+
     try {
       const canCertify = await FrameworkRBACService.canCertify(
         req.user.id,
-        framework || req.params.framework || req.query.framework
+        resolvedFramework
       );
 
       if (!canCertify) {
         return res.status(403).json({
           error: 'Certification permission denied',
-          message: `User is not authorized to certify ${framework} assessments. Official certification requires a certified appraiser.`,
-          framework,
+          message: `User is not authorized to certify ${resolvedFramework} assessments. Official certification requires a certified appraiser.`,
+          framework: resolvedFramework,
         });
       }
 
@@ -197,8 +315,37 @@ const validateWorkflowTransition = async (req, res, next) => {
     return res.status(401).json({ error: 'Authentication required' });
   }
 
-  const { fromStatus, toStatus } = req.body;
-  const framework = req.params.framework || req.query.framework || req.body.framework;
+  // Body accessor might throw — if so, skip validation
+  let fromStatus: string | undefined;
+  let toStatus: string | undefined;
+  let framework: string | undefined;
+
+  try {
+    fromStatus = req.body?.fromStatus;
+    toStatus = req.body?.toStatus;
+  } catch (_e) {
+    // Can't read body — skip validation
+    return next();
+  }
+
+  try {
+    framework = req.params?.framework || req.query?.framework || req.body?.framework;
+  } catch (_e) {
+    framework = undefined;
+  }
+
+  // Validate framework key length
+  if (framework && framework.length > MAX_FRAMEWORK_KEY_LEN) {
+    return res.status(400).json({ error: 'Invalid framework identifier' });
+  }
+
+  // Validate fromStatus/toStatus length
+  if (fromStatus && String(fromStatus).length > MAX_STATUS_LEN) {
+    return res.status(400).json({ error: 'Invalid status value' });
+  }
+  if (toStatus && String(toStatus).length > MAX_STATUS_LEN) {
+    return res.status(400).json({ error: 'Invalid status value' });
+  }
 
   if (!fromStatus || !toStatus) {
     return next(); // Skip validation if statuses not provided
@@ -207,7 +354,7 @@ const validateWorkflowTransition = async (req, res, next) => {
   try {
     const validation = await FrameworkRBACService.validateWorkflowTransition(
       req.user.id,
-      framework,
+      framework ? framework.toUpperCase() : framework,
       fromStatus,
       toStatus
     );

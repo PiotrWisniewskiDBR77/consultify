@@ -87,7 +87,7 @@ export const ToolsPanelShell: React.FC<ToolsPanelShellProps> = ({
         <div className="flex items-center gap-2.5">
           {icon || (
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-500 to-crimson-600 flex items-center justify-center shadow-sm shadow-primary-500/20">
-              <Sparkles size={13} className="text-white" />
+              <Sparkles size={14} className="text-white" />
             </div>
           )}
           <div>
@@ -308,7 +308,7 @@ export const TransformTextSection: React.FC<TransformTextSectionProps> = ({ isPl
               </div>
             </div>
             <ChevronDown
-              size={12}
+              size={14}
               className={`text-slate-600 transition-transform ${styleMenuOpen ? 'rotate-180' : ''}`}
             />
           </button>

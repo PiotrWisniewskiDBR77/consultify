@@ -71,14 +71,14 @@ const BlockPreview: React.FC<{
     case 'table_grid': {
       const table = tables.find((t) => t.id === block.config.tableId);
       return (
-        <div className="bg-gray-100 rounded p-3 text-sm text-gray-500">
+        <div className="bg-c-surface-raised rounded p-3 text-sm text-c-text-muted">
           {table ? `Table: ${table.name}` : 'Select a table'}
         </div>
       );
     }
     case 'chart':
       return (
-        <div className="bg-gray-100 rounded p-6 text-center text-sm text-gray-500">
+        <div className="bg-c-surface-raised rounded p-6 text-center text-sm text-c-text-muted">
           Chart: {String(block.config.chartType || 'bar')}
         </div>
       );
@@ -93,26 +93,26 @@ const BlockPreview: React.FC<{
         <div className="bg-blue-50 rounded p-3">
           <span className="text-2xl font-bold text-blue-700">—</span>
           <br />
-          <span className="text-xs text-gray-500">{String(block.config.label || 'Summary')}</span>
+          <span className="text-xs text-c-text-muted">{String(block.config.label || 'Summary')}</span>
         </div>
       );
     case 'record_detail':
-      return <div className="bg-gray-100 rounded p-3 text-sm text-gray-500">Record Detail</div>;
+      return <div className="bg-c-surface-raised rounded p-3 text-sm text-c-text-muted">Record Detail</div>;
     case 'filter':
-      return <div className="bg-gray-100 rounded p-3 text-sm text-gray-500">Filter Control</div>;
+      return <div className="bg-c-surface-raised rounded p-3 text-sm text-c-text-muted">Filter Control</div>;
     case 'search':
       return (
-        <div className="bg-gray-100 rounded p-2">
+        <div className="bg-c-surface-raised rounded p-2">
           <input
             type="text"
             placeholder={String(block.config.placeholder || 'Search...')}
-            className="w-full px-3 py-1.5 border rounded text-sm bg-white"
+            className="w-full px-3 py-1.5 border rounded text-sm bg-c-surface"
             readOnly
           />
         </div>
       );
     default:
-      return <div className="bg-gray-100 rounded p-3 text-sm text-gray-500">{block.type}</div>;
+      return <div className="bg-c-surface-raised rounded p-3 text-sm text-c-text-muted">{block.type}</div>;
   }
 };
 
@@ -136,13 +136,13 @@ const BlockConfigPanel: React.FC<{
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-gray-700">
+      <h3 className="text-sm font-semibold text-c-text">
         {block.type.replace(/_/g, ' ')} Config
       </h3>
 
       {hasTableSelector && (
         <div>
-          <label className="text-xs text-gray-500">Table</label>
+          <label className="text-xs text-c-text-muted">Table</label>
           <select
             value={String(block.config.tableId || '')}
             onChange={(e) => updateConfig('tableId', e.target.value)}
@@ -161,7 +161,7 @@ const BlockConfigPanel: React.FC<{
       {block.type === 'text' && (
         <>
           <div>
-            <label className="text-xs text-gray-500">Content</label>
+            <label className="text-xs text-c-text-muted">Content</label>
             <textarea
               value={String(block.config.content || '')}
               onChange={(e) => updateConfig('content', e.target.value)}
@@ -170,7 +170,7 @@ const BlockConfigPanel: React.FC<{
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500">Font Size</label>
+            <label className="text-xs text-c-text-muted">Font Size</label>
             <input
               type="number"
               value={Number(block.config.fontSize || 14)}
@@ -183,7 +183,7 @@ const BlockConfigPanel: React.FC<{
 
       {block.type === 'chart' && (
         <div>
-          <label className="text-xs text-gray-500">Chart Type</label>
+          <label className="text-xs text-c-text-muted">Chart Type</label>
           <select
             value={String(block.config.chartType || 'bar')}
             onChange={(e) => updateConfig('chartType', e.target.value)}
@@ -199,7 +199,7 @@ const BlockConfigPanel: React.FC<{
 
       {block.type === 'button' && (
         <div>
-          <label className="text-xs text-gray-500">Label</label>
+          <label className="text-xs text-c-text-muted">Label</label>
           <input
             type="text"
             value={String(block.config.label || '')}
@@ -212,7 +212,7 @@ const BlockConfigPanel: React.FC<{
       {block.type === 'summary' && (
         <>
           <div>
-            <label className="text-xs text-gray-500">Label</label>
+            <label className="text-xs text-c-text-muted">Label</label>
             <input
               type="text"
               value={String(block.config.label || '')}
@@ -221,7 +221,7 @@ const BlockConfigPanel: React.FC<{
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500">Aggregation</label>
+            <label className="text-xs text-c-text-muted">Aggregation</label>
             <select
               value={String(block.config.aggregation || 'count')}
               onChange={(e) => updateConfig('aggregation', e.target.value)}
@@ -239,7 +239,7 @@ const BlockConfigPanel: React.FC<{
 
       {block.type === 'search' && (
         <div>
-          <label className="text-xs text-gray-500">Placeholder</label>
+          <label className="text-xs text-c-text-muted">Placeholder</label>
           <input
             type="text"
             value={String(block.config.placeholder || '')}
@@ -306,8 +306,8 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
   return (
     <div className="flex h-full">
       {/* Left: Block palette */}
-      <div className="w-60 border-r bg-gray-50 p-4 flex flex-col gap-2 shrink-0">
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">Add Block</h3>
+      <div className="w-60 border-r bg-c-surface-raised p-4 flex flex-col gap-2 shrink-0">
+        <h3 className="text-sm font-semibold text-c-text mb-2">Add Block</h3>
         {BLOCK_TYPES.map((bt) => (
           <button
             key={bt.type}
@@ -329,7 +329,7 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
       </div>
 
       {/* Center: Canvas */}
-      <div className="flex-1 p-6 overflow-auto bg-white min-w-0">
+      <div className="flex-1 p-6 overflow-auto bg-c-surface min-w-0">
         <div className="max-w-4xl mx-auto space-y-4">
           {blocks.map((block, index) => (
             <div
@@ -341,19 +341,19 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
               className={`border rounded-lg p-4 cursor-pointer transition-all ${
                 selectedBlock === block.id
                   ? 'border-blue-500 ring-2 ring-blue-200'
-                  : 'border-gray-200 hover:border-gray-300'
+                  : 'border-c-border-subtle hover:border-c-border'
               } ${draggedIndex === index ? 'opacity-50' : ''}`}
               onClick={() => setSelectedBlock(block.id)}
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span
-                    className="cursor-grab text-gray-600 hover:text-gray-600"
+                    className="cursor-grab text-c-text-secondary hover:text-c-text-secondary"
                     title="Drag to reorder"
                   >
                     ⋮⋮
                   </span>
-                  <span className="text-xs font-medium text-gray-500 uppercase">
+                  <span className="text-xs font-medium text-c-text-muted uppercase">
                     {block.type.replace(/_/g, ' ')}
                   </span>
                 </div>
@@ -362,7 +362,7 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
                     e.stopPropagation();
                     removeBlock(block.id);
                   }}
-                  className="text-gray-600 hover:text-danger-500 text-sm transition-colors"
+                  className="text-c-text-secondary hover:text-danger-500 text-sm transition-colors"
                 >
                   ×
                 </button>
@@ -371,7 +371,7 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
             </div>
           ))}
           {blocks.length === 0 && (
-            <div className="text-center py-20 text-gray-600">
+            <div className="text-center py-20 text-c-text-secondary">
               <p className="text-lg">Empty interface</p>
               <p className="text-sm mt-1">Add blocks from the left panel to build your interface</p>
             </div>
@@ -381,7 +381,7 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
 
       {/* Right: Config panel */}
       {selectedBlock && blocks.find((b) => b.id === selectedBlock) && (
-        <div className="w-72 border-l bg-gray-50 p-4 shrink-0 overflow-y-auto">
+        <div className="w-72 border-l bg-c-surface-raised p-4 shrink-0 overflow-y-auto">
           <BlockConfigPanel
             block={blocks.find((b) => b.id === selectedBlock)!}
             tables={tables}

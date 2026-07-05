@@ -443,7 +443,7 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
             <button
               onClick={onGenerateFullSession}
               disabled={!onGenerateFullSession || generationStatus === 'generating'}
-              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-primary-700 dark:hover:bg-primary-600"
+              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-c-text px-5 py-3 text-sm font-semibold text-c-bg transition-colors hover:bg-c-text-secondary disabled:cursor-not-allowed disabled:opacity-50 dark:bg-c-text dark:hover:bg-c-text-secondary"
             >
               {generationStatus === 'generating' ? (
                 <>

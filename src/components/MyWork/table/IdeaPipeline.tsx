@@ -40,7 +40,7 @@ const DEFAULT_STAGES: PipelineStage[] = [
     id: 'draft',
     label: 'Draft',
     labelPl: 'Szkic',
-    color: '#94a3b8',
+    color: 'var(--c-text-muted)',
     icon: <Flag size={12} />,
     criteria: ['Has a title', 'Has a description'],
     criteriaPl: ['Ma tytuł', 'Ma opis'],
@@ -49,7 +49,7 @@ const DEFAULT_STAGES: PipelineStage[] = [
     id: 'validated',
     label: 'Validated',
     labelPl: 'Zwalidowany',
-    color: '#f59e0b',
+    color: 'var(--c-warning)',
     icon: <Shield size={12} />,
     criteria: ['Impact assessed', 'Effort estimated', 'At least 1 supporter'],
     criteriaPl: ['Oceniony wpływ', 'Oszacowany wysiłek', 'Min. 1 zwolennik'],
@@ -58,7 +58,7 @@ const DEFAULT_STAGES: PipelineStage[] = [
     id: 'approved',
     label: 'Approved',
     labelPl: 'Zatwierdzony',
-    color: '#10b981',
+    color: 'var(--c-success)',
     icon: <Check size={12} />,
     criteria: ['Scoring > 60', 'Budget allocated', 'Sponsor assigned'],
     criteriaPl: ['Scoring > 60', 'Budżet przydzielony', 'Sponsor wyznaczony'],
@@ -67,7 +67,7 @@ const DEFAULT_STAGES: PipelineStage[] = [
     id: 'initiative',
     label: 'Initiative',
     labelPl: 'Inicjatywa',
-    color: '#6366f1',
+    color: 'var(--c-info)',
     icon: <Rocket size={12} />,
     criteria: ['Converted to initiative module', 'Team assigned'],
     criteriaPl: ['Skonwertowany do modułu inicjatyw', 'Zespół przydzielony'],
@@ -188,13 +188,13 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[680px] max-w-[95vw] max-h-[85vh] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden flex flex-col"
+        className="w-[680px] max-w-[95vw] max-h-[85vh] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200/60 dark:border-navy-700/60">
-          <Rocket size={16} className="text-primary-500" />
-          <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+        <div className="flex items-center gap-2 px-5 py-3.5 border-b border-c-border-subtle">
+          <Rocket size={16} className="text-c-accent" />
+          <span className="text-sm font-bold text-c-text">
             {isPl ? 'Pipeline: Pomysł → Inicjatywa' : 'Pipeline: Idea → Initiative'}
           </span>
           <div className="flex-1" />
@@ -206,14 +206,14 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-c-surface-raised transition-colors"
           >
-            <X size={14} className="text-slate-600" />
+            <X size={14} className="text-c-text-secondary" />
           </button>
         </div>
 
         {/* Funnel visualization */}
-        <div className="px-5 py-4 border-b border-slate-200/30 dark:border-white/[0.04]">
+        <div className="px-5 py-4 border-b border-c-border-subtle">
           <div className="flex items-center gap-1">
             {funnelData.map((item, idx) => {
               const maxCount = Math.max(...funnelData.map((f) => f.count), 1);
@@ -224,8 +224,8 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                     onClick={() =>
                       setSelectedStage(selectedStage === item.stage.id ? null : item.stage.id)
                     }
-                    className={`flex-1 rounded-xl px-3 py-2.5 transition-all cursor-pointer ${selectedStage === item.stage.id ? 'ring-2 ring-primary-500/40' : 'hover:ring-1 hover:ring-slate-300'}`}
-                    style={{ backgroundColor: `${item.stage.color}15` }}
+                    className={`flex-1 rounded-xl px-3 py-2.5 transition-all cursor-pointer ${selectedStage === item.stage.id ? 'ring-2 ring-c-focus' : 'hover:ring-1 hover:ring-c-border'}`}
+                    style={{ backgroundColor: `color-mix(in srgb, ${item.stage.color} 10%, transparent)` }}
                   >
                     <div className="flex items-center gap-1.5 mb-1">
                       <span style={{ color: item.stage.color }}>{item.stage.icon}</span>
@@ -236,10 +236,10 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                         {isPl ? item.stage.labelPl : item.stage.label}
                       </span>
                     </div>
-                    <div className="text-lg font-black text-slate-800 dark:text-slate-200">
+                    <div className="text-lg font-black text-c-text">
                       {item.count}
                     </div>
-                    <div className="mt-1 h-1 rounded-full bg-slate-200/60 dark:bg-navy-700/60 overflow-hidden">
+                    <div className="mt-1 h-1 rounded-full bg-c-border-subtle overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all"
                         style={{ width: `${widthPct}%`, backgroundColor: item.stage.color }}
@@ -249,7 +249,7 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                   {idx < funnelData.length - 1 && (
                     <ChevronRight
                       size={14}
-                      className="text-slate-600 dark:text-slate-400 flex-shrink-0"
+                      className="text-c-text-secondary flex-shrink-0"
                     />
                   )}
                 </React.Fragment>
@@ -268,21 +268,21 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <span style={{ color: stage.color }}>{stage.icon}</span>
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <span className="text-xs font-bold text-c-text">
                       {isPl ? stage.labelPl : stage.label} ({stageNodes.length})
                     </span>
                   </div>
 
                   {/* Criteria */}
-                  <div className="mb-4 p-3 rounded-xl bg-slate-50/80 dark:bg-navy-900/50 border border-slate-200/40 dark:border-navy-700/40">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <div className="mb-4 p-3 rounded-xl bg-c-surface-raised border border-c-border-subtle">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-c-text-muted">
                       {isPl ? 'Kryteria przejścia' : 'Stage gate criteria'}
                     </span>
                     <div className="mt-1.5 space-y-1">
                       {(isPl ? stage.criteriaPl : stage.criteria).map((c, i) => (
                         <div
                           key={i}
-                          className="flex items-center gap-1.5 text-[10px] text-slate-600 dark:text-slate-300"
+                          className="flex items-center gap-1.5 text-[10px] text-c-text-secondary"
                         >
                           <div
                             className="w-1.5 h-1.5 rounded-full"
@@ -296,7 +296,7 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
 
                   {/* Items */}
                   {stageNodes.length === 0 ? (
-                    <p className="text-xs text-slate-600 text-center py-4">
+                    <p className="text-xs text-c-text-secondary text-center py-4">
                       {isPl ? 'Brak pomysłów na tym etapie' : 'No ideas at this stage'}
                     </p>
                   ) : (
@@ -312,13 +312,13 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                         return (
                           <div
                             key={node.id}
-                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white dark:bg-navy-900/30 border border-slate-200/30 dark:border-navy-700/30"
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-c-surface border border-c-border-subtle"
                           >
                             <div
                               className="w-2 h-2 rounded-full flex-shrink-0"
                               style={{ backgroundColor: nodeColor }}
                             />
-                            <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex-1 truncate">
+                            <span className="text-[11px] font-medium text-c-text flex-1 truncate">
                               {node.data?.label || node.id}
                             </span>
                             <div className="flex items-center gap-1">
@@ -327,13 +327,13 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                               >
                                 {eval_.met}/{eval_.total}
                               </span>
-                              <div className="w-8 h-1 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                              <div className="w-8 h-1 rounded-full bg-c-border-subtle overflow-hidden">
                                 <div
                                   className="h-full rounded-full transition-all"
                                   style={{
                                     width: `${(eval_.met / Math.max(eval_.total, 1)) * 100}%`,
                                     backgroundColor:
-                                      eval_.met === eval_.total ? '#10b981' : '#f59e0b',
+                                      eval_.met === eval_.total ? 'var(--c-success)' : 'var(--c-warning)',
                                   }}
                                 />
                               </div>
@@ -342,7 +342,7 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                               <button
                                 onClick={() => handlePromote(node.id, selectedStage)}
                                 disabled={!canPromote || promotingId === node.id}
-                                className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold transition-colors ${canPromote ? 'text-white hover:opacity-90' : 'text-slate-600 bg-slate-100 dark:bg-navy-800 cursor-not-allowed'}`}
+                                className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold transition-colors ${canPromote ? 'text-white hover:opacity-90' : 'text-c-text-secondary bg-c-surface-raised cursor-not-allowed'}`}
                                 style={
                                   canPromote ? { backgroundColor: nextStage.color } : undefined
                                 }
@@ -374,8 +374,8 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
             })()
           ) : (
             <div className="text-center py-8">
-              <Target size={24} className="text-slate-600 mx-auto mb-2" />
-              <p className="text-xs text-slate-600">
+              <Target size={24} className="text-c-text-secondary mx-auto mb-2" />
+              <p className="text-xs text-c-text-secondary">
                 {isPl
                   ? 'Kliknij etap aby zobaczyć pomysły i kryteria'
                   : 'Click a stage to see ideas and criteria'}

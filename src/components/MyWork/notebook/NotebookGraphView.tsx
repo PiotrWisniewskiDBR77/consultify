@@ -201,12 +201,12 @@ export const NotebookGraphView: React.FC<NotebookGraphViewProps> = ({
 
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
-      <div className="flex items-center gap-2 text-[13px] font-semibold text-slate-700 dark:text-slate-200">
-        <Network className="h-4 w-4 text-slate-400" />
+      <div className="flex items-center gap-2 text-[13px] font-semibold text-c-text">
+        <Network className="h-4 w-4 text-c-text-muted" />
         <span>{t.title}</span>
-        {loading && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />}
+        {loading && <Loader2 className="h-3.5 w-3.5 animate-spin text-c-text-muted" />}
         {!loading && (
-          <span className="text-[11px] font-normal text-slate-400">
+          <span className="text-[11px] font-normal text-c-text-muted">
             {topics.length} {t.topics.toLowerCase()} • {backlinks.length}{' '}
             {t.backlinks.toLowerCase()}
           </span>
@@ -214,11 +214,11 @@ export const NotebookGraphView: React.FC<NotebookGraphViewProps> = ({
       </div>
 
       <div
-        className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50/40 dark:border-white/10 dark:bg-white/[0.02]"
+        className="overflow-hidden rounded-xl border border-c-border bg-slate-50/40 dark:border-white/10 dark:bg-white/[0.02]"
         style={{ height }}
       >
         {!loading && isEmpty ? (
-          <div className="flex h-full items-center justify-center px-4 text-center text-[12px] text-slate-400">
+          <div className="flex h-full items-center justify-center px-4 text-center text-[12px] text-c-text-muted">
             {t.empty}
           </div>
         ) : (

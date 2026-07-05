@@ -36,6 +36,7 @@ import industryBenchmarkService from '../services/ai/industryBenchmarkService.js
 import AssessmentInitiativeGenerationRunService from '../services/assessmentInitiativeGenerationRunService.js';
 import AssessmentPermissionService from '../services/assessmentPermissionService.js';
 import BenchmarkingService from '../services/benchmarkingService.js';
+import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import NotificationService from '../services/notificationService.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
@@ -1230,31 +1231,70 @@ router.post(
 
       const { title, description, category, priority, risk } = req.body || {};
 
-      // Persist initiative (minimal fields; keep consistent with generated initiatives)
-      await db.run(
-        `INSERT INTO initiatives (
-          id, organization_id, project_id, name, title, description,
-          status, priority, risk_level, category, source_type, source_id,
-          created_by, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          String(initiativeId),
+      // Uspójnienie F1.7 — przez kanoniczny lejek (DRAFT pominięty → normalizowany w lejku;
+      // name/title + lineage source_type='assessment'). Linki/batch używają id zwróconego z lejka.
+      let createdInitiativeId = String(initiativeId);
+      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+        const __r = await funnelCreateInitiative(
           String(assessment.organization_id),
-          assessment.project_id || null,
-          String(title),
-          String(title),
-          description ? String(description) : null,
-          'DRAFT',
-          (priority || 'medium').toString(),
-          (risk || 'medium').toString(),
-          category ? String(category) : null,
-          'assessment',
-          String(assessmentId),
-          String(userId),
-          now,
-          now,
-        ]
-      );
+          {
+            title: String(title),
+            projectId: assessment.project_id || null,
+            description: description ? String(description) : null,
+            // status 'DRAFT' POMINIĘTY — lejek normalizuje do DRAFT
+            priority: (priority || 'medium').toString(),
+            category: category ? String(category) : null,
+            sourceType: 'assessment',
+            sourceId: String(assessmentId),
+          },
+          { validate: false, actor: { id: String(userId) } }
+        );
+        createdInitiativeId = __r.id;
+        // Extra-kolumny, których lejek nie zna (risk_level, created_by) → post-create UPDATE.
+        try {
+          await db.run(
+            `UPDATE initiatives SET risk_level = ?, created_by = ?, updated_at = ?
+             WHERE id = ? AND organization_id = ?`,
+            [
+              (risk || 'medium').toString(),
+              String(userId),
+              now,
+              createdInitiativeId,
+              String(assessment.organization_id),
+            ]
+          );
+        } catch (updErr: any) {
+          logger.warn(
+            `[AssessmentWorkflowV2] post-create UPDATE (risk/created_by) failed: ${updErr?.message || updErr}`
+          );
+        }
+      } else {
+        // Persist initiative (minimal fields; keep consistent with generated initiatives)
+        await db.run(
+          `INSERT INTO initiatives (
+            id, organization_id, project_id, name, title, description,
+            status, priority, risk_level, category, source_type, source_id,
+            created_by, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            String(initiativeId),
+            String(assessment.organization_id),
+            assessment.project_id || null,
+            String(title),
+            String(title),
+            description ? String(description) : null,
+            'DRAFT',
+            (priority || 'medium').toString(),
+            (risk || 'medium').toString(),
+            category ? String(category) : null,
+            'assessment',
+            String(assessmentId),
+            String(userId),
+            now,
+            now,
+          ]
+        );
+      }
 
       // Create a synthetic batch so history is consistent
       await db.run(
@@ -1264,15 +1304,15 @@ router.post(
         [batchId, String(assessmentId), 'manual', 1, 0, String(userId), now]
       );
 
-      // Link row
+      // Link row — używa id zwróconego z lejka (krytyczne: link nie może być sierotą).
       await db.run(
         `INSERT INTO assessment_initiative_links (id, assessment_id, batch_id, initiative_id, created_at)
          VALUES (?, ?, ?, ?, ?)`,
-        [String(linkId), String(assessmentId), String(batchId), String(initiativeId), now]
+        [String(linkId), String(assessmentId), String(batchId), String(createdInitiativeId), now]
       );
 
       return res.status(201).json({
-        initiative: { id: initiativeId, title, status: 'DRAFT', batchId },
+        initiative: { id: createdInitiativeId, title, status: 'DRAFT', batchId },
       });
     } catch (err: any) {
       logger.error('[AssessmentWorkflowV2] Error creating manual initiative:', err);

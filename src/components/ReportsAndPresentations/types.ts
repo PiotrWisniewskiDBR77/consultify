@@ -10,6 +10,7 @@ export type RapTab =
   | 'outputs_documents'
   | 'presentations'
   | 'outputs_sheets'
+  | 'outputs_data'
   | 'templates';
 
 /** Canonical registry row flattened for All / Mine / Needs review tabs */

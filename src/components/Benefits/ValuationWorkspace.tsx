@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import { API_URL, getHeaders } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
@@ -48,7 +49,7 @@ interface MultiplesState {
 }
 
 function sensitivityHeatmapColor(value: number, min: number, max: number): string {
-  if (min === max) return 'bg-slate-100 dark:bg-navy-700';
+  if (min === max) return 'bg-c-surface-raised dark:bg-c-surface-raised';
   const ratio = Math.max(0, Math.min(1, (value - min) / (max - min)));
   if (ratio >= 0.8)
     return 'bg-emerald-200 dark:bg-emerald-900/40 text-emerald-900 dark:text-emerald-200';
@@ -94,6 +95,32 @@ const DEFAULT_MULTIPLES: MultiplesState = {
   peerSet: [],
 };
 
+type TranslateFn = (key: string, defaultValue: string) => string;
+
+/** Localized label for a valuation status enum (DRAFT / REVIEW / APPROVED). */
+export function valuationStatusLabel(raw: unknown, t: TranslateFn): string {
+  const s = String(raw ?? '')
+    .trim()
+    .toUpperCase();
+  if (s === 'APPROVED') return t('valuation.enum.status.approved', 'Approved');
+  if (s === 'REVIEW') return t('valuation.enum.status.review', 'In review');
+  if (s === 'DRAFT') return t('valuation.enum.status.draft', 'Draft');
+  return s || t('valuation.enum.status.draft', 'Draft');
+}
+
+/** Localized label for a valuation source type (budget / financial_model / manual). */
+export function valuationSourceLabel(raw: unknown, t: TranslateFn): string {
+  const s = String(raw ?? '')
+    .trim()
+    .toLowerCase();
+  if (s === 'budget') return t('valuation.enum.source.budget', 'Budget');
+  if (s === 'financial_model') return t('valuation.enum.source.financialModel', 'Financial model');
+  if (s === 'financial_analysis')
+    return t('valuation.enum.source.financialAnalysis', 'Financial analysis');
+  if (s === 'manual') return t('valuation.enum.source.manual', 'Manual');
+  return raw ? String(raw) : t('valuation.enum.source.manual', 'Manual');
+}
+
 interface ValuationWorkspaceProps {
   initialValuationId?: string;
   hideSidebar?: boolean;
@@ -109,6 +136,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [valuations, setValuations] = useState<ValuationListItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -142,11 +170,15 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/economics/valuations`, { headers: getHeaders() });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setLoadError(true);
+        return;
+      }
       const d = (await res.json()) as any;
       setValuations((d?.valuations || []) as ValuationListItem[]);
+      setLoadError(false);
     } catch {
-      // ignore
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -460,7 +492,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
               <div className="flex items-center gap-3">
                 <span>{t('valuation.advisory.convertOk', 'Initiative created')}</span>
                 <button
-                  className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline whitespace-nowrap"
+                  className="text-xs font-medium text-c-info dark:text-c-info hover:underline whitespace-nowrap"
                   onClick={() => {
                     toast.dismiss(toastMsg.id);
                     navigate(`/initiatives?open=${initiativeId}`);
@@ -487,16 +519,16 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
       {!hideSidebar && (
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            <h2 className="text-lg font-semibold text-c-text dark:text-white">
               {t('valuation.title', 'Enterprise valuation')}
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted dark:text-c-text-muted">
               {t('valuation.subtitle', 'DCF + comps + sensitivity, deck-ready export')}
             </p>
           </div>
           <button
             onClick={() => setShowCreate(true)}
-            className="px-3 py-2 rounded-lg text-sm bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 inline-flex items-center gap-2"
+            className="px-3 py-2 rounded-lg text-sm bg-c-text text-c-bg hover:opacity-90 inline-flex items-center gap-2"
           >
             <Plus size={16} /> {t('valuation.create.cta', 'New valuation')}
           </button>
@@ -505,18 +537,46 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
 
       <div className={hideSidebar ? '' : 'grid grid-cols-12 gap-4'}>
         {!hideSidebar && (
-          <div className="col-span-4 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-            <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
-              <div className="text-sm font-semibold text-slate-900 dark:text-white">
+          <div className="col-span-4 bg-white dark:bg-c-surface rounded-xl border border-c-border dark:border-c-border overflow-hidden">
+            <div className="px-4 py-3 border-b border-c-border dark:border-c-border flex items-center justify-between">
+              <div className="text-sm font-semibold text-c-text dark:text-white">
                 {t('valuation.list.title', 'Valuations')}
               </div>
-              {loading && <Loader2 className="w-4 h-4 animate-spin text-slate-600" />}
+              {loading && <Loader2 className="w-4 h-4 animate-spin text-c-text-secondary" />}
             </div>
-            <div className="max-h-[520px] overflow-auto divide-y divide-slate-200 dark:divide-navy-800">
-              {valuations.length === 0 ? (
-                <div className="p-4 text-sm text-slate-500 dark:text-slate-400">
-                  {t('valuation.list.empty', 'No valuations yet. Create one to start.')}
+            <div className="max-h-[520px] overflow-auto divide-y divide-c-border-subtle dark:divide-c-border-subtle">
+              {loading && valuations.length === 0 ? (
+                <div className="p-4">
+                  <LoadingState template="list" rows={4} />
                 </div>
+              ) : loadError && valuations.length === 0 ? (
+                <EmptyState
+                  variant="error"
+                  compact
+                  title={t('valuation.list.loadErrorTitle', 'Could not load valuations')}
+                  description={t(
+                    'valuation.list.loadErrorDesc',
+                    'The valuations source could not be reached. Check your connection and try again.',
+                  )}
+                  onRetry={() => {
+                    void fetchValuations();
+                  }}
+                />
+              ) : valuations.length === 0 ? (
+                <EmptyState
+                  variant="new"
+                  compact
+                  title={t('valuation.list.empty', 'No valuations yet. Create one to start.')}
+                  description={t(
+                    'valuation.list.emptyDesc',
+                    'Create a valuation to estimate value from a model or budget.',
+                  )}
+                  primaryAction={{
+                    label: t('valuation.create.cta', 'New valuation'),
+                    onClick: () => setShowCreate(true),
+                    icon: Plus,
+                  }}
+                />
               ) : (
                 valuations.map((v) => (
                   <button
@@ -526,17 +586,19 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                       setActiveStep('assumptions');
                     }}
                     className={[
-                      'w-full text-left p-4 hover:bg-slate-50 dark:hover:bg-navy-800 transition',
-                      selectedId === v.id ? 'bg-slate-50 dark:bg-navy-800' : '',
+                      'w-full text-left p-4 hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition',
+                      selectedId === v.id ? 'bg-c-surface-raised dark:bg-c-surface-raised' : '',
                     ].join(' ')}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                        <div className="text-sm font-semibold text-c-text dark:text-white">
                           {v.title}
                         </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                          {t('valuation.list.source', 'Source')}: {v.sourceType} • {v.status}
+                        <div className="text-xs text-c-text-muted dark:text-c-text-muted mt-0.5">
+                          {t('valuation.list.source', 'Source')}:{' '}
+                          {valuationSourceLabel(v.sourceType, t)} •{' '}
+                          {valuationStatusLabel(v.status, t)}
                         </div>
                       </div>
                     </div>
@@ -551,23 +613,24 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
           className={
             hideSidebar
               ? 'w-full'
-              : 'col-span-8 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5'
+              : 'col-span-8 bg-white dark:bg-c-surface rounded-xl border border-c-border dark:border-c-border p-5'
           }
         >
           {!selectedId || !selected ? (
-            <div className="h-[520px] flex items-center justify-center text-sm text-slate-500 dark:text-slate-400">
+            <div className="h-[520px] flex items-center justify-center text-sm text-c-text-muted dark:text-c-text-muted">
               {t('valuation.detail.empty', 'Select a valuation to continue')}
             </div>
           ) : (
             <>
               <div className="flex items-start justify-between gap-4 mb-4">
                 <div>
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  <div className="text-sm font-semibold text-c-text dark:text-white">
                     {selected.title}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
+                  <div className="text-xs text-c-text-muted dark:text-c-text-muted mt-0.5 flex items-center gap-2 flex-wrap">
                     <span>
-                      {t('valuation.detail.status', 'Status')}: {selected.status} •{' '}
+                      {t('valuation.detail.status', 'Status')}:{' '}
+                      {valuationStatusLabel(selected.status, t)} •{' '}
                       {t('valuation.detail.currency', 'Currency')}: {selected.currency}
                     </span>
                     {selected.source_type &&
@@ -582,7 +645,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                               navigate(`/economics?tab=prediction&openId=${selected.source_id}`);
                             }
                           }}
-                          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-primary-500/10 text-primary-500 hover:bg-primary-500/20 transition font-medium"
+                          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-c-info/10 text-c-info hover:bg-c-info/20 transition font-medium"
                         >
                           <ExternalLink size={10} />
                           {t('valuation.detail.viewSource', 'View source')}
@@ -594,7 +657,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                   <button
                     disabled={busy}
                     onClick={handleCompute}
-                    className="px-3 py-2 rounded-lg text-sm bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-60 inline-flex items-center gap-2"
+                    className="px-3 py-2 rounded-lg text-sm bg-c-surface text-white hover:bg-c-surface-raised disabled:opacity-60 inline-flex items-center gap-2"
                   >
                     {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play size={16} />}
                     {t('valuation.compute.cta', 'Compute')}
@@ -624,9 +687,9 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                 return (
                   <div className="mb-4">
                     <div className="relative mb-3">
-                      <div className="absolute top-1/2 left-0 right-0 h-1 -translate-y-1/2 bg-slate-200 dark:bg-navy-700 rounded-full" />
+                      <div className="absolute top-1/2 left-0 right-0 h-1 -translate-y-1/2 bg-c-surface-raised dark:bg-c-surface-raised rounded-full" />
                       <div
-                        className="absolute top-1/2 left-0 h-1 -translate-y-1/2 bg-navy-900 rounded-full transition-all duration-300"
+                        className="absolute top-1/2 left-0 h-1 -translate-y-1/2 bg-c-surface rounded-full transition-all duration-300"
                         style={{ width: `${progressPercent}%` }}
                       />
                       <div className="relative flex justify-between">
@@ -636,15 +699,15 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                             className={[
                               'w-3 h-3 rounded-full border-2 transition-colors',
                               idx <= activeIndex
-                                ? 'bg-primary-600 border-primary-600'
-                                : 'bg-white dark:bg-navy-900 border-slate-300 dark:border-navy-600',
+                                ? 'bg-c-accent border-c-accent'
+                                : 'bg-white dark:bg-c-surface border-c-border-strong dark:border-c-border-strong',
                             ].join(' ')}
                           />
                         ))}
                       </div>
                     </div>
                     <div
-                      className="flex items-center gap-2 border-b border-slate-200 dark:border-navy-700 pb-3"
+                      className="flex items-center gap-2 border-b border-c-border dark:border-c-border pb-3"
                       role="tablist"
                       aria-label={t('valuation.steps.label', 'Valuation steps')}
                     >
@@ -659,8 +722,8 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                           className={[
                             'px-3 py-1.5 rounded-lg text-sm border transition',
                             activeStep === s
-                              ? 'bg-primary-600 text-white border-primary-600'
-                              : 'bg-white dark:bg-navy-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-navy-800',
+                              ? 'bg-c-surface-raised text-c-text border-c-border-strong dark:border-c-border-strong'
+                              : 'bg-white dark:bg-c-surface text-c-text-secondary dark:text-c-text-secondary border-c-border dark:border-c-border hover:bg-c-surface-raised dark:hover:bg-c-surface-raised',
                           ].join(' ')}
                         >
                           {t(`valuation.steps.${s}` as any, s)}
@@ -672,7 +735,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
               })()}
 
               {activeStep === 'source' && (
-                <div className="text-sm text-slate-500 dark:text-slate-400">
+                <div className="text-sm text-c-text-muted dark:text-c-text-muted">
                   {t(
                     'valuation.source.note',
                     'Source is set at creation (Budget or Manual for this branch).'
@@ -689,13 +752,13 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                   )}
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-                      <div className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                    <div className="bg-c-surface-raised dark:bg-c-surface-raised border border-c-border dark:border-c-border rounded-xl p-4">
+                      <div className="text-sm font-semibold text-c-text dark:text-white mb-3">
                         {t('valuation.assumptions.dcfTitle', 'DCF assumptions')}
                       </div>
                       <div className="space-y-3">
                         <div>
-                          <label className="text-xs text-slate-500">
+                          <label className="text-xs text-c-text-muted">
                             {t('valuation.assumptions.wacc', 'WACC (%)')}
                           </label>
                           <input
@@ -707,11 +770,11 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                 waccPercent: safeNumber(e.target.value, p.waccPercent),
                               }))
                             }
-                            className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
+                            className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface text-sm text-c-text dark:text-white"
                           />
                         </div>
                         <div>
-                          <label className="text-xs text-slate-500">
+                          <label className="text-xs text-c-text-muted">
                             {t('valuation.assumptions.terminalMethod', 'Terminal method')}
                           </label>
                           <select
@@ -722,7 +785,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                 terminalMethod: e.target.value as TerminalMethod,
                               }))
                             }
-                            className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
+                            className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface text-sm text-c-text dark:text-white"
                           >
                             <option value="gordon">Gordon growth</option>
                             <option value="exit_multiple">Exit multiple</option>
@@ -730,7 +793,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                         </div>
                         {assumptions.terminalMethod === 'gordon' ? (
                           <div>
-                            <label className="text-xs text-slate-500">
+                            <label className="text-xs text-c-text-muted">
                               {t('valuation.assumptions.g', 'Terminal growth g (%)')}
                             </label>
                             <input
@@ -745,7 +808,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                   ),
                                 }))
                               }
-                              className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
+                              className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface text-sm text-c-text dark:text-white"
                             />
                             <div className="mt-1.5 flex flex-wrap gap-1">
                               {[
@@ -780,8 +843,8 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                   className={[
                                     'text-[10px] px-1.5 py-0.5 rounded border transition-colors',
                                     assumptions.terminalGrowthPercent === preset.value
-                                      ? 'border-primary-500 bg-primary-500/10 text-primary-600 dark:text-primary-300'
-                                      : 'border-slate-200 dark:border-navy-600 text-slate-500 hover:border-primary-300',
+                                      ? 'border-c-focus bg-c-info/10 text-c-info dark:text-c-info'
+                                      : 'border-c-border dark:border-c-border-strong text-c-text-muted hover:border-c-border-strong',
                                   ].join(' ')}
                                 >
                                   {preset.label}
@@ -792,7 +855,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                         ) : (
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <label className="text-xs text-slate-500">
+                              <label className="text-xs text-c-text-muted">
                                 {t('valuation.assumptions.exitMultiple', 'Exit multiple')}
                               </label>
                               <input
@@ -804,11 +867,11 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                     exitMultiple: safeNumber(e.target.value, p.exitMultiple ?? 0),
                                   }))
                                 }
-                                className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
+                                className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface text-sm text-c-text dark:text-white"
                               />
                             </div>
                             <div>
-                              <label className="text-xs text-slate-500">
+                              <label className="text-xs text-c-text-muted">
                                 {t('valuation.assumptions.exitMetric', 'Metric')}
                               </label>
                               <select
@@ -819,7 +882,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                     exitMultipleMetric: e.target.value as ExitMultipleMetric,
                                   }))
                                 }
-                                className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
+                                className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface text-sm text-c-text dark:text-white"
                               >
                                 <option value="EV/EBITDA">EV/EBITDA</option>
                                 <option value="EV/Revenue">EV/Revenue</option>
@@ -830,21 +893,21 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                         <button
                           disabled={busy}
                           onClick={handleSaveAssumptions}
-                          className="w-full px-3 py-2 rounded-lg text-sm bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-60"
+                          className="w-full px-3 py-2 rounded-lg text-sm bg-c-text text-c-bg hover:opacity-90 disabled:opacity-60"
                         >
                           {t('valuation.assumptions.save', 'Save assumptions')}
                         </button>
                       </div>
                     </div>
 
-                    <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-                      <div className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                    <div className="bg-c-surface-raised dark:bg-c-surface-raised border border-c-border dark:border-c-border rounded-xl p-4">
+                      <div className="text-sm font-semibold text-c-text dark:text-white mb-3">
                         {t('valuation.comps.title', 'Comparable valuation (multiples)')}
                       </div>
                       <div className="space-y-3">
                         <div className="grid grid-cols-3 gap-3">
                           <div>
-                            <label className="text-xs text-slate-500">
+                            <label className="text-xs text-c-text-muted">
                               {t('valuation.comps.min', 'Min')}
                             </label>
                             <input
@@ -856,11 +919,11 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                   min: safeNumber(e.target.value, p.min),
                                 }))
                               }
-                              className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
+                              className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface text-sm text-c-text dark:text-white"
                             />
                           </div>
                           <div>
-                            <label className="text-xs text-slate-500">
+                            <label className="text-xs text-c-text-muted">
                               {t('valuation.comps.median', 'Median')}
                             </label>
                             <input
@@ -872,11 +935,11 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                   median: safeNumber(e.target.value, p.median),
                                 }))
                               }
-                              className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
+                              className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface text-sm text-c-text dark:text-white"
                             />
                           </div>
                           <div>
-                            <label className="text-xs text-slate-500">
+                            <label className="text-xs text-c-text-muted">
                               {t('valuation.comps.max', 'Max')}
                             </label>
                             <input
@@ -888,12 +951,12 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                   max: safeNumber(e.target.value, p.max),
                                 }))
                               }
-                              className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
+                              className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface text-sm text-c-text dark:text-white"
                             />
                           </div>
                         </div>
                         <div>
-                          <label className="text-xs text-slate-500">
+                          <label className="text-xs text-c-text-muted">
                             {t('valuation.comps.peers', 'Peers (comma-separated)')}
                           </label>
                           <input
@@ -913,13 +976,13 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                               'valuation.comps.peersPlaceholder',
                               'e.g., Company A, Company B'
                             )}
-                            className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-900 text-sm text-slate-900 dark:text-white"
+                            className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface text-sm text-c-text dark:text-white"
                           />
                         </div>
                         <button
                           disabled={busy}
                           onClick={handleSaveComps}
-                          className="w-full px-3 py-2 rounded-lg text-sm bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-60"
+                          className="w-full px-3 py-2 rounded-lg text-sm bg-c-text text-c-bg hover:opacity-90 disabled:opacity-60"
                         >
                           {t('valuation.comps.save', 'Save comps')}
                         </button>
@@ -932,83 +995,83 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
               {activeStep === 'results' && (
                 <div className="space-y-4">
                   {!dcf ? (
-                    <div className="text-sm text-slate-500 dark:text-slate-400">
+                    <div className="text-sm text-c-text-muted dark:text-c-text-muted">
                       {t('valuation.results.empty', 'Compute the valuation to see results')}
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-                        <div className="text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                      <div className="bg-c-surface-raised dark:bg-c-surface-raised border border-c-border dark:border-c-border rounded-xl p-4">
+                        <div className="text-sm font-semibold text-c-text dark:text-white mb-2">
                           {t('valuation.results.summary', 'Valuation summary')}
                         </div>
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
-                            <span className="text-slate-500">
+                            <span className="text-c-text-muted">
                               {t('valuation.results.ev', 'Enterprise value (EV)')}
                             </span>
-                            <span className="font-mono text-slate-900 dark:text-white">
+                            <span className="font-mono text-c-text dark:text-white">
                               {fmtValue(dcf.enterpriseValue)}
                             </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-slate-500">
+                            <span className="text-c-text-muted">
                               {t('valuation.results.equity', 'Equity value')}
                             </span>
-                            <span className="font-mono text-slate-900 dark:text-white">
+                            <span className="font-mono text-c-text dark:text-white">
                               {fmtValue(dcf.equityValue)}
                             </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-slate-500">
+                            <span className="text-c-text-muted">
                               {t('valuation.results.wacc', 'WACC')}
                             </span>
-                            <span className="font-mono text-slate-900 dark:text-white">
+                            <span className="font-mono text-c-text dark:text-white">
                               {dcf.discountRatePercent}%
                             </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-slate-500">
+                            <span className="text-c-text-muted">
                               {t('valuation.results.pvSplit', 'PV split (explicit/terminal)')}
                             </span>
-                            <span className="font-mono text-slate-900 dark:text-white">
+                            <span className="font-mono text-c-text dark:text-white">
                               {fmtValue(dcf.pvExplicit)} / {fmtValue(dcf.pvTerminal)}
                             </span>
                           </div>
                         </div>
                       </div>
-                      <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-                        <div className="text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                      <div className="bg-c-surface-raised dark:bg-c-surface-raised border border-c-border dark:border-c-border rounded-xl p-4">
+                        <div className="text-sm font-semibold text-c-text dark:text-white mb-2">
                           {t('valuation.results.comps', 'Comparable range (if set)')}
                         </div>
                         {computed?.comps?.impliedEnterpriseValue ? (
                           <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                              <span className="text-slate-500">
+                              <span className="text-c-text-muted">
                                 {t('valuation.results.compsMin', 'Min')}
                               </span>
-                              <span className="font-mono text-slate-900 dark:text-white">
+                              <span className="font-mono text-c-text dark:text-white">
                                 {fmtValue(computed.comps.impliedEnterpriseValue.min)}
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-slate-500">
+                              <span className="text-c-text-muted">
                                 {t('valuation.results.compsMedian', 'Median')}
                               </span>
-                              <span className="font-mono text-slate-900 dark:text-white">
+                              <span className="font-mono text-c-text dark:text-white">
                                 {fmtValue(computed.comps.impliedEnterpriseValue.median)}
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-slate-500">
+                              <span className="text-c-text-muted">
                                 {t('valuation.results.compsMax', 'Max')}
                               </span>
-                              <span className="font-mono text-slate-900 dark:text-white">
+                              <span className="font-mono text-c-text dark:text-white">
                                 {fmtValue(computed.comps.impliedEnterpriseValue.max)}
                               </span>
                             </div>
                           </div>
                         ) : (
-                          <div className="text-sm text-slate-500 dark:text-slate-400">
+                          <div className="text-sm text-c-text-muted dark:text-c-text-muted">
                             {t('valuation.results.compsEmpty', 'Configure comps in Assumptions')}
                           </div>
                         )}
@@ -1017,28 +1080,28 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                   )}
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+                    <div className="bg-white dark:bg-c-surface border border-c-border dark:border-c-border rounded-xl p-4">
                       <div className="flex items-center justify-between gap-2 mb-3">
-                        <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                        <div className="text-sm font-semibold text-c-text dark:text-white">
                           {t('valuation.advisory.title', 'Valuation advisory')}
                         </div>
                         <button
                           disabled={busy || selected?.status !== 'APPROVED'}
                           onClick={handleGenerateAdvisory}
-                          className="px-3 py-1.5 rounded-lg text-xs bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-60"
+                          className="px-3 py-1.5 rounded-lg text-xs bg-c-text text-c-bg hover:opacity-90 disabled:opacity-60"
                         >
                           {t('valuation.advisory.generate', 'Generate')}
                         </button>
                       </div>
                       {selected?.status !== 'APPROVED' ? (
-                        <div className="text-sm text-slate-500 dark:text-slate-400">
+                        <div className="text-sm text-c-text-muted dark:text-c-text-muted">
                           {t(
                             'valuation.advisory.approvalGate',
                             'Generate advisory requires APPROVED valuation.'
                           )}
                         </div>
                       ) : !advisory?.recommendations?.length ? (
-                        <div className="text-sm text-slate-500 dark:text-slate-400">
+                        <div className="text-sm text-c-text-muted dark:text-c-text-muted">
                           {t(
                             'valuation.advisory.empty',
                             'Generate advisory to see recommended actions.'
@@ -1047,9 +1110,9 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                       ) : (
                         <div className="space-y-4">
                           {advisory.driverDecomposition?.drivers?.length > 0 && (
-                            <div className="bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-                              <div className="px-4 py-2 border-b border-slate-200 dark:border-navy-700">
-                                <h4 className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+                            <div className="bg-c-surface-raised dark:bg-c-surface-raised rounded-xl border border-c-border dark:border-c-border overflow-hidden">
+                              <div className="px-4 py-2 border-b border-c-border dark:border-c-border">
+                                <h4 className="text-xs font-semibold text-c-text-secondary dark:text-c-text-secondary uppercase tracking-wide">
                                   {t(
                                     'valuation.advisory.driverDecomposition',
                                     'Value Driver Decomposition'
@@ -1058,7 +1121,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                               </div>
                               <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full text-xs">
                                 <thead>
-                                  <tr className="text-slate-500 border-b border-slate-200 dark:border-navy-700">
+                                  <tr className="text-c-text-muted border-b border-c-border dark:border-c-border">
                                     <th className="px-3 py-1.5 text-left">
                                       {t('valuation.advisory.driver', 'Driver')}
                                     </th>
@@ -1080,21 +1143,21 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                   {advisory.driverDecomposition.drivers.map((d: any, i: number) => (
                                     <tr
                                       key={i}
-                                      className="border-b border-slate-200 dark:border-navy-700 last:border-0"
+                                      className="border-b border-c-border dark:border-c-border last:border-0"
                                     >
-                                      <td className="px-3 py-1.5 font-medium text-slate-800 dark:text-slate-200">
+                                      <td className="px-3 py-1.5 font-medium text-c-text dark:text-c-text-secondary">
                                         {d.driver}
                                       </td>
-                                      <td className="px-3 py-1.5 text-right font-mono text-slate-600 dark:text-slate-400">
+                                      <td className="px-3 py-1.5 text-right font-mono text-c-text-secondary dark:text-c-text-muted">
                                         {d.currentValue}
                                       </td>
-                                      <td className="px-3 py-1.5 text-right font-mono text-primary-600 dark:text-primary-400">
+                                      <td className="px-3 py-1.5 text-right font-mono text-c-text dark:text-c-text">
                                         {d.change}
                                       </td>
                                       <td className="px-3 py-1.5 text-right font-mono text-emerald-600 dark:text-emerald-400">
                                         {d.evImpactDirection} {d.evImpactMagnitude}
                                       </td>
-                                      <td className="px-3 py-1.5 text-slate-500 dark:text-slate-400 max-w-[200px] truncate">
+                                      <td className="px-3 py-1.5 text-c-text-muted dark:text-c-text-muted max-w-[200px] truncate">
                                         {d.lever}
                                       </td>
                                     </tr>
@@ -1102,7 +1165,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                 </tbody>
                               </table>
                               {advisory.driverDecomposition.summary && (
-                                <div className="px-4 py-2 text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-900 border-t border-slate-200 dark:border-navy-700">
+                                <div className="px-4 py-2 text-xs text-c-text-muted dark:text-c-text-muted bg-c-surface-raised dark:bg-c-surface border-t border-c-border dark:border-c-border">
                                   {advisory.driverDecomposition.summary}
                                 </div>
                               )}
@@ -1114,7 +1177,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                 high: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
                                 medium:
                                   'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
-                                low: 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-300',
+                                low: 'bg-c-surface-raised text-c-text-secondary dark:bg-c-surface-raised dark:text-c-text-secondary',
                               };
                               const effortColors: Record<string, string> = {
                                 low: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
@@ -1127,13 +1190,13 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                               return (
                                 <div
                                   key={r.id}
-                                  className="p-4 rounded-xl bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-600 transition-colors"
+                                  className="p-4 rounded-xl bg-c-surface-raised dark:bg-c-surface-raised border border-c-border dark:border-c-border hover:border-c-border-strong dark:hover:border-c-border-strong transition-colors"
                                 >
                                   <div className="flex items-start justify-between gap-3">
-                                    <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                                    <div className="text-sm font-semibold text-c-text dark:text-white">
                                       {r.title}
                                     </div>
-                                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 font-medium">
+                                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-c-surface text-c-text-secondary border border-c-border dark:bg-c-surface-raised dark:text-c-text-secondary font-medium">
                                       {r.category}
                                     </span>
                                   </div>
@@ -1155,14 +1218,14 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                       {t('valuation.advisory.effort', 'Effort')}: {r.effort}
                                     </span>
                                   </div>
-                                  <div className="text-xs text-slate-600 dark:text-slate-300 mt-2.5 line-clamp-3 leading-relaxed">
+                                  <div className="text-xs text-c-text-secondary dark:text-c-text-secondary mt-2.5 line-clamp-3 leading-relaxed">
                                     {r.mechanism || r.hypothesis}
                                   </div>
-                                  <div className="mt-3 pt-3 border-t border-slate-200 dark:border-navy-700 flex items-center gap-2">
+                                  <div className="mt-3 pt-3 border-t border-c-border dark:border-c-border flex items-center gap-2">
                                     <button
                                       disabled={busy}
                                       onClick={() => handleConvertRecommendation(String(r.id))}
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 disabled:opacity-60 transition-colors"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-c-text text-c-bg hover:opacity-90 disabled:opacity-60 transition-colors"
                                     >
                                       <Plus size={12} />
                                       {t('valuation.advisory.convert', 'Create initiative')}
@@ -1170,7 +1233,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                     <button
                                       disabled={busy}
                                       onClick={() => handleConvertRecommendation(String(r.id))}
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border dark:border-c-border-strong text-c-text-secondary dark:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
                                     >
                                       <ExternalLink size={12} />
                                       {t('valuation.advisory.details', 'Details')}
@@ -1218,9 +1281,9 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                       )}
                     </div>
 
-                    <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
+                    <div className="bg-white dark:bg-c-surface border border-c-border dark:border-c-border rounded-xl p-4">
                       <div className="flex items-center justify-between gap-2 mb-3">
-                        <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                        <div className="text-sm font-semibold text-c-text dark:text-white">
                           {t('valuation.negotiation.title', 'Negotiation pack')}
                         </div>
                         <div className="flex items-center gap-2">
@@ -1250,7 +1313,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                   toast.error(t('valuation.export.failed', 'Export failed'));
                                 }
                               }}
-                              className="px-3 py-1.5 rounded-lg text-xs border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800"
+                              className="px-3 py-1.5 rounded-lg text-xs border border-c-border-strong dark:border-c-border-strong text-c-text-secondary dark:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised"
                             >
                               {t('valuation.negotiation.export', 'Export Pack')}
                             </button>
@@ -1258,21 +1321,21 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                           <button
                             disabled={busy || selected?.status !== 'APPROVED'}
                             onClick={handleGenerateNegotiationPack}
-                            className="px-3 py-1.5 rounded-lg text-xs bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-60"
+                            className="px-3 py-1.5 rounded-lg text-xs bg-c-surface text-white hover:bg-c-surface-raised disabled:opacity-60"
                           >
                             {t('valuation.negotiation.generate', 'Generate')}
                           </button>
                         </div>
                       </div>
                       {selected?.status !== 'APPROVED' ? (
-                        <div className="text-sm text-slate-500 dark:text-slate-400">
+                        <div className="text-sm text-c-text-muted dark:text-c-text-muted">
                           {t(
                             'valuation.negotiation.approvalGate',
                             'Generate pack requires APPROVED valuation.'
                           )}
                         </div>
                       ) : !negotiationPack ? (
-                        <div className="text-sm text-slate-500 dark:text-slate-400">
+                        <div className="text-sm text-c-text-muted dark:text-c-text-muted">
                           {t(
                             'valuation.negotiation.empty',
                             'Generate a pack to get pro/contra points and Q&A.'
@@ -1281,10 +1344,10 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                       ) : (
                         <div className="space-y-3">
                           <div>
-                            <div className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                            <div className="text-xs font-semibold text-c-text-secondary dark:text-c-text-secondary mb-1">
                               {t('valuation.negotiation.pro', 'Pro')}
                             </div>
-                            <ul className="list-disc pl-5 text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                            <ul className="list-disc pl-5 text-xs text-c-text-secondary dark:text-c-text-secondary space-y-1">
                               {(negotiationPack.proPoints || [])
                                 .slice(0, 4)
                                 .map((p: any, idx: number) => (
@@ -1293,10 +1356,10 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                             </ul>
                           </div>
                           <div>
-                            <div className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                            <div className="text-xs font-semibold text-c-text-secondary dark:text-c-text-secondary mb-1">
                               {t('valuation.negotiation.qa', 'Q&A')}
                             </div>
-                            <ul className="list-disc pl-5 text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                            <ul className="list-disc pl-5 text-xs text-c-text-secondary dark:text-c-text-secondary space-y-1">
                               {(negotiationPack.qa || []).slice(0, 3).map((q: any, idx: number) => (
                                 <li key={idx}>{q.question}</li>
                               ))}
@@ -1312,16 +1375,16 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
               {activeStep === 'sensitivity' && (
                 <div className="space-y-4">
                   {!computed?.sensitivity && !computed?.tornado ? (
-                    <div className="text-sm text-slate-500 dark:text-slate-400">
+                    <div className="text-sm text-c-text-muted dark:text-c-text-muted">
                       {t('valuation.results.empty', 'Compute the valuation to see results')}
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="col-span-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-                        <div className="text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                      <div className="col-span-2 bg-c-surface-raised dark:bg-c-surface-raised border border-c-border dark:border-c-border rounded-xl p-4">
+                        <div className="text-sm font-semibold text-c-text dark:text-white mb-2">
                           {t('valuation.steps.sensitivity', 'Sensitivity')}
                         </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                        <div className="text-xs text-c-text-muted dark:text-c-text-muted mb-3">
                           {computed?.sensitivity?.kind || '—'}
                         </div>
                         {Array.isArray(computed?.sensitivity?.matrix) &&
@@ -1353,13 +1416,13 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                 <table className="w-full text-xs border-collapse">
                                   <thead>
                                     <tr>
-                                      <th className="px-2 py-1.5 text-left text-slate-500 dark:text-slate-400 font-medium">
+                                      <th className="px-2 py-1.5 text-left text-c-text-muted dark:text-c-text-muted font-medium">
                                         WACC \ g
                                       </th>
                                       {gValues.map((g) => (
                                         <th
                                           key={g}
-                                          className="px-2 py-1.5 text-center text-slate-500 dark:text-slate-400 font-medium"
+                                          className="px-2 py-1.5 text-center text-c-text-muted dark:text-c-text-muted font-medium"
                                         >
                                           {g}%
                                         </th>
@@ -1369,7 +1432,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                   <tbody>
                                     {waccValues.map((w) => (
                                       <tr key={w}>
-                                        <td className="px-2 py-1.5 font-medium text-slate-600 dark:text-slate-300 border-r border-slate-200 dark:border-navy-700">
+                                        <td className="px-2 py-1.5 font-medium text-c-text-secondary dark:text-c-text-secondary border-r border-c-border dark:border-c-border">
                                           {w}%
                                         </td>
                                         {gValues.map((g) => {
@@ -1390,7 +1453,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                     ))}
                                   </tbody>
                                 </table>
-                                <div className="flex items-center gap-2 mt-2 text-[10px] text-slate-600">
+                                <div className="flex items-center gap-2 mt-2 text-[10px] text-c-text-secondary">
                                   <span>{t('valuation.sensitivity.legend', 'Legend')}:</span>
                                   <span className="inline-block w-3 h-3 rounded bg-danger-100 dark:bg-danger-900/20" />
                                   <span>{t('valuation.sensitivity.lower', 'Lower')}</span>
@@ -1403,19 +1466,19 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                             );
                           })()
                         ) : Array.isArray(computed?.sensitivity?.waccGrid) ? (
-                          <div className="text-xs text-slate-600 dark:text-slate-300">
+                          <div className="text-xs text-c-text-secondary dark:text-c-text-secondary">
                             WACC grid:{' '}
                             {(computed.sensitivity.waccGrid as any[]).slice(0, 5).join(', ')}
                           </div>
                         ) : null}
                       </div>
 
-                      <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-                        <div className="text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                      <div className="bg-c-surface-raised dark:bg-c-surface-raised border border-c-border dark:border-c-border rounded-xl p-4">
+                        <div className="text-sm font-semibold text-c-text dark:text-white mb-2">
                           {t('valuation.sensitivity.tornadoTitle', 'Tornado (top drivers)')}
                         </div>
                         {Array.isArray(computed?.tornado) && computed.tornado.length ? (
-                          <ul className="list-disc pl-5 text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                          <ul className="list-disc pl-5 text-xs text-c-text-secondary dark:text-c-text-secondary space-y-1">
                             {computed.tornado.slice(0, 8).map((d: any, idx: number) => (
                               <li key={idx}>
                                 {String(d?.driver || 'Driver')}: {String(d?.swing ?? '—')}
@@ -1423,7 +1486,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                             ))}
                           </ul>
                         ) : (
-                          <div className="text-sm text-slate-500 dark:text-slate-400">—</div>
+                          <div className="text-sm text-c-text-muted dark:text-c-text-muted">—</div>
                         )}
                       </div>
                     </div>
@@ -1433,7 +1496,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
 
               {activeStep === 'export' && (
                 <div className="space-y-4">
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                  <div className="text-xs text-c-text-muted dark:text-c-text-muted">
                     {t(
                       'valuation.export.approvalGate',
                       'Export requires APPROVED valuation and includes disclaimers.'
@@ -1443,7 +1506,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                     <button
                       disabled={busy}
                       onClick={handleExportPptx}
-                      className="px-3 py-2 rounded-lg text-sm bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800 inline-flex items-center gap-2 disabled:opacity-60"
+                      className="px-3 py-2 rounded-lg text-sm bg-c-text text-c-bg hover:opacity-90 inline-flex items-center gap-2 disabled:opacity-60"
                     >
                       {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download size={16} />}
                       {t('valuation.export.pptx', 'Export PPTX')}
@@ -1466,14 +1529,14 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
 
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 w-full max-w-lg">
+          <div className="bg-white dark:bg-c-surface border border-c-border dark:border-c-border rounded-xl p-6 w-full max-w-lg">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              <h2 className="text-lg font-semibold text-c-text dark:text-white">
                 {t('valuation.create.title', 'New valuation')}
               </h2>
               <button
                 onClick={() => setShowCreate(false)}
-                className="text-slate-600 hover:text-slate-600"
+                className="text-c-text-secondary hover:text-c-text-secondary"
               >
                 <X size={18} />
               </button>
@@ -1486,11 +1549,11 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                   'valuation.create.titlePlaceholder',
                   'e.g., Fundraising valuation — base case'
                 )}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface-raised text-c-text dark:text-white text-sm"
               />
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-slate-500 mb-1 block">
+                  <label className="text-xs text-c-text-muted mb-1 block">
                     {t('valuation.create.sourceType', 'Source type')}
                   </label>
                   <select
@@ -1499,7 +1562,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                       setCreateSourceType(e.target.value as ValuationSourceType);
                       setCreateSourceId('');
                     }}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm"
+                    className="w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface-raised text-c-text dark:text-white text-sm"
                   >
                     <option value="budget">
                       {t('valuation.create.source.budget', 'Approved budget (T053)')}
@@ -1516,26 +1579,26 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-slate-500 mb-1 block">
+                  <label className="text-xs text-c-text-muted mb-1 block">
                     {t('valuation.create.horizon', 'Horizon (years)')}
                   </label>
                   <input
                     type="number"
                     value={createHorizonYears}
                     onChange={(e) => setCreateHorizonYears(safeNumber(e.target.value, 5))}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm"
+                    className="w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface-raised text-c-text dark:text-white text-sm"
                   />
                 </div>
               </div>
               {createSourceType === 'budget' && (
                 <div>
-                  <label className="text-xs text-slate-500 mb-1 block">
+                  <label className="text-xs text-c-text-muted mb-1 block">
                     {t('valuation.create.sourceLabel', 'Source')}
                   </label>
                   <select
                     value={createSourceId}
                     onChange={(e) => setCreateSourceId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm"
+                    className="w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface-raised text-c-text dark:text-white text-sm"
                   >
                     <option value="">{t('valuation.create.selectSource', 'Select...')}</option>
                     {sources.budgets.map((b) => (
@@ -1550,14 +1613,14 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowCreate(false)}
-                className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700"
+                className="px-4 py-2 text-sm text-c-text-muted hover:text-c-text-secondary"
               >
                 {t('valuation.create.cancel', 'Cancel')}
               </button>
               <button
                 disabled={busy}
                 onClick={handleCreate}
-                className="px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg hover:bg-navy-800 disabled:opacity-60"
+                className="px-4 py-2 bg-c-text text-c-bg hover:opacity-90 text-sm font-medium rounded-lg disabled:opacity-60"
               >
                 {busy ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

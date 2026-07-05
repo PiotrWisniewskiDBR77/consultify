@@ -438,17 +438,17 @@ Help leaders develop change management competencies.`,
   ];
 
   return (
-    <div className="h-full flex flex-col bg-navy-950 overflow-hidden relative">
+    <div className="h-full flex flex-col bg-c-bg overflow-hidden relative">
       <InfoButton cardId="superadmin-ai-config" position="top-right" />
       {/* Header */}
       <div className="shrink-0 px-8 py-6 border-b border-white/10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center shadow-lg shadow-primary-500/20">
-              <Brain className="text-white" size={24} />
+              <Brain className="text-c-text" size={24} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">LLM Management</h1>
+              <h1 className="text-2xl font-bold text-c-text">LLM Management</h1>
               <p className="text-sm text-slate-400 dark:text-slate-500">
                 Manage AI behavior, providers, and system health
               </p>
@@ -507,10 +507,10 @@ Help leaders develop change management competencies.`,
                       }`}
                     >
                       <div className={`p-2 rounded-lg bg-gradient-to-br ${cap.color}`}>
-                        <Icon size={18} className="text-white" />
+                        <Icon size={18} className="text-c-text" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-white text-sm truncate">{cap.name}</div>
+                        <div className="font-medium text-c-text text-sm truncate">{cap.name}</div>
                         <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
                           {cap.description}
                         </div>
@@ -534,7 +534,7 @@ Help leaders develop change management competencies.`,
                 <>
                   <div className="shrink-0 p-4 border-b border-white/5 flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold text-white">
+                      <h3 className="font-semibold text-c-text">
                         Instructions for:{' '}
                         {AI_CAPABILITIES.find((c) => c.id === selectedCapability)?.name}
                       </h3>
@@ -595,7 +595,7 @@ Help leaders develop change management competencies.`,
                   <Server size={20} className="text-primary-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-white">Ollama Local Models</h3>
+                  <h3 className="text-lg font-semibold text-c-text">Ollama Local Models</h3>
                   <p className="text-sm text-slate-400 dark:text-slate-500">
                     Connect to local Ollama for privacy-focused AI
                   </p>
@@ -627,7 +627,7 @@ Help leaders develop change management competencies.`,
               </div>
 
               {ollamaConnected === true && ollamaModels.length > 0 && (
-                <div className="bg-navy-950/50 rounded-lg p-4">
+                <div className="bg-c-bg/50 rounded-lg p-4">
                   <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
                     Available Models (click to add)
                   </p>
@@ -666,7 +666,7 @@ Help leaders develop change management competencies.`,
             {/* Cloud Providers */}
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-bold text-white">LLM Providers</h2>
+                <h2 className="text-xl font-bold text-c-text">LLM Providers</h2>
                 <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">
                   Configure AI models available to tenants
                 </p>
@@ -674,7 +674,7 @@ Help leaders develop change management competencies.`,
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowInactive(!showInactive)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors text-sm font-medium ${showInactive ? 'bg-white/10 border-white/20 text-white' : 'border-white/10 text-slate-400 dark:text-slate-500 hover:text-white'}`}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors text-sm font-medium ${showInactive ? 'bg-white/10 border-white/20 text-c-text' : 'border-white/10 text-slate-400 dark:text-slate-500 hover:text-white'}`}
                 >
                   {showInactive ? <Eye size={16} /> : <EyeOff size={16} />}
                   {showInactive ? 'Hide Inactive' : 'Show Inactive'}
@@ -692,7 +692,7 @@ Help leaders develop change management competencies.`,
               </div>
             </div>
 
-            <div className="bg-navy-900 border border-white/10 rounded-xl overflow-hidden">
+            <div className="bg-c-surface border border-white/10 rounded-xl overflow-hidden">
               <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-left text-sm">
                 <thead className="bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 uppercase text-xs">
                   <tr>
@@ -731,7 +731,7 @@ Help leaders develop change management competencies.`,
                           key={p.id}
                           className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
                         >
-                          <td className="px-6 py-4 font-medium text-white">{p.name}</td>
+                          <td className="px-6 py-4 font-medium text-c-text">{p.name}</td>
                           <td className="px-6 py-4 text-slate-300 capitalize">{p.provider}</td>
                           <td className="px-6 py-4 font-mono text-xs text-slate-400 dark:text-slate-500">
                             {p.model_id}
@@ -789,8 +789,8 @@ Help leaders develop change management competencies.`,
         {activeTab === 'routing' && (
           <div className="p-8 overflow-y-auto h-full">
             <div className="max-w-3xl mx-auto">
-              <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Model Routing per Tier</h3>
+              <div className="bg-c-surface border border-white/10 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-c-text mb-4">Model Routing per Tier</h3>
                 <p className="text-sm text-slate-400 dark:text-slate-500 mb-6">
                   Define which LLM model to use for different complexity levels.
                 </p>
@@ -824,15 +824,15 @@ Help leaders develop change management competencies.`,
                   ].map((item) => (
                     <div
                       key={item.tier}
-                      className="flex items-center gap-4 p-4 bg-navy-950/50 rounded-lg border border-white/5"
+                      className="flex items-center gap-4 p-4 bg-c-bg/50 rounded-lg border border-white/5"
                     >
                       <div className="flex-1">
-                        <div className="font-medium text-white">{item.label}</div>
+                        <div className="font-medium text-c-text">{item.label}</div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
                           {item.desc}
                         </div>
                       </div>
-                      <select className="bg-navy-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 outline-none">
+                      <select className="bg-c-surface-raised border border-white/10 rounded-lg px-3 py-2 text-sm text-c-text focus:border-blue-500 outline-none">
                         <option>{item.default}</option>
                         {providers
                           .filter((p) => p.is_active)
@@ -881,16 +881,16 @@ Help leaders develop change management competencies.`,
             </div>
 
             {costStats?.byModel && costStats.byModel.length > 0 && (
-              <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Costs per Model</h3>
+              <div className="bg-c-surface border border-white/10 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-c-text mb-4">Costs per Model</h3>
                 <div className="space-y-3">
                   {costStats.byModel.map((m: any) => (
                     <div
                       key={m.model}
-                      className="flex items-center gap-4 p-3 bg-navy-950/50 rounded-lg"
+                      className="flex items-center gap-4 p-3 bg-c-bg/50 rounded-lg"
                     >
                       <div className="flex-1">
-                        <div className="text-sm text-white">{m.model}</div>
+                        <div className="text-sm text-c-text">{m.model}</div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
                           {m.requests} requests
                         </div>
@@ -914,9 +914,9 @@ Help leaders develop change management competencies.`,
           <div className="p-8 overflow-y-auto h-full">
             <div className="max-w-3xl mx-auto space-y-6">
               {/* System Status */}
-              <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
+              <div className="bg-c-surface border border-white/10 rounded-xl p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-white">AI System Status</h3>
+                  <h3 className="text-lg font-semibold text-c-text">AI System Status</h3>
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium ${
                       healthStatus?.status === 'OK'
@@ -952,8 +952,8 @@ Help leaders develop change management competencies.`,
               </div>
 
               {/* AI Capabilities Health */}
-              <div className="bg-navy-900 border border-white/10 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Test Capabilities</h3>
+              <div className="bg-c-surface border border-white/10 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-c-text mb-4">Test Capabilities</h3>
                 <div className="grid grid-cols-2 gap-4">
                   {[
                     { id: 'connection', icon: Zap, label: 'Connection' },
@@ -963,10 +963,10 @@ Help leaders develop change management competencies.`,
                   ].map((cap) => (
                     <button
                       key={cap.id}
-                      className="flex items-center gap-3 p-4 bg-navy-950/50 border border-white/5 rounded-lg hover:bg-navy-950 hover:border-white/10 transition-colors"
+                      className="flex items-center gap-3 p-4 bg-c-bg/50 border border-white/5 rounded-lg hover:bg-c-bg hover:border-white/10 transition-colors"
                     >
                       <cap.icon size={20} className="text-blue-400" />
-                      <span className="text-sm text-white">{cap.label}</span>
+                      <span className="text-sm text-c-text">{cap.label}</span>
                     </button>
                   ))}
                 </div>
@@ -982,7 +982,7 @@ Help leaders develop change management competencies.`,
               {/* Header with Save Button */}
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-white">Global AI Settings</h2>
+                  <h2 className="text-xl font-bold text-c-text">Global AI Settings</h2>
                   <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
                     Platform-wide AI configuration. These settings apply to all organizations.
                   </p>
@@ -1020,7 +1020,7 @@ Help leaders develop change management competencies.`,
                           onChange={(e) =>
                             updateGlobalSetting('defaultProvider', e.target.value || null)
                           }
-                          className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-primary-500 outline-none"
+                          className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
                         >
                           <option value="">Auto (First Available)</option>
                           {providers
@@ -1047,7 +1047,7 @@ Help leaders develop change management competencies.`,
                                 failureThreshold: parseInt(e.target.value) || 5,
                               })
                             }
-                            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-primary-500 outline-none"
+                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
                           />
                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             Failures before circuit opens
@@ -1066,7 +1066,7 @@ Help leaders develop change management competencies.`,
                                 cooldownSeconds: parseInt(e.target.value) || 60,
                               })
                             }
-                            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-primary-500 outline-none"
+                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
                           />
                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             Wait before retry
@@ -1119,7 +1119,7 @@ Help leaders develop change management competencies.`,
                         defaultValue={8192}
                       />
 
-                      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-700/50">
+                      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-c-border/50">
                         <div>
                           <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
                             Requests per Minute
@@ -1133,7 +1133,7 @@ Help leaders develop change management competencies.`,
                                 requestsPerMinute: parseInt(e.target.value) || 60,
                               })
                             }
-                            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-primary-500 outline-none"
+                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
                           />
                         </div>
                         <div>
@@ -1149,7 +1149,7 @@ Help leaders develop change management competencies.`,
                                 requestsPerHour: parseInt(e.target.value) || 1000,
                               })
                             }
-                            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-primary-500 outline-none"
+                            className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
                           />
                         </div>
                       </div>
@@ -1179,7 +1179,7 @@ Help leaders develop change management competencies.`,
                                                                   globalSettings.piiDetectionSensitivity ===
                                                                   level
                                                                     ? 'bg-primary-500/20 border-primary-500 text-primary-300'
-                                                                    : 'bg-slate-800/50 border-slate-700 text-slate-400 dark:text-slate-500 hover:border-slate-600'
+                                                                    : 'bg-c-surface-raised/50 border-c-border text-slate-400 dark:text-slate-500 hover:border-slate-600'
                                                                 }
                                                             `}
                             >
@@ -1211,7 +1211,7 @@ Help leaders develop change management competencies.`,
                           onChange={(e) =>
                             updateGlobalSetting('dataResidency', e.target.value || null)
                           }
-                          className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-primary-500 outline-none"
+                          className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text focus:border-primary-500 outline-none"
                         >
                           <option value="">No Restriction</option>
                           <option value="eu">European Union</option>
@@ -1257,9 +1257,9 @@ Help leaders develop change management competencies.`,
       {/* Provider Modal */}
       {showProviderModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
+          <div className="bg-c-surface border border-white/10 rounded-xl p-8 w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-white">
+              <h2 className="text-xl font-bold text-c-text">
                 {editingProviderId ? 'Edit Provider' : 'Add Provider'}
               </h2>
               <button
@@ -1376,7 +1376,7 @@ Help leaders develop change management competencies.`,
                       onChange={(e) =>
                         setProviderForm({ ...providerForm, is_active: e.target.checked })
                       }
-                      className="w-4 h-4 rounded bg-navy-950 border-white/10"
+                      className="w-4 h-4 rounded bg-c-bg border-white/10"
                     />
                     <span className="text-sm text-slate-300">Active</span>
                   </label>
@@ -1421,14 +1421,14 @@ const StatCard: React.FC<{ icon: any; label: string; value: string; color: strin
   value,
   color,
 }) => (
-  <div className="bg-navy-900 border border-white/10 rounded-xl p-4">
+  <div className="bg-c-surface border border-white/10 rounded-xl p-4">
     <div className="flex items-center gap-3 mb-2">
       <Icon size={18} className={color} />
       <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
         {label}
       </span>
     </div>
-    <div className="text-2xl font-bold text-white">{value}</div>
+    <div className="text-2xl font-bold text-c-text">{value}</div>
   </div>
 );
 

@@ -104,20 +104,20 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm transition-opacity duration-200"
+      className="fixed inset-0 z-overlay flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm transition-opacity duration-200"
     >
-      <div className="w-full max-w-lg mx-4 rounded-2xl border border-primary-500/30 bg-white dark:bg-zinc-900 dark:border-zinc-700 shadow-2xl overflow-hidden transition-all duration-200 animate-in fade-in zoom-in-95">
+      <div className="w-full max-w-lg mx-4 rounded-2xl border border-c-accent bg-c-surface shadow-2xl overflow-hidden transition-all duration-200 animate-in fade-in zoom-in-95">
         {/* Header */}
-        <div className="flex items-center justify-between gap-2 px-5 py-4 border-b border-slate-200/60 dark:border-zinc-700/60">
+        <div className="flex items-center justify-between gap-2 px-5 py-4 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-sky-500/15 flex items-center justify-center">
               <Edit3 size={16} className="text-sky-600 dark:text-sky-400" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-100">
+              <h3 className="text-sm font-semibold text-c-text">
                 {isPl ? 'Doprecyzuj propozycję' : 'Refine Proposal'}
               </h3>
-              <p className="text-[10px] text-slate-600 dark:text-zinc-500">
+              <p className="text-[10px] text-c-text-secondary">
                 {isPl ? `Wersja ${currentVersion}` : `Version ${currentVersion}`} ·{' '}
                 {proposalIntent.replace(/_/g, ' ')}
               </p>
@@ -125,18 +125,18 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-c-surface-raised text-c-text-secondary hover:text-c-text-secondary transition-colors"
           >
             <X size={16} />
           </button>
         </div>
 
         {/* Current proposal summary */}
-        <div className="px-5 py-3 bg-slate-50/50 dark:bg-zinc-800/30 border-b border-slate-200/40 dark:border-zinc-700/40">
-          <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-1">
+        <div className="px-5 py-3 bg-c-surface-raised border-b border-c-border-subtle">
+          <p className="text-[11px] font-medium text-c-text-muted uppercase tracking-wider mb-1">
             {isPl ? 'Aktualna propozycja' : 'Current proposal'}
           </p>
-          <p className="text-xs text-slate-700 dark:text-zinc-200 leading-relaxed line-clamp-3">
+          <p className="text-xs text-c-text leading-relaxed line-clamp-3">
             {proposalSummary}
           </p>
         </div>
@@ -159,10 +159,10 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
               }
               disabled={loading}
               rows={3}
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-sm text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none resize-none transition-colors disabled:opacity-50"
+              className="w-full px-4 py-3 rounded-xl border border-c-border-subtle bg-c-surface text-sm text-c-text placeholder-c-text-muted focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none resize-none transition-colors disabled:opacity-50"
             />
             <div className="absolute bottom-2 right-2 flex items-center gap-1">
-              <span className="text-[9px] text-slate-600 dark:text-zinc-600">
+              <span className="text-[9px] text-c-text-secondary">
                 {isPl ? '⌘+Enter wyślij' : '⌘+Enter to send'}
               </span>
             </div>
@@ -175,7 +175,7 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
                 key={s}
                 onClick={() => setMessage(s)}
                 disabled={loading}
-                className="text-[10px] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-zinc-400 hover:border-primary-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors disabled:opacity-50"
+                className="text-[10px] px-2.5 py-1 rounded-lg border border-c-border-subtle text-c-text-muted hover:border-c-accent hover:text-c-accent transition-colors disabled:opacity-50"
               >
                 {s}
               </button>
@@ -185,10 +185,10 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
 
         {/* Version history */}
         {refinementHistory.length > 0 && (
-          <div className="px-5 border-t border-slate-200/40 dark:border-zinc-700/40">
+          <div className="px-5 border-t border-c-border-subtle">
             <button
               onClick={() => setShowHistory((v) => !v)}
-              className="flex items-center gap-1.5 py-2 text-[10px] font-medium text-slate-600 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors w-full"
+              className="flex items-center gap-1.5 py-2 text-[10px] font-medium text-c-text-secondary hover:text-c-text-secondary transition-colors w-full"
             >
               <History size={12} />
               {isPl ? 'Historia doprecyzowań' : 'Refinement history'} ({refinementHistory.length})
@@ -202,14 +202,14 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
                 {refinementHistory.map((entry) => (
                   <div
                     key={entry.version}
-                    className="flex items-start gap-2 text-[10px] text-slate-500 dark:text-zinc-400"
+                    className="flex items-start gap-2 text-[10px] text-c-text-muted"
                   >
-                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-[9px] font-bold text-slate-500 dark:text-zinc-400">
+                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-c-surface-raised flex items-center justify-center text-[9px] font-bold text-c-text-muted">
                       v{entry.version}
                     </span>
                     <div className="min-w-0">
                       <p className="truncate">{entry.message}</p>
-                      <p className="text-[9px] text-slate-600 dark:text-zinc-600">
+                      <p className="text-[9px] text-c-text-secondary">
                         {new Date(entry.timestamp).toLocaleTimeString([], {
                           hour: '2-digit',
                           minute: '2-digit',
@@ -224,18 +224,18 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
         )}
 
         {/* Footer actions */}
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200/60 dark:border-zinc-700/60 bg-slate-50/50 dark:bg-zinc-800/30">
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-c-border-subtle bg-c-surface-raised">
           <button
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2 rounded-xl text-xs font-medium text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+            className="px-4 py-2 rounded-xl text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50"
           >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
           <button
             onClick={handleSubmit}
             disabled={!message.trim() || loading}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-text text-c-bg hover:bg-c-text-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
             {loading ? (
               <>

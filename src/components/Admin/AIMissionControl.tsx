@@ -282,8 +282,8 @@ export const AIMissionControl: React.FC = () => {
 
       {/* Detail Logs (Last Test) */}
       {Object.keys(results).length > 0 && (
-        <div className="bg-slate-900 dark:bg-black/60 rounded-xl shadow-lg p-6 font-mono text-xs text-emerald-200 overflow-auto max-h-96 border border-white/10">
-          <h3 className="text-slate-200 mb-4 border-b border-white/5 pb-2 flex justify-between">
+        <div className="bg-c-surface dark:bg-black/60 rounded-xl shadow-lg p-6 font-mono text-xs text-emerald-200 overflow-auto max-h-96 border border-white/10">
+          <h3 className="text-c-text-secondary mb-4 border-b border-white/5 pb-2 flex justify-between">
             <span>LATEST DIAGNOSTIC LOGS</span>
             <button
               onClick={() => setResults({})}
@@ -305,7 +305,7 @@ export const AIMissionControl: React.FC = () => {
                 </div>
                 {res.error && <div className="text-danger-200 ml-4">Error: {res.error}</div>}
                 {res.details !== null && res.details !== undefined && (
-                  <pre className="ml-4 mt-1 text-slate-100 whitespace-pre-wrap break-words">
+                  <pre className="ml-4 mt-1 text-c-text-secondary whitespace-pre-wrap break-words">
                     {JSON.stringify(res.details, null, 2)}
                   </pre>
                 )}

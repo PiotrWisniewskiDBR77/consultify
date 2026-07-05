@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import { Check, ExternalLink, Send, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -14,10 +15,29 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { statusChipTone } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '@/services/api';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
 import { getToolCategoryLabel } from './ToolSessionPreview';
+
+/**
+ * Localized tool-session status label — canon §7.3: no raw enum keys in preview.
+ * Falls back to a humanized key (never the raw uppercase enum) when unmapped.
+ */
+function toolStatusLabel(t: TFunction, raw: string | null | undefined): string {
+  const key = String(raw ?? '').trim().toLowerCase();
+  const map: Record<string, string> = {
+    draft: t('preview.statuses.draft', 'Draft'),
+    review: t('preview.statuses.review', 'In review'),
+    approved: t('preview.statuses.approved', 'Approved'),
+    generated: t('preview.statuses.generated', 'Generated'),
+    completed: t('preview.statuses.completed', 'Completed'),
+  };
+  if (map[key]) return map[key];
+  const spaced = key.replace(/[_-]+/g, ' ').trim();
+  return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1) : '';
+}
 
 export type ToolSessionPreviewDetails = {
   id: string;
@@ -166,25 +186,23 @@ export const ToolSessionPreviewV3Body: React.FC<{
     const approvedSnapshot = (details.contextSnapshot as any)?.approvedSnapshot;
     if (!approvedSnapshot) return '';
     const safe = safeJsonString(approvedSnapshot, 2000);
-    return safe ? (isPolish ? 'Snapshot zatwierdzenia:\n' : 'Approval snapshot:\n') + safe : '';
-  }, [details, isPolish]);
+    return safe ? `${t('preview.approvalSnapshot', 'Approval snapshot')}:\n${safe}` : '';
+  }, [details, t]);
 
   const handleCopyDetails = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(detailsText || itemName || '');
-      toast.success(isPolish ? 'Skopiowano' : 'Copied');
+      toast.success(t('common.copied', 'Copied'));
     } catch {
-      toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+      toast.error(t('common.copyFailed', 'Copy failed'));
     }
-  }, [detailsText, isPolish, itemName]);
+  }, [detailsText, t, itemName]);
 
-  const statusUpper = String(status || 'DRAFT').toUpperCase();
-  const statusPillClass =
-    statusUpper === 'APPROVED' || statusUpper === 'GENERATED' || statusUpper === 'COMPLETED'
-      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
-      : statusUpper === 'REVIEW'
-        ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
-        : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300';
+  // Canon §4.1/§7.3: status is a SIGNAL carried by tone (statusChipTone),
+  // label is localized — never a raw uppercased enum with ad-hoc color classes.
+  const statusRaw = String(status || 'draft');
+  const statusTone = statusChipTone(statusRaw) as MetaPill['tone'];
+  const statusText = toolStatusLabel(t, statusRaw);
 
   const metaPills: MetaPill[] = [
     {
@@ -192,26 +210,25 @@ export const ToolSessionPreviewV3Body: React.FC<{
       className:
         'border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-700 dark:text-slate-200',
     },
-    { label: statusUpper, className: statusPillClass },
+    { label: statusText, tone: statusTone },
     {
-      label: `${t('preview.progress', 'Progress')}: ${progress ?? details?.progress ?? 0}%`,
-      className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
+      label: t('preview.progress', 'Progress'),
+      value: `${progress ?? details?.progress ?? 0}%`,
+      tone: 'neutral',
     },
     ...(details?.confidenceAvg != null
       ? [
           {
-            label: `${isPolish ? 'Pewność' : 'Confidence'}: ${details.confidenceAvg}`,
-            className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
+            label: t('preview.confidence', 'Confidence'),
+            value: details.confidenceAvg,
+            tone: 'neutral' as const,
           },
         ]
       : []),
   ];
 
   const detailsDisplayText =
-    detailsText ||
-    (isPolish
-      ? 'Użyj AI hintów w stopce, aby wygenerować brief.'
-      : 'Use AI hints in the footer to generate a brief.');
+    detailsText || t('preview.useAiHints', 'Use AI hints in the footer to generate a brief.');
 
   return (
     <div className="space-y-4">
@@ -257,7 +274,7 @@ export const ToolSessionPreviewV3Body: React.FC<{
         onCopy={() => void handleCopyDetails()}
         extraCopyFormats={[
           {
-            label: isPolish ? 'Kopiuj jako Markdown' : 'Copy as Markdown',
+            label: t('preview.copyAsMarkdown', 'Copy as Markdown'),
             onClick: () =>
               void copyAsMarkdown(
                 { title: itemName, status, description: detailsDisplayText },
@@ -265,7 +282,7 @@ export const ToolSessionPreviewV3Body: React.FC<{
               ),
           },
           {
-            label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
+            label: t('preview.copyForSlack', 'Copy for Slack'),
             onClick: () =>
               void copyForSlack(
                 { title: itemName, status, description: detailsDisplayText },
@@ -321,24 +338,26 @@ export const ToolSessionPreviewV3Footer: React.FC<{
         setAiText(text);
       } catch (e: any) {
         setAiError(
-          isPolish ? 'AI niedostępne' : e?.code === 'AI_TIMEOUT' ? 'AI timed out' : 'AI unavailable'
+          e?.code === 'AI_TIMEOUT'
+            ? t('preview.aiTimedOut', 'AI timed out')
+            : t('preview.aiUnavailable', 'AI unavailable')
         );
       } finally {
         setAiLoading(false);
       }
     },
-    [details, isPolish]
+    [details, isPolish, t]
   );
 
   const handleCopyAi = useCallback(async () => {
     if (!aiText) return;
     try {
       await navigator.clipboard.writeText(aiText);
-      toast.success(isPolish ? 'Skopiowano' : 'Copied');
+      toast.success(t('common.copied', 'Copied'));
     } catch {
-      toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+      toast.error(t('common.copyFailed', 'Copy failed'));
     }
-  }, [aiText, isPolish]);
+  }, [aiText, t]);
 
   const handleClearAi = useCallback(() => {
     setAiText(null);
@@ -364,9 +383,9 @@ export const ToolSessionPreviewV3Footer: React.FC<{
   const decisionRelations = (details?.decisions || []).slice(0, 3);
 
   const aiHints = [
-    isPolish ? 'Executive brief' : 'Executive brief',
-    isPolish ? 'Kluczowe ryzyka' : 'Key risks',
-    isPolish ? 'Kąty inicjatyw' : 'Initiative angles',
+    t('preview.aiHints.execBrief', 'Executive brief'),
+    t('preview.aiHints.keyRisks', 'Key risks'),
+    t('preview.aiHints.initiativeAngles', 'Initiative angles'),
   ];
   const hintToIntent: Record<string, ToolSessionPreviewAiIntent> = {
     [aiHints[0]]: 'exec_brief',
@@ -381,8 +400,8 @@ export const ToolSessionPreviewV3Footer: React.FC<{
           label: clampText(String(i.title || i.name || i.id), 42),
           tone: 'text-amber-700 dark:text-amber-300',
         })),
-        ...decisionRelations.map((d, idx) => ({
-          label: clampText(String(d.decision_type || 'Decision'), 42),
+        ...decisionRelations.map((d) => ({
+          label: clampText(String(d.decision_type || t('common.decision', 'Decision')), 42),
           tone: 'text-primary-700 dark:text-primary-300',
         })),
       ];
@@ -407,7 +426,7 @@ export const ToolSessionPreviewV3Footer: React.FC<{
               ...(canResume
                 ? [
                     {
-                      label: isPolish ? 'Wznów' : 'Resume',
+                      label: t('preview.resume', 'Resume'),
                       onClick: onResume,
                       colorScheme: 'primary' as const,
                       icon: ExternalLink,
@@ -425,7 +444,7 @@ export const ToolSessionPreviewV3Footer: React.FC<{
           {
             buttons: [
               {
-                label: isPolish ? 'Wyślij do review' : 'Request review',
+                label: t('preview.requestReview', 'Request review'),
                 onClick: () => void onRequestReview(),
                 colorScheme: canRequestReview ? ('amber' as const) : ('neutral' as const),
                 icon: Send,
@@ -440,7 +459,7 @@ export const ToolSessionPreviewV3Footer: React.FC<{
           {
             buttons: [
               {
-                label: isPolish ? 'Zatwierdź' : 'Approve',
+                label: t('preview.approve', 'Approve'),
                 onClick: () => void onApprove(),
                 colorScheme: canApproveTool ? ('emerald' as const) : ('neutral' as const),
                 icon: Check,
@@ -448,7 +467,7 @@ export const ToolSessionPreviewV3Footer: React.FC<{
                 flex: true,
               },
               {
-                label: isPolish ? 'Odeślij' : 'Send back',
+                label: t('preview.sendBack', 'Send back'),
                 onClick: () => void onSendBack(),
                 colorScheme: 'red' as const,
                 icon: X,
@@ -463,7 +482,7 @@ export const ToolSessionPreviewV3Footer: React.FC<{
           {
             buttons: [
               {
-                label: isPolish ? 'Generuj inicjatywy' : 'Generate initiatives',
+                label: t('preview.generateInitiatives', 'Generate initiatives'),
                 onClick: onOpenGenerateModal,
                 colorScheme: 'neutral' as const,
                 icon: Sparkles,
@@ -495,12 +514,8 @@ export const ToolSessionPreviewV3Footer: React.FC<{
         items={relationItems}
         emptyLabel={
           detailsLoading
-            ? isPolish
-              ? 'Ładowanie powiązań…'
-              : 'Loading relations…'
-            : isPolish
-              ? 'Brak powiązań'
-              : 'No relations'
+            ? t('preview.loadingRelations', 'Loading relations…')
+            : t('preview.noRelations', 'No relations')
         }
       />
 

@@ -120,7 +120,7 @@ const getTypeBadge = (isSystem: boolean) =>
         bg: 'bg-primary-500/20',
         label: 'ORG',
         icon: Building2,
-        dot: 'bg-navy-900',
+        dot: 'bg-c-accent',
       };
 
 const getCategoryBadge = (category: string) => {
@@ -429,12 +429,12 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
         {filteredTypes.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/50 rounded-xl">
             <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800 inline-block mb-4">
-              <Layers size={28} className="text-slate-500" />
+              <Layers size={28} className="text-slate-500 dark:text-slate-400" />
             </div>
             <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               {searchQuery ? 'No sections match your search' : 'No section types found'}
             </p>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               {searchQuery
                 ? 'Try adjusting your search terms'
                 : 'Section types define the available building blocks for initiative cards'}
@@ -446,26 +446,26 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
               <thead>
                 <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
                   <th className="w-10 px-2 py-2" />
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[90px]">
+                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[90px]">
                     Type
                   </th>
                   <th className="w-8 px-1 py-2" />
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     Section
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[90px]">
+                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[90px]">
                     Category
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[80px]">
+                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[80px]">
                     Column
                   </th>
-                  <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 uppercase tracking-wider w-[60px]">
+                  <th className="px-3 py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[60px]">
                     Order
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[50px]">
+                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[50px]">
                     AI
                   </th>
-                  <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-[100px]">
+                  <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[100px]">
                     Actions
                   </th>
                 </tr>
@@ -507,7 +507,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                               }}
                               className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
                                 selectedIds.has(st.id)
-                                  ? 'bg-navy-900 border-navy-900 text-white'
+                                  ? 'bg-c-text text-c-bg border-c-border'
                                   : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
                               }`}
                             >
@@ -546,11 +546,11 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                   <span className="text-sm font-medium text-slate-900 dark:text-white">
                                     {st.name}
                                   </span>
-                                  <code className="text-[10px] px-1 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-400 font-mono">
+                                  <code className="text-[10px] px-1 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500 font-mono">
                                     {st.key}
                                   </code>
                                 </div>
-                                <span className="text-xs text-slate-500 line-clamp-1">
+                                <span className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
                                   {st.description || st.namePl || '—'}
                                 </span>
                               </div>
@@ -596,7 +596,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                 className="w-6 h-6 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center"
                                 title="No AI prompt"
                               >
-                                <span className="text-[10px] text-slate-400">—</span>
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500">—</span>
                               </div>
                             )}
                           </td>
@@ -666,7 +666,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                               <div className="grid grid-cols-3 gap-6">
                                 {/* Col 1: Details */}
                                 <div className="space-y-3">
-                                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                  <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     Section Details
                                   </h4>
                                   <div className="space-y-2">
@@ -684,15 +684,15 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                           {st.name}
                                         </p>
                                         {st.namePl && (
-                                          <p className="text-xs text-slate-400">{st.namePl}</p>
+                                          <p className="text-xs text-slate-400 dark:text-slate-500">{st.namePl}</p>
                                         )}
                                       </div>
                                     </div>
-                                    <p className="text-xs text-slate-500">
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
                                       {st.description || 'No description'}
                                     </p>
                                     {st.descriptionPl && (
-                                      <p className="text-xs text-slate-400 italic">
+                                      <p className="text-xs text-slate-400 dark:text-slate-500 italic">
                                         {st.descriptionPl}
                                       </p>
                                     )}
@@ -701,12 +701,12 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
 
                                 {/* Col 2: Technical */}
                                 <div className="space-y-3">
-                                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                  <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     Technical
                                   </h4>
                                   <div className="grid grid-cols-2 gap-2">
                                     <div className="p-2 rounded-lg bg-white/50 dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50">
-                                      <span className="text-[10px] text-slate-400 uppercase">
+                                      <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase">
                                         Key
                                       </span>
                                       <p className="text-xs font-mono text-slate-600 dark:text-slate-400">
@@ -714,7 +714,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                       </p>
                                     </div>
                                     <div className="p-2 rounded-lg bg-white/50 dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50">
-                                      <span className="text-[10px] text-slate-400 uppercase">
+                                      <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase">
                                         Component
                                       </span>
                                       <p className="text-xs font-mono text-indigo-500">
@@ -722,7 +722,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                       </p>
                                     </div>
                                     <div className="p-2 rounded-lg bg-white/50 dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50">
-                                      <span className="text-[10px] text-slate-400 uppercase">
+                                      <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase">
                                         Icon
                                       </span>
                                       <p className="text-xs text-slate-600 dark:text-slate-400">
@@ -733,10 +733,10 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                                       </p>
                                     </div>
                                     <div className="p-2 rounded-lg bg-white/50 dark:bg-navy-900/50 border border-slate-200/50 dark:border-navy-700/50">
-                                      <span className="text-[10px] text-slate-400 uppercase">
+                                      <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase">
                                         ID
                                       </span>
-                                      <p className="text-xs font-mono text-slate-500 truncate">
+                                      <p className="text-xs font-mono text-slate-500 dark:text-slate-400 truncate">
                                         {st.id}
                                       </p>
                                     </div>
@@ -745,12 +745,12 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
 
                                 {/* Col 3: AI Prompt */}
                                 <div className="space-y-3">
-                                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                  <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                                     <Sparkles size={12} className="text-primary-400" />
                                     AI Prompt Template
                                   </h4>
                                   {st.aiPromptTemplate ? (
-                                    <pre className="text-[11px] text-slate-500 p-3 rounded-lg bg-primary-50/50 dark:bg-primary-500/5 border border-primary-200/50 dark:border-primary-500/10 overflow-auto max-h-40 whitespace-pre-wrap font-mono leading-relaxed">
+                                    <pre className="text-[11px] text-slate-500 dark:text-slate-400 p-3 rounded-lg bg-primary-50/50 dark:bg-primary-500/5 border border-primary-200/50 dark:border-primary-500/10 overflow-auto max-h-40 whitespace-pre-wrap font-mono leading-relaxed">
                                       {st.aiPromptTemplate}
                                     </pre>
                                   ) : (

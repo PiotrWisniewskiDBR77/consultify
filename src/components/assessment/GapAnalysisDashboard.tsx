@@ -83,7 +83,7 @@ export const GapAnalysisDashboard: React.FC<GapAnalysisDashboardProps> = ({
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <h2 className="text-3xl font-bold mb-6 flex items-center gap-2">
-        <Target className="w-8 h-8 text-danger-500" />
+        <Target className="w-8 h-8 text-rose-500" />
         Gap Analysis & Initiatives
       </h2>
 
@@ -176,7 +176,7 @@ export const GapAnalysisDashboard: React.FC<GapAnalysisDashboardProps> = ({
                   <span
                     className={`px-3 py-1 rounded-full text-sm ${
                       initiative.priority === 'Critical'
-                        ? 'bg-danger-100 text-danger-700'
+                        ? 'bg-rose-100 text-rose-700'
                         : initiative.priority === 'High'
                           ? 'bg-amber-100 text-amber-700'
                           : 'bg-blue-100 text-blue-700'

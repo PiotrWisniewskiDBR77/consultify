@@ -99,12 +99,12 @@ export const DecisionsHub: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white">
+    <div className="flex flex-col h-full bg-c-bg text-c-text">
       {/* ----------------------------------------------------------------
-          Navigation Bar — Menu 2 + Menu 3 in a single bg-white block
-          Standard: bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/5
+          Navigation Bar — Menu 2 + Menu 3 in a single surface block
+          Standard: bg-c-surface border-b border-c-border-subtle
           ---------------------------------------------------------------- */}
-      <div className="bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/5">
+      <div className="bg-c-surface border-b border-c-border-subtle">
         {/* Menu 2 row */}
         <div className="flex items-center justify-between px-4 py-3">
           {/* Left: tabs */}
@@ -135,13 +135,12 @@ export const DecisionsHub: React.FC = () => {
               className="
                 inline-flex items-center justify-center h-9 rounded-lg px-4
                 text-sm font-medium transition-colors duration-150
-                text-white dark:text-navy-950
-                bg-navy-900 hover:bg-navy-800
-                dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF]
+                text-white
+                bg-c-accent hover:opacity-90
                 active:scale-[0.98]
                 focus-visible:outline-none focus-visible:ring-2
                 focus-visible:ring-c-focus focus-visible:ring-offset-1
-                ring-offset-white dark:ring-offset-navy-900
+                ring-offset-c-bg
               "
               data-testid="decisions-cta-new"
             >

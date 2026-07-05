@@ -152,3 +152,91 @@ Hub: `ReportsAndPresentationsHub.tsx` (ModuleHub — Menu 1/2/3, 7 zakładek, br
 | Stan: v8 OFF | dedykowany baner "moduł wyłączony" (moduleDisabled) | `useRapData.ts`→`ReportsAndPresentationsHub.tsx` |
 
 Liczba ekranów: ~11 (7 zakładek taksonomii + trust-state + public viewer + stany).
+
+---
+
+## Generatory Deliverable — warstwa zunifikowanego wejścia (M17 w programie M17–M20)
+
+> **APPEND 2026-06-23.** Sekcja dokłada do teczki M17 NOWĄ rolę modułu w programie „Generatory Deliverable" (SSOT: [`DELIVERABLES-STAN-PRACY-ODBIORY.md`](DELIVERABLES-STAN-PRACY-ODBIORY.md), plan testów: `docs/qa/deliverables/test-plan/{E,T,X}-series.md`). Powyższa teczka (warstwy 00–H) opisuje ISTNIEJĄCY moduł Outputs Library (rejestr/biblioteka/lineage); ta sekcja opisuje M17 jako **zunifikowany launcher + hub + transakcyjny rejestr** generatorów. Zachowuje wzorzec 8-warstwowy ([`_WZORZEC_TECZKI.md`](_WZORZEC_TECZKI.md)): traceability epik→DoD→dowód, R3 (dowód > dziedziczenie), R4 (DoD z liczbami).
+>
+> **PRAWDA STANU (uczciwie, R3):** wszystkie sub-moduły niżej są **CODE-COMPLETE za flagą** (FE: `VITE_ENABLE_DELIVERABLES_LIGHT`; premium: `ENABLE_DELIVERABLES_PREMIUM`), **NIE wpięte w żywe UI klienta** (klienci OFF najpierw). Launcher (`OutputsLauncherModal`) + hub (`ReportsAndPresentationsHub`, `data-testid="reports-presentations-hub"`) renderują się w żywym UI na `/presentations`. `data-testid` dodane w tej sesji: `launcher-type-report|presentation|table`, `launcher-template-*`, `launcher-suggest-input/btn`, `outputs-new-btn`. Potwierdzone żywo: app bootuje lokalnie, hub renderuje się po zalogowaniu, przyciski „New presentation"/„New AI document" obecne.
+
+### Rola M17 w programie (job-to-be-done warstwy wejścia)
+M17 przestaje być tylko „biblioteką wyników" — staje się **jednym wejściem do produkcji deliverable**: launcher „Nowy" z 3 kaflami typu (Raport / Prezentacja / Tabela) → galeria template (DBR77 kuratorowane + user-created + Teresa-proponuje) → spójna „paczka kontekstu" → routing do edytora (Tryb B przez Teresę) → po generacji **transakcyjna rejestracja w Outputs + lineage**. Jeden silnik, zero duplikatów (północny gwiazdor: „jeden deliverable, zero duplikatów" — [[finding_deliverables_connection_model]]).
+
+### F+ · EPIKI → STORIES (warstwa launcher/template/registry, traceable do E/T/X)
+
+- **EPIK G1 — Launcher „Nowy" + 3 kafle typu (sub-moduł E1, 2 epiki):**
+  - Story G1.1: jako użytkownik na tabie agregatu Outputs (`outputs_all/mine/review`) chcę kliknąć „Nowy" i zobaczyć modal z 3 kaflami typu, aby zacząć dowolny deliverable z jednego miejsca.
+    - Gherkin: *dany* hub `/presentations`, tab agregatu, flaga `VITE_ENABLE_DELIVERABLES_LIGHT=true` · *gdy* klik `outputs-new-btn` · *wtedy* `role=dialog` „New output" z 3 kaflami (`launcher-type-report|presentation|table`). [dowód: `OutputsLauncherModal.tsx:213-286`, `ReportsAndPresentationsHub.tsx:237-246` `handleNewItem`; commit `a3387f55ed`]
+  - Story G1.2: jako system chcę, by flaga OFF dawała fallback (NIE launcher), aby klient bez programu nie zobaczył nowego flow. Gherkin: *gdy* flaga != 'true' i klik „Nowy" · *wtedy* `navigate('/presentations?tab=templates')`, brak modala. [dowód: `ReportsAndPresentationsHub.tsx:237-246`]
+
+- **EPIK G2 — Galeria template (sub-moduł E2 + T2 DBR77 + T3 user-created, 2+2+2 epiki):**
+  - Story G2.1: jako użytkownik po wyborze typu chcę galerię szablonów (Blank zawsze pierwszy + kuratorowane DBR77 per typ), aby wystartować ze struktury, nie z pustki. Gherkin: *gdy* klik kafla typu · *wtedy* krok 2 „Choose a template" z `launcher-template-blank` + kuratorowane (doc: audit-report/exec-memo; deck: board-deck/diagnostic; table: risk-register/kpi-dashboard). [dowód: `OutputsLauncherModal.tsx:259-402`; T2 seed migracja `784`, commit `f3b19a78d1`]
+  - Story G2.2: jako użytkownik chcę tworzyć/edytować/usuwać własne template (org-scope), widoczne tylko w mojej org. Gherkin: *dany* `POST/PUT/DELETE /api/deliverables/templates` za JWT+org · *gdy* cross-org PUT/DELETE · *wtedy* 403 (`TemplateForbiddenError`). [dowód: `deliverableTemplates.routes.ts`; migracja `785`; commit `4a79090db8`]
+
+- **EPIK G3 — Silnik template zunifikowany (sub-moduł T1, federacja 3 tabel):**
+  - Story G3.1: jako FE chcę jednego API `GET /api/deliverables/templates?type={doc|deck|table}` federującego 3 tabele (`report_builder_templates`/`presentation_templates`/`tp_base_templates`), aby launcher nie znał szczegółów per typ. Gherkin: *gdy* `type` valid · *wtedy* `200 {templates:[...]}`; *gdy* `type` invalid · *wtedy* `400`. [dowód: `deliverableTemplates.routes.ts:44-49`; migracja `783`; commit `bc41936116`]
+
+- **EPIK G4 — Teresa-proponuje template (sub-moduł T4):**
+  - Story G4.1: jako użytkownik chcę z intencji NL („zrób audyt") dostać sugestię template z confidence+uzasadnieniem. Gherkin: *gdy* `POST /api/deliverables/templates/suggest {intent,type}` · *wtedy* `200 {suggestion: null | {templateId,confidence,reasoning}}` (fail-open, NIGDY 500). [dowód: `deliverableTemplates.routes.ts:166-194`; commit `6d227f4798`]
+
+- **EPIK G5 — Kontrakt „paczka kontekstu" + routing (sub-moduły E3 + E4):**
+  - Story G5.1: jako system chcę, by każda ścieżka wejścia (encja inicjatywy/notatnik/ideas/canvas/czat/„Nowy") montowała spójny `openChatWithContext({entityType:'deliverable_launch', entityId:'{type}-{templateId}', contextData:{teresaPrompt, deliverableType, templateId}})`. Gherkin: *gdy* wybór typu+template w launcherze · *wtedy* opener czatu z `deliverableKickoffSeed(type)` zgodnym z detektorem Tryb B. [dowód: `ReportsAndPresentationsHub.tsx:205-224`; commit `097553ee6c`/`E3`]
+  - Story G5.2: jako użytkownik po odpowiedzi Teresy (Tryb B) chcę trafić do właściwego edytora (doc→`/document-studio` TipTap, deck→`/presentations/:deckId` MELS, tabela→grid); błąd generacji = uczciwy komunikat, nie biały ekran. [dowód: E4 = REUSE Tryb B; mapowanie `toApiType` `OutputsLauncherModal.tsx:200-201`]
+
+- **EPIK G6 — X5 doc/sheet = jedna encja (round-trip, brak duplikatu):**
+  - Story G6.1: jako system chcę, by doc/sheet z czatu i edycja w Studio/Canvas były TYM SAMYM rekordem (`work_canvas_drafts.artifact_id ↔ wave5_artifacts`), aby lista Outputs nie pokazywała duplikatów. Gherkin: *gdy* `commitDraftToArtifact` re-commit istniejącego · *wtedy* `isNewArtifact===false`, bump wersji, zero drugiego rekordu. [dowód: `unifiedDocEntityService.ts`; commit `14f29f8f1f`]
+
+- **EPIK G7 — X6 transakcyjny rejestr Outputs + lineage:**
+  - Story G7.1: jako system chcę, by każdy artefakt ze źródła trafiał do Outputs ATOMOWO (BEGIN/COMMIT obu INSERT-ów: `v8_output_artifacts` + `v8_artifact_origin_links`), idempotentnie po `(originRuntime, originRecordId)`, z lineage do źródła; po błędzie ROLLBACK (zero driftu); org-scope. Gherkin: *gdy* 2× register tej samej pary · *wtedy* 1 artefakt (`isNew===false`); *gdy* błąd 2. INSERT · *wtedy* 0 wierszy. [dowód: `outputsTransactionalRegistry.ts`; commit `5825e2d7f6`]
+
+### G+ · DoD globalny (7 kryteriów SSOT) — zastosowany do M17 launcher/template/registry
+
+| # | Kryterium globalne | Stan dla M17 (warstwa generatorów) | Met / Pending |
+|---|---|---|---|
+| 1 | **Spięcie front↔back** (zero fasad/martwych CTA) | Launcher+hub renderują żywo; `data-testid` dodane (`outputs-new-btn`, `launcher-type-*`, `launcher-template-*`, `launcher-suggest-*`); template API federuje 3 tabele realnie; X6 rejestr transakcyjny | 🟡 **częściowo** — kod spięty, ale launcher→edytor (G5.2) idzie przez Teresę/Tryb B i **NIEZWERYFIKOWANE żywo na końcu** (wymaga LLM); klienci OFF |
+| 2 | **Bezpieczeństwo** (org-scope, JWT, flaga per-org+fail-open, 0 P0/P1) | Template API: `verifyToken`+`requireOrgAccess` na całym routerze; org z JWT (`getOrgId`); cross-org PUT/DELETE→403; suggest fail-open (nigdy 500); X5/X6 org-scope (null/`[]` dla cudzej org) | 🟢 **code-side spełnione** (FT-8 zielone T1/T3/X5/X6); **żywy IDOR-test cross-org pending** (2 różne org w E2E = blocker test-infra) |
+| 3 | **i18n** (PL+EN przez `t()`) | Launcher i18n PL/EN (`rap.outputs.launcher.*`); E1/E2/T4 i18n zadeklarowane zielone code-side; rdzeń M17 hub: L-09 ZAMKNIĘTA (`reports.*`/`rap.*` 271 kluczy) | 🟢 **code-side**; żywy PL/EN render launchera pending (FT-7) |
+| 4 | **Tokeny CSS** (zero hex w chrome) | Hub: 0 hex (grep=0, sekcja G powyżej); launcher kafle/galeria = klasy Tailwind/tokeny | 🟢 **code-side** (dark-parytet launchera = FT-3 e2e + manual pending) |
+| 5 | **Standard UI/UX** (kanon §7/§9/§17/§27; „mniej znaczy więcej") | Launcher 2-krokowy minimalny (typ→template), Blank zawsze pierwszy; hub = ModuleHub (Menu 1/2/3, breadcrumbs) | 🟡 **pending UI-review** (→UI Piotra; checkpoint manualny W1) |
+| 6 | **tsc + lint + testy** (0 fail; KOMPLET FT) | Code-side FT zielone: E1 FT-1; E2 FT-1 10/10; E3 FT-2 6/6; T1 20/20; T2 20/20; T3 18/18; T4 22/22; X5 12/12; X6 10/10 | 🟡 **FT-1/FT-2/FT-8 zielone**; **FT-3 (e2e Playwright) NIE napisane** (plan w E/T/X-series, blokery test-id częściowo zdjęte); FT-7 manual 0 |
+| 7 | **Flaga/rollout/telemetria** (zmiana za flagą per-org; fail-open; telemetria) | Launcher za `VITE_ENABLE_DELIVERABLES_LIGHT`; premium za `ENABLE_DELIVERABLES_PREMIUM`; telemetria kosztu przez AIPipeline (B5 resolver) | 🟢 **flaga + fail-open obecne**; **deploy staging za flagą + per-org rollout = pending** (znany blocker: VITE flaga build-time, [[finding_deliverables_vite_flag_deploy]]) |
+
+**Podsumowanie DoD: 0/7 formalnie ZAMKNIĘTE.** Met code-side (kryteria 2,3,4,7) ale żaden nie domknięty do końca bo brak: FT-3 e2e zielone na Londyn (kryt. 6), żywa weryfikacja launcher→edytor (kryt. 1), UI-review Piotra (kryt. 5), deploy staging + manual FT-7 + →F/→UI (kryt. 1,5,7). To jest stan **„code-complete, odbiór niedomknięty"** — zgodny z dashboardem SSOT (0/24 ZAMKNIĘTYCH).
+
+### Status per sub-moduł (R3 — dowód, nie dziedziczenie)
+
+| Sub-moduł | Rola w M17 | Code-side | Deploy | FT-3 e2e | Manual (FT-7) | →F | →UI |
+|---|---|---|---|---|---|---|---|
+| **E1** Launcher + 3 kafle | wejście | 🟢 (commit `a3387f55ed`; FT-1✅) | ⬜ pending | ⬜ plan E-series E1-S01..S12 | ⬜ 0/6 | ⬜ | ⬜ |
+| **E2** Galeria template | wejście | 🟢 (commit `c4c8bac2d3`; FT-1 10/10) | ⬜ | ⬜ plan E2-S01..S08 | ⬜ 0/5 | ⬜ | ⬜ |
+| **E3** Paczka kontekstu (3 ścieżki) | wejście | 🟢 (commit `097553ee6c`; FT-2 6/6) | ⬜ | ⬜ plan E3-S01..S10 (S01-05 zablokowane brakiem test-id „zrób z tego") | ⬜ 0/8 | ⬜ | ⬜ |
+| **E4** Routing → edytor | wejście | 🟢 (REUSE Tryb B) | ⬜ | ⬜ plan E4-S01..S07 (S01-03 wymagają LLM lub mock) | ⬜ 0/4 | ⬜ | ⬜ |
+| **T1** Model template + persyst | silnik | 🟢 (commit `bc41936116`; FT-1+2 20/20+org-scope) | ⬜ | ⬜ plan T1 (API testowalne OD ZARAZ; cross-org blocked = 2 org) | ⬜ 0/4 | ⬜ | ⬜ |
+| **T2** Biblioteka DBR77 | silnik | 🟢 (commit `f3b19a78d1`; FT-1 14/14 + FT-2 6/6) | ⬜ | ⬜ plan T2 (golden FT-6 = ocena człowieka) | ⬜ 0/6 | ⬜ | ⬜ |
+| **T3** User-created CRUD | silnik | 🟢 (commit `4a79090db8`; FT-1+2+8 18/18) | ⬜ | ⬜ plan T3 (CRUD API OD ZARAZ) | ⬜ 0/6 | ⬜ | ⬜ |
+| **T4** Teresa-proponuje | silnik | 🟢 (commit `6d227f4798`; FT-1+2+6 22/22) | ⬜ | ⬜ plan T4 (suggest API OD ZARAZ; fail-open) | ⬜ 0/4 | ⬜ | ⬜ |
+| **X5** doc/sheet = jedna encja | rejestr | 🟢 (commit `14f29f8f1f`; FT 12/12) | ⬜ (OPT-IN, żywe EP nietknięte) | ⬜ X5-U01 (UI brak dup) | ⬜ 0/6 | ⬜ | ⬜ |
+| **X6** Transakcyjny rejestr + lineage | rejestr | 🟢 (commit `5825e2d7f6`; FT 10/10) | ⬜ (NIE modyfikuje żywej `registerArtifactOrigin`) | ⬜ X6-U01 (output natychmiast) | ⬜ 0/4 | ⬜ | ⬜ |
+
+**Legenda statusu:** 🟢 GOTOWY code-side (FT-1/2/8 zielone, commit) · ⬜ pending. Wszystkie sub-moduły = **code-side done / deploy-pending / FT-3 e2e niedopisane / FT-7 manual 0 / →F →UI pending**.
+
+### H+ · Rejestr wejść (dołożone — program Generatory Deliverable)
+| ID | Źródło | Data | Treść (1 zd.) | → Luka / Story |
+|----|--------|------|----------------|---------|
+| W-06 | SSOT `DELIVERABLES-STAN-PRACY-ODBIORY.md` (E1-E4,T1-T4,X5,X6) | 2026-06-22 | M17 = zunifikowany launcher+hub+transakcyjny rejestr; 24/24 code-side, 0/24 ZAMKNIĘTE | G1-G7 |
+| W-07 | `docs/qa/deliverables/test-plan/E-series.md` | 2026-06-22 | launcher nie nawiguje wprost do edytora — montuje opener Teresy (Tryb B); E3-S01..05 blokowane brakiem test-id „zrób z tego" | G5 (routing przez czat) |
+| W-08 | `docs/qa/deliverables/test-plan/T-series.md` | 2026-06-22 | unified template API `doc\|deck\|table` federuje 3 tabele; cross-org 403/izolacja blokowane brakiem 2 org w E2E | G2/G3/G4 |
+| W-09 | `docs/qa/deliverables/test-plan/X-series.md` | 2026-06-22 | X5 jedna encja (zero dup) + X6 transakcyjny rejestr + lineage; brak per-wiersz/per-tab `data-testid` w hubie | G6/G7 |
+| W-10 | Sesja 2026-06-23 (żywa weryfikacja) | 2026-06-23 | app bootuje lokalnie, hub renderuje się po zalogowaniu; `data-testid` launchera dodane (`outputs-new-btn`, `launcher-type-*`, `launcher-template-*`, `launcher-suggest-input/btn`) | (odblokowuje FT-3) |
+
+### H+ · Rejestr decyzji (dołożone)
+| ID | Pytanie | Opcje | Właściciel | Termin | Status |
+|----|---------|-------|------------|--------|--------|
+| D-03 | Kiedy wpiąć launcher w żywe UI klienta | OFF do domknięcia FT-3+FT-7+staging / włączyć per-org pilot | Piotr | po W1 checkpoint | **OTWARTE** — klienci OFF najpierw (decyzja programu) |
+| D-04 | Próg jakości FT-6 (Q1) dla golden T2/T4 | ≥85% wszystkie formaty (locked 2026-06-22) | Piotr | — | **ROZSTRZYGNIĘTE** (Q1=≥85%) — pomiar live pending |
+| D-05 | 2 różne org w E2E test-support (odblokowuje cross-org 403: T1/T3/X5/X6) | rozszerzyć `/api/test-support/bootstrap` o świeżą org / honest-skip | Piotr/Claude | przed FT-8 e2e | **OTWARTE** |
+
+### Bramka teczki (warstwa generatorów): dokumentacyjnie kompletna; ODBIÓR niedomknięty
+Epiki G1-G7 traceable do E/T/X + commitów (R2 zero sierot); DoD 7/7 zmapowane z liczbami FT (R4); statusy z dowodem-commitem, nie dziedziczone (R3); decyzje z właścicielem (R5: D-03/D-05 otwarte). **Następny krok (R6):** deploy staging za flagą → FT-3 e2e (E/T/X-series) → checkpoint manualny W1 (FT-7) → →F/→UI Piotra. Manualne scenariusze wykonawcze: [`Harvard/Testy manualne/TESTY_M17_OUTPUTS.md`](../Testy%20manualne/TESTY_M17_OUTPUTS.md) §Generatory Deliverable.

@@ -81,8 +81,10 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
 
   const regionMap = useMemo(() => {
     if (!layout || card.blocks.length === 0) return null;
-    return assignBlocksToRegions(card.blocks, layout);
-  }, [layout, card.blocks]);
+    // STEP 1b — pass B1's composition so the AI's area assignment is honoured;
+    // absent → byte-identical to the prior preferred-block-type heuristic.
+    return assignBlocksToRegions(card.blocks, layout, card.composition);
+  }, [layout, card.blocks, card.composition]);
 
   const useGridLayout = layout && regionMap && layout.regions.length > 1;
 
@@ -152,7 +154,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
               isRefreshable={block.is_refreshable ?? false}
             />
           )}
-          <div className="absolute inset-0 rounded border-2 border-transparent group-hover:border-primary-400/50 transition-colors pointer-events-none" />
+          <div className="absolute inset-0 rounded border-2 border-transparent group-hover:border-c-border-strong transition-colors pointer-events-none" />
         </div>
       </AnimatedBlock>
     );
@@ -161,7 +163,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
   const cardContent = (
     <div
       className={`relative rounded-xl overflow-hidden shadow-lg transition-shadow ${
-        isActive ? 'ring-2 ring-slate-500 dark:ring-white/50 shadow-xl' : 'shadow-md'
+        isActive ? 'ring-2 ring-c-focus-solid shadow-xl' : 'shadow-md'
       }`}
       style={{
         aspectRatio: '16/9',

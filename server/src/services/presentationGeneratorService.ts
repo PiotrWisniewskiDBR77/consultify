@@ -40,7 +40,9 @@ import {
   type PresentationTemplateRuntime,
 } from './presentationTemplateRuntimeService.js';
 import { qaGatedImageGeneration } from './presentationVisionQAService.js';
-import { planDeckVisuals } from './presentationVisualDirectorService.js';
+import { planDeckVisuals, planDeckVisualsTiered } from './presentationVisualDirectorService.js';
+import { generateDeckVariants } from './presentationLayoutVariantsService.js';
+import { resolveDeliverableTier } from './deliverableGenerationTier.js';
 import { PptxPipelineService } from './report/pptx/PptxPipelineService.js';
 import type {
   SlideIntent,
@@ -54,6 +56,7 @@ import {
   buildTransformationReadDeckPack,
 } from './transformationReadDeckPackService.js';
 import * as artifactRegistryService from './v8/artifactRegistryService.js';
+import { runBundleContentGate } from './deliverables/bundleContentGate.js';
 
 // ============================================================
 // TYPES
@@ -194,7 +197,7 @@ function generateOutlineFromTemplate(
   return outline.map(applyIntentDensityDefaults);
 }
 
-function generateDefaultOutline(setup: DeckSetup): OutlineItem[] {
+export function generateDefaultOutline(setup: DeckSetup): OutlineItem[] {
   const items: OutlineItem[] = [
     { intent: 'cover', title: setup.title, enabled: true },
     {
@@ -208,6 +211,41 @@ function generateDefaultOutline(setup: DeckSetup): OutlineItem[] {
       enabled: true,
     },
   ];
+
+  // Blank-brief (no source artifacts): a 4-slide stub (cover/exec/key/next) is
+  // too thin for a consulting-grade deck. Lay down the standard narrative arc
+  // — problem → approach → findings → recommendations → roadmap → risks — with
+  // sensible per-slide key messages so downstream content-gen has real anchors
+  // (not "Key message for X" placeholders). When sources ARE present, the
+  // source-driven slides below carry the analytical narrative instead.
+  const pl = setup.language === 'pl';
+  // "Rich" sources drive the analytical slides below. A deck whose only source is
+  // the synthetic `custom` placeholder (injected by the V8 materialize path when
+  // no real artifact exists) is effectively a blank-brief narrative deck — so the
+  // arc must fire on "no rich source", not merely "no source at all".
+  const RICH_SOURCE_TYPES = new Set([
+    'initiative_portfolio', 'execution_status', 'kpi_roi', 'raid', 'assessment', 'tool_session',
+  ]);
+  const hasRichSource =
+    Array.isArray(setup.sourceArtifacts) &&
+    setup.sourceArtifacts.some((s) => RICH_SOURCE_TYPES.has(String((s as any).type)));
+  if (!hasRichSource) {
+    const arc: OutlineItem[] = [
+      { intent: 'root_cause', title: pl ? 'Problem i kontekst' : 'Problem & Context',
+        keyMessage: pl ? 'Jaki problem rozwiązujemy i dlaczego teraz' : 'The problem we solve and why now', enabled: true },
+      { intent: 'single_insight', title: pl ? 'Podejście i metodyka' : 'Approach & Methodology',
+        keyMessage: pl ? 'Jak podchodzimy do problemu' : 'How we approach the problem', enabled: true },
+      { intent: 'performance_overview', title: pl ? 'Wyniki i analiza' : 'Findings & Analysis',
+        keyMessage: pl ? 'Co pokazują dane i analiza' : 'What the data and analysis show', enabled: true },
+      { intent: 'recommendation_portfolio', title: pl ? 'Rekomendacje' : 'Recommendations',
+        keyMessage: pl ? 'Co rekomendujemy i dlaczego' : 'What we recommend and why', enabled: true },
+      { intent: 'roadmap', title: pl ? 'Roadmapa wdrożenia' : 'Implementation Roadmap',
+        keyMessage: pl ? 'Plan realizacji w czasie' : 'Phased execution plan', enabled: true },
+      { intent: 'risk_management', title: pl ? 'Ryzyka i mitygacje' : 'Risks & Mitigations',
+        keyMessage: pl ? 'Kluczowe ryzyka i plan ich ograniczenia' : 'Key risks and how we mitigate them', enabled: true },
+    ];
+    items.push(...arc);
+  }
 
   for (const source of setup.sourceArtifacts) {
     switch (source.type) {
@@ -1352,8 +1390,9 @@ export async function generateDeck(
       const maxImages =
         visualPriority === 'cost' ? 1 : density === 'high' ? 6 : density === 'medium' ? 3 : 1;
 
-      // 1) Plan visuals (deterministic v1)
-      const plannedSlides = planDeckVisuals({
+      // 1) Plan visuals — premium B1 Layout Director when flag ON (fail-open +
+      // byte-identical to deterministic v1 when OFF, default for all clients).
+      const tieredVisuals = await planDeckVisualsTiered({
         slides,
         meta,
         deckTitle: setup.title,
@@ -1365,7 +1404,10 @@ export async function generateDeck(
           priority: visualPriority,
           imageDensity: density,
         },
+        orgId: organizationId,
+        preferPremium: true,
       });
+      const plannedSlides = tieredVisuals.slides;
       // Apply planned visuals back into the slides array (in-place by index)
       for (let i = 0; i < slides.length; i++) slides[i] = plannedSlides[i];
 
@@ -1478,6 +1520,70 @@ export async function generateDeck(
 
     const unifiedJson: UnifiedReportJSON = { meta, slides: auditedSlides };
     const warnings = [...extraWarnings];
+
+    // ------------------------------------------------------------
+    // F1.4 — per-deck CONTENT GATE (placeholder scan on final slides).
+    // The bundle pipeline (bundleGenerationRuntime) already runs this for
+    // the premium 3-format bundle, but a standalone L1 deck never did — so
+    // a "[PLACEHOLDER]" / "TBD" / "AWAITING CONTENT" leak could ship in a
+    // solo deck unnoticed. We scan the assembled slide text (key_message +
+    // content + narrative enrichment) and surface any hit as a warning the
+    // Studio banner + PPTX review marker already know how to display.
+    // Pure + fail-open (runBundleContentGate never throws); JSON.stringify
+    // the discriminated-union content so every slide variant is covered
+    // without hand-mapping 17 content shapes.
+    // ------------------------------------------------------------
+    try {
+      const deckTextForGate = auditedSlides
+        .map((s) => {
+          const narrative = (s as { _narrative_enrichment?: { content?: string } })
+            ._narrative_enrichment?.content;
+          return [s.key_message, JSON.stringify(s.content ?? ''), narrative]
+            .filter(Boolean)
+            .join(' ');
+        })
+        .filter(Boolean)
+        .join('\n');
+      const contentGate = runBundleContentGate({ deckText: deckTextForGate });
+      if (!contentGate.passed) {
+        for (const issue of contentGate.issues) warnings.push(`content-gate: ${issue}`);
+        logger.warn(
+          `[PresentationGen] content-gate flagged ${contentGate.placeholderHits.length} placeholder(s) in deck ${deckId}`,
+          { hits: contentGate.placeholderHits.slice(0, 3).map((h) => h.pattern) }
+        );
+      }
+    } catch (gateErr) {
+      logger.warn(`[PresentationGen] content-gate skipped (non-fatal)`, { gateErr });
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // B2 (W4): PREMIUM layout variants — 3 distinct palette+intent
+    // plans stored as bonus data on deckDocument.variants. Fail-open:
+    // any error silently skips variant generation and ships the deck.
+    // ──────────────────────────────────────────────────────────────
+    let deckVariants: unknown[] | undefined;
+    try {
+      const tier = resolveDeliverableTier({ orgId: organizationId, preferPremium: true });
+      if (tier === 'PREMIUM') {
+        const variantsResult = await generateDeckVariants(auditedSlides, meta, {
+          orgId: organizationId,
+          preferPremium: true,
+        });
+        if (variantsResult.variants.length > 0) {
+          deckVariants = variantsResult.variants as unknown[];
+          logger.info('[PresentationGen] B2 deck variants generated', {
+            count: deckVariants.length,
+            tierUsed: variantsResult.tierUsed,
+            fallbackUsed: variantsResult.fallbackUsed,
+          });
+        }
+      }
+    } catch (b2Err) {
+      logger.warn('[PresentationGen] B2 deck variants failed (non-fatal), skipping', {
+        err: (b2Err as Error)?.message,
+      });
+    }
+
     let deckDocument = deckDocumentFromUnifiedJson({
       deckId,
       organizationId,
@@ -1547,6 +1653,11 @@ export async function generateDeck(
       ...sourcePackPreflight.warnings,
       ...narrativePlan.warnings,
     ];
+
+    // B2: attach variants (additive — never replaces primary slides).
+    if (deckVariants && deckVariants.length > 0) {
+      deckDocument.variants = deckVariants;
+    }
 
     let outlinePayload: unknown = outline;
     try {
@@ -1657,11 +1768,44 @@ export async function generateDeck(
   }
 }
 
+/**
+ * R4 — Default set of intents whose copy is produced by the Narrative Engine.
+ * Without an author instruction, only these slides are AI-rewritten (legacy
+ * behaviour). With a free-text instruction the user can rewrite ANY slide, so
+ * the gate is widened — see {@link shouldRunNarrativeRewrite}.
+ */
+export const NARRATIVE_REWRITE_INTENTS: SlideIntent[] = [
+  'executive_summary',
+  'key_messages',
+  'next_steps',
+  'recommendation_portfolio',
+];
+
+/**
+ * R4 — Pure decision: should the per-slide narrative rewrite run for this
+ * intent? A free-text instruction unlocks every slide; absent an instruction
+ * we keep the historical narrative-only gate. Exported for unit testing.
+ */
+export function shouldRunNarrativeRewrite(
+  intent: SlideIntent,
+  instruction?: string
+): boolean {
+  const hasInstruction = typeof instruction === 'string' && instruction.trim().length > 0;
+  if (hasInstruction) return true;
+  return NARRATIVE_REWRITE_INTENTS.includes(intent);
+}
+
 export async function regenerateSlide(
   deckId: string,
   slideIndex: number,
-  organizationId: string
-): Promise<{ slide: UnifiedSlide }> {
+  organizationId: string,
+  opts?: { instruction?: string }
+): Promise<{ slide: UnifiedSlide; card?: unknown }> {
+  const instruction =
+    typeof opts?.instruction === 'string' && opts.instruction.trim().length > 0
+      ? opts.instruction.trim()
+      : undefined;
+
   const deck = (await dbGet(
     `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
     [deckId, organizationId]
@@ -1674,15 +1818,9 @@ export async function regenerateSlide(
 
   const slide = unifiedJson.slides[slideIndex];
 
-  // Try narrative enrichment for text-heavy slides using the saved context pack.
-  const narrativeIntents: SlideIntent[] = [
-    'executive_summary',
-    'key_messages',
-    'next_steps',
-    'recommendation_portfolio',
-  ];
-
-  if (narrativeIntents.includes(slide.intent)) {
+  // R4 — narrative path runs for the legacy text-heavy intents OR for ANY slide
+  // when the author supplied a free-text rewrite instruction.
+  if (shouldRunNarrativeRewrite(slide.intent, instruction)) {
     const contextPack = await getContextPackSnapshot(deckId);
     if (contextPack) {
       try {
@@ -1703,6 +1841,7 @@ export async function regenerateSlide(
           section_type: slide.intent,
           section_title: slide.key_message || slide.intent,
           aiPurpose: 'presentation_slide_copy',
+          ...(instruction ? { user_instruction: instruction } : {}),
         });
 
         if (narrativeOutput.post_check.passed && narrativeOutput.content) {
@@ -1711,10 +1850,13 @@ export async function regenerateSlide(
             facts_used: narrativeOutput.facts_used.length,
             observations_used: narrativeOutput.observations_used.length,
             regenerated_at: new Date().toISOString(),
+            ...(instruction ? { instruction } : {}),
           };
           unifiedJson.slides[slideIndex] = slide;
         }
       } catch (err) {
+        // Fallback: AI unavailable / failed → keep the existing slide untouched
+        // and let the caller persist the (surgically unchanged) deck. No throw.
         logger.warn(`[PresentationGen] Narrative Engine skipped for regenerateSlide: ${err}`);
       }
     }
@@ -1734,5 +1876,9 @@ export async function regenerateSlide(
     [JSON.stringify(unifiedJson), JSON.stringify(updatedDeckDocument), deckId, organizationId]
   );
 
-  return { slide: unifiedJson.slides[slideIndex] };
+  // R4 — return the rebuilt FE-shaped card so the client can `updateCard()` in
+  // place (preserves undo) instead of reloading the whole deck.
+  const rebuiltCard = (updatedDeckDocument as any)?.cards?.[slideIndex];
+
+  return { slide: unifiedJson.slides[slideIndex], card: rebuiltCard };
 }

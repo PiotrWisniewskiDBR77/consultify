@@ -187,7 +187,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
             <div className="flex items-center gap-2 p-2 border-b border-slate-200 dark:border-navy-700">
               <button
                 onClick={showAll}
-                className="flex-1 px-2 py-1.5 text-xs font-medium text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded"
+                className="flex-1 px-2 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised rounded"
               >
                 {t('admin.table.showAll', 'Show All')}
               </button>
@@ -250,8 +250,8 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                       className={cn(
                         'p-1 rounded',
                         column.visible
-                          ? 'text-primary-600 bg-primary-100 dark:bg-primary-900/30'
-                          : 'text-slate-600 dark:text-slate-500',
+                          ? 'text-c-text-secondary bg-c-surface-raised'
+                          : 'text-slate-400 dark:text-slate-500',
                         column.required && 'opacity-50 cursor-not-allowed'
                       )}
                     >

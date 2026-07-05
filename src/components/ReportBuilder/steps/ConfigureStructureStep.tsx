@@ -114,15 +114,15 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-lg mx-4">
+      <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-lg mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-          <h3 className="font-semibold text-slate-900 dark:text-white">
+        <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
+          <h3 className="font-semibold text-c-text">
             {isPl ? 'Opcje Sekcji' : 'Section Options'}
           </h3>
           <button
             onClick={onClose}
-            className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
+            className="text-c-text-secondary hover:text-c-text-secondary"
           >
             <X className="w-5 h-5" />
           </button>
@@ -132,20 +132,20 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
         <div className="p-4 space-y-4">
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text mb-1">
               {isPl ? 'Tytuł Sekcji' : 'Section Title'}
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           {/* Length */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text mb-2">
               {isPl ? 'Długość' : 'Length'}
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -158,14 +158,14 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
                     ${
                       length === opt.value
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-slate-200 dark:border-slate-700 hover:border-blue-300'
+                        : 'border-c-border-subtle hover:border-blue-300'
                     }
                   `}
                 >
-                  <div className="font-medium text-sm text-slate-900 dark:text-white">
+                  <div className="font-medium text-sm text-c-text">
                     {isPl ? opt.labelPl : opt.label}
                   </div>
-                  <div className="text-xs text-slate-500">{opt.description}</div>
+                  <div className="text-xs text-c-text-secondary">{opt.description}</div>
                 </button>
               ))}
             </div>
@@ -173,7 +173,7 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
 
           {/* Language */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-c-text mb-2">
               {isPl ? 'Styl Języka' : 'Language Style'}
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -186,14 +186,14 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
                     ${
                       language === opt.value
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-slate-200 dark:border-slate-700 hover:border-blue-300'
+                        : 'border-c-border-subtle hover:border-blue-300'
                     }
                   `}
                 >
-                  <div className="font-medium text-sm text-slate-900 dark:text-white">
+                  <div className="font-medium text-sm text-c-text">
                     {isPl ? opt.labelPl : opt.label}
                   </div>
-                  <div className="text-xs text-slate-500">{opt.description}</div>
+                  <div className="text-xs text-c-text-secondary">{opt.description}</div>
                 </button>
               ))}
             </div>
@@ -201,7 +201,7 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
 
           {/* Custom Prompt */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-c-text mb-1">
               {isPl ? 'Dodatkowe Wskazówki dla AI' : 'Additional AI Guidance'}
             </label>
             <textarea
@@ -213,22 +213,22 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
                   : 'E.g., "Focus on financial aspects", "Include competitor comparison"...'
               }
               rows={3}
-              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 resize-none"
             />
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 p-4 border-t border-slate-200 dark:border-slate-700">
+        <div className="flex items-center justify-end gap-2 p-4 border-t border-c-border-subtle">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+            className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
           >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="px-4 py-2 bg-blue-600 text-c-text rounded-lg hover:bg-blue-700"
           >
             {isPl ? 'Zapisz' : 'Save'}
           </button>
@@ -288,21 +288,21 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md mx-4">
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-          <h3 className="font-semibold text-slate-900 dark:text-white">
+      <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-md mx-4">
+        <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
+          <h3 className="font-semibold text-c-text">
             {isPl ? 'Dodaj Sekcję' : 'Add Section'}
           </h3>
           <button
             onClick={onClose}
-            className="text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            className="text-c-text-secondary hover:text-c-text-secondary"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-4">
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          <label className="block text-sm font-medium text-c-text mb-1">
             {isPl ? 'Typ bloku' : 'Block type'}
           </label>
           <select
@@ -313,7 +313,7 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
               const bt = blockTypes.find((b) => b.id === id);
               if (bt && !title) setTitle(bt.name);
             }}
-            className="w-full mb-4 px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+            className="w-full mb-4 px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500"
           >
             <option value="">{isPl ? 'Custom (tytuł + prompt)' : 'Custom (title + prompt)'}</option>
             {isLoadingBlocks ? (
@@ -329,7 +329,7 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
             )}
           </select>
 
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          <label className="block text-sm font-medium text-c-text mb-1">
             {isPl ? 'Tytuł Sekcji' : 'Section Title'}
           </label>
           <input
@@ -339,21 +339,21 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
             placeholder={isPl ? 'Wprowadź tytuł...' : 'Enter title...'}
             autoFocus
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-            className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-        <div className="flex items-center justify-end gap-2 p-4 border-t border-slate-200 dark:border-slate-700">
+        <div className="flex items-center justify-end gap-2 p-4 border-t border-c-border-subtle">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+            className="px-4 py-2 text-c-text-secondary hover:bg-c-surface-raised rounded-lg"
           >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
           <button
             onClick={handleAdd}
             disabled={!title.trim()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 bg-blue-600 text-c-text rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
             {isPl ? 'Dodaj' : 'Add'}
           </button>
@@ -487,7 +487,7 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
     switch (type) {
       case 'cover':
       case 'summary':
-        return 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300';
+        return 'bg-c-accent-soft text-c-accent';
       case 'methodology':
         return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
       case 'matrix':
@@ -500,7 +500,7 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
       case 'action_plan':
         return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
       default:
-        return 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300';
+        return 'bg-c-surface-raised text-c-text';
     }
   };
 
@@ -508,7 +508,7 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
     <div className="space-y-4">
       {/* Summary */}
       <div className="flex items-center justify-between mb-4">
-        <div className="text-sm text-slate-500 dark:text-slate-400">
+        <div className="text-sm text-c-text-secondary">
           {isPl
             ? `${sortedSections.filter((s) => s.enabled).length} z ${sortedSections.length} sekcji włączonych`
             : `${sortedSections.filter((s) => s.enabled).length} of ${sortedSections.length} sections enabled`}
@@ -531,13 +531,13 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
               flex items-center gap-3 p-4 rounded-lg border transition-all
               ${
                 section.enabled
-                  ? 'border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900'
-                  : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 opacity-60'
+                  ? 'border-c-border-subtle bg-c-surface'
+                  : 'border-c-border-subtle bg-c-surface-raised opacity-60'
               }
             `}
           >
             {/* Drag Handle */}
-            <div className="cursor-grab text-slate-600 hover:text-slate-600">
+            <div className="cursor-grab text-c-text-secondary hover:text-c-text-secondary">
               <GripVertical className="w-5 h-5" />
             </div>
 
@@ -547,17 +547,17 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
               checked={section.enabled}
               onChange={() => handleToggleEnabled(section)}
               disabled={section.required}
-              className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+              className="w-5 h-5 rounded border-c-border text-blue-600 focus:ring-blue-500 disabled:opacity-50"
             />
 
             {/* Section Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-medium text-slate-900 dark:text-white truncate">
+                <span className="font-medium text-c-text truncate">
                   {section.title}
                 </span>
                 {section.required && (
-                  <span className="text-xs text-slate-500 dark:text-slate-400">(required)</span>
+                  <span className="text-xs text-c-text-secondary">(required)</span>
                 )}
               </div>
               <div className="flex items-center gap-2 mt-1">
@@ -566,7 +566,7 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
                 >
                   {section.sectionType}
                 </span>
-                <span className="text-xs text-slate-500 dark:text-slate-400">
+                <span className="text-xs text-c-text-secondary">
                   {section.length} • {section.language}
                 </span>
                 {section.customPrompt && (
@@ -584,7 +584,7 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
               <button
                 onClick={() => handleMove(index, 'up')}
                 disabled={index === 0}
-                className="p-1.5 text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded disabled:opacity-30"
+                className="p-1.5 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised rounded disabled:opacity-30"
               >
                 <ChevronUp className="w-4 h-4" />
               </button>
@@ -593,7 +593,7 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
               <button
                 onClick={() => handleMove(index, 'down')}
                 disabled={index === sortedSections.length - 1}
-                className="p-1.5 text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded disabled:opacity-30"
+                className="p-1.5 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised rounded disabled:opacity-30"
               >
                 <ChevronDown className="w-4 h-4" />
               </button>
@@ -601,7 +601,7 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
               {/* Options */}
               <button
                 onClick={() => setOptionsSection(section)}
-                className="p-1.5 text-slate-600 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+                className="p-1.5 text-c-text-secondary hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
               >
                 <Settings className="w-4 h-4" />
               </button>
@@ -610,7 +610,7 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
               {!section.required && section.sectionKey.startsWith('custom_') && (
                 <button
                   onClick={() => handleRemoveSection(section.sectionKey)}
-                  className="p-1.5 text-slate-600 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded"
+                  className="p-1.5 text-c-text-secondary hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

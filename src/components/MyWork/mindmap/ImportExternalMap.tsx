@@ -235,12 +235,12 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
   const renderTree = (node: ImportedNode, depth: number = 0): React.ReactNode => (
     <div key={node.id} style={{ marginLeft: depth * 16 }}>
       <div
-        className={`text-[${depth === 0 ? '12' : '10'}px] ${depth === 0 ? 'font-bold text-slate-700 dark:text-slate-200' : 'text-slate-600 dark:text-slate-300'} py-0.5`}
+        className={`text-[${depth === 0 ? '12' : '10'}px] ${depth === 0 ? 'font-bold text-c-text-secondary dark:text-c-text' : 'text-c-text-secondary dark:text-c-text-muted'} py-0.5`}
       >
-        {depth > 0 && <span className="text-slate-600 mr-1">{'─'.repeat(Math.min(depth, 3))}</span>}
+        {depth > 0 && <span className="text-c-text-secondary mr-1">{'─'.repeat(Math.min(depth, 3))}</span>}
         {node.label}
         {node.notes && (
-          <span className="ml-1 text-[8px] text-slate-600" title={node.notes}>
+          <span className="ml-1 text-[8px] text-c-text-secondary" title={node.notes}>
             📝
           </span>
         )}
@@ -254,18 +254,18 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
   const nodeCount = preview ? countNodes(preview) : 0;
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-lg rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
+    <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
+      <div className="w-full max-w-lg rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
           <div className="flex items-center gap-2">
-            <FileUp size={16} className="text-sky-500" />
-            <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+            <FileUp size={16} className="text-c-info" />
+            <h3 className="text-sm font-bold text-c-text dark:text-c-text">
               {isPl ? 'Import mapy' : 'Import Mind Map'}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             <X size={16} />
           </button>
@@ -274,8 +274,8 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {!preview && !loading && (
             <div className="text-center py-6">
-              <Upload size={36} className="text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
+              <Upload size={36} className="text-c-text-secondary dark:text-c-text-muted mx-auto mb-3" />
+              <p className="text-[11px] text-c-text-secondary dark:text-c-text-muted mb-4">
                 {isPl
                   ? 'Importuj mapę z pliku .mm (FreeMind), .xmind (XMind) lub .opml (OPML).'
                   : 'Import a map from .mm (FreeMind), .xmind (XMind), or .opml (OPML) file.'}
@@ -290,7 +290,7 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
               <button
                 onClick={() => fileRef.current?.click()}
                 disabled={locked}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-500/15 to-blue-500/10 text-[11px] font-bold text-sky-700 dark:text-sky-300 hover:from-sky-500/25 hover:to-blue-500/15 transition-all disabled:opacity-40"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-c-surface-raised text-[11px] font-bold text-c-info dark:text-c-info transition-all disabled:opacity-40"
               >
                 <Upload size={14} />
                 {isPl ? 'Wybierz plik' : 'Choose file'}
@@ -300,8 +300,8 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
 
           {loading && (
             <div className="flex items-center justify-center gap-2 py-8">
-              <Loader2 size={16} className="animate-spin text-sky-500" />
-              <span className="text-[11px] text-slate-500">
+              <Loader2 size={16} className="animate-spin text-c-info" />
+              <span className="text-[11px] text-c-text-secondary">
                 {isPl ? 'Parsuję...' : 'Parsing...'}
               </span>
             </div>
@@ -309,16 +309,16 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
 
           {preview && (
             <>
-              <div className="mb-3 p-2 rounded-xl bg-sky-500/5 border border-sky-500/10">
-                <div className="text-[10px] font-bold text-sky-700 dark:text-sky-300">
+              <div className="mb-3 p-2 rounded-xl bg-c-surface-raised border border-c-info">
+                <div className="text-[10px] font-bold text-c-info dark:text-c-info">
                   {fileName}
                 </div>
-                <div className="text-[9px] text-slate-600">
+                <div className="text-[9px] text-c-text-secondary">
                   {nodeCount} {isPl ? 'węzłów' : 'nodes'} · {preview.children.length}{' '}
                   {isPl ? 'gałęzi' : 'branches'}
                 </div>
               </div>
-              <div className="p-3 rounded-xl bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30 max-h-[250px] overflow-y-auto">
+              <div className="p-3 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border max-h-[250px] overflow-y-auto">
                 {renderTree(preview)}
               </div>
             </>
@@ -326,20 +326,20 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
         </div>
 
         {preview && (
-          <div className="px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center gap-2">
+          <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border flex items-center gap-2">
             <button
               onClick={() => {
                 setPreview(null);
                 setFileName('');
               }}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
             >
               {isPl ? 'Inny plik' : 'Different file'}
             </button>
             <button
               onClick={handleImport}
               disabled={locked}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-sky-500/15 to-blue-500/10 text-sky-700 dark:text-sky-300 hover:from-sky-500/25 hover:to-blue-500/15 border border-sky-500/10 transition-all disabled:opacity-40"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-c-surface-raised text-c-info dark:text-c-info border border-c-info transition-all disabled:opacity-40"
             >
               <FileUp size={12} />
               {isPl ? 'Importuj do mapy' : 'Import to map'}

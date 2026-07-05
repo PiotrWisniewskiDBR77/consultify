@@ -88,7 +88,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
       case 'blocked':
         return 'text-danger-400 bg-danger-500/10 border-danger-500/20';
       default:
-        return 'text-slate-600 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/300/10 border-slate-500/20';
+        return 'text-c-text-secondary bg-c-surface-raised border-c-border';
     }
   };
 
@@ -180,8 +180,8 @@ export const InitiativeTasksTab: React.FC<Props> = ({
       {/* Toolbar */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
-          <h3 className="text-navy-900 dark:text-white font-bold text-lg">Strategic Execution</h3>
-          <span className="bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 text-xs px-2 py-0.5 rounded-full border border-slate-200 dark:border-navy-700">
+          <h3 className="text-c-text font-bold text-lg">Strategic Execution</h3>
+          <span className="bg-c-surface-raised text-c-text-secondary text-xs px-2 py-0.5 rounded-full border border-c-border">
             {tasks.length}
           </span>
         </div>
@@ -192,18 +192,18 @@ export const InitiativeTasksTab: React.FC<Props> = ({
             className={`px - 3 py - 1.5 bg - purple - 50 dark: bg - purple - 600 / 20 hover: bg - purple - 100 dark: hover: bg - purple - 600 / 30 text - purple - 600 dark: text - purple - 300 border border - purple - 200 dark: border - purple - 500 / 30 rounded text - xs font - medium flex items - center gap - 2 transition - colors ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''} `}
           >
             {isGenerating ? (
-              <div className="w-4 h-4 rounded-full border-2 border-t-transparent border-primary-400 animate-spin" />
+              <div className="w-4 h-4 rounded-full border-2 border-t-transparent border-c-info animate-spin" />
             ) : (
               <span className="text-lg">✨</span>
             )}
             {isGenerating ? 'Generating Plan...' : 'Generate with AI'}
           </button>
-          <div className="flex bg-slate-100 dark:bg-navy-950 rounded border border-slate-200 dark:border-navy-700 p-1">
+          <div className="flex bg-c-surface-raised rounded border border-c-border p-1">
             {['all', 'todo', 'in_progress', 'completed'].map((s) => (
               <button
                 key={s}
                 onClick={() => setFilterStatus(s)}
-                className={`px - 3 py - 1 text - xs rounded transition - colors ${filterStatus === s ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'} `}
+                className={`px - 3 py - 1 text - xs rounded transition - colors ${filterStatus === s ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-sm' : 'text-c-text-muted hover:text-c-text'} `}
               >
                 {s.replace('_', ' ').toUpperCase()}
               </button>
@@ -230,9 +230,9 @@ export const InitiativeTasksTab: React.FC<Props> = ({
             </button>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500 dark:text-slate-400 mr-2">Set status:</span>
+            <span className="text-xs text-c-text-muted mr-2">Set status:</span>
             {[
-              { status: TaskStatus.TODO, label: 'Todo', color: 'bg-slate-500' },
+              { status: TaskStatus.TODO, label: 'Todo', color: 'bg-c-border-strong' },
               { status: TaskStatus.IN_PROGRESS, label: 'In Progress', color: 'bg-blue-500' },
               { status: TaskStatus.DONE, label: 'Done', color: 'bg-green-500' },
             ].map(({ status, label, color }) => (
@@ -258,31 +258,31 @@ export const InitiativeTasksTab: React.FC<Props> = ({
       <div className="flex-1 overflow-y-auto space-y-2 pr-2">
         {/* Select All Header */}
         {filteredTasks.length > 0 && (
-          <div className="flex items-center gap-3 py-2 px-1 border-b border-slate-200 dark:border-navy-700 mb-2">
+          <div className="flex items-center gap-3 py-2 px-1 border-b border-c-border mb-2">
             <button
               onClick={toggleSelectAll}
-              className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+              className="p-1 rounded hover:bg-c-surface-raised transition-colors"
             >
               {selectedTaskIds.size === filteredTasks.length ? (
                 <CheckSquare size={16} className="text-blue-500" />
               ) : (
-                <Square size={16} className="text-slate-600 dark:text-slate-500" />
+                <Square size={16} className="text-c-text-secondary" />
               )}
             </button>
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+            <span className="text-xs text-c-text-muted">
               {selectedTaskIds.size === filteredTasks.length ? 'Deselect all' : 'Select all'}
             </span>
           </div>
         )}
 
         {loading ? (
-          <div className="text-center py-10 text-slate-500 dark:text-slate-400">
+          <div className="text-center py-10 text-c-text-muted">
             Loading tasks...
           </div>
         ) : filteredTasks.length === 0 ? (
-          <div className="text-center py-10 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl bg-slate-50 dark:bg-navy-950/30">
-            <CheckCircle size={32} className="mx-auto mb-2 text-slate-600 dark:text-slate-400" />
-            <p className="text-slate-500 dark:text-slate-400">
+          <div className="text-center py-10 border-2 border-dashed border-c-border rounded-xl bg-c-surface-raised">
+            <CheckCircle size={32} className="mx-auto mb-2 text-c-text-secondary" />
+            <p className="text-c-text-muted">
               No tasks found. Create one to get started.
             </p>
           </div>
@@ -291,40 +291,40 @@ export const InitiativeTasksTab: React.FC<Props> = ({
             <div
               key={task.id}
               onClick={() => setSelectedTask(task)}
-              className={`bg-white dark:bg-navy-950 border rounded-lg p-3 hover:border-blue-500/30 transition-colors cursor-pointer group flex items-center gap-4 shadow-sm dark:shadow-none ${
+              className={`bg-c-bg border rounded-lg p-3 hover:border-blue-500/30 transition-colors cursor-pointer group flex items-center gap-4 shadow-sm dark:shadow-none ${
                 selectedTaskIds.has(task.id)
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10'
-                  : 'border-slate-200 dark:border-navy-700'
+                  : 'border-c-border'
               }`}
             >
               {/* Checkbox */}
               <button
                 onClick={(e) => toggleTaskSelection(task.id, e)}
-                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 transition-colors shrink-0"
+                className="p-1 rounded hover:bg-c-surface-raised transition-colors shrink-0"
               >
                 {selectedTaskIds.has(task.id) ? (
                   <CheckSquare size={18} className="text-blue-500" />
                 ) : (
                   <Square
                     size={18}
-                    className="text-slate-600 dark:text-slate-400 group-hover:text-slate-400"
+                    className="text-c-text-secondary group-hover:text-c-text-muted"
                   />
                 )}
               </button>
 
               {/* Status Indicator */}
               <div
-                className={`w-2 h-full self-stretch rounded-full ${task.status === TaskStatus.DONE ? 'bg-green-500' : task.status === TaskStatus.IN_PROGRESS ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'}`}
+                className={`w-2 h-full self-stretch rounded-full ${task.status === TaskStatus.DONE ? 'bg-green-500' : task.status === TaskStatus.IN_PROGRESS ? 'bg-blue-500' : 'bg-c-border-strong'}`}
               ></div>
 
               <div className="flex-1">
                 <div className="flex justify-between items-start">
-                  <h4 className="text-navy-900 dark:text-slate-200 font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  <h4 className="text-c-text font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                     {task.title}
                   </h4>
                   <div className="flex items-center gap-2">
                     {task.weight && task.weight > 1 && (
-                      <span className="text-[9px] font-bold text-primary-500 bg-primary-50 dark:bg-primary-500/10 px-1.5 py-0.5 rounded">
+                      <span className="text-[9px] font-bold text-c-info bg-c-surface-raised px-1.5 py-0.5 rounded">
                         {task.weight}x
                       </span>
                     )}
@@ -335,9 +335,9 @@ export const InitiativeTasksTab: React.FC<Props> = ({
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 mt-2 text-xs text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-4 mt-2 text-xs text-c-text-muted">
                   <span className="flex items-center gap-1">
-                    <div className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[8px] text-navy-600 dark:text-white overflow-hidden">
+                    <div className="w-4 h-4 rounded-full bg-c-surface-raised flex items-center justify-center text-[8px] text-c-text-secondary overflow-hidden">
                       {task.assignee?.avatarUrl ? (
                         <img src={task.assignee.avatarUrl} className="w-full h-full object-cover" />
                       ) : (
@@ -354,7 +354,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
                     </span>
                   )}
                   <span
-                    className={`uppercase ${task.priority === 'urgent' ? 'text-danger-500 dark:text-danger-400' : task.priority === 'high' ? 'text-amber-500 dark:text-amber-400' : 'text-slate-500'}`}
+                    className={`uppercase ${task.priority === 'urgent' ? 'text-danger-500 dark:text-danger-400' : task.priority === 'high' ? 'text-amber-500 dark:text-amber-400' : 'text-c-text-muted'}`}
                   >
                     {task.priority}
                   </span>

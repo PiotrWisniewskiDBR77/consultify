@@ -164,20 +164,20 @@ export const NotebookVersionHistory: React.FC<NotebookVersionHistoryProps> = ({
 
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
-      <div className="flex items-center gap-2 text-[13px] font-semibold text-slate-700 dark:text-slate-200">
-        <History className="h-4 w-4 text-slate-400" />
+      <div className="flex items-center gap-2 text-[13px] font-semibold text-c-text-secondary">
+        <History className="h-4 w-4 text-c-text-muted" />
         <span>{t.title}</span>
-        {loading && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />}
+        {loading && <Loader2 className="h-3.5 w-3.5 animate-spin text-c-text-muted" />}
       </div>
 
       {error && (
-        <p className="rounded-lg bg-amber-50 px-3 py-2 text-[12px] text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+        <p className="rounded-lg bg-c-warning/8 px-3 py-2 text-[12px] text-c-warning">
           {error}
         </p>
       )}
 
       {!loading && !error && versions.length === 0 && (
-        <p className="px-1 text-[12px] text-slate-400">{t.empty}</p>
+        <p className="px-1 text-[12px] text-c-text-muted">{t.empty}</p>
       )}
 
       <ul className="flex flex-col gap-1">
@@ -186,8 +186,8 @@ export const NotebookVersionHistory: React.FC<NotebookVersionHistoryProps> = ({
             key={v.id}
             className={`rounded-lg border px-3 py-2 transition-colors ${
               selectedId === v.id
-                ? 'border-blue-300 bg-blue-50/60 dark:border-blue-500/40 dark:bg-blue-500/10'
-                : 'border-slate-200 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/[0.04]'
+                ? 'border-c-info/30 bg-c-info/10'
+                : 'border-c-border hover:bg-c-surface-raised'
             }`}
           >
             <div className="flex items-center justify-between gap-2">
@@ -196,8 +196,8 @@ export const NotebookVersionHistory: React.FC<NotebookVersionHistoryProps> = ({
                 className="flex min-w-0 flex-1 items-center gap-2 text-left"
                 onClick={() => setSelectedId((id) => (id === v.id ? null : v.id))}
               >
-                <Clock className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                <span className="truncate text-[12px] text-slate-600 dark:text-slate-300">
+                <Clock className="h-3.5 w-3.5 shrink-0 text-c-text-muted" />
+                <span className="truncate text-[12px] text-c-text-secondary">
                   {formatTime(v.createdAt)}
                   {v.createdBy ? ` • ${t.by} ${v.createdBy.slice(0, 8)}` : ''}
                 </span>
@@ -206,7 +206,7 @@ export const NotebookVersionHistory: React.FC<NotebookVersionHistoryProps> = ({
                 type="button"
                 onClick={() => handleRestore(v.id)}
                 disabled={restoringId !== null}
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-blue-600 transition-colors hover:bg-blue-50 disabled:opacity-50 dark:text-blue-300 dark:hover:bg-blue-500/10"
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-c-info transition-colors hover:bg-c-info/10 disabled:opacity-50"
               >
                 {restoringId === v.id ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -218,23 +218,23 @@ export const NotebookVersionHistory: React.FC<NotebookVersionHistoryProps> = ({
             </div>
 
             {selectedId === v.id && (
-              <div className="mt-2 border-t border-slate-200 pt-2 dark:border-white/10">
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+              <div className="mt-2 border-t border-c-border pt-2">
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
                   {t.diff}
                 </p>
-                <pre className="max-h-48 overflow-auto rounded bg-slate-50 p-2 text-[11px] leading-snug dark:bg-white/[0.03]">
+                <pre className="max-h-48 overflow-auto rounded bg-c-surface-raised p-2 text-[11px] leading-snug">
                   {diff.length === 0 ? (
-                    <span className="text-slate-400">—</span>
+                    <span className="text-c-text-muted">—</span>
                   ) : (
                     diff.map((d, i) => (
                       <div
                         key={i}
                         className={
                           d.type === 'add'
-                            ? 'text-emerald-600 dark:text-emerald-400'
+                            ? 'text-c-success'
                             : d.type === 'del'
-                              ? 'text-rose-500 line-through dark:text-rose-400'
-                              : 'text-slate-500 dark:text-slate-400'
+                              ? 'text-c-danger line-through'
+                              : 'text-c-text-muted'
                         }
                       >
                         {d.type === 'add' ? '+ ' : d.type === 'del' ? '- ' : '  '}

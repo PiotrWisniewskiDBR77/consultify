@@ -25,6 +25,7 @@ import type { OutcomeType } from '../services/ideaClusterService.js';
 import { createOutcomeFromCluster, materializeClusters } from '../services/ideaClusterService.js';
 import { InboxAiAssistItemSchema, runInboxAiAssist } from '../services/inboxAiAssistService.js';
 import inboxService from '../services/inboxService.js';
+import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import NotificationService from '../services/notificationService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import projectionService from '../services/tablePlatform/ProjectionService.js';
@@ -37,6 +38,7 @@ import { getCapacityOverview, getOverloadAlerts } from '../services/workloadCapa
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
+import { resolveMentionsFromComment } from '../utils/mentionResolver.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import {
   ensureLatestSchema,
@@ -51,6 +53,7 @@ import notebookRouter from './my-work/notebook.routes.js';
 import radarRouter from './my-work/radar.routes.js';
 import signalsRouter from './my-work/signals.routes.js';
 import statsRouter from './my-work/stats.routes.js';
+import whiteboardUploadsRouter from './my-work/whiteboard-uploads.routes.js';
 
 const router = Router();
 
@@ -360,7 +363,8 @@ const decorateIdeaLineage = (row: any) => ({
   sourcePack: parseJsonField(row?.source_pack_json, {}),
   evidenceRefs: parseJsonField(row?.evidence_refs_json, []),
   researchData: row?.researchData != null ? parseJsonField(row.researchData, []) : undefined,
-  creativeProposals: row?.creativeProposals != null ? parseJsonField(row.creativeProposals, []) : undefined,
+  creativeProposals:
+    row?.creativeProposals != null ? parseJsonField(row.creativeProposals, []) : undefined,
   summaryData: row?.summaryData != null ? parseJsonField(row.summaryData, null) : undefined,
   action_contract_json: undefined,
   source_pack_json: undefined,
@@ -1338,14 +1342,21 @@ router.get(
         t.completed_at as "completedAt"
       FROM tasks t
       WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}
-        AND lower(coalesce(t.task_type,'')) = 'personal'
       LIMIT 1
     `,
       [id, orgId, ...ownerScope.params]
     );
 
     if (!row) {
-      res.status(404).json({ error: 'Not found' });
+      // The personal-tasks LIST endpoint returns every owner-scoped task in the
+      // org (personal-sorted first), but historically this detail lookup added a
+      // hard `task_type='personal'` filter. Any non-personal owned task (e.g. an
+      // initiative/project task, or one with a null/other task_type) therefore
+      // appeared in the list yet 404'd on open → the "Failed to load task" toast
+      // over a blank form. Scope now matches the list (org + owner) so those
+      // rows load. A 404 here now means a genuinely missing/foreign task, which
+      // the client renders as an explicit "not found" state.
+      res.status(404).json({ error: 'Not found', code: 'TASK_NOT_FOUND' });
       return;
     }
 
@@ -1501,6 +1512,8 @@ router.delete(
 router.use(calendarRouter);
 
 router.use(decisionsRouter);
+
+router.use(whiteboardUploadsRouter);
 
 /**
  * GET /api/my-work/inbox
@@ -2789,7 +2802,13 @@ router.post(
         logger.warn('[MyIdeas] org-context capture failed (create):', err?.message)
       );
 
-    res.status(201).json(decorateIdeaLineage({ ...row, tags: parseTagsArray((row as any)?.tags), isFavorite: !!(row as any)?.isFavorite }));
+    res.status(201).json(
+      decorateIdeaLineage({
+        ...row,
+        tags: parseTagsArray((row as any)?.tags),
+        isFavorite: !!(row as any)?.isFavorite,
+      })
+    );
   })
 );
 
@@ -2856,7 +2875,13 @@ router.get(
       return;
     }
 
-    res.json(decorateIdeaLineage({ ...row, tags: parseTagsArray((row as any)?.tags), isFavorite: !!(row as any)?.isFavorite }));
+    res.json(
+      decorateIdeaLineage({
+        ...row,
+        tags: parseTagsArray((row as any)?.tags),
+        isFavorite: !!(row as any)?.isFavorite,
+      })
+    );
   })
 );
 
@@ -3011,7 +3036,13 @@ router.put(
         logger.warn('[MyIdeas] org-context capture failed (update):', err?.message)
       );
 
-    res.json(decorateIdeaLineage({ ...row, tags: parseTagsArray((row as any)?.tags), isFavorite: !!(row as any)?.isFavorite }));
+    res.json(
+      decorateIdeaLineage({
+        ...row,
+        tags: parseTagsArray((row as any)?.tags),
+        isFavorite: !!(row as any)?.isFavorite,
+      })
+    );
   })
 );
 
@@ -3434,6 +3465,82 @@ function parseOptionalVersion(value: unknown): number | null | 'invalid' {
   return parsed;
 }
 
+/**
+ * A1 (D-WB-2): shared canonical board write for idea maps (multiplayer persistence).
+ *
+ * The canonical idea-map document is the ROW OWNED BY THE IDEA'S OWNER. Any member of
+ * the same organization write-throughs to that owner's row (mirrors the GET read-fallback
+ * at "M09 L-01"). This keeps optimistic locking (version + baseVersion 409) meaningful:
+ * two different users writing the same idea contend on ONE row, not two per-user rows.
+ *
+ * Returns the owner user_id (org-scoped). Returns null when the idea does not exist in the
+ * org — callers must respond 404, exactly as the previous ownership-gated SELECT did.
+ *
+ * Note: node-pg returns text/uuid columns as strings, so ownerUserId is always a string.
+ * We intentionally do NOT delete any historical per-requester ("orphan") rows; the owner's
+ * row is authoritative and orphans are simply ignored (consistent with the read-fallback).
+ */
+async function resolveCanonicalMapOwner(ideaId: string, orgId: string): Promise<string | null> {
+  const idea = await queryHelpers.queryOne<{ ownerUserId?: string | null }>(
+    `SELECT user_id as "ownerUserId" FROM my_ideas WHERE id = ? AND organization_id = ? LIMIT 1`,
+    [ideaId, orgId]
+  );
+  if (!idea) return null;
+  const ownerUserId = idea.ownerUserId != null ? String(idea.ownerUserId) : '';
+  return ownerUserId || null;
+}
+
+/**
+ * B1 (M09 facilitation enforcement) — is the CALLING user gated to read-only because
+ * they hold the 'observer' role in an ACTIVE facilitation session for this whiteboard?
+ *
+ * The whiteboard's facilitation session is keyed on tool_session_id = `whiteboard:<ideaId>`
+ * (see IdeaWhiteboardTool.tsx `toolSessionId`). Role rows live in tool_facilitation_roles,
+ * scoped to the session and org. We only enforce the 'observer' role — facilitator /
+ * participant / no-role / no-active-session are ALL unchanged (returns false), so single-
+ * player editing and the A1 canonical-owner write path are untouched.
+ *
+ * Fail-open by design: any DB error (e.g. facilitation tables absent on an older schema)
+ * must NOT block a legitimate write — we log-and-allow rather than 500 the editor.
+ * Uses a single queryAll so the mocked call-sequences in existing PUT/sync contract
+ * tests (which return [] for queryAll) keep their behavior unchanged.
+ */
+async function isWhiteboardObserver(
+  ideaId: string,
+  orgId: string,
+  userId: string
+): Promise<boolean> {
+  const toolSessionId = `whiteboard:${ideaId}`;
+  try {
+    const rows = await queryHelpers.queryAll<{ role_name?: string | null }>(
+      `SELECT r.role_name AS role_name
+         FROM tool_facilitation_roles r
+         JOIN tool_facilitation_sessions s ON s.id = r.facilitation_session_id
+        WHERE s.organization_id = ?
+          AND s.tool_session_id = ?
+          AND s.status <> 'ended'
+          AND r.user_id = ?
+        LIMIT 1`,
+      [orgId, toolSessionId, userId]
+    );
+    const roleName = rows?.[0]?.role_name;
+    return String(roleName || '').toLowerCase() === 'observer';
+  } catch (err) {
+    // Older orgs / schemas without the facilitation tables must not be blocked.
+    logger.warn('[my-work] isWhiteboardObserver check failed (allowing write):', err as Error);
+    return false;
+  }
+}
+
+const WHITEBOARD_OBSERVER_READONLY = {
+  status: 403,
+  body: {
+    error:
+      'You are an observer in this facilitation session and cannot edit the shared whiteboard.',
+    code: 'WHITEBOARD_OBSERVER_READONLY',
+  },
+} as const;
+
 function buildMapConflictPayload(
   existing:
     | {
@@ -3540,20 +3647,26 @@ router.get(
 
       if (!ids.length) return res.json({ metrics: {} });
 
+      // A1 (D-WB-2) read-side parity: join through my_ideas so each idea's row is
+      // read via its OWNER's user_id (the canonical row PUT/sync now write to — see
+      // resolveCanonicalMapOwner) instead of the caller's own user_id. A single-owner
+      // caller is unaffected (own ideas: ownerUserId === userId); a non-owner org
+      // member now sees the real shared counts instead of 0.
       const placeholders = queryHelpers.buildInPlaceholders(ids);
       const rows =
         (await queryHelpers.queryAll<any>(
           `
           SELECT
-            idea_id as "ideaId",
-            nodes_json as "nodesJson",
-            edges_json as "edgesJson",
-            updated_at as "updatedAt"
-          FROM my_idea_maps
-          WHERE user_id = ? AND organization_id = ?
-            AND idea_id IN (${placeholders})
+            m.idea_id as "ideaId",
+            m.nodes_json as "nodesJson",
+            m.edges_json as "edgesJson",
+            m.updated_at as "updatedAt"
+          FROM my_idea_maps m
+          JOIN my_ideas i ON i.id = m.idea_id AND i.user_id = m.user_id
+          WHERE m.organization_id = ? AND i.organization_id = ?
+            AND m.idea_id IN (${placeholders})
         `,
-          [userId, orgId, ...ids]
+          [orgId, orgId, ...ids]
         )) || [];
 
       const byId = new Map<string, any>();
@@ -3592,8 +3705,9 @@ router.get(
     const isPl = language.startsWith('pl');
 
     // M09 L-01 (DP-3 multiplayer): idea existence is ORG-scoped for READ so a 2nd
-    // org member opening a colleague's board gets 200 (not 404). Ownership (user_id)
-    // still gates WRITE — see PUT handler. Single-player owners are unaffected.
+    // org member opening a colleague's board gets 200 (not 404). Org-scoped SELECT
+    // (id, title, ownerUserId) doubles as the resolveCanonicalMapOwner lookup here —
+    // we keep the extra "title" column for the default-map fallback below.
     const idea = await queryHelpers.queryOne<any>(
       `SELECT id, title, user_id as "ownerUserId" FROM my_ideas WHERE id = ? AND organization_id = ? LIMIT 1`,
       [ideaId, orgId]
@@ -3618,14 +3732,14 @@ router.get(
       LIMIT 1
     `;
 
-    // Own copy first (owner / single-player unchanged).
-    let row = await queryHelpers.queryOne<any>(mapSelectSql, [ideaId, userId, orgId]);
-    // M09 L-01: org-read fallback — a non-owner member reads the idea owner's
-    // canonical board so the shared whiteboard loads instead of 404'ing. Realtime
-    // graph_patch (L-02) then keeps both clients in sync. WRITE stays per-user.
-    if (!row && idea.ownerUserId && String(idea.ownerUserId) !== String(userId)) {
-      row = await queryHelpers.queryOne<any>(mapSelectSql, [ideaId, idea.ownerUserId, orgId]);
-    }
+    // A1 (D-WB-2): read the canonical (idea-owner's) row — the same row PUT/sync now
+    // write to (see resolveCanonicalMapOwner). The owner reading their own idea is
+    // unaffected (ownerUserId === userId). A non-owner org member now sees the SAME
+    // shared board they just wrote to, instead of a stale/empty per-user copy.
+    const canonicalUserId = idea.ownerUserId ? String(idea.ownerUserId) : null;
+    const row = canonicalUserId
+      ? await queryHelpers.queryOne<any>(mapSelectSql, [ideaId, canonicalUserId, orgId])
+      : null;
 
     if (!row) {
       const def = buildDefaultIdeaMap({ id: ideaId, title: String(idea?.title || '') }, isPl);
@@ -3697,13 +3811,16 @@ router.get(
  * Notes:
  * - Keeps list fast by avoiding N calls to /:id/map
  * - JSON is parsed in JS for cross-DB compatibility.
+ * - NOTE: this route is currently shadowed by the `ideaId === 'metrics'` special case
+ *   in `/my-ideas/:id/map` above (Express matches that route first), but is kept in
+ *   sync with the same canonical-owner read for when/if that special-casing is removed.
  */
 router.get(
   '/my-ideas/metrics/map',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const { userId, orgId } = identity;
+    const { orgId } = identity;
     if (!(await requireTables(res, ['my_idea_maps']))) return;
 
     const idsRaw = String(req.query.ids || '').trim();
@@ -3720,20 +3837,24 @@ router.get(
 
     if (!ids.length) return res.json({ metrics: {} });
 
+    // A1 (D-WB-2) read-side parity: join through my_ideas so each idea's row is read
+    // via its OWNER's user_id (the canonical row PUT/sync write to) instead of the
+    // caller's own user_id — see resolveCanonicalMapOwner.
     const placeholders = queryHelpers.buildInPlaceholders(ids);
     const rows =
       (await queryHelpers.queryAll<any>(
         `
         SELECT
-          idea_id as "ideaId",
-          nodes_json as "nodesJson",
-          edges_json as "edgesJson",
-          updated_at as "updatedAt"
-        FROM my_idea_maps
-        WHERE user_id = ? AND organization_id = ?
-          AND idea_id IN (${placeholders})
+          m.idea_id as "ideaId",
+          m.nodes_json as "nodesJson",
+          m.edges_json as "edgesJson",
+          m.updated_at as "updatedAt"
+        FROM my_idea_maps m
+        JOIN my_ideas i ON i.id = m.idea_id AND i.user_id = m.user_id
+        WHERE m.organization_id = ? AND i.organization_id = ?
+          AND m.idea_id IN (${placeholders})
       `,
-        [userId, orgId, ...ids]
+        [orgId, orgId, ...ids]
       )) || [];
 
     const byId = new Map<string, any>();
@@ -3816,11 +3937,28 @@ router.put(
     const normalizedNodes = validation.normalized.nodes;
     const normalizedEdges = validation.normalized.edges;
 
-    const ideaOk = await queryHelpers.queryOne<any>(
-      `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
-    );
-    if (!ideaOk) return res.status(404).json({ error: 'Idea not found' });
+    // P13 Hard cap: reject if nodes > 500 (hard safety limit for whiteboard storage)
+    if (normalizedNodes.length > 500) {
+      return res.status(422).json({
+        error: 'Object limit exceeded',
+        code: 'WHITEBOARD_OBJECT_LIMIT_EXCEEDED',
+        details: `Whiteboard cannot exceed 500 objects; requested: ${normalizedNodes.length}`,
+        limit: 500,
+        current: normalizedNodes.length,
+      });
+    }
+
+    // A1 (D-WB-2): write to the canonical (idea-owner's) row so org members' edits
+    // persist even when the owner is offline. Org-scoped existence check → 404 if absent.
+    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
+    if (!canonicalUserId) return res.status(404).json({ error: 'Idea not found' });
+
+    // B1 (M09): observers in an active facilitation session are read-only on the shared board.
+    if (await isWhiteboardObserver(ideaId, orgId, userId)) {
+      return res
+        .status(WHITEBOARD_OBSERVER_READONLY.status)
+        .json(WHITEBOARD_OBSERVER_READONLY.body);
+    }
 
     const baseVersionRaw = req.body?.baseVersion ?? req.body?.version ?? null;
     const baseVersionParsed = parseOptionalVersion(baseVersionRaw);
@@ -3838,7 +3976,7 @@ router.put(
     const schemaVersionSelect = mapCols.has('schema_version') ? ', schema_version' : '';
     const existing = await queryHelpers.queryOne<any>(
       `SELECT id, version, nodes_json, edges_json${extColSelect}${preferredToolSelect}${schemaVersionSelect} FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
+      [ideaId, canonicalUserId, orgId]
     );
 
     const currentVersion = existing ? Number(existing.version || 1) : 1;
@@ -3865,7 +4003,7 @@ router.put(
           },
           {
             id: ideaId,
-            title: String((ideaOk as any)?.title || ''),
+            title: '',
             isPl: false,
           }
         )
@@ -3936,7 +4074,7 @@ router.put(
         insertParams.push(val);
       };
       add('idea_id', ideaId);
-      add('user_id', userId);
+      add('user_id', canonicalUserId);
       add('organization_id', orgId);
       add('nodes_json', JSON.stringify(normalizedNodes));
       add('edges_json', JSON.stringify(normalizedEdges));
@@ -3965,7 +4103,7 @@ router.put(
       if (preferredTool !== null) set('preferred_tool', preferredTool);
       if (mergedExtensions !== null) set('extensions_json', JSON.stringify(mergedExtensions));
       set('updated_at', now);
-      params.push(ideaId, userId, orgId);
+      params.push(ideaId, canonicalUserId, orgId);
       if (baseVersion !== null) {
         params.push(baseVersion);
       }
@@ -3984,7 +4122,7 @@ router.put(
           }${mapCols.has('extensions_json') ? ', extensions_json as "extensionsJson"' : ''}${
             mapCols.has('schema_version') ? ', schema_version as "schemaVersion"' : ''
           } FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-          [ideaId, userId, orgId]
+          [ideaId, canonicalUserId, orgId]
         );
         return res.status(409).json(
           buildMapConflictPayload(latest, {
@@ -4084,11 +4222,27 @@ router.post(
       });
     }
 
-    const ideaOk = await queryHelpers.queryOne<any>(
-      `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
-    );
-    if (!ideaOk) return res.status(404).json({ error: 'Idea not found' });
+    // P13 Hard cap: reject if nodes > 500 (hard safety limit for whiteboard storage)
+    if (validation.normalized.nodes.length > 500) {
+      return res.status(422).json({
+        error: 'Object limit exceeded',
+        code: 'WHITEBOARD_OBJECT_LIMIT_EXCEEDED',
+        details: `Whiteboard cannot exceed 500 objects; requested: ${validation.normalized.nodes.length}`,
+        limit: 500,
+        current: validation.normalized.nodes.length,
+      });
+    }
+
+    // A1 (D-WB-2): canonical (owner) row write-through — see resolveCanonicalMapOwner.
+    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
+    if (!canonicalUserId) return res.status(404).json({ error: 'Idea not found' });
+
+    // B1 (M09): observers in an active facilitation session are read-only on the shared board.
+    if (await isWhiteboardObserver(ideaId, orgId, userId)) {
+      return res
+        .status(WHITEBOARD_OBSERVER_READONLY.status)
+        .json(WHITEBOARD_OBSERVER_READONLY.body);
+    }
 
     const mapCols = await getTableColumns('my_idea_maps');
     const preferredToolSelect = mapCols.has('preferred_tool')
@@ -4105,7 +4259,7 @@ router.post(
        FROM my_idea_maps
        WHERE idea_id = ? AND user_id = ? AND organization_id = ?
        LIMIT 1`,
-      [ideaId, userId, orgId]
+      [ideaId, canonicalUserId, orgId]
     );
 
     const currentVersion = existing ? Number(existing.version || 1) : 1;
@@ -4188,7 +4342,7 @@ router.post(
         insertParams.push(val);
       };
       add('idea_id', ideaId);
-      add('user_id', userId);
+      add('user_id', canonicalUserId);
       add('organization_id', orgId);
       add('nodes_json', JSON.stringify(normalizedNodes));
       add('edges_json', JSON.stringify(normalizedEdges));
@@ -4217,7 +4371,7 @@ router.post(
       if (preferredTool !== null) set('preferred_tool', preferredTool);
       if (mergedExtensions !== null) set('extensions_json', JSON.stringify(mergedExtensions));
       set('updated_at', now);
-      params.push(ideaId, userId, orgId);
+      params.push(ideaId, canonicalUserId, orgId);
       await queryHelpers.queryRun(
         `UPDATE my_idea_maps
          SET ${setParts.join(', ')}
@@ -4906,6 +5060,47 @@ router.post(
       resourceId: id,
     });
 
+    // @mention → notification. Resolve tokens against the caller's org roster
+    // (org-scoped: tokens matching no org member are dropped, so a comment can
+    // never notify a user outside the organization). Best-effort — a notify
+    // failure must never fail the comment write.
+    try {
+      const { getMembers } = await import('../services/organizationService.js');
+      const members = await getMembers(orgId);
+      const mentionedUserIds = resolveMentionsFromComment(
+        parsed.data.text,
+        parsed.data.mentions,
+        members,
+        userId // don't notify the author for self-mentions
+      );
+      if (mentionedUserIds.length > 0) {
+        const snippet =
+          parsed.data.text.length > 140 ? `${parsed.data.text.slice(0, 140)}…` : parsed.data.text;
+        await Promise.allSettled(
+          mentionedUserIds.map((uid) =>
+            NotificationService.send({
+              userId: uid,
+              organizationId: orgId,
+              type: 'whiteboard.mention',
+              title: `${userName} mentioned you in a whiteboard comment`,
+              body: snippet,
+              entityType: 'idea',
+              entityId: ideaId,
+              relatedObjectType: 'idea_node',
+              relatedObjectId: nodeId,
+              actionUrl: `/my-work/ideas/${ideaId}`,
+              actorId: userId,
+              actorName: userName,
+              priority: 'normal',
+              metadata: { ideaId, nodeId, commentId: id },
+            })
+          )
+        );
+      }
+    } catch (notifyErr) {
+      logger.warn('[my-work] whiteboard mention notification failed (non-fatal):', notifyErr);
+    }
+
     res.status(201).json({
       comment: {
         id,
@@ -5209,10 +5404,14 @@ router.post(
 
     if (!(await requireTables(res, ['my_idea_maps']))) return;
 
+    // A1 (D-WB-2): resolve canonical (owner) row so org members can attach artifacts.
+    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
+    if (!canonicalUserId) return res.status(404).json({ error: 'Idea map not found' });
+
     const map = await queryHelpers.queryOne<any>(
       `SELECT id, version, nodes_json, edges_json, preferred_tool as "preferredTool", extensions_json as "extensionsJson", schema_version as "schemaVersion"
        FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
+      [ideaId, canonicalUserId, orgId]
     );
     if (!map) return res.status(404).json({ error: 'Idea map not found' });
     const currentVersion = Number(map.version || 1);
@@ -5294,7 +5493,7 @@ router.post(
       const latest = await queryHelpers.queryOne<any>(
         `SELECT id, version, nodes_json as "nodesJson", edges_json as "edgesJson", preferred_tool as "preferredTool", extensions_json as "extensionsJson", schema_version as "schemaVersion"
          FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-        [ideaId, userId, orgId]
+        [ideaId, canonicalUserId, orgId]
       );
       return res.status(409).json(
         buildMapConflictPayload(latest, {
@@ -5350,10 +5549,14 @@ router.delete(
 
     if (!(await requireTables(res, ['my_idea_maps']))) return;
 
+    // A1 (D-WB-2): resolve canonical (owner) row so org members can detach artifacts.
+    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
+    if (!canonicalUserId) return res.status(404).json({ error: 'Idea map not found' });
+
     const map = await queryHelpers.queryOne<any>(
       `SELECT id, version, nodes_json, edges_json, preferred_tool as "preferredTool", extensions_json as "extensionsJson", schema_version as "schemaVersion"
        FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
+      [ideaId, canonicalUserId, orgId]
     );
     if (!map) return res.status(404).json({ error: 'Idea map not found' });
     const currentVersion = Number(map.version || 1);
@@ -5429,7 +5632,7 @@ router.delete(
       const latest = await queryHelpers.queryOne<any>(
         `SELECT id, version, nodes_json as "nodesJson", edges_json as "edgesJson", preferred_tool as "preferredTool", extensions_json as "extensionsJson", schema_version as "schemaVersion"
          FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-        [ideaId, userId, orgId]
+        [ideaId, canonicalUserId, orgId]
       );
       return res.status(409).json(
         buildMapConflictPayload(latest, {
@@ -5470,16 +5673,22 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const { userId, orgId } = identity;
+    const { orgId } = identity;
 
     const { id: ideaId, objectId } = req.params;
     if (!ideaId || !objectId) return res.status(400).json({ error: 'Missing params' });
 
     if (!(await requireTables(res, ['my_idea_maps']))) return;
 
+    // A1 (D-WB-2): read the canonical (idea-owner's) row so a non-owner org member
+    // sees the artifact links they (or a teammate) just attached via the shared
+    // write path above — see resolveCanonicalMapOwner.
+    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
+    if (!canonicalUserId) return res.status(404).json({ error: 'Idea map not found' });
+
     const map = await queryHelpers.queryOne<any>(
       `SELECT nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
+      [ideaId, canonicalUserId, orgId]
     );
     if (!map) return res.status(404).json({ error: 'Idea map not found' });
 
@@ -5658,15 +5867,20 @@ router.post(
       return res.status(400).json({ error: 'clusters array is required' });
     }
 
-    const idea = await queryHelpers.queryOne<any>(
-      `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
-    );
-    if (!idea) return res.status(404).json({ error: 'Idea not found' });
+    // A1 (D-WB-2): canonical (owner) row write-through so org members can materialize clusters.
+    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
+    if (!canonicalUserId) return res.status(404).json({ error: 'Idea not found' });
+
+    // B1 (M09): observers in an active facilitation session are read-only on the shared board.
+    if (await isWhiteboardObserver(ideaId, orgId, userId)) {
+      return res
+        .status(WHITEBOARD_OBSERVER_READONLY.status)
+        .json(WHITEBOARD_OBSERVER_READONLY.body);
+    }
 
     const mapRow = await queryHelpers.queryOne<any>(
       `SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
+      [ideaId, canonicalUserId, orgId]
     );
     if (!mapRow) return res.status(404).json({ error: 'Idea map not found' });
 
@@ -5714,7 +5928,7 @@ router.post(
         nextVersion,
         now,
         ideaId,
-        userId,
+        canonicalUserId,
         orgId,
       ]
     );
@@ -5761,15 +5975,20 @@ router.post(
     }
     if (!label) return res.status(400).json({ error: 'label is required' });
 
-    const idea = await queryHelpers.queryOne<any>(
-      `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
-    );
-    if (!idea) return res.status(404).json({ error: 'Idea not found' });
+    // A1 (D-WB-2): canonical (owner) row write-through so org members can create outcomes.
+    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
+    if (!canonicalUserId) return res.status(404).json({ error: 'Idea not found' });
+
+    // B1 (M09): observers in an active facilitation session are read-only on the shared board.
+    if (await isWhiteboardObserver(ideaId, orgId, userId)) {
+      return res
+        .status(WHITEBOARD_OBSERVER_READONLY.status)
+        .json(WHITEBOARD_OBSERVER_READONLY.body);
+    }
 
     const mapRow = await queryHelpers.queryOne<any>(
       `SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
+      [ideaId, canonicalUserId, orgId]
     );
     if (!mapRow) return res.status(404).json({ error: 'Idea map not found' });
 
@@ -5822,7 +6041,7 @@ router.post(
         nextVersion,
         now,
         ideaId,
-        userId,
+        canonicalUserId,
         orgId,
       ]
     );
@@ -5865,15 +6084,27 @@ router.post(
         .json({ error: 'Invalid target — must be task, decision, or initiative' });
     }
 
+    // A1 (D-WB-2): canonical (owner) row write-through so org members can convert outcomes.
+    // Idea metadata (title/body/etc.) is org-scoped here; ownership only picks the map row.
+    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
+    if (!canonicalUserId) return res.status(404).json({ error: 'Idea not found' });
+
+    // B1 (M09): observers in an active facilitation session are read-only on the shared board.
+    if (await isWhiteboardObserver(ideaId, orgId, userId)) {
+      return res
+        .status(WHITEBOARD_OBSERVER_READONLY.status)
+        .json(WHITEBOARD_OBSERVER_READONLY.body);
+    }
+
     const idea = await queryHelpers.queryOne<any>(
-      `SELECT id, title, body, seed_text as "seedText", ai_expansion as "aiExpansion" FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
+      `SELECT id, title, body, seed_text as "seedText", ai_expansion as "aiExpansion" FROM my_ideas WHERE id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, orgId]
     );
     if (!idea) return res.status(404).json({ error: 'Idea not found' });
 
     const mapRow = await queryHelpers.queryOne<any>(
       `SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
+      [ideaId, canonicalUserId, orgId]
     );
     if (!mapRow) return res.status(404).json({ error: 'Idea map not found' });
 
@@ -5917,27 +6148,43 @@ router.post(
 
     if (target === 'initiative') {
       if (!(await requireTables(res, ['initiatives']))) return;
-      const cols = await getTableColumns('initiatives');
-      entityId = uuidv4();
-      const insertCols: string[] = ['id'];
-      const insertVals: string[] = ['?'];
-      const insertParams: any[] = [entityId];
-      const add = (col: string, val: any) => {
-        if (!cols.has(col)) return;
-        insertCols.push(col);
-        insertVals.push('?');
-        insertParams.push(val);
-      };
-      add('organization_id', orgId);
-      add('name', safeTitle);
-      add('summary', (safeExpansion || safeBody).slice(0, 5000) || null);
-      add('owner_execution_id', userId);
-      add('source_type', 'tool');
-      add('source_id', toolSessionId);
-      await queryHelpers.queryRun(
-        `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-        insertParams
-      );
+      // Uspójnienie F1.5 — przez kanoniczny lejek (DRAFT + name/title + lineage).
+      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+        const __r = await funnelCreateInitiative(
+          orgId,
+          {
+            title: safeTitle,
+            summary: (safeExpansion || safeBody).slice(0, 5000) || null,
+            ownerExecutionId: userId,
+            sourceType: 'tool',
+            sourceId: toolSessionId,
+          },
+          { validate: false, actor: { id: userId } }
+        );
+        entityId = __r.id;
+      } else {
+        const cols = await getTableColumns('initiatives');
+        entityId = uuidv4();
+        const insertCols: string[] = ['id'];
+        const insertVals: string[] = ['?'];
+        const insertParams: any[] = [entityId];
+        const add = (col: string, val: any) => {
+          if (!cols.has(col)) return;
+          insertCols.push(col);
+          insertVals.push('?');
+          insertParams.push(val);
+        };
+        add('organization_id', orgId);
+        add('name', safeTitle);
+        add('summary', (safeExpansion || safeBody).slice(0, 5000) || null);
+        add('owner_execution_id', userId);
+        add('source_type', 'tool');
+        add('source_id', toolSessionId);
+        await queryHelpers.queryRun(
+          `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+          insertParams
+        );
+      }
     } else if (target === 'decision') {
       if (!(await requireTables(res, ['decisions']))) return;
       const cols = await getTableColumns('decisions');
@@ -6034,7 +6281,7 @@ router.post(
           nextVersion,
           now,
           ideaId,
-          userId,
+          canonicalUserId,
           orgId,
         ]
       );
@@ -6149,9 +6396,7 @@ router.post(
         );
         if (mapRow?.nodes_json) {
           const nodes: Array<{ data?: { label?: string } }> = JSON.parse(String(mapRow.nodes_json));
-          const labels = nodes
-            .map((n) => (n.data?.label ?? '').trim())
-            .filter(Boolean);
+          const labels = nodes.map((n) => (n.data?.label ?? '').trim()).filter(Boolean);
           if (labels.length > 0) processFlowReadback = labels.join(' → ');
         }
       } catch {
@@ -6187,21 +6432,6 @@ router.post(
           .json({ error: 'Failed to materialize MYWORK ToolSession for traceability' });
       }
 
-      const initiativeId = uuidv4();
-      const insertCols: string[] = ['id'];
-      const insertVals: string[] = ['?'];
-      const insertParams: any[] = [initiativeId];
-
-      const add = (col: string, val: any) => {
-        if (!cols.has(col)) return;
-        insertCols.push(col);
-        insertVals.push('?');
-        insertParams.push(val);
-      };
-
-      add('organization_id', orgId);
-      add('name', safeTitle.slice(0, 255));
-
       // V51-15: When nodeIds provided, enrich summary with selected node labels
       // P14 integration: prepend process flow readback when converting from PF
       let initSummary = (safeExpansion || safeBody).slice(0, 5000) || null;
@@ -6234,18 +6464,64 @@ router.post(
           /* best-effort */
         }
       }
-      add('summary', initSummary);
-      add('area', idea?.area ? String(idea.area).slice(0, 120) : null);
-      add('owner_execution_id', userId);
-      add('owner_business_id', userId);
-      add('sponsor_id', userId);
-      add('source_type', 'tool');
-      add('source_id', toolSessionId);
+      const initArea = idea?.area ? String(idea.area).slice(0, 120) : null;
 
-      await queryHelpers.queryRun(
-        `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-        insertParams
-      );
+      // Uspójnienie F1.5 — przez kanoniczny lejek (DRAFT + name/title + lineage).
+      let initiativeId: string;
+      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+        const __r = await funnelCreateInitiative(
+          orgId,
+          {
+            title: safeTitle.slice(0, 255),
+            summary: initSummary,
+            area: initArea,
+            ownerExecutionId: userId,
+            ownerBusinessId: userId,
+            sourceType: 'tool',
+            sourceId: toolSessionId,
+          },
+          { validate: false, actor: { id: userId } }
+        );
+        initiativeId = __r.id;
+        // Funnel does not set `sponsor_id` — post-create UPDATE for the extra column.
+        if (cols.has('sponsor_id')) {
+          try {
+            await queryHelpers.queryRun(
+              `UPDATE initiatives SET sponsor_id = ? WHERE id = ? AND organization_id = ?`,
+              [userId, initiativeId, orgId]
+            );
+          } catch {
+            /* sponsor_id column may be absent on some schemas */
+          }
+        }
+      } else {
+        initiativeId = uuidv4();
+        const insertCols: string[] = ['id'];
+        const insertVals: string[] = ['?'];
+        const insertParams: any[] = [initiativeId];
+
+        const add = (col: string, val: any) => {
+          if (!cols.has(col)) return;
+          insertCols.push(col);
+          insertVals.push('?');
+          insertParams.push(val);
+        };
+
+        add('organization_id', orgId);
+        add('name', safeTitle.slice(0, 255));
+        add('summary', initSummary);
+        add('area', initArea);
+        add('owner_execution_id', userId);
+        add('owner_business_id', userId);
+        add('sponsor_id', userId);
+        add('source_type', 'tool');
+        add('source_id', toolSessionId);
+
+        await queryHelpers.queryRun(
+          `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+          insertParams
+        );
+      }
 
       await promote('initiative', initiativeId);
 
@@ -8082,8 +8358,11 @@ router.get(
         capacity: {
           totalTeamCapacityHours: totalCapacity,
           totalRequiredHours: totalRequired,
+          totalBacklogHours: Number(capacityOverview.summary.totalBacklog || 0),
           shortfallHours: Math.max(0, Math.round((totalRequired - totalCapacity) * 10) / 10),
           avgUtilization: capacityOverview.summary.avgUtilization,
+          windowStart: capacityOverview.windowStart,
+          windowEnd: capacityOverview.windowEnd,
         },
         initiatives: {
           total: Number(initiativeSummary?.total || 0),
@@ -8109,6 +8388,7 @@ router.get(
         overloads: overloads.map((row) => ({
           userId: row.userId,
           assignedHours: row.allocatedHours,
+          backlogHours: row.backlogHours,
           capacityHours: row.capacityHours,
           overloadHours: row.overloadHours,
           severity: row.severity,
@@ -9057,15 +9337,21 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const { userId, orgId } = identity;
+    const { orgId } = identity;
 
     const ideaId = String(req.params.id || '').trim();
     if (!ideaId) return res.status(400).json({ error: 'Invalid idea id' });
 
     try {
+      // A1 (D-WB-2): read the canonical (idea-owner's) row so a non-owner org member
+      // can export the shared table/whiteboard data instead of 404'ing — see
+      // resolveCanonicalMapOwner.
+      const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
+      if (!canonicalUserId) return res.status(404).json({ error: 'Idea map not found' });
+
       const mapRow = await queryHelpers.queryOne<any>(
         `SELECT nodes_json, extensions_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-        [ideaId, userId, orgId]
+        [ideaId, canonicalUserId, orgId]
       );
       if (!mapRow) return res.status(404).json({ error: 'Idea map not found' });
 

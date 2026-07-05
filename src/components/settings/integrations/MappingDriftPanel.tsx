@@ -188,7 +188,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
       },
     };
     const m = map[status] || {
-      color: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400',
+      color: 'bg-c-surface-raised text-c-text-secondary',
       icon: null,
     };
     return (
@@ -223,11 +223,11 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
               <GitMerge size={20} />
               {t('integrations.mappings.overviewTitle', 'Mapping Overview')}
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-c-text-muted mt-1">
               {t(
                 'integrations.mappings.overviewDesc',
                 'Select an integration to view and manage its field mappings.'
@@ -236,7 +236,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
           </div>
           <button
             onClick={loadOverview}
-            className="p-2 text-slate-600 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+            className="p-2 text-c-text-secondary hover:text-brand rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700 transition-colors"
           >
             <RefreshCw size={16} />
           </button>
@@ -247,17 +247,17 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
             <button
               key={item.integrationId}
               onClick={() => setSelectedId(item.integrationId)}
-              className="w-full text-left p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800/40 hover:border-brand/30 hover:shadow-md transition-all"
+              className="w-full text-left p-4 rounded-xl border border-c-border-subtle dark:border-navy-700 bg-c-surface-raised hover:border-brand/30 hover:shadow-md transition-all"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm text-slate-900 dark:text-white">
+                    <span className="font-medium text-sm text-c-text">
                       {item.name || item.connectorId}
                     </span>
                     {statusBadge(item.status)}
                   </div>
-                  <div className="flex gap-4 mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="flex gap-4 mt-1.5 text-xs text-c-text-muted">
                     <span>
                       {item.fieldMappingCount}{' '}
                       {t('integrations.mappings.fieldMappings', 'field mappings')}
@@ -273,7 +273,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
                     )}
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-600" />
+                <ChevronRight className="w-4 h-4 text-c-text-secondary" />
               </div>
             </button>
           ))}
@@ -354,8 +354,8 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
 
       {actionError && <Banner variant="danger" title={actionError} />}
 
-      <div className="bg-white dark:bg-navy-800/40 rounded-xl border border-slate-200 dark:border-navy-700">
-        <div className="flex border-b border-slate-200 dark:border-navy-700 overflow-x-auto">
+      <div className="bg-c-surface-raised rounded-xl border border-c-border-subtle dark:border-navy-700">
+        <div className="flex border-b border-c-border-subtle dark:border-navy-700 overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -363,13 +363,13 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
                 activeTab === tab.id
                   ? 'border-brand text-brand'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                  : 'border-transparent text-c-text-muted hover:text-c-text-secondary'
               }`}
             >
               {tab.icon}
               {tab.label}
               {typeof tab.count === 'number' && tab.count > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 text-xs bg-slate-200 dark:bg-navy-700 rounded-full">
+                <span className="ml-1 px-1.5 py-0.5 text-xs bg-c-surface-raised rounded-full">
                   {tab.count}
                 </span>
               )}
@@ -381,7 +381,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
           {activeTab === 'fields' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                <h3 className="text-sm font-semibold text-c-text-secondary">
                   {t('integrations.mappings.fieldEditor', 'Field Mapping Configuration')}
                 </h3>
                 <button
@@ -403,8 +403,8 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
                 className={`w-full h-64 p-3 text-xs font-mono rounded-lg border ${
                   jsonError
                     ? 'border-danger-400 bg-danger-50 dark:bg-danger-900/20'
-                    : 'border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900'
-                } text-slate-900 dark:text-white`}
+                    : 'border-c-border-subtle dark:border-navy-700 bg-c-surface-raised'
+                } text-c-text`}
                 spellCheck={false}
               />
               {jsonError && <p className="text-xs text-danger-500">{jsonError}</p>}
@@ -415,7 +415,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
             <div className="overflow-x-auto">
               <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-navy-700">
+                  <tr className="text-left text-xs text-c-text-muted uppercase tracking-wider border-b border-c-border-subtle dark:border-navy-700">
                     <th className="pb-2 pr-4">
                       {t('integrations.mappings.localType', 'Local Type')}
                     </th>
@@ -435,14 +435,14 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
                     <tr>
                       <td
                         colSpan={6}
-                        className="py-8 text-center text-slate-600 dark:text-slate-500"
+                        className="py-8 text-center text-c-text-secondary"
                       >
                         {t('common.noData', 'No data')}
                       </td>
                     </tr>
                   ) : (
                     data.entityMappings.map((m) => (
-                      <tr key={m.id} className="border-b border-slate-200 dark:border-navy-700/50">
+                      <tr key={m.id} className="border-b border-c-border-subtle dark:border-navy-700/50">
                         <td className="py-2 pr-4 font-mono text-xs">{m.localType}</td>
                         <td className="py-2 pr-4 font-mono text-xs truncate max-w-[120px]">
                           {m.localId}
@@ -452,7 +452,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
                           {m.externalId}
                         </td>
                         <td className="py-2 pr-4">{statusBadge(m.syncStatus)}</td>
-                        <td className="py-2 text-xs text-slate-500">
+                        <td className="py-2 text-xs text-c-text-muted">
                           {formatTimestamp(m.lastSyncedAt)}
                         </td>
                       </tr>
@@ -466,7 +466,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
           {activeTab === 'drift' && (
             <div className="space-y-3">
               {data.driftEvents.length === 0 ? (
-                <div className="text-center py-8 text-slate-600 dark:text-slate-500">
+                <div className="text-center py-8 text-c-text-secondary">
                   <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-400" />
                   <p className="text-sm">
                     {t('integrations.mappings.noDrift', 'No schema drift detected')}
@@ -483,7 +483,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-900 dark:text-white">
+                      <span className="text-sm font-medium text-c-text">
                         {d.driftType}
                       </span>
                       {d.resolvedAt ? (
@@ -496,12 +496,12 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-xs text-c-text-muted mt-1">
                       {t('integrations.mappings.detected', 'Detected')}:{' '}
                       {formatTimestamp(d.detectedAt)}
                     </p>
                     {d.affectedFields && (
-                      <p className="text-xs font-mono text-slate-600 dark:text-slate-400 mt-1">
+                      <p className="text-xs font-mono text-c-text-secondary mt-1">
                         {d.affectedFields}
                       </p>
                     )}
@@ -515,7 +515,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-navy-700">
+                  <tr className="text-left text-xs text-c-text-muted uppercase tracking-wider border-b border-c-border-subtle dark:border-navy-700">
                     <th className="pb-2 pr-4">
                       {t('integrations.mappings.objectType', 'Object Type')}
                     </th>
@@ -534,23 +534,23 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
                     <tr>
                       <td
                         colSpan={5}
-                        className="py-8 text-center text-slate-600 dark:text-slate-500"
+                        className="py-8 text-center text-c-text-secondary"
                       >
                         {t('common.noData', 'No data')}
                       </td>
                     </tr>
                   ) : (
                     data.syncStates.map((s) => (
-                      <tr key={s.id} className="border-b border-slate-200 dark:border-navy-700/50">
+                      <tr key={s.id} className="border-b border-c-border-subtle dark:border-navy-700/50">
                         <td className="py-2 pr-4 text-xs">{s.objectType}</td>
                         <td className="py-2 pr-4 font-mono text-xs truncate max-w-[120px]">
                           {s.objectId}
                         </td>
                         <td className="py-2 pr-4">{statusBadge(s.syncStatus)}</td>
-                        <td className="py-2 pr-4 text-xs text-slate-500 dark:text-slate-400">
+                        <td className="py-2 pr-4 text-xs text-c-text-muted">
                           {s.errorClass || '—'}
                         </td>
-                        <td className="py-2 text-xs text-slate-500 dark:text-slate-400">
+                        <td className="py-2 text-xs text-c-text-muted">
                           {formatTimestamp(s.lastSyncedAt)}
                         </td>
                       </tr>

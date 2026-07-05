@@ -1,6 +1,23 @@
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
+/**
+ * Brand-consistent export palette (navy / teal).
+ * jsPDF renders outside the DOM, so CSS vars are unavailable — these are fixed
+ * RGB tuples aligned with the DBR77 navy/teal brand, kept in one place so PDF
+ * and notebook exports read consistently. NEVER var() here (no DOM at export).
+ */
+const PDF_COLORS = {
+  paper: '#ffffff',
+  ink: [15, 23, 42] as [number, number, number],
+  inkSubtle: [71, 85, 105] as [number, number, number],
+  inkMuted: [100, 116, 128] as [number, number, number],
+  hairline: [203, 210, 218] as [number, number, number],
+  hairlineSubtle: [230, 233, 237] as [number, number, number],
+  navy: [15, 23, 42] as [number, number, number],
+  teal: [13, 148, 136] as [number, number, number],
+};
+
 interface ExportOptions {
   filename?: string;
   title?: string;
@@ -25,7 +42,7 @@ export async function exportToPDF(elementId: string, options: ExportOptions = {}
     scale: 2, // Higher resolution
     useCORS: true,
     logging: false,
-    backgroundColor: '#ffffff',
+    backgroundColor: PDF_COLORS.paper,
     windowWidth: element.scrollWidth,
     windowHeight: element.scrollHeight,
   });
@@ -52,14 +69,14 @@ export async function exportToPDF(elementId: string, options: ExportOptions = {}
   let yOffset = margin;
   if (title) {
     pdf.setFontSize(16);
-    pdf.setTextColor(51, 51, 51);
+    pdf.setTextColor(...PDF_COLORS.ink);
     pdf.text(title, margin, yOffset + 5);
     yOffset += 15;
   }
 
   // Add generation timestamp
   pdf.setFontSize(9);
-  pdf.setTextColor(128, 128, 128);
+  pdf.setTextColor(...PDF_COLORS.inkMuted);
   pdf.text(`Generated: ${new Date().toLocaleString()}`, margin, yOffset);
   yOffset += 10;
 
@@ -91,7 +108,7 @@ export async function exportToPDF(elementId: string, options: ExportOptions = {}
   for (let i = 1; i <= totalPages; i++) {
     pdf.setPage(i);
     pdf.setFontSize(8);
-    pdf.setTextColor(150, 150, 150);
+    pdf.setTextColor(...PDF_COLORS.inkMuted);
     pdf.text(`Page ${i} of ${totalPages} • Consultify`, pageWidth - margin, pageHeight - 5, {
       align: 'right',
     });
@@ -127,13 +144,13 @@ export async function exportConversationToPDF(
 
   // Title
   pdf.setFontSize(18);
-  pdf.setTextColor(20, 30, 70);
+  pdf.setTextColor(...PDF_COLORS.navy);
   pdf.text(title, margin, y + 6);
   y += 14;
 
   // Subtitle
   pdf.setFontSize(9);
-  pdf.setTextColor(120, 120, 120);
+  pdf.setTextColor(...PDF_COLORS.inkSubtle);
   pdf.text(
     `Exported: ${new Date().toLocaleString()} • ${messages.length} messages • Consultify`,
     margin,
@@ -142,7 +159,7 @@ export async function exportConversationToPDF(
   y += 8;
 
   // Separator
-  pdf.setDrawColor(200, 200, 200);
+  pdf.setDrawColor(...PDF_COLORS.hairline);
   pdf.line(margin, y, pageWidth - margin, y);
   y += 6;
 
@@ -150,7 +167,7 @@ export async function exportConversationToPDF(
   for (const msg of messages) {
     const isUser = msg.role === 'user';
     const roleLabel = isUser ? 'USER' : 'AI CONSULTANT';
-    const roleColor: [number, number, number] = isUser ? [59, 130, 246] : [16, 185, 129];
+    const roleColor: [number, number, number] = isUser ? PDF_COLORS.navy : PDF_COLORS.teal;
 
     // Role label
     addPageIfNeeded(12);
@@ -160,7 +177,7 @@ export async function exportConversationToPDF(
     pdf.text(roleLabel, margin, y);
     if (msg.timestamp) {
       const ts = typeof msg.timestamp === 'string' ? new Date(msg.timestamp) : msg.timestamp;
-      pdf.setTextColor(160, 160, 160);
+      pdf.setTextColor(...PDF_COLORS.inkMuted);
       pdf.setFont('helvetica', 'normal');
       pdf.text(ts.toLocaleString(), margin + 35, y);
     }
@@ -168,7 +185,7 @@ export async function exportConversationToPDF(
 
     // Message content — word-wrap
     pdf.setFontSize(10);
-    pdf.setTextColor(40, 40, 40);
+    pdf.setTextColor(...PDF_COLORS.ink);
     pdf.setFont('helvetica', 'normal');
 
     // Clean markdown formatting for PDF
@@ -191,7 +208,7 @@ export async function exportConversationToPDF(
 
     // Light separator between messages
     addPageIfNeeded(3);
-    pdf.setDrawColor(230, 230, 230);
+    pdf.setDrawColor(...PDF_COLORS.hairlineSubtle);
     pdf.line(margin, y, margin + 40, y);
     y += 5;
   }
@@ -201,7 +218,7 @@ export async function exportConversationToPDF(
   for (let i = 1; i <= totalPages; i++) {
     pdf.setPage(i);
     pdf.setFontSize(8);
-    pdf.setTextColor(150, 150, 150);
+    pdf.setTextColor(...PDF_COLORS.inkMuted);
     pdf.text(`Page ${i} of ${totalPages} • Consultify AI`, pageWidth - margin, pageHeight - 5, {
       align: 'right',
     });

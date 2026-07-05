@@ -278,7 +278,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
             }`}
             title={pinnedId === selectedItem.id ? 'Unpin' : 'Pin for comparison'}
           >
-            {pinnedId === selectedItem.id ? <PinOff size={13} /> : <Pin size={13} />}
+            {pinnedId === selectedItem.id ? <PinOff size={14} /> : <Pin size={14} />}
           </button>
         ) : null}
         {renderPreviewActions?.(selectedItem)}
@@ -324,7 +324,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
                 className="inline-flex items-center justify-center h-7 w-7 rounded-full text-primary-500 bg-primary-50 dark:bg-primary-500/10"
                 title="Unpin"
               >
-                <PinOff size={13} />
+                <PinOff size={14} />
               </button>
             }
           >

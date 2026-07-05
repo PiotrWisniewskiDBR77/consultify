@@ -223,7 +223,7 @@ const rowVariants = {
 
 // Identity tone (canon §4.0a): leading dot only, neutral chip shell — never colored fill.
 const NEUTRAL_CHIP =
-  'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-100/60 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300';
+  'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-c-border-subtle bg-c-surface-raised/[0.04] text-c-text-secondary';
 
 // Get type badge config
 const getTypeBadgeConfig = (isSystem: boolean) => {
@@ -237,7 +237,7 @@ const getTypeBadgeConfig = (isSystem: boolean) => {
   return {
     label: 'ORG',
     icon: Building2,
-    dot: 'bg-primary-400',
+    dot: 'bg-c-accent-soft',
   };
 };
 
@@ -253,7 +253,7 @@ const getSourceTypeBadgeConfig = (sourceType: string) => {
     case 'INITIATIVE':
       return { dot: 'bg-pink-400' };
     default:
-      return { dot: 'bg-slate-400' };
+      return { dot: 'bg-c-text-muted' };
   }
 };
 
@@ -261,7 +261,7 @@ const getSourceTypeBadgeConfig = (sourceType: string) => {
 const getAudienceBadgeConfig = (audience?: string) => {
   switch (audience?.toLowerCase()) {
     case 'executive':
-      return { dot: 'bg-primary-400', label: 'Executive' };
+      return { dot: 'bg-c-accent-soft', label: 'Executive' };
     case 'manager':
       return { dot: 'bg-blue-400', label: 'Manager' };
     case 'analyst':
@@ -271,7 +271,7 @@ const getAudienceBadgeConfig = (audience?: string) => {
     case 'external':
       return { dot: 'bg-danger-400', label: 'External' };
     default:
-      return { dot: 'bg-slate-400', label: 'General' };
+      return { dot: 'bg-c-text-muted', label: 'General' };
   }
 };
 
@@ -604,15 +604,15 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-c-accent animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-navy-950">
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-surface-raised">
       {/* Navigation Bar - Matching MyWorkHub Golden Standard */}
-      <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
+      <div className="bg-c-surface border-b border-c-border-subtle">
         {/* Main Navigation Row */}
         <div className="flex items-center justify-between px-4 py-3">
           {/* Left: Search Toggle + Tab Buttons */}
@@ -622,8 +622,8 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               onClick={() => setShowSearch(!showSearch)}
               className={`flex items-center justify-center h-9 w-9 rounded-lg border transition-all duration-200 ${
                 showSearch
-                  ? 'bg-primary-500/15 border-primary-500 text-primary-400'
-                  : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-500'
+                  ? 'bg-c-accent-soft0 border-c-accent text-c-accent'
+                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border'
               }`}
               title="Search"
             >
@@ -635,8 +635,8 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               onClick={() => setFilter('all')}
               className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition-all duration-200 ${
                 filter === 'all'
-                  ? 'bg-primary-500/15 border-primary-500 text-primary-300'
-                  : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-500'
+                  ? 'bg-c-accent-soft0 border-c-accent text-c-accent'
+                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border'
               }`}
             >
               <FileText size={14} />
@@ -644,8 +644,8 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               <span
                 className={`px-1.5 text-xs rounded-full ${
                   filter === 'all'
-                    ? 'bg-primary-500/30 text-primary-300'
-                    : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'
+                    ? 'bg-c-accent-soft0 text-c-accent'
+                    : 'bg-c-surface-raised text-c-text-secondary'
                 }`}
               >
                 {templates.length}
@@ -657,7 +657,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition-all duration-200 ${
                 filter === 'app'
                   ? 'bg-blue-500/15 border-blue-500 text-blue-300'
-                  : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-500'
+                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border'
               }`}
             >
               <Package size={14} />
@@ -666,7 +666,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                 className={`px-1.5 text-xs rounded-full ${
                   filter === 'app'
                     ? 'bg-blue-500/30 text-blue-300'
-                    : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'
+                    : 'bg-c-surface-raised text-c-text-secondary'
                 }`}
               >
                 {appCount}
@@ -677,8 +677,8 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               onClick={() => setFilter('org')}
               className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition-all duration-200 ${
                 filter === 'org'
-                  ? 'bg-primary-500/15 border-primary-500 text-primary-300'
-                  : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-500'
+                  ? 'bg-c-accent-soft0 border-c-accent text-c-accent'
+                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border'
               }`}
             >
               <Building2 size={14} />
@@ -686,8 +686,8 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               <span
                 className={`px-1.5 text-xs rounded-full ${
                   filter === 'org'
-                    ? 'bg-primary-500/30 text-primary-300'
-                    : 'bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-400'
+                    ? 'bg-c-accent-soft0 text-c-accent'
+                    : 'bg-c-surface-raised text-c-text-secondary'
                 }`}
               >
                 {orgCount}
@@ -702,7 +702,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               <select
                 value={moduleFilter}
                 onChange={(e) => setModuleFilter(e.target.value as typeof moduleFilter)}
-                className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-500 text-slate-700 dark:text-slate-200 hover:border-primary-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition-all duration-200 cursor-pointer"
+                className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium bg-c-surface border border-c-border-subtle text-c-text hover:border-c-accent focus:border-c-accent focus:ring-1 focus:ring-c-focus transition-all duration-200 cursor-pointer"
               >
                 <option value="all">All Modules</option>
                 <option value="assessment">Assessment ({moduleCounts.assessment})</option>
@@ -712,7 +712,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               </select>
               <ChevronDown
                 size={14}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-c-text-secondary pointer-events-none"
               />
             </div>
 
@@ -721,7 +721,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               <select
                 value={formatFilter}
                 onChange={(e) => setFormatFilter(e.target.value as typeof formatFilter)}
-                className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-500 text-slate-700 dark:text-slate-200 hover:border-primary-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition-all duration-200 cursor-pointer"
+                className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium bg-c-surface border border-c-border-subtle text-c-text hover:border-c-accent focus:border-c-accent focus:ring-1 focus:ring-c-focus transition-all duration-200 cursor-pointer"
               >
                 <option value="all">All Formats</option>
                 <option value="vertical">Vertical ({formatCounts.vertical})</option>
@@ -729,17 +729,17 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               </select>
               <ChevronDown
                 size={14}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-c-text-secondary pointer-events-none"
               />
             </div>
 
             {/* Separator */}
-            <div className="w-px h-6 bg-slate-200 dark:bg-navy-600 mx-1" />
+            <div className="w-px h-6 bg-c-border-subtle mx-1" />
 
             {/* Primary Action Button - Unified height */}
             <button
               onClick={() => openEditor()}
-              className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-gradient-to-r from-primary-500 to-primary-600 text-white border border-white/20 hover:brightness-110 shadow-lg shadow-primary-500/25 transition-all duration-200"
+              className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-c-accent text-c-text border border-c-border hover:brightness-110 shadow-lg transition-all duration-200"
             >
               <Plus size={14} />
               <span>New Template</span>
@@ -753,7 +753,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
             <div className="relative">
               <Search
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-secondary"
               />
               <input
                 type="text"
@@ -761,7 +761,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search templates..."
                 autoFocus
-                className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+                className="w-full pl-10 pr-10 py-2 rounded-lg bg-c-surface border border-c-border-subtle text-c-text placeholder:text-c-text-muted focus:border-c-accent focus:ring-1 focus:ring-c-focus transition-all"
               />
               {searchQuery && (
                 <button
@@ -769,7 +769,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                     setSearchQuery('');
                     setShowSearch(false);
                   }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-c-text-secondary hover:text-c-text"
                 >
                   <X size={16} />
                 </button>
@@ -783,34 +783,34 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
       <div className="flex-1 min-h-0 flex gap-1.5 p-4">
         <div className="flex-1 min-w-0 overflow-y-auto">
           {filteredTemplates.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/50 rounded-xl">
-              <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800 inline-block mb-4">
-                <FileText size={28} className="text-slate-500" />
+            <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-c-border-subtle rounded-xl">
+              <div className="p-4 rounded-full bg-c-surface-raised inline-block mb-4">
+                <FileText size={28} className="text-c-text-secondary" />
               </div>
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <p className="text-sm font-medium text-c-text mb-1">
                 {searchQuery ? 'No templates match your search' : 'No templates found'}
               </p>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-c-text-secondary">
                 {searchQuery
                   ? 'Try adjusting your search terms'
                   : 'Create a new template to get started'}
               </p>
             </div>
           ) : (
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/50 rounded-xl overflow-x-auto">
+            <div className="bg-c-surface border border-c-border-subtle rounded-xl overflow-x-auto">
               <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full" style={{ minWidth: 900 }}>
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
+                  <tr className="border-b border-c-border-subtle bg-c-surface-raised sticky top-0 z-10">
                     {/* Select All */}
                     <th className="w-10 px-2 py-2">
                       <button
                         onClick={() => handleSelectAll(!allSelected)}
                         className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
                           allSelected
-                            ? 'bg-navy-900 border-navy-900 text-white'
+                            ? 'bg-c-surface border-c-border text-c-text'
                             : someSelected
-                              ? 'bg-primary-500/50 border-primary-500 text-white'
-                              : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-500 dark:hover:text-slate-400'
+                              ? 'bg-c-accent-soft0 border-c-accent text-c-text'
+                              : 'border-c-border hover:border-c-accent text-transparent hover:text-c-text-secondary'
                         }`}
                       >
                         {allSelected ? (
@@ -825,13 +825,13 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
 
                     {/* Type with Filter */}
                     <th
-                      className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                      className="px-3 py-2 text-left text-xs font-medium text-c-text-secondary uppercase tracking-wider relative group/header"
                       style={{ width: columnWidths.type }}
                     >
                       <div className="flex items-center gap-1">
                         <span
                           className={
-                            (tableFilters.type as string[])?.length ? 'text-primary-500' : ''
+                            (tableFilters.type as string[])?.length ? 'text-c-accent' : ''
                           }
                         >
                           Type
@@ -858,19 +858,19 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                     <th className="w-8 px-1 py-2"></th>
 
                     {/* Template Name */}
-                    <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-c-text-secondary uppercase tracking-wider">
                       Template
                     </th>
 
                     {/* Module with Filter */}
                     <th
-                      className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                      className="px-3 py-2 text-left text-xs font-medium text-c-text-secondary uppercase tracking-wider relative group/header"
                       style={{ width: columnWidths.sourceType }}
                     >
                       <div className="flex items-center gap-1">
                         <span
                           className={
-                            (tableFilters.sourceType as string[])?.length ? 'text-primary-500' : ''
+                            (tableFilters.sourceType as string[])?.length ? 'text-c-accent' : ''
                           }
                         >
                           Module
@@ -897,13 +897,13 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
 
                     {/* Audience with Filter */}
                     <th
-                      className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                      className="px-3 py-2 text-left text-xs font-medium text-c-text-secondary uppercase tracking-wider relative group/header"
                       style={{ width: columnWidths.audience }}
                     >
                       <div className="flex items-center gap-1">
                         <span
                           className={
-                            (tableFilters.audience as string[])?.length ? 'text-primary-500' : ''
+                            (tableFilters.audience as string[])?.length ? 'text-c-accent' : ''
                           }
                         >
                           Audience
@@ -930,7 +930,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
 
                     {/* User */}
                     <th
-                      className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                      className="px-3 py-2 text-left text-xs font-medium text-c-text-secondary uppercase tracking-wider relative group/header"
                       style={{ width: columnWidths.createdBy }}
                     >
                       <span>User</span>
@@ -945,7 +945,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
 
                     {/* Sections */}
                     <th
-                      className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                      className="px-3 py-2 text-right text-xs font-medium text-c-text-secondary uppercase tracking-wider relative group/header"
                       style={{ width: columnWidths.sections }}
                     >
                       <span>Sections</span>
@@ -960,7 +960,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
 
                     {/* Updated */}
                     <th
-                      className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                      className="px-3 py-2 text-left text-xs font-medium text-c-text-secondary uppercase tracking-wider relative group/header"
                       style={{ width: columnWidths.updatedAt }}
                     >
                       <span>Updated</span>
@@ -975,7 +975,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
 
                     {/* Actions */}
                     <th
-                      className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
+                      className="px-3 py-2 text-right text-xs font-medium text-c-text-secondary uppercase tracking-wider"
                       style={{ width: columnWidths.actions }}
                     >
                       Actions
@@ -998,7 +998,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                           exit="exit"
                           onClick={() => setPreviewId(template.id)}
                           className={`
-                          group cursor-pointer border-b border-slate-200 dark:border-navy-700/50
+                          group cursor-pointer border-b border-c-border-subtle
                           ${
                             previewId === template.id
                               ? PREVIEW_SELECTED_ROW_CLASS
@@ -1007,7 +1007,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                                 : ''
                           }
                           transition-colors duration-150
-                          hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
+                          hover:bg-c-surface-raised/[0.03]
                         `}
                         >
                           {/* Checkbox */}
@@ -1019,8 +1019,8 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                               }}
                               className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
                                 selectedIds.has(template.id)
-                                  ? 'bg-navy-900 border-navy-900 text-white'
-                                  : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
+                                  ? 'bg-c-surface border-c-border text-c-text'
+                                  : 'border-c-border hover:border-c-accent'
                               }`}
                             >
                               {selectedIds.has(template.id) && <CheckSquare size={12} />}
@@ -1031,7 +1031,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                           <td className="px-3 py-2.5" style={{ width: columnWidths.type }}>
                             <span className={`${NEUTRAL_CHIP} text-[11px] font-semibold uppercase`}>
                               <span className={`h-1.5 w-1.5 rounded-full ${typeConfig.dot}`} />
-                              <TypeIcon size={11} className="text-slate-500 dark:text-slate-400" />
+                              <TypeIcon size={11} className="text-c-text-secondary" />
                               {typeConfig.label}
                             </span>
                           </td>
@@ -1049,11 +1049,11 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                           {/* Template Name */}
                           <td className="px-3 py-2.5" style={{ minWidth: 200 }}>
                             <div className="flex flex-col">
-                              <span className="text-sm font-medium text-slate-900 dark:text-white">
+                              <span className="text-sm font-medium text-c-text">
                                 {template.name}
                               </span>
                               {template.description && (
-                                <span className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+                                <span className="text-xs text-c-text-secondary mt-0.5 line-clamp-1">
                                   {template.description}
                                 </span>
                               )}
@@ -1085,8 +1085,8 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
 
                           {/* User */}
                           <td className="px-3 py-2.5" style={{ width: columnWidths.createdBy }}>
-                            <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
-                              <User size={13} className="text-slate-600 dark:text-slate-500" />
+                            <div className="flex items-center gap-1.5 text-sm text-c-text-secondary">
+                              <User size={13} className="text-c-text-secondary" />
                               <span className="truncate">
                                 {template.createdByName || (template.isSystem ? 'System' : '—')}
                               </span>
@@ -1098,15 +1098,15 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                             className="px-3 py-2.5 text-right"
                             style={{ width: columnWidths.sections }}
                           >
-                            <span className="text-sm tabular-nums text-slate-700 dark:text-slate-400">
+                            <span className="text-sm tabular-nums text-c-text">
                               {template.sections?.length || 0}
                             </span>
                           </td>
 
                           {/* Updated */}
                           <td className="px-3 py-2.5" style={{ width: columnWidths.updatedAt }}>
-                            <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
-                              <Calendar size={12} className="text-slate-600 dark:text-slate-500" />
+                            <div className="flex items-center gap-1.5 text-sm text-c-text-secondary">
+                              <Calendar size={12} className="text-c-text-secondary" />
                               {formatDate(template.updatedAt || template.createdAt)}
                             </div>
                           </td>
@@ -1144,22 +1144,22 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
           const audienceConfig = getAudienceBadgeConfig(previewTpl.audience);
           return (
             <div className="shrink-0 overflow-y-auto" style={{ width: 'clamp(340px, 28%, 480px)' }}>
-              <div className="rounded-xl bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] backdrop-blur">
-                <div className="sticky top-0 z-10 flex items-center gap-2 px-4 py-3 border-b border-slate-200/60 dark:border-white/[0.05] bg-white/80 dark:bg-navy-900/80 backdrop-blur">
-                  <h3 className="flex-1 min-w-0 truncate text-sm font-semibold text-slate-900 dark:text-white">
+              <div className="rounded-xl bg-c-surface border border-c-border-subtle/[0.06] backdrop-blur">
+                <div className="sticky top-0 z-10 flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle/[0.05] bg-c-surface backdrop-blur">
+                  <h3 className="flex-1 min-w-0 truncate text-sm font-semibold text-c-text">
                     {previewTpl.name}
                   </h3>
                   {!previewTpl.isSystem && (
                     <button
                       onClick={() => openEditor(previewTpl)}
-                      className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                      className="px-2.5 py-1 rounded-lg border border-c-border-subtle text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                     >
                       Edit
                     </button>
                   )}
                   <button
                     onClick={() => setPreviewId(null)}
-                    className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                    className="p-1 rounded-lg text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                     aria-label="Close preview"
                   >
                     <X size={15} />
@@ -1181,26 +1181,26 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                     </span>
                   </div>
                   {previewTpl.description && (
-                    <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
+                    <p className="text-sm leading-relaxed text-c-text-secondary whitespace-pre-wrap">
                       {previewTpl.description}
                     </p>
                   )}
                   <dl className="text-sm space-y-1.5 pt-1">
                     <div className="flex justify-between gap-3">
-                      <dt className="text-slate-500 dark:text-slate-400">User</dt>
-                      <dd className="text-slate-700 dark:text-slate-200 truncate">
+                      <dt className="text-c-text-secondary">User</dt>
+                      <dd className="text-c-text truncate">
                         {previewTpl.createdByName || (previewTpl.isSystem ? 'System' : '—')}
                       </dd>
                     </div>
                     <div className="flex justify-between gap-3">
-                      <dt className="text-slate-500 dark:text-slate-400">Sections</dt>
-                      <dd className="text-slate-700 dark:text-slate-200 tabular-nums">
+                      <dt className="text-c-text-secondary">Sections</dt>
+                      <dd className="text-c-text tabular-nums">
                         {previewTpl.sections?.length || 0}
                       </dd>
                     </div>
                     <div className="flex justify-between gap-3">
-                      <dt className="text-slate-500 dark:text-slate-400">Updated</dt>
-                      <dd className="text-slate-700 dark:text-slate-200">
+                      <dt className="text-c-text-secondary">Updated</dt>
+                      <dd className="text-c-text">
                         {formatDate(previewTpl.updatedAt || previewTpl.createdAt)}
                       </dd>
                     </div>
@@ -1219,7 +1219,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[70] bg-slate-50 dark:bg-navy-950"
+            className="fixed inset-0 z-[70] bg-c-surface-raised"
           >
             <ReportEditor
               mode="template"

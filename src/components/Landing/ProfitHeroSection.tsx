@@ -28,13 +28,13 @@ export const ProfitHeroSection: React.FC<ProfitHeroSectionProps> = ({
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55 }}
-              className="text-5xl lg:text-7xl font-black text-navy-950 dark:text-white leading-[1.05] tracking-tight"
+              className="text-5xl lg:text-7xl font-black text-c-text leading-[1.05] tracking-tight"
             >
               {t('landing.profitHero.h1.line1', 'Consultify AI.')}
               <br />
               {t('landing.profitHero.h1.line2', 'All the world’s business knowledge.')}
               <br />
-              <span className="bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
+              <span className="text-c-accent">
                 {t('landing.profitHero.h1.line3', 'Turned into your profits.')}
               </span>
             </motion.h1>
@@ -43,7 +43,7 @@ export const ProfitHeroSection: React.FC<ProfitHeroSectionProps> = ({
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.08 }}
-              className="text-lg lg:text-xl text-slate-600 dark:text-slate-300 font-semibold"
+              className="text-lg lg:text-xl text-c-text-secondary font-semibold"
             >
               {t('landing.profitHero.sub', 'Diagnose. Plan. Execute. Track impact.')}
             </motion.p>
@@ -52,7 +52,7 @@ export const ProfitHeroSection: React.FC<ProfitHeroSectionProps> = ({
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.14 }}
-              className="text-sm lg:text-base text-slate-500 dark:text-slate-400 font-medium max-w-xl"
+              className="text-sm lg:text-base text-c-text-muted font-medium max-w-xl"
             >
               {t(
                 'landing.profitHero.billboard',
@@ -71,7 +71,7 @@ export const ProfitHeroSection: React.FC<ProfitHeroSectionProps> = ({
                 });
                 onLaunchTrial();
               }}
-              className="px-7 py-4 rounded-xl bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] font-semibold shadow-lg shadow-primary-500/20 transition-colors flex items-center justify-center gap-2"
+              className="px-7 py-4 rounded-xl bg-c-accent hover:opacity-90 text-white font-semibold shadow-lg shadow-c-accent/20 transition-opacity flex items-center justify-center gap-2"
             >
               {t('landing.profitHero.ctaPrimary', 'Launch Free Trial')}
               <ArrowRight size={18} />
@@ -82,14 +82,14 @@ export const ProfitHeroSection: React.FC<ProfitHeroSectionProps> = ({
                 trackFunnelEvent('landing_demo_clicked', { cta: 'open_demo_now', variant });
                 onOpenDemoNow();
               }}
-              className="px-7 py-4 rounded-xl bg-white dark:bg-navy-900 hover:bg-slate-50 dark:hover:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-800 dark:text-slate-200 font-semibold transition-colors flex items-center justify-center gap-2"
+              className="px-7 py-4 rounded-xl bg-c-surface hover:bg-c-surface-raised border border-c-border text-c-text font-semibold transition-colors flex items-center justify-center gap-2"
             >
-              <Play size={18} className="text-primary-600 dark:text-primary-400" />
+              <Play size={18} className="text-c-accent" />
               {t('landing.profitHero.ctaSecondary', 'OPEN DEMO NOW')}
             </button>
           </div>
 
-          <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+          <div className="text-xs text-c-text-muted font-medium">
             {t(
               'landing.profitHero.ctaNote',
               'Short teasers are public. Full videos unlock after login.'
@@ -103,13 +103,13 @@ export const ProfitHeroSection: React.FC<ProfitHeroSectionProps> = ({
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.12 }}
-            className="relative rounded-2xl overflow-hidden bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 shadow-2xl"
+            className="relative rounded-2xl overflow-hidden bg-c-surface border border-c-border shadow-2xl"
           >
-            <div className="p-6 border-b border-slate-200 dark:border-navy-700">
-              <p className="text-sm font-black text-slate-900 dark:text-white">
+            <div className="p-6 border-b border-c-border">
+              <p className="text-sm font-black text-c-text">
                 {t('landing.profitHero.panel.title', 'From chat → to deliverables → to profit')}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-xs text-c-text-muted mt-1">
                 {t('landing.profitHero.panel.subtitle', 'One workspace. End-to-end execution.')}
               </p>
             </div>
@@ -136,19 +136,19 @@ export const ProfitHeroSection: React.FC<ProfitHeroSectionProps> = ({
                 ].map((it) => (
                   <div
                     key={it.k}
-                    className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950/40 p-4"
+                    className="rounded-xl border border-c-border bg-c-surface-raised p-4"
                   >
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">
+                    <p className="text-sm font-bold text-c-text">
                       {t(it.k, it.d)}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-xs text-c-text-muted mt-1">
                       {t(`${it.k}.sub`, 'Built for enterprise')}
                     </p>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-6 rounded-xl overflow-hidden border border-slate-200 dark:border-navy-700 bg-slate-100 dark:bg-navy-950">
+              <div className="mt-6 rounded-xl overflow-hidden border border-c-border bg-c-surface-raised">
                 <img
                   src="/assets/landing/proof/consultify-where-it-happens.png"
                   alt={t('landing.profitHero.panel.imageAlt', 'Consultify product screenshot')}
@@ -158,7 +158,7 @@ export const ProfitHeroSection: React.FC<ProfitHeroSectionProps> = ({
                   }}
                 />
                 <div className="p-4">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-c-text-muted">
                     {t(
                       'landing.profitHero.panel.imageHint',
                       'Screenshots will appear here when assets are available.'

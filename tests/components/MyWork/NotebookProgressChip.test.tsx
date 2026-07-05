@@ -18,10 +18,10 @@ const baseProps = {
 describe('NotebookProgressChip', () => {
   it('renders the four workflow steps', () => {
     render(<NotebookProgressChip {...baseProps} />);
-    expect(screen.getByText('① Sources')).toBeInTheDocument();
-    expect(screen.getByText('② AI')).toBeInTheDocument();
-    expect(screen.getByText('③ Review')).toBeInTheDocument();
-    expect(screen.getByText('④ Convert')).toBeInTheDocument();
+    expect(screen.getByText('Sources')).toBeInTheDocument();
+    expect(screen.getByText('AI')).toBeInTheDocument();
+    expect(screen.getByText('Review')).toBeInTheDocument();
+    expect(screen.getByText('Convert')).toBeInTheDocument();
   });
 
   it('fires the sources and AI-proposal callbacks', () => {
@@ -34,22 +34,22 @@ describe('NotebookProgressChip', () => {
         onCreateAIProposal={onCreateAIProposal}
       />
     );
-    fireEvent.click(screen.getByText('① Sources'));
-    fireEvent.click(screen.getByText('② AI'));
+    fireEvent.click(screen.getByText('Sources'));
+    fireEvent.click(screen.getByText('AI'));
     expect(onOpenAttachments).toHaveBeenCalled();
     expect(onCreateAIProposal).toHaveBeenCalled();
   });
 
   it('disables Review until there are pending proposals', () => {
     const { rerender } = render(<NotebookProgressChip {...baseProps} hasPendingAIProposals={false} />);
-    expect(screen.getByText('③ Review').closest('button')).toBeDisabled();
+    expect(screen.getByText('Review').closest('button')).toBeDisabled();
     rerender(<NotebookProgressChip {...baseProps} hasPendingAIProposals />);
-    expect(screen.getByText('③ Review').closest('button')).not.toBeDisabled();
+    expect(screen.getByText('Review').closest('button')).not.toBeDisabled();
   });
 
   it('disables Convert when the deliverable cannot be converted', () => {
     render(<NotebookProgressChip {...baseProps} canConvertDeliverable={false} />);
-    expect(screen.getByText('④ Convert').closest('button')).toBeDisabled();
+    expect(screen.getByText('Convert').closest('button')).toBeDisabled();
   });
 
   it('renders optional handoff buttons only when callbacks are supplied', () => {
@@ -68,7 +68,7 @@ describe('NotebookProgressChip', () => {
 
   it('renders Polish labels when isPolish', () => {
     render(<NotebookProgressChip {...baseProps} isPolish />);
-    expect(screen.getByText('① Źródła')).toBeInTheDocument();
-    expect(screen.getByText('④ Konwertuj')).toBeInTheDocument();
+    expect(screen.getByText('Źródła')).toBeInTheDocument();
+    expect(screen.getByText('Konwertuj')).toBeInTheDocument();
   });
 });

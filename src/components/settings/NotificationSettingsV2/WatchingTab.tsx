@@ -45,11 +45,11 @@ const WatchingTab: React.FC<WatchingTabProps> = ({ watchers, onAddWatcher, onRem
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+        <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
           <Eye size={20} />
           {t('settings.notifications.watchingTitle', 'Watching')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-sm text-c-text-muted mt-1">
           {t('settings.notifications.watchingDesc', "Objects you're following for updates.")}
         </p>
       </div>
@@ -71,7 +71,7 @@ const WatchingTab: React.FC<WatchingTabProps> = ({ watchers, onAddWatcher, onRem
 
             return (
               <div key={type} className="space-y-2">
-                <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                <h4 className="text-sm font-medium text-c-text-secondary flex items-center gap-2">
                   <Icon size={16} />
                   {label}s ({items.length})
                 </h4>
@@ -80,15 +80,15 @@ const WatchingTab: React.FC<WatchingTabProps> = ({ watchers, onAddWatcher, onRem
                   {items.map((watcher) => (
                     <div
                       key={watcher.id}
-                      className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800/50 rounded-lg group"
+                      className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg group"
                     >
                       <div className="flex items-center gap-3">
-                        <Icon size={16} className="text-slate-600 dark:text-slate-500" />
+                        <Icon size={16} className="text-c-text-secondary" />
                         <div>
-                          <p className="text-sm font-medium text-slate-900 dark:text-white">
+                          <p className="text-sm font-medium text-c-text">
                             {watcher.objectId}
                           </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                          <p className="text-xs text-c-text-muted">
                             Notify: {watcher.notifyOn}
                           </p>
                         </div>
@@ -96,7 +96,7 @@ const WatchingTab: React.FC<WatchingTabProps> = ({ watchers, onAddWatcher, onRem
 
                       <button
                         onClick={() => onRemoveWatcher(watcher.objectType, watcher.objectId)}
-                        className="p-2 text-slate-600 dark:text-slate-500 hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-all"
+                        className="p-2 text-c-text-secondary hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-all"
                         title={t('settings.notifications.unwatch', 'Stop watching')}
                       >
                         <Trash2 size={16} />

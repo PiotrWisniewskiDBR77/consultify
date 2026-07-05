@@ -218,22 +218,22 @@ const TableOfContents: React.FC<{
   if (totalSections < 3) return null;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mb-8 overflow-hidden print:hidden">
+    <div className="bg-c-surface rounded-xl border border-c-border-subtle mb-8 overflow-hidden print:hidden">
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+        className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-c-surface-raised transition-colors"
       >
         <div className="flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-blue-500" />
-          <span className="font-semibold text-gray-900 dark:text-white">
+          <BookOpen className="w-5 h-5 text-c-info" />
+          <span className="font-semibold text-c-text">
             {isPl ? 'Spis Treści' : 'Table of Contents'}
           </span>
-          <span className="text-sm text-gray-600">({totalSections})</span>
+          <span className="text-sm text-c-text-secondary">({totalSections})</span>
         </div>
         {collapsed ? (
-          <ChevronRight className="w-5 h-5 text-gray-600" />
+          <ChevronRight className="w-5 h-5 text-c-text-secondary" />
         ) : (
-          <ChevronDown className="w-5 h-5 text-gray-600" />
+          <ChevronDown className="w-5 h-5 text-c-text-secondary" />
         )}
       </button>
 
@@ -247,7 +247,7 @@ const TableOfContents: React.FC<{
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: group.chapter.color || '#3B82F6' }}
                   />
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                  <span className="text-sm font-medium text-c-text-secondary uppercase tracking-wider">
                     {group.chapter.title}
                   </span>
                 </div>
@@ -258,12 +258,12 @@ const TableOfContents: React.FC<{
                   <button
                     key={section.sectionKey}
                     onClick={() => onNavigate(section.sectionKey)}
-                    className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+                    className="w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-c-surface-raised transition-colors group"
                   >
-                    <span className="text-xs text-gray-600 font-mono w-6 text-right">
+                    <span className="text-xs text-c-text-secondary font-mono w-6 text-right">
                       {gi > 0 ? `${gi}.${si + 1}` : `${si + 1}`}
                     </span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    <span className="text-sm text-c-text-secondary group-hover:text-c-info transition-colors">
                       {section.title}
                     </span>
                   </button>
@@ -370,7 +370,7 @@ const DownloadBar: React.FC<{
       ) : (
         <button
           onClick={onLoginRedirect}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-blue-500/80 hover:bg-blue-500 rounded-lg transition-colors text-white backdrop-blur-sm"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-c-accent/80 hover:bg-c-accent rounded-lg transition-colors text-white backdrop-blur-sm"
           title={isPl ? 'Zaloguj się aby pobrać PPTX/DOCX' : 'Sign in to download PPTX/DOCX'}
         >
           <LogIn className="w-4 h-4" />
@@ -504,10 +504,10 @@ export const PublicReportBuilderView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-c-bg">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">
+          <Loader2 className="w-12 h-12 animate-spin text-c-info mx-auto mb-4" />
+          <p className="text-c-text-secondary">
             {isPl ? 'Ładowanie raportu...' : 'Loading report...'}
           </p>
         </div>
@@ -521,16 +521,16 @@ export const PublicReportBuilderView: React.FC = () => {
 
   if (requiresPassword) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
-        <div className="max-w-md w-full mx-4 p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
+      <div className="min-h-screen flex items-center justify-center bg-c-bg">
+        <div className="max-w-md w-full mx-4 p-8 bg-c-surface rounded-2xl shadow-xl border border-c-border-subtle">
           <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Lock className="w-8 h-8 text-blue-500" />
+            <div className="w-16 h-16 bg-c-info/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-8 h-8 text-c-info" />
             </div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-xl font-bold text-c-text">
               {isPl ? 'Raport chroniony hasłem' : 'Password Protected Report'}
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">
+            <p className="text-c-text-muted mt-2 text-sm">
               {isPl
                 ? 'Wprowadź hasło, aby wyświetlić ten raport'
                 : 'Enter the password to view this report'}
@@ -544,10 +544,10 @@ export const PublicReportBuilderView: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={isPl ? 'Hasło' : 'Password'}
-                className={`w-full px-4 py-3 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                className={`w-full px-4 py-3 border rounded-xl bg-c-surface text-c-text focus:ring-2 focus:ring-c-focus focus:border-transparent transition-all ${
                   passwordError
                     ? 'border-danger-400 ring-2 ring-danger-100'
-                    : 'border-gray-200 dark:border-gray-600'
+                    : 'border-c-border'
                 }`}
                 autoFocus
               />
@@ -560,7 +560,7 @@ export const PublicReportBuilderView: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full px-4 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/25"
+              className="w-full px-4 py-3 bg-c-accent text-white rounded-xl font-medium hover:opacity-90 transition-opacity shadow-lg shadow-c-accent/25"
             >
               {isPl ? 'Wyświetl raport' : 'View Report'}
             </button>
@@ -576,20 +576,20 @@ export const PublicReportBuilderView: React.FC = () => {
 
   if (error === 'notfound') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-danger-50 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen flex items-center justify-center bg-c-bg">
         <div className="text-center max-w-md mx-auto p-8">
           <div className="w-16 h-16 bg-danger-100 dark:bg-danger-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <Clock className="w-8 h-8 text-danger-500" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-2xl font-bold text-c-text mb-2">
             {isPl ? 'Link wygasł lub nie istnieje' : 'Link Expired or Not Found'}
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 mb-6">
+          <p className="text-c-text-muted mb-6">
             {isPl
               ? 'Ten link do raportu wygasł lub został unieważniony.'
               : 'This report link has expired or has been revoked.'}
           </p>
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center justify-center gap-2 text-sm text-c-text-secondary">
             <Lock className="w-4 h-4" />
             <span>
               {isPl ? 'Skontaktuj się z autorem raportu' : 'Contact the report author for access'}
@@ -602,13 +602,13 @@ export const PublicReportBuilderView: React.FC = () => {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-c-bg">
         <div className="text-center max-w-md mx-auto p-8">
           <AlertTriangle className="w-16 h-16 text-danger-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-xl font-bold text-c-text mb-2">
             {isPl ? 'Wystąpił błąd' : 'An Error Occurred'}
           </h1>
-          <p className="text-gray-500 dark:text-gray-400">{error}</p>
+          <p className="text-c-text-muted">{error}</p>
         </div>
       </div>
     );
@@ -619,7 +619,7 @@ export const PublicReportBuilderView: React.FC = () => {
   // ==========================================
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
+    <div className="min-h-screen bg-c-bg">
       {/* ── Sticky Header ── */}
       <header
         className="sticky top-0 z-50 backdrop-blur-xl border-b border-white/10 print:static"
@@ -656,7 +656,7 @@ export const PublicReportBuilderView: React.FC = () => {
 
         {/* Auth info banner */}
         {authState.authenticated && (
-          <div className="flex items-center gap-2 px-4 py-2 mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-sm text-green-700 dark:text-green-300 print:hidden">
+          <div className="flex items-center gap-2 px-4 py-2 mb-6 bg-c-success/10 border border-c-success/30 rounded-lg text-sm text-c-success print:hidden">
             <Eye className="w-4 h-4" />
             <span>
               {isPl
@@ -678,7 +678,7 @@ export const PublicReportBuilderView: React.FC = () => {
                       className="w-1 h-8 rounded-full"
                       style={{ backgroundColor: group.chapter.color || primaryColor }}
                     />
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+                    <h2 className="text-xl font-bold text-c-text tracking-tight">
                       {group.chapter.title}
                     </h2>
                   </div>
@@ -698,12 +698,12 @@ export const PublicReportBuilderView: React.FC = () => {
                     ref={(el) => {
                       sectionRefs.current[section.sectionKey] = el;
                     }}
-                    className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden mb-4 shadow-sm hover:shadow-md transition-shadow print:shadow-none print:border print:mb-2"
+                    className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden mb-4 shadow-sm hover:shadow-md transition-shadow print:shadow-none print:border print:mb-2"
                     id={`section-${section.sectionKey}`}
                   >
                     {/* Section Header */}
-                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700/50">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <div className="px-6 py-4 border-b border-c-border-subtle">
+                      <h3 className="text-lg font-semibold text-c-text">
                         {section.title}
                       </h3>
                     </div>
@@ -720,7 +720,7 @@ export const PublicReportBuilderView: React.FC = () => {
                           blockSettings={section.blockConfig}
                         />
                       ) : (
-                        <p className="text-gray-600 italic text-sm">
+                        <p className="text-c-text-secondary italic text-sm">
                           {isPl ? 'Sekcja bez treści' : 'No content in this section'}
                         </p>
                       )}
@@ -732,7 +732,7 @@ export const PublicReportBuilderView: React.FC = () => {
           ))}
 
           {data.sections.length === 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center text-gray-600 border border-gray-200 dark:border-gray-700">
+            <div className="bg-c-surface rounded-xl p-12 text-center text-c-text-secondary border border-c-border-subtle">
               <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p>{isPl ? 'Brak treści w raporcie' : 'No content in this report'}</p>
             </div>
@@ -742,8 +742,8 @@ export const PublicReportBuilderView: React.FC = () => {
 
       {/* ── Footer ── */}
       <footer className="max-w-5xl mx-auto px-6 py-8 print:py-2">
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-6 print:pt-2">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-600 dark:text-gray-500">
+        <div className="border-t border-c-border-subtle pt-6 print:pt-2">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-c-text-muted">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5">
                 <Calendar className="w-4 h-4" />
@@ -761,7 +761,7 @@ export const PublicReportBuilderView: React.FC = () => {
 
             {data.branding.showConsultifyBranding && (
               <p className="text-xs font-medium tracking-wide">
-                Powered by <span className="text-blue-500">Consultify</span>
+                Powered by <span className="text-c-accent">Consultify</span>
               </p>
             )}
           </div>

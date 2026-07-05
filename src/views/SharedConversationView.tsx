@@ -72,41 +72,41 @@ export const SharedConversationView: React.FC = () => {
   }, [load]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-navy-950">
-      <header className="border-b border-slate-200 dark:border-navy-800 bg-white/80 dark:bg-navy-900/60 backdrop-blur">
+    <div className="min-h-screen bg-c-bg">
+      <header className="border-b border-c-border bg-c-surface/80 backdrop-blur">
         <div className="mx-auto max-w-3xl px-4 py-3 flex items-center gap-2">
-          <MessageSquare size={18} className="text-primary-600" />
-          <span className="text-sm font-semibold text-navy-900 dark:text-white">Consultify</span>
-          <span className="text-xs text-slate-500 dark:text-slate-400">· shared conversation</span>
+          <MessageSquare size={18} className="text-c-accent" />
+          <span className="text-sm font-semibold text-c-text">Consultify</span>
+          <span className="text-xs text-c-text-muted">· shared conversation</span>
         </div>
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-8">
         {status === 'loading' && (
-          <div className="py-20 text-center text-sm text-slate-500">Loading…</div>
+          <div className="py-20 text-center text-sm text-c-text-muted">Loading…</div>
         )}
 
         {status === 'notfound' && (
           <div className="py-20 text-center">
-            <div className="text-lg font-semibold text-navy-900 dark:text-white">
+            <div className="text-lg font-semibold text-c-text">
               This link is no longer available
             </div>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-c-text-muted">
               The shared conversation may have been removed or the link has expired.
             </p>
           </div>
         )}
 
         {status === 'error' && (
-          <div className="py-20 text-center text-sm text-danger-600">
+          <div className="py-20 text-center text-sm text-c-danger">
             Something went wrong loading this conversation.
           </div>
         )}
 
         {status === 'password' && (
           <div className="mx-auto max-w-sm py-16 text-center">
-            <Lock size={28} className="mx-auto text-slate-400" />
-            <div className="mt-3 text-base font-semibold text-navy-900 dark:text-white">
+            <Lock size={28} className="mx-auto text-c-text-muted" />
+            <div className="mt-3 text-base font-semibold text-c-text">
               Password protected
             </div>
             <div className="mt-4 flex gap-2">
@@ -118,11 +118,11 @@ export const SharedConversationView: React.FC = () => {
                   if (e.key === 'Enter') void load(password);
                 }}
                 placeholder="Enter password"
-                className="flex-1 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-sm outline-none focus:border-primary-500"
+                className="flex-1 rounded-xl border border-c-border bg-c-surface px-3 py-2 text-sm outline-none focus:border-c-focus-solid"
               />
               <button
                 onClick={() => void load(password)}
-                className="rounded-xl bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] px-4 py-2 text-sm font-semibold"
+                className="rounded-xl bg-c-accent hover:opacity-90 text-white px-4 py-2 text-sm font-semibold"
               >
                 View
               </button>
@@ -132,11 +132,11 @@ export const SharedConversationView: React.FC = () => {
 
         {status === 'ok' && data && (
           <>
-            <h1 className="text-2xl font-semibold text-navy-900 dark:text-white">
+            <h1 className="text-2xl font-semibold text-c-text">
               {data.title || 'Conversation'}
             </h1>
             {data.description && (
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{data.description}</p>
+              <p className="mt-1 text-sm text-c-text-muted">{data.description}</p>
             )}
             <div className="mt-8 space-y-8">
               {data.messages?.map((m) => (
@@ -147,18 +147,18 @@ export const SharedConversationView: React.FC = () => {
                   }
                 >
                   {m.role === 'user' ? (
-                    <div className="max-w-[85%] rounded-2xl bg-primary-50 text-primary-900 border border-primary-100 px-4 py-2.5 text-sm dark:bg-primary-900/25 dark:text-primary-50 dark:border-primary-800/40">
+                    <div className="max-w-[85%] rounded-2xl bg-c-accent-soft text-c-text border border-c-border px-4 py-2.5 text-sm">
                       {m.content}
                     </div>
                   ) : (
-                    <div className="prose prose-sm dark:prose-invert max-w-none text-slate-700 dark:text-slate-200">
+                    <div className="prose prose-sm dark:prose-invert max-w-none text-c-text-secondary">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content || ''}</ReactMarkdown>
                     </div>
                   )}
                 </div>
               ))}
             </div>
-            <footer className="mt-16 border-t border-slate-200 dark:border-navy-800 pt-6 text-center text-xs text-slate-400">
+            <footer className="mt-16 border-t border-c-border pt-6 text-center text-xs text-c-text-muted">
               Shared with Consultify — read-only view.
             </footer>
           </>

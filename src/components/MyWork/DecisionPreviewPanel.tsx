@@ -109,7 +109,7 @@ function relationTone(type: string) {
   if (t === 'task') return 'text-blue-600 dark:text-blue-300';
   if (t === 'initiative') return 'text-amber-700 dark:text-amber-300';
   if (t === 'decision') return 'text-blue-700 dark:text-blue-300';
-  return 'text-slate-700 dark:text-slate-200';
+  return 'text-c-text-secondary';
 }
 
 type DecisionAiIntent = 'summarize_context' | 'propose_options' | 'assess_risk';
@@ -242,18 +242,18 @@ export const DecisionPreviewBody: React.FC<{
           {
             label: decision.projectName,
             tone: 'neutral',
-            className: 'bg-transparent text-slate-600 dark:text-slate-300 truncate max-w-[120px]',
+            className: 'bg-transparent text-c-text-secondary truncate max-w-[120px]',
           } as MetaPill,
         ]
       : []),
   ];
 
   const trailing = decision?.dueDate ? (
-    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+    <span className="text-[11px] font-semibold text-c-text-secondary">
       {formatShortDate(decision.dueDate) || ''}
     </span>
   ) : (
-    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-500 italic">
+    <span className="text-[11px] font-semibold text-c-text-muted italic">
       {isPolish ? 'Bez terminu' : 'No due date'}
     </span>
   );
@@ -264,7 +264,7 @@ export const DecisionPreviewBody: React.FC<{
     <div className="space-y-4">
       <PreviewMetaCard pills={pills} trailing={trailing}>
         {brief?.recommendation ? (
-          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          <div className="mt-2 text-xs text-c-text-muted">
             {clampText(brief.recommendation, 140)}
           </div>
         ) : null}
@@ -459,7 +459,7 @@ export const DecisionPreviewFooter: React.FC<{
   return (
     // canon §7.3 — footer cards stacked with space-y-2.5, NO dividers between framed cards.
     <div className="space-y-2.5">
-      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+      <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
         <PreviewAIHintStrip
           hints={hints}
           loading={aiLoading}
@@ -504,13 +504,13 @@ export const DecisionPreviewFooter: React.FC<{
             </button>
             {snoozeOpen ? (
               <>
-                <div className="fixed inset-0 z-40" onClick={onCloseSnooze} />
-                <div className="absolute right-0 top-full mt-2 z-50 w-56 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-xl overflow-hidden">
+                <div className="fixed inset-0 z-dropdown" onClick={onCloseSnooze} />
+                <div className="absolute right-0 top-full mt-2 z-overlay w-56 rounded-xl border border-c-border bg-c-surface-raised shadow-xl overflow-hidden">
                   {(['1h', '4h', 'tomorrow', 'week'] as const).map((p) => (
                     <button
                       key={p}
                       onClick={() => onSnooze(p)}
-                      className="w-full px-3 py-2 text-left text-xs hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-200"
+                      className="w-full px-3 py-2 text-left text-xs hover:bg-c-surface text-c-text-secondary"
                     >
                       {labelForSnoozePreset(p, isPolish)}
                     </button>
@@ -804,14 +804,14 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
 
   if (!decisionId) {
     return (
-      <aside className="w-[420px] flex-shrink-0 bg-slate-50 dark:bg-navy-950 h-full p-3">
+      <aside className="w-[420px] flex-shrink-0 bg-c-bg h-full p-3">
         <PreviewPaneShell
           kicker={isPolish ? 'Podgląd' : 'Preview'}
           title={isPolish ? 'Decyzja' : 'Decision'}
           onClose={onClose}
         >
           <div className="h-full flex items-center justify-center p-6 text-center">
-            <div className="text-sm text-slate-500 dark:text-slate-400">
+            <div className="text-sm text-c-text-muted">
               {isPolish
                 ? 'Wybierz decyzję z listy, aby zobaczyć podgląd.'
                 : 'Select a decision to preview.'}
@@ -823,7 +823,7 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
   }
 
   return (
-    <aside className="w-[420px] flex-shrink-0 bg-slate-50 dark:bg-navy-950 h-full p-3 overflow-hidden">
+    <aside className="w-[420px] flex-shrink-0 bg-c-bg h-full p-3 overflow-hidden">
       <PreviewPaneShell
         kicker={
           mode === 'requests_pending'
@@ -839,7 +839,7 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
         actions={
           <button
             onClick={() => onOpenFullDetail(decisionId, decision)}
-            className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+            className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
             title={isPolish ? 'Otwórz pełny widok' : 'Open full detail'}
           >
             <ExternalLink size={13} />
@@ -882,7 +882,7 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
         }
       >
         {loading ? (
-          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-2 text-sm text-c-text-muted">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span>{isPolish ? 'Ładowanie…' : 'Loading…'}</span>
           </div>

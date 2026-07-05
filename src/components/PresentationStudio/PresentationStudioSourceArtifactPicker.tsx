@@ -20,8 +20,13 @@
  *     persistence and projection into the API setup payload.
  */
 
-import { AlertTriangle, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, FileText, Loader2, RefreshCw } from 'lucide-react';
 import React from 'react';
+
+import {
+  EmptyState as SharedEmptyState,
+  LoadingState as SharedLoadingState,
+} from '@/components/shared/states';
 
 import type {
   PresentationStudioSourceArtifactItem,
@@ -224,22 +229,20 @@ export const PresentationStudioSourceArtifactPicker: React.FC<
         ) : null}
 
         {loading && artifacts.length === 0 ? (
-          <div
-            className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400"
-            data-testid="psstudio-source-picker-loading"
-          >
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-            <span>Loading source artifacts…</span>
+          <div data-testid="psstudio-source-picker-loading">
+            <SharedLoadingState template="list" rows={3} label="Loading source artifacts…" />
           </div>
         ) : null}
 
         {isEmpty ? (
-          <div
-            className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
-            data-testid="psstudio-source-picker-empty"
-          >
-            No source artifacts available for this organization yet. Create or complete an
-            assessment first; nothing is silently attached.
+          <div data-testid="psstudio-source-picker-empty">
+            <SharedEmptyState
+              variant="new"
+              compact
+              icon={FileText}
+              title="No source material yet"
+              description="Create or complete an assessment first — nothing is silently attached to the deck."
+            />
           </div>
         ) : null}
 

@@ -392,7 +392,7 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
         }
         aria-label="AI"
       >
-        {loading ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+        {loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
         {!iconOnly && 'AI'}
       </button>
 
@@ -411,7 +411,7 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
                     : 'w-full text-left px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-md transition-colors'
                 }
               >
-                {isGenerate ? <Sparkles size={12} /> : null}
+                {isGenerate ? <Sparkles size={14} /> : null}
                 {isPolish ? label.pl : label.en}
               </button>
             );

@@ -314,7 +314,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                     <button
                       onClick={() => handleReply(comment.id)}
                       disabled={submitting || !replyContent.trim()}
-                      className="px-3 py-2 rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 transition-colors"
+                      className="px-3 py-2 rounded-lg bg-c-text text-c-bg hover:bg-c-text-secondary disabled:opacity-50 transition-colors"
                     >
                       {submitting ? (
                         <Loader2 size={16} className="animate-spin" />
@@ -483,7 +483,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                       whileTap={{ scale: 0.95 }}
                       onClick={handleSubmit}
                       disabled={submitting || !newComment.trim()}
-                      className="px-5 py-2.5 rounded-xl bg-primary-500 text-white font-semibold hover:bg-primary-600 disabled:opacity-50 transition-all duration-200 flex items-center gap-2 disabled:cursor-not-allowed"
+                      className="px-5 py-2.5 rounded-xl bg-c-text text-c-bg font-semibold hover:bg-c-text-secondary disabled:opacity-50 transition-all duration-200 flex items-center gap-2 disabled:cursor-not-allowed"
                     >
                       {submitting ? (
                         <Loader2 size={18} className="animate-spin" />

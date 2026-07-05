@@ -19,7 +19,6 @@ import {
   ExternalLink,
   FileText,
   Layout,
-  Loader2,
   Pause,
   Play,
   Plus,
@@ -28,6 +27,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/shared/states';
 import { EntityStatusChip } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
@@ -97,8 +97,8 @@ const R_TYPE_META: Record<
   R2: {
     label: 'Steering Committee',
     labelPl: 'Komitet sterujący',
-    color: 'text-primary-400',
-    dotColor: 'bg-primary-400',
+    color: 'text-c-accent',
+    dotColor: 'bg-c-accent-soft',
   },
   R3: {
     label: 'Benefits Tracking',
@@ -414,17 +414,17 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
     if (filteredReports.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-          <FileText className="w-14 h-14 text-slate-500 dark:text-slate-400 mb-4" />
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+          <FileText className="w-14 h-14 text-c-text-secondary mb-4" />
+          <h3 className="text-lg font-semibold text-c-text mb-2">
             {t('rbHub.emptyReports.title', 'Brak raportów')}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-sm">
+          <p className="text-sm text-c-text-secondary mb-6 max-w-sm">
             {t('rbHub.emptyReports.description', 'Utwórz swój pierwszy raport za pomocą kreatora.')}
           </p>
           {onCreateReport && (
             <button
               onClick={onCreateReport}
-              className="flex items-center gap-2 px-5 py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-xl text-sm font-medium transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 bg-c-text text-c-bg hover:opacity-90 rounded-xl text-sm font-medium transition-colors"
             >
               <Plus size={16} />
               {t('rbHub.newReport', 'Nowy raport')}
@@ -446,7 +446,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
         id: 'title',
         label: t('rbHub.col.title', 'Tytuł'),
         render: (row) => (
-          <span className="text-sm font-medium text-slate-900 dark:text-white">
+          <span className="text-sm font-medium text-c-text">
             {String(row.title ?? '—')}
           </span>
         ),
@@ -458,7 +458,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
         filterable: true,
         filterOptions: typeOptions,
         render: (row) => (
-          <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">
+          <span className="text-xs font-mono font-bold text-c-text-secondary">
             {String(row.report_type_v3 || '—')}
           </span>
         ),
@@ -477,7 +477,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
         width: '130px',
         sortable: true,
         render: (row) => (
-          <span className="text-xs text-slate-500 dark:text-slate-400">
+          <span className="text-xs text-c-text-secondary">
             {formatDate(row.created_at as string)}
           </span>
         ),
@@ -488,7 +488,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
         width: '130px',
         sortable: true,
         render: (row) => (
-          <span className="text-xs text-slate-500 dark:text-slate-400">
+          <span className="text-xs text-c-text-secondary">
             {formatDate(row.updated_at as string)}
           </span>
         ),
@@ -549,29 +549,29 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
           }
           renderPreview={(item) => (
             <div className="space-y-3">
-              <div className="rounded-lg bg-slate-100/60 dark:bg-white/[0.03] p-4 space-y-2">
+              <div className="rounded-lg bg-c-surface-raised/[0.03] p-4 space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   <EntityStatusChip status={String(item.status ?? 'draft')} />
                   {item.report_type_v3 && (
-                    <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">
+                    <span className="text-xs font-mono font-bold text-c-text-secondary">
                       {item.report_type_v3}
                     </span>
                   )}
                 </div>
                 <dl className="text-sm space-y-1.5">
                   <div className="flex justify-between gap-3">
-                    <dt className="text-slate-500 dark:text-slate-400">
+                    <dt className="text-c-text-secondary">
                       {t('rbHub.col.created', 'Utworzono')}
                     </dt>
-                    <dd className="text-slate-700 dark:text-slate-200">
+                    <dd className="text-c-text">
                       {formatDate(item.created_at)}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-slate-500 dark:text-slate-400">
+                    <dt className="text-c-text-secondary">
                       {t('rbHub.col.updated', 'Zaktualizowano')}
                     </dt>
-                    <dd className="text-slate-700 dark:text-slate-200">
+                    <dd className="text-c-text">
                       {formatDate(item.updated_at)}
                     </dd>
                   </div>
@@ -604,11 +604,11 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
     if (r1r4Reports.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-          <Layout className="w-14 h-14 text-slate-500 dark:text-slate-400 mb-4" />
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+          <Layout className="w-14 h-14 text-c-text-secondary mb-4" />
+          <h3 className="text-lg font-semibold text-c-text mb-2">
             {t('rbHub.emptyR1R4.title', 'Brak raportów R1–R4')}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm">
+          <p className="text-sm text-c-text-secondary max-w-sm">
             {t('rbHub.emptyR1R4.description', 'Wygeneruj standardowy raport zarządczy.')}
           </p>
         </div>
@@ -627,49 +627,49 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
           return (
             <div
               key={rType}
-              className="border border-slate-200 dark:border-white/5 rounded-xl bg-white dark:bg-navy-900/60"
+              className="border border-c-border-subtle rounded-xl bg-c-surface"
             >
               <button
-                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors rounded-xl"
+                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:opacity-90/[0.03] transition-colors rounded-xl"
                 onClick={() => toggleType(rType)}
               >
                 {isExpanded ? (
-                  <ChevronDown size={16} className="text-slate-600" />
+                  <ChevronDown size={16} className="text-c-text-secondary" />
                 ) : (
-                  <ChevronRight size={16} className="text-slate-600" />
+                  <ChevronRight size={16} className="text-c-text-secondary" />
                 )}
                 <span className={`font-mono text-sm font-bold ${meta.color}`}>{rType}</span>
-                <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">
+                <span className="text-sm text-c-text font-medium">
                   {isPl ? meta.labelPl : meta.label}
                 </span>
-                <span className="ml-auto text-xs text-slate-500 dark:text-slate-400">
+                <span className="ml-auto text-xs text-c-text-secondary">
                   {grouped.length} {t('rbHub.reports', 'raportów')}
                 </span>
                 <span className={`w-2 h-2 rounded-full ${meta.dotColor}`} />
               </button>
 
               {isExpanded && (
-                <div className="border-t border-slate-200 dark:border-white/5">
+                <div className="border-t border-c-border-subtle">
                   {/* Latest report summary */}
-                  <div className="px-4 py-3 bg-slate-50/50 dark:bg-white/[0.02] flex items-center gap-4">
+                  <div className="px-4 py-3 bg-c-surface-raised/[0.02] flex items-center gap-4">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                      <p className="text-sm font-medium text-c-text truncate">
                         {latest.title}
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      <p className="text-xs text-c-text-secondary mt-0.5">
                         {t('rbHub.latestReport', 'Najnowszy')}: {formatDate(latest.created_at)}
                       </p>
                     </div>
                     {statusBadge(latest.status)}
                     <button
                       onClick={() => onOpenReport?.(latest.id)}
-                      className="px-3 py-1.5 text-xs font-medium bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors"
+                      className="px-3 py-1.5 text-xs font-medium bg-c-text text-c-bg hover:opacity-90 rounded-lg transition-colors"
                     >
                       {t('common.open', 'Otwórz')}
                     </button>
                     <button
                       onClick={() => onCreateReport?.()}
-                      className="px-3 py-1.5 text-xs font-medium border border-primary-500/30 text-primary-400 hover:bg-primary-500/10 rounded-lg transition-colors"
+                      className="px-3 py-1.5 text-xs font-medium border border-c-accent text-c-accent hover:bg-c-accent-soft0 rounded-lg transition-colors"
                     >
                       <Plus size={12} className="inline mr-1" />
                       {t('rbHub.generateNew', 'Generuj nowy')}
@@ -677,18 +677,18 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                   </div>
 
                   {grouped.length > 1 && (
-                    <div className="divide-y divide-slate-200 dark:divide-white/5">
+                    <div className="divide-y divide-c-border-subtle">
                       {grouped.slice(1).map((report) => (
                         <div
                           key={report.id}
-                          className="px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer transition-colors"
+                          className="px-4 py-2.5 flex items-center gap-3 hover:opacity-90/[0.02] cursor-pointer transition-colors"
                           onClick={() => onOpenReport?.(report.id)}
                         >
-                          <span className="text-sm text-slate-700 dark:text-slate-300 flex-1 truncate">
+                          <span className="text-sm text-c-text flex-1 truncate">
                             {report.title}
                           </span>
                           {statusBadge(report.status)}
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                          <span className="text-xs text-c-text-secondary">
                             {formatDate(report.created_at)}
                           </span>
                         </div>
@@ -712,11 +712,11 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
     if (filteredTemplates.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-          <FileText className="w-14 h-14 text-slate-500 dark:text-slate-400 mb-4" />
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+          <FileText className="w-14 h-14 text-c-text-secondary mb-4" />
+          <h3 className="text-lg font-semibold text-c-text mb-2">
             {t('rbHub.emptyTemplates.title', 'Brak szablonów')}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm">
+          <p className="text-sm text-c-text-secondary max-w-sm">
             {t('rbHub.emptyTemplates.description', 'Szablony raportów pojawią się tutaj.')}
           </p>
         </div>
@@ -728,21 +728,21 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
         {filteredTemplates.map((tpl) => (
           <div
             key={tpl.id}
-            className="border border-slate-200 dark:border-white/5 rounded-xl bg-white dark:bg-navy-900/60 p-4 flex flex-col gap-3 hover:border-primary-500/30 transition-colors"
+            className="border border-c-border-subtle rounded-xl bg-c-surface p-4 flex flex-col gap-3 hover:border-c-accent transition-colors"
           >
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                <h4 className="text-sm font-semibold text-c-text truncate">
                   {tpl.name}
                 </h4>
                 {tpl.description && (
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                  <p className="text-xs text-c-text-secondary mt-1 line-clamp-2">
                     {tpl.description}
                   </p>
                 )}
               </div>
               {tpl.report_type_v3 && (
-                <span className="ml-2 px-2 py-0.5 text-[10px] font-bold font-mono rounded bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400">
+                <span className="ml-2 px-2 py-0.5 text-[10px] font-bold font-mono rounded bg-c-surface-raised text-c-text-secondary">
                   {tpl.report_type_v3}
                 </span>
               )}
@@ -751,7 +751,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
             <div className="flex items-center gap-2 mt-auto">
               <button
                 onClick={() => onCreateReport?.()}
-                className="flex-1 px-3 py-1.5 text-xs font-medium bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors text-center"
+                className="flex-1 px-3 py-1.5 text-xs font-medium bg-c-text text-c-bg hover:opacity-90 rounded-lg transition-colors text-center"
               >
                 {t('rbHub.useTemplate', 'Użyj szablonu')}
               </button>
@@ -759,7 +759,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                 onClick={() =>
                   setScheduleModal({ open: true, templateId: tpl.id, templateName: tpl.name })
                 }
-                className="px-3 py-1.5 text-xs font-medium border border-slate-300 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+                className="px-3 py-1.5 text-xs font-medium border border-c-border text-c-text-secondary hover:opacity-90 rounded-lg transition-colors"
                 title={t('rbHub.scheduleFromTemplate', 'Zaplanuj raport z szablonu')}
               >
                 <Calendar size={14} />
@@ -779,11 +779,11 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
     if (filteredSchedules.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-          <Clock className="w-14 h-14 text-slate-500 dark:text-slate-400 mb-4" />
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+          <Clock className="w-14 h-14 text-c-text-secondary mb-4" />
+          <h3 className="text-lg font-semibold text-c-text mb-2">
             {t('rbHub.emptySchedules.title', 'Brak harmonogramów')}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm">
+          <p className="text-sm text-c-text-secondary max-w-sm">
             {t(
               'rbHub.emptySchedules.description',
               'Utwórz harmonogram, aby automatycznie generować raporty.'
@@ -796,38 +796,38 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
     return (
       <div className="overflow-auto h-full">
         <table /* §27-exempt: render danych nie-listowy, nie spelnia definicji 1 (przegladana kolekcja encji z akcjami) */  className="w-full text-left">
-          <thead className="sticky top-0 bg-slate-50 dark:bg-navy-900/80 border-b border-slate-200 dark:border-white/5">
+          <thead className="sticky top-0 bg-c-surface-raised border-b border-c-border-subtle">
             <tr>
-              <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              <th className="px-4 py-3 text-xs font-semibold text-c-text-secondary uppercase tracking-wide">
                 {t('rbHub.col.name', 'Nazwa')}
               </th>
-              <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide w-28">
+              <th className="px-4 py-3 text-xs font-semibold text-c-text-secondary uppercase tracking-wide w-28">
                 {t('rbHub.col.frequency', 'Częstotliwość')}
               </th>
-              <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide w-32">
+              <th className="px-4 py-3 text-xs font-semibold text-c-text-secondary uppercase tracking-wide w-32">
                 {t('rbHub.col.nextRun', 'Następne uruchomienie')}
               </th>
-              <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide w-24">
+              <th className="px-4 py-3 text-xs font-semibold text-c-text-secondary uppercase tracking-wide w-24">
                 {t('rbHub.col.status', 'Status')}
               </th>
               <th className="px-4 py-3 w-20" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-white/5">
+          <tbody className="divide-y divide-c-border-subtle">
             {filteredSchedules.map((s) => (
               <tr
                 key={s.id}
-                className="hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+                className="hover:opacity-90/[0.03] transition-colors"
               >
                 <td className="px-4 py-3">
-                  <span className="text-sm font-medium text-slate-900 dark:text-white">
+                  <span className="text-sm font-medium text-c-text">
                     {s.name}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 capitalize">
+                <td className="px-4 py-3 text-xs text-c-text-secondary capitalize">
                   {s.frequency}
                 </td>
-                <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
+                <td className="px-4 py-3 text-xs text-c-text-secondary">
                   {s.nextRunAt ? formatDate(s.nextRunAt) : '—'}
                 </td>
                 <td className="px-4 py-3">
@@ -835,11 +835,11 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                     className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full ${
                       s.isActive
                         ? 'bg-emerald-500/10 text-emerald-500'
-                        : 'bg-slate-500/10 text-slate-600'
+                        : 'bg-c-text-muted text-c-text-secondary'
                     }`}
                   >
                     <span
-                      className={`w-1.5 h-1.5 rounded-full ${s.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`}
+                      className={`w-1.5 h-1.5 rounded-full ${s.isActive ? 'bg-emerald-500' : 'bg-c-text-muted'}`}
                     />
                     {s.isActive ? t('rbHub.active', 'Aktywny') : t('rbHub.paused', 'Wstrzymany')}
                   </span>
@@ -847,7 +847,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                 <td className="px-4 py-3 text-right">
                   <button
                     onClick={() => handleToggleSchedule(s.id, s.isActive)}
-                    className="p-1.5 rounded-lg hover:bg-white/10 text-slate-600 hover:text-slate-200 transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-c-text text-c-bg-secondary hover:text-c-text transition-colors"
                     title={
                       s.isActive
                         ? t('rbHub.pauseSchedule', 'Wstrzymaj')
@@ -872,8 +872,8 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
   const renderTabContent = () => {
     if (isLoading) {
       return (
-        <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+        <div className="h-full p-6">
+          <LoadingState template="list" rows={6} />
         </div>
       );
     }

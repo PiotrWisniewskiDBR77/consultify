@@ -225,7 +225,7 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white text-sm font-medium rounded-md transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-c-text hover:bg-c-text-secondary disabled:bg-c-border-strong text-c-bg text-sm font-medium rounded-md transition-colors"
               >
                 {isUploading ? (
                   <>

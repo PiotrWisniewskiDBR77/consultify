@@ -1,4 +1,4 @@
-import { BarChart3, FileText, Image, LayoutGrid, Search, Share2, Type, Video } from 'lucide-react';
+import { BarChart3, Image, LayoutGrid, Search, Share2, Type } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -9,8 +9,6 @@ type ToolbarPanel =
   | 'layouts'
   | 'diagrams'
   | 'charts'
-  | 'media'
-  | 'artifacts'
   | null;
 
 interface BlockToolbarProps {
@@ -25,8 +23,6 @@ const TOOLBAR_ITEMS: { id: ToolbarPanel; icon: React.FC<{ size?: number }>; labe
   { id: 'layouts', icon: LayoutGrid, labelKey: 'presentations.builder.toolbar.smartLayouts' },
   { id: 'diagrams', icon: Share2, labelKey: 'presentations.builder.toolbar.diagrams' },
   { id: 'charts', icon: BarChart3, labelKey: 'presentations.builder.toolbar.chartsData' },
-  { id: 'media', icon: Video, labelKey: 'presentations.builder.toolbar.media' },
-  { id: 'artifacts', icon: FileText, labelKey: 'presentations.builder.toolbar.artifacts' },
 ];
 
 export const BlockToolbar: React.FC<BlockToolbarProps> = ({
@@ -43,7 +39,7 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
   return (
     <div className="flex flex-shrink-0">
       {/* Icon strip */}
-      <div className="w-14 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex flex-col items-center py-3 gap-1">
+      <div className="w-14 border-l border-c-border-subtle bg-c-surface flex flex-col items-center py-3 gap-1">
         {TOOLBAR_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = activePanel === item.id;
@@ -54,8 +50,8 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
               title={t(item.labelKey, item.id || '')}
               className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
                 isActive
-                  ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
-                  : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 hover:text-slate-600 dark:hover:text-slate-300'
+                  ? 'bg-c-accent-soft0 text-c-accent'
+                  : 'text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text-secondary'
               }`}
             >
               <Icon size={18} />
@@ -66,9 +62,9 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
 
       {/* Expanded Panel */}
       {activePanel && (
-        <div className="w-64 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 overflow-y-auto">
+        <div className="w-64 border-l border-c-border-subtle bg-c-surface overflow-y-auto">
           <div className="p-3">
-            <h3 className="text-sm font-semibold text-slate-700 dark:text-white mb-3">
+            <h3 className="text-sm font-semibold text-c-text mb-3">
               {t(TOOLBAR_ITEMS.find((i) => i.id === activePanel)?.labelKey || '', activePanel)}
             </h3>
 
@@ -78,8 +74,6 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
             {activePanel === 'diagrams' && <DiagramsPanel onInsertBlock={onInsertBlock} />}
             {activePanel === 'charts' && <ChartsPanel onInsertBlock={onInsertBlock} />}
             {activePanel === 'search' && <SearchPanel />}
-            {activePanel === 'media' && <MediaPanel />}
-            {activePanel === 'artifacts' && <ArtifactsPanel />}
           </div>
         </div>
       )}
@@ -98,11 +92,11 @@ const PanelButton: React.FC<{
     disabled={disabled}
     title={disabled ? 'Coming soon' : undefined}
     className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
-      disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-50 dark:hover:bg-navy-800'
+      disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-c-surface-raised'
     }`}
   >
-    <p className="text-xs font-medium text-slate-700 dark:text-slate-300">{label}</p>
-    {description && <p className="text-[10px] text-slate-600 mt-0.5">{description}</p>}
+    <p className="text-xs font-medium text-c-text">{label}</p>
+    {description && <p className="text-[10px] text-c-text-secondary mt-0.5">{description}</p>}
   </button>
 );
 
@@ -228,39 +222,9 @@ const SearchPanel: React.FC = () => (
     <input
       type="text"
       placeholder="Search deck content..."
-      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm"
+      className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface-raised text-sm"
     />
-    <p className="text-[10px] text-slate-600 mt-2">Type to search across all cards</p>
+    <p className="text-[10px] text-c-text-secondary mt-2">Type to search across all cards</p>
   </div>
 );
 
-const MediaPanel: React.FC = () => (
-  <div className="space-y-0.5">
-    <PanelButton
-      label="Video embed"
-      description="Paste YouTube/Loom URL"
-      disabled
-      onClick={() => {}}
-    />
-    <PanelButton label="Animation" description="Add animated element" disabled onClick={() => {}} />
-  </div>
-);
-
-const ArtifactsPanel: React.FC = () => (
-  <div className="space-y-0.5">
-    <PanelButton
-      label="Initiative card"
-      description="Mini-view with status"
-      disabled
-      onClick={() => {}}
-    />
-    <PanelButton
-      label="Task list"
-      description="From selected initiative"
-      disabled
-      onClick={() => {}}
-    />
-    <PanelButton label="Financial snapshot" description="Key metrics" disabled onClick={() => {}} />
-    <PanelButton label="Insight card" description="Single insight" disabled onClick={() => {}} />
-  </div>
-);

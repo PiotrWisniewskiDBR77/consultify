@@ -48,17 +48,17 @@ export const AIOsProductMapSection: React.FC = () => {
     <section className="py-24 px-6 relative z-10">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.04] text-xs font-bold uppercase tracking-[0.2em] text-slate-600 dark:text-white/70">
-            <BrainCircuit size={12} className="text-primary-600 dark:text-primary-300" />
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-c-border bg-c-surface-raised text-xs font-bold uppercase tracking-[0.2em] text-c-text-secondary">
+            <BrainCircuit size={12} className="text-c-accent" />
             {t('landing.aiOs.badge', 'AI operating system')}
           </div>
-          <h2 className="mt-5 text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
+          <h2 className="mt-5 text-4xl lg:text-5xl font-black text-c-text tracking-tight">
             {t(
               'landing.aiOs.heading',
               'One AI system for assistants, prompts, agents, knowledge, and artifact-native work.'
             )}
           </h2>
-          <p className="mt-4 text-base text-slate-500 dark:text-white/55 max-w-3xl mx-auto">
+          <p className="mt-4 text-base text-c-text-secondary max-w-3xl mx-auto">
             {t(
               'landing.aiOs.sub',
               'Consultify packages strong AI architecture as a visible operating environment: guided assistants, governed prompts, multi-step agents, policy-aware knowledge, and outputs that continue beyond chat.'
@@ -72,18 +72,18 @@ export const AIOsProductMapSection: React.FC = () => {
             return (
               <div
                 key={item.title}
-                className="rounded-3xl border border-slate-200 dark:border-white/[0.06] bg-slate-50 dark:bg-white/[0.035] p-6 backdrop-blur-xl"
+                className="rounded-3xl border border-c-border bg-c-surface p-6 backdrop-blur-xl"
               >
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-primary-500/15 bg-primary-500/10">
-                  <Icon size={20} className="text-primary-600 dark:text-primary-300" />
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-c-accent/20 bg-c-accent-soft">
+                  <Icon size={20} className="text-c-accent" />
                 </div>
-                <div className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary-600 dark:text-primary-300">
+                <div className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-c-accent">
                   {item.badge}
                 </div>
-                <h3 className="text-lg font-black text-slate-900 dark:text-white leading-snug">
+                <h3 className="text-lg font-black text-c-text leading-snug">
                   {item.title}
                 </h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-500 dark:text-white/58">
+                <p className="mt-3 text-sm leading-relaxed text-c-text-secondary">
                   {item.description}
                 </p>
               </div>
@@ -91,7 +91,7 @@ export const AIOsProductMapSection: React.FC = () => {
           })}
         </div>
 
-        <div className="mt-8 rounded-3xl border border-slate-200 dark:border-white/[0.06] bg-slate-100 dark:bg-[#0F172A] px-6 py-5 text-center text-sm text-slate-600 dark:text-white/65">
+        <div className="mt-8 rounded-3xl border border-c-border bg-c-surface-raised px-6 py-5 text-center text-sm text-c-text-secondary">
           {t(
             'landing.aiOs.footer',
             'The point is not more AI surfaces. The point is one coherent, governed AI operating environment across chat, execution, knowledge, and outputs.'

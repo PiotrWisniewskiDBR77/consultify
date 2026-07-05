@@ -35,6 +35,7 @@ import toast from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import { InitiativeSuggestionBadge } from '@/components/Initiatives/InitiativeSuggestionBadge';
 import { Api } from '@/services/api';
 
 // ==========================================
@@ -366,10 +367,16 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
                   </>
                 )}
               </div>
-              <div
-                className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusConfig.bgColor} ${statusConfig.color}`}
-              >
-                {statusConfig.label}
+              <div className="flex items-center gap-2">
+                <InitiativeSuggestionBadge
+                  sourceType="interview_insight"
+                  sourceId={insightId}
+                />
+                <div
+                  className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusConfig.bgColor} ${statusConfig.color}`}
+                >
+                  {statusConfig.label}
+                </div>
               </div>
             </div>
           </div>

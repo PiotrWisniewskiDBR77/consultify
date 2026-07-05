@@ -174,11 +174,11 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
     <div className={`space-y-6 ${className}`}>
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
             <Calendar size={20} />
             {t('settings.integrations.calendarTitle', 'Calendar Sync')}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             {t(
               'settings.integrations.calendarDesc',
               'Sync your tasks and deadlines with external calendars.'
@@ -187,7 +187,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
         </div>
         <button
           onClick={fetchCalendars}
-          className="p-2 text-slate-600 dark:text-slate-500 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+          className="p-2 text-c-text-secondary hover:text-brand rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700 transition-colors"
           title={t('common.refresh', 'Refresh')}
         >
           <RefreshCw size={18} />
@@ -207,15 +207,15 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
               className={`flex items-center justify-between p-4 rounded-lg transition-colors ${
                 cal.connected
                   ? 'bg-green-50/50 dark:bg-green-900/10 border border-green-200 dark:border-green-900/30'
-                  : 'bg-slate-50 dark:bg-navy-800/50'
+                  : 'bg-c-surface-raised'
               }`}
             >
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{cal.icon}</span>
                 <div>
-                  <span className="font-medium text-slate-900 dark:text-white">{cal.name}</span>
+                  <span className="font-medium text-c-text">{cal.name}</span>
                   {cal.connected && cal.connection && (
-                    <div className="text-sm text-slate-500 dark:text-slate-400">
+                    <div className="text-sm text-c-text-muted">
                       {cal.connection.externalEmail} • {cal.connection.calendarName}
                     </div>
                   )}
@@ -229,7 +229,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
                   </span>
                   <button
                     onClick={() => disconnectCalendar(cal.id)}
-                    className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-500 rounded transition-colors"
+                    className="p-1.5 text-c-text-secondary hover:text-danger-500 rounded transition-colors"
                     title={t('common.disconnect', 'Disconnect')}
                   >
                     <X size={16} />
@@ -251,16 +251,16 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
 
       {/* Sync Options */}
       <div className="space-y-3">
-        <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">
+        <h4 className="text-sm font-medium text-c-text-secondary">
           {t('settings.integrations.syncOptions', 'Sync Options')}
         </h4>
 
-        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-800/50 rounded-lg">
+        <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
           <div>
-            <p className="font-medium text-slate-900 dark:text-white">
+            <p className="font-medium text-c-text">
               {t('settings.integrations.syncTasks', 'Sync Tasks')}
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t('settings.integrations.syncTasksDesc', 'Add task deadlines to your calendar')}
             </p>
           </div>
@@ -272,16 +272,16 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
               disabled={savingSettings}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-brand rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:bg-navy-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+            <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-navy-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
           </label>
         </div>
 
-        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-800/50 rounded-lg">
+        <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg">
           <div>
-            <p className="font-medium text-slate-900 dark:text-white">
+            <p className="font-medium text-c-text">
               {t('settings.integrations.syncMeetings', 'Sync Meetings')}
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-c-text-muted">
               {t('settings.integrations.syncMeetingsDesc', 'Add project meetings to your calendar')}
             </p>
           </div>
@@ -293,7 +293,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
               disabled={savingSettings}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-brand rounded-full peer dark:bg-navy-700 peer-checked:after:translate-x-full peer-checked:bg-navy-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+            <div className="w-11 h-6 bg-c-surface-raised peer-focus:ring-2 peer-focus:ring-[color:var(--c-focus)] rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-navy-900 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-c-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
           </label>
         </div>
       </div>

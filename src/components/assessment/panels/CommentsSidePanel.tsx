@@ -90,7 +90,7 @@ export const CommentsSidePanel: React.FC<CommentsSidePanelProps> = ({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/30 z-40 transition-opacity duration-300"
+        className="fixed inset-0 bg-black/30 z-dropdown transition-opacity duration-300"
         style={{ opacity: isOpen ? 1 : 0 }}
       />
 
@@ -99,7 +99,7 @@ export const CommentsSidePanel: React.FC<CommentsSidePanelProps> = ({
         ref={panelRef}
         className={`
                     fixed right-0 top-0 h-full w-full max-w-md bg-white dark:bg-navy-900
-                    shadow-xl z-50 flex flex-col
+                    shadow-xl z-overlay flex flex-col
                     transform transition-transform duration-300 ease-out
                     ${isOpen ? 'translate-x-0' : 'translate-x-full'}
                 `}

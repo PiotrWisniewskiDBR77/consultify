@@ -265,12 +265,18 @@ export function useReports() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchReports = useCallback(async () => {
+  // M17 junk filter (S6.3): server excludes drafts + dedupes by default.
+  // Pass includeDrafts=true (the "Robocze" toggle) to also surface drafts.
+  const fetchReports = useCallback(async (includeDrafts = false) => {
     setLoading(true);
     try {
-      const artifactRes = await fetch(`${API_URL}/artifacts?outputType=report&limit=200`, {
-        headers: getHeaders(),
-      });
+      const draftParam = includeDrafts ? '&include=drafts' : '';
+      const artifactRes = await fetch(
+        `${API_URL}/artifacts?outputType=report&limit=200${draftParam}`,
+        {
+          headers: getHeaders(),
+        }
+      );
       if (artifactRes.ok) {
         const artifactData = await artifactRes.json();
         const list = artifactData.data || [];
@@ -589,50 +595,55 @@ export function useArtifactOutputsList(view: ArtifactOutputsRegistryView | null)
   // dedicated "module turned off" banner instead of a "failed to load" error.
   const [moduleDisabled, setModuleDisabled] = useState(false);
 
-  const fetchOutputs = useCallback(async () => {
-    if (!view) {
-      setRows([]);
-      setLoading(false);
-      setError(null);
-      setModuleDisabled(false);
-      return;
-    }
-    setLoading(true);
-    try {
-      const qs = new URLSearchParams({ limit: '200' });
-      if (view === 'mine') qs.set('view', 'mine');
-      if (view === 'review') qs.set('view', 'review');
-      const res = await fetch(`${API_URL}/artifacts?${qs.toString()}`, { headers: getHeaders() });
-      if (!res.ok) {
+  const fetchOutputs = useCallback(
+    async (includeDrafts = false) => {
+      if (!view) {
         setRows([]);
-        // The whole module sits behind ENABLE_V8_GLOBAL; when OFF the registry
-        // routes 404 (pre/post-auth). Treat 404 as "module disabled", everything
-        // else as a generic failure.
-        if (res.status === 404) {
-          setModuleDisabled(true);
-          setError(null);
-        } else {
-          setModuleDisabled(false);
-          setError('Canonical artifact registry failed to load outputs.');
-        }
+        setLoading(false);
+        setError(null);
+        setModuleDisabled(false);
         return;
       }
-      const data = await res.json();
-      const list = data.data || [];
-      const mapped = list
-        .map(mapRegistryItemToUnified)
-        .filter((x: UnifiedOutputRow | null): x is UnifiedOutputRow => !!x);
-      setRows(mapped);
-      setError(null);
-      setModuleDisabled(false);
-    } catch {
-      setRows([]);
-      setModuleDisabled(false);
-      setError('Canonical artifact registry failed to load outputs.');
-    } finally {
-      setLoading(false);
-    }
-  }, [view]);
+      setLoading(true);
+      try {
+        const qs = new URLSearchParams({ limit: '200' });
+        if (view === 'mine') qs.set('view', 'mine');
+        if (view === 'review') qs.set('view', 'review');
+        // M17 junk filter (S6.3): default excludes drafts + dedupes server-side.
+        if (includeDrafts) qs.set('include', 'drafts');
+        const res = await fetch(`${API_URL}/artifacts?${qs.toString()}`, { headers: getHeaders() });
+        if (!res.ok) {
+          setRows([]);
+          // The whole module sits behind ENABLE_V8_GLOBAL; when OFF the registry
+          // routes 404 (pre/post-auth). Treat 404 as "module disabled", everything
+          // else as a generic failure.
+          if (res.status === 404) {
+            setModuleDisabled(true);
+            setError(null);
+          } else {
+            setModuleDisabled(false);
+            setError('Canonical artifact registry failed to load outputs.');
+          }
+          return;
+        }
+        const data = await res.json();
+        const list = data.data || [];
+        const mapped = list
+          .map(mapRegistryItemToUnified)
+          .filter((x: UnifiedOutputRow | null): x is UnifiedOutputRow => !!x);
+        setRows(mapped);
+        setError(null);
+        setModuleDisabled(false);
+      } catch {
+        setRows([]);
+        setModuleDisabled(false);
+        setError('Canonical artifact registry failed to load outputs.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [view]
+  );
 
   useEffect(() => {
     void fetchOutputs();
@@ -972,12 +983,16 @@ export function usePresentations() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPresentations = useCallback(async () => {
+  const fetchPresentations = useCallback(async (includeDrafts = false) => {
     setLoading(true);
     try {
-      const artifactRes = await fetch(`${API_URL}/artifacts?outputType=presentation&limit=200`, {
-        headers: getHeaders(),
-      });
+      const draftParam = includeDrafts ? '&include=drafts' : '';
+      const artifactRes = await fetch(
+        `${API_URL}/artifacts?outputType=presentation&limit=200${draftParam}`,
+        {
+          headers: getHeaders(),
+        }
+      );
       if (artifactRes.ok) {
         const artifactData = await artifactRes.json();
         const list = artifactData.data || [];
@@ -1027,10 +1042,11 @@ export function useSheetOutputs() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSheets = useCallback(async () => {
+  const fetchSheets = useCallback(async (includeDrafts = false) => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/artifacts?outputType=sheet&limit=200`, {
+      const draftParam = includeDrafts ? '&include=drafts' : '';
+      const res = await fetch(`${API_URL}/artifacts?outputType=sheet&limit=200${draftParam}`, {
         headers: getHeaders(),
       });
       if (res.ok) {

@@ -345,8 +345,8 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
     if (role === 'PROJECT_MANAGER')
       return 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/30';
     if (role === 'MANAGER')
-      return 'bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/30';
-    return 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-navy-700';
+      return 'bg-slate-500/10 text-c-text-secondary border-slate-500/30';
+    return 'bg-c-surface-raised dark:bg-c-surface/5 text-c-text-secondary border-c-border';
   };
 
   return (
@@ -359,7 +359,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
           {/* Search */}
           <div className="relative">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-muted"
               size={18}
             />
             <input
@@ -367,7 +367,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               disabled={!!loadError}
-              className="pl-10 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-primary-500 outline-none w-64"
+              className="pl-10 pr-4 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-navy-900 dark:text-white focus:border-primary-500 outline-none w-64"
             />
           </div>
 
@@ -376,7 +376,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
             disabled={!!loadError}
-            className="px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white text-sm focus:border-primary-500 outline-none"
+            className="px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-navy-900 dark:text-white text-sm focus:border-primary-500 outline-none"
           >
             <option value="all">All Account Types</option>
             <option value="OWNER">Owner</option>
@@ -389,7 +389,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             disabled={!!loadError}
-            className="px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white text-sm focus:border-primary-500 outline-none"
+            className="px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-navy-900 dark:text-white text-sm focus:border-primary-500 outline-none"
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>
@@ -455,7 +455,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               <tr>
                 <td
                   colSpan={5}
-                  className="px-6 py-12 text-center text-slate-500 dark:text-slate-400"
+                  className="px-6 py-12 text-center text-c-text-muted"
                 >
                   No users found
                 </td>
@@ -464,18 +464,18 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               filteredUsers.map((user) => (
                 <tr
                   key={user.id}
-                  className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                  className="hover:bg-c-bg dark:hover:bg-c-surface/5 transition-colors"
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="relative">
-                        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white font-medium">
+                        <div className="w-10 h-10 rounded-full bg-c-surface-raised flex items-center justify-center text-c-text font-medium">
                           {user.firstName?.[0] || '?'}
                         </div>
                         {/* Owner Crown Badge */}
                         {(user.isOwner || user.role === 'OWNER') && (
                           <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center">
-                            <Crown size={12} className="text-white" />
+                            <Crown size={12} className="text-c-text" />
                           </div>
                         )}
                       </div>
@@ -503,7 +503,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                         {userPlans.find((p) => p.id === user.licensePlanId)?.name || 'Standard'}
                       </span>
                       {user.licensePlanId && userPlans.find((p) => p.id === user.licensePlanId) && (
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                        <span className="text-[10px] text-c-text-muted">
                           ${userPlans.find((p) => p.id === user.licensePlanId)?.price_monthly}
                           /mo • Budget: $
                           {userPlans.find((p) => p.id === user.licensePlanId)?.ai_budget || 0}
@@ -518,7 +518,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                           ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
                           : user.status === 'suspended'
                             ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
-                            : 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/30'
+                            : 'bg-slate-500/10 text-c-text-secondary border-slate-500/30'
                       }`}
                     >
                       {user.status === 'active' ? (
@@ -538,7 +538,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                       {canEdit && (
                         <button
                           onClick={() => openEditModal(user)}
-                          className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg text-slate-400 dark:text-slate-500 hover:text-white"
+                          className="p-2 hover:bg-c-surface-raised/40 rounded-lg text-c-text-muted hover:text-white"
                           title="Edit user"
                         >
                           <Edit size={16} />
@@ -551,8 +551,8 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                           onClick={() => handleDeactivateUser(user)}
                           className={`p-2 rounded-lg ${
                             user.status === 'active'
-                              ? 'hover:bg-yellow-500/20 text-slate-400 dark:text-slate-500 hover:text-yellow-400'
-                              : 'hover:bg-green-500/20 text-slate-400 dark:text-slate-500 hover:text-green-400'
+                              ? 'hover:bg-yellow-500/20 text-c-text-muted hover:text-yellow-400'
+                              : 'hover:bg-green-500/20 text-c-text-muted hover:text-green-400'
                           }`}
                           title={user.status === 'active' ? 'Deactivate user' : 'Reactivate user'}
                         >
@@ -567,8 +567,8 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                           disabled={user.isOwner || user.role === 'OWNER'}
                           className={`p-2 rounded-lg ${
                             user.isOwner || user.role === 'OWNER'
-                              ? 'text-slate-600 dark:text-slate-400 cursor-not-allowed'
-                              : 'hover:bg-danger-500/20 text-slate-400 dark:text-slate-500 hover:text-danger-400'
+                              ? 'text-c-text-secondary cursor-not-allowed'
+                              : 'hover:bg-danger-500/20 text-c-text-muted hover:text-danger-400'
                           }`}
                           title={
                             user.isOwner || user.role === 'OWNER'
@@ -598,14 +598,14 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
       {/* Add/Edit User Modal */}
       {showAddUserModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-8 w-full max-w-md shadow-2xl">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl p-8 w-full max-w-md shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-navy-900 dark:text-white">
                 {editingUser ? 'Edit User' : 'Add New User'}
               </h2>
               <button
                 onClick={() => setShowAddUserModal(false)}
-                className="text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white"
+                className="text-c-text-muted hover:text-navy-900 dark:hover:text-white"
               >
                 <X size={20} />
               </button>
@@ -635,14 +635,14 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                 placeholder="First Name"
                 value={formData.firstName}
                 onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded p-2 text-navy-900 dark:text-white"
+                className="w-full bg-c-surface-raised border border-c-border-subtle rounded p-2 text-navy-900 dark:text-white"
               />
               <input
                 required
                 placeholder="Last Name"
                 value={formData.lastName}
                 onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded p-2 text-navy-900 dark:text-white"
+                className="w-full bg-c-surface-raised border border-c-border-subtle rounded p-2 text-navy-900 dark:text-white"
               />
               <input
                 required
@@ -650,12 +650,12 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                 placeholder="Email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded p-2 text-navy-900 dark:text-white"
+                className="w-full bg-c-surface-raised border border-c-border-subtle rounded p-2 text-navy-900 dark:text-white"
               />
               <select
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded p-2 text-navy-900 dark:text-white"
+                className="w-full bg-c-surface-raised border border-c-border-subtle rounded p-2 text-navy-900 dark:text-white"
                 disabled={editingUser?.isOwner}
               >
                 <option value="USER">User</option>
@@ -664,7 +664,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded p-2 text-navy-900 dark:text-white"
+                className="w-full bg-c-surface-raised border border-c-border-subtle rounded p-2 text-navy-900 dark:text-white"
                 disabled={editingUser?.isOwner}
               >
                 <option value="active">Status: Active</option>
@@ -674,7 +674,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               <select
                 value={formData.licensePlanId}
                 onChange={(e) => setFormData({ ...formData, licensePlanId: e.target.value })}
-                className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded p-2 text-navy-900 dark:text-white"
+                className="w-full bg-c-surface-raised border border-c-border-subtle rounded p-2 text-navy-900 dark:text-white"
               >
                 <option value="">Select License (Budget)...</option>
                 {userPlans.map((p) => (
@@ -697,7 +697,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
       {/* Transfer Ownership Modal */}
       {showTransferModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-8 w-full max-w-md shadow-2xl">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl p-8 w-full max-w-md shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
                 <Crown className="text-amber-400" size={24} />
@@ -705,7 +705,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               </h2>
               <button
                 onClick={() => setShowTransferModal(false)}
-                className="text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white"
+                className="text-c-text-muted hover:text-navy-900 dark:hover:text-white"
               >
                 <X size={20} />
               </button>
@@ -727,7 +727,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                 <select
                   value={transferTarget}
                   onChange={(e) => setTransferTarget(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded p-3 text-navy-900 dark:text-white"
+                  className="w-full bg-c-surface-raised border border-c-border-subtle rounded p-3 text-navy-900 dark:text-white"
                 >
                   <option value="">Select an Admin...</option>
                   {eligibleOwnerCandidates.map((u) => (
@@ -737,7 +737,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                   ))}
                 </select>
                 {eligibleOwnerCandidates.length === 0 && (
-                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-2 text-xs text-c-text-muted">
                     No eligible candidates. The new owner must be an Admin.
                   </p>
                 )}
@@ -751,14 +751,14 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
                   value={transferReason}
                   onChange={(e) => setTransferReason(e.target.value)}
                   placeholder="e.g., Leaving the company, Account Type change..."
-                  className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded p-3 text-navy-900 dark:text-white h-24 resize-none"
+                  className="w-full bg-c-surface-raised border border-c-border-subtle rounded p-3 text-navy-900 dark:text-white h-24 resize-none"
                 />
               </div>
 
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={() => setShowTransferModal(false)}
-                  className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium"
+                  className="flex-1 py-3 bg-c-surface-raised hover:bg-slate-600 text-c-text rounded-lg font-medium"
                 >
                   Cancel
                 </button>

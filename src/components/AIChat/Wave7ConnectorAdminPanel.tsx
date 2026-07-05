@@ -458,9 +458,9 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
                     <div className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
                       {t('aios.wave7ConnectorAdminPanel.reconnectRequired')}
                       {connector.accessRevokedAt
-                        ? isPolish
-                          ? `; dostęp cofnięty${connector.revokedReason ? ` (${connector.revokedReason})` : ''}`
-                          : `; access revoked${connector.revokedReason ? ` (${connector.revokedReason})` : ''}`
+                        ? connector.revokedReason
+                          ? t('aios.wave7ConnectorAdminPanel.accessRevokedWithReason', { reason: connector.revokedReason })
+                          : t('aios.wave7ConnectorAdminPanel.accessRevoked')
                         : connector.tokenExpired
                           ? t('aios.wave7ConnectorAdminPanel.tokenExpired')
                           : ''}

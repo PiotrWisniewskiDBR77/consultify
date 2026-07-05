@@ -948,6 +948,41 @@ async function exportDocxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
 }
 
 async function exportXlsxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
+  // W4/B4 (premium) — flag-gated, FAIL-OPEN. Gdy ENABLE_DELIVERABLES_PREMIUM
+  // jest ON i draft niesie typowany schemat B4 w provenance (zapisany przez
+  // startSheet), eksportujemy go realnym builderem exceljs (style/CF/kolory
+  // singleSelect) zamiast fasady SheetJS. Każdy błąd / brak schematu / flaga OFF
+  // ⇒ ścieżka legacy poniżej (zachowanie byte-identyczne jak dziś).
+  try {
+    const provenance = (draft.provenance || {}) as Record<string, any>;
+    const tableSchemaB4 = provenance?.deliverablesGeneration?.tableSchemaB4;
+    if (tableSchemaB4 && typeof tableSchemaB4 === 'object') {
+      const { resolveDeliverableTier } = await import(
+        '../services/deliverableGenerationTier.js'
+      );
+      if (resolveDeliverableTier({ preferPremium: true }) === 'PREMIUM') {
+        const { tableSchemaToWorkbook, buildWorkbookBuffer } = await import(
+          '../services/workbook/WorkbookBuilder.js'
+        );
+        const wbSchema = tableSchemaToWorkbook(tableSchemaB4 as any, {
+          title: draft.title,
+          author: 'Business Work Canvas',
+        });
+        const buffer = await buildWorkbookBuffer(wbSchema);
+        logger.info('[work-canvas] xlsx export via premium B4 workbook', {
+          draftId: draft.id,
+          sheets: wbSchema.sheets?.length ?? 0,
+        });
+        return buffer;
+      }
+    }
+  } catch (premiumErr) {
+    logger.warn('[work-canvas] premium xlsx export failed, falling back to legacy', {
+      draftId: draft.id,
+      error: premiumErr instanceof Error ? premiumErr.message : String(premiumErr),
+    });
+  }
+
   // XLSX renders a two-cell footer (`['Source Canvas', <id>]`), so the raw draft
   // id is passed as sourceLabel here (not the prefixed `Source Canvas: <id>`
   // label used by PDF/DOCX/PPTX), keeping the spreadsheet byte-for-byte.
@@ -1947,6 +1982,12 @@ async function createVersionSnapshot(
 async function ensureStorage(): Promise<void> {
   if (!storageReadyPromise) {
     storageReadyPromise = (async () => {
+      // Fail-soft, self-healing: this opportunistic DDL runs first in the Canvas
+      // read paths (GET /drafts etc). Use fallback:true so a transient DDL failure
+      // (lock/timeout/brief read-only/connection blip) can NEVER reject and bubble
+      // up as a bare HTTP 500 / white screen. The IIFE is also memoized below; on
+      // failure we null the promise (see .catch) so the next request retries
+      // instead of being poisoned by a permanently-rejected cached promise.
       await dbRun(
         `CREATE TABLE IF NOT EXISTS work_canvas_drafts (
           id TEXT PRIMARY KEY,
@@ -1982,7 +2023,7 @@ async function ensureStorage(): Promise<void> {
           updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )`,
         [],
-        { fallback: false }
+        { fallback: true }
       );
       const contentContractColumns = [
         "ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS canonical_format TEXT NOT NULL DEFAULT 'markdown'",
@@ -1996,19 +2037,19 @@ async function ensureStorage(): Promise<void> {
         'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS projection_error TEXT',
       ];
       for (const statement of contentContractColumns) {
-        await dbRun(statement, [], { fallback: false });
+        await dbRun(statement, [], { fallback: true });
       }
       await dbRun(
         `CREATE INDEX IF NOT EXISTS idx_work_canvas_drafts_org_updated
          ON work_canvas_drafts (organization_id, updated_at DESC)`,
         [],
-        { fallback: false }
+        { fallback: true }
       );
       await dbRun(
         `CREATE INDEX IF NOT EXISTS idx_work_canvas_drafts_conversation
          ON work_canvas_drafts (organization_id, conversation_id)`,
         [],
-        { fallback: false }
+        { fallback: true }
       );
       await dbRun(
         `CREATE TABLE IF NOT EXISTS work_canvas_proposals (
@@ -2029,7 +2070,7 @@ async function ensureStorage(): Promise<void> {
           updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )`,
         [],
-        { fallback: false }
+        { fallback: true }
       );
       await dbRun(
         `CREATE TABLE IF NOT EXISTS work_canvas_versions (
@@ -2044,20 +2085,27 @@ async function ensureStorage(): Promise<void> {
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )`,
         [],
-        { fallback: false }
+        { fallback: true }
       );
       await dbRun(
         'ALTER TABLE work_canvas_versions ADD COLUMN IF NOT EXISTS blocks_json TEXT',
         [],
-        { fallback: false }
+        { fallback: true }
       );
       await dbRun(
         `CREATE INDEX IF NOT EXISTS idx_work_canvas_versions_draft_created
          ON work_canvas_versions (draft_id, created_at DESC)`,
         [],
-        { fallback: false }
+        { fallback: true }
       );
-    })();
+    })().catch((err: any) => {
+      // Self-heal: drop the memoized (now rejected) promise so a transient DDL
+      // failure retries on the next request instead of poisoning Canvas until
+      // process restart. Re-throw so this call still surfaces the failure to its
+      // caller (handlers wrap ensureStorage / degrade to a safe response).
+      storageReadyPromise = null;
+      throw err;
+    });
   }
   return storageReadyPromise;
 }
@@ -2638,32 +2686,41 @@ async function createOutputResource(
 router.use(verifyToken);
 
 router.get('/drafts', async (req: AuthRequest, res) => {
-  await ensureStorage();
-  const { organizationId, userId } = authContext(req);
-  const conversationId = req.query.conversationId ? String(req.query.conversationId) : null;
-  const projectId = req.query.projectId ? String(req.query.projectId) : null;
-  const whereParts = ['organization_id = ?'];
-  const queryParams: unknown[] = [organizationId];
-  if (conversationId) {
-    whereParts.push('conversation_id = ?');
-    queryParams.push(conversationId);
-  }
-  const accessParts = ['created_by = ?', 'owner_id = ?', "visibility = 'project'"];
-  queryParams.push(userId, userId);
-  if (projectId) {
-    whereParts.push('project_id = ?');
-    queryParams.push(projectId);
-  }
-  whereParts.push(`(${accessParts.join(' OR ')})`);
-  const rows = await dbAll<DraftRow>(
-    `SELECT * FROM work_canvas_drafts
+  // Fail-soft list: this is a high-traffic Canvas read. A transient DDL/read
+  // failure must degrade to an empty list (not a bare HTTP 500 / white screen).
+  // ensureStorage() is now fail-soft + self-healing; wrap the read too so any
+  // residual transient error still yields a well-formed empty envelope.
+  try {
+    await ensureStorage();
+    const { organizationId, userId } = authContext(req);
+    const conversationId = req.query.conversationId ? String(req.query.conversationId) : null;
+    const projectId = req.query.projectId ? String(req.query.projectId) : null;
+    const whereParts = ['organization_id = ?'];
+    const queryParams: unknown[] = [organizationId];
+    if (conversationId) {
+      whereParts.push('conversation_id = ?');
+      queryParams.push(conversationId);
+    }
+    const accessParts = ['created_by = ?', 'owner_id = ?', "visibility = 'project'"];
+    queryParams.push(userId, userId);
+    if (projectId) {
+      whereParts.push('project_id = ?');
+      queryParams.push(projectId);
+    }
+    whereParts.push(`(${accessParts.join(' OR ')})`);
+    const rows = await dbAll<DraftRow>(
+      `SELECT * FROM work_canvas_drafts
      WHERE ${whereParts.join(' AND ')}
      ORDER BY updated_at DESC`,
-    queryParams,
-    { fallback: false }
-  );
-  const result = rows.map(toDraft);
-  res.json(envelope(result));
+      queryParams,
+      { fallback: true }
+    );
+    const result = rows.map(toDraft);
+    res.json(envelope(result));
+  } catch (err: any) {
+    logger.warn(`[WorkCanvas] GET /drafts degraded to empty list: ${err?.message}`);
+    res.json(envelope([] as ReturnType<typeof toDraft>[]));
+  }
 });
 
 router.post('/drafts', async (req: AuthRequest, res) => {
@@ -4466,6 +4523,36 @@ router.post('/drafts/:draftId/register-in-outputs', async (req: AuthRequest, res
       },
     });
 
+    // X6 — W5 Transactional Outputs Registry: fire-and-forget parallel call to
+    // ensure both v8_output_artifacts + v8_artifact_origin_links are registered
+    // atomically. Runs alongside the existing registerArtifactOrigin path (additive,
+    // idempotent). Fail-open: errors are swallowed so the primary response is unaffected.
+    import('../services/v8/outputsTransactionalRegistry.js')
+      .then(({ registerOutputArtifactTransactional }) =>
+        registerOutputArtifactTransactional({
+          organizationId,
+          outputType: 'report',
+          artifactFamily: 'document',
+          originRuntime: 'native_artifact',
+          originRecordId: draft.id,
+          titleSnapshot: title,
+          ownerUserId: userId,
+          createdBy: userId,
+          projectId: draft.projectId || null,
+          originSummary: {
+            sourceType: 'work_canvas',
+            sourceTable: 'work_canvas_drafts',
+            contentMdLength: (draft.contentMd || '').length,
+          },
+        })
+      )
+      .catch((x6Err: unknown) => {
+        logger.warn('[work-canvas] X6 registerOutputArtifactTransactional failed (non-blocking)', {
+          draftId: draft.id,
+          error: x6Err instanceof Error ? x6Err.message : String(x6Err),
+        });
+      });
+
     const previousLinks =
       draft.provenance?.linkedWorkspaceResources &&
       typeof draft.provenance.linkedWorkspaceResources === 'object'
@@ -4634,6 +4721,7 @@ router.post('/drafts/:draftId/send-to-document-studio', async (req: AuthRequest,
 router.post('/drafts/:draftId/save-as-artifact', async (req: AuthRequest, res) => {
   const draft = await ownedDraft(req, req.params.draftId);
   if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  const { organizationId, userId } = authContext(req);
   const artifactId = `artifact-${randomUUID()}`;
   const artifactRunId = `run-${randomUUID()}`;
   const now = new Date().toISOString();
@@ -4685,6 +4773,26 @@ router.post('/drafts/:draftId/save-as-artifact', async (req: AuthRequest, res) =
     ],
     { fallback: false }
   );
+
+  // X5 — W5 Unified Doc Entity: commit draft → wave5_artifacts transactionally.
+  // Fail-open: if commitDraftToArtifact throws, the draft UPDATE above already
+  // succeeded so the canvas is still saved; we just won't have a wave5_artifacts row.
+  try {
+    const { commitDraftToArtifact } = await import(
+      '../services/deliverables/unifiedDocEntityService.js'
+    );
+    await commitDraftToArtifact({
+      organizationId,
+      draftId: draft.id,
+      committedBy: userId,
+    });
+  } catch (x5Err) {
+    logger.warn('[work-canvas] X5 commitDraftToArtifact failed (non-blocking)', {
+      draftId: draft.id,
+      error: x5Err instanceof Error ? x5Err.message : String(x5Err),
+    });
+  }
+
   const readBack = {
     target: 'artifact',
     targetObjectId: artifactId,

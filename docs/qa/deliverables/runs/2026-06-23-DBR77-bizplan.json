@@ -1,0 +1,925 @@
+{
+  "ranAt": "2026-06-24T02:26:28.707Z",
+  "model": "claude-sonnet-4-6",
+  "spine": {
+    "company": "DBR77 Sp. z o.o.",
+    "product": "Consultify — platforma AI generująca materiały doradcze (prezentacje, raporty, tabele) klasy konsultingowej",
+    "thesis": "Konsulting tworzy deliverable ręcznie: wolno i drogo. Consultify generuje je AI w minuty, w jakości McKinsey/Gamma, zasilane realnymi danymi organizacji.",
+    "ask": "Runda seed 1,2 mln EUR na skalowanie Consultify (sprzedaż + produkt), runway 24 mies.",
+    "assumptions": [
+      "Model hybrydowy: usługi doradcze (transformacja AI) + SaaS Consultify (subskrypcja per-seat).",
+      "SaaS: 290 EUR/seat/mies., churn roczny 12%, ekspansja netto 115%.",
+      "Konsulting: stawka 1400 EUR/dzień, utylizacja 65%, zespół delivery rośnie z 8 do 22 FTE.",
+      "CAC SaaS 2,1 tys. EUR, LTV 9,4 tys. EUR (LTV/CAC ≈ 4,5).",
+      "Koszt modeli AI ~1/100 konkurencji (chińskie modele przez OpenRouter) = marża brutto SaaS 86%."
+    ],
+    "financials": [
+      {
+        "rok": "Rok 1 (2026)",
+        "przychodSaaS": 540,
+        "przychodKonsulting": 1850,
+        "przychodRazem": 2390,
+        "cogs": 430,
+        "opex": 1980,
+        "ebitda": -20,
+        "marzaEbitda": "-1%",
+        "klienciSaaS": 38,
+        "arr": 650,
+        "fte": 16
+      },
+      {
+        "rok": "Rok 2 (2027)",
+        "przychodSaaS": 2160,
+        "przychodKonsulting": 2600,
+        "przychodRazem": 4760,
+        "cogs": 760,
+        "opex": 3200,
+        "ebitda": 800,
+        "marzaEbitda": "17%",
+        "klienciSaaS": 142,
+        "arr": 2900,
+        "fte": 22
+      },
+      {
+        "rok": "Rok 3 (2028)",
+        "przychodSaaS": 5400,
+        "przychodKonsulting": 3400,
+        "przychodRazem": 8800,
+        "cogs": 1300,
+        "opex": 4800,
+        "ebitda": 2700,
+        "marzaEbitda": "31%",
+        "klienciSaaS": 340,
+        "arr": 7200,
+        "fte": 31
+      }
+    ]
+  },
+  "table": {
+    "tierUsed": "PREMIUM",
+    "fallbackUsed": false,
+    "fields": [
+      {
+        "key": "rok",
+        "header": "Rok",
+        "type": "singleLineText"
+      },
+      {
+        "key": "przychod_saas",
+        "header": "Przychód SaaS (tys EUR)",
+        "type": "currency"
+      },
+      {
+        "key": "przychod_konsulting",
+        "header": "Przychód Konsulting (tys EUR)",
+        "type": "currency"
+      },
+      {
+        "key": "przychod_razem",
+        "header": "Przychód Razem (tys EUR)",
+        "type": "currency"
+      },
+      {
+        "key": "cogs",
+        "header": "COGS (tys EUR)",
+        "type": "currency"
+      },
+      {
+        "key": "opex",
+        "header": "OpEx (tys EUR)",
+        "type": "currency"
+      },
+      {
+        "key": "ebitda",
+        "header": "EBITDA (tys EUR)",
+        "type": "currency"
+      },
+      {
+        "key": "marza_ebitda",
+        "header": "Marża EBITDA",
+        "type": "percent"
+      },
+      {
+        "key": "klienci_saas",
+        "header": "Klienci SaaS",
+        "type": "number"
+      },
+      {
+        "key": "arr",
+        "header": "ARR (tys EUR)",
+        "type": "currency"
+      },
+      {
+        "key": "fte",
+        "header": "FTE",
+        "type": "number"
+      }
+    ],
+    "seedRows": [
+      {
+        "rok": "Rok 1 (2026)",
+        "przychod_saas": 540,
+        "przychod_konsulting": 1850,
+        "przychod_razem": 2390,
+        "cogs": 430,
+        "opex": 1980,
+        "ebitda": -20,
+        "marza_ebitda": -0.01,
+        "klienci_saas": 38,
+        "arr": 650,
+        "fte": 16
+      },
+      {
+        "rok": "Rok 2 (2027)",
+        "przychod_saas": 2160,
+        "przychod_konsulting": 2600,
+        "przychod_razem": 4760,
+        "cogs": 760,
+        "opex": 3200,
+        "ebitda": 800,
+        "marza_ebitda": 0.17,
+        "klienci_saas": 142,
+        "arr": 2900,
+        "fte": 22
+      },
+      {
+        "rok": "Rok 3 (2028)",
+        "przychod_saas": 5400,
+        "przychod_konsulting": 3400,
+        "przychod_razem": 8800,
+        "cogs": 1300,
+        "opex": 4800,
+        "ebitda": 2700,
+        "marza_ebitda": 0.31,
+        "klienci_saas": 340,
+        "arr": 7200,
+        "fte": 31
+      }
+    ],
+    "cf": [
+      {
+        "ref": "G2:G4",
+        "rules": [
+          {
+            "type": "colorScale",
+            "colors": [
+              "#DC2626",
+              "#F59E0B",
+              "#16A34A"
+            ]
+          }
+        ]
+      },
+      {
+        "ref": "H2:H4",
+        "rules": [
+          {
+            "type": "dataBar",
+            "color": "#16A34A"
+          }
+        ]
+      }
+    ]
+  },
+  "doc": {
+    "sections": [
+      {
+        "sectionId": "sec-0",
+        "heading": "Streszczenie wykonawcze",
+        "blocks": [
+          {
+            "blockId": "b-0-0",
+            "type": "heading",
+            "content": {
+              "text": "Streszczenie wykonawcze"
+            }
+          },
+          {
+            "blockId": "b-0-1",
+            "type": "kpi",
+            "content": {
+              "items": [
+                {
+                  "label": "Przychód R3",
+                  "value": "8 800 tys. EUR",
+                  "delta": "+269% vs R1"
+                },
+                {
+                  "label": "EBITDA R3",
+                  "value": "2 700 tys. EUR",
+                  "delta": "marża 31% (vs –1% R1)"
+                },
+                {
+                  "label": "ARR SaaS R3",
+                  "value": "7 200 tys. EUR",
+                  "delta": "+1 008% vs R1"
+                },
+                {
+                  "label": "Ask runda seed",
+                  "value": "1,2 mln EUR",
+                  "delta": "runway 24 mies."
+                }
+              ]
+            }
+          },
+          {
+            "blockId": "b-0-2",
+            "type": "text",
+            "content": {
+              "text": "Firmy konsultingowe tworzą swoje kluczowe deliverable — raporty, prezentacje strategiczne, analizy due diligence — w całości ręcznie. Jeden dokument pochłania od kilku dni do kilku tygodni pracy doświadczonych konsultantów, generując koszt rzędu dziesiątek, a nierzadko setek tysięcy euro. To fundamentalna nieefektywność rynku wartego ponad 300 mld EUR rocznie: klienci płacą premię za czas spędzony na formatowaniu i kompilacji danych, nie za rzeczywistą wartość intelektualną. W środowisku rosnącej presji kosztowej i skracających się cykli decyzyjnych, taki model operacyjny staje się strukturalną słabością — zarówno dla firm doradczych, jak i dla ich klientów."
+            }
+          },
+          {
+            "blockId": "b-0-3",
+            "type": "text",
+            "content": {
+              "text": "Consultify eliminuje tę nieefektywność u źródła. Platforma generuje materiały doradcze klasy McKinsey i Gamma — w ciągu minut, nie tygodni — zasilane realnymi danymi organizacji klienta i sterowane przez modele AI pozyskiwane przez OpenRouter w koszcie ~1/100 rozwiązań konkurencyjnych. Przekłada się to bezpośrednio na marżę brutto SaaS na poziomie 86% i trwałą przewagę cenową. DBR77 Sp. z o.o. realizuje model hybrydowy: usługi doradcze w obszarze transformacji AI zapewniają dodatni cashflow od pierwszego roku i stanowią naturalny kanał sprzedaży Consultify, podczas gdy segment SaaS (290 EUR/seat/mies., ekspansja netto 115%) buduje powtarzalny, wysoko-marżowy strumień przychodów — skalując ARR z 650 tys. EUR w R1 do 7,2 mln EUR w R3 przy bazie 340 klientów."
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-1",
+        "heading": "Problem i rynek",
+        "blocks": [
+          {
+            "blockId": "b-1-0",
+            "type": "heading",
+            "content": {
+              "text": "Problem i rynek"
+            }
+          },
+          {
+            "blockId": "b-1-1",
+            "type": "text",
+            "content": {
+              "text": "Tradycyjny konsulting od dekad opiera się na tym samym modelu produkcji wiedzy: drogie zespoły seniorów spędzają tygodnie na ręcznym tworzeniu prezentacji, raportów i analiz strategicznych. Pojedynczy deck McKinsey czy BCG angażuje 4–8 konsultantów przez 3 do 6 tygodni, generując faktury rzędu 50–150 tys. EUR — zanim klient ujrzy pierwszą rekomendację. Jakość deliverable jest pochodną doświadczenia konkretnych osób przydzielonych do projektu, a nie powtarzalnego procesu. W praktyce oznacza to dwa fundamentalne problemy. Po pierwsze, organizacje tracą tygodnie na czekanie w kolejce do analiz, których potrzebują natychmiast — decyzje o transformacji, wejściu na rynek czy restrukturyzacji zapadają w warunkach informacyjnej próżni. Po drugie, koszt dostępu do wiedzy klasy enterprise eliminuje z rynku firmy z segmentu mid-market, które nie mogą pozwolić sobie na zaangażowanie Big Four, a jednocześnie potrzebują tej samej jakości myślenia strategicznego. Consultify atakuje dokładnie tę lukę: modele AI zasilane realnymi danymi organizacji generują deliverable w jakości McKinsey/Gamma w ciągu minut, a nie tygodni — przy koszcie stanowiącym ułamek tradycyjnych stawek. Możliwe to jest dzięki wykorzystaniu chińskich modeli językowych przez OpenRouter, których koszt jednostkowy wynosi około 1/100 zachodnich odpowiedników, co bezpośrednio przekłada się na marżę brutto SaaS na poziomie 86% — strukturalnie nieosiągalną dla firm budujących na GPT-4 czy Claude."
+            }
+          },
+          {
+            "blockId": "b-1-2",
+            "type": "callout",
+            "content": {
+              "text": "🌍 Skala bólu rynkowego: Globalny rynek usług konsultingowych przekracza 300 mld USD rocznie i rośnie w tempie ~6% CAGR. Typowy deck strategiczny kosztuje 50–150 tys. EUR i powstaje przez 3–6 tygodni pracy drogich zespołów. Consultify redukuje ten czas do minut i ten koszt do ułamka — przy zachowaniu jakości klasy McKinsey/Gamma, zasilanej realnymi danymi organizacji klienta.",
+              "tone": "warning"
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-2",
+        "heading": "Produkt — Consultify",
+        "blocks": [
+          {
+            "blockId": "b-2-0",
+            "type": "heading",
+            "content": {
+              "text": "Produkt — Consultify"
+            }
+          },
+          {
+            "blockId": "b-2-1",
+            "type": "text",
+            "content": {
+              "text": "Consultify to platforma AI nowej generacji, zaprojektowana z myślą o eliminacji najbardziej czasochłonnego i kosztownego etapu pracy doradczej — ręcznego wytwarzania deliverable'ów. Tradycyjny konsulting angażuje seniorów przez tygodnie, by stworzyć deck, raport strategiczny czy model analityczny; Consultify kompresuje ten proces do minut. Platforma integruje się bezpośrednio z danymi organizacji klienta i generuje gotowe materiały w jakości klasy McKinsey/Gamma — prezentacje, raporty strategiczne, tabele analityczne — zasilane realnymi danymi operacyjnymi, finansowymi i rynkowymi. Wynikiem jest skokowy wzrost produktywności zespołów doradczych oraz radykalne obniżenie kosztu wytworzenia każdego deliverable'u, przy zachowaniu najwyższych standardów merytorycznych i wizualnych."
+            }
+          },
+          {
+            "blockId": "b-2-2",
+            "type": "bulletList",
+            "content": {
+              "items": [
+                "Generowanie decków (prezentacji) AI klasy konsultingowej na żądanie — strukturyzowane narracje, gotowe do prezentacji zarządom i radom nadzorczym w minuty od zlecenia.",
+                "Automatyczne tworzenie raportów strategicznych i analitycznych — od diagnozy sytuacji, przez analizę scenariuszy, po rekomendacje — w oparciu o szablony wypracowane przez praktyków doradztwa.",
+                "Budowanie tabel i modeli danych zasilanych realnymi danymi organizacji — dynamiczne modele finansowe, benchmarki operacyjne i dashboardy analityczne generowane bez ręcznego wprowadzania danych.",
+                "Integracja z wewnętrznymi źródłami danych klienta (ERP, CRM, pliki Excel/CSV) — platforma pobiera, harmonizuje i interpretuje dane w locie, eliminując żmudny etap data-gatheringu.",
+                "Eksport do PowerPoint i PDF oraz dostęp do wiodących modeli AI przez OpenRouter — użytkownik otrzymuje gotowy plik w preferowanym formacie, a warstwa modelowa jest wymieniana na najtańsze i najwydajniejsze modele dostępne na rynku."
+              ]
+            }
+          },
+          {
+            "blockId": "b-2-3",
+            "type": "callout",
+            "content": {
+              "text": "Przewaga kosztowa: Consultify korzysta z chińskich modeli AI dostępnych przez OpenRouter, których koszt inferecji stanowi ~1/100 ceny modeli OpenAI lub Anthropic. Ta strukturalna przewaga kosztowa przekłada się bezpośrednio na marżę brutto SaaS na poziomie 86% — wynik nieosiągalny dla konkurentów zbudowanych na modelach zachodnich. Oznacza to, że każdy EUR przychodu subskrypcyjnego generuje niemal dziewięć razy więcej zysku brutto niż u typowego rywala z segmentu AI-for-consulting.",
+              "tone": "success"
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-3",
+        "heading": "Model biznesowy i założenia",
+        "blocks": [
+          {
+            "blockId": "b-3-0",
+            "type": "heading",
+            "content": {
+              "text": "Model biznesowy i założenia"
+            }
+          },
+          {
+            "blockId": "b-3-1",
+            "type": "bulletList",
+            "content": {
+              "items": [
+                "Model hybrydowy: usługi doradcze (transformacja AI) + SaaS Consultify (subskrypcja per-seat) — dwa strumienie przychodów wzajemnie się wzmacniają: consulting otwiera drzwi, SaaS buduje referencyjną wartość ARR.",
+                "SaaS: 290 EUR/seat/mies., churn roczny 12%, ekspansja netto 115% — wskaźnik ekspansji powyżej 100% oznacza, że baza klientów rośnie organicznie bez nowych akwizycji.",
+                "Konsulting: stawka 1 400 EUR/dzień, utylizacja 65%, zespół delivery rośnie z 8 do 22 FTE w R3 — skalowanie zasobów ludzkich skorelowane ze wzrostem pipeline'u doradczego.",
+                "CAC SaaS 2 100 EUR, LTV 9 400 EUR, LTV/CAC ≈ 4,5 — zdrowa ekonomika jednostkowa: każde 1 EUR zainwestowane w akwizycję zwraca 4,5 EUR skumulowanej wartości klienta.",
+                "Koszt modeli AI ~1/100 konkurencji (chińskie modele przez OpenRouter) = marża brutto SaaS 86% — strukturalna przewaga kosztowa niedostępna dla dostawców opartych wyłącznie na modelach OpenAI/Anthropic."
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-4",
+        "heading": "Analiza finansowa",
+        "blocks": [
+          {
+            "blockId": "b-4-0",
+            "type": "heading",
+            "content": {
+              "text": "Analiza finansowa"
+            }
+          },
+          {
+            "blockId": "b-4-1",
+            "type": "table",
+            "content": {
+              "rows": [
+                {
+                  "cells": {
+                    "rok": {
+                      "value": "Rok"
+                    },
+                    "przychod": {
+                      "value": "Przychód razem (tys. EUR)"
+                    },
+                    "ebitda": {
+                      "value": "EBITDA (tys. EUR)"
+                    },
+                    "marza": {
+                      "value": "Marża EBITDA"
+                    },
+                    "arr": {
+                      "value": "ARR SaaS (tys. EUR)"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "rok": {
+                      "value": "Rok 1 (2026)"
+                    },
+                    "przychod": {
+                      "value": "2 390"
+                    },
+                    "ebitda": {
+                      "value": "-20",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "marza": {
+                      "value": "-1%",
+                      "style": {
+                        "bgColor": "#DC2626"
+                      }
+                    },
+                    "arr": {
+                      "value": "650"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "rok": {
+                      "value": "Rok 2 (2027)"
+                    },
+                    "przychod": {
+                      "value": "4 760"
+                    },
+                    "ebitda": {
+                      "value": "800",
+                      "style": {
+                        "bgColor": "#D97706"
+                      }
+                    },
+                    "marza": {
+                      "value": "17%",
+                      "style": {
+                        "bgColor": "#D97706"
+                      }
+                    },
+                    "arr": {
+                      "value": "2 900"
+                    }
+                  }
+                },
+                {
+                  "cells": {
+                    "rok": {
+                      "value": "Rok 3 (2028)"
+                    },
+                    "przychod": {
+                      "value": "8 800"
+                    },
+                    "ebitda": {
+                      "value": "2 700",
+                      "style": {
+                        "bgColor": "#16A34A"
+                      }
+                    },
+                    "marza": {
+                      "value": "31%",
+                      "style": {
+                        "bgColor": "#16A34A"
+                      }
+                    },
+                    "arr": {
+                      "value": "7 200"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "blockId": "b-4-2",
+            "type": "chart",
+            "content": {
+              "kind": "bar",
+              "title": "Przychód i EBITDA 2026–2028 (tys. EUR)",
+              "xAxisLabel": "Rok",
+              "yAxisLabel": "tys. EUR",
+              "series": [
+                {
+                  "label": "Przychód razem (tys. EUR)",
+                  "values": [
+                    2390,
+                    4760,
+                    8800
+                  ],
+                  "color": "#2563EB"
+                },
+                {
+                  "label": "EBITDA (tys. EUR)",
+                  "values": [
+                    -20,
+                    800,
+                    2700
+                  ],
+                  "color": "#0D9488"
+                }
+              ]
+            }
+          },
+          {
+            "blockId": "b-4-3",
+            "type": "text",
+            "content": {
+              "text": "Spółka DBR77 przechodzi czytelną trajektorię od fazy inwestycyjnej do rentowności operacyjnej w ciągu zaledwie trzech lat. W Roku 1 (2026) ujemna EBITDA na poziomie –20 tys. EUR (marża –1%) odzwierciedla świadome nakłady na budowę platformy Consultify, zespołu delivery i pozyskanie pierwszych klientów SaaS — koszt wejścia na rynek pozostaje jednak wyjątkowo niski dzięki strukturalnej przewadze kosztowej modeli AI (~1/100 kosztu konkurencji, marża brutto SaaS 86%). Przełom następuje w Roku 2 (2027): break-even na poziomie EBITDA zostaje przekroczony, a spółka generuje 800 tys. EUR zysku operacyjnego przy przychodzie 4 760 tys. EUR (marża 17%). Kluczowym motorem jest ekspansja ARR SaaS — z 650 tys. EUR do 2 900 tys. EUR — napędzana modelem net revenue retention 115% oraz rosnącą bazą klientów subskrypcyjnych. Rok 3 (2028) potwierdza dojrzewanie modelu: EBITDA 2 700 tys. EUR przy marży 31% plasuje DBR77 w profilu rentownej firmy hybrydowej SaaS+konsulting. ARR SaaS osiąga 7 200 tys. EUR (~11× wzrost względem Roku 1), co przy utrzymaniu churn rocznego na poziomie 12% świadczy o silnym product-market fit i wysokiej retencji klientów enterprise. Dynamika przychodów całkowitych (~3,7× w 3 lata) przy jednoczesnym lewarowaniu kosztów stałych tworzy klasyczny profil skalowania: każda kolejna złotówka przychodu generuje nieproporcjonalnie wyższy przyrost EBITDA."
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-5",
+        "heading": "Ryzyka i mitygacja",
+        "blocks": [
+          {
+            "blockId": "b-5-0",
+            "type": "heading",
+            "content": {
+              "text": "Ryzyka i mitygacja"
+            }
+          },
+          {
+            "blockId": "b-5-1",
+            "type": "text",
+            "content": {
+              "text": "Każdy ambitny plan wzrostu niesie ze sobą strukturalne ryzyka, które — jeśli nie są aktywnie zarządzane — mogą istotnie odchylić trajektorię przychodów i marż od założeń bazowych. W przypadku DBR77 zidentyfikowano cztery kategorie ryzyk o największym potencjalnym wpływie na realizację modelu hybrydowego (konsulting + SaaS Consultify).\n\n(1) Ryzyko adopcji. Organizacje klienckie są przyzwyczajone do ręcznego, procesowo ugruntowanego tworzenia deliverable — zmiana nawyków wymaga czasu i zaangażowania interesariuszy po stronie klienta. Mitygacja opiera się na modelu land-and-expand: Consultify jest wdrażany najpierw w ramach projektów konsultingowych DBR77 jako narzędzie wewnętrzne, co pozwala klientom doświadczyć wartości bez formalnego procesu zakupowego. Organiczne rozszerzanie zasięgu następuje po wykazaniu ROI na pierwszym pilocie — typowo w ciągu 6–8 tygodni.\n\n(2) Ryzyko dostawcy modeli AI. Strategiczna przewaga kosztowa DBR77 — marża brutto SaaS na poziomie 86% — wynika z wykorzystania chińskich modeli LLM za pośrednictwem platformy OpenRouter, których koszt wnioskowania wynosi ułamek ceny modeli zachodnich. Koncentracja na jednej klasie dostawców tworzy jednak ryzyko regulacyjne (potencjalne restrykcje UE wobec chińskich modeli) oraz cenowe (zmiana polityki OpenRouter). Mitygacja zakłada architekturę multi-model routing z automatycznym fallbackiem na alternatywne modele (Anthropic, Mistral, open-source lokalne), bez istotnej zmiany UX dla użytkownika końcowego.\n\n(3) Ryzyko churn SaaS. Zakładany roczny churn na poziomie 12% oraz wskaźnik ekspansji netto 115% wymagają sprawnie działającego aparatu customer success. Klienci, którzy nie osiągną pełnego wdrożenia w ciągu pierwszych 90 dni, są statystycznie trzykrotnie bardziej narażeni na rezygnację. Mitygacja obejmuje: dedykowany onboarding z playbook'iem wdrożeniowym, kwartalne przeglądy wartości (QBR) oraz automatyczne alerty produktowe sygnalizujące spadek aktywności użytkownika.\n\n(4) Ryzyko konkurencji. Duże platformy technologiczne (Microsoft Copilot for Work, Gamma AI, Canva AI) dysponują znaczącymi budżetami R&D i mogą eskalować inwestycje w segmencie automatyzacji dokumentów biznesowych. Trwała przewaga DBR77 opiera się na dwóch elementach trudnych do replikacji: (a) głębokiej integracji z danymi organizacyjnymi klienta (ERP, CRM, wewnętrzne bazy wiedzy), której duże platformy generalistyczne nie oferują out-of-the-box, oraz (b) wbudowanej wiedzy konsultingowej — frameworkach, strukturach analitycznych i standardach narracyjnych — zakodowanych w silniku Consultify przez praktyków z doświadczeniem McKinsey/Big4."
+            }
+          },
+          {
+            "blockId": "b-5-2",
+            "type": "callout",
+            "content": {
+              "text": "⚠ DWA RYZYKA KRYTYCZNE WYMAGAJĄCE NATYCHMIASTOWEGO PLANU MITYGACJI\n\n(A) NISKA ADOPCJA WEWNĘTRZNA — Organizacje przyzwyczajone do ręcznych procesów tworzenia deliverable mogą odrzucić narzędzie pomimo jego obiektywnej przewagi jakościowej i czasowej, jeśli zmiana nie będzie wsparta dedykowanym change managementem. Brak budżetu na customer success i onboarding w planie go-to-market bezpośrednio zagraża realizacji założeń ARR (650 tys. EUR w R1 → 7,2 mln EUR w R3). Rekomendacja: uwzględnienie CS lead + onboarding specialist jako zatrudnienie priorytetowe w R1, przed skalowaniem sprzedaży.\n\n(B) ZALEŻNOŚĆ OD DOSTAWCÓW MODELI AI (OpenRouter / chińskie LLM) — Nagła zmiana warunków handlowych, decyzja regulacyjna UE lub geopolityczny szok podażowy może podnieść jednostkowy koszt wnioskowania AI nawet 10×, niwelując kluczową przewagę marżową modelu (marża brutto SaaS 86%). Scenariusz taki sprowadziłby marżę brutto do poziomu poniżej 60%, destabilizując rentowność segmentu SaaS i opóźniając breakeven EBITDA. Rekomendacja: utrzymanie aktywnych kontraktów testowych z ≥2 alternatywnymi dostawcami (Mistral, Anthropic, lokalne modele open-source) oraz kwartalne benchmarki kosztowe — gotowość do przełączenia w <30 dni.",
+              "tone": "warning"
+            }
+          }
+        ]
+      },
+      {
+        "sectionId": "sec-6",
+        "heading": "Zespół i rekomendacja inwestycyjna",
+        "blocks": [
+          {
+            "blockId": "b-6-0",
+            "type": "heading",
+            "content": {
+              "text": "Zespół i rekomendacja inwestycyjna"
+            }
+          },
+          {
+            "blockId": "b-6-1",
+            "type": "text",
+            "content": {
+              "text": "DBR77 Sp. z o.o. buduje zdolności operacyjne, skalując łączną bazę do 31 FTE w Roku 3 — od 8 FTE delivery konsultingowego dziś, przez 22 FTE w R3, uzupełnionych dedykowanym zespołem produktowym i sprzedażowym Consultify. Kluczowym aktywem spółki jest unikalne połączenie głębokiej ekspertyzy konsultingowej — znajomości metodyk, procesów i bólu klienta korporacyjnego — z inżynierią AI opartą na efektywnych modelach chińskich dostępnych przez OpenRouter, generujących koszt ~1/100 rozwiązań konkurencyjnych. To połączenie tworzy trudny do replikowania moat: DBR77 rozumie jednocześnie problem biznesowy klienta i potrafi zautomatyzować jego rozwiązanie w sposób skalowalny, powtarzalny i mierzalny. Strumień konsultingowy nie tylko finansuje wzrost produktu, lecz stanowi żywe laboratorium przypadków użycia — każdy projekt transformacji AI zasila roadmapę Consultify i weryfikuje wartość produktu w warunkach produkcyjnych. Hybrydowy model operacyjny pozwala spółce rosnąć w sposób zdyscyplinowany finansowo, osiągając rentowność EBITDA już w Roku 2, zanim ARR SaaS przekroczy 3 mln EUR."
+            }
+          },
+          {
+            "blockId": "b-6-2",
+            "type": "callout",
+            "content": {
+              "text": "🚀 Rekomendacja inwestycyjna — Runda Seed: 1 200 000 EUR\n\nDBR77 pozyskuje rundę seed w wysokości 1,2 mln EUR z przeznaczeniem na skalowanie Consultify: budowę zespołu sprzedażowego, akcelerację rozwoju produktu oraz ekspansję na rynki DACH i Benelux. Pozyskany kapitał zapewnia runway 24 miesięcy — do momentu osiągnięcia ARR SaaS na poziomie 7 200 tys. EUR i EBITDA 2 700 tys. EUR (marża 31%) w Roku 3.\n\nEkonomika jednostkowa potwierdza zasadność inwestycji:\n• LTV / CAC = 4,5× (LTV 9 400 EUR · CAC 2 100 EUR)\n• Marża brutto SaaS: 86% dzięki strukturze kosztowej AI\n• Churn roczny: 12% przy ekspansji netto 115% — baza klientów rośnie sama z siebie\n\nKażde euro zainwestowane w akwizycję klienta zwraca 4,5× wartości życiowej. Spółka nie spekuluje na wzroście — buduje go na fundamencie sprawdzonej ekonomiki i działającego biznesu konsultingowego.",
+              "tone": "success"
+            }
+          }
+        ]
+      }
+    ],
+    "citations": [
+      {
+        "id": "c1",
+        "ref": "Wewnętrzny model finansowy DBR77 Sp. z o.o. — projekcje R1–R3 (przychody, EBITDA, ARR SaaS, churn 12%, ekspansja netto 115%), wersja robocza 2025"
+      },
+      {
+        "id": "c2",
+        "ref": "Analiza jednostkowej ekonomiki Consultify — wskaźniki CAC (2,1 tys. EUR), LTV (9,4 tys. EUR), LTV/CAC ≈ 4,5 oraz marża brutto SaaS 86% przy kosztach modeli AI via OpenRouter, DBR77 2025"
+      },
+      {
+        "id": "c3",
+        "ref": "Raport gotowości rynku konsultingowego na automatyzację deliverable'ów AI — benchmarking stawek dziennych (1 400 EUR/dzień), utylizacja zespołu delivery (65%), wzrost FTE 8→22, metodyka hybrydowa SaaS + usługi doradcze, DBR77 2025"
+      }
+    ]
+  },
+  "deck": {
+    "tierUsed": "PREMIUM",
+    "fallbackUsed": false,
+    "plans": [
+      {
+        "slideIndex": 0,
+        "layoutIntent": "cover",
+        "paletteId": "midnight",
+        "imageBrief": "Abstract dark digital network with glowing AI nodes and consulting document silhouettes, premium boardroom aesthetic",
+        "reasoning": "Opening cover for a high-stakes investor deck; centered variant maximises brand impact and sets a premium, tech-forward tone for DBR77/Consultify.",
+        "source": "llm",
+        "title": "DBR77 Sp. z o.o. — Consultify",
+        "keyMessage": "Konsulting tworzy deliverable ręcznie: wolno i drogo. Consultify generuje je AI w minuty, w jakości McKinsey/Gamma, zasilane realnymi danymi organizacji.",
+        "composition": {
+          "layoutVariantId": "centered",
+          "emphasis": "visual",
+          "regions": [
+            {
+              "area": "full",
+              "blockTypes": [
+                "image"
+              ]
+            },
+            {
+              "area": "overlay",
+              "blockTypes": [
+                "heading",
+                "paragraph"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 1,
+        "layoutIntent": "executive_summary",
+        "paletteId": "midnight",
+        "imageBrief": "Minimalist financial dashboard with glowing KPI tiles on dark background, investor-grade aesthetic",
+        "reasoning": "Multiple KPIs (revenue, EBITDA, ARR, clients) plus a funding ask map perfectly onto a kpi_grid_2x2 with a supporting metric strip and callout for the seed round.",
+        "source": "llm",
+        "title": "Streszczenie inwestorskie",
+        "keyMessage": "Przychód R1/R2/R3: 2390/4760/8800 tys. EUR; EBITDA -20/800/2700 (marża -1%→31%); ARR SaaS 650→7200 tys. EUR; klienci SaaS 38→340. Ask: Runda seed 1,2 mln EUR na skalowanie Consultify (sprzedaż + produkt), runway 24 mies.",
+        "composition": {
+          "layoutVariantId": "kpi_grid_2x2",
+          "emphasis": "data",
+          "regions": [
+            {
+              "area": "top",
+              "blockTypes": [
+                "heading",
+                "paragraph"
+              ]
+            },
+            {
+              "area": "full",
+              "blockTypes": [
+                "kpi_widget"
+              ]
+            },
+            {
+              "area": "bottom",
+              "blockTypes": [
+                "callout"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 2,
+        "layoutIntent": "root_cause",
+        "paletteId": "midnight",
+        "imageBrief": "Frustrated consultant buried in paper documents and slow manual processes, dark moody office scene",
+        "reasoning": "Root cause layout exposes the structural pain of manual consulting deliverables; smart_diagram visualises the cause-and-effect chain (slow → expensive → inconsistent).",
+        "source": "llm",
+        "title": "Problem",
+        "keyMessage": "Konsulting tworzy deliverable ręcznie — wolno, drogo, niespójnie",
+        "composition": {
+          "layoutVariantId": "smart_diagram",
+          "emphasis": "narrative",
+          "regions": [
+            {
+              "area": "top",
+              "blockTypes": [
+                "heading",
+                "paragraph"
+              ]
+            },
+            {
+              "area": "full",
+              "blockTypes": [
+                "smart_diagram"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 3,
+        "layoutIntent": "single_insight",
+        "paletteId": "midnight",
+        "imageBrief": "Sleek AI-powered platform UI generating a polished McKinsey-style consulting slide in seconds, dark glass morphism design",
+        "reasoning": "Product intro benefits from a big visual moment; chart_left_text_right places a product screenshot/diagram on the left with key capability bullets on the right.",
+        "source": "llm",
+        "title": "Produkt — Consultify",
+        "keyMessage": "Consultify — platforma AI generująca materiały doradcze (prezentacje, raporty, tabele) klasy konsultingowej",
+        "composition": {
+          "layoutVariantId": "chart_left_text_right",
+          "emphasis": "visual",
+          "regions": [
+            {
+              "area": "left",
+              "blockTypes": [
+                "image"
+              ]
+            },
+            {
+              "area": "right",
+              "blockTypes": [
+                "heading",
+                "bullet_list",
+                "callout"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 4,
+        "layoutIntent": "performance_overview",
+        "paletteId": "midnight",
+        "imageBrief": "Upward-trending SaaS growth chart with client count milestones on a dark analytical dashboard",
+        "reasoning": "Traction metrics (142 SaaS clients, ARR 2 900 k EUR) are best displayed as big KPI numbers supported by a growth chart; kpi_grid_2x2 with chart reinforces momentum.",
+        "source": "llm",
+        "title": "Rynek i trakcja",
+        "keyMessage": "142 klientów SaaS w R2, ARR 2900 tys EUR",
+        "composition": {
+          "layoutVariantId": "kpi_grid_2x2",
+          "emphasis": "data",
+          "regions": [
+            {
+              "area": "top",
+              "blockTypes": [
+                "heading"
+              ]
+            },
+            {
+              "area": "left",
+              "blockTypes": [
+                "kpi_widget"
+              ]
+            },
+            {
+              "area": "right",
+              "blockTypes": [
+                "chart"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 5,
+        "layoutIntent": "comparison",
+        "paletteId": "midnight",
+        "imageBrief": "Side-by-side cost comparison graphic: expensive Western AI models vs ultra-low-cost Chinese models via OpenRouter, dark infographic style",
+        "reasoning": "The 86% gross margin vs competition is a direct two-sided comparison; split_lr cleanly contrasts Consultify's cost structure against incumbents.",
+        "source": "llm",
+        "title": "Przewaga: koszt modeli ~1/100",
+        "keyMessage": "Chińskie modele przez OpenRouter — marża brutto SaaS 86% vs konkurencja",
+        "composition": {
+          "layoutVariantId": "split_lr",
+          "emphasis": "comparison",
+          "regions": [
+            {
+              "area": "top",
+              "blockTypes": [
+                "heading"
+              ]
+            },
+            {
+              "area": "left",
+              "blockTypes": [
+                "heading",
+                "kpi_widget",
+                "bullet_list"
+              ]
+            },
+            {
+              "area": "right",
+              "blockTypes": [
+                "heading",
+                "kpi_widget",
+                "bullet_list"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 6,
+        "layoutIntent": "performance_overview",
+        "paletteId": "midnight",
+        "imageBrief": "Three-year financial projection chart with revenue bars and EBITDA margin line on a dark investor dashboard",
+        "reasoning": "Three years of revenue, EBITDA and ARR data suit a chart-led layout; chart_left_text_right puts the financial model visually front-and-centre with annotations on the right.",
+        "source": "llm",
+        "title": "Model finansowy 3-letni",
+        "keyMessage": "Przychód R1/R2/R3: 2390/4760/8800 tys. EUR; EBITDA -20/800/2700 (marża -1%→31%); ARR SaaS 650→7200 tys. EUR; klienci SaaS 38→340",
+        "composition": {
+          "layoutVariantId": "chart_left_text_right",
+          "emphasis": "data",
+          "regions": [
+            {
+              "area": "top",
+              "blockTypes": [
+                "heading"
+              ]
+            },
+            {
+              "area": "left",
+              "blockTypes": [
+                "chart"
+              ]
+            },
+            {
+              "area": "right",
+              "blockTypes": [
+                "metric_strip",
+                "bullet_list"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 7,
+        "layoutIntent": "recommendation_portfolio",
+        "paletteId": "midnight",
+        "imageBrief": "Abstract unit economics flywheel diagram with LTV, CAC, churn and expansion metrics glowing in dark space",
+        "reasoning": "LTV/CAC, net expansion and churn are three discrete unit-economics KPIs; kpi_grid_2x2 with callout commentary presents them as a portfolio of health signals for investors.",
+        "source": "llm",
+        "title": "Jednostkowa ekonomia",
+        "keyMessage": "LTV/CAC 4,5; ekspansja netto 115%; churn 12%",
+        "composition": {
+          "layoutVariantId": "kpi_grid_2x2",
+          "emphasis": "data",
+          "regions": [
+            {
+              "area": "top",
+              "blockTypes": [
+                "heading",
+                "paragraph"
+              ]
+            },
+            {
+              "area": "full",
+              "blockTypes": [
+                "kpi_widget"
+              ]
+            },
+            {
+              "area": "bottom",
+              "blockTypes": [
+                "callout"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 8,
+        "layoutIntent": "roadmap",
+        "paletteId": "midnight",
+        "imageBrief": "24-month product and go-to-market roadmap timeline on dark background with milestone markers and phase labels",
+        "reasoning": "A 24-month roadmap across three phases (sales scale → product → international expansion) is best rendered as a horizontal timeline strip with phase annotations.",
+        "source": "llm",
+        "title": "Roadmapa 24 mies.",
+        "keyMessage": "Skalowanie sprzedaży → produkt → ekspansja zagraniczna",
+        "composition": {
+          "layoutVariantId": "timeline_strip",
+          "emphasis": "visual",
+          "regions": [
+            {
+              "area": "top",
+              "blockTypes": [
+                "heading",
+                "paragraph"
+              ]
+            },
+            {
+              "area": "full",
+              "blockTypes": [
+                "timeline_block"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 9,
+        "layoutIntent": "recommendation_single",
+        "paletteId": "midnight",
+        "imageBrief": "Bold seed funding visual: single large Euro sign surrounded by growth arrows and runway countdown on dark background",
+        "reasoning": "A single, decisive funding ask (1.2 M EUR seed, 24-month runway) calls for maximum visual emphasis; big_number variant centres the ask amount with supporting rationale bullets.",
+        "source": "llm",
+        "title": "Ask inwestorski",
+        "keyMessage": "Runda seed 1,2 mln EUR na skalowanie Consultify (sprzedaż + produkt), runway 24 mies.",
+        "composition": {
+          "layoutVariantId": "big_number",
+          "emphasis": "narrative",
+          "regions": [
+            {
+              "area": "top",
+              "blockTypes": [
+                "heading"
+              ]
+            },
+            {
+              "area": "full",
+              "blockTypes": [
+                "kpi_widget"
+              ]
+            },
+            {
+              "area": "bottom",
+              "blockTypes": [
+                "bullet_list",
+                "callout"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "slideIndex": 10,
+        "layoutIntent": "next_steps",
+        "paletteId": "midnight",
+        "imageBrief": "Clean dark closing slide with three sequential action steps — handshake, magnifier, checkmark — leading to Q3 close",
+        "reasoning": "Three crisp sequential actions (term sheet → due diligence → round close in Q3) fit a numbered_stack that guides investors through a clear, actionable path forward.",
+        "source": "llm",
+        "title": "Następne kroki",
+        "keyMessage": "Term sheet, due diligence, zamknięcie rundy w Q3",
+        "composition": {
+          "layoutVariantId": "numbered_stack",
+          "emphasis": "narrative",
+          "regions": [
+            {
+              "area": "top",
+              "blockTypes": [
+                "heading",
+                "paragraph"
+              ]
+            },
+            {
+              "area": "full",
+              "blockTypes": [
+                "numbered_list",
+                "icon_row"
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

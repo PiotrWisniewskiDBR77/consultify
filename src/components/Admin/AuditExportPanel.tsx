@@ -123,7 +123,7 @@ export const AuditExportPanel: React.FC = () => {
               onClick={() => setExportFormat(format)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 exportFormat === format
-                  ? 'bg-navy-900 text-white'
+                  ? 'bg-c-text text-c-bg'
                   : 'bg-white dark:bg-navy-900 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -136,7 +136,7 @@ export const AuditExportPanel: React.FC = () => {
       <button
         onClick={handleExport}
         disabled={isExporting}
-        className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors disabled:opacity-50"
+        className="flex items-center gap-2 px-4 py-2 bg-c-text text-c-bg hover:bg-c-text-secondary rounded-lg transition-colors disabled:opacity-50"
       >
         <Download className="w-4 h-4" />
         {isExporting ? 'Exporting...' : 'Export'}

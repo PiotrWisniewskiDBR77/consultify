@@ -360,22 +360,22 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
   const exportJSON = useCallback(() => {
     setExporting('json');
     try {
+      // A3 / P13 canon: round-trip safe — preserve the full node/edge shape (width,
+      // height, parentNode, style, zIndex, …) so re-importing the JSON (diagram
+      // package path) reproduces a visually identical canvas. Only transient
+      // interaction state (selected/dragging) is stripped.
       const data = {
         id: ideaId,
         title,
         exportedAt: new Date().toISOString(),
-        nodes: graphNodes.map((n) => ({
-          id: n.id,
-          type: n.type,
-          position: n.position,
-          data: { label: n.data?.label, ...n.data },
-        })),
-        edges: graphEdges.map((e: any) => ({
-          id: e.id,
-          source: e.source,
-          target: e.target,
-          label: e.label || e.data?.label,
-        })),
+        nodes: graphNodes.map((n: any) => {
+          const { selected: _selected, dragging: _dragging, ...rest } = n;
+          return { ...rest, data: { label: n.data?.label, ...n.data } };
+        }),
+        edges: graphEdges.map((e: any) => {
+          const { selected: _selected, ...rest } = e;
+          return { ...rest, label: e.label || e.data?.label };
+        }),
         extensions: extensions || {},
       };
       downloadText(JSON.stringify(data, null, 2), `${safeFilename}.json`, 'application/json');
@@ -583,7 +583,7 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+    <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/30 backdrop-blur-sm">
       <div className="bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200/60 dark:border-navy-700/60 w-full max-w-2xl overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
           <div className="flex items-center gap-2">

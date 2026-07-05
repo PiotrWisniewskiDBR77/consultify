@@ -60,6 +60,11 @@ const MOCK_TABLE_FALLBACK_COLUMNS: Record<string, string[]> = {
     'action_contract_json',
     'source_pack_json',
     'evidence_refs_json',
+    // M2 home-shell columns (migration 20260602). Without these in the fallback,
+    // folder assignment (folder_id) silently no-ops under mock-DB / tests.
+    'folder_id',
+    'is_favorite',
+    'last_opened_at',
   ],
 };
 

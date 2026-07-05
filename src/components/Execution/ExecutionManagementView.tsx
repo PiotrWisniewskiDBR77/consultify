@@ -13,6 +13,8 @@ import {
 import { Callout } from '@/components/shared/NModeBlocks';
 
 import { type ManagerModuleId, ManagerModuleView } from './ManagerModuleView';
+import BenefitsRegisterPanel from './BenefitsRegisterPanel';
+import { isExecutionFlagEnabled } from './executionFeatureFlags';
 
 interface ManagerLaneCount {
   total: number;
@@ -174,7 +176,7 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
       },
       {
         id: 'workload' as ManagerModuleId,
-        icon: <Users size={20} className="text-primary-500" />,
+        icon: <Users size={20} className="text-c-text-secondary" />,
         title: t('execution.manager.tile.workload', 'Resource & Workload'),
         description: t(
           'execution.manager.tile.workloadDesc',
@@ -308,6 +310,8 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
               </Callout>
             )}
 
+            {isExecutionFlagEnabled('benefits') && <BenefitsRegisterPanel />}
+
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filteredTiles.map((tile) => {
                 const hasAlerts = tile.metrics.some(
@@ -318,25 +322,25 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
                     key={tile.id}
                     type="button"
                     onClick={() => setSubview(tile.id)}
-                    className={`group text-left rounded-xl border bg-white dark:bg-navy-900 p-5 transition-all hover:shadow-md hover:border-primary-500/40 dark:hover:border-primary-400/30 ${
+                    className={`group text-left rounded-xl border bg-c-surface p-5 transition-all hover:shadow-md hover:border-c-border-strong ${
                       hasAlerts
                         ? 'border-amber-200 dark:border-amber-800/40'
-                        : 'border-slate-200 dark:border-navy-700'
+                        : 'border-c-border-subtle'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3 mb-3">
-                      <div className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800 group-hover:bg-primary-50 dark:group-hover:bg-primary-900/20 transition-colors">
+                      <div className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-c-surface-raised group-hover:bg-c-surface-raised transition-colors">
                         {tile.icon}
                       </div>
                       <ChevronRight
                         size={14}
-                        className="text-slate-600 dark:text-slate-400 group-hover:text-primary-500 transition-colors mt-1"
+                        className="text-c-text-secondary group-hover:text-c-text-secondary transition-colors mt-1"
                       />
                     </div>
-                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">
+                    <h3 className="text-sm font-semibold text-c-text mb-1">
                       {tile.title}
                     </h3>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
+                    <p className="text-[11px] text-c-text-muted leading-relaxed mb-3">
                       {tile.description}
                     </p>
                     <div className="flex gap-3">
@@ -348,12 +352,12 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
                                 ? 'text-danger-600 dark:text-danger-400'
                                 : metric.variant === 'warn'
                                   ? 'text-amber-600 dark:text-amber-400'
-                                  : 'text-slate-900 dark:text-white'
+                                  : 'text-c-text'
                             }`}
                           >
                             {metric.value}
                           </div>
-                          <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500">
+                          <div className="text-[10px] uppercase tracking-wider text-c-text-muted">
                             {metric.label}
                           </div>
                         </div>

@@ -197,10 +197,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
     return (
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
-          <p className="text-sm text-slate-600 mb-1">
+          <p className="text-sm text-c-text-secondary mb-1">
             {isPl ? 'Brak dat do wyświetlenia' : 'No dates to display'}
           </p>
-          <p className="text-[10px] text-slate-600">
+          <p className="text-[10px] text-c-text-muted">
             {isPl
               ? 'Dodaj kolumny typu "date" aby zobaczyć timeline'
               : 'Add "date" type columns to see the timeline'}
@@ -218,17 +218,17 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
       onMouseLeave={handleMouseUp}
     >
       {/* Toolbar */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 flex-shrink-0">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-c-border-subtle bg-c-surface-raised flex-shrink-0">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
           Timeline
         </span>
         <div className="flex-1" />
-        <div className="flex items-center gap-1 rounded-lg border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
+        <div className="flex items-center gap-1 rounded-lg border border-c-border-subtle overflow-hidden">
           {(['day', 'week', 'month'] as ZoomLevel[]).map((z) => (
             <button
               key={z}
               onClick={() => setZoom(z)}
-              className={`px-2 py-1 text-[10px] font-bold transition-colors ${zoom === z ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-600 hover:text-slate-600'}`}
+              className={`px-2 py-1 text-[10px] font-bold transition-colors ${zoom === z ? 'bg-c-info/10 text-c-info' : 'text-c-text-secondary hover:text-c-text'}`}
             >
               {z === 'day'
                 ? isPl
@@ -246,13 +246,13 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
         </div>
         <button
           onClick={() => setZoom(zoom === 'day' ? 'week' : zoom === 'week' ? 'month' : 'month')}
-          className="p-1 rounded text-slate-600 hover:text-slate-600"
+          className="p-1 rounded text-c-text-secondary hover:text-c-text"
         >
           <ZoomOut size={12} />
         </button>
         <button
           onClick={() => setZoom(zoom === 'month' ? 'week' : zoom === 'week' ? 'day' : 'day')}
-          className="p-1 rounded text-slate-600 hover:text-slate-600"
+          className="p-1 rounded text-c-text-secondary hover:text-c-text"
         >
           <ZoomIn size={12} />
         </button>
@@ -263,14 +263,14 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
         <div className="flex" style={{ minWidth: LABEL_WIDTH + totalWidth }}>
           {/* Labels column */}
           <div
-            className="flex-shrink-0 border-r border-slate-200/60 dark:border-navy-700/60"
+            className="flex-shrink-0 border-r border-c-border-subtle"
             style={{ width: LABEL_WIDTH }}
           >
-            <div className="h-8 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50 dark:bg-navy-900" />
+            <div className="h-8 border-b border-c-border-subtle bg-c-surface-raised" />
             {timelineData.map(({ node, color }) => (
               <div
                 key={node.id}
-                className="flex items-center gap-2 px-3 border-b border-slate-200/20 dark:border-white/[0.03] cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+                className="flex items-center gap-2 px-3 border-b border-c-border-subtle cursor-pointer hover:bg-c-surface-raised transition-colors"
                 style={{ height: ROW_HEIGHT }}
                 onClick={() => onNodeClick?.(node.id)}
               >
@@ -278,7 +278,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                   className="w-2 h-2 rounded-full flex-shrink-0"
                   style={{ backgroundColor: color }}
                 />
-                <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate">
+                <span className="text-[11px] font-medium text-c-text truncate">
                   {node.data?.label || node.id}
                 </span>
               </div>
@@ -288,11 +288,11 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
           {/* Chart area */}
           <div className="flex-1 relative">
             {/* Header */}
-            <div className="flex h-8 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 sticky top-0 z-10">
+            <div className="flex h-8 border-b border-c-border-subtle bg-c-surface-raised sticky top-0 z-10">
               {headerCells.map((cell, i) => (
                 <div
                   key={i}
-                  className={`flex items-center justify-center text-[9px] font-bold border-r border-slate-200/30 dark:border-navy-700/30 flex-shrink-0 ${cell.isToday ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-600'}`}
+                  className={`flex items-center justify-center text-[9px] font-bold border-r border-c-border-subtle flex-shrink-0 ${cell.isToday ? 'bg-c-info/10 text-c-info' : 'text-c-text-secondary'}`}
                   style={{ width: cell.width }}
                 >
                   {cell.label}
@@ -306,7 +306,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
               return (
                 <div
                   key={node.id}
-                  className="relative border-b border-slate-200/10 dark:border-white/[0.02]"
+                  className="relative border-b border-c-border-subtle"
                   style={{ height: ROW_HEIGHT }}
                 >
                   {/* Grid lines */}
@@ -314,7 +314,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                     {headerCells.map((cell, i) => (
                       <div
                         key={i}
-                        className="border-r border-slate-200/10 dark:border-navy-700/10 flex-shrink-0"
+                        className="border-r border-c-border-subtle flex-shrink-0"
                         style={{ width: cell.width }}
                       />
                     ))}
@@ -322,12 +322,12 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
 
                   {/* Bar */}
                   <div
-                    className={`absolute top-1.5 rounded-lg shadow-sm cursor-pointer transition-shadow hover:shadow-md ${dragging?.nodeId === node.id ? 'ring-2 ring-primary-500/40' : ''}`}
+                    className={`absolute top-1.5 rounded-lg shadow-sm cursor-pointer transition-shadow hover:shadow-md ${dragging?.nodeId === node.id ? 'ring-2 ring-c-focus' : ''}`}
                     style={{
                       left,
                       width,
                       height: ROW_HEIGHT - 12,
-                      background: `linear-gradient(135deg, ${color}, ${color}cc)`,
+                      background: `linear-gradient(135deg, ${color}, color-mix(in srgb, ${color} 80%, transparent))`,
                     }}
                     onClick={() => onNodeClick?.(node.id)}
                     onMouseDown={(e) => handleMouseDown(node.id, 'move', e, start, end)}

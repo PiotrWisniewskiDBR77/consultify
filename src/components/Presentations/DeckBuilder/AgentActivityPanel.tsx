@@ -16,7 +16,7 @@ const STATUS_DOT_CLASS: Record<string, string> = {
 
 function statusDotClass(status: string | null): string {
   if (status && STATUS_DOT_CLASS[status]) return STATUS_DOT_CLASS[status];
-  return 'bg-slate-400';
+  return 'bg-c-text-muted';
 }
 
 function formatTimestamp(iso: string): string {
@@ -33,11 +33,11 @@ function formatTimestamp(iso: string): string {
 const PanelShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <aside
     aria-label="AI Activity"
-    className="w-72 flex-shrink-0 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex flex-col"
+    className="w-72 flex-shrink-0 border-l border-c-border-subtle bg-c-surface flex flex-col"
   >
-    <div className="m-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-sm flex flex-col overflow-hidden">
-      <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-800">
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-white">AI Activity</h3>
+    <div className="m-3 rounded-xl border border-c-border-subtle bg-c-surface shadow-sm flex flex-col overflow-hidden">
+      <div className="px-3 py-2 border-b border-c-border-subtle">
+        <h3 className="text-sm font-semibold text-c-text">AI Activity</h3>
       </div>
       <div className="flex-1 overflow-y-auto px-3 py-2">{children}</div>
     </div>
@@ -70,7 +70,7 @@ export const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({
   if (!events || events.length === 0) {
     return (
       <PanelShell>
-        <p className="text-xs text-slate-500 dark:text-slate-400 italic">No AI activity yet.</p>
+        <p className="text-xs text-c-text-secondary italic">No AI activity yet.</p>
       </PanelShell>
     );
   }
@@ -79,7 +79,7 @@ export const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({
 
   return (
     <PanelShell>
-      <ul className="divide-y divide-slate-200 dark:divide-navy-800">
+      <ul className="divide-y divide-c-border-subtle">
         {recent.map((evt) => (
           <li key={evt.id} className="py-2 first:pt-0 last:pb-0 flex items-start gap-2">
             <span
@@ -88,16 +88,16 @@ export const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({
             />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-xs font-mono font-medium text-slate-700 dark:text-slate-200 truncate">
+                <span className="text-xs font-mono font-medium text-c-text truncate">
                   {evt.eventType}
                 </span>
                 {evt.scope ? (
-                  <span className="italic text-[10px] text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-navy-800">
+                  <span className="italic text-[10px] text-c-text-secondary px-1.5 py-0.5 rounded-md bg-c-surface-raised">
                     {evt.scope}
                   </span>
                 ) : null}
               </div>
-              <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+              <div className="mt-0.5 text-[11px] text-c-text-secondary">
                 {formatTimestamp(evt.createdAt)}
               </div>
             </div>

@@ -34,9 +34,11 @@ describe('toolAi registry helpers', () => {
     expect(getToolSuggestionPrompt('market-forces', 'rivalry', {})).toContain(
       'Analyze the rivalry force'
     );
-    expect(getToolSummaryPrompt('dynamic-swot', buildSwot())).toContain(
-      'Executive Summary (3-4 sentences)'
-    );
+    const summaryPrompt = getToolSummaryPrompt('dynamic-swot', buildSwot());
+    expect(summaryPrompt).toContain('CONCLUSION_LAYER_STANDARD variant W2');
+    expect(summaryPrompt).toContain('"verdict"');
+    expect(summaryPrompt).toContain('tradeoff');
+    expect(summaryPrompt).toContain('rejectedAlternative');
   });
 
   it('returns mission suggestion from SWOT apply handler without silent persistence', () => {

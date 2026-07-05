@@ -17,7 +17,7 @@ export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser })
   return (
     <div className="max-w-4xl relative">
       <InfoButton cardId="settings-billing" position="top-right" />
-      <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-6">
+      <h2 className="text-lg font-semibold text-c-text mb-6">
         Subscription & Billing
       </h2>
       <BillingCore
@@ -31,8 +31,8 @@ export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser })
       />
 
       {/* Legal Documents Section */}
-      <div className="mt-8 pt-6 border-t border-slate-200 dark:border-navy-700">
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">
+      <div className="mt-8 pt-6 border-t border-c-border-subtle dark:border-navy-700">
+        <h3 className="text-sm font-semibold text-c-text-secondary mb-4">
           Billing & Subscription Terms
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -70,19 +70,19 @@ interface LegalDocumentLinkProps {
 const LegalDocumentLink: React.FC<LegalDocumentLinkProps> = ({ to, icon, title, description }) => (
   <Link
     to={to}
-    className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors group"
+    className="flex items-start gap-3 p-3 bg-c-surface-raised rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors group"
   >
-    <div className="text-slate-600 dark:text-slate-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 mt-0.5">
+    <div className="text-c-text-secondary group-hover:text-c-accent dark:group-hover:text-c-accent mt-0.5">
       {icon}
     </div>
     <div className="flex-1 min-w-0">
       <div className="flex items-center gap-1">
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-primary-400">
+        <span className="text-sm font-medium text-c-text-secondary group-hover:text-c-accent dark:group-hover:text-c-accent">
           {title}
         </span>
-        <ExternalLink className="w-3 h-3 text-slate-600 dark:text-slate-500" />
+        <ExternalLink className="w-3 h-3 text-c-text-secondary" />
       </div>
-      <span className="text-xs text-slate-500 dark:text-slate-400">{description}</span>
+      <span className="text-xs text-c-text-muted">{description}</span>
     </div>
   </Link>
 );

@@ -12,23 +12,23 @@ interface ChartBlockProps {
   fields?: Array<{ id: string; name: string; type: string }>;
 }
 
-const PALETTE = [
-  'rgba(59, 130, 246, 0.7)',
-  'rgba(239, 68, 68, 0.7)',
-  'rgba(16, 185, 129, 0.7)',
-  'rgba(245, 158, 11, 0.7)',
-  'rgba(165,28,48, 0.7)',
-  'rgba(236, 72, 153, 0.7)',
-  'rgba(6, 182, 212, 0.7)',
-  'rgba(132, 204, 22, 0.7)',
-  'rgba(249, 115, 22, 0.7)',
-  'rgba(99, 102, 241, 0.7)',
-];
+// Chart series draw from the identity palette (c-tag-*), blue-first and never
+// crimson — data must never wear the brand accent (Artifact Anatomy §15.1).
+// Tokens resolve at render time so charts follow light/dark theme swaps.
+const TAG_ORDER = [1, 10, 2, 6, 3, 9, 4, 12, 5, 11, 7, 8];
+
+function resolveTag(n: number): string {
+  if (typeof window === 'undefined') return '#3b8ea5';
+  const v = getComputedStyle(document.documentElement)
+    .getPropertyValue(`--c-tag-${n}`)
+    .trim();
+  return v || '#3b8ea5';
+}
 
 function generateColors(count: number): string[] {
   const colors: string[] = [];
   for (let i = 0; i < count; i++) {
-    colors.push(PALETTE[i % PALETTE.length]!);
+    colors.push(resolveTag(TAG_ORDER[i % TAG_ORDER.length]!));
   }
   return colors;
 }

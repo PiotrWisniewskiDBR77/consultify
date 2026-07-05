@@ -189,7 +189,7 @@ export const PricingView: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-navy-950 flex flex-col">
+    <div className="min-h-screen bg-c-surface flex flex-col">
       <EntryTopBar
         onTrialClick={handleTrialClick}
         onDemoClick={handleDemoClick}
@@ -221,19 +221,19 @@ export const PricingView: React.FC = () => {
               </span>
             </h1>
 
-            <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed mb-8">
+            <p className="text-lg text-c-text-secondary max-w-2xl mx-auto leading-relaxed mb-8">
               Replace expensive consultants with AI-powered strategic guidance. 7-day free trial. No
               credit card required.
             </p>
 
             {/* Billing Toggle */}
-            <div className="inline-flex items-center gap-3 p-1.5 bg-slate-100 dark:bg-navy-900 rounded-xl">
+            <div className="inline-flex items-center gap-3 p-1.5 bg-c-surface-raised rounded-xl">
               <button
                 onClick={() => setBillingPeriod('annual')}
                 className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${
                   billingPeriod === 'annual'
-                    ? 'bg-white dark:bg-navy-800 text-navy-950 dark:text-white shadow-md'
-                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
+                    ? 'bg-c-surface text-navy-950 dark:text-white shadow-md'
+                    : 'text-c-text-muted hover:text-c-text-secondary dark:hover:text-slate-300'
                 }`}
               >
                 Annual
@@ -245,8 +245,8 @@ export const PricingView: React.FC = () => {
                 onClick={() => setBillingPeriod('monthly')}
                 className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${
                   billingPeriod === 'monthly'
-                    ? 'bg-white dark:bg-navy-800 text-navy-950 dark:text-white shadow-md'
-                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300'
+                    ? 'bg-c-surface text-navy-950 dark:text-white shadow-md'
+                    : 'text-c-text-muted hover:text-c-text-secondary dark:hover:text-slate-300'
                 }`}
               >
                 Monthly
@@ -273,7 +273,7 @@ export const PricingView: React.FC = () => {
                   className={`relative rounded-xl p-8 flex flex-col ${
                     tier.highlight
                       ? 'bg-gradient-to-b from-primary-600 to-primary-700 text-white ring-4 ring-primary-500/50 shadow-2xl shadow-primary-500/20 scale-105 z-10'
-                      : 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700'
+                      : 'bg-c-surface border border-c-border-subtle'
                   }`}
                 >
                   {tier.badge && (
@@ -287,7 +287,7 @@ export const PricingView: React.FC = () => {
                   <div className="flex items-center gap-3 mb-4">
                     <div
                       className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                        tier.highlight ? 'bg-white/20' : 'bg-primary-100 dark:bg-primary-900/30'
+                        tier.highlight ? 'bg-c-surface/20' : 'bg-primary-100 dark:bg-primary-900/30'
                       }`}
                     >
                       <Icon
@@ -305,7 +305,7 @@ export const PricingView: React.FC = () => {
                   </div>
 
                   <p
-                    className={`text-sm mb-6 ${tier.highlight ? 'text-primary-100' : 'text-slate-500 dark:text-slate-400'}`}
+                    className={`text-sm mb-6 ${tier.highlight ? 'text-primary-100' : 'text-c-text-muted'}`}
                   >
                     {tier.description}
                   </p>
@@ -317,7 +317,7 @@ export const PricingView: React.FC = () => {
                       {displayPrice}
                     </span>
                     <span
-                      className={`text-sm ml-2 ${tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'}`}
+                      className={`text-sm ml-2 ${tier.highlight ? 'text-primary-200' : 'text-c-text-muted'}`}
                     >
                       {tier.priceNote}
                     </span>
@@ -326,12 +326,12 @@ export const PricingView: React.FC = () => {
                   {/* Key Metrics */}
                   <div
                     className={`grid grid-cols-2 gap-3 mb-6 p-4 rounded-xl ${
-                      tier.highlight ? 'bg-white/10' : 'bg-slate-50 dark:bg-navy-950'
+                      tier.highlight ? 'bg-c-surface/10' : 'bg-c-surface-raised'
                     }`}
                   >
                     <div>
                       <div
-                        className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'}`}
+                        className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-primary-200' : 'text-c-text-muted'}`}
                       >
                         Seats
                       </div>
@@ -343,7 +343,7 @@ export const PricingView: React.FC = () => {
                     </div>
                     <div>
                       <div
-                        className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'}`}
+                        className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-primary-200' : 'text-c-text-muted'}`}
                       >
                         AI Credits
                       </div>
@@ -355,7 +355,7 @@ export const PricingView: React.FC = () => {
                     </div>
                     <div>
                       <div
-                        className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'}`}
+                        className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-primary-200' : 'text-c-text-muted'}`}
                       >
                         Extra Seats
                       </div>
@@ -367,7 +367,7 @@ export const PricingView: React.FC = () => {
                     </div>
                     <div>
                       <div
-                        className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'}`}
+                        className={`text-xs font-medium mb-1 ${tier.highlight ? 'text-primary-200' : 'text-c-text-muted'}`}
                       >
                         Overage
                       </div>
@@ -396,7 +396,7 @@ export const PricingView: React.FC = () => {
                             className={`flex-shrink-0 ${
                               tier.highlight
                                 ? 'text-primary-300/50'
-                                : 'text-slate-600 dark:text-slate-400'
+                                : 'text-c-text-secondary'
                             }`}
                           />
                         )}
@@ -405,10 +405,10 @@ export const PricingView: React.FC = () => {
                             feature.included
                               ? tier.highlight
                                 ? 'text-primary-100'
-                                : 'text-slate-600 dark:text-slate-300'
+                                : 'text-c-text-secondary'
                               : tier.highlight
                                 ? 'text-primary-300/50'
-                                : 'text-slate-600 dark:text-slate-500'
+                                : 'text-c-text-secondary'
                           }`}
                         >
                           {feature.name}
@@ -421,10 +421,10 @@ export const PricingView: React.FC = () => {
                     onClick={() => handleCtaClick(tier)}
                     className={`w-full py-4 px-6 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
                       tier.ctaVariant === 'primary'
-                        ? 'bg-white text-primary-700 hover:bg-primary-50 shadow-lg'
+                        ? 'bg-c-surface text-primary-700 hover:bg-primary-50 shadow-lg'
                         : tier.ctaVariant === 'secondary'
                           ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] hover:bg-navy-800'
-                          : 'border-2 border-slate-300 dark:border-white/20 text-navy-950 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5'
+                          : 'border-2 border-c-border dark:border-white/20 text-navy-950 dark:text-white hover:bg-c-bg dark:hover:bg-c-surface/5'
                     }`}
                   >
                     {tier.cta}
@@ -437,7 +437,7 @@ export const PricingView: React.FC = () => {
 
           {/* Trust indicators */}
           <div className="mt-16 text-center">
-            <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-c-text-muted">
               <div className="flex items-center gap-2">
                 <Shield size={18} className="text-green-500" />
                 <span>GDPR Compliant</span>
@@ -456,13 +456,13 @@ export const PricingView: React.FC = () => {
       </section>
 
       {/* AI Credits Section */}
-      <section className="py-16 px-6 bg-slate-50 dark:bg-navy-900/50">
+      <section className="py-16 px-6 bg-c-surface-raised/50">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-black text-navy-950 dark:text-white mb-4">
               AI Credits: Two Ways to Pay
             </h2>
-            <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+            <p className="text-c-text-secondary max-w-2xl mx-auto">
               Choose Managed AI for simplicity, or BYOK for control. Both options give you full
               access to AI features.
             </p>
@@ -474,7 +474,7 @@ export const PricingView: React.FC = () => {
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="bg-white dark:bg-navy-900 rounded-xl p-8 border border-slate-200 dark:border-navy-700"
+              className="bg-c-surface rounded-xl p-8 border border-c-border-subtle"
             >
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center">
@@ -487,21 +487,21 @@ export const PricingView: React.FC = () => {
                   </span>
                 </div>
               </div>
-              <p className="text-slate-600 dark:text-slate-400 text-sm mb-6">
+              <p className="text-c-text-secondary text-sm mb-6">
                 We handle everything. Latest models, optimized prompts, automatic failover between
                 providers.
               </p>
               <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-navy-700">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">Growth overage</span>
+                <div className="flex justify-between items-center py-2 border-b border-c-border-subtle">
+                  <span className="text-sm text-c-text-secondary">Growth overage</span>
                   <span className="font-bold text-navy-950 dark:text-white">€0.05/credit</span>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-navy-700">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">Scale overage</span>
+                <div className="flex justify-between items-center py-2 border-b border-c-border-subtle">
+                  <span className="text-sm text-c-text-secondary">Scale overage</span>
                   <span className="font-bold text-navy-950 dark:text-white">€0.04/credit</span>
                 </div>
                 <div className="flex justify-between items-center py-2">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                  <span className="text-sm text-c-text-secondary">
                     Enterprise overage
                   </span>
                   <span className="font-bold text-navy-950 dark:text-white">€0.03/credit</span>
@@ -514,7 +514,7 @@ export const PricingView: React.FC = () => {
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="bg-white dark:bg-navy-900 rounded-xl p-8 border border-slate-200 dark:border-navy-700"
+              className="bg-c-surface rounded-xl p-8 border border-c-border-subtle"
             >
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center">
@@ -527,25 +527,25 @@ export const PricingView: React.FC = () => {
                   </span>
                 </div>
               </div>
-              <p className="text-slate-600 dark:text-slate-400 text-sm mb-6">
+              <p className="text-c-text-secondary text-sm mb-6">
                 Use your own OpenAI/Anthropic/Azure keys. You pay providers directly, we charge
                 orchestration fee.
               </p>
               <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-navy-700">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                <div className="flex justify-between items-center py-2 border-b border-c-border-subtle">
+                  <span className="text-sm text-c-text-secondary">
                     Scale orchestration
                   </span>
                   <span className="font-bold text-navy-950 dark:text-white">€0.015/credit</span>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-navy-700">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                <div className="flex justify-between items-center py-2 border-b border-c-border-subtle">
+                  <span className="text-sm text-c-text-secondary">
                     Enterprise orchestration
                   </span>
                   <span className="font-bold text-navy-950 dark:text-white">€0.01/credit</span>
                 </div>
                 <div className="flex justify-between items-center py-2">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                  <span className="text-sm text-c-text-secondary">
                     Local LLM (Llama, Mistral)
                   </span>
                   <span className="font-bold text-navy-950 dark:text-white">€0.01/credit</span>
@@ -555,7 +555,7 @@ export const PricingView: React.FC = () => {
           </div>
 
           {/* Credit Usage Examples */}
-          <div className="mt-12 bg-white dark:bg-navy-900 rounded-xl p-8 border border-slate-200 dark:border-navy-700">
+          <div className="mt-12 bg-c-surface rounded-xl p-8 border border-c-border-subtle">
             <h3 className="text-lg font-bold text-navy-950 dark:text-white mb-6 flex items-center gap-2">
               <Server size={20} className="text-primary-500" />
               What uses AI Credits?
@@ -573,9 +573,9 @@ export const PricingView: React.FC = () => {
               ].map((item, idx) => (
                 <div
                   key={idx}
-                  className="flex justify-between items-center p-3 bg-slate-50 dark:bg-navy-950 rounded-lg"
+                  className="flex justify-between items-center p-3 bg-c-surface-raised rounded-lg"
                 >
-                  <span className="text-sm text-slate-600 dark:text-slate-400">{item.action}</span>
+                  <span className="text-sm text-c-text-secondary">{item.action}</span>
                   <span className="text-sm font-bold text-primary-600 dark:text-primary-400">
                     {item.credits}
                   </span>
@@ -593,7 +593,7 @@ export const PricingView: React.FC = () => {
             <h2 className="text-3xl font-black text-navy-950 dark:text-white mb-4">
               Frequently Asked Questions
             </h2>
-            <p className="text-slate-600 dark:text-slate-400">
+            <p className="text-c-text-secondary">
               Have more questions?{' '}
               <a href="/contact" className="text-primary-600 hover:underline">
                 Contact us
@@ -609,13 +609,13 @@ export const PricingView: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.05 }}
-                className="bg-white dark:bg-navy-900 rounded-xl p-6 border border-slate-200 dark:border-navy-700"
+                className="bg-c-surface rounded-xl p-6 border border-c-border-subtle"
               >
                 <h3 className="font-bold text-navy-950 dark:text-white mb-2 flex items-start gap-3">
                   <HelpCircle size={20} className="text-primary-500 mt-0.5 flex-shrink-0" />
                   {faq.q}
                 </h3>
-                <p className="text-slate-600 dark:text-slate-400 text-sm pl-8">{faq.a}</p>
+                <p className="text-c-text-secondary text-sm pl-8">{faq.a}</p>
               </motion.div>
             ))}
           </div>
@@ -623,12 +623,12 @@ export const PricingView: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-6 bg-slate-50 dark:bg-navy-900/50">
+      <section className="py-20 px-6 bg-c-surface-raised/50">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-black text-navy-950 dark:text-white mb-4">
             Ready to transform your organization?
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-xl mx-auto">
+          <p className="text-c-text-secondary mb-8 max-w-xl mx-auto">
             Start your 7-day free trial today. Full Scale features, 2,000 AI Credits, 5 seats. No
             credit card required.
           </p>
@@ -644,7 +644,7 @@ export const PricingView: React.FC = () => {
               href={CALENDAR_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-8 py-4 border-2 border-slate-300 dark:border-white/20 text-navy-950 dark:text-white font-bold rounded-xl hover:bg-white dark:hover:bg-white/5 transition-colors flex items-center justify-center gap-2"
+              className="px-8 py-4 border-2 border-c-border dark:border-white/20 text-navy-950 dark:text-white font-bold rounded-xl hover:bg-c-surface dark:hover:bg-c-surface/5 transition-colors flex items-center justify-center gap-2"
             >
               <Calendar size={18} />
               Schedule a Demo

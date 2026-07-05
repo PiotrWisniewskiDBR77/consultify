@@ -161,7 +161,7 @@ export const ROIAssumptionEditor: React.FC<ROIAssumptionEditorProps> = ({
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="h-9 px-4 text-sm font-medium rounded-full bg-primary-500 text-white hover:bg-primary-400 disabled:opacity-50 flex items-center gap-2"
+          className="h-9 px-4 text-sm font-medium rounded-full bg-c-text text-c-bg hover:bg-c-text-secondary disabled:opacity-50 flex items-center gap-2"
         >
           <Edit3 size={14} />
           {saving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}

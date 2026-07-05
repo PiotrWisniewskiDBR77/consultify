@@ -170,10 +170,17 @@ export async function loadTabelePreviewByTableId(
   const tabeleSchemaFields = fields.map((field: any) => {
     const fieldId = String(field?.id ?? field?.fieldId ?? '');
     const proposalId = proposalByFieldId.get(fieldId);
+    // Surface the field's own description/help text when present so the schema
+    // block caption reflects THIS field rather than a shared boilerplate string
+    // (HOTFIX #62 UI-M6).
+    const rawDescription = String(
+      field?.description ?? field?.helpText ?? field?.help_text ?? ''
+    ).trim();
     return {
       fieldId,
       name: String(field?.name ?? ''),
       fieldType: String(field?.type ?? field?.fieldType ?? 'text'),
+      ...(rawDescription ? { description: rawDescription } : {}),
       governanceState: proposalId ? ('proposed' as const) : ('committed' as const),
       ...(proposalId ? { proposalId } : {}),
     };

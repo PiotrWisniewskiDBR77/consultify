@@ -27,6 +27,7 @@ import { DIGITIZATION_AXES, getLevelColor } from '../../data/digitizationEvaluat
 import { Api } from '../../services/api';
 import { AnalysisDataSeries, ComparisonRadarChart } from '../Charts';
 import { LoadingState } from '../ui/primitives';
+import { useFinanceChartColors } from './financeChartTokens';
 import { DigitizationAnalysis } from './types';
 
 const AXIS_ICONS: Record<string, any> = {
@@ -38,16 +39,10 @@ const AXIS_ICONS: Record<string, any> = {
   cybersecurity: Shield,
 };
 
-// Default color palette for analyses — Harvard categorical (HBS complementary).
-// was ['#3b82f6','#6366f1','#f59e0b','#10b981'].
-const ANALYSIS_COLORS = [
-  '#A51C30', // Harvard Crimson
-  '#6578B4', // HBS Blue 2
-  '#52A52E', // HBS Green 2
-  '#E87D1E', // HBS Orange 2
-];
-
 export const AnalysisCompareView: React.FC = () => {
+  // Categorical series palette = the shared `--c-tag-*` ramp (theme-aware).
+  // The brand accent is deliberately NOT in the data-series ramp (no crimson-leak).
+  const ANALYSIS_COLORS = useFinanceChartColors().ramp;
   const [availableAnalyses, setAvailableAnalyses] = useState<DigitizationAnalysis[]>([]);
   const [selectedAnalyses, setSelectedAnalyses] = useState<DigitizationAnalysis[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -101,7 +96,7 @@ export const AnalysisCompareView: React.FC = () => {
         scores,
       };
     });
-  }, [selectedAnalyses]);
+  }, [selectedAnalyses, ANALYSIS_COLORS]);
 
   const axisLabels: Record<string, string> = useMemo(() => {
     const labels: Record<string, string> = {};

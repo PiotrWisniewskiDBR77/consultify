@@ -207,11 +207,11 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
             <Database size={28} className="text-blue-500" />
             {t('settings.ai.context.title', 'AI Context')}
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t('settings.ai.context.description', 'Control what information AI can access')}
           </p>
         </div>
@@ -226,12 +226,12 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
       </div>
 
       {/* Context Window Size */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Settings size={20} className="text-blue-500" />
           Context Window Size
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           How much context AI can consider at once
         </p>
 
@@ -248,20 +248,20 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
               className={`p-4 rounded-xl border-2 text-center transition-all ${
                 settings.contextWindowSize === size.id
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
-                  : 'border-slate-200 dark:border-navy-700 hover:border-blue-300'
+                  : 'border-c-border-subtle dark:border-navy-700 hover:border-blue-300'
               }`}
             >
               <span className="text-2xl">{size.icon}</span>
-              <p className="font-medium text-slate-900 dark:text-white mt-2">{size.label}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{size.desc}</p>
+              <p className="font-medium text-c-text mt-2">{size.label}</p>
+              <p className="text-xs text-c-text-muted">{size.desc}</p>
             </button>
           ))}
         </div>
       </div>
 
       {/* Project Context */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <FolderOpen size={20} className="text-amber-500" />
           Project Context
         </h3>
@@ -274,7 +274,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
               className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all ${
                 settings.projectContextMode === mode
                   ? 'bg-amber-600 text-white'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                  : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-700'
               }`}
             >
               {mode === 'all' ? 'All Projects' : mode === 'include' ? 'Only Include' : 'Exclude'}
@@ -287,14 +287,14 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
             <div className="relative">
               <Search
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-secondary"
               />
               <input
                 type="text"
                 value={projectSearch}
                 onChange={(e) => setProjectSearch(e.target.value)}
                 placeholder="Search projects..."
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                className="w-full pl-10 pr-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg"
               />
             </div>
             <div className="max-h-48 overflow-y-auto space-y-2">
@@ -315,10 +315,10 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                     className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${
                       isSelected
                         ? 'bg-amber-100 dark:bg-amber-500/20 border-2 border-amber-500'
-                        : 'bg-slate-50 dark:bg-navy-950 border-2 border-transparent hover:border-amber-300'
+                        : 'bg-c-surface-raised border-2 border-transparent hover:border-amber-300'
                     }`}
                   >
-                    <span className="text-sm text-slate-900 dark:text-white">{project.name}</span>
+                    <span className="text-sm text-c-text">{project.name}</span>
                     {isSelected && <CheckCircle size={16} className="text-amber-600" />}
                   </button>
                 );
@@ -329,20 +329,20 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
       </div>
 
       {/* Team Data Context */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Users size={20} className="text-green-500" />
             Team Data
           </h3>
           <button
             onClick={() => setSettings({ ...settings, includeTeamData: !settings.includeTeamData })}
             className={`relative w-12 h-6 rounded-full transition-colors ${
-              settings.includeTeamData ? 'bg-green-600' : 'bg-slate-300 dark:bg-slate-600'
+              settings.includeTeamData ? 'bg-green-600' : 'bg-c-surface-raised'
             }`}
           >
             <span
-              className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+              className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                 settings.includeTeamData ? 'left-7' : 'left-1'
               }`}
             />
@@ -359,7 +359,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                   className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all ${
                     settings.teamDataMode === mode
                       ? 'bg-green-600 text-white'
-                      : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
+                      : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-navy-700'
                   }`}
                 >
                   {mode === 'all' ? 'All Members' : mode === 'include' ? 'Only Include' : 'Exclude'}
@@ -372,14 +372,14 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                 <div className="relative">
                   <Search
                     size={16}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-secondary"
                   />
                   <input
                     type="text"
                     value={memberSearch}
                     onChange={(e) => setMemberSearch(e.target.value)}
                     placeholder="Search team members..."
-                    className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+                    className="w-full pl-10 pr-4 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg"
                   />
                 </div>
                 <div className="max-h-48 overflow-y-auto space-y-2">
@@ -400,12 +400,12 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                         className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${
                           isSelected
                             ? 'bg-green-100 dark:bg-green-500/20 border-2 border-green-500'
-                            : 'bg-slate-50 dark:bg-navy-950 border-2 border-transparent hover:border-green-300'
+                            : 'bg-c-surface-raised border-2 border-transparent hover:border-green-300'
                         }`}
                       >
                         <div className="text-left">
-                          <p className="text-sm text-slate-900 dark:text-white">{member.name}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                          <p className="text-sm text-c-text">{member.name}</p>
+                          <p className="text-xs text-c-text-muted">
                             {member.email}
                           </p>
                         </div>
@@ -421,12 +421,12 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
       </div>
 
       {/* Knowledge Bases */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-          <BookOpen size={20} className="text-primary-500" />
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
+          <BookOpen size={20} className="text-c-accent" />
           Knowledge Bases
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-c-text-muted">
           Additional knowledge sources for AI
         </p>
 
@@ -455,11 +455,11 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
           ].map((kb) => (
             <div
               key={kb.key}
-              className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg"
+              className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg"
             >
               <div>
-                <p className="font-medium text-slate-900 dark:text-white">{kb.label}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{kb.desc}</p>
+                <p className="font-medium text-c-text">{kb.label}</p>
+                <p className="text-sm text-c-text-muted">{kb.desc}</p>
               </div>
               <button
                 onClick={() =>
@@ -474,11 +474,11 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
                 className={`relative w-12 h-6 rounded-full transition-colors ${
                   (settings.knowledgeBases as any)[kb.key]
                     ? 'bg-navy-900'
-                    : 'bg-slate-300 dark:bg-slate-600'
+                    : 'bg-c-surface-raised'
                 }`}
               >
                 <span
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${
                     (settings.knowledgeBases as any)[kb.key] ? 'left-7' : 'left-1'
                   }`}
                 />
@@ -488,8 +488,8 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
         </div>
 
         {/* Custom Sources */}
-        <div className="pt-4 border-t border-slate-200 dark:border-navy-700">
-          <p className="font-medium text-slate-900 dark:text-white mb-3">
+        <div className="pt-4 border-t border-c-border-subtle dark:border-navy-700">
+          <p className="font-medium text-c-text mb-3">
             Custom Knowledge Sources
           </p>
           <div className="flex gap-2 mb-3">
@@ -498,7 +498,7 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
               value={newCustomSource}
               onChange={(e) => setNewCustomSource(e.target.value)}
               placeholder="Add custom URL or path..."
-              className="flex-1 px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg"
+              className="flex-1 px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-lg"
               onKeyPress={(e) => e.key === 'Enter' && addCustomSource()}
             />
             <button
@@ -512,12 +512,12 @@ export const AIContextSettings: React.FC<AIContextSettingsProps> = ({
             {settings.knowledgeBases.customSources.map((source) => (
               <span
                 key={source}
-                className="flex items-center gap-2 px-3 py-1.5 bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 rounded-lg text-sm"
+                className="flex items-center gap-2 px-3 py-1.5 bg-c-accent-soft dark:bg-c-accent-soft text-c-accent rounded-lg text-sm"
               >
                 {source}
                 <button
                   onClick={() => removeCustomSource(source)}
-                  className="hover:text-primary-900"
+                  className="hover:text-c-accent"
                 >
                   <X size={14} />
                 </button>

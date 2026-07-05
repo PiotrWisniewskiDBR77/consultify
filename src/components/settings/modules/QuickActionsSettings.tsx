@@ -76,11 +76,11 @@ export const QuickActionsSettings: React.FC<QuickActionsSettingsProps> = ({ curr
 
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
             <Command size={28} className="text-blue-500" />
             Quick Actions
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             Configure command palette and quick actions
           </p>
         </div>
@@ -94,38 +94,38 @@ export const QuickActionsSettings: React.FC<QuickActionsSettingsProps> = ({ curr
         </button>
       </div>
 
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <Search size={20} className="text-blue-500" />
             <div>
-              <p className="font-medium text-slate-900 dark:text-white">Command Palette</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Quick access with Cmd+K</p>
+              <p className="font-medium text-c-text">Command Palette</p>
+              <p className="text-sm text-c-text-muted">Quick access with Cmd+K</p>
             </div>
           </div>
           <button
             onClick={() => setCommandPaletteEnabled(!commandPaletteEnabled)}
-            className={`relative w-12 h-6 rounded-full ${commandPaletteEnabled ? 'bg-blue-600' : 'bg-slate-300'}`}
+            className={`relative w-12 h-6 rounded-full ${commandPaletteEnabled ? 'bg-blue-600' : 'bg-c-surface-raised'}`}
           >
             <span
-              className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow ${commandPaletteEnabled ? 'left-7' : 'left-1'}`}
+              className={`absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow ${commandPaletteEnabled ? 'left-7' : 'left-1'}`}
             />
           </button>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Quick Actions</h3>
+      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-c-text mb-4">Quick Actions</h3>
         <div className="space-y-2">
           {actions.map((action, i) => (
             <div
               key={action.id}
-              className={`flex items-center justify-between p-3 rounded-lg ${action.enabled ? 'bg-blue-50 dark:bg-blue-500/10' : 'bg-slate-50 dark:bg-navy-950 opacity-60'}`}
+              className={`flex items-center justify-between p-3 rounded-lg ${action.enabled ? 'bg-blue-50 dark:bg-blue-500/10' : 'bg-c-surface-raised opacity-60'}`}
             >
               <div className="flex items-center gap-3">
-                <Grip size={16} className="text-slate-600 dark:text-slate-500 cursor-grab" />
-                <span className="font-medium text-slate-900 dark:text-white">{action.label}</span>
-                <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-navy-800 rounded text-xs font-mono">
+                <Grip size={16} className="text-c-text-secondary cursor-grab" />
+                <span className="font-medium text-c-text">{action.label}</span>
+                <kbd className="px-2 py-0.5 bg-c-surface-raised rounded text-xs font-mono">
                   {action.shortcut}
                 </kbd>
               </div>
@@ -134,10 +134,10 @@ export const QuickActionsSettings: React.FC<QuickActionsSettingsProps> = ({ curr
                   onClick={() =>
                     setActions(actions.map((a, j) => (j === i ? { ...a, enabled: !a.enabled } : a)))
                   }
-                  className={`relative w-10 h-5 rounded-full ${action.enabled ? 'bg-blue-600' : 'bg-slate-300'}`}
+                  className={`relative w-10 h-5 rounded-full ${action.enabled ? 'bg-blue-600' : 'bg-c-surface-raised'}`}
                 >
                   <span
-                    className={`absolute top-0.5 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow ${action.enabled ? 'left-5' : 'left-0.5'}`}
+                    className={`absolute top-0.5 w-4 h-4 rounded-full bg-c-surface shadow ${action.enabled ? 'left-5' : 'left-0.5'}`}
                   />
                 </button>
               </div>

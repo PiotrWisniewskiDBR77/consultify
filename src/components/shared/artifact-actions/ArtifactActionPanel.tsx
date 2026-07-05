@@ -792,7 +792,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
         </div>
       )}
       {composerTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className="w-full max-w-xl rounded-3xl border border-white/[0.08] bg-navy-900 p-5 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -920,7 +920,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
         </div>
       )}
       {proposalTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className="w-full max-w-xl rounded-3xl border border-white/[0.08] bg-navy-900 p-5 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>

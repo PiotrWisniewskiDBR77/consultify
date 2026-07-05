@@ -256,7 +256,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
         <div className="space-y-6">
           {/* Quick Templates */}
           <div>
-            <label className="block text-sm font-medium text-slate-600 mb-3">
+            <label className="block text-sm font-medium text-c-text-secondary mb-3">
               {t('settings.ai.quickTemplates', 'Quick Templates')}
             </label>
             <div className="flex flex-wrap gap-2">
@@ -264,9 +264,9 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
                 <button
                   key={tpl.id}
                   onClick={() => applyTemplate(tpl)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-navy-700/50 hover:bg-slate-200 dark:hover:bg-navy-700
-                    border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-700 dark:text-slate-300
-                    hover:text-slate-900 dark:hover:text-white transition-all duration-200"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-navy-700
+                    border border-c-border-subtle rounded-lg text-sm text-c-text-secondary
+                    hover:text-c-text dark:hover:text-white transition-all duration-200"
                 >
                   <Wand2 size={14} />
                   {t(`settings.ai.behaviorTemplates.${tpl.id}.name`, tpl.name)}
@@ -294,7 +294,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
               maxLength={2000}
             />
             <div className="flex justify-between items-center mt-2">
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-c-text-muted">
                 {preferences.systemPrompt.length}/2000 {t('common.characters', 'characters')}
               </span>
               {preferences.systemPrompt.length > 1800 && (
@@ -326,8 +326,8 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
 
           {/* Tone & Communication */}
           <div>
-            <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-              <Sparkles size={14} className="text-primary-600 dark:text-primary-400" />
+            <h4 className="text-sm font-semibold text-c-text mb-4 flex items-center gap-2">
+              <Sparkles size={14} className="text-c-accent" />
               {t('settings.ai.toneSection', 'Tone & Communication')}
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -392,14 +392,14 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
           </div>
 
           {/* Tips */}
-          <div className="p-4 bg-primary-600/5 border border-primary-500/20 rounded-lg">
+          <div className="p-4 bg-c-accent-soft border border-c-accent rounded-lg">
             <div className="flex items-start gap-3">
-              <Sparkles size={18} className="text-primary-400 flex-shrink-0 mt-0.5" />
+              <Sparkles size={18} className="text-c-accent flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-sm font-medium text-primary-300 mb-1">
+                <h4 className="text-sm font-medium text-c-accent mb-1">
                   {t('settings.ai.tips', 'Pro Tips')}
                 </h4>
-                <ul className="text-xs text-slate-500 space-y-1">
+                <ul className="text-xs text-c-text-muted space-y-1">
                   <li>• {t('settings.ai.tip1', 'Be specific about your role and expertise')}</li>
                   <li>
                     •{' '}

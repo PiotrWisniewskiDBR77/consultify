@@ -22,6 +22,15 @@ export interface FrameworkDimension {
   levels: FrameworkLevel[];
 }
 
+/**
+ * Availability of a framework in the assessment picker.
+ *  - 'available'   : fully wired; a session can be started.
+ *  - 'coming_soon' : shown honestly as "wkrótce"/"coming soon"; the picker MUST
+ *                    block starting a session (decision D-B: CMMI/LEAN are beta
+ *                    placeholders in v1, not buildable). See isFrameworkAvailable.
+ */
+export type FrameworkStatus = 'available' | 'coming_soon';
+
 export interface FrameworkConfig {
   id: FrameworkId;
   name: string;
@@ -34,6 +43,12 @@ export interface FrameworkConfig {
   scaleMax: number;
   supportsImport: boolean;
   supportsManualEntry: boolean;
+  /**
+   * Picker availability. Defaults to 'available' when omitted. When
+   * 'coming_soon' the framework is rendered as a disabled "wkrótce"/"coming soon"
+   * card and MUST NOT start an assessment session.
+   */
+  status?: FrameworkStatus;
   legalNotice?: string;
   legalNoticeType?: 'educational' | 'proprietary' | 'open';
   dimensions: FrameworkDimension[];
@@ -141,6 +156,10 @@ export const FRAMEWORK_CONFIGS: Record<FrameworkId, FrameworkConfig> = {
     colorDark: 'amber-400',
     scaleMin: 1,
     scaleMax: 5,
+    // Decision D-B: CMMI is a beta placeholder in v1 — shown honestly as "coming
+    // soon" and NOT startable. Corroborated by getFrameworkIntegrationStatus,
+    // which already flags CMMI knowledgeBase:false (never fully wired).
+    status: 'coming_soon',
     supportsImport: true,
     supportsManualEntry: true,
     legalNotice:
@@ -179,6 +198,9 @@ export const FRAMEWORK_CONFIGS: Record<FrameworkId, FrameworkConfig> = {
     colorDark: 'blue-400',
     scaleMin: 1,
     scaleMax: 5,
+    // Decision D-B: DBR77 Lean 4.0 is a beta placeholder in v1 — shown honestly
+    // as "coming soon" and NOT startable until the structure/report are wired.
+    status: 'coming_soon',
     supportsImport: false,
     supportsManualEntry: true,
     legalNotice:
@@ -224,6 +246,24 @@ export function getFrameworkConfig(id: FrameworkId): FrameworkConfig {
  */
 export function getAllFrameworks(): FrameworkConfig[] {
   return Object.values(FRAMEWORK_CONFIGS);
+}
+
+/**
+ * Whether a framework may currently start an assessment session. Frameworks
+ * flagged `status: 'coming_soon'` (decision D-B: CMMI/LEAN beta placeholders)
+ * return false — the picker MUST NOT start a session for them.
+ *
+ * This is the single source of truth for the picker gate: any surface that can
+ * start a session should call this rather than re-listing framework ids, so the
+ * picker can never lie about what is buildable.
+ */
+export function isFrameworkAvailable(id: FrameworkId): boolean {
+  return (FRAMEWORK_CONFIGS[id]?.status ?? 'available') === 'available';
+}
+
+/** Inverse of isFrameworkAvailable — convenience for badge rendering. */
+export function isFrameworkComingSoon(id: FrameworkId): boolean {
+  return !isFrameworkAvailable(id);
 }
 
 /**

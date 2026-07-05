@@ -178,7 +178,7 @@ export const DataExportPanel: React.FC = () => {
             onChange={(e) => setFilterOrgId(e.target.value)}
             disabled
             title={dataExportWorkflowUnavailableReason}
-            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
+            className="px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           >
             <option value="">All Organizations</option>
             {organizations.map((org) => (
@@ -193,7 +193,7 @@ export const DataExportPanel: React.FC = () => {
             onChange={(e) => setFilterStatus(e.target.value)}
             disabled
             title={dataExportWorkflowUnavailableReason}
-            className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-primary-500/50 outline-none"
+            className="px-4 py-2.5 bg-c-surface-raised border border-white/10 rounded-lg text-c-text focus:border-primary-500/50 outline-none"
           >
             <option value="">All Status</option>
             <option value="pending">Pending</option>
@@ -206,7 +206,7 @@ export const DataExportPanel: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={fetchData}
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+            className="p-2.5 bg-c-surface-raised hover:bg-c-surface-raised rounded-lg transition-colors"
           >
             <RefreshCw
               size={18}
@@ -241,7 +241,7 @@ export const DataExportPanel: React.FC = () => {
           {requests.map((request) => (
             <div
               key={request.id}
-              className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-4"
+              className="bg-c-surface-raised/50 border border-white/[0.06] rounded-xl p-4"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -320,9 +320,9 @@ export const DataExportPanel: React.FC = () => {
 
       {/* Create Export Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-white/10 rounded-xl p-6 w-full max-w-lg">
-            <h3 className="text-lg font-semibold text-white mb-6">Request Data Export</h3>
+        <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-c-surface border border-white/10 rounded-xl p-6 w-full max-w-lg">
+            <h3 className="text-lg font-semibold text-c-text mb-6">Request Data Export</h3>
 
             <div className="space-y-4">
               <div>
@@ -336,7 +336,7 @@ export const DataExportPanel: React.FC = () => {
                       className={`flex-1 px-4 py-2.5 rounded-lg border transition-colors ${
                         formData.exportType === type
                           ? 'bg-primary-500/20 border-primary-500/50 text-primary-400'
-                          : 'bg-slate-800 border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/20'
+                          : 'bg-c-surface-raised border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/20'
                       }`}
                     >
                       {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -349,7 +349,7 @@ export const DataExportPanel: React.FC = () => {
                 <label className="block text-sm font-medium text-slate-600 mb-2">
                   Include Data
                 </label>
-                <div className="max-h-64 overflow-y-auto bg-slate-800/50 rounded-lg p-3 space-y-2">
+                <div className="max-h-64 overflow-y-auto bg-c-surface-raised/50 rounded-lg p-3 space-y-2">
                   {DATA_TYPES.map((dataType) => (
                     <label
                       key={dataType.id}
@@ -371,7 +371,7 @@ export const DataExportPanel: React.FC = () => {
                             }));
                           }
                         }}
-                        className="w-4 h-4 mt-0.5 rounded border-slate-600 bg-slate-800 text-primary-500"
+                        className="w-4 h-4 mt-0.5 rounded border-slate-600 bg-c-surface-raised text-primary-500"
                       />
                       <div>
                         <span className="text-sm text-slate-600 group-hover:text-white">
@@ -390,7 +390,7 @@ export const DataExportPanel: React.FC = () => {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-600 transition-colors"
+                className="px-4 py-2.5 bg-c-surface-raised hover:bg-c-surface-raised rounded-lg text-slate-600 transition-colors"
               >
                 Cancel
               </button>

@@ -182,7 +182,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
   };
 
   return (
-    <div className="fixed inset-y-0 right-0 w-full max-w-lg bg-white dark:bg-navy-900 shadow-2xl z-50 flex flex-col">
+    <div className="fixed inset-y-0 right-0 w-full max-w-lg bg-white dark:bg-navy-900 shadow-2xl z-overlay flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-3">

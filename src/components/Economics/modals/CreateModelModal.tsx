@@ -38,11 +38,23 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const [creating, setCreating] = useState(false);
+
+  // DEC-3: a model is DEFAULT-grounded on the most recent Approved statement.
+  // `availableStatements` is already filtered to workable/Approved packs by the
+  // hub, so the newest one (by updatedAt) is the default seed. Starting from
+  // zero is a deliberate opt-out, not the default.
+  const newestApprovedStatement = useMemo(() => {
+    if (availableStatements.length === 0) return null;
+    return [...availableStatements].sort((a, b) =>
+      String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''))
+    )[0];
+  }, [availableStatements]);
+
   const [mode, setMode] = useState<'manual' | 'statement'>(
-    initialSourceStatementPackId ? 'statement' : 'manual'
+    initialSourceStatementPackId || newestApprovedStatement ? 'statement' : 'manual'
   );
   const [sourceStatementPackId, setSourceStatementPackId] = useState(
-    initialSourceStatementPackId || ''
+    initialSourceStatementPackId || newestApprovedStatement?.id || ''
   );
   const [form, setForm] = useState({
     name: '',
@@ -76,11 +88,15 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
     [availableStatements, t]
   );
 
+  // Seed the form from the initial pack (deep-link) or, absent that, from the
+  // newest Approved statement (DEC-3 default grounding). Runs once on mount.
   useEffect(() => {
-    if (initialSourceStatementPackId) {
-      updateFromStatement(initialSourceStatementPackId);
+    const seedId = initialSourceStatementPackId || newestApprovedStatement?.id;
+    if (seedId) {
+      updateFromStatement(seedId);
     }
-  }, [initialSourceStatementPackId, updateFromStatement]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const createModelWithFallback = useCallback(async (payload: V8FinanceModelCreatePayload) => {
     try {
@@ -168,12 +184,23 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
   ]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-overlay bg-black/40 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-navy-900 rounded-2xl shadow-xl w-full max-w-lg p-6 space-y-4">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">
           {t('finance.model.createModel', 'Create Financial Model')}
         </h3>
         <div className="grid grid-cols-2 gap-2 rounded-xl bg-slate-100 dark:bg-navy-800 p-1">
+          <button
+            onClick={() => setMode('statement')}
+            disabled={availableStatements.length === 0}
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:opacity-40 ${
+              mode === 'statement'
+                ? 'bg-white dark:bg-navy-700 text-slate-900 dark:text-white shadow-sm'
+                : 'text-slate-500 dark:text-slate-300'
+            }`}
+          >
+            {t('finance.model.fromStatementMode', 'Ground on statement')}
+          </button>
           <button
             onClick={() => setMode('manual')}
             className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
@@ -182,26 +209,24 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
                 : 'text-slate-500 dark:text-slate-300'
             }`}
           >
-            {t('finance.model.manualMode', 'Create manually')}
-          </button>
-          <button
-            onClick={() => setMode('statement')}
-            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-              mode === 'statement'
-                ? 'bg-white dark:bg-navy-700 text-slate-900 dark:text-white shadow-sm'
-                : 'text-slate-500 dark:text-slate-300'
-            }`}
-          >
-            {t('finance.model.fromStatementMode', 'Create from statement')}
+            {t('finance.model.manualMode', 'Start from zero')}
           </button>
         </div>
         <div className="space-y-3">
           {mode === 'statement' && (
             <div className="space-y-3 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
               <div>
-                <label className="text-xs text-slate-500">
-                  {t('finance.model.sourceStatement', 'Source statement')}
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-slate-500">
+                    {t('finance.model.sourceStatement', 'Source statement')}
+                  </label>
+                  {newestApprovedStatement &&
+                    sourceStatementPackId === newestApprovedStatement.id && (
+                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
+                        {t('finance.model.defaultLatestApproved', 'Latest approved (default)')}
+                      </span>
+                    )}
+                </div>
                 <select
                   value={sourceStatementPackId}
                   onChange={(e) => updateFromStatement(e.target.value)}
@@ -237,6 +262,14 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
                     {t('finance.model.seedStartDate', 'Forecast start')}: {form.startDate}
                   </div>
                 </div>
+              )}
+            </div>
+          )}
+          {mode === 'manual' && (
+            <div className="rounded-xl border border-amber-200 dark:border-amber-700/40 bg-amber-50/60 dark:bg-amber-900/10 p-3 text-xs text-amber-800 dark:text-amber-200">
+              {t(
+                'finance.model.manualModeNotice',
+                'No source statement — historical lines will not be pulled in. Opening balances start at zero. Use "Ground on statement" to seed the model from an approved statement.'
               )}
             </div>
           )}

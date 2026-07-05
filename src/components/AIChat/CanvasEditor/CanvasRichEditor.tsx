@@ -61,7 +61,12 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
   provenanceScope,
 }) => {
   const { t, i18n } = useTranslation();
-  const extensions = useMemo(() => getCanvasEditorExtensions(placeholder), [placeholder]);
+  const effectivePlaceholder =
+    placeholder ?? t('canvas.editor.startTypingPlaceholder', 'Start typing or press / for commands...');
+  const extensions = useMemo(
+    () => getCanvasEditorExtensions(effectivePlaceholder),
+    [effectivePlaceholder]
+  );
 
   const onContentChangeRef = useRef(onContentChange);
   onContentChangeRef.current = onContentChange;
@@ -490,7 +495,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
                   onClick={onStopStream}
                   className="px-2 py-0.5 rounded text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
                 >
-                  Stop
+                  {t('canvas.editor.stop', 'Stop')}
                 </button>
               )}
             </div>

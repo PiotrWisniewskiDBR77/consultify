@@ -189,7 +189,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
             <button
               onClick={handleShare}
               disabled={disabled || sharing}
-              className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white rounded-lg font-medium transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-c-text hover:bg-c-text-secondary disabled:bg-c-border-strong text-c-bg rounded-lg font-medium transition-colors"
             >
               {sharing ? <Loader2 size={18} className="animate-spin" /> : <Share2 size={18} />}
               <span>Share Link</span>

@@ -35,20 +35,20 @@ export const SnapshotLabel: React.FC<SnapshotLabelProps> = ({
     <div
       className={`
             inline-flex items-center gap-2 px-3 py-1.5 rounded-lg
-            bg-amber-50 dark:bg-amber-900/20 
-            border border-amber-200 dark:border-amber-500/30
+            bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)]
+            border border-[color-mix(in_srgb,var(--c-warning)_30%,transparent)]
             ${className}
         `}
     >
-      <Camera size={14} className="text-amber-600 dark:text-amber-400" />
-      <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
+      <Camera size={14} className="text-c-warning" />
+      <span className="text-sm font-medium text-c-warning">
         Snapshot
         {version && ` v${version}`}
       </span>
       {formattedDate && (
         <>
-          <span className="text-amber-400 dark:text-amber-600">•</span>
-          <span className="text-xs text-amber-600 dark:text-amber-400">{formattedDate}</span>
+          <span className="text-c-warning">•</span>
+          <span className="text-xs text-c-warning">{formattedDate}</span>
         </>
       )}
     </div>
@@ -62,25 +62,25 @@ export const SnapshotDisclaimer: React.FC<{ className?: string }> = ({ className
   return (
     <div
       className={`
-            bg-slate-50 dark:bg-navy-900 
-            border border-slate-200 dark:border-slate-700 
+            bg-c-surface-raised dark:bg-c-surface 
+            border border-c-border-subtle 
             rounded-lg p-4
             ${className}
         `}
     >
       <div className="flex items-start gap-3">
-        <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
-          <AlertCircle size={16} className="text-amber-600 dark:text-amber-400" />
+        <div className="w-8 h-8 rounded-lg bg-[color-mix(in_srgb,var(--c-warning)_15%,transparent)] flex items-center justify-center shrink-0">
+          <AlertCircle size={16} className="text-c-warning" />
         </div>
         <div>
-          <h4 className="font-semibold text-navy-900 dark:text-white text-sm mb-1">
+          <h4 className="font-semibold text-c-text text-sm mb-1">
             To jest snapshot — punkt w czasie
           </h4>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+          <p className="text-sm text-c-text-secondary dark:text-c-text-muted mb-2">
             Ten widok przedstawia stan Twojego myślenia w momencie jego zapisania. To nie jest
             ostateczna rekomendacja ani werdykt.
           </p>
-          <ul className="text-xs text-slate-500 dark:text-slate-500 space-y-1">
+          <ul className="text-xs text-c-text-muted space-y-1">
             <li className="flex items-center gap-2">
               <Clock size={12} />
               <span>Możesz wrócić i zaktualizować w dowolnym momencie</span>
@@ -111,8 +111,8 @@ export const SnapshotBadge: React.FC<{
     <span
       className={`
             inline-flex items-center gap-1 rounded-full
-            bg-amber-100 dark:bg-amber-900/30 
-            text-amber-700 dark:text-amber-400
+            bg-[color-mix(in_srgb,var(--c-warning)_15%,transparent)]
+            text-c-warning
             ${size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm'}
         `}
     >

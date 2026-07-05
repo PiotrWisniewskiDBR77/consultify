@@ -51,7 +51,7 @@ export const ImpersonationBanner: React.FC = () => {
   if (!payload?.impersonatorId) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[9999] bg-amber-500 text-white px-4 py-2 flex items-center justify-between shadow-lg">
+    <div className="fixed top-0 left-0 right-0 z-toast bg-c-warning text-white px-4 py-2 flex items-center justify-between shadow-lg">
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5">
           <Shield size={16} />
@@ -64,7 +64,7 @@ export const ImpersonationBanner: React.FC = () => {
           )}
         </span>
         {payload.name && (
-          <span className="text-xs bg-amber-600 px-2 py-0.5 rounded">
+          <span className="text-xs bg-black/20 px-2 py-0.5 rounded">
             {payload.name} ({payload.email})
           </span>
         )}
@@ -72,7 +72,7 @@ export const ImpersonationBanner: React.FC = () => {
       <button
         onClick={handleExit}
         disabled={reverting}
-        className="flex items-center gap-1.5 px-3 py-1 bg-white text-amber-700 rounded-md text-xs font-medium hover:bg-amber-50 transition-colors disabled:opacity-50"
+        className="flex items-center gap-1.5 px-3 py-1 bg-c-surface-raised text-c-warning rounded-md text-xs font-medium hover:bg-c-surface transition-colors disabled:opacity-50"
       >
         <LogOut size={14} />
         {reverting

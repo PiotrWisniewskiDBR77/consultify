@@ -220,31 +220,31 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
   const inputDisabled = !canEdit || loading || !!loadError;
 
   const cardClass =
-    'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-6';
+    'bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg p-6';
   const sectionTitleClass =
-    'text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2';
-  const labelClass = 'block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5';
+    'text-sm font-bold text-navy-900 mb-4 uppercase tracking-wider flex items-center gap-2';
+  const labelClass = 'block text-sm font-medium text-c-text-secondary mb-1.5';
   const textInputClass =
-    'w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-md text-sm text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 disabled:opacity-60 disabled:cursor-not-allowed';
-  const helperTextClass = 'text-xs text-slate-500 dark:text-slate-400 mt-1';
+    'w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-md text-sm text-navy-900 placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 disabled:opacity-60 disabled:cursor-not-allowed';
+  const helperTextClass = 'text-xs text-c-text-muted mt-1';
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
+          <h3 className="text-lg font-bold text-navy-900 flex items-center gap-2">
             <ShieldCheck size={18} className="text-blue-500" />
             Brand Kit Governance
           </h3>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             Centrally manage colors, headers, footers, and confidentiality defaults applied to
             generated presentations.
           </p>
         </div>
         <div className="flex items-center gap-2">
           {!canEdit && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-navy-800 dark:text-slate-200 border border-slate-200 dark:border-navy-700">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-c-surface-raised text-c-text-secondary border border-c-border-subtle dark:border-navy-700">
               <Lock size={12} />
               Read-only
             </span>
@@ -310,18 +310,18 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
       {/* Loading skeleton */}
       {loading && !loadError && (
         <div className={cardClass}>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Loading brand kit...</p>
+          <p className="text-sm text-c-text-muted">Loading brand kit...</p>
           <div className="mt-4 space-y-3 animate-pulse">
-            <div className="h-9 rounded-md bg-slate-100 dark:bg-navy-800" />
-            <div className="h-9 rounded-md bg-slate-100 dark:bg-navy-800" />
-            <div className="h-9 rounded-md bg-slate-100 dark:bg-navy-800 w-2/3" />
+            <div className="h-9 rounded-md bg-c-surface-raised" />
+            <div className="h-9 rounded-md bg-c-surface-raised" />
+            <div className="h-9 rounded-md bg-c-surface-raised w-2/3" />
           </div>
         </div>
       )}
 
       {/* Empty 200 OK */}
       {!loading && !loadError && !hasData && (
-        <div className={`${cardClass} text-sm text-slate-600 dark:text-slate-300`}>
+        <div className={`${cardClass} text-sm text-c-text-secondary`}>
           No brand kit configured yet.
         </div>
       )}
@@ -384,7 +384,7 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
                           id={id}
                           type="color"
                           aria-label={`${label} picker`}
-                          className="h-9 w-12 cursor-pointer rounded-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 disabled:opacity-60 disabled:cursor-not-allowed"
+                          className="h-9 w-12 cursor-pointer rounded-md border border-c-border-subtle dark:border-navy-700 bg-c-surface disabled:opacity-60 disabled:cursor-not-allowed"
                           value={isValidHex ? value : '#000000'}
                           disabled={inputDisabled}
                           onChange={(event) => updateField(key, event.target.value)}
@@ -444,18 +444,18 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <label
                 htmlFor="brandkit-show-page-numbers"
-                className="flex items-start gap-3 p-3 rounded-md border border-slate-200 dark:border-navy-700 cursor-pointer"
+                className="flex items-start gap-3 p-3 rounded-md border border-c-border-subtle dark:border-navy-700 cursor-pointer"
               >
                 <input
                   id="brandkit-show-page-numbers"
                   type="checkbox"
-                  className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="mt-1 h-4 w-4 rounded border-c-border text-blue-600 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed"
                   checked={brandKit.showPageNumbers}
                   disabled={inputDisabled}
                   onChange={(event) => updateField('showPageNumbers', event.target.checked)}
                 />
                 <span>
-                  <span className="block text-sm font-medium text-navy-900 dark:text-white">
+                  <span className="block text-sm font-medium text-navy-900">
                     Show page numbers
                   </span>
                   <span className={helperTextClass}>Render page numbers in the slide footer.</span>
@@ -464,18 +464,18 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
 
               <label
                 htmlFor="brandkit-show-confidentiality"
-                className="flex items-start gap-3 p-3 rounded-md border border-slate-200 dark:border-navy-700 cursor-pointer"
+                className="flex items-start gap-3 p-3 rounded-md border border-c-border-subtle dark:border-navy-700 cursor-pointer"
               >
                 <input
                   id="brandkit-show-confidentiality"
                   type="checkbox"
-                  className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="mt-1 h-4 w-4 rounded border-c-border text-blue-600 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed"
                   checked={brandKit.showConfidentiality}
                   disabled={inputDisabled}
                   onChange={(event) => updateField('showConfidentiality', event.target.checked)}
                 />
                 <span>
-                  <span className="block text-sm font-medium text-navy-900 dark:text-white">
+                  <span className="block text-sm font-medium text-navy-900">
                     Show confidentiality marker
                   </span>
                   <span className={helperTextClass}>

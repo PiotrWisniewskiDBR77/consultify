@@ -519,3 +519,205 @@ export function __resetAvailabilityCacheForTests(): void {
 export async function __shutdownBrowserForTests(): Promise<void> {
   await disposeSharedBrowser();
 }
+
+// ---------------------------------------------------------------------------
+// X1 — HTML → PNG (parytet eksportu deck+doc)
+//
+// Współdzieli availability gate + sharedBrowser z renderHtmlToPdf — zero
+// duplikacji lazy-load Playwright. Te eksporty są DODATKOWE; istniejące API
+// PDF nieruszone (presentationOperationsHealthPdfService nadal działa bez zmian).
+// ---------------------------------------------------------------------------
+
+export interface RenderHtmlPngInput {
+  html: string;
+  pngOptions?: {
+    /** Viewport width (px). Default 1920 (deck-friendly). */
+    viewportWidth?: number;
+    /** Viewport height (px). Default 1080 (deck-friendly). */
+    viewportHeight?: number;
+    /** Full-page screenshot vs viewport only. Default false (viewport). */
+    fullPage?: boolean;
+    /** Background color when DOM has transparency. Default '#ffffff'. */
+    omitBackground?: boolean;
+    /** PNG quality is lossless — but image scaling can be controlled via DPR. */
+    deviceScaleFactor?: number;
+  };
+  navigationTimeoutMs?: number;
+}
+
+export interface RenderHtmlPngOk {
+  status: 'ok';
+  buffer: Buffer;
+  bytes: number;
+  durationMs: number;
+}
+
+export interface RenderHtmlPngErr {
+  status: RenderHtmlPdfErrStatus;
+  reason: string;
+  durationMs: number;
+}
+
+export type RenderHtmlPngResult = RenderHtmlPngOk | RenderHtmlPngErr;
+
+/** Structural type — Playwright Page screenshot API. */
+interface PngBrowserPage extends PdfBrowserPage {
+  screenshot(opts?: Record<string, unknown>): Promise<Buffer | Uint8Array>;
+  setViewportSize?(opts: { width: number; height: number }): Promise<void>;
+}
+
+function buildScreenshotOptions(
+  overrides: RenderHtmlPngInput['pngOptions']
+): Record<string, unknown> {
+  return {
+    type: 'png',
+    fullPage: overrides?.fullPage ?? false,
+    omitBackground: overrides?.omitBackground ?? false,
+  };
+}
+
+/**
+ * Render HTML → PNG (analog do renderHtmlToPdf). Współdzieli singleton
+ * Playwright browser i availability cache. NIGDY nie rzuca — błąd zawsze
+ * jako typed `RenderHtmlPngErr`.
+ *
+ * Domyślny viewport 1920×1080 dopasowany do decka (deliverables graphic
+ * parameters: deck canvas 1920×1080). Doc → fullPage=true zalecane.
+ */
+export async function renderHtmlToPng(input: RenderHtmlPngInput): Promise<RenderHtmlPngResult> {
+  const startedAt = Date.now();
+  const navigationTimeoutMs =
+    typeof input.navigationTimeoutMs === 'number' && input.navigationTimeoutMs > 0
+      ? input.navigationTimeoutMs
+      : DEFAULT_NAVIGATION_TIMEOUT_MS;
+
+  const viewportWidth = input.pngOptions?.viewportWidth ?? 1920;
+  const viewportHeight = input.pngOptions?.viewportHeight ?? 1080;
+  const deviceScaleFactor = input.pngOptions?.deviceScaleFactor ?? 1;
+  const screenshotOpts = buildScreenshotOptions(input.pngOptions);
+
+  // Availability gate.
+  let availability: AvailabilityResult;
+  try {
+    availability = await isPlaywrightPdfRendererAvailable();
+  } catch (err) {
+    return {
+      status: 'unavailable',
+      reason: `availability_probe_threw: ${errorMessage(err)}`,
+      durationMs: Date.now() - startedAt,
+    };
+  }
+  if (!availability.available) {
+    return {
+      status: 'unavailable',
+      reason: availability.reason || 'unavailable',
+      durationMs: Date.now() - startedAt,
+    };
+  }
+
+  // Launch shared browser.
+  let browser: PdfBrowser;
+  try {
+    browser = await launchBrowser();
+  } catch (err) {
+    if (isExecutableMissingError(err)) {
+      setFailureCache('chromium_binary_missing');
+      return {
+        status: 'unavailable',
+        reason: 'chromium_binary_missing',
+        durationMs: Date.now() - startedAt,
+      };
+    }
+    await disposeSharedBrowser();
+    return {
+      status: 'launch_failed',
+      reason: errorMessage(err),
+      durationMs: Date.now() - startedAt,
+    };
+  }
+
+  // Render with hard timeout.
+  let context: PdfBrowserContext | null = null;
+  let page: PngBrowserPage | null = null;
+  let timer: NodeJS.Timeout | null = null;
+
+  try {
+    const work = (async (): Promise<RenderHtmlPngResult> => {
+      context = await browser.newContext({
+        viewport: { width: viewportWidth, height: viewportHeight },
+        deviceScaleFactor,
+      });
+      page = (await context.newPage()) as PngBrowserPage;
+      page.setDefaultNavigationTimeout?.(navigationTimeoutMs);
+      page.setDefaultTimeout?.(navigationTimeoutMs);
+
+      await page.setContent(input.html, {
+        waitUntil: 'networkidle',
+        timeout: navigationTimeoutMs,
+      });
+
+      const raw = await page.screenshot(screenshotOpts);
+      const buffer = Buffer.isBuffer(raw) ? raw : Buffer.from(raw);
+      return {
+        status: 'ok',
+        buffer,
+        bytes: buffer.length,
+        durationMs: Date.now() - startedAt,
+      };
+    })();
+
+    const timeout = new Promise<RenderHtmlPngResult>((resolve) => {
+      timer = setTimeout(() => {
+        resolve({
+          status: 'timeout',
+          reason: `render_timeout_${navigationTimeoutMs}ms`,
+          durationMs: Date.now() - startedAt,
+        });
+      }, navigationTimeoutMs);
+    });
+
+    return await Promise.race([work, timeout]);
+  } catch (err) {
+    if (isExecutableMissingError(err)) {
+      setFailureCache('chromium_binary_missing');
+      await disposeSharedBrowser();
+      return {
+        status: 'unavailable',
+        reason: 'chromium_binary_missing',
+        durationMs: Date.now() - startedAt,
+      };
+    }
+    const msg = errorMessage(err).toLowerCase();
+    if (
+      msg.includes('target closed') ||
+      msg.includes('browser has been closed') ||
+      msg.includes('browser closed') ||
+      msg.includes('disconnected')
+    ) {
+      await disposeSharedBrowser();
+    }
+    return {
+      status: 'render_failed',
+      reason: errorMessage(err),
+      durationMs: Date.now() - startedAt,
+    };
+  } finally {
+    if (timer) clearTimeout(timer);
+    const pageRef = page as PngBrowserPage | null;
+    const contextRef = context as PdfBrowserContext | null;
+    if (pageRef) {
+      try {
+        await pageRef.close();
+      } catch {
+        // best-effort
+      }
+    }
+    if (contextRef) {
+      try {
+        await contextRef.close();
+      } catch {
+        // best-effort
+      }
+    }
+  }
+}

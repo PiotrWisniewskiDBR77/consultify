@@ -27,6 +27,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/shared/states';
+
 import { Api } from '../../../services/api';
 import { trackFunnelEvent } from '../../../services/funnelAnalytics';
 
@@ -393,20 +395,20 @@ export const ReportingAutomationWorkspace: React.FC = () => {
   const statusBadge = (status: string | null, isActive?: boolean) => {
     if (isActive === false) {
       return (
-        <span className="px-2 py-0.5 text-xs font-medium rounded bg-slate-700 text-slate-600">
+        <span className="px-2 py-0.5 text-xs font-medium rounded bg-slate-700 text-c-text-secondary">
           {tp('paused')}
         </span>
       );
     }
     const colors: Record<string, string> = {
-      success: 'bg-emerald-600 text-white',
-      failed: 'bg-danger-600 text-white',
-      running: 'bg-blue-600 text-white',
-      pending: 'bg-amber-600 text-white',
+      success: 'bg-emerald-600 text-c-text',
+      failed: 'bg-danger-600 text-c-text',
+      running: 'bg-blue-600 text-c-text',
+      pending: 'bg-amber-600 text-c-text',
     };
     return (
       <span
-        className={`px-2 py-0.5 text-xs font-medium rounded ${colors[status || ''] || 'bg-slate-600 text-slate-600'}`}
+        className={`px-2 py-0.5 text-xs font-medium rounded ${colors[status || ''] || 'bg-slate-600 text-c-text-secondary'}`}
       >
         {status ? tp(`execution${status.charAt(0).toUpperCase() + status.slice(1)}`) : tp('active')}
       </span>
@@ -422,7 +424,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
       case 'hybrid':
         return <ScanSearch size={14} className="text-primary-400" />;
       default:
-        return <CalendarClock size={14} className="text-slate-600" />;
+        return <CalendarClock size={14} className="text-c-text-secondary" />;
     }
   };
 
@@ -443,8 +445,8 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+      <div className="h-full p-6">
+        <LoadingState template="list" rows={6} />
       </div>
     );
   }
@@ -452,56 +454,56 @@ export const ReportingAutomationWorkspace: React.FC = () => {
   return (
     <div className="flex h-full">
       {/* LEFT SIDEBAR — Schedule list */}
-      <div className="w-72 shrink-0 border-r border-white/5 bg-navy-950/30 flex flex-col">
-        <div className="p-4 border-b border-white/5">
+      <div className="w-72 shrink-0 border-r border-c-border-subtle bg-c-surface-raised flex flex-col">
+        <div className="p-4 border-b border-c-border-subtle">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-c-text flex items-center gap-2">
               <CalendarClock size={16} className="text-primary-400" />
               {tp('title')}
             </h2>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="p-1.5 rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors"
+              className="p-1.5 rounded-lg bg-navy-900 hover:bg-c-surface text-c-text dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors"
               title={tp('newSchedule')}
             >
               <Plus size={14} />
             </button>
           </div>
-          <p className="text-xs text-slate-500">{tp('subtitle')}</p>
+          <p className="text-xs text-c-text-muted">{tp('subtitle')}</p>
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {schedules.length === 0 ? (
             <div className="px-4 py-8 text-center">
-              <CalendarClock className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-              <p className="text-sm text-slate-600">{tp('noSchedules')}</p>
-              <p className="text-xs text-slate-500 mt-1">{tp('noSchedulesHint')}</p>
+              <CalendarClock className="w-10 h-10 text-c-text-secondary mx-auto mb-3" />
+              <p className="text-sm text-c-text-secondary">{tp('noSchedules')}</p>
+              <p className="text-xs text-c-text-muted mt-1">{tp('noSchedulesHint')}</p>
             </div>
           ) : (
             schedules.map((schedule) => (
               <button
                 key={schedule.id}
                 onClick={() => setSelectedScheduleId(schedule.id)}
-                className={`w-full text-left px-4 py-3 border-b border-white/5 hover:bg-white/5 transition-colors ${
-                  selectedScheduleId === schedule.id ? 'bg-white/10' : ''
+                className={`w-full text-left px-4 py-3 border-b border-c-border-subtle hover:bg-c-surface-raised transition-colors ${
+                  selectedScheduleId === schedule.id ? 'bg-c-surface-raised' : ''
                 }`}
               >
                 <div className="flex items-center gap-2 mb-1">
                   {scheduleTypeIcon(schedule.scheduleType)}
                   {deliverableIcon(schedule.deliverableType)}
-                  <span className="text-sm font-medium text-white truncate flex-1">
+                  <span className="text-sm font-medium text-c-text truncate flex-1">
                     {schedule.name}
                   </span>
-                  <ChevronRight size={12} className="text-slate-500" />
+                  <ChevronRight size={12} className="text-c-text-muted" />
                 </div>
                 <div className="flex items-center gap-2 mt-1">
                   {statusBadge(schedule.lastRunStatus, schedule.isActive)}
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-c-text-muted">
                     {schedule.frequency} · {tp('runCount')}: {schedule.runCount}
                   </span>
                 </div>
                 {schedule.nextRunAt && (
-                  <p className="text-[10px] text-slate-600 mt-1">
+                  <p className="text-[10px] text-c-text-secondary mt-1">
                     {tp('nextRun')}: {new Date(schedule.nextRunAt).toLocaleDateString()}
                   </p>
                 )}
@@ -511,7 +513,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
         </div>
 
         {/* Evaluate triggers button */}
-        <div className="p-3 border-t border-white/5">
+        <div className="p-3 border-t border-c-border-subtle">
           <button
             onClick={handleEvaluateTriggers}
             disabled={actionLoading === 'evaluate'}
@@ -531,12 +533,12 @@ export const ReportingAutomationWorkspace: React.FC = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         {!selectedSchedule ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <CalendarClock className="w-16 h-16 text-slate-600 mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">{tp('title')}</h3>
-            <p className="text-sm text-slate-600 mb-6 max-w-md">{tp('noSchedulesHint')}</p>
+            <CalendarClock className="w-16 h-16 text-c-text-secondary mb-4" />
+            <h3 className="text-lg font-semibold text-c-text mb-2">{tp('title')}</h3>
+            <p className="text-sm text-c-text-secondary mb-6 max-w-md">{tp('noSchedulesHint')}</p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-xl font-medium transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-navy-900 hover:bg-c-surface text-c-text dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-xl font-medium transition-colors"
             >
               <Plus size={18} />
               {tp('newSchedule')}
@@ -545,19 +547,19 @@ export const ReportingAutomationWorkspace: React.FC = () => {
         ) : (
           <>
             {/* Schedule header */}
-            <div className="px-6 py-4 border-b border-white/5 bg-navy-950/20">
+            <div className="px-6 py-4 border-b border-c-border-subtle bg-c-surface-raised">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2">
                     {scheduleTypeIcon(selectedSchedule.scheduleType)}
                     {deliverableIcon(selectedSchedule.deliverableType)}
-                    <h2 className="text-lg font-semibold text-white">{selectedSchedule.name}</h2>
+                    <h2 className="text-lg font-semibold text-c-text">{selectedSchedule.name}</h2>
                     {statusBadge(selectedSchedule.lastRunStatus, selectedSchedule.isActive)}
                   </div>
                   {selectedSchedule.description && (
-                    <p className="text-sm text-slate-600 mt-1">{selectedSchedule.description}</p>
+                    <p className="text-sm text-c-text-secondary mt-1">{selectedSchedule.description}</p>
                   )}
-                  <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                  <div className="flex items-center gap-4 mt-2 text-xs text-c-text-muted">
                     <span>
                       {tp('frequency')}: {tp(selectedSchedule.frequency)}
                     </span>
@@ -576,7 +578,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                   <button
                     onClick={() => handleRunNow(selectedSchedule.id)}
                     disabled={actionLoading === `run-${selectedSchedule.id}`}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-c-text text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
                   >
                     {actionLoading === `run-${selectedSchedule.id}` ? (
                       <Loader2 size={14} className="animate-spin" />
@@ -588,7 +590,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                   {selectedSchedule.isActive ? (
                     <button
                       onClick={() => handlePause(selectedSchedule.id)}
-                      className="flex items-center gap-1.5 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-c-text text-sm font-medium rounded-lg transition-colors"
                     >
                       <Pause size={14} />
                       {tp('pause')}
@@ -596,7 +598,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                   ) : (
                     <button
                       onClick={() => handleResume(selectedSchedule.id)}
-                      className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-500 text-c-text text-sm font-medium rounded-lg transition-colors"
                     >
                       <Play size={14} />
                       {tp('resume')}
@@ -604,7 +606,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                   )}
                   <button
                     onClick={() => handleDelete(selectedSchedule.id)}
-                    className="p-2 text-slate-600 hover:text-danger-400 rounded-lg hover:bg-danger-500/10 transition-colors"
+                    className="p-2 text-c-text-secondary hover:text-danger-400 rounded-lg hover:bg-danger-500/10 transition-colors"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -613,13 +615,13 @@ export const ReportingAutomationWorkspace: React.FC = () => {
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-white/5">
+            <div className="flex border-b border-c-border-subtle">
               <button
                 onClick={() => setActiveTab('schedules')}
                 className={`px-4 py-2.5 text-sm font-medium transition-colors ${
                   activeTab === 'schedules'
                     ? 'text-primary-400 border-b-2 border-primary-400'
-                    : 'text-slate-600 hover:text-white'
+                    : 'text-c-text-secondary hover:text-c-text'
                 }`}
               >
                 {tp('triggers')}
@@ -629,7 +631,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                 className={`px-4 py-2.5 text-sm font-medium transition-colors ${
                   activeTab === 'history'
                     ? 'text-primary-400 border-b-2 border-primary-400'
-                    : 'text-slate-600 hover:text-white'
+                    : 'text-c-text-secondary hover:text-c-text'
                 }`}
               >
                 {tp('history')}
@@ -658,9 +660,9 @@ export const ReportingAutomationWorkspace: React.FC = () => {
     return (
       <div className="space-y-6">
         {/* Trigger rules section */}
-        <div className="bg-white/5 rounded-xl border border-white/10 p-5">
+        <div className="bg-c-surface rounded-xl border border-c-border p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-c-text flex items-center gap-2">
               <Zap size={14} className="text-amber-400" />
               {tp('triggers')}
             </h3>
@@ -674,7 +676,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
           </div>
 
           {triggerRules.length === 0 ? (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-c-text-muted">
               No trigger rules configured. Add triggers for event-based automation.
             </p>
           ) : (
@@ -685,15 +687,15 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                 return (
                   <div
                     key={rule.id}
-                    className="flex items-center justify-between p-3 bg-navy-900/50 rounded-lg border border-white/5"
+                    className="flex items-center justify-between p-3 bg-c-surface-raised rounded-lg border border-c-border-subtle"
                   >
                     <div className="flex items-center gap-3">
                       <IconComp size={16} className="text-amber-400" />
                       <div>
-                        <p className="text-sm font-medium text-white">
+                        <p className="text-sm font-medium text-c-text">
                           {opt ? tp(opt.labelKey) : rule.triggerType}
                         </p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-c-text-muted">
                           {tp('throttleHours')}: {rule.throttleHours}h · Fires: {rule.fireCount}
                           {rule.conditions && Object.keys(rule.conditions).length > 0 && (
                             <span> · {JSON.stringify(rule.conditions)}</span>
@@ -705,15 +707,15 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                       <span
                         className={`px-2 py-0.5 text-[10px] font-medium rounded ${
                           rule.isActive
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-slate-700 text-slate-600'
+                            ? 'bg-emerald-600 text-c-text'
+                            : 'bg-slate-700 text-c-text-secondary'
                         }`}
                       >
                         {rule.isActive ? tp('active') : tp('paused')}
                       </span>
                       <button
                         onClick={() => handleDeleteTrigger(rule.id)}
-                        className="p-1 text-slate-500 hover:text-danger-400 transition-colors"
+                        className="p-1 text-c-text-muted hover:text-danger-400 transition-colors"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -726,13 +728,13 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
           {/* Add trigger form */}
           {showAddTrigger && (
-            <div className="mt-4 p-4 bg-navy-900/80 rounded-lg border border-white/10 space-y-3">
+            <div className="mt-4 p-4 bg-c-surface-raised rounded-lg border border-c-border space-y-3">
               <div>
-                <label className="block text-xs text-slate-600 mb-1">{tp('triggerType')}</label>
+                <label className="block text-xs text-c-text-secondary mb-1">{tp('triggerType')}</label>
                 <select
                   value={triggerFormType}
                   onChange={(e) => setTriggerFormType(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-navy-800 px-3 py-2 text-sm text-white"
+                  className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
                 >
                   {TRIGGER_TYPE_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -744,24 +746,24 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
               {triggerFormType === 'delay_threshold' && (
                 <div>
-                  <label className="block text-xs text-slate-600 mb-1">{tp('delayDays')}</label>
+                  <label className="block text-xs text-c-text-secondary mb-1">{tp('delayDays')}</label>
                   <input
                     type="number"
                     value={triggerFormDelayDays}
                     onChange={(e) => setTriggerFormDelayDays(Number(e.target.value))}
                     min={1}
-                    className="w-full rounded-lg border border-white/10 bg-navy-800 px-3 py-2 text-sm text-white"
+                    className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
                   />
                 </div>
               )}
 
               {triggerFormType === 'risk_high' && (
                 <div>
-                  <label className="block text-xs text-slate-600 mb-1">{tp('riskSeverity')}</label>
+                  <label className="block text-xs text-c-text-secondary mb-1">{tp('riskSeverity')}</label>
                   <select
                     value={triggerFormSeverity}
                     onChange={(e) => setTriggerFormSeverity(e.target.value)}
-                    className="w-full rounded-lg border border-white/10 bg-navy-800 px-3 py-2 text-sm text-white"
+                    className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
                   >
                     <option value="high">High</option>
                     <option value="critical">Critical</option>
@@ -771,26 +773,26 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
               {triggerFormType === 'budget_threshold' && (
                 <div>
-                  <label className="block text-xs text-slate-600 mb-1">{tp('budgetPercent')}</label>
+                  <label className="block text-xs text-c-text-secondary mb-1">{tp('budgetPercent')}</label>
                   <input
                     type="number"
                     value={triggerFormBudgetPct}
                     onChange={(e) => setTriggerFormBudgetPct(Number(e.target.value))}
                     min={50}
                     max={100}
-                    className="w-full rounded-lg border border-white/10 bg-navy-800 px-3 py-2 text-sm text-white"
+                    className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block text-xs text-slate-600 mb-1">{tp('throttleHours')}</label>
+                <label className="block text-xs text-c-text-secondary mb-1">{tp('throttleHours')}</label>
                 <input
                   type="number"
                   value={triggerFormThrottleHours}
                   onChange={(e) => setTriggerFormThrottleHours(Number(e.target.value))}
                   min={1}
-                  className="w-full rounded-lg border border-white/10 bg-navy-800 px-3 py-2 text-sm text-white"
+                  className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
                 />
               </div>
 
@@ -798,7 +800,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                 <button
                   onClick={handleAddTrigger}
                   disabled={actionLoading === 'add-trigger'}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-c-text text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
                 >
                   {actionLoading === 'add-trigger' ? (
                     <Loader2 size={14} className="animate-spin" />
@@ -809,7 +811,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setShowAddTrigger(false)}
-                  className="px-4 py-2 text-slate-600 hover:text-white text-sm transition-colors"
+                  className="px-4 py-2 text-c-text-secondary hover:text-c-text text-sm transition-colors"
                 >
                   Cancel
                 </button>
@@ -825,9 +827,9 @@ export const ReportingAutomationWorkspace: React.FC = () => {
     if (executions.length === 0) {
       return (
         <div className="text-center py-12">
-          <Clock className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-          <p className="text-sm text-slate-600">{tp('noHistory')}</p>
-          <p className="text-xs text-slate-500 mt-1">{tp('noHistoryHint')}</p>
+          <Clock className="w-12 h-12 text-c-text-secondary mx-auto mb-3" />
+          <p className="text-sm text-c-text-secondary">{tp('noHistory')}</p>
+          <p className="text-xs text-c-text-muted mt-1">{tp('noHistoryHint')}</p>
         </div>
       );
     }
@@ -837,27 +839,27 @@ export const ReportingAutomationWorkspace: React.FC = () => {
         {executions.map((exec) => (
           <div
             key={exec.id}
-            className="p-4 bg-white/5 rounded-xl border border-white/10 flex items-start justify-between"
+            className="p-4 bg-c-surface rounded-xl border border-c-border flex items-start justify-between"
           >
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 {statusBadge(exec.status)}
                 {exec.triggerType && (
-                  <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-slate-700 text-slate-600">
+                  <span className="px-2 py-0.5 text-[10px] font-medium rounded bg-slate-700 text-c-text-secondary">
                     {exec.triggerType}
                   </span>
                 )}
                 {exec.deliverableType && (
-                  <span className="text-xs text-slate-500">{exec.deliverableType}</span>
+                  <span className="text-xs text-c-text-muted">{exec.deliverableType}</span>
                 )}
               </div>
               {exec.triggerReason && (
-                <p className="text-xs text-slate-600 mt-1">
+                <p className="text-xs text-c-text-secondary mt-1">
                   {tp('triggerReason')}: {exec.triggerReason}
                 </p>
               )}
               {exec.error && <p className="text-xs text-danger-400 mt-1">{exec.error}</p>}
-              <div className="flex items-center gap-3 mt-2 text-[10px] text-slate-600">
+              <div className="flex items-center gap-3 mt-2 text-[10px] text-c-text-secondary">
                 <span>Started: {new Date(exec.startedAt).toLocaleString()}</span>
                 {exec.completedAt && (
                   <span>Completed: {new Date(exec.completedAt).toLocaleString()}</span>
@@ -893,15 +895,15 @@ export const ReportingAutomationWorkspace: React.FC = () => {
   function renderCreateModal() {
     return (
       <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-        <div className="bg-navy-900 rounded-2xl border border-white/10 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-            <h3 className="text-lg font-semibold text-white">{tp('newSchedule')}</h3>
+        <div className="bg-c-surface rounded-2xl border border-c-border w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-c-border">
+            <h3 className="text-lg font-semibold text-c-text">{tp('newSchedule')}</h3>
             <button
               onClick={() => {
                 setShowCreateModal(false);
                 resetForm();
               }}
-              className="p-1 text-slate-600 hover:text-white transition-colors"
+              className="p-1 text-c-text-secondary hover:text-c-text transition-colors"
             >
               <X size={18} />
             </button>
@@ -910,32 +912,32 @@ export const ReportingAutomationWorkspace: React.FC = () => {
           <div className="px-6 py-5 space-y-4">
             {/* Name */}
             <div>
-              <label className="block text-xs text-slate-600 mb-1">{tp('scheduleName')}</label>
+              <label className="block text-xs text-c-text-secondary mb-1">{tp('scheduleName')}</label>
               <input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
                 placeholder={tp('scheduleNamePlaceholder')}
-                className="w-full rounded-lg border border-white/10 bg-navy-800 px-3 py-2 text-sm text-white placeholder-slate-600"
+                className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder-slate-600"
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-xs text-slate-600 mb-1">Description</label>
+              <label className="block text-xs text-c-text-secondary mb-1">Description</label>
               <input
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-navy-800 px-3 py-2 text-sm text-white placeholder-slate-600"
+                className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder-slate-600"
               />
             </div>
 
             {/* Schedule type */}
             <div>
-              <label className="block text-xs text-slate-600 mb-1">{tp('scheduleType')}</label>
+              <label className="block text-xs text-c-text-secondary mb-1">{tp('scheduleType')}</label>
               <select
                 value={formScheduleType}
                 onChange={(e) => setFormScheduleType(e.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-navy-800 px-3 py-2 text-sm text-white"
+                className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
               >
                 {SCHEDULE_TYPE_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -947,11 +949,11 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
             {/* Deliverable type */}
             <div>
-              <label className="block text-xs text-slate-600 mb-1">{tp('deliverableType')}</label>
+              <label className="block text-xs text-c-text-secondary mb-1">{tp('deliverableType')}</label>
               <select
                 value={formDeliverableType}
                 onChange={(e) => setFormDeliverableType(e.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-navy-800 px-3 py-2 text-sm text-white"
+                className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
               >
                 {DELIVERABLE_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -964,11 +966,11 @@ export const ReportingAutomationWorkspace: React.FC = () => {
             {/* Frequency (for time-based) */}
             {formScheduleType !== 'event_triggered' && (
               <div>
-                <label className="block text-xs text-slate-600 mb-1">{tp('frequency')}</label>
+                <label className="block text-xs text-c-text-secondary mb-1">{tp('frequency')}</label>
                 <select
                   value={formFrequency}
                   onChange={(e) => setFormFrequency(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-navy-800 px-3 py-2 text-sm text-white"
+                  className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
                 >
                   {FREQUENCY_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -982,33 +984,33 @@ export const ReportingAutomationWorkspace: React.FC = () => {
             {/* Cron expression (for custom frequency) */}
             {formFrequency === 'custom' && formScheduleType !== 'event_triggered' && (
               <div>
-                <label className="block text-xs text-slate-600 mb-1">{tp('cronExpression')}</label>
+                <label className="block text-xs text-c-text-secondary mb-1">{tp('cronExpression')}</label>
                 <input
                   value={formCron}
                   onChange={(e) => setFormCron(e.target.value)}
                   placeholder="0 9 * * 1"
-                  className="w-full rounded-lg border border-white/10 bg-navy-800 px-3 py-2 text-sm text-white font-mono placeholder-slate-600"
+                  className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text font-mono placeholder-slate-600"
                 />
               </div>
             )}
 
             {/* Timezone */}
             <div>
-              <label className="block text-xs text-slate-600 mb-1">{tp('timezone')}</label>
+              <label className="block text-xs text-c-text-secondary mb-1">{tp('timezone')}</label>
               <input
                 value={formTimezone}
                 onChange={(e) => setFormTimezone(e.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-navy-800 px-3 py-2 text-sm text-white"
+                className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
               />
             </div>
 
             {/* Scope */}
             <div>
-              <label className="block text-xs text-slate-600 mb-1">{tp('scope')}</label>
+              <label className="block text-xs text-c-text-secondary mb-1">{tp('scope')}</label>
               <select
                 value={formScopeType}
                 onChange={(e) => setFormScopeType(e.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-navy-800 px-3 py-2 text-sm text-white"
+                className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
               >
                 {SCOPE_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -1020,21 +1022,21 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
             {/* Recipients */}
             <div>
-              <label className="block text-xs text-slate-600 mb-1">{tp('recipients')}</label>
+              <label className="block text-xs text-c-text-secondary mb-1">{tp('recipients')}</label>
               <input
                 value={formRecipients}
                 onChange={(e) => setFormRecipients(e.target.value)}
                 placeholder={tp('recipientsPlaceholder')}
-                className="w-full rounded-lg border border-white/10 bg-navy-800 px-3 py-2 text-sm text-white placeholder-slate-600"
+                className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder-slate-600"
               />
             </div>
 
             {/* Delivery methods */}
             <div>
-              <label className="block text-xs text-slate-600 mb-1">{tp('delivery')}</label>
+              <label className="block text-xs text-c-text-secondary mb-1">{tp('delivery')}</label>
               <div className="flex items-center gap-4 mt-1">
                 {(['dashboard', 'email', 'webhook'] as const).map((method) => (
-                  <label key={method} className="flex items-center gap-1.5 text-sm text-slate-600">
+                  <label key={method} className="flex items-center gap-1.5 text-sm text-c-text-secondary">
                     <input
                       type="checkbox"
                       checked={formDeliveryMethods.includes(method)}
@@ -1045,7 +1047,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                           setFormDeliveryMethods((prev) => prev.filter((m) => m !== method));
                         }
                       }}
-                      className="rounded border-white/20"
+                      className="rounded border-c-border"
                     />
                     {tp(`delivery${method.charAt(0).toUpperCase() + method.slice(1)}`)}
                   </label>
@@ -1054,20 +1056,20 @@ export const ReportingAutomationWorkspace: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10">
+          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-c-border">
             <button
               onClick={() => {
                 setShowCreateModal(false);
                 resetForm();
               }}
-              className="px-4 py-2 text-sm text-slate-600 hover:text-white transition-colors"
+              className="px-4 py-2 text-sm text-c-text-secondary hover:text-c-text transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleCreate}
               disabled={!formName.trim() || actionLoading === 'create'}
-              className="flex items-center gap-2 px-5 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2 bg-navy-900 hover:bg-c-surface text-c-text dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
             >
               {actionLoading === 'create' ? (
                 <Loader2 size={14} className="animate-spin" />

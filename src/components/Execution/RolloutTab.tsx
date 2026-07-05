@@ -27,6 +27,11 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
+
+import RolloutStagesPanel from './RolloutStagesPanel';
+import RolloutBaselinePanel from './RolloutBaselinePanel';
+import CutoverRunbookPanel from './CutoverRunbookPanel';
+import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { Button } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 
@@ -1047,7 +1052,18 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
   return (
     <div className="h-full overflow-auto p-4 space-y-5">
       {/* ── PLAN ── */}
-      {subview === 'plan' && <RolloutPlanView initiatives={initiatives} t={t} />}
+      {subview === 'plan' && (
+        <>
+          {isExecutionFlagEnabled('rolloutStages') && (
+            <>
+              <RolloutStagesPanel projectId={projectId} />
+              <RolloutBaselinePanel projectId={projectId} />
+              <CutoverRunbookPanel initiativeId={initiatives[0]?.id} />
+            </>
+          )}
+          <RolloutPlanView initiatives={initiatives} t={t} />
+        </>
+      )}
 
       {/* ── KPI ── */}
       {subview === 'kpi' && (

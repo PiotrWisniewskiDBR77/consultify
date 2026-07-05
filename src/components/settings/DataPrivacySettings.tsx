@@ -62,7 +62,6 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
   const [isExporting, setIsExporting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmEmail, setDeleteConfirmEmail] = useState('');
-  const [deletePassword, setDeletePassword] = useState('');
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -155,14 +154,14 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
   };
 
   const handleDeleteAccount = async () => {
-    if (deleteConfirmEmail !== currentUser.email || !deletePassword) {
+    if (deleteConfirmEmail !== currentUser.email) {
       return;
     }
 
     try {
       setActionError(null);
-      const response = await Api.post('/settings/gdpr/deletion-request', {
-        password: deletePassword,
+      const response = await Api.post('/settings/request-deletion', {
+        email: deleteConfirmEmail,
         reason: 'user_requested',
       });
       confirmRequestAccepted(response, 'Account deletion request was not accepted by the server');
@@ -173,7 +172,6 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
         )
       );
       setShowDeleteConfirm(false);
-      setDeletePassword('');
     } catch (error: unknown) {
       setActionError(normalizeApiErrorMessage(error, 'Failed to request account deletion'));
       alert(t('settings.dataPrivacy.deleteFailed', 'Failed to request account deletion.'));
@@ -182,15 +180,15 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
 
   // Styling
   const cardClass =
-    'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-6';
+    'bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg p-6';
   const sectionTitleClass =
-    'text-sm font-bold text-navy-900 dark:text-white mb-4 uppercase tracking-wider flex items-center gap-2';
+    'text-sm font-bold text-navy-900 mb-4 uppercase tracking-wider flex items-center gap-2';
   const toggleClass = (enabled: boolean) =>
     `relative w-12 h-6 rounded-full transition-colors ${
-      enabled ? 'bg-navy-900' : 'bg-slate-300 dark:bg-slate-600'
+      enabled ? 'bg-c-accent' : 'bg-c-surface-raised'
     }`;
   const toggleKnobClass = (enabled: boolean) =>
-    `absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;
+    `absolute top-1 w-4 h-4 rounded-full bg-c-surface shadow transition-all ${enabled ? 'left-7' : 'left-1'}`;
 
   const ToggleSwitch = ({
     enabled,
@@ -203,10 +201,10 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
     label: string;
     description: string;
   }) => (
-    <div className="flex items-center justify-between py-3 border-b border-slate-200 dark:border-navy-700 last:border-0">
+    <div className="flex items-center justify-between py-3 border-b border-c-border-subtle dark:border-navy-700 last:border-0">
       <div className="flex-1 pr-4">
-        <p className="text-sm font-medium text-navy-900 dark:text-white">{label}</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>
+        <p className="text-sm font-medium text-navy-900">{label}</p>
+        <p className="text-xs text-c-text-muted mt-0.5">{description}</p>
       </div>
       <button onClick={() => onChange(!enabled)} className={toggleClass(enabled)}>
         <span className={toggleKnobClass(enabled)} />
@@ -219,10 +217,10 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-bold text-navy-900 dark:text-white">
+          <h3 className="text-lg font-bold text-navy-900">
             {t('settings.dataPrivacy.title', 'Data & Privacy')}
           </h3>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-c-text-muted text-sm mt-1">
             {t(
               'settings.dataPrivacy.description',
               'Control how your data is used and manage your privacy settings'
@@ -232,7 +230,7 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
         <button
           onClick={handleSave}
           disabled={isSaving || !!loadError}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary-500/20"
+          className="flex items-center gap-2 px-4 py-2 bg-c-accent hover:bg-c-accent text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-c-accent"
         >
           {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {isSaving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
@@ -248,7 +246,7 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
           {/* Data Sharing */}
           <div className={cardClass}>
             <h4 className={sectionTitleClass}>
-              <Eye size={16} className="text-primary-500" />
+              <Eye size={16} className="text-c-accent" />
               {t('settings.dataPrivacy.dataSharing', 'Data Sharing')}
             </h4>
 
@@ -286,7 +284,7 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
           {/* Communication Preferences */}
           <div className={cardClass}>
             <h4 className={sectionTitleClass}>
-              <FileText size={16} className="text-primary-500" />
+              <FileText size={16} className="text-c-accent" />
               {t('settings.dataPrivacy.communications', 'Communication Preferences')}
             </h4>
 
@@ -328,11 +326,11 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
           {/* Data Retention */}
           <div className={cardClass}>
             <h4 className={sectionTitleClass}>
-              <Database size={16} className="text-primary-500" />
+              <Database size={16} className="text-c-accent" />
               {t('settings.dataPrivacy.dataRetention', 'Data Retention')}
             </h4>
 
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+            <p className="text-sm text-c-text-muted mb-4">
               {t('settings.dataPrivacy.dataRetentionDesc', 'Choose how long we keep your data')}
             </p>
 
@@ -352,20 +350,20 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
                   }
                   className={`p-4 rounded-lg border-2 text-left transition-all ${
                     privacySettings.dataRetentionPolicy === option.value
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10'
-                      : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
+                      ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
+                      : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border'
                   }`}
                 >
                   <p
                     className={`font-medium ${
                       privacySettings.dataRetentionPolicy === option.value
-                        ? 'text-primary-700 dark:text-primary-300'
-                        : 'text-navy-900 dark:text-white'
+                        ? 'text-c-accent'
+                        : 'text-navy-900'
                     }`}
                   >
                     {option.label}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{option.desc}</p>
+                  <p className="text-xs text-c-text-muted mt-0.5">{option.desc}</p>
                 </button>
               ))}
             </div>
@@ -374,7 +372,7 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
           {/* Security */}
           <div className={cardClass}>
             <h4 className={sectionTitleClass}>
-              <Shield size={16} className="text-primary-500" />
+              <Shield size={16} className="text-c-accent" />
               {t('settings.dataPrivacy.security', 'Security')}
             </h4>
 
@@ -407,11 +405,11 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
           {/* Data Export */}
           <div className={cardClass}>
             <h4 className={sectionTitleClass}>
-              <Download size={16} className="text-primary-500" />
+              <Download size={16} className="text-c-accent" />
               {t('settings.dataPrivacy.exportData', 'Export Your Data')}
             </h4>
 
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+            <p className="text-sm text-c-text-muted mb-4">
               {t(
                 'settings.dataPrivacy.exportDataDesc',
                 'Download a copy of all your data. This may take some time to prepare.'
@@ -421,7 +419,7 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
             <button
               onClick={handleExportData}
               disabled={isExporting}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-navy-950 hover:bg-slate-200 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-200 rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-navy-800 text-c-text-secondary rounded-lg transition-colors disabled:opacity-50"
             >
               {isExporting ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -447,13 +445,13 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
           </div>
 
           {/* Delete Account */}
-          <div className={`${cardClass} border-danger-200 dark:border-danger-500/20`}>
-            <h4 className="text-sm font-bold text-danger-600 dark:text-danger-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+          <div className={`${cardClass} border-rose-200 dark:border-rose-500/20`}>
+            <h4 className="text-sm font-bold text-rose-600 dark:text-rose-400 mb-4 uppercase tracking-wider flex items-center gap-2">
               <Trash2 size={16} />
               {t('settings.dataPrivacy.dangerZone', 'Danger Zone')}
             </h4>
 
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+            <p className="text-sm text-c-text-muted mb-4">
               {t(
                 'settings.dataPrivacy.deleteDesc',
                 'Permanently delete your account and all associated data. This action cannot be undone.'
@@ -463,20 +461,20 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
             {!showDeleteConfirm ? (
               <button
                 onClick={() => setShowDeleteConfirm(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-danger-50 dark:bg-danger-500/10 hover:bg-danger-100 dark:hover:bg-danger-500/20 text-danger-600 dark:text-danger-400 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-lg transition-colors"
               >
                 <Trash2 size={16} />
                 {t('settings.dataPrivacy.requestDeletion', 'Request Account Deletion')}
               </button>
             ) : (
-              <div className="p-4 bg-danger-50 dark:bg-danger-500/10 border border-danger-200 dark:border-danger-500/20 rounded-lg space-y-4">
+              <div className="p-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-lg space-y-4">
                 <div className="flex items-start gap-2">
-                  <AlertTriangle size={18} className="text-danger-500 mt-0.5" />
+                  <AlertTriangle size={18} className="text-rose-500 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-danger-600 dark:text-danger-400">
+                    <p className="text-sm font-medium text-rose-600 dark:text-rose-400">
                       {t('settings.dataPrivacy.confirmDelete', 'Are you sure?')}
                     </p>
-                    <p className="text-xs text-danger-500 mt-1">
+                    <p className="text-xs text-rose-500 mt-1">
                       {t(
                         'settings.dataPrivacy.confirmDeleteDesc',
                         'Type your email address to confirm account deletion.'
@@ -490,22 +488,14 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
                   value={deleteConfirmEmail}
                   onChange={(e) => setDeleteConfirmEmail(e.target.value)}
                   placeholder={currentUser.email}
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-danger-200 dark:border-danger-500/30 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-danger-500/50 outline-none"
-                />
-
-                <input
-                  type="password"
-                  value={deletePassword}
-                  onChange={(e) => setDeletePassword(e.target.value)}
-                  placeholder={t('settings.dataPrivacy.passwordPlaceholder', 'Enter your password')}
-                  className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-danger-200 dark:border-danger-500/30 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-danger-500/50 outline-none"
+                  className="w-full px-3 py-2 bg-c-surface border border-rose-200 dark:border-rose-500/30 rounded-md text-navy-900 focus:ring-2 focus:ring-rose-500/50 outline-none"
                 />
 
                 <div className="flex gap-2">
                   <button
                     onClick={handleDeleteAccount}
-                    disabled={deleteConfirmEmail !== currentUser.email || !deletePassword}
-                    className="flex items-center gap-2 px-4 py-2 bg-danger-600 hover:bg-danger-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={deleteConfirmEmail !== currentUser.email}
+                    className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Trash2 size={16} />
                     {t('settings.dataPrivacy.confirmDeleteButton', 'Delete My Account')}
@@ -514,9 +504,8 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
                     onClick={() => {
                       setShowDeleteConfirm(false);
                       setDeleteConfirmEmail('');
-                      setDeletePassword('');
                     }}
-                    className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-200 rounded-lg transition-colors hover:bg-slate-300 dark:hover:bg-navy-700"
+                    className="px-4 py-2 bg-c-surface-raised text-c-text-secondary rounded-lg transition-colors hover:bg-c-surface-raised dark:hover:bg-navy-700"
                   >
                     {t('common.cancel', 'Cancel')}
                   </button>

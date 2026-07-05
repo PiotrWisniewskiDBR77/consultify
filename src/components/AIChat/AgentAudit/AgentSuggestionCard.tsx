@@ -247,7 +247,7 @@ export const AgentSuggestionCard: React.FC<AgentSuggestionCardProps> = ({
                     onClick={() => onUserIntentChange(intent)}
                     className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
                       userIntent === intent
-                        ? 'bg-primary-600 border-primary-600 text-white'
+                        ? 'bg-c-text border-c-text text-c-bg'
                         : 'bg-white dark:bg-navy-950 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
                     }`}
                   >
@@ -272,7 +272,7 @@ export const AgentSuggestionCard: React.FC<AgentSuggestionCardProps> = ({
                     onClick={() => onMaxAgentsChange(num)}
                     className={`w-10 h-8 text-xs rounded-lg border transition-colors ${
                       maxAgents === num
-                        ? 'bg-primary-600 border-primary-600 text-white'
+                        ? 'bg-c-text border-c-text text-c-bg'
                         : 'bg-white dark:bg-navy-950 border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
                     }`}
                   >

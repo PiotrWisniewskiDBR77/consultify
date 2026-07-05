@@ -63,7 +63,7 @@ export const AdminSecurityIdentityPanel: React.FC = () => {
                 className={cn(
                   'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition',
                   activeTab === tab.id
-                    ? 'bg-navy-900 text-white'
+                    ? 'bg-c-text text-c-bg'
                     : 'bg-transparent text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/5'
                 )}
               >

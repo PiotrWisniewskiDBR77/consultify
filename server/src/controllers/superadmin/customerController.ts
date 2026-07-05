@@ -1,10 +1,13 @@
+import { flagOn, parseMaybeJson } from '../../utils/pgFlags.js';
 import { AppError, type AuthenticatedRequest, catchAsync, deps } from './shared.js';
 
 export const getLifecycleStages = catchAsync(async (req, res, next) => {
   const stages = await deps.db.all(
     'SELECT * FROM customer_lifecycle_stages ORDER BY order_index ASC'
   );
-  res.json(stages.map((s: any) => ({ ...s, isActive: s.is_active === 1 })));
+  // flagOn: is_active may be int4 (1), int8/bigint ("1"), or native boolean on
+  // Postgres — a raw `=== 1` silently renders every stage as inactive.
+  res.json(stages.map((s: any) => ({ ...s, isActive: flagOn(s.is_active) })));
 });
 
 export const createLifecycleStage = catchAsync(async (req, res, next) => {
@@ -118,9 +121,11 @@ export const getSuccessPlaybooks = catchAsync(async (req, res, next) => {
   res.json(
     playbooks.map((p: any) => ({
       ...p,
-      triggerConditions: JSON.parse(p.trigger_conditions_json || '{}'),
-      actions: JSON.parse(p.actions_json || '[]'),
-      isActive: p.is_active === 1,
+      // parseMaybeJson: *_json columns are native jsonb (object) on Postgres —
+      // a raw JSON.parse() throws on "[object Object]". flagOn: see above.
+      triggerConditions: parseMaybeJson(p.trigger_conditions_json, {}),
+      actions: parseMaybeJson(p.actions_json, []),
+      isActive: flagOn(p.is_active),
     }))
   );
 });

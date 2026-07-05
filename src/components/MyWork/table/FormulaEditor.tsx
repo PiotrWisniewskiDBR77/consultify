@@ -267,8 +267,8 @@ function highlightFormula(
       ? [{ pattern: fieldPattern, cls: 'text-emerald-600 dark:text-emerald-400 font-semibold' }]
       : []),
     { pattern: funcPattern, cls: 'text-blue-600 dark:text-blue-400 font-semibold' },
-    { pattern: numberPattern, cls: 'text-primary-600 dark:text-primary-400' },
-    { pattern: operatorPattern, cls: 'text-slate-600 dark:text-zinc-500' },
+    { pattern: numberPattern, cls: 'text-c-accent' },
+    { pattern: operatorPattern, cls: 'text-c-text-secondary' },
   ];
 
   // Build a combined match list
@@ -303,7 +303,7 @@ function highlightFormula(
   for (const m of filtered) {
     if (m.start > pos) {
       tokens.push(
-        <span key={keyIdx++} className="text-slate-700 dark:text-zinc-300">
+        <span key={keyIdx++} className="text-c-text">
           {expression.slice(pos, m.start)}
         </span>
       );
@@ -318,7 +318,7 @@ function highlightFormula(
 
   if (pos < expression.length) {
     tokens.push(
-      <span key={keyIdx++} className="text-slate-700 dark:text-zinc-300">
+      <span key={keyIdx++} className="text-c-text">
         {expression.slice(pos)}
       </span>
     );
@@ -568,10 +568,10 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
       <div className="space-y-3">
         {/* Code input with syntax highlighting */}
         <div className="relative">
-          <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+          <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
             {isPl ? 'Wyrażenie formuły' : 'Formula expression'}
           </label>
-          <div className="relative rounded-xl border border-slate-200 bg-slate-50 dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="relative rounded-xl border border-c-border-subtle bg-c-surface-raised">
             {/* Highlight overlay */}
             <div
               ref={highlightRef}
@@ -592,7 +592,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
               placeholder={
                 isPl ? 'np. IF({status} = "Done", 1, 0)' : 'e.g. IF({status} = "Done", 1, 0)'
               }
-              className="relative w-full resize-y rounded-xl bg-transparent p-3 font-mono text-xs leading-relaxed text-transparent caret-slate-800 outline-none placeholder:text-slate-400 dark:caret-zinc-200 dark:placeholder:text-zinc-600"
+              className="relative w-full resize-y rounded-xl bg-transparent p-3 font-mono text-xs leading-relaxed text-transparent caret-slate-800 outline-none placeholder:text-c-text-muted dark:caret-zinc-200 dark:placeholder:text-c-text-secondary"
               spellCheck={false}
             />
 
@@ -600,7 +600,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
             {showAutocomplete && (
               <div
                 ref={acRef}
-                className="absolute left-3 top-full z-50 mt-1 max-h-48 w-72 overflow-auto rounded-xl border border-slate-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
+                className="absolute left-3 top-full z-50 mt-1 max-h-48 w-72 overflow-auto rounded-xl border border-c-border-subtle bg-c-surface shadow-xl"
               >
                 {autocompleteItems.map((item, idx) => (
                   <button
@@ -609,7 +609,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
                     className={`flex w-full items-center gap-2 px-3 py-2 text-left text-xs transition-colors ${
                       idx === acHighlightIdx
                         ? 'bg-blue-50 dark:bg-blue-900/20'
-                        : 'hover:bg-slate-50 dark:hover:bg-zinc-800'
+                        : 'hover:bg-c-surface-raised'
                     }`}
                   >
                     <span
@@ -622,11 +622,11 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
                       {item.type === 'field' ? 'F' : 'fn'}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="font-medium text-slate-700 dark:text-zinc-200">
+                      <div className="font-medium text-c-text">
                         {item.label}
                       </div>
                       {item.detail && (
-                        <div className="truncate text-[10px] text-slate-600 dark:text-zinc-500">
+                        <div className="truncate text-[10px] text-c-text-secondary">
                           {item.detail}
                         </div>
                       )}
@@ -641,7 +641,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
         {/* Validation status */}
         <div className="flex items-center gap-3">
           {validating ? (
-            <div className="flex items-center gap-1.5 text-[10px] text-slate-600">
+            <div className="flex items-center gap-1.5 text-[10px] text-c-text-secondary">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               {isPl ? 'Walidacja...' : 'Validating...'}
             </div>
@@ -666,12 +666,12 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
 
           {/* Dependencies */}
           {validation?.valid && validation.dependencies && validation.dependencies.length > 0 && (
-            <div className="flex items-center gap-1 text-[10px] text-slate-600">
+            <div className="flex items-center gap-1 text-[10px] text-c-text-secondary">
               <span>{isPl ? 'Zależy od:' : 'Depends on:'}</span>
               {validation.dependencies.map((dep) => (
                 <span
                   key={dep}
-                  className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium text-slate-600 dark:bg-zinc-800 dark:text-zinc-300"
+                  className="rounded bg-c-surface-raised px-1.5 py-0.5 text-[9px] font-medium text-c-text-secondary"
                 >
                   {dep}
                 </span>
@@ -682,19 +682,19 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
 
         {/* Preview */}
         {validation?.valid && (
-          <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/50">
-            <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-500">
+          <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised px-4 py-2.5">
+            <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-c-text-secondary">
               <Sparkles className="h-3 w-3" />
               {isPl ? 'Podgląd wyniku' : 'Result preview'}
             </div>
             {previewLoading ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-600" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-c-text-secondary" />
             ) : preview != null ? (
-              <span className="font-mono text-xs font-semibold text-slate-700 dark:text-zinc-200">
+              <span className="font-mono text-xs font-semibold text-c-text">
                 {preview}
               </span>
             ) : (
-              <span className="text-[10px] italic text-slate-600">
+              <span className="text-[10px] italic text-c-text-secondary">
                 {isPl ? 'Brak danych do podglądu' : 'No preview data available'}
               </span>
             )}
@@ -702,23 +702,23 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
         )}
 
         {/* Function reference */}
-        <div className="rounded-xl border border-slate-200 dark:border-zinc-700">
+        <div className="rounded-xl border border-c-border-subtle">
           <button
             onClick={() => setShowFuncRef(!showFuncRef)}
-            className="flex w-full items-center gap-2 px-4 py-2.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-zinc-800/50"
+            className="flex w-full items-center gap-2 px-4 py-2.5 text-left transition-colors hover:bg-c-surface-raised"
           >
-            <BookOpen className="h-3.5 w-3.5 text-slate-600" />
-            <span className="flex-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+            <BookOpen className="h-3.5 w-3.5 text-c-text-secondary" />
+            <span className="flex-1 text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
               {isPl ? 'Dostępne funkcje' : 'Available functions'}
             </span>
             {showFuncRef ? (
-              <ChevronDown className="h-3.5 w-3.5 text-slate-600" />
+              <ChevronDown className="h-3.5 w-3.5 text-c-text-secondary" />
             ) : (
-              <ChevronRight className="h-3.5 w-3.5 text-slate-600" />
+              <ChevronRight className="h-3.5 w-3.5 text-c-text-secondary" />
             )}
           </button>
           {showFuncRef && (
-            <div className="border-t border-slate-200 px-2 py-2 dark:border-zinc-800">
+            <div className="border-t border-c-border-subtle px-2 py-2">
               {FUNCTION_CATEGORIES.map((cat) => {
                 const funcs = FORMULA_FUNCTIONS.filter((f) => f.category === cat.key);
                 const isExpanded = expandedCategory === cat.key;
@@ -726,7 +726,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
                   <div key={cat.key} className="mb-1">
                     <button
                       onClick={() => setExpandedCategory(isExpanded ? null : cat.key)}
-                      className="flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-[10px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                      className="flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-[10px] font-semibold text-c-text-secondary transition-colors hover:bg-c-surface-raised"
                     >
                       {isExpanded ? (
                         <ChevronDown className="h-3 w-3" />
@@ -754,14 +754,14 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
                                 textarea.focus();
                               });
                             }}
-                            className="flex w-full items-start gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-zinc-800"
+                            className="flex w-full items-start gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-c-surface-raised"
                           >
                             <FunctionSquare className="mt-0.5 h-3 w-3 flex-shrink-0 text-blue-500" />
                             <div>
-                              <div className="font-mono text-[10px] font-semibold text-slate-700 dark:text-zinc-200">
+                              <div className="font-mono text-[10px] font-semibold text-c-text">
                                 {fn.signature}
                               </div>
-                              <div className="text-[9px] text-slate-600 dark:text-zinc-500">
+                              <div className="text-[9px] text-c-text-secondary">
                                 {isPl ? fn.description.pl : fn.description.en}
                               </div>
                             </div>

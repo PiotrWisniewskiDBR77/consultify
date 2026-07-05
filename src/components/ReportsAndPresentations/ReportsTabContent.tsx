@@ -17,15 +17,19 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { useConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
 import { LoadingState, StatusChip } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 
 import {
+  type BulkAction,
+  BulkActionBar,
   FilterableTable,
   type FilterChip,
   type GridItem,
   GridView,
   type TableColumn,
+  useTableSelection,
   type ViewMode,
 } from '../shared/ModuleHub';
 import type { RowAction } from '../shared/RowActionsMenu';
@@ -84,6 +88,8 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
 
   const columns: TableColumn[] = useMemo(
     () => [
+      // canon §3.5 — leading selection column.
+      { id: 'select', label: '', type: 'select', width: '44px' },
       {
         id: 'title',
         label: t('rap.columns.title', 'Tytuł'),
@@ -97,7 +103,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
               >
                 {row.reportType}
               </span>
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+              <span className="text-sm font-medium text-c-text truncate">
                 {row.title}
               </span>
             </div>
@@ -119,7 +125,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         render: (row: ReportItem) => {
           const meta = REPORT_TYPE_META[row.reportType] || REPORT_TYPE_META.custom;
           return (
-            <span className={`text-xs font-medium ${meta.color}`}>
+            <span className="text-xs font-medium text-c-text-secondary">
               {isPolish ? meta.labelPl : meta.label}
             </span>
           );
@@ -159,7 +165,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         label: t('rap.columns.period', 'Okres'),
         width: '160px',
         render: (row: ReportItem) => {
-          if (!row.periodFrom) return <span className="text-sm text-slate-600">—</span>;
+          if (!row.periodFrom) return <span className="text-sm text-c-text-muted">—</span>;
           const from = new Date(row.periodFrom).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
             day: 'numeric',
             month: 'short',
@@ -172,7 +178,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
               })
             : '...';
           return (
-            <span className="text-sm text-slate-600 dark:text-slate-300">
+            <span className="text-sm text-c-text-secondary">
               {from} — {to}
             </span>
           );
@@ -186,7 +192,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         render: (row: ReportItem) => {
           const d = new Date(row.createdAt);
           return (
-            <span className="text-sm text-slate-500 dark:text-slate-400">
+            <span className="text-sm text-c-text-muted">
               {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
                 day: 'numeric',
                 month: 'short',
@@ -201,13 +207,13 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         label: t('rap.columns.exports', 'Eksporty'),
         width: '140px',
         render: (row: ReportItem) => {
-          if (!row.exportFormats?.length) return <span className="text-sm text-slate-600">—</span>;
+          if (!row.exportFormats?.length) return <span className="text-sm text-c-text-muted">—</span>;
           return (
             <div className="flex items-center gap-1">
               {row.exportFormats.map((fmt) => (
                 <span
                   key={fmt}
-                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300"
+                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-c-surface-raised text-c-text-secondary"
                 >
                   {fmt}
                 </span>
@@ -311,6 +317,46 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
       }
     : null;
   const itemIds = filteredData.map((i) => i.id);
+
+  // canon §3.5 — row selection + bulk archive (loops existing archiveReport).
+  const selection = useTableSelection(itemIds);
+  const { dialog: bulkConfirmDialog, confirm: confirmBulk } = useConfirmDialog();
+  const bulkActions = useMemo<BulkAction[]>(() => {
+    const rowById = new Map(filteredData.map((r) => [String(r.id), r]));
+    return [
+      {
+        id: 'archive',
+        label: t('rap.actions.archive', 'Archiwizuj'),
+        icon: Archive,
+        variant: 'danger',
+        onRun: async (sel) => {
+          const ok = await confirmBulk({
+            title: t('rap.bulk.confirmArchiveReportsTitle', 'Zarchiwizować zaznaczone raporty?'),
+            description: t(
+              'rap.bulk.confirmArchiveReportsDesc',
+              'Zarchiwizujesz {{count}} raportów. Operacja jest odwracalna.',
+              { count: sel.count }
+            ),
+            confirmLabel: t('rap.actions.archive', 'Archiwizuj'),
+            cancelLabel: t('common.cancel', 'Anuluj'),
+            variant: 'warning',
+          });
+          if (!ok) return;
+          await sel.runBulk(
+            async (id) => {
+              const row = rowById.get(id);
+              if (!row) throw new Error('missing row');
+              const done = await actions.archiveReport(row);
+              if (!done) throw new Error('archive failed');
+            },
+            { silent: true }
+          );
+          onRefresh();
+        },
+      },
+    ];
+  }, [filteredData, actions, confirmBulk, onRefresh, t]);
+
   const reviewDisabled =
     !previewItem?.artifactId ||
     reviewBusyArtifactId === previewItem?.artifactId ||
@@ -327,11 +373,11 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
     return (
       <div className="flex items-center justify-center h-full p-6">
         <div className="w-full max-w-3xl rounded-2xl border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/80 dark:bg-amber-500/10 p-6">
-          <div className="text-lg font-semibold text-slate-900 dark:text-white">
+          <div className="text-lg font-semibold text-c-text">
             {t('rap.errors.realReportsTitle', 'Real reports source needs attention')}
           </div>
-          <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">{error}</div>
-          <div className="mt-4 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <div className="mt-2 text-sm text-c-text-secondary">{error}</div>
+          <div className="mt-4 text-xs uppercase tracking-wide text-c-text-muted">
             {t(
               'rap.errors.realSourceHint',
               'No synthetic demo fallback was injected. Verify active DB, organization scope, and data-context before retrying.'
@@ -352,16 +398,16 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
 
     return (
       <div className="flex items-center justify-center h-full p-6">
-        <div className="w-full max-w-4xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-6">
+        <div className="w-full max-w-4xl rounded-2xl border border-c-border-subtle bg-c-surface p-6">
           <div className="flex items-start gap-4">
             <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-300">
               <FileText size={20} />
             </div>
             <div className="min-w-0">
-              <div className="text-lg font-semibold text-slate-900 dark:text-white">
+              <div className="text-lg font-semibold text-c-text">
                 {t('rap.empty.reportsTitle', 'Canonical management reports')}
               </div>
-              <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+              <div className="mt-1 text-sm text-c-text-secondary">
                 {t(
                   'rap.empty.reportsBody',
                   'This library is organized around the V3 report canon. Start from one of the four sponsor-ready report types below.'
@@ -374,19 +420,19 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
             {canon.map(([code, label]) => (
               <div
                 key={code}
-                className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.03] p-4"
+                className="rounded-xl border border-c-border-subtle bg-c-bg p-4"
               >
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
                   {code}
                 </div>
-                <div className="mt-1 text-sm font-medium text-slate-900 dark:text-white">
+                <div className="mt-1 text-sm font-medium text-c-text">
                   {label}
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="mt-5 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <div className="mt-5 text-xs uppercase tracking-wide text-c-text-muted">
             {t(
               'rap.empty.reportsHint',
               'Use the topbar quick chips or create a new report to enter R1, R2, R3, or R4 flow.'
@@ -461,18 +507,25 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
           />
         )}
       >
-        <FilterableTable
-          columns={columns}
-          data={filteredData}
-          selectedRowId={selectedId}
-          onRowClick={(row) => setSelectedId(row.id)}
-          onRowDoubleClick={(row) => openReport(row as ReportItem)}
-          getRowActions={(row) => getRowActions(row as unknown as ReportItem)}
-          activeFilters={activeFilters}
-          onFilterChange={onFilterChange}
-          emptyMessage={t('rap.empty.reports', 'Brak raportów')}
-          canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
-        />
+        <div className="flex h-full min-h-0 flex-col">
+          <BulkActionBar selection={selection} actions={bulkActions} />
+          {bulkConfirmDialog}
+          <div className="min-h-0 flex-1">
+            <FilterableTable
+              columns={columns}
+              data={filteredData}
+              selectedRowId={selectedId}
+              selection={selection.selectionProp}
+              onRowClick={(row) => setSelectedId(row.id)}
+              onRowDoubleClick={(row) => openReport(row as ReportItem)}
+              getRowActions={(row) => getRowActions(row as unknown as ReportItem)}
+              activeFilters={activeFilters}
+              onFilterChange={onFilterChange}
+              emptyMessage={t('rap.empty.reports', 'Brak raportów')}
+              canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+            />
+          </div>
+        </div>
       </TableWithPreviewLayout>
     </div>
   );

@@ -12,15 +12,20 @@ export function ConfidentialityBanner(
   props: ConfidentialityBannerProps,
   tokens: DesignTokens
 ): RenderedElement {
+  // Discreet classification mark — a quiet metadata label, not an alarm.
+  // Spaced caps read as an editorial mark rather than a warning sticker.
   const labels: Record<string, string> = {
-    confidential: 'CONFIDENTIAL',
-    internal: 'INTERNAL',
-    public: 'PUBLIC',
+    confidential: 'C O N F I D E N T I A L',
+    internal: 'I N T E R N A L',
+    public: 'P U B L I C',
   };
 
+  // No alarming red. The mark stays in a muted, neutral tone so it reads as a
+  // subtle footer-like classification rather than a red warning. On a dark
+  // cover the inverse (white) reads cleanly; muted keeps it from shouting.
   const colors: Record<string, string> = {
-    confidential: tokens.colors.danger,
-    internal: tokens.colors.warning,
+    confidential: tokens.colors.muted,
+    internal: tokens.colors.muted,
     public: tokens.colors.muted,
   };
 
@@ -28,14 +33,14 @@ export function ConfidentialityBanner(
     kind: 'text',
     apply(slide) {
       slide.addText(labels[props.level], {
-        x: 7.8,
-        y: 0.05,
-        w: 1.8,
-        h: 0.25,
-        fontSize: 7,
+        x: 7.6,
+        y: 0.06,
+        w: 2.0,
+        h: 0.22,
+        fontSize: 6.5,
         fontFace: tokens.fonts.body,
         color: colors[props.level],
-        bold: true,
+        bold: false,
         align: 'right',
       });
     },

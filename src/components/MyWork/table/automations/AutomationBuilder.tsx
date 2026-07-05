@@ -198,29 +198,29 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder={isPl ? 'Nazwa automatyzacji...' : 'Automation name...'}
-          className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base font-medium dark:border-gray-600 dark:bg-gray-800"
+          className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-4 py-2.5 text-base font-medium border-c-border bg-c-surface-raised"
         />
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder={isPl ? 'Opis (opcjonalny)' : 'Description (optional)'}
           rows={2}
-          className="w-full resize-none rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-600 dark:bg-gray-800"
+          className="w-full resize-none rounded-lg border border-c-border-subtle bg-c-surface px-4 py-2 text-sm border-c-border bg-c-surface-raised"
         />
       </div>
 
       {/* Enabled toggle */}
-      <div className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 dark:border-gray-600">
+      <div className="flex items-center justify-between rounded-lg border border-c-border-subtle px-4 py-3 border-c-border">
         <span className="text-sm font-medium">{isPl ? 'Aktywna' : 'Enabled'}</span>
         <button
           type="button"
           onClick={() => setEnabled((v) => !v)}
           className={`relative h-6 w-11 rounded-full transition-colors ${
-            enabled ? 'bg-navy-900' : 'bg-gray-300 dark:bg-gray-600'
+            enabled ? 'bg-c-surface' : 'bg-c-surface-raised'
           }`}
         >
           <span
-            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+            className={`absolute top-0.5 h-5 w-5 rounded-full bg-c-surface shadow transition-transform ${
               enabled ? 'translate-x-5' : 'translate-x-0.5'
             }`}
           />
@@ -229,7 +229,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
 
       {/* Trigger type */}
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+        <h3 className="text-sm font-semibold text-c-text-muted">
           <Zap className="mr-1.5 inline h-4 w-4" />
           {isPl ? 'Wyzwalacz' : 'Trigger'}
         </h3>
@@ -246,18 +246,18 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                 }}
                 className={`flex items-start gap-2.5 rounded-lg border p-3 text-left transition-colors ${
                   isActive
-                    ? 'border-slate-500 dark:border-white/40 bg-slate-100/60 dark:bg-white/[0.07]'
-                    : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500'
+                    ? 'border-c-border-strong bg-c-surface-raised'
+                    : 'border-c-border-subtle bg-c-surface hover:border-c-border'
                 }`}
               >
                 <span
-                  className={`mt-0.5 ${isActive ? 'text-slate-700 dark:text-slate-200' : 'text-gray-600'}`}
+                  className={`mt-0.5 ${isActive ? 'text-c-text' : 'text-c-text-secondary'}`}
                 >
                   {opt.icon}
                 </span>
                 <div>
                   <p className="text-sm font-medium">{isPl ? opt.labelPl : opt.label}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-c-text-muted">
                     {isPl ? opt.descriptionPl : opt.description}
                   </p>
                 </div>
@@ -268,8 +268,8 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
       </div>
 
       {/* Trigger config */}
-      <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-600">
-        <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+      <div className="rounded-lg border border-c-border-subtle p-4 border-c-border">
+        <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-c-text-muted">
           {isPl ? 'Konfiguracja wyzwalacza' : 'Trigger configuration'}
         </h4>
 
@@ -284,14 +284,14 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
 
         {(triggerType === 'record_created' || triggerType === 'record_updated') && (
           <div className="space-y-3">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-c-text-muted">
               {isPl
                 ? 'Opcjonalnie dodaj warunki filtrujące (pole, operator, wartość).'
                 : 'Optionally add filter conditions (field, operator, value).'}
             </p>
             {fields.length > 0 && (
               <div className="space-y-2">
-                <label className="block text-xs font-medium text-gray-500">
+                <label className="block text-xs font-medium text-c-text-muted">
                   {isPl ? 'Pole warunkowe' : 'Condition field'}
                 </label>
                 <select
@@ -302,7 +302,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                       conditionFieldId: e.target.value || undefined,
                     }))
                   }
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800"
+                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border bg-c-surface-raised"
                 >
                   <option value="">{isPl ? '(brak warunku)' : '(no condition)'}</option>
                   {fields.map((f) => (
@@ -317,7 +317,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
         )}
 
         {triggerType === 'webhook_received' && (
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-c-text-muted">
             {isPl
               ? 'Webhook URL zostanie wygenerowany po zapisaniu automatyzacji.'
               : 'Webhook URL will be generated after saving the automation.'}
@@ -328,15 +328,15 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
       {/* Actions */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          <h3 className="text-sm font-semibold text-c-text-muted">
             <Bell className="mr-1.5 inline h-4 w-4" />
             {isPl ? 'Akcje' : 'Actions'}
-            <span className="ml-1.5 text-xs font-normal text-gray-600">({actions.length})</span>
+            <span className="ml-1.5 text-xs font-normal text-c-text-secondary">({actions.length})</span>
           </h3>
           <button
             type="button"
             onClick={addAction}
-            className="flex items-center gap-1 rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+            className="flex items-center gap-1 rounded-md bg-c-surface-raised px-2.5 py-1 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised text-c-text-muted hover:bg-c-surface-raised"
           >
             <Plus className="h-3 w-3" />
             {isPl ? 'Dodaj akcję' : 'Add action'}
@@ -347,11 +347,11 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
           {actions.map((action, idx) => (
             <div
               key={action.id}
-              className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-600 dark:bg-gray-800"
+              className="rounded-lg border border-c-border-subtle bg-c-surface p-3 border-c-border bg-c-surface-raised"
             >
               <div className="mb-2 flex items-center gap-2">
-                <GripVertical className="h-4 w-4 flex-shrink-0 text-gray-600" />
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+                <GripVertical className="h-4 w-4 flex-shrink-0 text-c-text-secondary" />
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-c-accent text-xs font-bold text-c-accent bg-c-accent-soft text-c-accent">
                   {idx + 1}
                 </span>
                 <select
@@ -362,7 +362,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                       actionConfig: {},
                     })
                   }
-                  className="flex-1 rounded border border-gray-200 bg-transparent px-2 py-1 text-sm dark:border-gray-600"
+                  className="flex-1 rounded border border-c-border-subtle bg-transparent px-2 py-1 text-sm border-c-border"
                 >
                   {ACTION_OPTIONS.map((opt) => (
                     <option key={opt.type} value={opt.type}>
@@ -375,7 +375,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                     type="button"
                     onClick={() => moveAction(idx, -1)}
                     disabled={idx === 0}
-                    className="rounded p-1 text-gray-600 hover:text-gray-600 disabled:opacity-30"
+                    className="rounded p-1 text-c-text-secondary hover:text-c-text-secondary disabled:opacity-30"
                   >
                     <ArrowUp className="h-3.5 w-3.5" />
                   </button>
@@ -383,7 +383,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                     type="button"
                     onClick={() => moveAction(idx, 1)}
                     disabled={idx === actions.length - 1}
-                    className="rounded p-1 text-gray-600 hover:text-gray-600 disabled:opacity-30"
+                    className="rounded p-1 text-c-text-secondary hover:text-c-text-secondary disabled:opacity-30"
                   >
                     <ArrowDown className="h-3.5 w-3.5" />
                   </button>
@@ -391,7 +391,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                     type="button"
                     onClick={() => removeAction(action.id)}
                     disabled={actions.length <= 1}
-                    className="rounded p-1 text-danger-400 hover:text-danger-600 disabled:opacity-30"
+                    className="rounded p-1 text-c-danger hover:text-c-danger disabled:opacity-30"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -406,11 +406,11 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                     value={(action.actionConfig.url as string) || ''}
                     onChange={(e) => updateActionConfig(action.id, 'url', e.target.value)}
                     placeholder="https://example.com/webhook"
-                    className="w-full rounded border border-gray-200 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-700"
+                    className="w-full rounded border border-c-border-subtle px-2.5 py-1.5 text-sm border-c-border bg-c-surface-raised"
                   />
                 )}
                 {action.actionType === 'create_record' && fields.length > 0 && (
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-c-text-secondary">
                     {isPl
                       ? 'Rekord zostanie utworzony z domyślnymi wartościami.'
                       : 'Record will be created with default values.'}
@@ -420,7 +420,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                   <select
                     value={(action.actionConfig.fieldId as string) || ''}
                     onChange={(e) => updateActionConfig(action.id, 'fieldId', e.target.value)}
-                    className="w-full rounded border border-gray-200 bg-transparent px-2.5 py-1.5 text-sm dark:border-gray-600"
+                    className="w-full rounded border border-c-border-subtle bg-transparent px-2.5 py-1.5 text-sm border-c-border"
                   >
                     <option value="">{isPl ? 'Wybierz pole...' : 'Select field...'}</option>
                     {fields.map((f) => (
@@ -431,7 +431,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                   </select>
                 )}
                 {action.actionType === 'send_email' && (
-                  <p className="text-xs text-amber-500">
+                  <p className="text-xs text-c-warning">
                     {isPl
                       ? 'Usługa email nie jest jeszcze skonfigurowana.'
                       : 'Email service not yet configured.'}
@@ -444,12 +444,12 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-600">
+      <div className="flex items-center justify-end gap-3 border-t border-c-border-subtle pt-4 border-c-border">
         <button
           type="button"
           onClick={onCancel}
           disabled={saving}
-          className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+          className="rounded-lg border border-c-border-subtle px-4 py-2 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised border-c-border text-c-text-muted hover:bg-c-surface-raised"
         >
           {isPl ? 'Anuluj' : 'Cancel'}
         </button>
@@ -457,7 +457,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
           type="button"
           onClick={handleSave}
           disabled={!canSave || saving}
-          className="flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+          className="flex items-center gap-2 rounded-lg bg-c-accent px-4 py-2 text-sm font-medium text-c-text hover:bg-c-accent disabled:opacity-50"
         >
           {saving && <Loader2 className="h-4 w-4 animate-spin" />}
           {isPl ? 'Zapisz' : 'Save'}

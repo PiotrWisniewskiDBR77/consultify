@@ -29,6 +29,15 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { LoadingState } from '@/components/ui/primitives';
+import { buildDRDVisualizationDataFromAxes } from '../../services/drdVizAdapter';
+import {
+  buildADMAAssessmentData,
+  buildSIRIAssessmentData,
+  detectReportFramework,
+} from '../../services/report/assessmentReportDataAdapter';
+import { ADMAReportTemplate } from './reports/templates/ADMAReportTemplate';
+import { DRDReportTemplate } from './reports/templates/DRDReportTemplate';
+import { SIRIReportTemplate } from './reports/templates/SIRIReportTemplate';
 
 interface ReportContent {
   executiveSummary: string;
@@ -56,6 +65,8 @@ interface Report {
     | 'UTILIZED';
   assessmentId: string;
   assessmentName: string;
+  assessmentType?: string | null;
+  projectId?: string | null;
   content: ReportContent;
   axisData: Record<string, AxisData>;
   progress: number;
@@ -95,6 +106,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
 
   // Editable content
   const [name, setName] = useState('');
@@ -310,6 +322,28 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
 
   const gapSummary = getGapSummary();
   const isReadOnly = report.status === 'FINAL';
+  // Which per-framework report template can we render as a rich preview?
+  //  - DRD:  axisData keyed by the 7 named DRD axis keys (== AXIS_LABELS keys)
+  //          OR detected as DRD from assessmentType / axisData shape.
+  //  - SIRI/ADMA: detected from assessmentType marker or the prefixed axisData
+  //          keys (block_/dim_/area_ → SIRI, pillar_/dim_ → ADMA). OXFORD #103/#104.
+  const detectedFramework = detectReportFramework(report.axisData, report.assessmentType);
+  // DRD preview needs the named-axis-key shape that buildDRDVisualizationDataFromAxes
+  // consumes; keep that guard unchanged so DRD behaviour is untouched. SIRI/ADMA are
+  // detected from the prefixed axisData / assessmentType marker (OXFORD #103/#104).
+  const isDRD = Object.keys(report.axisData || {}).some((k) => k in AXIS_LABELS);
+  const isSIRI = !isDRD && detectedFramework === 'SIRI';
+  const isADMA = !isDRD && detectedFramework === 'ADMA';
+  // Any framework with a mountable rich template gets the Edit/Preview toggle.
+  const hasRichPreview = isDRD || isSIRI || isADMA;
+  // Fail-soft: the CONCLUSION_LAYER bridge only fires with an assessment id.
+  const conclusionSource = report.assessmentId
+    ? {
+        assessmentId: report.assessmentId,
+        assessmentName: report.assessmentName || null,
+        projectId: report.projectId || null,
+      }
+    : undefined;
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-navy-900">
@@ -330,7 +364,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={isReadOnly}
-                  className="text-xl font-bold text-navy-900 dark:text-white bg-transparent border-none outline-none focus:ring-2 focus:ring-primary-500 rounded px-1 -ml-1"
+                  className="text-xl font-bold text-navy-900 dark:text-white bg-transparent border-none outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] rounded px-1 -ml-1"
                 />
                 <span
                   className={`px-2 py-0.5 text-xs font-medium rounded-full ${
@@ -349,6 +383,32 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           </div>
 
           <div className="flex items-center gap-3">
+            {hasRichPreview && (
+              <div className="flex items-center rounded-lg border border-slate-200 dark:border-navy-700 p-0.5">
+                <button
+                  onClick={() => setViewMode('edit')}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    viewMode === 'edit'
+                      ? 'bg-slate-100 dark:bg-navy-800 text-navy-900 dark:text-white'
+                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                  }`}
+                >
+                  {FileText && <FileText size={14} className="inline mr-1 -mt-0.5" />}
+                  Edycja
+                </button>
+                <button
+                  onClick={() => setViewMode('preview')}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    viewMode === 'preview'
+                      ? 'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300'
+                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <Sparkles size={14} className="inline mr-1 -mt-0.5" />
+                  Podgląd raportu
+                </button>
+              </div>
+            )}
             {hasChanges && (
               <span className="text-xs text-amber-500 flex items-center gap-1">
                 <AlertCircle size={12} />
@@ -397,6 +457,31 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
       </div>
 
       {/* Content */}
+      {viewMode === 'preview' && hasRichPreview ? (
+        <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-navy-950/50">
+          <div className="max-w-5xl mx-auto">
+            {isSIRI ? (
+              <SIRIReportTemplate
+                data={buildSIRIAssessmentData(report.axisData)}
+                organizationName={report.assessmentName}
+                conclusionSource={conclusionSource}
+              />
+            ) : isADMA ? (
+              <ADMAReportTemplate
+                data={buildADMAAssessmentData(report.axisData)}
+                organizationName={report.assessmentName}
+                conclusionSource={conclusionSource}
+              />
+            ) : (
+              <DRDReportTemplate
+                visualizationData={buildDRDVisualizationDataFromAxes(report.axisData)}
+                companyName={report.assessmentName}
+                readOnly
+              />
+            )}
+          </div>
+        </div>
+      ) : (
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto p-6 space-y-8">
           {/* Gap Analysis Summary (Read-only) */}
@@ -443,7 +528,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               disabled={isReadOnly}
               placeholder="Podsumowanie wykonawcze raportu..."
               rows={6}
-              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
             />
           </div>
 
@@ -556,11 +641,12 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               disabled={isReadOnly}
               placeholder="Dodatkowe uwagi i notatki..."
               rows={4}
-              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
             />
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 };

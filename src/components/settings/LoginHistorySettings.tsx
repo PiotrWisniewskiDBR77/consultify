@@ -51,7 +51,7 @@ export const LoginHistorySettings: React.FC<LoginHistorySettingsProps> = ({ clas
       case 'success':
         return <CheckCircle className="text-green-500" size={18} aria-label="Successful" />;
       case 'failed':
-        return <XCircle className="text-danger-500" size={18} aria-label="Failed" />;
+        return <XCircle className="text-rose-500" size={18} aria-label="Failed" />;
       case 'suspicious':
         return <AlertTriangle className="text-amber-500" size={18} aria-label="Suspicious" />;
       default:
@@ -66,17 +66,17 @@ export const LoginHistorySettings: React.FC<LoginHistorySettingsProps> = ({ clas
   return (
     <div className={`space-y-6 ${className}`}>
       <div>
-        <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+        <h3 className="text-lg font-medium text-c-text flex items-center gap-2">
           <History size={20} />
           {t('settings.security.loginHistoryTitle', 'Login History')}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-sm text-c-text-muted mt-1">
           {t('settings.security.loginHistoryDesc', 'Review recent login activity on your account.')}
         </p>
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-slate-600 dark:text-slate-500">
+        <div className="text-center py-8 text-c-text-secondary">
           {t('common.loading', 'Loading...')}
         </div>
       ) : loadError ? (
@@ -96,20 +96,20 @@ export const LoginHistorySettings: React.FC<LoginHistorySettingsProps> = ({ clas
           {(history || []).map((event) => (
             <div
               key={event.id}
-              className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-800/50 rounded-lg"
+              className="flex items-center justify-between p-4 bg-c-surface-raised rounded-lg"
             >
               <div className="flex items-center gap-4">
                 {getStatusIcon(event.status || 'success')}
                 <div>
-                  <p className="font-medium text-slate-900 dark:text-white">
+                  <p className="font-medium text-c-text">
                     {event.device || 'Unknown Device'}
                   </p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-c-text-muted">
                     {event.location || 'Unknown Location'} · {event.ip || 'Unknown IP'}
                   </p>
                 </div>
               </div>
-              <span className="text-sm text-slate-600 dark:text-slate-500">
+              <span className="text-sm text-c-text-secondary">
                 {formatDate(event.timestamp || new Date().toISOString())}
               </span>
             </div>

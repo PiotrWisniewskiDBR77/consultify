@@ -384,7 +384,7 @@ const CustomerLifecycleView: React.FC = () => {
           <button
             onClick={() => setShowTransitionModal(true)}
             disabled={Boolean(loadError)}
-            className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+            className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-c-text px-4 py-2 rounded-lg transition-colors"
           >
             <ArrowRight className="w-4 h-4" />
             Transition Customer
@@ -702,7 +702,7 @@ const CustomerLifecycleView: React.FC = () => {
                       onChange={(e) =>
                         setEditingStage({ ...editingStage, description: e.target.value })
                       }
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-c-text"
                       rows={2}
                     />
                   </div>
@@ -739,7 +739,7 @@ const CustomerLifecycleView: React.FC = () => {
                 <div className="flex justify-end gap-3 mt-6">
                   <button
                     onClick={() => setEditingStage(null)}
-                    className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                    className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-c-text rounded-lg transition-colors"
                   >
                     Cancel
                   </button>
@@ -759,7 +759,7 @@ const CustomerLifecycleView: React.FC = () => {
           {showTransitionModal && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
               <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
-                <h3 className="text-xl font-bold text-white mb-4">Transition Customer</h3>
+                <h3 className="text-xl font-bold text-c-text mb-4">Transition Customer</h3>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-600 mb-1">
@@ -771,7 +771,7 @@ const CustomerLifecycleView: React.FC = () => {
                       onChange={(e) =>
                         setNewTransition({ ...newTransition, organizationId: e.target.value })
                       }
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-c-text"
                       placeholder="Organization ID"
                     />
                   </div>
@@ -784,7 +784,7 @@ const CustomerLifecycleView: React.FC = () => {
                       onChange={(e) =>
                         setNewTransition({ ...newTransition, fromStageId: e.target.value })
                       }
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-c-text"
                     >
                       <option value="">-- Current Stage --</option>
                       {stages.map((stage) => (
@@ -801,7 +801,7 @@ const CustomerLifecycleView: React.FC = () => {
                       onChange={(e) =>
                         setNewTransition({ ...newTransition, toStageId: e.target.value })
                       }
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-c-text"
                     >
                       <option value="">-- Select Stage --</option>
                       {stages.map((stage) => (
@@ -818,7 +818,7 @@ const CustomerLifecycleView: React.FC = () => {
                       onChange={(e) =>
                         setNewTransition({ ...newTransition, notes: e.target.value })
                       }
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-c-text"
                       rows={2}
                       placeholder="Optional notes about this transition"
                     />
@@ -827,7 +827,7 @@ const CustomerLifecycleView: React.FC = () => {
                 <div className="flex justify-end gap-3 mt-6">
                   <button
                     onClick={() => setShowTransitionModal(false)}
-                    className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                    className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-c-text rounded-lg transition-colors"
                   >
                     Cancel
                   </button>

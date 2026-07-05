@@ -597,13 +597,13 @@ export const SecurityPoliciesView: React.FC = () => {
             }}
             className={`p-4 rounded-xl border cursor-pointer transition-all ${
               selectedOrg === org.id
-                ? 'bg-slate-100 dark:bg-white/[0.08] border-[var(--c-info)]/40 dark:border-[var(--c-info)]/30'
-                : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 hover:border-[var(--c-info)]/30 dark:hover:border-[var(--c-info)]/20'
+                ? 'bg-slate-100 dark:bg-white/[0.08] border-c-info/40 dark:border-c-info/30'
+                : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 hover:border-c-info/30 dark:hover:border-c-info/20'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-white font-bold">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-c-text font-bold">
                   {org.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
@@ -614,7 +614,7 @@ export const SecurityPoliciesView: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               {org.hasCustomPolicy ? (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--c-info)]/10 text-[var(--c-info)]">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-c-info/10 text-[var(--c-info)]">
                   <Settings size={12} />
                   Custom Policy
                 </span>

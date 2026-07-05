@@ -43,7 +43,7 @@ import { GroupPermission, User, UserGroup } from '../../types';
 const GROUP_COLORS = [
   {
     id: 'violet',
-    bg: 'bg-navy-900',
+    bg: 'bg-c-accent',
     text: 'text-primary-500',
     light: 'bg-primary-100 dark:bg-primary-900/30',
   },
@@ -387,11 +387,11 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-c-text flex items-center gap-2">
             <UsersRound size={24} />
             {t('admin.groups.title', 'Teams')}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-c-text-muted mt-1">
             {t('admin.groups.desc', 'Create reusable teams to quickly assign to projects')}
           </p>
         </div>
@@ -426,7 +426,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
       {/* Search */}
       <div className="relative">
         <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-c-text-muted"
           size={18}
         />
         <input
@@ -435,20 +435,20 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search teams..."
           disabled={!!loadError}
-          className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
+          className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text"
         />
       </div>
 
       {/* Teams List */}
       {loadError ? (
-        <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+        <div className="p-6 bg-c-surface rounded-xl border border-c-border-subtle">
           <DegradedState title="Team list unavailable" description={loadError} />
         </div>
       ) : filteredGroups.length === 0 ? (
-        <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+        <div className="p-12 text-center bg-c-surface rounded-xl border border-c-border-subtle">
           <UsersRound className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Teams</h3>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 mb-4">
+          <h3 className="text-lg font-medium text-c-text">No Teams</h3>
+          <p className="text-c-text-muted mt-1 mb-4">
             Create your first team to quickly assign groups of users to projects
           </p>
           <button
@@ -468,7 +468,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
             return (
               <div
                 key={group.id}
-                className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden"
+                className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden"
               >
                 {/* Group Header */}
                 <div className="p-4">
@@ -481,21 +481,21 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-slate-900 dark:text-white">
+                          <h3 className="font-semibold text-c-text">
                             {group.name}
                           </h3>
                           {group.isDefault && (
-                            <span className="px-2 py-0.5 bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400 text-xs rounded-full">
+                            <span className="px-2 py-0.5 bg-c-surface-raised text-c-text-muted text-xs rounded-full">
                               Default
                             </span>
                           )}
                         </div>
                         {group.description && (
-                          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                          <p className="text-sm text-c-text-muted mt-0.5">
                             {group.description}
                           </p>
                         )}
-                        <div className="flex items-center gap-4 mt-2 text-xs text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center gap-4 mt-2 text-xs text-c-text-muted">
                           <span className="flex items-center gap-1">
                             <Users size={12} />
                             {group.memberIds.length} members
@@ -511,28 +511,28 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => openMembersModal(group)}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-300"
+                        className="p-2 hover:bg-c-surface-raised rounded-lg text-c-text-muted hover:text-c-text-secondary"
                         title="Manage members"
                       >
                         <Users size={18} />
                       </button>
                       <button
                         onClick={() => openEditModal(group)}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-300"
+                        className="p-2 hover:bg-c-surface-raised rounded-lg text-c-text-muted hover:text-c-text-secondary"
                         title="Edit group"
                       >
                         <Edit size={18} />
                       </button>
                       <button
                         onClick={() => handleDeleteGroup(group.id)}
-                        className="p-2 hover:bg-danger-100 dark:hover:bg-danger-900/30 rounded-lg text-slate-500 dark:text-slate-400 hover:text-danger-600"
+                        className="p-2 hover:bg-danger-100 dark:hover:bg-danger-900/30 rounded-lg text-c-text-muted hover:text-danger-600"
                         title="Delete group"
                       >
                         <Trash2 size={18} />
                       </button>
                       <button
                         onClick={() => setExpandedGroup(isExpanded ? null : group.id)}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg text-slate-500 dark:text-slate-400"
+                        className="p-2 hover:bg-c-surface-raised rounded-lg text-c-text-muted"
                       >
                         {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                       </button>
@@ -547,17 +547,17 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      className="border-t border-slate-200 dark:border-navy-700"
+                      className="border-t border-c-border-subtle"
                     >
                       <div className="p-4 space-y-4">
                         {/* Members */}
                         <div>
-                          <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                          <h4 className="text-sm font-medium text-c-text-secondary mb-2">
                             Members
                           </h4>
                           <div className="flex flex-wrap gap-2">
                             {group.memberIds.length === 0 ? (
-                              <span className="text-sm text-slate-500 dark:text-slate-400">
+                              <span className="text-sm text-c-text-muted">
                                 No members yet
                               </span>
                             ) : (
@@ -570,7 +570,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${
                                       isLeader
                                         ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200'
-                                        : 'bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-300'
+                                        : 'bg-c-surface-raised text-c-text-secondary'
                                     }`}
                                   >
                                     {isLeader && <Crown size={12} />}
@@ -586,12 +586,12 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
 
                         {/* Permissions */}
                         <div>
-                          <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                          <h4 className="text-sm font-medium text-c-text-secondary mb-2">
                             Permissions
                           </h4>
                           <div className="flex flex-wrap gap-2">
                             {group.permissions?.length === 0 ? (
-                              <span className="text-sm text-slate-500 dark:text-slate-400">
+                              <span className="text-sm text-c-text-muted">
                                 No permissions set
                               </span>
                             ) : (
@@ -629,10 +629,10 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden"
+              className="bg-c-surface rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden"
             >
-              <div className="p-6 border-b border-slate-200 dark:border-navy-700">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <div className="p-6 border-b border-c-border-subtle">
+                <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
                   <UsersRound size={20} />
                   {editingGroup ? 'Edit Team' : 'Create Team'}
                 </h3>
@@ -641,7 +641,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                 {/* Basic Info */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-sm font-medium text-c-text-secondary mb-1">
                       Group Name *
                     </label>
                     <input
@@ -649,11 +649,11 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="e.g., Project Managers"
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-sm font-medium text-c-text-secondary mb-1">
                       Description
                     </label>
                     <input
@@ -661,11 +661,11 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       placeholder="Brief description of this group"
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-sm font-medium text-c-text-secondary mb-1">
                       Color
                     </label>
                     <div className="flex gap-2">
@@ -682,13 +682,13 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-sm font-medium text-c-text-secondary mb-1">
                       Team Leader
                     </label>
                     <select
                       value={formData.leaderId}
                       onChange={(e) => setFormData({ ...formData, leaderId: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
+                      className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
                     >
                       <option value="">No leader</option>
                       {users.map((user) => (
@@ -701,12 +701,12 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                 </div>
 
                 {/* Default Project Role */}
-                <div className="p-4 bg-slate-50 dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-600">
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-2">
+                <div className="p-4 bg-c-surface-raised rounded-lg border border-c-border-subtle">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-1 flex items-center gap-2">
                     <FolderKanban size={16} />
                     Default Project Role
                   </label>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                  <p className="text-xs text-c-text-muted mb-2">
                     When this team is added to a project, members will be assigned this role by
                     default.
                   </p>
@@ -715,7 +715,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                     onChange={(e) =>
                       setFormData({ ...formData, defaultProjectRole: e.target.value })
                     }
-                    className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
+                    className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text"
                   >
                     <option value="PROJECT_EXECUTIVE">Project Executive / Sponsor (Level 0)</option>
                     <option value="PROJECT_MANAGER">Project Manager (Level 1)</option>
@@ -727,20 +727,20 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
 
                 {/* Permissions Matrix */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                  <label className="block text-sm font-medium text-c-text-secondary mb-3">
                     Permissions
                   </label>
-                  <div className="border border-slate-200 dark:border-navy-600 rounded-lg overflow-hidden">
+                  <div className="border border-c-border-subtle rounded-lg overflow-hidden">
                     <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full text-sm">
-                      <thead className="bg-slate-50 dark:bg-navy-900">
+                      <thead className="bg-c-surface-raised">
                         <tr>
-                          <th className="px-4 py-2 text-left text-slate-600 dark:text-slate-400 font-medium">
+                          <th className="px-4 py-2 text-left text-c-text-secondary font-medium">
                             Resource
                           </th>
                           {PERMISSION_ACTIONS.map((action) => (
                             <th
                               key={action}
-                              className="px-2 py-2 text-center text-slate-600 dark:text-slate-400 font-medium capitalize"
+                              className="px-2 py-2 text-center text-c-text-secondary font-medium capitalize"
                             >
                               {action}
                             </th>
@@ -751,10 +751,10 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                         {PERMISSION_RESOURCES.map((resource) => (
                           <tr key={resource.id}>
                             <td className="px-4 py-2">
-                              <div className="font-medium text-slate-900 dark:text-white">
+                              <div className="font-medium text-c-text">
                                 {resource.label}
                               </div>
-                              <div className="text-xs text-slate-500 dark:text-slate-400">
+                              <div className="text-xs text-c-text-muted">
                                 {resource.description}
                               </div>
                             </td>
@@ -765,8 +765,8 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                                   onClick={() => togglePermission(resource.id, action)}
                                   className={`w-6 h-6 rounded ${
                                     hasPermission(resource.id, action)
-                                      ? 'bg-navy-900 text-white'
-                                      : 'bg-slate-200 dark:bg-navy-700 text-slate-400 dark:text-slate-500'
+                                      ? 'bg-c-text text-c-bg'
+                                      : 'bg-slate-200 dark:bg-navy-700 text-c-text-muted'
                                   }`}
                                 >
                                   {hasPermission(resource.id, action) && (
@@ -782,10 +782,10 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                   </div>
                 </div>
               </div>
-              <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-3">
+              <div className="p-6 border-t border-c-border-subtle flex justify-end gap-3">
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                  className="px-4 py-2 text-c-text-secondary hover:text-c-text dark:hover:text-slate-200"
                 >
                   Cancel
                 </button>
@@ -816,10 +816,10 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl max-w-md w-full mx-4 max-h-[80vh] overflow-hidden"
+              className="bg-c-surface rounded-xl shadow-2xl max-w-md w-full mx-4 max-h-[80vh] overflow-hidden"
             >
-              <div className="p-6 border-b border-slate-200 dark:border-navy-700">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <div className="p-6 border-b border-c-border-subtle">
+                <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
                   <Users size={20} />
                   Manage Members - {selectedGroupForMembers.name}
                 </h3>
@@ -837,7 +837,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                         className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
                           isMember
                             ? 'bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800'
-                            : 'bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 hover:border-slate-300'
+                            : 'bg-c-surface-raised border border-c-border-subtle hover:border-c-border'
                         }`}
                       >
                         <div className="flex items-center gap-3">
@@ -846,12 +846,12 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-slate-900 dark:text-white">
+                              <span className="font-medium text-c-text">
                                 {user.firstName} {user.lastName}
                               </span>
                               {isLeader && <Crown size={14} className="text-amber-500" />}
                             </div>
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                            <span className="text-xs text-c-text-muted">
                               {user.email}
                             </span>
                           </div>
@@ -860,17 +860,17 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
                           className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                             isMember
                               ? 'bg-primary-600 border-primary-600'
-                              : 'border-slate-300 dark:border-navy-600'
+                              : 'border-c-border'
                           }`}
                         >
-                          {isMember && <Check size={14} className="text-white" />}
+                          {isMember && <Check size={14} className="text-c-text" />}
                         </div>
                       </div>
                     );
                   })}
                 </div>
               </div>
-              <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end">
+              <div className="p-6 border-t border-c-border-subtle flex justify-end">
                 <button
                   onClick={() => setShowMembersModal(false)}
                   className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium"

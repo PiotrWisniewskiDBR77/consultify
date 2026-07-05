@@ -82,20 +82,24 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
         onDragEnd={handleDragEnd}
         onDragOver={(e) => handleDragOver(e, idx)}
         onDrop={() => handleDrop(idx)}
-        className={`group relative w-full text-left rounded-2xl p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 border border-white/40 dark:border-white/[0.06] ${dragId === node.id ? 'opacity-40 scale-95' : ''} ${dragOverIdx === idx && dragId !== node.id ? 'ring-2 ring-primary-500/40' : ''}`}
-        style={{ backgroundColor: `${color}15`, borderLeftColor: color, borderLeftWidth: 4 }}
+        className={`group relative w-full text-left rounded-2xl p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 border border-c-border-subtle ${dragId === node.id ? 'opacity-40 scale-95' : ''} ${dragOverIdx === idx && dragId !== node.id ? 'ring-2 ring-c-focus' : ''}`}
+        style={{
+          backgroundColor: `color-mix(in srgb, ${color} 12%, var(--c-surface))`,
+          borderLeftColor: color,
+          borderLeftWidth: 4,
+        }}
       >
         {/* Icon/emoji */}
         {node.data?.icon && <span className="text-lg mb-1 block">{node.data.icon}</span>}
 
         {/* Title */}
-        <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5 leading-snug line-clamp-2">
+        <h4 className="text-xs font-bold text-c-text mb-1.5 leading-snug line-clamp-2">
           {node.data?.label || node.id}
         </h4>
 
         {/* Description snippet */}
         {(node.data?.bodyMarkdown || node.data?.description) && (
-          <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-3 mb-2">
+          <p className="text-[10px] text-c-text-secondary leading-relaxed line-clamp-3 mb-2">
             {String(node.data.bodyMarkdown || node.data.description).slice(0, 120)}
           </p>
         )}
@@ -107,7 +111,7 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
             if (!val) return null;
             return (
               <div key={col.key} className="flex items-center gap-1.5">
-                <span className="text-[8px] font-bold uppercase tracking-wider text-slate-600 w-14 truncate">
+                <span className="text-[8px] font-bold uppercase tracking-wider text-c-text-muted w-14 truncate">
                   {col.header}
                 </span>
                 {col.type === 'rating' ? (
@@ -117,30 +121,30 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
                         key={s}
                         size={8}
                         className={
-                          s <= Number(val) ? 'text-amber-400 fill-amber-400' : 'text-slate-600'
+                          s <= Number(val) ? 'text-c-warning fill-c-warning' : 'text-c-text-muted'
                         }
                       />
                     ))}
                   </span>
                 ) : col.type === 'progress' ? (
                   <div className="flex items-center gap-1 flex-1">
-                    <div className="flex-1 h-1 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+                    <div className="flex-1 h-1 rounded-full bg-c-border-subtle overflow-hidden">
                       <div
                         className="h-full rounded-full"
                         style={{ width: `${Number(val)}%`, backgroundColor: color }}
                       />
                     </div>
-                    <span className="text-[8px] text-slate-600">{val}%</span>
+                    <span className="text-[8px] text-c-text-muted">{val}%</span>
                   </div>
                 ) : col.type === 'select' ? (
                   <span
                     className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md"
-                    style={{ backgroundColor: `${color}20`, color }}
+                    style={{ backgroundColor: `color-mix(in srgb, ${color} 18%, transparent)`, color }}
                   >
                     {String(val)}
                   </span>
                 ) : (
-                  <span className="text-[9px] text-slate-600 dark:text-slate-300 truncate">
+                  <span className="text-[9px] text-c-text-secondary truncate">
                     {String(val)}
                   </span>
                 )}
@@ -150,22 +154,22 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
         </div>
 
         {/* Bottom indicators */}
-        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200/30 dark:border-white/[0.04]">
-          <span className="text-[8px] font-bold uppercase tracking-wider text-slate-600">
+        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-c-border-subtle">
+          <span className="text-[8px] font-bold uppercase tracking-wider text-c-text-muted">
             {node.type || 'idea'}
           </span>
           <div className="flex-1" />
           {commentCount > 0 && (
-            <span className="flex items-center gap-0.5 text-[9px] text-slate-600">
+            <span className="flex items-center gap-0.5 text-[9px] text-c-text-muted">
               <MessageSquare size={8} /> {commentCount}
             </span>
           )}
           {attachCount > 0 && (
-            <span className="flex items-center gap-0.5 text-[9px] text-slate-600">
+            <span className="flex items-center gap-0.5 text-[9px] text-c-text-muted">
               <Paperclip size={8} /> {attachCount}
             </span>
           )}
-          {node.data?.aiInsights && <Sparkles size={8} className="text-primary-400" />}
+          {node.data?.aiInsights && <Sparkles size={8} className="text-c-accent" />}
         </div>
       </button>
     );
@@ -174,7 +178,7 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
   if (nodes.length === 0) {
     return (
       <div className="w-full h-full flex items-center justify-center">
-        <p className="text-sm text-slate-600">{isPl ? 'Brak karteczek' : 'No sticky notes'}</p>
+        <p className="text-sm text-c-text-muted">{isPl ? 'Brak karteczek' : 'No sticky notes'}</p>
       </div>
     );
   }
@@ -184,7 +188,7 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
       {grouped ? (
         Object.entries(grouped).map(([groupKey, groupNodes]) => (
           <div key={groupKey} className="mb-6">
-            <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 px-1">
+            <h3 className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted mb-3 px-1">
               {groupKey} ({groupNodes.length})
             </h3>
             <div className="columns-2 md:columns-3 lg:columns-4 gap-3 [column-fill:_balance]">

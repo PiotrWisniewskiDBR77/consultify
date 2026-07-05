@@ -56,6 +56,9 @@ jobs:
 
       - name: Run TypeScript check
         run: npm run type-check
+
+      - name: Hardcoded-color ratchet gate (VEGAS V7.7)
+        run: npm run check:colors
       - name: Job duration
         if: always()
         run: |
@@ -320,6 +323,35 @@ jobs:
           name: unit-test-results-${{ matrix.shard }}
           path: junit-unit-${{ matrix.shard }}.xml
           retention-days: 30
+      - name: Job duration
+        if: always()
+        run: |
+          end=$(date +%s)
+          dur=$((end - JOB_START))
+          echo "Job duration: ${dur}s" >> "$GITHUB_STEP_SUMMARY"
+
+  # ═══════════════════════════════════════════════════════════════
+  # INITIATIVES UNIT GATE (deterministic, zero external deps)
+  # ═══════════════════════════════════════════════════════════════
+  initiatives-tests:
+    name: 🏗️ Initiatives Unit Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    needs: lint-typecheck
+    if: ${{ github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'main' || github.ref_name == 'develop' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture job start
+        run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run initiatives unit tests
+        run: npm run test:initiatives
       - name: Job duration
         if: always()
         run: |
@@ -1213,6 +1245,7 @@ jobs:
         e2e-tests,
         readiness-smoke,
         patch-coverage,
+        initiatives-tests,
       ]
     if: ${{ github.event_name == 'pull_request' }}
     steps:

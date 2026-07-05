@@ -71,7 +71,7 @@ export const EscalationBanner: React.FC<EscalationBannerProps> = ({
   return (
     <div className={`flex items-start gap-3 px-4 py-3 rounded-xl border ${bannerBg} mb-4`}>
       {loading ? (
-        <Loader2 size={16} className="animate-spin text-primary-400 shrink-0 mt-0.5" />
+        <Loader2 size={16} className="animate-spin text-c-accent shrink-0 mt-0.5" />
       ) : (
         <ShieldAlert size={16} className={`${iconColor} shrink-0 mt-0.5`} />
       )}
@@ -89,14 +89,14 @@ export const EscalationBanner: React.FC<EscalationBannerProps> = ({
         </div>
         <ul className="mt-1.5 space-y-0.5">
           {trigger.reasons.map((reason, i) => (
-            <li key={i} className="flex items-start gap-1.5 text-xs text-slate-600">
+            <li key={i} className="flex items-start gap-1.5 text-xs text-c-text-secondary">
               <AlertTriangle size={10} className={`${iconColor} shrink-0 mt-0.5`} />
               {reason}
             </li>
           ))}
         </ul>
         <div className="flex items-center gap-3 mt-2">
-          <div className="flex items-center gap-4 text-[10px] text-slate-500 uppercase tracking-wide">
+          <div className="flex items-center gap-4 text-[10px] text-c-text-secondary uppercase tracking-wide">
             {trigger.blockedInitiatives > 0 && (
               <span>
                 {trigger.blockedInitiatives} {t('reports.escalation.blocked', 'blocked')}
@@ -121,7 +121,7 @@ export const EscalationBanner: React.FC<EscalationBannerProps> = ({
         {onCreateR2 && (
           <button
             onClick={onCreateR2}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-600/80 hover:bg-primary-600 text-white transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-c-accent-soft hover:bg-c-accent-soft text-c-text transition-colors"
           >
             {t('reports.escalation.createR2', 'Create R2 Report')}
             <ArrowRight size={12} />
@@ -129,7 +129,7 @@ export const EscalationBanner: React.FC<EscalationBannerProps> = ({
         )}
         <button
           onClick={() => setDismissed(true)}
-          className="p-1 text-slate-500 hover:text-slate-300 transition-colors"
+          className="p-1 text-c-text-secondary hover:text-c-text-secondary transition-colors"
           title={t('reports.escalation.dismiss', 'Dismiss')}
         >
           <X size={14} />

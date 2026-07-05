@@ -63,6 +63,15 @@ const COMMANDS: CommandItem[] = [
     category: 'nodes',
     action: 'mm_duplicate',
   },
+  {
+    // M06 product gap — BatchConvertModal exists + dispatcher handles mm_batch_convert,
+    // but nothing offered it. Lets the user convert many selected nodes at once.
+    id: 'batch_convert',
+    labelPl: 'Konwersja zbiorcza',
+    labelEn: 'Batch convert',
+    category: 'nodes',
+    action: 'mm_batch_convert',
+  },
 
   // AI
   {
@@ -180,6 +189,31 @@ const COMMANDS: CommandItem[] = [
     labelEn: 'Toggle minimap',
     category: 'view',
     action: 'mm_toggle_minimap',
+  },
+  // M06 product gaps — these views were built (TimelineView/MindMap3DView/TimeHeatmap)
+  // but no UI surface emitted their action strings, so they were unreachable. The
+  // dispatcher (useMindMapQuickActions) already handles each one; the palette just
+  // needs to offer them.
+  {
+    id: 'timeline_view',
+    labelPl: 'Widok osi czasu',
+    labelEn: 'Timeline view',
+    category: 'view',
+    action: 'mm_timeline',
+  },
+  {
+    id: 'view_3d',
+    labelPl: 'Widok 3D',
+    labelEn: '3D view',
+    category: 'view',
+    action: 'mm_3d_view',
+  },
+  {
+    id: 'time_heatmap',
+    labelPl: 'Mapa cieplna czasu',
+    labelEn: 'Time heatmap',
+    category: 'view',
+    action: 'mm_time_heatmap',
   },
 
   // Export
@@ -337,33 +371,33 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
 
   const content = (
     <>
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[200]" onClick={onClose} />
-      <div className="fixed top-[14%] left-1/2 -translate-x-1/2 w-full max-w-md z-[201]">
-        <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-          <div className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-slate-200 dark:border-navy-700">
-            <Search size={16} className="text-slate-600 shrink-0" />
+      <div className="fixed inset-0 bg-c-bg backdrop-blur-sm z-context-menu" onClick={onClose} />
+      <div className="fixed top-[14%] left-1/2 -translate-x-1/2 w-full max-w-md z-context-menu">
+        <div className="bg-c-surface-raised dark:bg-c-surface rounded-xl shadow-2xl border border-c-border-subtle dark:border-c-border overflow-hidden">
+          <div className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-c-border-subtle dark:border-c-border">
+            <Search size={16} className="text-c-text-secondary shrink-0" />
             <input
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={isPl ? 'Szukaj akcji…' : 'Search actions…'}
-              className="flex-1 bg-transparent text-sm text-navy-900 dark:text-white placeholder-slate-400 outline-none"
+              className="flex-1 bg-transparent text-sm text-c-text-secondary dark:text-c-text placeholder-c-text-muted outline-none"
             />
-            <kbd className="hidden sm:flex items-center px-1.5 py-0.5 bg-slate-100 dark:bg-white/10 rounded text-[10px] font-mono text-slate-500 dark:text-slate-400">
+            <kbd className="hidden sm:flex items-center px-1.5 py-0.5 bg-c-surface-raised dark:bg-c-surface-raised rounded text-[10px] font-mono text-c-text-secondary dark:text-c-text-muted">
               ⌘K
             </kbd>
           </div>
 
           <div ref={listRef} className="max-h-[360px] overflow-y-auto p-1.5">
             {filtered.length === 0 ? (
-              <div className="py-8 text-center text-sm text-slate-600 dark:text-slate-500">
+              <div className="py-8 text-center text-sm text-c-text-secondary dark:text-c-text-secondary">
                 {isPl ? 'Brak wyników' : 'No results'}
               </div>
             ) : (
               Array.from(grouped.entries()).map(([cat, { items, startIdx }]) => (
                 <div key={cat} className="mb-1">
-                  <div className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-500">
+                  <div className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
                     {isPl ? CATEGORY_LABELS[cat]?.pl : CATEGORY_LABELS[cat]?.en || cat}
                   </div>
                   {items.map((cmd, i) => {
@@ -377,8 +411,8 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
                         onMouseEnter={() => setSelectedIdx(globalIdx)}
                         className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs transition-colors ${
                           isActive
-                            ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200'
-                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.04]'
+                            ? 'bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text'
+                            : 'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
                         }`}
                       >
                         <span className="flex-1 font-medium truncate">
@@ -388,8 +422,8 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
                           <kbd
                             className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
                               isActive
-                                ? 'bg-primary-200/60 dark:bg-primary-800/40 text-primary-700 dark:text-primary-300'
-                                : 'bg-slate-100 dark:bg-white/10 text-slate-600'
+                                ? 'bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text'
+                                : 'bg-c-surface-raised dark:bg-c-surface-raised text-c-text-secondary'
                             }`}
                           >
                             {cmd.shortcut}
@@ -403,17 +437,17 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-3 px-3.5 py-1.5 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-white/[0.02] text-[10px] text-slate-600 dark:text-slate-500">
+          <div className="flex items-center gap-3 px-3.5 py-1.5 border-t border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface-raised text-[10px] text-c-text-secondary dark:text-c-text-secondary">
             <span className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 bg-slate-200 dark:bg-white/10 rounded">↑↓</kbd>
+              <kbd className="px-1 py-0.5 bg-c-surface-raised dark:bg-c-surface-raised rounded">↑↓</kbd>
               {isPl ? 'Nawiguj' : 'Navigate'}
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 bg-slate-200 dark:bg-white/10 rounded">↵</kbd>
+              <kbd className="px-1 py-0.5 bg-c-surface-raised dark:bg-c-surface-raised rounded">↵</kbd>
               {isPl ? 'Wykonaj' : 'Execute'}
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 bg-slate-200 dark:bg-white/10 rounded">esc</kbd>
+              <kbd className="px-1 py-0.5 bg-c-surface-raised dark:bg-c-surface-raised rounded">esc</kbd>
               {isPl ? 'Zamknij' : 'Close'}
             </span>
           </div>
