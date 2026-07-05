@@ -22,6 +22,7 @@ import {
   validateWorkbookSchema,
 } from './WorkbookBuilder.js';
 import { type WorkbookSchema, WorkbookSchemaValidator } from './WorkbookSchema.js';
+import { augmentWorkbookWithCharts } from './workbookChartAugment.js';
 import { critiqueWorkbook, type WorkbookQualityReport } from './workbookQualityGate.js';
 import {
   buildFromTemplate,
@@ -1055,6 +1056,33 @@ class WorkbookGeneratorService {
       logger.info(
         `[WorkbookGenerator] Phase 5 QUALITY GATE: score=${qualityReport.score}, ${qualityReport.issues.length} issue(s), passed=${qualityReport.passed}`,
       );
+    }
+
+    // Chart bridge — illustrative PNG bar/line chart(s) mounted via
+    // sheet.chartImages (EQ-C). Runs AFTER the final schema is settled
+    // (post Phase 0 template-match OR post Phase 4 review/Phase 5 repair)
+    // and BEFORE the ExcelJS build. Purely additive & fail-soft: any error
+    // here must never block workbook generation.
+    const chartAugmentStart = Date.now();
+    try {
+      const chartsBefore = schema!.sheets.reduce((n, s) => n + (s.chartImages?.length ?? 0), 0);
+      schema = await augmentWorkbookWithCharts(schema!);
+      const chartsAfter = schema!.sheets.reduce((n, s) => n + (s.chartImages?.length ?? 0), 0);
+      const added = chartsAfter - chartsBefore;
+      pipelineLog.push({
+        phase: 'chart-augment',
+        status: 'ok',
+        durationMs: Date.now() - chartAugmentStart,
+        detail: `${added} chart(s) added`,
+      });
+    } catch (chartErr) {
+      logger.warn('[WorkbookGenerator] chart-augment threw, continuing without charts', chartErr);
+      pipelineLog.push({
+        phase: 'chart-augment',
+        status: 'warning',
+        durationMs: Date.now() - chartAugmentStart,
+        detail: 'chart-augment failed, proceeding without charts (fail-soft)',
+      });
     }
 
     let buffer: Buffer;
