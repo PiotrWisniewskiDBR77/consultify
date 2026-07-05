@@ -689,6 +689,8 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   // it live (reuse only — no new WS message type).
   const handleToggleReaction = useCallback(
     (nodeId: string, emoji: string) => {
+      // Observers (B1 read-only) must not mutate the board — reacting is a write.
+      if (locked) return;
       setNodes((nds) => {
         let updated: Node | null = null;
         const next = nds.map((n) => {
@@ -708,11 +710,12 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         return next;
       });
     },
-    [collab, currentUserId, setNodes]
+    [collab, currentUserId, locked, setNodes]
   );
 
   // Reactions are live only during an active facilitation session with the flag on.
-  const reactionsActive = Boolean(sessionState.active && sessionState.reactionsEnabled);
+  // Observers (B1 read-only) never get the reaction affordance — reacting is a write.
+  const reactionsActive = Boolean(sessionState.active && sessionState.reactionsEnabled && !locked);
   // Ref mirror so the (open-scoped) hydrate closure can seed reactionsEnabled with
   // the current value without taking reactionsActive as a dep (which would trigger a
   // full re-hydrate/network fetch every time the flag flips). The sync effect below
