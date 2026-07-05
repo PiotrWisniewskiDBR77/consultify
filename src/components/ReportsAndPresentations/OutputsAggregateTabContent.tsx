@@ -49,6 +49,7 @@ import {
 } from '../shared/ModuleHub';
 import {
   StandardPreview,
+  standardPreviewShortcuts,
   type StandardPreviewActions,
   StandardTable,
   type StandardRowMenu,
@@ -735,6 +736,78 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       }
     : null;
 
+  const previewActions: StandardPreviewActions | undefined = useMemo(() => {
+    if (!previewItem) return undefined;
+    const informational: NonNullable<StandardPreviewActions['informational']> = [
+      {
+        id: 'open',
+        variant: 'neutral',
+        label: t('rap.actions.open', 'Otwórz'),
+        icon: ExternalLink,
+        shortcut: 'O',
+        onClick: () => openRow(previewItem),
+      },
+    ];
+    if (previewItem.kind === 'sheet') {
+      informational.push({
+        id: 'open_sheet',
+        variant: 'neutral',
+        label: isEnabled('tablePlatformMetadataFirst')
+          ? t('rap.actions.openInWorkspace', 'Open in workspace')
+          : t('rap.actions.exportXlsx', 'Download XLSX'),
+        icon: Download,
+        shortcut: 'D',
+        onClick: () => openRow(previewItem),
+      });
+    }
+    if (previewItem.artifactId) {
+      const reviewBlocked =
+        previewItem.governance?.validationState === 'pending' ||
+        previewItem.governance?.validationState === 'attention_required' ||
+        (!!previewItem.governance?.publishState &&
+          previewItem.governance.publishState !== 'private_draft');
+      informational.push({
+        id: 'start_review',
+        variant: 'neutral',
+        label: t('rap.actions.startReview', 'Start review'),
+        icon: Eye,
+        shortcut: 'R',
+        disabled: reviewBlocked,
+        onClick: async () => {
+          const aid = previewItem.artifactId;
+          if (!aid) return;
+          const ok = await actions.startArtifactReview(aid);
+          if (ok) onRefresh();
+        },
+      });
+    }
+    return { informational };
+  }, [previewItem, t, isEnabled, actions, onRefresh]);
+
+  // Esc closes preview; single-key shortcuts (O/D/R) active while preview
+  // open (kanon B.24/B.31 — wzór 1:1 z Assessment/Results adopterami).
+  useEffect(() => {
+    if (!selectedId) return;
+    const shortcuts = standardPreviewShortcuts(previewActions);
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) {
+        return;
+      }
+      if (e.key === 'Escape') {
+        setSelectedId(null);
+        return;
+      }
+      const handler = shortcuts[e.key.toUpperCase()];
+      if (handler) {
+        e.preventDefault();
+        handler();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectedId, previewActions]);
+
   if (loading) {
     return (
       <div className="p-4">
@@ -1119,41 +1192,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
                     ]
                   : []
               }
-              actions={(() => {
-                const informational: NonNullable<StandardPreviewActions['informational']> = [];
-                if (previewItem.kind === 'sheet') {
-                  informational.push({
-                    id: 'open_sheet',
-                    variant: 'neutral',
-                    label: isEnabled('tablePlatformMetadataFirst')
-                      ? t('rap.actions.openInWorkspace', 'Open in workspace')
-                      : t('rap.actions.exportXlsx', 'Download XLSX'),
-                    icon: ExternalLink,
-                    onClick: () => openRow(previewItem),
-                  });
-                }
-                if (previewItem.artifactId) {
-                  const reviewBlocked =
-                    previewItem.governance?.validationState === 'pending' ||
-                    previewItem.governance?.validationState === 'attention_required' ||
-                    (!!previewItem.governance?.publishState &&
-                      previewItem.governance.publishState !== 'private_draft');
-                  informational.push({
-                    id: 'start_review',
-                    variant: 'neutral',
-                    label: t('rap.actions.startReview', 'Start review'),
-                    icon: Eye,
-                    disabled: reviewBlocked,
-                    onClick: async () => {
-                      const aid = previewItem.artifactId;
-                      if (!aid) return;
-                      const ok = await actions.startArtifactReview(aid);
-                      if (ok) onRefresh();
-                    },
-                  });
-                }
-                return informational.length ? { informational } : undefined;
-              })()}
+              actions={previewActions}
             >
               <TrustStatePreviewSection
                 governance={previewItem.governance}
