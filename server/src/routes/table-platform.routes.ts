@@ -10,6 +10,7 @@ import multer from 'multer';
 import { featureFlags } from '../config/FeatureFlags.js';
 import { type AuthRequest, requireSuperAdmin, verifyToken } from '../middleware/auth.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
+import { requireOrgRole } from '../middleware/rbac.middleware.js';
 import {
   requireServiceAccountScope,
   serviceAccountAuth,
@@ -4611,7 +4612,7 @@ router.post('/sso/callback', async (req: Request, res: Response) => {
 // SERVICE ACCOUNTS API
 // ==========================================
 
-router.post('/admin/service-accounts', async (req: Request, res: Response) => {
+router.post('/admin/service-accounts', requireOrgRole('admin'), async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const organizationId = authReq.organizationId;
@@ -4635,7 +4636,7 @@ router.post('/admin/service-accounts', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/admin/service-accounts', async (req: Request, res: Response) => {
+router.get('/admin/service-accounts', requireOrgRole('admin'), async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const organizationId = authReq.organizationId;
@@ -4647,7 +4648,7 @@ router.get('/admin/service-accounts', async (req: Request, res: Response) => {
   }
 });
 
-router.delete('/admin/service-accounts/:id', async (req: Request, res: Response) => {
+router.delete('/admin/service-accounts/:id', requireOrgRole('admin'), async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const organizationId = authReq.organizationId;

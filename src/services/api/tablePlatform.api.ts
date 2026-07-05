@@ -2259,3 +2259,58 @@ export async function markAllNotificationsRead(): Promise<{
   });
   return handleResponse(res, 'Failed to mark all notifications read');
 }
+
+// ============================================================================
+// SERVICE ACCOUNTS API (org-admin only — see server guard requireOrgRole('admin'))
+// ============================================================================
+
+export interface TpServiceAccount {
+  id: string;
+  name: string;
+  description: string | null;
+  token_prefix: string;
+  scopes: string[];
+  last_used_at: string | null;
+  expires_at: string | null;
+  created_at: string;
+}
+
+export interface TpServiceAccountCreateResult {
+  account: TpServiceAccount;
+  token: string;
+}
+
+/** List service accounts (PATs) for the current organization. */
+export async function getServiceAccounts(): Promise<TpServiceAccount[]> {
+  const res = await fetchWithRetry(`${BASE_PATH}/admin/service-accounts`, {
+    headers: getHeaders(),
+  });
+  return handleResponse<TpServiceAccount[]>(res, 'Failed to list service accounts');
+}
+
+/**
+ * Create a new service account (PAT). The returned `token` is the ONLY time
+ * the raw secret is ever available — it is not retrievable afterwards.
+ */
+export async function createServiceAccount(data: {
+  name: string;
+  description?: string;
+  scopes: string[];
+  expiresInDays?: number;
+}): Promise<TpServiceAccountCreateResult> {
+  const res = await fetchWithRetry(`${BASE_PATH}/admin/service-accounts`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse<TpServiceAccountCreateResult>(res, 'Failed to create service account');
+}
+
+/** Revoke (permanently delete) a service account token. */
+export async function revokeServiceAccount(id: string): Promise<void> {
+  const res = await fetchWithRetry(`${BASE_PATH}/admin/service-accounts/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  await handleResponse(res, 'Failed to revoke service account');
+}
