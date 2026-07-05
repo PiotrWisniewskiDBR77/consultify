@@ -1,6 +1,8 @@
 import React from 'react';
 import { Handle, type NodeProps, NodeResizer, Position } from 'reactflow';
 
+import { CommentPinBadge, commentCountOf } from './CommentPinBadge';
+
 export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
   const [editing, setEditing] = React.useState(false);
   const [editValue, setEditValue] = React.useState(String(data?.label || ''));
@@ -20,6 +22,8 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
     }
   };
 
+  const commentCount = commentCountOf(data);
+
   return (
     <>
       <NodeResizer isVisible={selected && !data?.locked} minWidth={100} minHeight={40} />
@@ -33,6 +37,11 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
         }}
       >
         <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-c-border-strong !-top-1" />
+        <CommentPinBadge
+          nodeId={nodeId}
+          count={commentCount}
+          positionClassName="top-1 left-1"
+        />
         {editing ? (
           <textarea
             ref={textareaRef}

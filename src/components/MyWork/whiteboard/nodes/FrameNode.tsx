@@ -2,10 +2,12 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import React from 'react';
 import { type NodeProps, NodeResizer } from 'reactflow';
 
+import { CommentPinBadge, commentCountOf } from './CommentPinBadge';
 import { useIsDark } from './whiteboardNodeHelpers';
 
-export const FrameNode: React.FC<NodeProps> = ({ data, selected }) => {
+export const FrameNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
   const isDark = useIsDark();
+  const commentCount = commentCountOf(data);
   const lightBg = data?.bgColor || 'rgba(241,245,249,0.6)';
   const darkBg = 'rgba(15,23,42,0.7)';
   const collapsed = Boolean(data?.collapsed);
@@ -45,6 +47,7 @@ export const FrameNode: React.FC<NodeProps> = ({ data, selected }) => {
           backgroundColor: isDark ? darkBg : lightBg,
         }}
       >
+        <CommentPinBadge nodeId={nodeId} count={commentCount} />
         <div className="flex items-center gap-1.5 mb-2">
           {data?.semanticLabel && (
             <span className="px-1.5 py-0.5 rounded-full bg-c-surface text-[9px] font-bold uppercase tracking-[0.12em] text-c-text-muted">
