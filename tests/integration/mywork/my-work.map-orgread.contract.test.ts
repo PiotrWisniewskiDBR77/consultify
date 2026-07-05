@@ -1,9 +1,11 @@
 /**
- * M09 L-01 — GET /my-ideas/:id/map org-read fallback (DP-3 multiplayer).
+ * M09 L-01 / A1 (D-WB-2) — GET /my-ideas/:id/map canonical-owner read.
  *
  * A 2nd org member opening a colleague's whiteboard must get 200 with the owner's
- * canonical board (not 404). Owner / single-player path is unchanged. Idea outside
- * the org → 404. Mirrors the map-sync contract harness (mock queryHelpers, no DB).
+ * canonical board (not 404), matching the row PUT/sync now write to (see
+ * resolveCanonicalMapOwner in my-work.routes.ts). Owner / single-player path is
+ * unchanged (ownerUserId === viewer's own id). Idea outside the org → 404. Mirrors
+ * the map-sync contract harness (mock queryHelpers, no DB).
  */
 import express from 'express';
 import request from 'supertest';
@@ -106,7 +108,7 @@ function buildApp() {
   return app;
 }
 
-describe('M09 L-01 — GET /map org-read fallback (DP-3)', () => {
+describe('M09 L-01 / A1 (D-WB-2) — GET /map canonical-owner read', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockQueryAll.mockResolvedValue([]);
@@ -117,9 +119,7 @@ describe('M09 L-01 — GET /map org-read fallback (DP-3)', () => {
     mockQueryOne
       // idea exists in org, owned by owner-9 (viewer is user-1)
       .mockResolvedValueOnce({ id: IDEA_ID, title: 'Shared board', ownerUserId: 'owner-9' })
-      // viewer's own map row → none
-      .mockResolvedValueOnce(null)
-      // org-read fallback: owner-9's canonical board
+      // canonical-owner (owner-9) row read directly — no viewer-row lookup anymore
       .mockResolvedValueOnce(OWNER_MAP);
 
     const res = await request(buildApp()).get(`/api/my-work/my-ideas/${IDEA_ID}/map`);
@@ -127,18 +127,20 @@ describe('M09 L-01 — GET /map org-read fallback (DP-3)', () => {
     expect(res.status).toBe(200);
     expect(res.body.map?.nodes?.length).toBe(1);
     expect(res.body.isDefault).toBeFalsy();
+    // exactly 2 queries: idea (resolves canonical owner) + owner's map row
+    expect(mockQueryOne).toHaveBeenCalledTimes(2);
   });
 
-  it('owner reads own board without hitting the fallback path → 200', async () => {
+  it('owner reads own board (canonical owner === viewer) → 200', async () => {
     mockQueryOne
       .mockResolvedValueOnce({ id: IDEA_ID, title: 'Mine', ownerUserId: 'user-1' })
-      .mockResolvedValueOnce(OWNER_MAP); // own row found → no 3rd query
+      .mockResolvedValueOnce(OWNER_MAP); // own (== canonical) row found
 
     const res = await request(buildApp()).get(`/api/my-work/my-ideas/${IDEA_ID}/map`);
 
     expect(res.status).toBe(200);
     expect(res.body.map?.nodes?.length).toBe(1);
-    // exactly 2 queries: idea + own map (no fallback)
+    // exactly 2 queries: idea + canonical map row (owner === viewer here)
     expect(mockQueryOne).toHaveBeenCalledTimes(2);
   });
 
@@ -153,7 +155,6 @@ describe('M09 L-01 — GET /map org-read fallback (DP-3)', () => {
   it('member opens a colleague board that has no saved map yet → 200 default (not 404)', async () => {
     mockQueryOne
       .mockResolvedValueOnce({ id: IDEA_ID, title: 'Empty shared', ownerUserId: 'owner-9' })
-      .mockResolvedValueOnce(null) // viewer own row
       .mockResolvedValueOnce(null); // owner has no map row either
 
     const res = await request(buildApp()).get(`/api/my-work/my-ideas/${IDEA_ID}/map`);

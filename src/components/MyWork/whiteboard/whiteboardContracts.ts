@@ -221,11 +221,6 @@ export const WHITEBOARD_ACTIONS: Record<string, WhiteboardActionDefinition> = {
     surface: 'tools_panel',
     label: 'AI: convert board to table (cross-tool preview)',
   },
-  wb_ai_summarize: {
-    id: 'wb_ai_summarize',
-    surface: 'tools_panel',
-    label: 'AI: summarize stickies',
-  },
 };
 
 const SEMANTIC_TYPE_LABELS: Record<WhiteboardSemanticType, { en: string; pl: string }> = {

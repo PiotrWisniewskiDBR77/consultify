@@ -15,8 +15,7 @@ export type WhiteboardAIGeneratorType =
   | 'wb_name_clusters'
   | 'wb_to_map_branches'
   | 'wb_to_table'
-  | 'wb_extract_actions'
-  | 'sticky_summarize';
+  | 'wb_extract_actions';
 
 const AI_ACTION_MAP: Record<string, WhiteboardAIGeneratorType> = {
   wb_ai_find_themes: 'wb_find_themes',
@@ -24,7 +23,6 @@ const AI_ACTION_MAP: Record<string, WhiteboardAIGeneratorType> = {
   wb_ai_to_map: 'wb_to_map_branches',
   wb_ai_to_table: 'wb_to_table',
   wb_ai_extract_actions: 'wb_extract_actions',
-  wb_ai_summarize: 'sticky_summarize',
 };
 
 export interface WhiteboardQuickActionHandlers {

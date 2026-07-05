@@ -3579,20 +3579,26 @@ router.get(
 
       if (!ids.length) return res.json({ metrics: {} });
 
+      // A1 (D-WB-2) read-side parity: join through my_ideas so each idea's row is
+      // read via its OWNER's user_id (the canonical row PUT/sync now write to — see
+      // resolveCanonicalMapOwner) instead of the caller's own user_id. A single-owner
+      // caller is unaffected (own ideas: ownerUserId === userId); a non-owner org
+      // member now sees the real shared counts instead of 0.
       const placeholders = queryHelpers.buildInPlaceholders(ids);
       const rows =
         (await queryHelpers.queryAll<any>(
           `
           SELECT
-            idea_id as "ideaId",
-            nodes_json as "nodesJson",
-            edges_json as "edgesJson",
-            updated_at as "updatedAt"
-          FROM my_idea_maps
-          WHERE user_id = ? AND organization_id = ?
-            AND idea_id IN (${placeholders})
+            m.idea_id as "ideaId",
+            m.nodes_json as "nodesJson",
+            m.edges_json as "edgesJson",
+            m.updated_at as "updatedAt"
+          FROM my_idea_maps m
+          JOIN my_ideas i ON i.id = m.idea_id AND i.user_id = m.user_id
+          WHERE m.organization_id = ? AND i.organization_id = ?
+            AND m.idea_id IN (${placeholders})
         `,
-          [userId, orgId, ...ids]
+          [orgId, orgId, ...ids]
         )) || [];
 
       const byId = new Map<string, any>();
@@ -3631,8 +3637,9 @@ router.get(
     const isPl = language.startsWith('pl');
 
     // M09 L-01 (DP-3 multiplayer): idea existence is ORG-scoped for READ so a 2nd
-    // org member opening a colleague's board gets 200 (not 404). Ownership (user_id)
-    // still gates WRITE — see PUT handler. Single-player owners are unaffected.
+    // org member opening a colleague's board gets 200 (not 404). Org-scoped SELECT
+    // (id, title, ownerUserId) doubles as the resolveCanonicalMapOwner lookup here —
+    // we keep the extra "title" column for the default-map fallback below.
     const idea = await queryHelpers.queryOne<any>(
       `SELECT id, title, user_id as "ownerUserId" FROM my_ideas WHERE id = ? AND organization_id = ? LIMIT 1`,
       [ideaId, orgId]
@@ -3657,14 +3664,14 @@ router.get(
       LIMIT 1
     `;
 
-    // Own copy first (owner / single-player unchanged).
-    let row = await queryHelpers.queryOne<any>(mapSelectSql, [ideaId, userId, orgId]);
-    // M09 L-01: org-read fallback — a non-owner member reads the idea owner's
-    // canonical board so the shared whiteboard loads instead of 404'ing. Realtime
-    // graph_patch (L-02) then keeps both clients in sync. WRITE stays per-user.
-    if (!row && idea.ownerUserId && String(idea.ownerUserId) !== String(userId)) {
-      row = await queryHelpers.queryOne<any>(mapSelectSql, [ideaId, idea.ownerUserId, orgId]);
-    }
+    // A1 (D-WB-2): read the canonical (idea-owner's) row — the same row PUT/sync now
+    // write to (see resolveCanonicalMapOwner). The owner reading their own idea is
+    // unaffected (ownerUserId === userId). A non-owner org member now sees the SAME
+    // shared board they just wrote to, instead of a stale/empty per-user copy.
+    const canonicalUserId = idea.ownerUserId ? String(idea.ownerUserId) : null;
+    const row = canonicalUserId
+      ? await queryHelpers.queryOne<any>(mapSelectSql, [ideaId, canonicalUserId, orgId])
+      : null;
 
     if (!row) {
       const def = buildDefaultIdeaMap({ id: ideaId, title: String(idea?.title || '') }, isPl);
@@ -3736,13 +3743,16 @@ router.get(
  * Notes:
  * - Keeps list fast by avoiding N calls to /:id/map
  * - JSON is parsed in JS for cross-DB compatibility.
+ * - NOTE: this route is currently shadowed by the `ideaId === 'metrics'` special case
+ *   in `/my-ideas/:id/map` above (Express matches that route first), but is kept in
+ *   sync with the same canonical-owner read for when/if that special-casing is removed.
  */
 router.get(
   '/my-ideas/metrics/map',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const { userId, orgId } = identity;
+    const { orgId } = identity;
     if (!(await requireTables(res, ['my_idea_maps']))) return;
 
     const idsRaw = String(req.query.ids || '').trim();
@@ -3759,20 +3769,24 @@ router.get(
 
     if (!ids.length) return res.json({ metrics: {} });
 
+    // A1 (D-WB-2) read-side parity: join through my_ideas so each idea's row is read
+    // via its OWNER's user_id (the canonical row PUT/sync write to) instead of the
+    // caller's own user_id — see resolveCanonicalMapOwner.
     const placeholders = queryHelpers.buildInPlaceholders(ids);
     const rows =
       (await queryHelpers.queryAll<any>(
         `
         SELECT
-          idea_id as "ideaId",
-          nodes_json as "nodesJson",
-          edges_json as "edgesJson",
-          updated_at as "updatedAt"
-        FROM my_idea_maps
-        WHERE user_id = ? AND organization_id = ?
-          AND idea_id IN (${placeholders})
+          m.idea_id as "ideaId",
+          m.nodes_json as "nodesJson",
+          m.edges_json as "edgesJson",
+          m.updated_at as "updatedAt"
+        FROM my_idea_maps m
+        JOIN my_ideas i ON i.id = m.idea_id AND i.user_id = m.user_id
+        WHERE m.organization_id = ? AND i.organization_id = ?
+          AND m.idea_id IN (${placeholders})
       `,
-        [userId, orgId, ...ids]
+        [orgId, orgId, ...ids]
       )) || [];
 
     const byId = new Map<string, any>();
@@ -5536,16 +5550,22 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const { userId, orgId } = identity;
+    const { orgId } = identity;
 
     const { id: ideaId, objectId } = req.params;
     if (!ideaId || !objectId) return res.status(400).json({ error: 'Missing params' });
 
     if (!(await requireTables(res, ['my_idea_maps']))) return;
 
+    // A1 (D-WB-2): read the canonical (idea-owner's) row so a non-owner org member
+    // sees the artifact links they (or a teammate) just attached via the shared
+    // write path above — see resolveCanonicalMapOwner.
+    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
+    if (!canonicalUserId) return res.status(404).json({ error: 'Idea map not found' });
+
     const map = await queryHelpers.queryOne<any>(
       `SELECT nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, userId, orgId]
+      [ideaId, canonicalUserId, orgId]
     );
     if (!map) return res.status(404).json({ error: 'Idea map not found' });
 
@@ -9175,15 +9195,21 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const { userId, orgId } = identity;
+    const { orgId } = identity;
 
     const ideaId = String(req.params.id || '').trim();
     if (!ideaId) return res.status(400).json({ error: 'Invalid idea id' });
 
     try {
+      // A1 (D-WB-2): read the canonical (idea-owner's) row so a non-owner org member
+      // can export the shared table/whiteboard data instead of 404'ing — see
+      // resolveCanonicalMapOwner.
+      const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
+      if (!canonicalUserId) return res.status(404).json({ error: 'Idea map not found' });
+
       const mapRow = await queryHelpers.queryOne<any>(
         `SELECT nodes_json, extensions_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-        [ideaId, userId, orgId]
+        [ideaId, canonicalUserId, orgId]
       );
       if (!mapRow) return res.status(404).json({ error: 'Idea map not found' });
 

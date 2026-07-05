@@ -53,7 +53,6 @@ describe('useWhiteboardQuickActions — AI quick actions (A2)', () => {
     ['wb_ai_to_map', 'wb_to_map_branches'],
     ['wb_ai_to_table', 'wb_to_table'],
     ['wb_ai_extract_actions', 'wb_extract_actions'],
-    ['wb_ai_summarize', 'sticky_summarize'],
   ];
 
   for (const [action, generatorType] of AI_CASES) {
@@ -99,5 +98,15 @@ describe('useWhiteboardQuickActions — AI quick actions (A2)', () => {
 
     expect(handlers.addElement).toHaveBeenCalledWith('sticky');
     expect(handlers.runAIAction).not.toHaveBeenCalled();
+  });
+
+  it('wb_ai_summarize is retired (no UI dispatches it): no longer routes to runAIAction', () => {
+    const handlers = makeHandlers();
+    render(<Harness open handlers={handlers} />);
+
+    dispatchQuickAction('wb_ai_summarize');
+
+    expect(handlers.runAIAction).not.toHaveBeenCalled();
+    expect(handlers.addElement).not.toHaveBeenCalled();
   });
 });
