@@ -21,7 +21,7 @@ import type {
   GenerationState,
   GenerationStatusResponse,
 } from '../../types/deliverablesGeneration.js';
-import { get as dbGet } from '../../utils/DbPromise.js';
+import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import type { DeckSetup, OutlineItem } from '../presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../presentationGeneratorService.js';
@@ -253,6 +253,24 @@ export async function start(params: {
     throw new DeliverablesGenerationError(
       'invalid_state',
       `Plan generacji ${row.id} nie ma żadnej włączonej pozycji`
+    );
+  }
+
+  // P0.3 — lock atomowy: dwa równoległe start() dla tego samego decka (np. dublet
+  // kliknięcia / retry FE) muszą wyłonić dokładnie jednego wykonawcę. Sam odczyt
+  // row.status wyżej jest TOCTOU (dwa requesty mogą przejść go równocześnie), więc
+  // faktyczna bramka to warunkowy UPDATE — wygrywa ten request, dla którego DB
+  // zwróci wiersz; przegrany dostaje 'invalid_state' zamiast dublować generateDeck().
+  const lock = await dbRun(
+    `UPDATE presentation_decks SET status = 'generating', updated_at = CURRENT_TIMESTAMP
+     WHERE id = ? AND organization_id = ? AND status != 'generating'
+     RETURNING id`,
+    [row.id, params.organizationId]
+  );
+  if (!lock.success || !lock.changes) {
+    throw new DeliverablesGenerationError(
+      'invalid_state',
+      `Generacja ${row.id} już trwa — odpytuj status zamiast startować ponownie`
     );
   }
 

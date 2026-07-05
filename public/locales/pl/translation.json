@@ -826,7 +826,15 @@
         "chartsData": "Wykresy i dane",
         "media": "Media",
         "artifacts": "Artefakty",
-        "aiEdit": "Edycja AI"
+        "aiEdit": "Edycja AI",
+        "orgLibrary": "Biblioteka organizacji",
+        "orgLibraryDescription": "Przeglądaj obrazy Twojej organizacji",
+        "aiGenerate": "Generuj AI",
+        "aiGenerating": "Generowanie…",
+        "aiGenerateDescription": "Wygeneruj ten slajd ponownie z obrazem AI",
+        "aiGenerateInstruction": "Dodaj do tego slajdu pasujący obraz wygenerowany przez AI.",
+        "upload": "Prześlij",
+        "uploadDescription": "Prześlij obraz z urządzenia"
       },
       "blocks": {
         "heading": "Nagłówek",
@@ -970,7 +978,10 @@
       "regenerating": "Generowanie ponowne…",
       "rewritePlaceholder": "Przerób ten slajd…",
       "rewriteSlide": "Przerób",
-      "notesPlaceholder": "Notatki prelegenta do tego slajdu..."
+      "notesPlaceholder": "Notatki prelegenta do tego slajdu...",
+      "duplicate": "Duplikuj",
+      "delete": "Usuń",
+      "slideSorter": "Slajdy"
     },
     "agent": {
       "title": "Agent AI",
@@ -991,6 +1002,9 @@
       }
     },
     "versionConflictDetectedRefreshingDeckTo": "Wykryto konflikt wersji. Odświeżam deck do najnowszej wersji.",
+    "versionConflictDetected": "Ten deck został zmieniony w innej sesji. Wybierz, jak to rozwiązać.",
+    "versionConflictReloaded": "Wczytano najnowszą wersję decka.",
+    "versionConflictKeptMine": "Zachowuję Twoją wersję — nadpisze ona pozostałe zmiany.",
     "exportFailed": "Eksport nie powiódł się",
     "versionRestored": "Przywrócono wersję",
     "couldNotRestoreThatVersion": "Nie udało się przywrócić wersji",
@@ -13514,7 +13528,8 @@
       "source": "Źródło",
       "slides": "Slajdy",
       "reportType": "Typ",
-      "mode": "Tryb"
+      "mode": "Tryb",
+      "quality": "Jakość"
     },
     "filters": {
       "type": "Typ",

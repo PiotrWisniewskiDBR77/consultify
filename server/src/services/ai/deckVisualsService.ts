@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet } from '../../utils/DbPromise.js';
 import { selectStockImageProvider } from '../deliverables/stockImageProvider.js';
+import { routeImage } from '../deliverables/imageRouter.js';
 import logger from '../../utils/Logger.js';
 import type { SlideVisualSpec, UnifiedReportMeta } from '../report/pptx/types.js';
 
@@ -507,6 +508,17 @@ export function resolveDefaultImageProvider(): ImageProviderSelection | null {
  * Stock-image fallback (Unsplash by default when UNSPLASH_ACCESS_KEY is set).
  * Downloads the chosen photo to the deck assets dir so the PPTX renderer gets a
  * local path. Returns null on any miss (fail-open).
+ *
+ * P2.1 — routed through `imageRouter.routeImage()` (F9.1/F9.3) so the
+ * tier/provider/credit decision for this "photo" content type is made by the
+ * same SSOT the bundle pipeline already uses (`bundleGenerationRuntime.ts`
+ * W1.7), instead of duplicating the T0-vs-explicit-provider logic ad hoc.
+ * `package: 'lite'` clamps content-type routing to T0/T1 — `photo` always
+ * prefers T0 (stock) regardless, so this NEVER selects a paid/premium tier;
+ * T2/T3 (Ideogram/Recraft) stay untouched pending Piotr's decision.
+ * Self-gating: with no provider keys configured, `selectStockImageProvider`
+ * still falls back to the null provider below — behavior is byte-identical
+ * to pre-P2.1 when UNSPLASH_ACCESS_KEY/PEXELS_API_KEY are absent.
  */
 async function tryStockFallback(params: {
   deckId: string;
@@ -523,11 +535,21 @@ async function tryStockFallback(params: {
     // Default to Unsplash when its key exists and no explicit STOCK_IMAGE_PROVIDER set.
     const explicit = String(process.env.STOCK_IMAGE_PROVIDER || '').trim();
     const hasUnsplash = !!String(process.env.UNSPLASH_ACCESS_KEY || '').trim();
+
+    // imageRouter decision (F9.1/F9.3): 'photo' content-type always routes to
+    // T0/stock regardless of package — this call never escalates to a paid
+    // tier (route.creditCost is always 0 for T0). Kept as an explicit,
+    // auditable step rather than only implicit env sniffing; the resolved
+    // provider name is ignored when an explicit STOCK_IMAGE_PROVIDER env
+    // override is set.
+    const route = routeImage({ contentType: 'photo', package: 'lite' });
     const providerCfg = explicit
       ? {}
       : hasUnsplash
         ? { provider: 'unsplash' as const }
-        : {};
+        : route.provider === 'unsplash'
+          ? { provider: 'unsplash' as const }
+          : {};
     const provider = selectStockImageProvider(providerCfg);
     if (provider.name === 'null') return null;
 

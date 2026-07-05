@@ -1,0 +1,422 @@
+{
+  "generatedAt": "2026-07-04T17:27:09.544Z",
+  "model": "claude-sonnet-4-6",
+  "topic": "VTS Group — diagnoza transformacji cyfrowej (W7 fill-canvas + guard-split)",
+  "axis": "BEFORE = W7 fill-canvas OFF (top-glued, dead bottom); AFTER = W7 ON (vertical rhythm + guard-split). Composition present in both.",
+  "summary": {
+    "overall": {
+      "before": 0.5314285714285714,
+      "after": 0.4828571428571428,
+      "delta": -0.04857142857142854
+    },
+    "perDimension": [
+      {
+        "dimension": "readability",
+        "before": 0.6514285714285712,
+        "after": 0.562857142857143,
+        "delta": -0.0885714285714283
+      },
+      {
+        "dimension": "hierarchy",
+        "before": 0.5714285714285714,
+        "after": 0.4571428571428572,
+        "delta": -0.11428571428571421
+      },
+      {
+        "dimension": "balance",
+        "before": 0.19999999999999998,
+        "after": 0.19999999999999998,
+        "delta": 0
+      },
+      {
+        "dimension": "no_overflow",
+        "before": 0.8785714285714284,
+        "after": 0.8214285714285714,
+        "delta": -0.05714285714285705
+      },
+      {
+        "dimension": "layout_fit",
+        "before": 0.3642857142857143,
+        "after": 0.3785714285714285,
+        "delta": 0.01428571428571418
+      }
+    ],
+    "perSlide": [
+      {
+        "slide": 0,
+        "variant": "centered",
+        "before": 0.52,
+        "after": 0.46,
+        "delta": -0.06
+      },
+      {
+        "slide": 1,
+        "variant": "two_column",
+        "before": 0.61,
+        "after": 0.59,
+        "delta": -0.020000000000000018
+      },
+      {
+        "slide": 2,
+        "variant": "kpi_grid_2x2",
+        "before": 0.61,
+        "after": 0.55,
+        "delta": -0.05999999999999994
+      },
+      {
+        "slide": 3,
+        "variant": "big_number",
+        "before": 0.61,
+        "after": 0.52,
+        "delta": -0.08999999999999997
+      },
+      {
+        "slide": 4,
+        "variant": "split_lr",
+        "before": 0.47,
+        "after": 0.4,
+        "delta": -0.06999999999999995
+      },
+      {
+        "slide": 5,
+        "variant": "stacked",
+        "before": 0.47,
+        "after": 0.48,
+        "delta": 0.010000000000000009
+      },
+      {
+        "slide": 6,
+        "variant": "timeline_strip",
+        "before": 0.43,
+        "after": 0.38,
+        "delta": -0.04999999999999999
+      }
+    ]
+  },
+  "before": [
+    {
+      "slide": 0,
+      "intent": "cover",
+      "title": "Diagnoza transformacji cyfrowej VTS Group",
+      "variant": "centered",
+      "scores": {
+        "readability": 0.7,
+        "hierarchy": 0.6,
+        "balance": 0.15,
+        "no_overflow": 0.95,
+        "layout_fit": 0.2
+      },
+      "overall": 0.52,
+      "issues": [
+        "Martwy dół — ponad 80% powierzchni slajdu to pusta biała przestrzeń, slajd wygląda jak niezakończony",
+        "Brak elementów typowych dla slajdu cover: logo firmy, wizual/grafika, data, autor/dział — slide nie spełnia funkcji okładki",
+        "Tytuł i podtytuł skumulowane w górnym lewym rogu bez żadnego centrowania ani kompozycji przestrzennej charakterystycznej dla cover",
+        "Podtytuł (szary, mały) zbyt słabo odróżnia się wagą od tytułu — hierarchia wymaga wzmocnienia kontrastem rozmiaru",
+        "Separator (cienka linia) pod nagłówkiem jest jedynym elementem strukturalnym — zbyt ubogi układ jak na slajd tytułowy poziomu McKinsey/BCG",
+        "Brak akcji kolorystycznej ani bloku wizualnego — cover powinien budować tożsamość prezentacji i angażować wzrok"
+      ]
+    },
+    {
+      "slide": 1,
+      "intent": "executive_summary",
+      "title": "Streszczenie wykonawcze",
+      "variant": "two_column",
+      "scores": {
+        "readability": 0.72,
+        "hierarchy": 0.65,
+        "balance": 0.25,
+        "no_overflow": 0.95,
+        "layout_fit": 0.5
+      },
+      "overall": 0.61,
+      "issues": [
+        "Martwy dół — ponad 55% powierzchni slajdu to pusta biała przestrzeń; treść skupiona wyłącznie w górnej ćwiartce płótna",
+        "Słaba hierarchia wizualna: brak wyraźnego 'so-what' headline pod tytułem; bullet-lista i rekomendacja mają zbliżony wizualny ciężar, oko nie wie co jest kluczowym przekazem",
+        "Zdanie 'Priorytet wynika z największego wskaźnika ROI...' wisi samotnie poza boksem rekomendacji, bez kontekstu wizualnego — powinno być częścią wyróżnionego bloku lub usunięte",
+        "Layout nie wykorzystuje struktury typowej dla executive summary (np. 3-kolumnowy układ problem/implikacja/rekomendacja lub duży insight header + supporting bullets); obecna forma to zwykła lista bez wartości dodanej layoutu",
+        "Rekomendacja w boksie info jest za mało wyeksponowana jak na slajd executive summary — powinna być wizualnie dominującym elementem, nie skromnym callout-em",
+        "Długość linii w bullet-pointach i boksie sięga pełnej szerokości slajdu (~1380px) — zbyt szeroka miara tekstu, utrudnia szybkie skanowanie"
+      ]
+    },
+    {
+      "slide": 2,
+      "intent": "performance_overview",
+      "title": "Stan obecny — wskaźniki dojrzałości",
+      "variant": "kpi_grid_2x2",
+      "scores": {
+        "readability": 0.72,
+        "hierarchy": 0.65,
+        "balance": 0.25,
+        "no_overflow": 0.95,
+        "layout_fit": 0.5
+      },
+      "overall": 0.61,
+      "issues": [
+        "MARTWY DÓŁ: dolne ~55% slajdu jest całkowicie puste — poważna wada kompozycyjna dla formatu 16:9",
+        "Wykres liniowy to jedynie placeholder ('line chart') bez żadnych danych — treść jest niekompletna i nie spełnia obietnicy sekcji 'Trend adopcji narzędzi'",
+        "KPI cards zajmują zaledwie górną ćwiartkę slajdu — brak proporcjonalnego rozłożenia treści na dostępnej przestrzeni",
+        "Brak kontekstu/benchmarku przy wartościach KPI (np. cel, delta r/r) — same liczby bez interpretacji obniżają wartość analityczną",
+        "Koszt operacyjny '+9%' — brak jednoznacznej sygnalizacji czy wzrost jest pozytywny czy negatywny (kolor/ikona), co może dezorientować odbiorcę",
+        "Hierarchia wizualna poprawna lokalnie (tytuł → KPI → wykres), ale słabo zdefiniowana globalnie przez pustą dolną połowę",
+        "Label kategorii KPI (np. 'Automatyzacja') w jasnoszarym, drobnym tekście — niski kontrast względem tła, czytelność obniżona"
+      ]
+    },
+    {
+      "slide": 3,
+      "intent": "single_insight",
+      "title": "Problem 1 — niska automatyzacja procesów",
+      "variant": "big_number",
+      "scores": {
+        "readability": 0.72,
+        "hierarchy": 0.65,
+        "balance": 0.25,
+        "no_overflow": 0.95,
+        "layout_fit": 0.5
+      },
+      "overall": 0.61,
+      "issues": [
+        "Martwy dół — ponad 50% dolnej połowy slajdu jest całkowicie pusta, treść skupia się w górnej tercji płótna",
+        "Brak tytułu widocznego na slajdzie — tytuł 'Problem 1 — niska automatyzacja procesów' nie jest wyrenderowany, co niszczy kontekst narracyjny",
+        "Słaba hierarchia: label KPI ('procesów zautomatyzowanych') jest mniejszy i bledszy niż liczba 18%, co jest poprawne, ale brakuje wyraźnego nagłówka/komunikatu SO-WHAT na poziomie slajdu",
+        "Single-insight intent wymaga mocniejszego wyeksponowania insightu — baner alertu '3x poniżej mediany' powinien być wizualnie dominującym elementem, a nie subtelnym paskiem",
+        "Bullet pointy zajmują zaledwie lewą połowę szerokości — linie są bardzo krótkie, co zostawia dużo pustej przestrzeni po prawej stronie i pogłębia problem balansu",
+        "Kontrast etykiety KPI (szary na jasnoniebieskim tle) jest na granicy dopuszczalności WCAG AA",
+        "Layout nie wykorzystuje struktury właściwej dla single-insight: brakuje wizualizacji danych (np. gauge/donut pokazujący 18% vs benchmark) wspierającej główną liczbę"
+      ]
+    },
+    {
+      "slide": 4,
+      "intent": "comparison",
+      "title": "Porównanie z konkurencją",
+      "variant": "split_lr",
+      "scores": {
+        "readability": 0.55,
+        "hierarchy": 0.45,
+        "balance": 0.2,
+        "no_overflow": 0.85,
+        "layout_fit": 0.3
+      },
+      "overall": 0.47,
+      "issues": [
+        "Martwy dół — ponad 60% wysokości slajdu to pusta biała przestrzeń, treść skupiona wyłącznie w górnym pasie",
+        "Wykres po lewej stronie jest szczątkowy: same linie Q1–Q4 bez osi Y, wartości, legendy ani tytułu — nie można odczytać żadnej informacji porównawczej",
+        "Brak wizualnego porównania z konkurencją po lewej stronie — intent 'comparison' nie jest realizowany przez układ; wykres powinien zestawiać serie danych (VTS vs konkurenci)",
+        "Hierarchia wizualna zaburzona: tytuł sekcji 'Porównanie z konkurencją' pojawia się po prawej na środku, a drobny label 'Dojrzałość cyfrowa' w lewym górnym rogu — brak wyraźnego głównego nagłówka całego slajdu",
+        "Lewa kolumna (wykres) i prawa kolumna (bullet points) są bardzo nierówno zagospodarowane treściowo — bullets mogłyby być zintegrowane z wykresem jako callouts",
+        "Rozmiar czcionki bullet pointów akceptowalny, ale brak wyróżnienia kluczowego insightu (np. bold/kolor na '−2 pkt')",
+        "Wykres nie ma tytułu osi, jednostek ani wartości — czytelność danych = 0"
+      ]
+    },
+    {
+      "slide": 5,
+      "intent": "recommendation_single",
+      "title": "Rekomendacja — platforma automatyzacji",
+      "variant": "stacked",
+      "scores": {
+        "readability": 0.6,
+        "hierarchy": 0.5,
+        "balance": 0.15,
+        "no_overflow": 0.9,
+        "layout_fit": 0.2
+      },
+      "overall": 0.47,
+      "issues": [
+        "MARTWY DÓŁ — ponad 70% powierzchni slajdu to pusta biała przestrzeń; treść skupiona wyłącznie w górnym pasie ~20% wysokości",
+        "Brak struktury rekomendacji: dla 'recommendation_single' oczekiwane są sekcje (np. Kontekst / Rekomendacja / Korzyści / Kolejne kroki) — slajd zawiera tylko 2 zdania",
+        "Hierarchia wizualna słaba — brak wyróżnienia kluczowej liczby/wniosku (np. '50%' lub '7%' powinny być wizualnie dominujące jako hero metric)",
+        "Linia oddzielająca (separator) po tekście body prowadzi wzrok w pustkę — element dekoracyjny bez funkcji kompozycyjnej",
+        "Baner informacyjny (info-box) i tekst body mają zbliżony ciężar wizualny — brak wyraźnej różnicy między rekomendacją a uzasadnieniem",
+        "Zbyt długie linie tekstu w info-boxie (niemal pełna szerokość slajdu) — obniża czytelność przy prezentacji na ekranie",
+        "Layout nie pasuje do intentu 'recommendation_single' — brakuje elementów wizualnych wspierających perswazję (ikony, KPI cards, timeline wdrożenia)"
+      ]
+    },
+    {
+      "slide": 6,
+      "intent": "next_steps",
+      "title": "Następne kroki — plan 90 dni",
+      "variant": "timeline_strip",
+      "scores": {
+        "readability": 0.55,
+        "hierarchy": 0.5,
+        "balance": 0.15,
+        "no_overflow": 0.6,
+        "layout_fit": 0.35
+      },
+      "overall": 0.43,
+      "issues": [
+        "Martwy dół — ponad 60% powierzchni slajdu (dolna połowa) jest całkowicie pusta, co jest krytycznym błędem kompozycji",
+        "Karty faz renderują się jedynie jako nawias '(' — zawartość kontenerów Q1–Q4 nie załadowała się lub jest ucięta, brak właściwej treści",
+        "Cztery fazy na osi czasu sugerują układ 4-kolumnowy, ale tytuł mówi '3 fazy' — niespójność narracyjna widoczna już na poziomie wizualnym",
+        "Podpis 'Trzy fazy z jasnymi właścicielami i miernikami postępu' jest jedynym tekstem treści — zbyt mało informacji jak na slajd next_steps poziomu McKinsey/BCG",
+        "Hierarchia wizualna zatrzymuje się na osi czasu — brak sekcji deliverables, owners, KPI pod każdą fazą, co jest standardem dla planu 90 dni",
+        "Oś czasu zajmuje tylko górne ~20% slajdu, pozostała przestrzeń jest niewykorzystana — layout nie pasuje do intentu (next_steps wymaga tabelarycznego lub swimlane'owego układu)",
+        "Kontrast etykiet Q1–Q4 (szary, mały) vs bold nazwy faz jest poprawny, ale skala czcionek ogólnie zbyt mała wobec ilości wolnej przestrzeni"
+      ]
+    }
+  ],
+  "after": [
+    {
+      "slide": 0,
+      "intent": "cover",
+      "title": "Diagnoza transformacji cyfrowej VTS Group",
+      "variant": "centered",
+      "scores": {
+        "readability": 0.6,
+        "hierarchy": 0.5,
+        "balance": 0.1,
+        "no_overflow": 0.9,
+        "layout_fit": 0.2
+      },
+      "overall": 0.46,
+      "issues": [
+        "MARTWY DÓŁ: ~85% powierzchni slajdu to pusta biel — treść skupiona wyłącznie w górnym pasku, reszta płótna całkowicie niewykorzystana",
+        "Slajd tytułowy (cover) nie ma elementów charakterystycznych dla okładki: brak wizualu, brak bloku kolorowego, brak logo klienta/firmy, brak daty/numeru wersji",
+        "Hierarchia płaska — tytuł i podtytuł mają zbyt małą różnicę wagową; podtytuł (szary, mały) ginie przy tytule, ale nie ma trzeciego poziomu ani elementu kotwiczącego wzrok w centrum",
+        "Podtytuł wyrównany do lewej z bardzo długą linią (~600px tekstu na białym tle) — kontrast szarego tekstu na białym tle jest bliski granicy WCAG AA",
+        "Layout nie pasuje do intentu 'cover': brakuje struktury dwudzielnej (góra-dół lub lewo-prawo) typowej dla slajdów tytułowych klasy McKinsey/BCG",
+        "Brak jakiegokolwiek elementu graficznego lub koloru wypełniającego przestrzeń — slajd wygląda jak niezaładowany szablon"
+      ]
+    },
+    {
+      "slide": 1,
+      "intent": "executive_summary",
+      "title": "Streszczenie wykonawcze",
+      "variant": "two_column",
+      "scores": {
+        "readability": 0.72,
+        "hierarchy": 0.55,
+        "balance": 0.25,
+        "no_overflow": 0.95,
+        "layout_fit": 0.5
+      },
+      "overall": 0.59,
+      "issues": [
+        "MARTWY DÓŁ: treść kończy się w połowie slajdu (~55% wysokości), dolna połowa to pusta biała przestrzeń — krytyczny problem kompozycji",
+        "MARTWA GÓRA: górne ~35% slajdu również puste, co powoduje że cała treść skupiona jest w środkowym pasie bez uzasadnienia",
+        "Słaba hierarchia wizualna: brak wyraźnego 'so what' — tytuł sekcji pełni rolę nagłówka, ale brakuje nadrzędnego komunikatu (action title) informującego o klucznym wniosku",
+        "Rekomendacja wizualnie nie wyróżnia się wystarczająco jako najważniejszy element — box informacyjny ma subtelne tło, powinien być bardziej prominentny na slajdzie executive summary",
+        "Zdanie 'Priorytet wynika z największego wskaźnika ROI...' wisi jako oddzielny akapit bez etykiety — brak struktury, wygląda jak orfan tekstowy",
+        "Brak elementów wizualnych (ikony KPI, podział na sekcje Problem/Rekomendacja) nieadekwatny do formatu executive summary na poziomie McKinsey/BCG",
+        "Zbyt szerokie linie tekstu w punktorach (full width ~1400px) — optymalna długość linii dla czytelności to 60–80 znaków"
+      ]
+    },
+    {
+      "slide": 2,
+      "intent": "performance_overview",
+      "title": "Stan obecny — wskaźniki dojrzałości",
+      "variant": "kpi_grid_2x2",
+      "scores": {
+        "readability": 0.62,
+        "hierarchy": 0.5,
+        "balance": 0.25,
+        "no_overflow": 0.85,
+        "layout_fit": 0.55
+      },
+      "overall": 0.55,
+      "issues": [
+        "MARTWY DÓŁ: dolna ~35% płótna (poniżej wykresu) jest całkowicie pusta — poważny problem kompozycji",
+        "DUŻA PUSTKA GÓRNA: między tytułem a kartami KPI istnieje nadmierna przestrzeń (~25% wysokości slajdu nieużyta)",
+        "Wykres zastępczy ('line chart' placeholder) nie zawiera żadnych danych — slajd wygląda na niedokończony",
+        "Hierarchia wizualna zaburzona: wzrok nie wie czy priorytetem są KPI-karty czy wykres trendu — brak wyraźnego akcentu narracyjnego",
+        "Karty KPI zajmują tylko wąski pas w środku slajdu zamiast być rozciągnięte proporcjonalnie do dostępnej przestrzeni",
+        "Brak kontekstu/benchmarku przy wartościach KPI (np. target, delta vs. poprzedni okres) — same liczby bez interpretacji",
+        "Tytuł podsekcji 'Trend adopcji narzędzi' jest nieproporcjonalnie mały relative do pustej przestrzeni wykresu",
+        "Kontrast etykiet kategorii (Automatyzacja, NPS klienta itd.) jest zbyt słaby — jasnoszary na białym tle"
+      ]
+    },
+    {
+      "slide": 3,
+      "intent": "single_insight",
+      "title": "Problem 1 — niska automatyzacja procesów",
+      "variant": "big_number",
+      "scores": {
+        "readability": 0.55,
+        "hierarchy": 0.45,
+        "balance": 0.25,
+        "no_overflow": 0.85,
+        "layout_fit": 0.5
+      },
+      "overall": 0.52,
+      "issues": [
+        "Martwy górny obszar — około 35% płótna (góra slajdu) jest całkowicie pusta, treść zaczyna się dopiero w połowie wysokości",
+        "Brak tytułu slajdu widocznego na kanwie — 'Problem 1 — niska automatyzacja procesów' nie jest wyrenderowany, co niszczy hierarchię i kontekst",
+        "Duży martwy dół — dolna ~30% powierzchni slajdu jest pustą białą przestrzenią, balans pionowy bardzo zaburzony",
+        "Hierarchia wizualna słaba — metryka '18%' jest centralnym elementem, ale bez tytułu nad slajdem oko nie ma punktu wejścia; brakuje wyraźnego nagłówka narracyjnego (headline statement)",
+        "Etykieta 'procesów zautomatyzowanych' nad metryką ma zbyt mały rozmiar i zbyt niski kontrast (szary na szarym tle) względem wartości 18%",
+        "Bullet points wyrównane do lewej krawędzi bez marginesu — zbyt długie linie (full width), co obniża czytelność",
+        "Layout nie wykorzystuje potencjału formatu single_insight: brakuje wizualnego benchmarku (np. '18% vs. mediana rynku 54%') jako grafiki porównawczej zamiast tylko tekstowej noty alertu",
+        "Treść skupiona w środkowym pasie pionowym bez zagospodarowania bocznych przestrzeni — kompozycja nie jest wycentrowana ani nie wypełnia siatki proporcjonalnie"
+      ]
+    },
+    {
+      "slide": 4,
+      "intent": "comparison",
+      "title": "Porównanie z konkurencją",
+      "variant": "split_lr",
+      "scores": {
+        "readability": 0.45,
+        "hierarchy": 0.35,
+        "balance": 0.2,
+        "no_overflow": 0.7,
+        "layout_fit": 0.3
+      },
+      "overall": 0.4,
+      "issues": [
+        "Martwy dół: treść skupiona w wąskim pasie ok. 50% wysokości slajdu, dolna połowa całkowicie pusta",
+        "Martwy góra: górna ~35% slajdu również całkowicie pusta — treść zepchnięta do środkowego pasa",
+        "Wykres 'Dojrzałość cyfrowa' jest szczątkowy — widoczne tylko poziome linie z etykietami Q1-Q4, brak osi Y, tytułu wykresu, wartości i legendy, co czyni go nieinformatywnym",
+        "Brak nadrzędnego tytułu slajdu po lewej stronie — 'Porównanie z konkurencją' pełni rolę nagłówka tylko prawej kolumny, nie całego slajdu",
+        "Słaba hierarchia wizualna: tytuł prawej kolumny jest duży i dominuje, ale lewa kolumna ('Dojrzałość cyfrowa') ma mały, niewyróżniający się podpis bez wizualnej wagi",
+        "Kompozycja dwukolumnowa jest słuszna dla slajdu comparison, ale lewa kolumna jest praktycznie pusta — brak równowagi między kolumnami",
+        "Brak slide headline/action title komunikującego wniosek (np. 'VTS traci grunt w 4 z 5 wymiarów')",
+        "Kontrast tekstu bullets jest dobry, ale rozmiar czcionki etykiet Q1-Q4 pod wykresem jest bardzo mały"
+      ]
+    },
+    {
+      "slide": 5,
+      "intent": "recommendation_single",
+      "title": "Rekomendacja — platforma automatyzacji",
+      "variant": "stacked",
+      "scores": {
+        "readability": 0.55,
+        "hierarchy": 0.45,
+        "balance": 0.2,
+        "no_overflow": 0.9,
+        "layout_fit": 0.3
+      },
+      "overall": 0.48,
+      "issues": [
+        "MARTWY GÓR i DÓŁ: treść skupiona w wąskim pasie ~35–55% wysokości slajdu; górna 1/3 i dolna 1/3 to pusta przestrzeń",
+        "Brak hierarchii wizualnej: tytuł slajdu pojawia się dopiero w połowie ekranu, wzrok nie wie od czego zacząć",
+        "Bardzo uboga treść jak na slajd rekomendacyjny — brak uzasadnienia (rationale), kroków wdrożenia, ryzyk, właściciela — layout nie jest wykorzystany",
+        "Tekst 'Oczekiwany efekt' ma zbyt słaby kontrast (ciemnoszary na białym) i brak formatowania wyróżniającego kluczowe liczby (18%→50%, 7%)",
+        "Layout nie pasuje do intendu recommendation_single: brak sekcji Evidence / Next Steps / Owner typowych dla slajdu rekomendacji McKinsey/BCG",
+        "Pozioma linia oddzielająca stopkę jest jedynym elementem dolnej części — wzmacnia efekt 'martwego dołu'",
+        "Brak numeru slajdu, logotypu ani daty — niekompletna identyfikacja wizualna"
+      ]
+    },
+    {
+      "slide": 6,
+      "intent": "next_steps",
+      "title": "Następne kroki — plan 90 dni",
+      "variant": "timeline_strip",
+      "scores": {
+        "readability": 0.45,
+        "hierarchy": 0.4,
+        "balance": 0.15,
+        "no_overflow": 0.6,
+        "layout_fit": 0.3
+      },
+      "overall": 0.38,
+      "issues": [
+        "MARTWY DÓŁ — ponad 60% powierzchni slajdu (dolna połowa) jest całkowicie pusta, co tworzy rażący brak kompozycji",
+        "Zawartość kolumn fazowych jest niemal niewidoczna — widać jedynie samotne nawiasy otwierające '(' bez żadnego tekstu, co sugeruje nieudane renderowanie lub brakujące dane w polach treści",
+        "Cztery fazy na osi czasowej (Q1–Q4) sugerują układ 4-kolumnowy, ale slajd tytułuje się jako '90 dni / 3 fazy' — niespójność między tytułem (3 fazy) a strukturą wizualną (4 etapy)",
+        "Podtytuł 'Trzy fazy z jasnymi właścicielami i miernikami postępu' jest osierocony w lewym dolnym rogu bez kontekstu wizualnego — brakuje powiązania z treścią kolumn",
+        "Hierarchia wizualna słaba — oś czasowa z numerami kroków przyciąga wzrok, ale nie prowadzi do żadnej substancji poniżej",
+        "Brak treści merytorycznej w kartach fazowych (bullet points, właściciele, KPI) mimo że intent next_steps tego wymaga",
+        "Kolorystyka kół fazowych niejednorodna (Q1/Q2 granatowe, Q3/Q4 turkusowe) bez widocznej logiki różnicowania"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,148 @@
+{
+  "generatedAt": "2026-07-04T17:28:41.445Z",
+  "note": "Deterministic DOM geometry. deadBottom = fraction of usable height empty below content. asymmetry = |deadTop − deadBottom| (0 = perfectly centered). BEFORE = W7 off, AFTER = W7 on.",
+  "before": [
+    {
+      "slide": 0,
+      "variant": "centered",
+      "intent": "cover",
+      "top": 0.044,
+      "bottom": 0.172,
+      "fill": 0.127,
+      "deadTop": 0.044,
+      "deadBottom": 0.828
+    },
+    {
+      "slide": 1,
+      "variant": "two_column",
+      "intent": "executive_summary",
+      "top": 0.044,
+      "bottom": 0.34,
+      "fill": 0.296,
+      "deadTop": 0.044,
+      "deadBottom": 0.66
+    },
+    {
+      "slide": 2,
+      "variant": "kpi_grid_2x2",
+      "intent": "performance_overview",
+      "top": 0.044,
+      "bottom": 0.379,
+      "fill": 0.335,
+      "deadTop": 0.044,
+      "deadBottom": 0.621
+    },
+    {
+      "slide": 3,
+      "variant": "big_number",
+      "intent": "single_insight",
+      "top": 0.044,
+      "bottom": 0.418,
+      "fill": 0.374,
+      "deadTop": 0.044,
+      "deadBottom": 0.582
+    },
+    {
+      "slide": 4,
+      "variant": "split_lr",
+      "intent": "comparison",
+      "top": 0.044,
+      "bottom": 0.211,
+      "fill": 0.167,
+      "deadTop": 0.044,
+      "deadBottom": 0.789
+    },
+    {
+      "slide": 5,
+      "variant": "stacked",
+      "intent": "recommendation_single",
+      "top": 0.044,
+      "bottom": 0.241,
+      "fill": 0.197,
+      "deadTop": 0.044,
+      "deadBottom": 0.759
+    },
+    {
+      "slide": 6,
+      "variant": "timeline_strip",
+      "intent": "next_steps",
+      "top": 0.044,
+      "bottom": 0.274,
+      "fill": 0.23,
+      "deadTop": 0.044,
+      "deadBottom": 0.726
+    }
+  ],
+  "after": [
+    {
+      "slide": 0,
+      "variant": "centered",
+      "intent": "cover",
+      "top": 0.044,
+      "bottom": 0.172,
+      "fill": 0.127,
+      "deadTop": 0.044,
+      "deadBottom": 0.828
+    },
+    {
+      "slide": 1,
+      "variant": "two_column",
+      "intent": "executive_summary",
+      "top": 0.352,
+      "bottom": 0.648,
+      "fill": 0.296,
+      "deadTop": 0.352,
+      "deadBottom": 0.352
+    },
+    {
+      "slide": 2,
+      "variant": "kpi_grid_2x2",
+      "intent": "performance_overview",
+      "top": 0.044,
+      "bottom": 0.667,
+      "fill": 0.623,
+      "deadTop": 0.044,
+      "deadBottom": 0.333
+    },
+    {
+      "slide": 3,
+      "variant": "big_number",
+      "intent": "single_insight",
+      "top": 0.313,
+      "bottom": 0.687,
+      "fill": 0.374,
+      "deadTop": 0.313,
+      "deadBottom": 0.313
+    },
+    {
+      "slide": 4,
+      "variant": "split_lr",
+      "intent": "comparison",
+      "top": 0.416,
+      "bottom": 0.584,
+      "fill": 0.167,
+      "deadTop": 0.416,
+      "deadBottom": 0.416
+    },
+    {
+      "slide": 5,
+      "variant": "stacked",
+      "intent": "recommendation_single",
+      "top": 0.396,
+      "bottom": 0.593,
+      "fill": 0.197,
+      "deadTop": 0.396,
+      "deadBottom": 0.407
+    },
+    {
+      "slide": 6,
+      "variant": "timeline_strip",
+      "intent": "next_steps",
+      "top": 0.044,
+      "bottom": 0.615,
+      "fill": 0.57,
+      "deadTop": 0.044,
+      "deadBottom": 0.385
+    }
+  ]
+}

@@ -14,6 +14,19 @@ type ToolbarPanel =
 interface BlockToolbarProps {
   onInsertBlock?: (blockType: string, content?: Record<string, unknown>) => void;
   onOpenMediaLibrary?: () => void;
+  /**
+   * P2.2 — "AI Generate" in the Images panel. Reuses the existing R4
+   * per-slide rewrite mechanism (regenerateSlide) with an image-focused
+   * instruction rather than building a new generation pipeline.
+   */
+  onGenerateAiImage?: () => void;
+  /** True while an AI image-generation rewrite is in flight. */
+  isGeneratingAiImage?: boolean;
+  /**
+   * P2.2 — "Upload" in the Images panel. Opens the same Media Library
+   * panel, which already has a real file-upload flow built in.
+   */
+  onUpload?: () => void;
 }
 
 const TOOLBAR_ITEMS: { id: ToolbarPanel; icon: React.FC<{ size?: number }>; labelKey: string }[] = [
@@ -28,6 +41,9 @@ const TOOLBAR_ITEMS: { id: ToolbarPanel; icon: React.FC<{ size?: number }>; labe
 export const BlockToolbar: React.FC<BlockToolbarProps> = ({
   onInsertBlock,
   onOpenMediaLibrary,
+  onGenerateAiImage,
+  isGeneratingAiImage,
+  onUpload,
 }) => {
   const { t } = useTranslation();
   const [activePanel, setActivePanel] = useState<ToolbarPanel>(null);
@@ -69,7 +85,14 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
             </h3>
 
             {activePanel === 'basic' && <BasicBlocksPanel onInsertBlock={onInsertBlock} />}
-            {activePanel === 'images' && <ImagesPanel onOpenMediaLibrary={onOpenMediaLibrary} />}
+            {activePanel === 'images' && (
+              <ImagesPanel
+                onOpenMediaLibrary={onOpenMediaLibrary}
+                onGenerateAiImage={onGenerateAiImage}
+                isGeneratingAiImage={isGeneratingAiImage}
+                onUpload={onUpload}
+              />
+            )}
             {activePanel === 'layouts' && <LayoutsPanel onInsertBlock={onInsertBlock} />}
             {activePanel === 'diagrams' && <DiagramsPanel onInsertBlock={onInsertBlock} />}
             {activePanel === 'charts' && <ChartsPanel onInsertBlock={onInsertBlock} />}
@@ -85,12 +108,13 @@ const PanelButton: React.FC<{
   label: string;
   description?: string;
   disabled?: boolean;
+  disabledTitle?: string;
   onClick: () => void;
-}> = ({ label, description, disabled, onClick }) => (
+}> = ({ label, description, disabled, disabledTitle, onClick }) => (
   <button
     onClick={onClick}
     disabled={disabled}
-    title={disabled ? 'Coming soon' : undefined}
+    title={disabled ? (disabledTitle ?? 'Coming soon') : undefined}
     className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
       disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-c-surface-raised'
     }`}
@@ -203,19 +227,55 @@ const ChartsPanel: React.FC<{
   );
 };
 
-const ImagesPanel: React.FC<{ onOpenMediaLibrary?: () => void }> = ({ onOpenMediaLibrary }) => (
-  <div className="space-y-3">
-    <div className="space-y-0.5">
-      <PanelButton
-        label="Organization Library"
-        description="Browse your org images"
-        onClick={() => onOpenMediaLibrary?.()}
-      />
-      <PanelButton label="AI Generate" description="Generate with AI" disabled onClick={() => {}} />
-      <PanelButton label="Upload" description="Drag & drop" disabled onClick={() => {}} />
+const ImagesPanel: React.FC<{
+  onOpenMediaLibrary?: () => void;
+  onGenerateAiImage?: () => void;
+  isGeneratingAiImage?: boolean;
+  onUpload?: () => void;
+}> = ({ onOpenMediaLibrary, onGenerateAiImage, isGeneratingAiImage, onUpload }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="space-y-3">
+      <div className="space-y-0.5">
+        <PanelButton
+          label={t('presentations.builder.toolbar.orgLibrary', 'Organization Library')}
+          description={t(
+            'presentations.builder.toolbar.orgLibraryDescription',
+            'Browse your org images'
+          )}
+          onClick={() => onOpenMediaLibrary?.()}
+        />
+        <PanelButton
+          label={
+            isGeneratingAiImage
+              ? t('presentations.builder.toolbar.aiGenerating', 'Generating…')
+              : t('presentations.builder.toolbar.aiGenerate', 'AI Generate')
+          }
+          description={t(
+            'presentations.builder.toolbar.aiGenerateDescription',
+            'Regenerate this slide with an AI image'
+          )}
+          disabled={isGeneratingAiImage || !onGenerateAiImage}
+          disabledTitle={
+            isGeneratingAiImage
+              ? t('presentations.builder.toolbar.aiGenerating', 'Generating…')
+              : undefined
+          }
+          onClick={() => onGenerateAiImage?.()}
+        />
+        <PanelButton
+          label={t('presentations.builder.toolbar.upload', 'Upload')}
+          description={t(
+            'presentations.builder.toolbar.uploadDescription',
+            'Upload an image from your device'
+          )}
+          disabled={!onUpload}
+          onClick={() => onUpload?.()}
+        />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const SearchPanel: React.FC = () => (
   <div>

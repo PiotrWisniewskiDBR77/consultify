@@ -10993,6 +10993,9 @@
     "renamePlaceholder": "Deck title",
     "comingSoon": "Coming soon",
     "versionConflictDetectedRefreshingDeckTo": "Version conflict detected. Refreshing deck to latest version.",
+    "versionConflictDetected": "This deck was changed in another session. Choose how to resolve it.",
+    "versionConflictReloaded": "Reloaded the latest version of this deck.",
+    "versionConflictKeptMine": "Keeping your version — it will be saved over the other changes.",
     "exportFailed": "Export failed",
     "versionRestored": "Version restored",
     "couldNotRestoreThatVersion": "Could not restore that version",
@@ -11027,6 +11030,16 @@
         "title": "Teresa"
       },
       "usedIn": "Used in (backlinks)",
+      "toolbar": {
+        "orgLibrary": "Organization Library",
+        "orgLibraryDescription": "Browse your org images",
+        "aiGenerate": "AI Generate",
+        "aiGenerating": "Generating…",
+        "aiGenerateDescription": "Regenerate this slide with an AI image",
+        "aiGenerateInstruction": "Add a relevant AI-generated image to this slide.",
+        "upload": "Upload",
+        "uploadDescription": "Upload an image from your device"
+      },
       "topBar": {
         "qualityGates": "Quality Gates",
         "governance": "Governance",
@@ -11043,7 +11056,10 @@
       "regenerating": "Regenerating…",
       "rewritePlaceholder": "Rewrite this slide…",
       "rewriteSlide": "Rewrite",
-      "notesPlaceholder": "Speaker notes for this slide..."
+      "notesPlaceholder": "Speaker notes for this slide...",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "slideSorter": "Slides"
     },
     "governance": {
       "loading": "Loading…",
@@ -12922,7 +12938,8 @@
       "source": "Source",
       "slides": "Slides",
       "reportType": "Type",
-      "mode": "Tryb"
+      "mode": "Tryb",
+      "quality": "Quality"
     },
     "filters": {
       "type": "Type",

@@ -36,9 +36,83 @@ import type { RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { appendArtifactOpenAction, resolveArtifactOpenPath } from './artifactNavigation';
 import { PresentationPreviewBody, PresentationPreviewFooter } from './previews/PresentationPreview';
-import { PRESENTATION_STATUS_META, type PresentationItem, SOURCE_TYPE_META } from './types';
+import {
+  type DeckListScorecard,
+  PRESENTATION_STATUS_META,
+  type PresentationItem,
+  SOURCE_TYPE_META,
+  type StatusChipTone,
+} from './types';
 import type { useRapActions } from './useRapData';
 import { useTrustState } from './useTrustState';
+
+/**
+ * P2.6 — deck quality badge. Two real signals, in priority order:
+ *
+ *  1. `governance.deckScorecard` — a compact quality scorecard derived
+ *     server-side from the deck-native `checkDeckQualityGates`
+ *     (server/src/services/presentationQualityGatesService.ts → mapped by
+ *     presentationDeckScorecard.ts): 0-100 score, A-F grade, PASS/BLOCKED
+ *     result and the top failing gates. When present it drives the badge
+ *     (letter grade chip; hover shows score + result + top issues).
+ *  2. `governance.validationState` (P2.5 fallback) — the artifact registry's
+ *     governance snapshot (title / source grounding / execution). Used when no
+ *     deck scorecard is available (unreadable deck, schema not ready, etc.).
+ *
+ * No signal at all = no badge (never fabricate a grade). The full 7-dimension
+ * `bundleQualityScorecard` remains business-plan-bundle only.
+ */
+const QUALITY_VALIDATION_META: Record<
+  string,
+  { label: string; labelPl: string; title: string; titlePl: string; tone: StatusChipTone }
+> = {
+  validated: {
+    label: 'Validated',
+    labelPl: 'Zwalidowana',
+    title: 'Governance checks passed (title, source grounding, execution).',
+    titlePl: 'Kontrole governance przeszły (tytuł, źródła, wykonanie).',
+    tone: 'success',
+  },
+  pending: {
+    label: 'Pending',
+    labelPl: 'W trakcie',
+    title: 'Governance validation still pending (e.g. execution in progress).',
+    titlePl: 'Walidacja governance w toku (np. wykonanie w trakcie).',
+    tone: 'warning',
+  },
+  attention_required: {
+    label: 'Attention',
+    labelPl: 'Uwaga',
+    title: 'Governance validation flagged an issue (missing source grounding or failed execution).',
+    titlePl: 'Walidacja governance wykryła problem (brak źródeł lub błąd wykonania).',
+    tone: 'danger',
+  },
+};
+
+/** P2.6 — A-F grade → chip tone (green for A/B, amber for C/D, red for F). */
+const GRADE_TONE: Record<DeckListScorecard['grade'], StatusChipTone> = {
+  A: 'success',
+  B: 'success',
+  C: 'warning',
+  D: 'warning',
+  F: 'danger',
+};
+
+/**
+ * Build the native-tooltip text for the deck-scorecard grade chip: score, pass
+ * result and up to 3 top failing gates. Kept plain-text so it works as a
+ * `title` attribute (accessible hover/expand without extra chrome).
+ */
+function deckScorecardTitle(sc: DeckListScorecard, isPolish: boolean): string {
+  const head = isPolish
+    ? `Jakość decka: ${sc.score}/100 (${sc.grade}) — ${sc.result}`
+    : `Deck quality: ${sc.score}/100 (${sc.grade}) — ${sc.result}`;
+  if (!sc.topIssues.length) {
+    return isPolish ? `${head}\nBrak zgłoszonych problemów.` : `${head}\nNo issues flagged.`;
+  }
+  const lead = isPolish ? 'Najważniejsze problemy:' : 'Top issues:';
+  return `${head}\n${lead}\n• ${sc.topIssues.slice(0, 3).join('\n• ')}`;
+}
 
 interface PresentationsTabContentProps {
   viewMode: ViewMode;
@@ -156,6 +230,37 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         render: (row: PresentationItem) => {
           const meta = PRESENTATION_STATUS_META[row.status] || PRESENTATION_STATUS_META.draft;
           return <StatusChip label={isPolish ? meta.labelPl : meta.label} tone={meta.tone} />;
+        },
+      },
+      {
+        // P2.6 — quality signal, two tiers (see QUALITY_VALIDATION_META doc):
+        //   1. deckScorecard (checkDeckQualityGates) → letter-grade chip with a
+        //      score + top-issues hover.
+        //   2. validationState (P2.5 governance) → fallback badge.
+        // Absent both → nothing (never fabricate a grade).
+        id: 'quality',
+        label: t('rap.columns.quality', 'Jakość'),
+        width: '110px',
+        render: (row: PresentationItem) => {
+          const scorecard = row.governance?.deckScorecard;
+          if (scorecard) {
+            return (
+              <StatusChip
+                label={`${scorecard.grade} · ${scorecard.score}`}
+                tone={GRADE_TONE[scorecard.grade]}
+                title={deckScorecardTitle(scorecard, isPolish)}
+              />
+            );
+          }
+          const meta = QUALITY_VALIDATION_META[row.governance?.validationState || ''];
+          if (!meta) return null;
+          return (
+            <StatusChip
+              label={isPolish ? meta.labelPl : meta.label}
+              tone={meta.tone}
+              title={isPolish ? meta.titlePl : meta.title}
+            />
+          );
         },
       },
       {

@@ -61,6 +61,14 @@ import {
   evaluateRevertEligibility,
   type RevertEligibilityReason,
 } from '../services/presentationDeckRevertService.js';
+import {
+  type CollaboratorRole,
+  isValidRole,
+  listCollaborators,
+  permissionToRole,
+  revokeCollaborator,
+  upsertCollaborator,
+} from '../services/presentationDeckCollaboratorService.js';
 import { buildParityReportForDeck } from '../services/presentationExportParityService.js';
 import type { DeckSetup } from '../services/presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
@@ -1280,6 +1288,31 @@ router.post(
     if (!ensurePresentationCapability(req, res, 'presentation_create')) return;
     const orgId = getOrgId(req);
     const { deckId, outline, setup } = req.body;
+
+    // P0.3-b — legacy route parity: deckId comes from a prior /generate/outline
+    // call, which already INSERTs the row (status='draft'). generateDeck() itself
+    // does an unconditional UPDATE status='generating' with no guard, so two
+    // concurrent /generate/deck POSTs for the same deckId both proceed and race
+    // each other. Mirror the deliverablesGenerationService.start() atomic-lock
+    // pattern: a conditional UPDATE wins exactly one request; the loser gets 409
+    // instead of duplicating generateDeck(). Fail-open when deckId is absent —
+    // that shape doesn't correspond to the outline→deck flow this lock protects.
+    if (deckId) {
+      const lock = await dbRun(
+        `UPDATE presentation_decks SET status = 'generating', updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND organization_id = ? AND status != 'generating'
+         RETURNING id`,
+        [deckId, orgId]
+      );
+      if (!lock.success || !lock.changes) {
+        return res.status(409).json({
+          success: false,
+          error: `Generacja ${deckId} już trwa — odpytuj status zamiast startować ponownie`,
+          code: 'PRESENTATION_GENERATION_IN_PROGRESS',
+        });
+      }
+    }
+
     const result = await generateDeck(deckId, outline, setup, orgId);
     res.json({ success: true, data: result });
   })
@@ -1903,6 +1936,128 @@ router.delete(
   })
 );
 
+// ============================================================
+// P3.3 — PER-USER DECK COLLABORATORS (presentation_deck_collaborators)
+// ============================================================
+//
+// The deferred half of P3.1: inviting a collaborator writes a real membership
+// row (deck + user/email + role) instead of only minting a share-link. All
+// three endpoints are org-scoped, gated by the `presentation_share` capability,
+// and FAIL-OPEN — if the collaborators table is unavailable the service returns
+// storage_error and we surface a soft 200/`collaborators: []` rather than a 500,
+// so the editor never blocks on the membership layer.
+
+// List collaborators for a deck.
+router.get(
+  '/decks/:id/collaborators',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_view')) return;
+    const orgId = getOrgId(req);
+    const deck = (await dbGet(
+      `SELECT id FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as any;
+    if (!deck) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
+    const collaborators = await listCollaborators(req.params.id, orgId);
+    res.json({ success: true, data: { collaborators } });
+  })
+);
+
+// Invite / upsert a collaborator with a role. Accepts either an explicit
+// { role } or a P3.1-style { permission: 'view' | 'comment' }.
+router.post(
+  '/decks/:id/collaborators',
+  shareRateLimiter,
+  requireAudit,
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_share')) return;
+    const orgId = getOrgId(req);
+    const inviterId = getUserId(req);
+    const deck = (await dbGet(
+      `SELECT id, title FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as any;
+    if (!deck) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
+
+    const body = req.body || {};
+    const email = typeof body.email === 'string' ? body.email.trim() : '';
+    const targetUserId = typeof body.userId === 'string' ? body.userId.trim() : '';
+    if (!email && !targetUserId) {
+      return res
+        .status(400)
+        .json({ success: false, error: 'email or userId is required', code: 'INVALID_INVITE' });
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, error: 'Invalid email', code: 'INVALID_EMAIL' });
+    }
+
+    const role: CollaboratorRole = isValidRole(body.role)
+      ? body.role
+      : permissionToRole(body.permission);
+
+    const result = await upsertCollaborator({
+      deckId: req.params.id,
+      organizationId: orgId,
+      userId: targetUserId || null,
+      invitedEmail: email || null,
+      role,
+      invitedBy: inviterId,
+    });
+
+    if (result.status !== 'ok') {
+      // Fail-open: membership layer unavailable. Return a soft 200 so the FE can
+      // still fall back to the share-link invite path without an error toast.
+      return res.json({
+        success: true,
+        data: { collaborator: null, degraded: true, reason: result.reason },
+      });
+    }
+
+    await (req as any).emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'collaborator_invite',
+      resourceType: 'presentation_deck',
+      resourceId: req.params.id,
+      after: { role, email: email || null, userId: targetUserId || null },
+      metadata: { organizationId: orgId, title: deck.title },
+    });
+
+    res.json({ success: true, data: { collaborator: result.collaborator ?? null } });
+  })
+);
+
+// Revoke a collaborator (soft delete).
+router.delete(
+  '/decks/:id/collaborators/:collaboratorId',
+  shareRateLimiter,
+  requireAudit,
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_share')) return;
+    const orgId = getOrgId(req);
+    const deck = (await dbGet(
+      `SELECT id, title FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as any;
+    if (!deck) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
+    const result = await revokeCollaborator(req.params.id, orgId, req.params.collaboratorId);
+    await (req as any).emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'collaborator_revoke',
+      resourceType: 'presentation_deck',
+      resourceId: req.params.id,
+      after: { collaboratorId: req.params.collaboratorId },
+      metadata: { organizationId: orgId, title: deck.title },
+    });
+    res.json({ success: true, data: { revoked: result.status === 'ok', degraded: result.status !== 'ok' } });
+  })
+);
+
 // Intent catalog (for UI) — reads from presentation_intents table
 router.get(
   '/intents',
@@ -2224,10 +2379,33 @@ router.put(
       }
     }
 
-    await dbRun(
-      `UPDATE presentation_decks SET deck_json = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-      [bodyStr, newVersion, deckId, orgId]
-    );
+    // Compare-and-swap: pin the UPDATE to the exact version we just read
+    // (or the client-supplied version, when present) so two writers that
+    // both observed the same starting version can no longer BOTH succeed.
+    // Whichever writer's UPDATE commits first advances the row's version;
+    // the loser's WHERE clause no longer matches (`version` has moved on),
+    // `changes` comes back 0, and it gets the same 409 VERSION_CONFLICT
+    // shape as the pre-existing stale-read check above, so the FE doesn't
+    // need to distinguish the two cases.
+    const expectedVersion = clientVersion !== null ? clientVersion : deck.version;
+    const updateResult = (await dbRun(
+      `UPDATE presentation_decks SET deck_json = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND version = ?`,
+      [bodyStr, newVersion, deckId, orgId, expectedVersion]
+    )) as { success?: boolean; changes?: number } | undefined;
+
+    if ((updateResult?.changes ?? 0) === 0) {
+      const latest = (await dbGet(
+        'SELECT id, version FROM presentation_decks WHERE id = ? AND organization_id = ?',
+        [deckId, orgId]
+      )) as any;
+      return res.status(409).json({
+        success: false,
+        error: 'Version conflict: deck was modified by another session. Please refresh.',
+        code: 'VERSION_CONFLICT',
+        serverVersion: latest?.version ?? null,
+        clientVersion,
+      });
+    }
 
     res.json({ success: true, version: newVersion });
   })

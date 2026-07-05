@@ -559,6 +559,9 @@ function mapArtifactGovernance(raw: any): ArtifactGovernanceSummary {
     visibilityScope: raw.visibilityScope,
     publishState: raw.publishState,
     validationState: raw.validationState || null,
+    // P2.6 — deck quality scorecard (checkDeckQualityGates) surfaced on the list row.
+    deckScorecard:
+      raw.deckScorecard && typeof raw.deckScorecard === 'object' ? raw.deckScorecard : null,
     validationChecks: Array.isArray(raw.validationChecks) ? raw.validationChecks : [],
     publishReviewers: Array.isArray(raw.publishReviewers) ? raw.publishReviewers : [],
     reviewGateCount: typeof raw.reviewGateCount === 'number' ? raw.reviewGateCount : 0,

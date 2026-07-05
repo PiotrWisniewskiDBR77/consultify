@@ -19,16 +19,53 @@ import {
   type LayoutTemplate,
 } from '../../../src/components/Presentations/DeckBuilder/layouts/LayoutEngine';
 
-function block(type: CardBlock['type'], order = 0): CardBlock {
+function block(type: CardBlock['type'], order = 0, content: Record<string, unknown> = {}): CardBlock {
   return {
     block_id: `b-${type}-${order}`,
     card_id: 'c1',
     type,
-    content: {},
+    content,
     is_refreshable: false,
     position: { area: 'full', order },
     ai_editable: true,
   };
+}
+
+/**
+ * W7 GUARD-SPLIT reconciliation (2026-07-05) — these fixtures prove selectLayout
+ * HONOURS an explicit/archetype layout choice. W7 (guard-split, 2acec9fc46) added
+ * a legitimate degradation of split/two-column templates when content is too
+ * sparse to fill both columns (see LayoutEngine.ts shouldAvoidSplit). A single
+ * `block('heading')` is exactly the sparse case W7 targets, so it now degrades
+ * — correctly. RICH_BLOCKS below gives each archetype enough weight/variety
+ * (chart + bullet_list + 2 kpi_widgets) to clear the guard-split thresholds
+ * (totalWeight ≥ 5, column balance ≥ 35%, a tall-fill block per column) so the
+ * explicit-layout-choice behaviour under test is observed without tripping W7.
+ */
+function richBlocks(): CardBlock[] {
+  return [
+    block('heading', 0),
+    block('chart', 1),
+    block('bullet_list', 2, { items: ['Finding one', 'Finding two', 'Finding three'] }),
+    block('kpi_widget', 3),
+    block('kpi_widget', 4),
+  ];
+}
+
+/**
+ * cover_left_image is the one archetype target where RICH_BLOCKS's `heading`
+ * claims the image region's single slot before the real `image` block does
+ * (assignBlocksToRegions always places `heading` first). Swap the leading
+ * `heading` for an `image` so the image slot is filled by an actual image
+ * block and the two columns balance — same total weight/variety otherwise.
+ */
+function richBlocksForLeftImage(): CardBlock[] {
+  return [
+    block('image', 0),
+    block('chart', 1),
+    block('bullet_list', 2, { items: ['Finding one', 'Finding two', 'Finding three'] }),
+    block('kpi_widget', 3),
+  ];
 }
 
 function card(partial: Partial<DeckCard>): DeckCard {
@@ -54,9 +91,11 @@ describe('STEP 1b — selectLayout honours composition', () => {
     const c = card({
       intent: 'performance_overview',
       layout_id: 'kpi_grid_2x2',
-      // Only ONE block: the heuristic (which rewards block-count fit) would NOT
-      // pick the data-heavy 2x2 grid here. Proving the AI choice overrides it.
-      blocks: [block('heading')],
+      // RICH_BLOCKS (not a lone heading): the heuristic (which rewards
+      // block-count fit) would NOT pick the data-heavy 2x2 grid here, and W7
+      // guard-split would degrade a sparse split — this fixture clears both
+      // bars so the AI choice-override behaviour under test is observable.
+      blocks: richBlocks(),
     });
     const layout = selectLayout(c);
     expect(layout.id).toBe(ARCHETYPE_TO_TEMPLATE['kpi_grid_2x2']); // 'kpi_grid_4'
@@ -65,7 +104,7 @@ describe('STEP 1b — selectLayout honours composition', () => {
   });
 
   it('honours an explicit direct template id in layout_id', () => {
-    const c = card({ intent: 'key_messages', layout_id: 'content_left_right', blocks: [block('heading')] });
+    const c = card({ intent: 'key_messages', layout_id: 'content_left_right', blocks: richBlocks() });
     expect(selectLayout(c).id).toBe('content_left_right');
   });
 
@@ -74,7 +113,7 @@ describe('STEP 1b — selectLayout honours composition', () => {
       intent: 'roadmap',
       layout_id: 'auto',
       composition: { layoutVariantId: 'timeline_strip' },
-      blocks: [block('heading')],
+      blocks: richBlocks(),
     });
     expect(selectLayout(c).id).toBe(ARCHETYPE_TO_TEMPLATE['timeline_strip']); // 'timeline_full'
   });
@@ -105,7 +144,10 @@ describe('STEP 1b — selectLayout honours composition', () => {
 
   it('every archetype in the map resolves to a real template', () => {
     for (const [archetype, templateId] of Object.entries(ARCHETYPE_TO_TEMPLATE)) {
-      const layout = selectLayout(card({ layout_id: archetype, blocks: [block('heading')] }));
+      // cover_left_image is the one target whose image region needs an actual
+      // `image` block to land there first (see richBlocksForLeftImage above).
+      const blocks = archetype === 'left_image' ? richBlocksForLeftImage() : richBlocks();
+      const layout = selectLayout(card({ layout_id: archetype, blocks }));
       expect(layout.id, `archetype ${archetype}`).toBe(templateId);
     }
   });
@@ -113,7 +155,7 @@ describe('STEP 1b — selectLayout honours composition', () => {
 
 describe('STEP 1b — assignBlocksToRegions honours composition.regions', () => {
   const twoCol = selectLayout(
-    card({ intent: 'key_messages', layout_id: 'content_left_right', blocks: [block('heading')] })
+    card({ intent: 'key_messages', layout_id: 'content_left_right', blocks: richBlocks() })
   ) as LayoutTemplate;
 
   it('prefers the AI area assignment for a block type', () => {
