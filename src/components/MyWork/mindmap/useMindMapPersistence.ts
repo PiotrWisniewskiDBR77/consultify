@@ -29,6 +29,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import type { Edge, Node } from 'reactflow';
 
+import i18n from '@/i18n';
 import { Api } from '@/services/api';
 
 import type { IdeaMapSyncState } from '../canvas/useIdeaMapSync';
@@ -61,6 +62,7 @@ function shouldBootstrapStarterGraph(
 function buildLocalDefaultIdeaMap(
   ideaId: string,
   ideaTitle: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept for call-site compatibility (molochs pass this positionally)
   isPolish: boolean
 ): { nodes: Node[]; edges: Edge[] } {
   const rootNode: Node = {
@@ -68,43 +70,43 @@ function buildLocalDefaultIdeaMap(
     type: 'center',
     position: { x: 0, y: 0 },
     data: {
-      label: ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea'),
-      hint: isPolish ? 'Kliknij, aby edytować' : 'Click to edit',
+      label: ideaTitle || i18n.t('mindmap.persistence.myIdea'),
+      hint: i18n.t('mindmap.persistence.clickToEdit'),
     },
   };
   const branchSpecs = [
     {
       id: 'branch-problem',
       branchKey: 'problem',
-      label: isPolish ? 'Problem' : 'Problem',
+      label: i18n.t('mindmap.persistence.branchProblem'),
       position: { x: -320, y: -180 },
       selected: false,
     },
     {
       id: 'branch-options',
       branchKey: 'options',
-      label: isPolish ? 'Opcje' : 'Options',
+      label: i18n.t('mindmap.persistence.branchOptions'),
       position: { x: 320, y: -180 },
       selected: true,
     },
     {
       id: 'branch-evidence',
       branchKey: 'evidence',
-      label: isPolish ? 'Dowody' : 'Evidence',
+      label: i18n.t('mindmap.persistence.branchEvidence'),
       position: { x: -320, y: 20 },
       selected: false,
     },
     {
       id: 'branch-risks',
       branchKey: 'risks',
-      label: isPolish ? 'Ryzyka' : 'Risks',
+      label: i18n.t('mindmap.persistence.branchRisks'),
       position: { x: 320, y: 20 },
       selected: false,
     },
     {
       id: 'branch-experiments',
       branchKey: 'experiments',
-      label: isPolish ? 'Eksperymenty' : 'Experiments',
+      label: i18n.t('mindmap.persistence.branchExperiments'),
       position: { x: 0, y: 240 },
       selected: false,
     },
@@ -118,7 +120,7 @@ function buildLocalDefaultIdeaMap(
     data: {
       label: branch.label,
       branchKey: branch.branchKey,
-      hint: isPolish ? 'Wybierz gałąź i naciśnij Tab' : 'Select branch and press Tab',
+      hint: i18n.t('mindmap.persistence.selectBranchHint'),
     },
   }));
 
@@ -338,8 +340,8 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
           ...n,
           data: {
             ...(n.data || {}),
-            label: ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea'),
-            hint: isPolish ? 'Kliknij, aby edytować' : 'Click to edit',
+            label: ideaTitle || i18n.t('mindmap.persistence.myIdeaAccented'),
+            hint: i18n.t('mindmap.persistence.clickToEditAccented'),
           },
         };
       });
@@ -406,8 +408,8 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
           ...n,
           data: {
             ...(n.data || {}),
-            label: ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea'),
-            hint: isPolish ? 'Kliknij, aby edytować' : 'Click to edit',
+            label: ideaTitle || i18n.t('mindmap.persistence.myIdeaAccented'),
+            hint: i18n.t('mindmap.persistence.clickToEditAccented'),
           },
         };
       });
@@ -468,21 +470,13 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
 
       if (isNoRoute) {
         setPersistence('no_route');
-        toast(
-          (isPolish
-            ? 'Backend wymaga restartu (route mapy jeszcze nie działa).'
-            : 'Backend needs restart (map route not active).') as any
-        );
+        toast(i18n.t('mindmap.persistence.backendNeedsRestart') as any);
       } else if (isMissingTable) {
         setPersistence('missing_table');
-        toast(
-          (isPolish
-            ? 'Brakuje tabeli mapy — uruchom migracje DB.'
-            : 'Map table missing — run DB migrations.') as any
-        );
+        toast(i18n.t('mindmap.persistence.mapTableMissing') as any);
       } else {
         setPersistence('offline');
-        toast.error(msg || (isPolish ? 'Nie udało się wczytać mapy' : 'Failed to load map'));
+        toast.error(msg || i18n.t('mindmap.persistence.failedToLoadMap'));
       }
 
       const def = buildLocalDefaultIdeaMap(ideaId, ideaTitle, isPolish);
@@ -575,8 +569,8 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
   }, [ideaId]);
 
   useEffect(() => {
-    const label = ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea');
-    const hint = isPolish ? 'Kliknij, aby edytować' : 'Click to edit';
+    const label = ideaTitle || i18n.t('mindmap.persistence.myIdeaAccented');
+    const hint = i18n.t('mindmap.persistence.clickToEditAccented');
     setNodes((prev: Node[]) => {
       let hasChanges = false;
       const next = (prev || []).map((n: any) => {
@@ -765,18 +759,11 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
           setLastSavedAt(Date.now());
         } catch (err: any) {
           if (err?.status === 409) {
-            toast(
-              isPolish
-                ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
-                : 'Change conflict detected. Refreshing map from server.',
-              { icon: '⚠️' }
-            );
+            toast(i18n.t('mindmap.persistence.conflictDetected'), { icon: '⚠️' });
             await hydrate();
             return;
           }
-          toast.error(
-            err?.message || (isPolish ? 'Nie udało się zapisać mapy' : 'Failed to save map')
-          );
+          toast.error(err?.message || i18n.t('mindmap.persistence.failedToSaveMap'));
         } finally {
           setSaving(false);
         }

@@ -9,6 +9,7 @@ import { useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import type { Edge, Node } from 'reactflow';
 
+import i18n from '@/i18n';
 import { Api } from '@/services/api';
 
 import type { MapStructureType, MindMapInteractionMode } from '../ideaSelectionTypes';
@@ -145,13 +146,13 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     ) {
       const level = Number(action.split('_').pop());
       handlers.setFoldLevel?.(level);
-      toast.success(isPolish ? `Widok: poziom ${level}` : `Showing level ${level}`, {
+      toast.success(i18n.t('mindmap.quickActions.viewLevel', { level }), {
         duration: 1200,
       });
     }
     if (action === 'mm_expand_all') {
       handlers.setFoldLevel?.(Infinity);
-      toast.success(isPolish ? 'Wszystko rozwinięte' : 'All expanded', { duration: 1200 });
+      toast.success(i18n.t('mindmap.quickActions.allExpanded'), { duration: 1200 });
     }
     if (action === 'mm_focus_selected') handlers.focusSelectedNode();
     if (action === 'mm_reparent_promote') handlers.reparentSelectedPromote();
@@ -164,7 +165,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       if (locked) return;
       const sel = handlers.getSelectedNode();
       if (!sel) {
-        toast(isPolish ? 'Zaznacz węzeł, do którego chcesz dodać' : 'Select a node to attach to', {
+        toast(i18n.t('mindmap.quickActions.selectNodeToAttach'), {
           icon: 'ℹ️',
         });
         return;
@@ -176,9 +177,9 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         mm_add_evidence: 'evidenceCard',
       };
       const labelMap: Record<string, string> = {
-        mm_add_knowledge: isPolish ? 'Wiedza' : 'Knowledge',
-        mm_add_note: isPolish ? 'Notatka' : 'Note',
-        mm_add_evidence: isPolish ? 'Dowód' : 'Evidence',
+        mm_add_knowledge: i18n.t('mindmap.quickActions.labelKnowledge'),
+        mm_add_note: i18n.t('mindmap.quickActions.labelNote'),
+        mm_add_evidence: i18n.t('mindmap.quickActions.labelEvidence'),
       };
       const newId = `${typeMap[action]}-${Date.now()}`;
       setters.setNodes((prev) => [
@@ -297,7 +298,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         try {
           handlers.exportAsPNG(`${ideaTitle || 'mindmap'}.png`);
         } catch {
-          toast.error(isPolish ? 'Nie udało się wyeksportować PNG' : 'PNG export failed');
+          toast.error(i18n.t('mindmap.quickActions.exportFailedPng'));
         }
       }
     }
@@ -305,21 +306,21 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       try {
         handlers.exportAsPNG(`${ideaTitle || 'mindmap'}.png`);
       } catch {
-        toast.error(isPolish ? 'Nie udało się wyeksportować PNG' : 'PNG export failed');
+        toast.error(i18n.t('mindmap.quickActions.exportFailedPng'));
       }
     }
     if (action === 'mm_export_svg') {
       try {
         handlers.exportAsSVG(`${ideaTitle || 'mindmap'}.svg`);
       } catch {
-        toast.error(isPolish ? 'Nie udało się wyeksportować SVG' : 'SVG export failed');
+        toast.error(i18n.t('mindmap.quickActions.exportFailedSvg'));
       }
     }
     if (action === 'mm_export_json') {
       try {
         handlers.exportAsJSON(nodes, edges, extensions, `${ideaTitle || 'mindmap'}.json`);
       } catch {
-        toast.error(isPolish ? 'Nie udało się wyeksportować JSON' : 'JSON export failed');
+        toast.error(i18n.t('mindmap.quickActions.exportFailedJson'));
       }
     }
     if (action === 'mm_export_csv') {
@@ -342,10 +343,10 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           a.download = `${ideaTitle || 'mindmap'}.csv`;
           a.click();
           URL.revokeObjectURL(url);
-          toast.success(isPolish ? 'CSV wyeksportowany' : 'CSV exported');
+          toast.success(i18n.t('mindmap.quickActions.csvExported'));
         }
       } catch {
-        toast.error(isPolish ? 'Nie udało się wyeksportować CSV' : 'CSV export failed');
+        toast.error(i18n.t('mindmap.quickActions.exportFailedCsv'));
       }
     }
 
@@ -358,12 +359,10 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
             { includeMetadata: true },
             `${ideaTitle || 'mindmap'}.md`
           );
-          toast.success(
-            isPolish ? 'Markdown skopiowany do schowka' : 'Markdown copied to clipboard'
-          );
+          toast.success(i18n.t('mindmap.quickActions.markdownCopied'));
         }
       } catch {
-        toast.error(isPolish ? 'Nie udało się wyeksportować Markdown' : 'Markdown export failed');
+        toast.error(i18n.t('mindmap.quickActions.exportFailedMarkdown'));
       }
     }
 
@@ -394,7 +393,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       const parentId = sel?.id || 'root';
       const parentNode = sel || nodes.find((n) => n.id === 'root');
       if (!parentNode) {
-        toast.error(isPolish ? 'Brak korzenia mapy' : 'Map root is missing');
+        toast.error(i18n.t('mindmap.quickActions.mapRootMissing'));
         return;
       }
       handlers.pushUndo();
@@ -437,7 +436,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       if (locked) return;
       const selectedIds = nodes.filter((n) => n.selected).map((n) => n.id);
       if (selectedIds.length < 2) {
-        toast(isPolish ? 'Zaznacz co najmniej 2 węzły' : 'Select at least 2 nodes', { icon: 'ℹ️' });
+        toast(i18n.t('mindmap.quickActions.selectAtLeast2Nodes'), { icon: 'ℹ️' });
         return;
       }
       handlers.pushUndo();
@@ -454,7 +453,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           id: frameId,
           type: 'group',
           position: { x: minX - pad, y: minY - pad },
-          data: { label: isPolish ? 'Grupa' : 'Group' },
+          data: { label: i18n.t('mindmap.quickActions.labelGroup') },
           style: {
             width: maxX - minX + pad * 2,
             height: maxY - minY + pad * 2,
@@ -464,9 +463,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           },
         } as Node,
       ]);
-      toast.success(
-        isPolish ? `Zgrupowano ${selectedIds.length} węzłów` : `Grouped ${selectedIds.length} nodes`
-      );
+      toast.success(i18n.t('mindmap.quickActions.groupedCount', { count: selectedIds.length }));
       return;
     }
 
@@ -487,7 +484,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           id: frameId,
           type: 'group',
           position: { x: sel ? sel.position.x - 40 : 200, y: sel ? sel.position.y - 40 : 100 },
-          data: { label: isPolish ? 'Ramka' : 'Frame' },
+          data: { label: i18n.t('mindmap.quickActions.labelFrame') },
           style: {
             width: 300,
             height: 200,
@@ -505,9 +502,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       handlers.handleAIExpand(detail?.nodeId as string | undefined);
     if (action === 'mm_ai_suggest') {
       if (handlers.onOpenChat) {
-        const prompt = isPolish
-          ? `Zasugeruj nowe gałęzie dla mapy "${ideaTitle}". Podaj 5-7 propozycji z uzasadnieniem.`
-          : `Suggest new branches for the map "${ideaTitle}". Provide 5-7 proposals with reasoning.`;
+        const prompt = i18n.t('mindmap.quickActions.promptSuggestBranches', { ideaTitle });
         handlers.onOpenChat(prompt);
       } else {
         handlers.handleAIExpand();
@@ -520,9 +515,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           .map((n) => n.data?.label)
           .filter(Boolean)
           .join(', ');
-        const prompt = isPolish
-          ? `Przeanalizuj luki w mapie "${ideaTitle}". Obecne węzły: ${nodeLabels}. Czego brakuje?`
-          : `Analyze gaps in the map "${ideaTitle}". Current nodes: ${nodeLabels}. What's missing?`;
+        const prompt = i18n.t('mindmap.quickActions.promptGapAnalysis', { ideaTitle, nodeLabels });
         handlers.onOpenChat(prompt);
       }
     }
@@ -537,11 +530,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       const orphanIdeas = nodes.filter((n) => rootChildren.includes(n.id) && n.type === 'idea');
 
       if (orphanIdeas.length < 2) {
-        toast(
-          isPolish
-            ? 'Za mało luźnych węzłów do grupowania'
-            : 'Not enough ungrouped nodes to cluster'
-        );
+        toast(i18n.t('mindmap.quickActions.notEnoughUngroupedNodes'));
         return;
       }
 
@@ -589,7 +578,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       }
 
       if (clusters.size < 2) {
-        toast(isPolish ? 'Wszystkie węzły pasują do jednej grupy' : 'All nodes fit in one group');
+        toast(i18n.t('mindmap.quickActions.allNodesFitOneGroup'));
         return;
       }
 
@@ -625,7 +614,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           data: {
             label: branchLabel,
             branchKey: key,
-            hint: isPolish ? 'Automatycznie zgrupowane' : 'Auto-clustered',
+            hint: i18n.t('mindmap.quickActions.autoClusteredHint'),
           },
         } as Node);
 
@@ -659,9 +648,10 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       setters.setEdges((prev) => [...prev.filter((e) => !edgesToRemove.has(e.id)), ...newEdges]);
 
       toast.success(
-        isPolish
-          ? `Utworzono ${clusters.size} grup z ${orphanIdeas.length} węzłów`
-          : `Created ${clusters.size} clusters from ${orphanIdeas.length} nodes`
+        i18n.t('mindmap.quickActions.createdClusters', {
+          clusterCount: clusters.size,
+          nodeCount: orphanIdeas.length,
+        })
       );
 
       setTimeout(() => {
@@ -680,17 +670,17 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           .map((n) => n.data?.label)
           .filter(Boolean)
           .join(', ');
-        const prompt = isPolish
-          ? `Podsumuj mapę "${ideaTitle}" z ${nodes.length} węzłami: ${nodeLabels}`
-          : `Summarize the map "${ideaTitle}" with ${nodes.length} nodes: ${nodeLabels}`;
+        const prompt = i18n.t('mindmap.quickActions.promptSummarizeMap', {
+          ideaTitle,
+          nodeCount: nodes.length,
+          nodeLabels,
+        });
         handlers.onOpenChat(prompt);
       }
     }
     if (action === 'mm_ai_auto_connect') {
       if (handlers.onOpenChat) {
-        const prompt = isPolish
-          ? `Zaproponuj połączenia między gałęziami w mapie "${ideaTitle}". Jakie cross-linki powinny istnieć?`
-          : `Suggest cross-links between branches in the map "${ideaTitle}". What connections should exist?`;
+        const prompt = i18n.t('mindmap.quickActions.promptAutoConnect', { ideaTitle });
         handlers.onOpenChat(prompt);
       }
     }
@@ -702,9 +692,11 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         const ctx = [tags ? `Tags: ${tags}` : '', sType ? `Type: ${sType}` : '']
           .filter(Boolean)
           .join('. ');
-        const prompt = isPolish
-          ? `Pogłęb temat "${sel.data?.label}" w kontekście mapy "${ideaTitle}".${ctx ? ` Kontekst: ${ctx}.` : ''} Podaj szczegółową analizę.`
-          : `Deepen the topic "${sel.data?.label}" in the context of map "${ideaTitle}".${ctx ? ` Context: ${ctx}.` : ''} Provide detailed analysis.`;
+        const prompt = i18n.t('mindmap.quickActions.promptDeepen', {
+          nodeLabel: sel.data?.label,
+          ideaTitle,
+          ctxSuffix: ctx ? i18n.t('mindmap.quickActions.promptDeepenCtxSuffix', { ctx }) : '',
+        });
         handlers.onOpenChat(prompt);
       } else {
         handlers.handleAIExpand();
@@ -713,7 +705,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     if (action === 'mm_ai_summarize_branch') {
       const sel = handlers.getSelectedNode();
       if (!sel) {
-        toast(isPolish ? 'Zaznacz gałąź' : 'Select a branch first', { icon: 'ℹ️' });
+        toast(i18n.t('mindmap.quickActions.selectBranchFirst'), { icon: 'ℹ️' });
         return;
       }
       window.dispatchEvent(
@@ -740,9 +732,11 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         ]
           .filter(Boolean)
           .join('. ');
-        const prompt = isPolish
-          ? `Porozmawiajmy o węźle "${label}" w mapie "${ideaTitle}".${ctx ? ` Kontekst: ${ctx}` : ''}`
-          : `Let's discuss the node "${label}" in map "${ideaTitle}".${ctx ? ` Context: ${ctx}` : ''}`;
+        const prompt = i18n.t('mindmap.quickActions.promptChatAboutNode', {
+          nodeLabel: label,
+          ideaTitle,
+          ctxSuffix: ctx ? i18n.t('mindmap.quickActions.promptChatAboutNodeCtxSuffix', { ctx }) : '',
+        });
         handlers.onOpenChat(prompt);
       }
     }
@@ -752,7 +746,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       if (locked) return;
       const sel = handlers.getSelectedNode();
       if (!sel) {
-        toast(isPolish ? 'Zaznacz węzeł' : 'Select a node first', { icon: 'ℹ️' });
+        toast(i18n.t('mindmap.quickActions.selectNodeFirst'), { icon: 'ℹ️' });
         return;
       }
       window.dispatchEvent(
@@ -776,7 +770,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         try {
           const pages = await Api.getNotebookPages({ limit: 10, sort: 'updated_at' });
           if (!Array.isArray(pages) || pages.length === 0) {
-            toast(isPolish ? 'Brak stron w notatniku' : 'No notebook pages found', { icon: '📓' });
+            toast(i18n.t('mindmap.quickActions.noNotebookPages'), { icon: '📓' });
             return;
           }
           const sel = handlers.getSelectedNode();
@@ -790,7 +784,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
             type: 'idea',
             position: { x: baseX, y: baseY + i * 80 },
             data: {
-              label: page.title || page.name || (isPolish ? 'Notatka' : 'Note'),
+              label: page.title || page.name || i18n.t('mindmap.quickActions.labelNoteFallback'),
               semanticType: 'knowledge',
               sourceType: 'notebook',
               sourceId: page.id,
@@ -808,12 +802,10 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           setters.setNodes((prev) => [...prev, ...newNodes]);
           setters.setEdges((prev) => [...prev, ...newEdges]);
           toast.success(
-            isPolish
-              ? `Wstawiono ${newNodes.length} stron z notatnika`
-              : `Inserted ${newNodes.length} notebook pages`
+            i18n.t('mindmap.quickActions.insertedNotebookPages', { count: newNodes.length })
           );
         } catch {
-          toast.error(isPolish ? 'Nie udało się pobrać notatnika' : 'Failed to fetch notebook');
+          toast.error(i18n.t('mindmap.quickActions.failedToFetchNotebook'));
         }
       })();
     }
@@ -842,21 +834,13 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
                 setters.setEdges((prev) => [...prev, ...data.edges]);
               }
               toast.success(
-                isPolish
-                  ? `Zaimportowano ${data.nodes.length} węzłów`
-                  : `Imported ${data.nodes.length} nodes`
+                i18n.t('mindmap.quickActions.importedNodes', { count: data.nodes.length })
               );
             } else {
-              toast.error(
-                isPolish
-                  ? 'Nieobsługiwany plik. Użyj eksportu JSON z Consultify.'
-                  : 'Unsupported file. Use a Consultify JSON export.'
-              );
+              toast.error(i18n.t('mindmap.quickActions.unsupportedImportFile'));
             }
           } catch {
-            toast.error(
-              isPolish ? 'Nie udało się odczytać pliku JSON' : 'Could not read JSON file'
-            );
+            toast.error(i18n.t('mindmap.quickActions.couldNotReadJsonFile'));
           }
         };
         reader.readAsText(file);
@@ -864,12 +848,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       input.click();
     }
     if (action === 'mm_import_url') {
-      toast(
-        isPolish
-          ? 'Import URL nie jest jeszcze dostępny. Użyj Import → Dokument lub XMind/FreeMind.'
-          : 'URL import is not yet available. Use Import → Document or XMind/FreeMind.',
-        { icon: 'ℹ️', duration: 2500 }
-      );
+      toast(i18n.t('mindmap.quickActions.urlImportNotAvailable'), { icon: 'ℹ️', duration: 2500 });
       return;
     }
     if (
@@ -882,7 +861,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         'mm_kanban_view',
       ].includes(action)
     ) {
-      toast(isPolish ? 'Ta funkcja jest w trakcie rozwoju' : 'This feature is under development', {
+      toast(i18n.t('mindmap.quickActions.featureUnderDevelopment'), {
         icon: '🚧',
         duration: 2200,
       });
@@ -911,7 +890,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           /* */
         }
       }, 50);
-      toast.success(isPolish ? `Układ: ${nextMode}` : `Layout: ${nextMode}`, { duration: 1200 });
+      toast.success(i18n.t('mindmap.quickActions.layoutChanged', { mode: nextMode }), { duration: 1200 });
     }
     if (action === 'mm_structure_picker') {
       if (setters.setShowStructurePicker) setters.setShowStructurePicker(true);
@@ -939,7 +918,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           semantic: { pl: 'Semantyczny', en: 'Semantic' },
         };
         const label = isPolish ? LABELS[newType]?.pl : LABELS[newType]?.en;
-        toast.success(isPolish ? `Struktura: ${label}` : `Structure: ${label}`, { duration: 1200 });
+        toast.success(i18n.t('mindmap.quickActions.structureChanged', { label }), { duration: 1200 });
       }
     }
     if (action === 'mm_toggle_minimap') {
@@ -954,10 +933,10 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       navigator.clipboard
         ?.writeText(url)
         .then(() => {
-          toast.success(isPolish ? 'Link skopiowany!' : 'Link copied!');
+          toast.success(i18n.t('mindmap.quickActions.linkCopied'));
         })
         .catch(() => {
-          toast(isPolish ? 'Nie udało się skopiować' : 'Copy failed', { icon: '⚠️' });
+          toast(i18n.t('mindmap.quickActions.copyFailed'), { icon: '⚠️' });
         });
     }
     if (action === 'mm_embed') {
@@ -966,10 +945,10 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       navigator.clipboard
         ?.writeText(embedCode)
         .then(() => {
-          toast.success(isPolish ? 'Kod embed skopiowany!' : 'Embed code copied!');
+          toast.success(i18n.t('mindmap.quickActions.embedCodeCopied'));
         })
         .catch(() => {
-          toast(isPolish ? 'Nie udało się skopiować' : 'Copy failed', { icon: '⚠️' });
+          toast(i18n.t('mindmap.quickActions.copyFailed'), { icon: '⚠️' });
         });
     }
     if (action === 'mm_branch_analysis') setters.setShowBranchComparison(true);

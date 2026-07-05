@@ -1,5 +1,6 @@
 import type { Edge, Node } from 'reactflow';
 
+import i18n from '@/i18n';
 import type { ArtifactLink } from '@/utils/artifactLinks';
 
 export interface MindMapEvidenceLink {
@@ -118,6 +119,7 @@ export function normalizeMindMapNodes(
   nodes: any[],
   edges: Edge[],
   ideaTitle: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept for call-site compatibility (molochs pass this positionally)
   isPolish: boolean
 ): Node[] {
   return nodes.map((node: any) => {
@@ -146,14 +148,10 @@ export function normalizeMindMapNodes(
         ...depthFields,
         label:
           node?.id === 'root'
-            ? ideaTitle || (isPolish ? 'Moj pomysl' : 'My idea')
+            ? ideaTitle || i18n.t('mindmap.nodeModel.myIdea')
             : (node?.data?.label ?? ''),
         hint:
-          node?.id === 'root'
-            ? isPolish
-              ? 'Kliknij, aby edytowac'
-              : 'Click to edit'
-            : node?.data?.hint,
+          node?.id === 'root' ? i18n.t('mindmap.nodeModel.clickToEdit') : node?.data?.hint,
         branchKey: node?.data?.branchKey || 'uncategorized',
         _depth: getNodeDepth(node.id, edges),
         tags: sanitizeTags(depthFields.tags ?? node?.data?.tags),
