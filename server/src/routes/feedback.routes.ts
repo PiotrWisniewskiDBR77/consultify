@@ -1716,10 +1716,12 @@ router.patch(
         );
     }
 
-    const current = await dbGet<{ status: string; metadata_json?: string | null }>(
-      `SELECT status, metadata_json FROM feedback_items WHERE id = ?`,
-      [id]
-    );
+    const current = await dbGet<{
+      status: string;
+      metadata_json?: string | null;
+      user_id?: string | null;
+      title?: string | null;
+    }>(`SELECT status, metadata_json, user_id, title FROM feedback_items WHERE id = ?`, [id]);
     const fromStatus = current?.status || null;
 
     const sql = `UPDATE feedback_items SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
@@ -1764,6 +1766,45 @@ router.patch(
           `🔧 Status: ${from} → ${to} · zmienił(a): ${actor}${note ? `\n_${String(note).slice(0, 200)}_` : ''}`
         );
       })();
+    }
+
+    // Close the loop with the REPORTER in-app: a status move (esp. → RESOLVED)
+    // is the user-facing signal that their report was acted on. Skip trivial
+    // no-ops, self-changes, and internal-only states (NEW/ARCHIVED) to avoid noise.
+    {
+      const to = status.toUpperCase();
+      const from = (fromStatus || 'NEW').toUpperCase();
+      const reporterId = current?.user_id || null;
+      const userFacingStatuses = new Set(['PENDING', 'IN_PROGRESS', 'REVIEWED', 'RESOLVED']);
+      if (reporterId && reporterId !== changedBy && to !== from && userFacingStatuses.has(to)) {
+        const statusPl: Record<string, string> = {
+          PENDING: 'Oczekuje',
+          IN_PROGRESS: 'W realizacji',
+          REVIEWED: 'Przejrzane',
+          RESOLVED: 'Rozwiązane',
+        };
+        const label = statusPl[to] || to;
+        const ticketTitle = String(current?.title || 'Twoje zgłoszenie').slice(0, 120);
+        void NotificationService.send({
+          userId: reporterId,
+          organizationId: 'system',
+          type: 'FEEDBACK_STATUS',
+          severity: 'INFO',
+          title:
+            to === 'RESOLVED'
+              ? `Rozwiązano Twoje zgłoszenie: ${ticketTitle}`
+              : `Status Twojego zgłoszenia: ${label}`,
+          body: `„${ticketTitle}" — ${label}${note ? `: ${String(note).slice(0, 160)}` : ''}`,
+          message: `„${ticketTitle}" — ${label}`,
+          relatedObjectType: 'FEEDBACK',
+          relatedObjectId: id,
+          isActionable: false,
+        }).catch((noteErr) => {
+          logger.warn('[Feedback] status notification failed (non-fatal):', {
+            error: noteErr instanceof Error ? noteErr.message : String(noteErr),
+          });
+        });
+      }
     }
 
     return res.json({ success: true });

@@ -180,6 +180,7 @@ export const FeedbackSidePanel: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [successReference, setSuccessReference] = useState<string | null>(null);
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
 
   // Context snapshot - captured the moment user opens the panel
@@ -442,14 +443,21 @@ export const FeedbackSidePanel: React.FC = () => {
     setSubmitErrorMessage(null);
   }, []);
 
-  // Handle success state
-  const handleSuccess = (msg: string) => {
+  // Handle success state. `referenceId` (when provided) is shown so the user
+  // has a ticket number to quote when following up — closes the "did it even
+  // send?" gap. Keep the success screen up a touch longer when there's an ID.
+  const handleSuccess = (msg: string, referenceId?: string) => {
     setSuccessMessage(msg);
+    setSuccessReference(referenceId || null);
     setShowSuccess(true);
-    setTimeout(() => {
-      setShowSuccess(false);
-      resetForm();
-    }, 2500);
+    setTimeout(
+      () => {
+        setShowSuccess(false);
+        setSuccessReference(null);
+        resetForm();
+      },
+      referenceId ? 4000 : 2500
+    );
   };
 
   // ==================== SUBMIT HANDLERS ====================
@@ -488,7 +496,7 @@ export const FeedbackSidePanel: React.FC = () => {
     }
 
     try {
-      await Api.sendFeedback({
+      const submitResult = await Api.sendFeedback({
         userId: currentUser?.id || undefined,
         userEmail: currentUser?.email || undefined,
         userName:
@@ -543,10 +551,19 @@ export const FeedbackSidePanel: React.FC = () => {
               }
             : null,
       });
+      // Surface a short ticket reference (first block of the UUID) so the user
+      // can quote it when following up. Backend returns { success, id, taskId }.
+      const rawId =
+        (submitResult && (submitResult.id || submitResult.feedbackId)) || undefined;
+      const reference =
+        typeof rawId === 'string' && rawId.length >= 8
+          ? rawId.slice(0, 8).toUpperCase()
+          : undefined;
       handleSuccess(
         reportType === 'BUG'
           ? t('feedback.success.bugReported', "Bug reported! We'll investigate ASAP.")
-          : t('feedback.success.ideaSubmitted', 'Great idea! Added to our backlog.')
+          : t('feedback.success.ideaSubmitted', 'Great idea! Added to our backlog.'),
+        reference
       );
     } catch (error) {
       console.error('Error submitting feedback:', error);
@@ -1234,6 +1251,19 @@ export const FeedbackSidePanel: React.FC = () => {
         {t('feedback.success.title', 'Thank You!')}
       </h4>
       <p className="text-sm text-slate-500 dark:text-slate-400 max-w-[250px]">{successMessage}</p>
+      {successReference ? (
+        <div className="mt-3 flex flex-col items-center gap-1">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            {t('feedback.success.reference', 'Numer zgłoszenia')}
+          </span>
+          <span className="font-mono text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-navy-900 px-2.5 py-1 rounded-lg">
+            #{successReference}
+          </span>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 max-w-[220px]">
+            {t('feedback.success.referenceHint', 'Powiadomimy Cię tutaj, gdy zmieni się status.')}
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 
