@@ -185,6 +185,18 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     allowLocalOverride: true,
   },
   {
+    id: 'mindmapAlignSnap',
+    name: 'Mind Map: Align/Distribute + Snap (M06 Fala 3.1)',
+    description:
+      'Positional canvas tools for the mind map (M06 Fala 3.1): align/distribute buttons on the ' +
+      'multi-select toolbar (align left/center-H/right/top/middle-V/bottom for 2+ nodes, ' +
+      'distribute H/V for 3+), an opt-in snap-to-grid toggle, and smart guide lines while ' +
+      'dragging. OFF = today’s free-form positioning with no alignment affordances.',
+    defaultValue: false,
+    category: 'beta',
+    allowLocalOverride: true,
+  },
+  {
     id: 'ENABLE_TERESA_MINDMAP',
     name: 'Teresa: Mind Map Bridge',
     description:
