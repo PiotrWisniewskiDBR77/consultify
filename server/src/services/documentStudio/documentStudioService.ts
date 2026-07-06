@@ -2251,6 +2251,113 @@ export async function insertDocumentContentBlock(
   };
 }
 
+/**
+ * P0 data-loss fix — manual (non-AI) content autosave.
+ *
+ * `DocumentTipTapEditor` lets a user type directly into the document.
+ * Before this slice that edit only ever updated the React component's
+ * local `schema` state (`DocumentStudioView.tsx`: `onSchemaUpdated={setSchema}`)
+ * — nothing reached the server, so a reload silently reverted to
+ * whatever was last durably persisted (an AI proposal, or nothing).
+ *
+ * This reuses the SAME durable layer the AI-proposal / rollback /
+ * content-block-insert paths already write through:
+ * `document_studio_schema_overlay` via `persistSchemaOverlayWriteThrough`
+ * (`documentEditorStateRegistryDao.ts`). `getDocumentArtifact` already
+ * reads that overlay first, so a manual save is visible on the very
+ * next GET — no separate read path needed.
+ *
+ * Optimistic lock (mirrors `PUT /api/v8/notebook/pages/:noteId/content`):
+ * the caller must pass `expectedVersion` — the `updatedAt` it last read.
+ * If the current server-side `updatedAt` (overlay-or-wave5) has moved on
+ * (e.g. an AI proposal was approved, or another tab autosaved first),
+ * the write is rejected with `DocumentManualSaveConflictError` (409 at
+ * the route layer) instead of silently overwriting the newer state.
+ *
+ * This function does NOT participate in the proposal/approve pipeline —
+ * it only ever overwrites `sections` (the editable body) on the current
+ * schema, so it can never race with `approveEditProposal` clobbering a
+ * proposal's own bookkeeping fields.
+ */
+export class DocumentManualSaveConflictError extends Error {
+  readonly code = 'manual_save_conflict' as const;
+  readonly serverVersion: string;
+  constructor(serverVersion: string) {
+    super('Document content changed since it was last loaded.');
+    this.name = 'DocumentManualSaveConflictError';
+    this.serverVersion = serverVersion;
+  }
+}
+
+export class DocumentManualSaveNotFoundError extends Error {
+  readonly code = 'document_not_found' as const;
+  constructor(artifactId: string) {
+    super(`document ${artifactId} not found`);
+    this.name = 'DocumentManualSaveNotFoundError';
+  }
+}
+
+export interface UpdateDocumentManualContentParams {
+  artifactId: string;
+  organizationId: string;
+  userId: string;
+  /** The editor's freshly-converted sections (ProseMirror → schema). */
+  sections: DocumentSchema['sections'];
+  /** The `updatedAt` the client last read — optimistic-lock guard. */
+  expectedVersion: string;
+}
+
+export interface UpdateDocumentManualContentResult {
+  schema: DocumentSchema;
+}
+
+export async function updateDocumentManualContent(
+  params: UpdateDocumentManualContentParams
+): Promise<UpdateDocumentManualContentResult> {
+  if (
+    !params.artifactId ||
+    !params.organizationId ||
+    !params.userId ||
+    !params.expectedVersion
+  ) {
+    throw new Error('invalid_input');
+  }
+  if (!Array.isArray(params.sections)) {
+    throw new Error('invalid_input');
+  }
+
+  const current = await getDocumentArtifact(params.artifactId, params.organizationId);
+  if (!current) {
+    throw new DocumentManualSaveNotFoundError(params.artifactId);
+  }
+
+  if (String(current.updatedAt) !== String(params.expectedVersion)) {
+    throw new DocumentManualSaveConflictError(current.updatedAt);
+  }
+
+  const nextSchema = cloneSchema(current);
+  nextSchema.sections = params.sections;
+  nextSchema.updatedAt = nowIso();
+
+  persistSchemaOverlayWriteThrough(params.artifactId, params.organizationId, nextSchema);
+
+  pushAuditEntry({
+    auditId: makeId('doc-audit'),
+    artifactId: params.artifactId,
+    organizationId: params.organizationId,
+    action: 'manual_content_saved',
+    actorId: params.userId,
+    occurredAt: nextSchema.updatedAt,
+    details: {
+      sectionCount: nextSchema.sections.length,
+      blockCount: nextSchema.sections.reduce((sum, s) => sum + s.blocks.length, 0),
+    },
+  });
+
+  const readBack = await getDocumentArtifact(params.artifactId, params.organizationId);
+  return { schema: readBack ?? nextSchema };
+}
+
 export function listDocumentAuditEntries(
   artifactId: string,
   organizationId: string

@@ -13,21 +13,38 @@
  * go through `setContent({ emitUpdate:false })` instead of remounting — so the
  * cursor / selection / undo stack survive every keystroke.
  *
- * E3 AUTOSAVE is intentionally OUT OF SCOPE here: `onSchemaUpdated` fires the
- * reconstructed schema (debounced), but persistence (PUT path / optimistic
- * lock) is a separate backend decision and is wired by Claude later.
+ * E3 AUTOSAVE (P0 data-loss fix): a manual edit used to only update the
+ * parent's in-memory `schema` state (`onSchemaUpdated`) — nothing reached
+ * the server, so a reload silently discarded it (or reverted to whatever an
+ * AI proposal had last approved). We now debounce the reconstructed schema
+ * and PUT its `sections` to `PUT /api/document-studio/:artifactId/content`
+ * (`saveDocumentStudioManualContent`), the same durable overlay layer the
+ * AI-proposal / rollback / content-block-insert paths already write
+ * through server-side. An optimistic-lock `expectedVersion` (mirrors
+ * `PUT /api/v8/notebook/pages/:noteId/content`) guards against clobbering
+ * a newer server state (e.g. an approved proposal, or another tab's
+ * autosave); a 409 is resolved by re-fetching the artifact rather than
+ * force-pushing the local buffer, so this path can never race the
+ * approve-flow's own writes.
  */
 
 import { EditorContent, useEditor } from '@tiptap/react';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { DocumentInlineAIMenu } from '../inline-ai';
+import {
+  DocumentManualSaveConflictError,
+  getDocumentStudioArtifact,
+  saveDocumentStudioManualContent,
+} from '../api';
 import { getDocumentEditorExtensions } from './documentEditorExtensions';
 import { proseMirrorToSchema, type PMDoc } from './tipTapToSchema';
 import { schemaToProseMirror } from './schemaToTipTap';
 import type { DocumentSchema } from '../types';
 
-const SAVE_DEBOUNCE_MS = 300;
+const SAVE_DEBOUNCE_MS = 500;
+
+export type DocumentAutosaveStatus = 'idle' | 'saving' | 'saved' | 'conflict' | 'error';
 
 export interface DocumentTipTapEditorProps {
   schema: DocumentSchema;
@@ -35,8 +52,10 @@ export interface DocumentTipTapEditorProps {
   editable?: boolean;
   placeholder?: string;
   className?: string;
-  /** When provided, enables the inline-AI floating menu (R2). */
+  /** When provided, enables the inline-AI floating menu (R2) AND manual-edit autosave. */
   artifactId?: string;
+  /** Optional autosave status observer (idle/saving/saved/conflict/error) for UI feedback. */
+  onAutosaveStatusChange?: (status: DocumentAutosaveStatus) => void;
 }
 
 export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
@@ -46,6 +65,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
   placeholder,
   className,
   artifactId,
+  onAutosaveStatusChange,
 }) => {
   const extensions = useMemo(() => getDocumentEditorExtensions(placeholder), [placeholder]);
 
@@ -55,13 +75,93 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
   schemaRef.current = schema;
   const onSchemaUpdatedRef = useRef(onSchemaUpdated);
   onSchemaUpdatedRef.current = onSchemaUpdated;
+  const onAutosaveStatusChangeRef = useRef(onAutosaveStatusChange);
+  onAutosaveStatusChangeRef.current = onAutosaveStatusChange;
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isExternalUpdateRef = useRef(false);
 
+  // Optimistic-lock version — the `schema.updatedAt` this editor instance
+  // last confirmed against the server (either from the initial load, a
+  // successful PUT response, or a conflict-triggered re-fetch). Sent back
+  // as `expectedVersion` on every autosave. A ref (not state) because it
+  // must be read synchronously inside the debounced save closure without
+  // re-triggering renders.
+  const versionRef = useRef(schema.updatedAt);
+  // Guards against overlapping PUTs: if a keystroke lands while a save is
+  // in flight, we remember it and fire exactly one more save on completion
+  // instead of racing two PUTs against the same expectedVersion.
+  const saveInFlightRef = useRef(false);
+  const saveQueuedRef = useRef(false);
+  // Once true, autosave stops firing until a fresh (non-conflicting) schema
+  // arrives — prevents hammering the server with doomed retries after a 409.
+  const conflictedRef = useRef(false);
+
   // Initial PM doc — computed once; subsequent schema changes flow through the
   // sync effect below, NOT through a remount.
   const initialDoc = useMemo(() => schemaToProseMirror(schema), [schema.artifactId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /**
+   * Persist the manual edit (sections only) via the same durable overlay
+   * layer the AI-proposal / rollback / content-block-insert paths already
+   * write through server-side. Content-only save — never touches the
+   * proposal/approve pipeline, so it cannot race an approval's own write.
+   */
+  const persistManualEdit = useCallback(
+    async (next: DocumentSchema) => {
+      if (!artifactId || conflictedRef.current) return;
+      if (saveInFlightRef.current) {
+        saveQueuedRef.current = true;
+        return;
+      }
+      saveInFlightRef.current = true;
+      onAutosaveStatusChangeRef.current?.('saving');
+      try {
+        const expectedVersion = versionRef.current;
+        if (!expectedVersion) {
+          // No version to lock against yet (schema predates this field) —
+          // skip rather than risk a lock-free overwrite; the next reload
+          // will hydrate `updatedAt` and autosave will engage normally.
+          onAutosaveStatusChangeRef.current?.('idle');
+          return;
+        }
+        const saved = await saveDocumentStudioManualContent(artifactId, {
+          sections: next.sections,
+          expectedVersion,
+        });
+        versionRef.current = saved.updatedAt;
+        onAutosaveStatusChangeRef.current?.('saved');
+        onSchemaUpdatedRef.current?.(saved);
+      } catch (err) {
+        if (err instanceof DocumentManualSaveConflictError) {
+          // Someone else (an approved AI proposal, another tab) wrote a
+          // newer version. Do NOT force-push the local buffer — re-fetch
+          // the authoritative schema and let the sync effect below push it
+          // into the live editor without echoing back through onUpdate.
+          conflictedRef.current = true;
+          onAutosaveStatusChangeRef.current?.('conflict');
+          try {
+            const fresh = await getDocumentStudioArtifact(artifactId);
+            versionRef.current = fresh.schema.updatedAt;
+            onSchemaUpdatedRef.current?.(fresh.schema);
+          } catch {
+            /* best-effort refetch; user can still manually reload */
+          } finally {
+            conflictedRef.current = false;
+          }
+        } else {
+          onAutosaveStatusChangeRef.current?.('error');
+        }
+      } finally {
+        saveInFlightRef.current = false;
+        if (saveQueuedRef.current) {
+          saveQueuedRef.current = false;
+          void persistManualEdit(schemaRef.current);
+        }
+      }
+    },
+    [artifactId]
+  );
 
   const editor = useEditor(
     {
@@ -70,12 +170,15 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
       content: initialDoc as unknown as Record<string, unknown>,
       onUpdate: ({ editor: ed }) => {
         if (isExternalUpdateRef.current) return;
-        if (!onSchemaUpdatedRef.current) return;
         if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
         saveTimerRef.current = setTimeout(() => {
           const json = ed.getJSON() as unknown as PMDoc;
           const next = proseMirrorToSchema(json, schemaRef.current);
+          // Local (parent) state always updates immediately so the rest of
+          // the UI (word count, right rail, etc.) reflects the edit even
+          // before the network round-trip completes.
           onSchemaUpdatedRef.current?.(next);
+          void persistManualEdit(next);
         }, SAVE_DEBOUNCE_MS);
       },
     },
@@ -110,6 +213,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
     // in-place for same-artifact schema swaps.
     if (schema.artifactId !== lastArtifactRef.current) {
       lastArtifactRef.current = schema.artifactId;
+      versionRef.current = schema.updatedAt;
       return;
     }
     // Heuristic: only force a sync when the incoming schema did NOT originate
@@ -118,7 +222,13 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
     try {
       const current = JSON.stringify(editor.getJSON());
       const incoming = JSON.stringify(schemaToProseMirror(schema));
-      if (current !== incoming) syncSchema(schema);
+      if (current !== incoming) {
+        syncSchema(schema);
+        // An external schema swap (AI proposal approved, rollback, another
+        // tab's autosave landing) is the new source of truth — adopt its
+        // version so the next local edit locks against it, not a stale one.
+        versionRef.current = schema.updatedAt;
+      }
     } catch {
       /* ignore */
     }

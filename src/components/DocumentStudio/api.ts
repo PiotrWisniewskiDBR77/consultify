@@ -337,6 +337,53 @@ export async function generateDocumentStudioArtifactStream(
   return done;
 }
 
+/**
+ * P0 data-loss fix — manual (non-AI) TipTap editor autosave. Thrown when
+ * the server rejects the write because `expectedVersion` no longer
+ * matches (an AI proposal was approved, or another tab autosaved first).
+ * Mirrors `PUT /api/v8/notebook/pages/:noteId/content`'s 409 contract.
+ */
+export class DocumentManualSaveConflictError extends Error {
+  readonly code = 'manual_save_conflict' as const;
+  readonly serverVersion: string;
+  constructor(serverVersion: string) {
+    super('Document content changed since it was last loaded.');
+    this.name = 'DocumentManualSaveConflictError';
+    this.serverVersion = serverVersion;
+  }
+}
+
+/**
+ * P0 data-loss fix — persist a manual (non-AI) content edit made directly
+ * in `DocumentTipTapEditor`. Content-only save; does NOT touch the
+ * proposal/approve pipeline. `expectedVersion` is the `schema.updatedAt`
+ * the editor last read (optimistic lock).
+ */
+export async function saveDocumentStudioManualContent(
+  artifactId: string,
+  payload: { sections: DocumentSchema['sections']; expectedVersion: string }
+): Promise<DocumentSchema> {
+  const res = await fetchWithRetry(`${BASE}/${encodeURIComponent(artifactId)}/content`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (res.status === 409) {
+    let body: { conflict?: { serverVersion?: string } } = {};
+    try {
+      body = (await res.clone().json()) as typeof body;
+    } catch {
+      // Fall through to the generic handler below.
+    }
+    throw new DocumentManualSaveConflictError(body.conflict?.serverVersion ?? '');
+  }
+  const json = await handleResponse<{ schema: DocumentSchema }>(
+    res,
+    'DocumentStudio save manual content'
+  );
+  return json.schema;
+}
+
 export async function getDocumentStudioArtifact(
   artifactId: string
 ): Promise<DocumentStudioArtifactResult> {
