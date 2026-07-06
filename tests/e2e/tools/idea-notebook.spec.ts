@@ -32,7 +32,8 @@
  */
 import { expect, Page, test } from '@playwright/test';
 
-import { seedE2EAuthWithBootstrap, suppressOnboarding } from '../smoke/runtime-gate-helpers';
+import { seedE2EAuthWithBootstrap } from '../smoke/runtime-gate-helpers';
+import { suppressOnboarding } from '../smoke/work-canvas-helpers';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 
@@ -40,12 +41,19 @@ function uniqueLabel(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+async function getSeededToken(page: Page): Promise<string> {
+  const token = await page.evaluate(() => window.localStorage.getItem('token'));
+  return token || '';
+}
+
 async function probeEndpoint(page: Page, method: 'GET' | 'POST', path: string, data?: unknown) {
   const url = `${API_BASE_URL}${path}`;
+  const token = await getSeededToken(page);
+  const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
   const res =
     method === 'GET'
-      ? await page.request.get(url).catch((e) => e)
-      : await page.request.post(url, { data: data ?? {} }).catch((e) => e);
+      ? await page.request.get(url, { headers }).catch((e) => e)
+      : await page.request.post(url, { headers, data: data ?? {} }).catch((e) => e);
   if (res instanceof Error) return { ok: false, status: -1, error: res.message };
   return { ok: res.ok(), status: res.status(), body: await res.text().catch(() => '') };
 }
@@ -54,6 +62,7 @@ test.describe('M04 Notebook — create page, type, reload persists', () => {
   test.beforeEach(async ({ page }) => {
     await suppressOnboarding(page);
     await seedE2EAuthWithBootstrap(page);
+    await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 60000 }).catch(() => {});
   });
 
   test('legacy /api/my-work/notebooks container endpoint does not exist (documented 404)', async ({ page }) => {

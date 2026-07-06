@@ -22,7 +22,8 @@
  */
 import { expect, test } from '@playwright/test';
 
-import { seedE2EAuthWithBootstrap, suppressOnboarding } from '../smoke/runtime-gate-helpers';
+import { seedE2EAuthWithBootstrap } from '../smoke/runtime-gate-helpers';
+import { suppressOnboarding } from '../smoke/work-canvas-helpers';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 const WORKSPACE_REGION = /Idea map workspace|Obszar roboczy mapy idei/;
@@ -32,8 +33,21 @@ function uniqueLabel(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-async function createIdea(page: import('@playwright/test').Page, title: string) {
+/**
+ * page.request is a separate API context from the browser page — it does NOT
+ * read the localStorage token that seedE2EAuthWithBootstrap() seeds via
+ * addInitScript. Read the token back out of the page (after one navigation so
+ * the init script has run) and use it as a Bearer header for API seed calls.
+ */
+async function getSeededToken(page: import('@playwright/test').Page): Promise<string> {
+  const token = await page.evaluate(() => window.localStorage.getItem('token'));
+  if (!token) throw new Error('seedE2EAuthWithBootstrap did not leave a token in localStorage');
+  return token;
+}
+
+async function createIdea(page: import('@playwright/test').Page, token: string, title: string) {
   const res = await page.request.post(`${API_BASE_URL}/api/my-work/my-ideas`, {
+    headers: { Authorization: `Bearer ${token}` },
     data: { title, body: `idea-table-rename seed for ${title}`, tags: ['e2e', 'table-rename'] },
     timeout: 40000,
   });
@@ -82,8 +96,12 @@ test.describe('M08 Ideas · Table Platform — rename persists', () => {
 
     await suppressOnboarding(page);
     await seedE2EAuthWithBootstrap(page);
+    // One cheap navigation so the addInitScript from seedE2EAuthWithBootstrap has run
+    // and localStorage actually contains the token before we read it back.
+    await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 60000 }).catch(() => {});
+    const token = await getSeededToken(page);
 
-    const idea = await createIdea(page, uniqueLabel('tp-rename'));
+    const idea = await createIdea(page, token, uniqueLabel('tp-rename'));
     await gotoTable(page, idea.id);
     await dismissOnboardingButtons(page);
 
