@@ -35,6 +35,7 @@ import { expect, Page, test } from '@playwright/test';
 
 import { seedE2EAuthWithBootstrap } from '../smoke/runtime-gate-helpers';
 import { suppressOnboarding } from '../smoke/work-canvas-helpers';
+import { waitVisible } from './_helpers';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 
@@ -113,7 +114,7 @@ test.describe('M04 Notebook — create page, type, reload persists', () => {
     await dismissOnboardingButtons(page);
 
     const editor = page.locator('.ProseMirror, [contenteditable="true"]').first();
-    const editorVisible = await editor.isVisible({ timeout: 30000 }).catch(() => false);
+    const editorVisible = await waitVisible(editor, 30000);
     test.skip(
       !editorVisible,
       'Notebook page editor (.ProseMirror) did not mount for the created page under mock — ' +

@@ -11,6 +11,7 @@ import { expect, Page, test } from '@playwright/test';
 
 import { seedE2EAuthWithBootstrap } from '../smoke/runtime-gate-helpers';
 import { suppressOnboarding } from '../smoke/work-canvas-helpers';
+import { waitVisible } from './_helpers';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 const WORKSPACE_REGION = /Idea map workspace|Obszar roboczy mapy idei/;
@@ -99,16 +100,16 @@ test.describe('M06 Ideas · Mind Map — add node persists', () => {
     await dismissOnboardingButtons(page);
 
     const workspaceRegion = page.getByRole('region', { name: WORKSPACE_REGION });
-    const shellVisible = await workspaceRegion.isVisible({ timeout: 60000 }).catch(() => false);
+    const shellVisible = await waitVisible(workspaceRegion, 60000);
     test.skip(!shellVisible, 'Idea workspace shell did not mount under mock — cannot reach Mind Map canvas');
 
     // Defensive tool-mount race: mind map switch button is labelled "Recommendation map".
     const mmToolBtn = page.locator('button[title="Recommendation map"], button[title="Mapa rekomendacji"]').first();
-    if (await mmToolBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+    if (await waitVisible(mmToolBtn, 5000)) {
       await mmToolBtn.click({ force: true }).catch(() => {});
     }
 
-    const canvasMounted = await page.locator('.react-flow').first().isVisible({ timeout: 60000 }).catch(() => false);
+    const canvasMounted = await waitVisible(page.locator('.react-flow').first(), 60000);
     test.skip(!canvasMounted, 'ReactFlow data layer did not mount within 60s — hydration/perf issue, not a Mind Map defect');
 
     // Let the auto-seed root-node write (version 1→2) settle before mutating.

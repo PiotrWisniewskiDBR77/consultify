@@ -15,6 +15,7 @@ import { expect, Page, test } from '@playwright/test';
 
 import { seedE2EAuthWithBootstrap } from '../smoke/runtime-gate-helpers';
 import { suppressOnboarding } from '../smoke/work-canvas-helpers';
+import { waitVisible } from './_helpers';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 const WORKSPACE_REGION = /Idea map workspace|Obszar roboczy mapy idei/;
@@ -103,16 +104,16 @@ test.describe('M07 Ideas · Process Flow — add step persists', () => {
     await dismissOnboardingButtons(page);
 
     const workspaceRegion = page.getByRole('region', { name: WORKSPACE_REGION });
-    const shellVisible = await workspaceRegion.isVisible({ timeout: 60000 }).catch(() => false);
+    const shellVisible = await waitVisible(workspaceRegion, 60000);
     test.skip(!shellVisible, 'Idea workspace shell did not mount under mock — cannot reach Process Flow canvas');
 
     // Defensive tool-mount race per task facts: click the Process Flow switch explicitly.
     const pfToolBtn = page.locator('button[title="Process Flow"]').first();
-    if (await pfToolBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+    if (await waitVisible(pfToolBtn, 5000)) {
       await pfToolBtn.click({ force: true }).catch(() => {});
     }
 
-    const canvasMounted = await page.locator('.react-flow').first().isVisible({ timeout: 60000 }).catch(() => false);
+    const canvasMounted = await waitVisible(page.locator('.react-flow').first(), 60000);
     test.skip(!canvasMounted, 'ReactFlow data layer did not mount within 60s — hydration/perf issue, not a Process Flow defect');
 
     // Let the auto-seed root-node write (version 1→2) settle before mutating.
@@ -123,11 +124,11 @@ test.describe('M07 Ideas · Process Flow — add step persists', () => {
     // Add a step via the toolbar. Empty-state offers "Add start"; a populated
     // canvas (auto-seeded root) uses the shape toolbar button instead.
     const addStart = page.getByRole('button', { name: /Add start|Dodaj start/i }).first();
-    if (await addStart.isVisible().catch(() => false)) {
+    if (await waitVisible(addStart, 3000)) {
       await addStart.click();
     } else {
       const actionBtn = page.locator('button[title="Action"], button[title="Akcja"]').first();
-      const actionVisible = await actionBtn.isVisible({ timeout: 10000 }).catch(() => false);
+      const actionVisible = await waitVisible(actionBtn, 10000);
       test.skip(!actionVisible, 'Process Flow shape toolbar ("Action" button) not found — toolbar affordance missing under mock');
       await actionBtn.click();
     }

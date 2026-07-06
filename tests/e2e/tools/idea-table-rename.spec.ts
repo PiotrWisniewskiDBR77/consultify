@@ -24,6 +24,7 @@ import { expect, test } from '@playwright/test';
 
 import { seedE2EAuthWithBootstrap } from '../smoke/runtime-gate-helpers';
 import { suppressOnboarding } from '../smoke/work-canvas-helpers';
+import { waitVisible } from './_helpers';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 const WORKSPACE_REGION = /Idea map workspace|Obszar roboczy mapy idei/;
@@ -106,7 +107,7 @@ test.describe('M08 Ideas · Table Platform — rename persists', () => {
     await dismissOnboardingButtons(page);
 
     const workspaceRegion = page.getByRole('region', { name: WORKSPACE_REGION });
-    const shellVisible = await workspaceRegion.isVisible({ timeout: 60000 }).catch(() => false);
+    const shellVisible = await waitVisible(workspaceRegion, 60000);
     test.skip(!shellVisible, 'Idea workspace shell did not mount — cannot reach Table Platform UI under mock');
 
     // Let the auto-seed root-node write (version 1→2) and any Table Platform
@@ -116,7 +117,7 @@ test.describe('M08 Ideas · Table Platform — rename persists', () => {
     // Defensive tool-mount race: make sure the Table tool-strip button is active
     // (workspace can briefly mount the wrong tool while hydrating).
     const tableToolBtn = page.locator('button[title="Table"]').first();
-    if (await tableToolBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+    if (await waitVisible(tableToolBtn, 5000)) {
       await tableToolBtn.click({ force: true }).catch(() => {});
     }
 
@@ -128,7 +129,7 @@ test.describe('M08 Ideas · Table Platform — rename persists', () => {
     // instead of faking green.
     const tabStripButtons = page.locator('.flex.items-center.h-9 button[draggable="true"]');
     const firstTab = tabStripButtons.first();
-    const tabVisible = await firstTab.isVisible({ timeout: 20000 }).catch(() => false);
+    const tabVisible = await waitVisible(firstTab, 20000);
     test.skip(
       !tabVisible,
       'TableTabStrip did not render a table tab — Table Platform did not activate under mock ' +
@@ -142,7 +143,7 @@ test.describe('M08 Ideas · Table Platform — rename persists', () => {
     await firstTab.click({ button: 'right' });
 
     const renameMenuItem = page.getByText(/^Rename$|^Zmień nazwę$/).first();
-    const menuVisible = await renameMenuItem.isVisible({ timeout: 5000 }).catch(() => false);
+    const menuVisible = await waitVisible(renameMenuItem, 5000);
     test.skip(!menuVisible, 'Table tab context menu did not open on right-click — cannot reach rename input');
 
     await renameMenuItem.click();

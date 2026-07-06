@@ -13,6 +13,7 @@ import { expect, Page, test } from '@playwright/test';
 
 import { seedE2EAuthWithBootstrap } from '../smoke/runtime-gate-helpers';
 import { suppressOnboarding } from '../smoke/work-canvas-helpers';
+import { waitVisible } from './_helpers';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 const WORKSPACE_REGION = /Idea map workspace|Obszar roboczy mapy idei/;
@@ -93,16 +94,16 @@ test.describe('M09 Ideas · Whiteboard — add sticky persists', () => {
     await dismissOnboardingButtons(page);
 
     const workspaceRegion = page.getByRole('region', { name: WORKSPACE_REGION });
-    const shellVisible = await workspaceRegion.isVisible({ timeout: 60000 }).catch(() => false);
+    const shellVisible = await waitVisible(workspaceRegion, 60000);
     test.skip(!shellVisible, 'Idea workspace shell did not mount under mock — cannot reach Whiteboard canvas');
 
     // Defensive tool-mount race.
     const wbToolBtn = page.locator('button[title="Whiteboard"]').first();
-    if (await wbToolBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+    if (await waitVisible(wbToolBtn, 5000)) {
       await wbToolBtn.click({ force: true }).catch(() => {});
     }
 
-    const canvasMounted = await page.locator('.react-flow').first().isVisible({ timeout: 60000 }).catch(() => false);
+    const canvasMounted = await waitVisible(page.locator('.react-flow').first(), 60000);
     test.skip(!canvasMounted, 'ReactFlow data layer did not mount within 60s — hydration/perf issue, not a Whiteboard defect');
 
     // Let the auto-seed root-node write (version 1→2) settle before mutating.
@@ -113,13 +114,13 @@ test.describe('M09 Ideas · Whiteboard — add sticky persists', () => {
     // Add a sticky via the "Create" split-button main click (adds sticky directly,
     // no dropdown needed — see CanvasToolbarPrimitives.tsx onMainClick).
     const createBtn = page.locator('button[title="Create"]').first();
-    const createVisible = await createBtn.isVisible({ timeout: 10000 }).catch(() => false);
+    const createVisible = await waitVisible(createBtn, 10000);
 
     if (!createVisible) {
       // Fall back to the empty-state "Add sticky" affordance if present (only
       // shown when nodes.length === 0, i.e. auto-seed did not run).
       const emptyStateAdd = page.getByRole('button', { name: /Add sticky|Dodaj karteczkę/i }).first();
-      const emptyVisible = await emptyStateAdd.isVisible({ timeout: 5000 }).catch(() => false);
+      const emptyVisible = await waitVisible(emptyStateAdd, 5000);
       test.skip(!emptyVisible, 'Neither the "Create" toolbar button nor the empty-state "Add sticky" affordance was found');
       await emptyStateAdd.click();
     } else {
