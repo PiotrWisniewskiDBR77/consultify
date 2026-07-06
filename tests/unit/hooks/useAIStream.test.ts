@@ -481,6 +481,56 @@ describe('useAIStream', () => {
     );
   });
 
+  it('Teresa "all 8 tools": forwards process_flow/table/whiteboard kind + preferredSystem to onDeliverable (not coerced to "doc")', async () => {
+    // Regression test — `kind` used to be narrowed to only
+    // 'doc' | 'sheet' | 'deck' | 'mindmap' before being forwarded, silently
+    // downgrading process_flow/table/whiteboard/note to 'doc'.
+    // UnifiedChatPanel's CANVAS_TOOL_KINDS check then never matched for these
+    // kinds, so the skeleton graph fell through to the generic doc-canvas
+    // mount path instead of the Ideas-workspace handoff — the same class of
+    // bug as the mindmap graph being ignored, but for the other 3 tools.
+    // `preferredSystem` was also never forwarded at all.
+    const mockOnDeliverable = vi.fn();
+
+    const skeletonGraph = {
+      nodes: [{ id: 'n1', type: 'step', data: { label: 'Krok 1' } }],
+      edges: [],
+    };
+
+    vi.mocked(Api.chatWithAIStream).mockImplementation(
+      async (message, history, onChunk, onDone, systemPrompt, context, roleName, language, onThinking) => {
+        onThinking?.({
+          type: 'deliverable',
+          draftId: 'chat-process_flow-1',
+          generationId: 'chat-process_flow-1',
+          kind: 'process_flow',
+          format: 'process_flow',
+          title: 'Proces onboardingu',
+          graph: skeletonGraph,
+          seedText: 'Zrób przepływ procesu onboardingu',
+          preferredSystem: 'process_flow',
+        });
+        onChunk('Utworzyłem przepływ procesu.');
+        onDone();
+      }
+    );
+
+    const { result } = renderHook(() => useAIStream({ onDeliverable: mockOnDeliverable }));
+
+    await act(async () => {
+      await result.current.startStream('zrób przepływ procesu onboardingu', []);
+    });
+
+    expect(mockOnDeliverable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draftId: 'chat-process_flow-1',
+        kind: 'process_flow',
+        preferredSystem: 'process_flow',
+        graph: skeletonGraph,
+      })
+    );
+  });
+
   it('SPEC_01 Tryb A: ignores a deliverable event without a draft id', async () => {
     const mockOnDeliverable = vi.fn();
 

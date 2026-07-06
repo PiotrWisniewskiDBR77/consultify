@@ -91,6 +91,18 @@ export type IdeaStructuredBrief = {
   evidenceNotes?: string;
 };
 
+/**
+ * Pre-built {nodes, edges} graph handed off from a backend skeleton builder
+ * (chat `generate_deliverable` mind-map / process-flow / table / whiteboard
+ * branches — see `server/src/services/ai/mindmapSkeleton.ts` and
+ * `canvasToolSkeletons.ts`). Same ReactFlow-like shape the idea-workspace
+ * graph runtime and `POST /my-ideas/:id/map/sync` already accept.
+ */
+export type IdeaWorkspaceSeedGraph = {
+  nodes: Array<Record<string, unknown>>;
+  edges: Array<Record<string, unknown>>;
+};
+
 export type IdeaWorkspaceSeedIntent = {
   startMode: IdeaStartMode;
   seedText: string;
@@ -100,6 +112,13 @@ export type IdeaWorkspaceSeedIntent = {
   popularStartLabel?: string | null;
   structuredBrief?: IdeaStructuredBrief | null;
   source?: 'seed_surface' | 'chat_handoff';
+  /**
+   * When present, the workspace hydrates this graph directly instead of
+   * starting a fresh AI kickoff — the backend already built a real skeleton
+   * from the user's chat intent, so re-deriving from `seedText` would waste
+   * it and produce a different result than what the chat message described.
+   */
+  seedGraph?: IdeaWorkspaceSeedGraph | null;
 };
 
 export type IdeaWorkspaceCreationPayload = {
