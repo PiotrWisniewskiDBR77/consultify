@@ -17,8 +17,11 @@ import { aiLogger } from './logger.js';
  * somehow includes mindmap while the flag is off would still be rejected with
  * `feature_disabled` — defense in depth.
  *
- * Teresa "all 8 tools" rollout — same pattern, two more flags (both default
- * ON as of 2026-07-06, collab-enable-flags — set to 'false' to opt back out):
+ * Teresa "all 8 tools" rollout — same pattern, three flags (all default ON
+ * as of 2026-07-06, collab-enable-flags — set to 'false' to opt back out):
+ *  - ENABLE_TERESA_MINDMAP → adds 'mindmap' (M06). Mounts via the idea-workspace
+ *    "new idea" path (real my_ideas + my_idea_maps row). Default ON since the
+ *    seedGraph fix made mind-map end-to-end.
  *  - ENABLE_TERESA_CANVAS_TOOLS → adds 'process_flow' (M07) / 'table' (M08
  *    Ideas Table) / 'whiteboard'. All three mount via the SAME idea-workspace
  *    "new idea" path as mindmap (real my_ideas + my_idea_maps row).
@@ -27,13 +30,17 @@ import { aiLogger } from './logger.js';
  * Each handler ALSO self-gates on its flag (defense in depth, same as mindmap).
  * NOTE: this file reads process.env directly (not the shared featureFlags
  * config) — keep the default (`!== 'false'` vs `=== 'true'`) in sync with
- * server/src/config/FeatureFlags.ts for these two flags.
+ * server/src/config/FeatureFlags.ts for these three flags. ENABLE_TERESA_MINDMAP
+ * is ALSO read (unchanged, still `=== 'true'`/default OFF) by the separate
+ * search_org_mindmaps RETRIEVAL tool (persona.ts / orgRetrievalShared.ts /
+ * ai.routes.ts) — that co-gate with ENABLE_TERESA_RETRIEVAL is intentionally
+ * untouched by this rollout.
  */
 const DELIVERABLE_TYPES: [string, ...string[]] = [
   'document',
   'sheet',
   'presentation',
-  ...(process.env.ENABLE_TERESA_MINDMAP === 'true' ? ['mindmap'] : []),
+  ...(process.env.ENABLE_TERESA_MINDMAP !== 'false' ? ['mindmap'] : []),
   ...(process.env.ENABLE_TERESA_CANVAS_TOOLS !== 'false'
     ? ['process_flow', 'table', 'whiteboard']
     : []),

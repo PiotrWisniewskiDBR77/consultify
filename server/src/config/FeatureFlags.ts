@@ -32,7 +32,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_V8_SHADOW_MODE: z.boolean().default(false),
   ENABLE_DELIVERABLES_LIGHT: z.boolean().default(false),
   ENABLE_TERESA_RETRIEVAL: z.boolean().default(false),
-  ENABLE_TERESA_MINDMAP: z.boolean().default(false),
+  ENABLE_TERESA_MINDMAP: z.boolean().default(true),
   ENABLE_DELIVERABLES_DOC_STREAMING: z.boolean().default(false),
   ENABLE_DELIVERABLES_PREMIUM: z.boolean().default(false),
   ENABLE_SHARED_IDEA_MAPS: z.boolean().default(true),
@@ -127,12 +127,19 @@ export function loadFeatureFlags(): FeatureFlags {
     // Opt-in; when off the chat stream and persona prompt are untouched.
     ENABLE_TERESA_RETRIEVAL: process.env.ENABLE_TERESA_RETRIEVAL === 'true',
 
-    // Teresa mind-map integration (ff_teresaMindmap / M06 Fala 2): chat-side
-    // READ tool `search_org_mindmaps` that lets Teresa locate an org idea-map
-    // by topic and inject its serialized outline. Co-gated with
-    // ENABLE_TERESA_RETRIEVAL for retrieval (S2). Opt-in; when off the tool
-    // returns an empty envelope and the retrieval regex block stays inert.
-    ENABLE_TERESA_MINDMAP: process.env.ENABLE_TERESA_MINDMAP === 'true',
+    // Teresa mind-map deliverable creation (ff_teresaMindmap / M06 Fala 2):
+    // generate_deliverable(type:'mindmap') handler self-gate — mounts a real
+    // my_ideas + my_idea_maps row via the SAME idea-workspace "new idea" path
+    // as process_flow/table/whiteboard. Default ON (2026-07-06,
+    // collab-enable-flags): end-to-end since the seedGraph fix landed;
+    // mirrors ENABLE_TERESA_CANVAS_TOOLS / ENABLE_TERESA_NOTE_CREATE. Set to
+    // 'false' to omit 'mindmap' from the enum.
+    // NOTE: this same env var ALSO co-gates the separate, still opt-in
+    // `search_org_mindmaps` RETRIEVAL tool (persona.ts / orgRetrievalShared.ts
+    // / ai.routes.ts org-retrieval block) which stays default OFF — those
+    // call sites read process.env directly and are intentionally untouched
+    // here; that tool only activates when ENABLE_TERESA_RETRIEVAL is ALSO on.
+    ENABLE_TERESA_MINDMAP: process.env.ENABLE_TERESA_MINDMAP !== 'false',
 
     // Deliverables A3: per-section streaming for documents. Generates section
     // by section (each call sees prior sections for coherence) and writes the
