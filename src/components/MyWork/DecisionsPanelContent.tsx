@@ -1875,7 +1875,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
           }}
         >
           <div className="p-4 pt-3">
-            <div className="bg-c-surface border border-c-border-subtle rounded-xl">
+            <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl">
               <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
                 <thead>
                   <tr className="border-b border-c-border-subtle bg-c-surface sticky top-0 z-10">

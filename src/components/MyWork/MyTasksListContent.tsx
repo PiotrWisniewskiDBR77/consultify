@@ -2161,7 +2161,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
         >
           <div className="pl-4 pr-1.5 pt-3 pb-4">
             {tasks.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-c-border-subtle rounded-xl">
+              <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl">
                 <CheckCircle2 size={48} className="text-c-text-muted mb-4" />
                 <h3 className="text-lg font-medium text-c-text-secondary mb-2">
                   {t('myWork.personalTasks.empty.title', 'No personal tasks in the current scope')}
@@ -2181,7 +2181,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                 </button>
               </div>
             ) : (
-              <div className="bg-c-surface border border-c-border-subtle rounded-xl">
+              <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl">
                 <table
                   /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */ className="w-full table-fixed"
                   style={{ minWidth: tableMinWidth }}

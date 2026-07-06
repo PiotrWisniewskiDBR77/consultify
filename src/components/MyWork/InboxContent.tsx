@@ -3328,7 +3328,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               )}
             </div>
           ) : (
-            <div className="bg-c-surface border border-c-border-subtle rounded-xl">
+            <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl">
               {viewMode === 'sections' ? renderSectionsView() : renderFlatView()}
             </div>
           )}
