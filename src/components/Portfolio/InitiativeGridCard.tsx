@@ -163,7 +163,7 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({
       })}
       className={[
         'group relative cursor-pointer rounded-xl p-4',
-        'border border-c-border-subtle',
+        'border border-slate-200/60 dark:border-white/[0.03]',
         // canon §8.1 — neutral card surface; status color lives in the badge, not the card
         'bg-c-surface',
         'hover:shadow-md hover:-translate-y-px transition-all duration-150',
@@ -248,7 +248,7 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({
       </div>
 
       {/* Zone 4 — Stats footer: next step · due (3 values) */}
-      <div className="flex items-center justify-between gap-2 text-[11px] text-c-text-muted border-t border-c-border-subtle mt-3 pt-3">
+      <div className="flex items-center justify-between gap-2 text-[11px] text-c-text-muted border-t border-slate-200/60 dark:border-white/[0.03] mt-3 pt-3">
         <span className="truncate" title={nextStep?.label}>
           {nextStep ? (
             <>

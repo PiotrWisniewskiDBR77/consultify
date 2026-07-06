@@ -395,7 +395,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
 
   return (
     <div className={canvasClassName}>
-      <div className="bg-c-surface backdrop-blur border border-c-border-subtle rounded-xl overflow-x-auto">
+      <div className="bg-c-surface backdrop-blur border border-slate-200/60 dark:border-white/[0.03] rounded-xl overflow-x-auto">
         <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full table-fixed" style={{ minWidth: 1080 }}>
           <thead className="sticky top-0 z-10 bg-c-surface-raised backdrop-blur border-b border-c-border-subtle">
             <tr>
