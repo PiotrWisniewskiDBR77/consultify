@@ -622,7 +622,7 @@ const TaskTableRow: React.FC<{
       onClick={() => onPreview(task.id, task)}
       onDoubleClick={() => onOpenFull(task.id, task)}
       className={`
-        group cursor-pointer border-b border-c-border-subtle
+        group cursor-pointer border-b border-slate-200/60 dark:border-white/[0.03]
         ${isCompleted ? 'opacity-60' : ''}
         ${isSelected ? TASK_SELECTED_ROW_CLASS : ''}
         ${isPreviewed ? TASK_PREVIEW_ROW_CLASS : ''}

@@ -330,7 +330,7 @@ export const MyTasksList: React.FC<MyTasksListProps> = ({
             </button>
           </div>
         ) : (
-          <div className="divide-y divide-slate-200 dark:divide-white/5">
+          <div className="divide-y divide-slate-200/60 dark:divide-white/[0.03]">
             {/* Pinned Tasks Section */}
             {pinnedTasks.length > 0 && activeTimeGroup === 'all' && (
               <div className="pb-2">

@@ -2428,7 +2428,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         key={item.id}
         data-index={index}
         className={`
-          group cursor-pointer border-b border-c-border-subtle
+          group cursor-pointer border-b border-slate-200/60 dark:border-white/[0.03]
           ${isSelected ? SELECTED_ROW_CLASS : ''}
           ${isPreviewed ? PREVIEW_SELECTED_ROW_CLASS : ''}
           ${isFocused && !isPreviewed ? FOCUSED_ROW_CLASS : ''}
