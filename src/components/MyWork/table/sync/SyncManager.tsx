@@ -255,7 +255,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                   <select
                     value={sourceTableId}
                     onChange={(e) => setSourceTableId(e.target.value)}
-                    className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
+                    className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
                   >
                     <option value="">{isPl ? 'Wybierz tabelę...' : 'Select table...'}</option>
                     {tables
@@ -279,7 +279,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                     value={sourceTableId}
                     onChange={(e) => setSourceTableId(e.target.value)}
                     placeholder="https://example.com/data.csv"
-                    className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
+                    className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
                   />
                 </div>
               )}
@@ -294,7 +294,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                     value={sourceTableId}
                     onChange={(e) => setSourceTableId(e.target.value)}
                     placeholder="https://docs.google.com/spreadsheets/d/..."
-                    className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
+                    className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
                   />
                 </div>
               )}
@@ -309,7 +309,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
               <select
                 value={targetTableId}
                 onChange={(e) => setTargetTableId(e.target.value)}
-                className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
+                className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
               >
                 {tables.map((t) => (
                   <option key={t.id} value={t.id}>
@@ -353,7 +353,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                           }))
                         }
                         placeholder={f.name}
-                        className="flex-1 rounded-lg border border-c-border-subtle px-2.5 py-1.5 text-xs border-c-border-subtle bg-c-surface"
+                        className="flex-1 rounded-lg border border-slate-200/60 dark:border-white/[0.03] px-2.5 py-1.5 text-xs border-c-border-subtle bg-c-surface"
                       />
                     </div>
                   ))}
@@ -533,7 +533,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
               return (
                 <div
                   key={sync.id}
-                  className="group flex items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 transition-colors hover:border-c-border-subtle bg-c-surface hover:border-c-border-subtle"
+                  className="group flex items-center gap-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-4 py-3 transition-colors hover:border-c-border-subtle bg-c-surface hover:border-c-border-subtle"
                 >
                   <div className="flex-shrink-0">
                     {sync.sync_mode === 'two_way' ? (

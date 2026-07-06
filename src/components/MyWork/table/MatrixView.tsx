@@ -186,7 +186,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                   const col = axisOptions.find((c) => c.key === e.target.value);
                   if (col) onAxisChange('x', col);
                 }}
-                className="text-[10px] font-medium px-2 py-1 rounded-lg bg-c-surface border border-c-border-subtle text-c-text-secondary"
+                className="text-[10px] font-medium px-2 py-1 rounded-lg bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-c-text-secondary"
               >
                 {axisOptions.map((c) => (
                   <option key={c.key} value={c.key}>
@@ -205,7 +205,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                   const col = axisOptions.find((c) => c.key === e.target.value);
                   if (col) onAxisChange('y', col);
                 }}
-                className="text-[10px] font-medium px-2 py-1 rounded-lg bg-c-surface border border-c-border-subtle text-c-text-secondary"
+                className="text-[10px] font-medium px-2 py-1 rounded-lg bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-c-text-secondary"
               >
                 {axisOptions.map((c) => (
                   <option key={c.key} value={c.key}>
@@ -261,7 +261,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                       handleDragStart(node.id);
                     }}
                     onClick={() => onNodeClick?.(node.id)}
-                    className={`absolute text-left px-2.5 py-1.5 rounded-xl bg-c-surface border border-c-border-subtle hover:shadow-md transition-shadow ${
+                    className={`absolute text-left px-2.5 py-1.5 rounded-xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] hover:shadow-md transition-shadow ${
                       dragNodeId === node.id ? 'opacity-40 scale-95 border-c-accent' : ''
                     }`}
                     style={{

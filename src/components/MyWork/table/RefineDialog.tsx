@@ -159,7 +159,7 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
               }
               disabled={loading}
               rows={3}
-              className="w-full px-4 py-3 rounded-xl border border-c-border-subtle bg-c-surface text-sm text-c-text placeholder-c-text-muted focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none resize-none transition-colors disabled:opacity-50"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-sm text-c-text placeholder-c-text-muted focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none resize-none transition-colors disabled:opacity-50"
             />
             <div className="absolute bottom-2 right-2 flex items-center gap-1">
               <span className="text-[9px] text-c-text-secondary">

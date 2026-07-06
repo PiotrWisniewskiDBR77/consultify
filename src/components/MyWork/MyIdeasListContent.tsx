@@ -1465,7 +1465,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       onClick={() => !converting && setConvertIdea(null)}
     >
       <div
-        className="w-full max-w-xl overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl"
+        className="w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-c-border-subtle">
@@ -1558,7 +1558,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       onClick={() => !bulkBusy && setTagModalOpen(false)}
     >
       <div
-        className="w-full max-w-lg overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl"
+        className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-c-border-subtle">
@@ -1586,7 +1586,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
             placeholder={isPolish ? 'np. backlog' : 'e.g. backlog'}
-            className="w-full h-10 px-3 rounded-xl border border-c-border-subtle bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
+            className="w-full h-10 px-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
             autoFocus
           />
         </div>
@@ -1624,7 +1624,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     if (activeFolder) {
       return (
         <div
-          className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-c-border-subtle rounded-xl"
+          className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl"
           data-testid="ideas-folder-empty"
         >
           <div className="relative mb-4">
@@ -1652,7 +1652,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     }
 
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-c-border-subtle rounded-xl">
+      <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl">
         <div className="relative mb-4">
           <Flower2 size={48} className="text-amber-400" />
           <Sparkles size={16} className="absolute -top-1 -right-1 text-amber-500 animate-pulse" />

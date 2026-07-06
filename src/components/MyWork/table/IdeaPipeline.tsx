@@ -188,7 +188,7 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[680px] max-w-[95vw] max-h-[85vh] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl overflow-hidden flex flex-col"
+        className="w-[680px] max-w-[95vw] max-h-[85vh] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -312,7 +312,7 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                         return (
                           <div
                             key={node.id}
-                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-c-surface border border-c-border-subtle"
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03]"
                           >
                             <div
                               className="w-2 h-2 rounded-full flex-shrink-0"

@@ -5,7 +5,7 @@ import type { Edge, Node } from 'reactflow';
 import { CONDITION_TYPES, EDGE_KINDS, type EdgeKind } from './FlowEdgeComponent';
 
 const inputClass =
-  'w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:ring-2 focus:ring-c-info outline-none';
+  'w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:ring-2 focus:ring-c-info outline-none';
 
 const sectionHeaderClass =
   'text-xs font-semibold uppercase tracking-wider text-c-text-muted mb-2';

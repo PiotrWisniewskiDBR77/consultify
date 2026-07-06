@@ -90,7 +90,7 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[480px] max-w-[90vw] max-h-[80vh] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl overflow-hidden"
+        className="w-[480px] max-w-[90vw] max-h-[80vh] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

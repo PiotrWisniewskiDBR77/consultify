@@ -387,7 +387,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                         ? 'Pozostaw puste dla publicznego dostępu'
                         : 'Leave empty for public access'
                     }
-                    className="w-full px-3 py-2 text-sm border border-c-border-subtle rounded-lg bg-c-surface text-c-text"
+                    className="w-full px-3 py-2 text-sm border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text"
                   />
                 </div>
 
@@ -407,7 +407,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                         : 'Leave empty for no expiration'
                     }
                     min={1}
-                    className="w-full px-3 py-2 text-sm border border-c-border-subtle rounded-lg bg-c-surface text-c-text"
+                    className="w-full px-3 py-2 text-sm border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text"
                   />
                 </div>
 
@@ -424,7 +424,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                     placeholder={
                       isPl ? 'Np. "Raport dla zarządu"' : 'E.g., "Report for management"'
                     }
-                    className="w-full px-3 py-2 text-sm border border-c-border-subtle rounded-lg bg-c-surface text-c-text"
+                    className="w-full px-3 py-2 text-sm border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text"
                   />
                 </div>
 

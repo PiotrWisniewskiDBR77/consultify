@@ -148,7 +148,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
           value={config?.startDateFieldId ?? ''}
           onChange={(e) => updateConfig({ startDateFieldId: e.target.value })}
           disabled={locked}
-          className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
+          className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
         >
           <option value="">—</option>
           {dateFields.map((f) => (
@@ -168,7 +168,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
           value={config?.endDateFieldId ?? ''}
           onChange={(e) => updateConfig({ endDateFieldId: e.target.value })}
           disabled={locked}
-          className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
+          className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
         >
           <option value="">—</option>
           {dateFields.map((f) => (
@@ -188,7 +188,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
           value={config?.durationFieldId ?? ''}
           onChange={(e) => updateConfig({ durationFieldId: e.target.value || undefined })}
           disabled={locked}
-          className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
+          className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
         >
           <option value="">—</option>
           {numberFields.map((f) => (
@@ -208,7 +208,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
           value={config?.predecessorFieldId ?? ''}
           onChange={(e) => updateConfig({ predecessorFieldId: e.target.value || undefined })}
           disabled={locked}
-          className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
+          className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
         >
           <option value="">—</option>
           {linkedRecordFields.map((f) => (
@@ -253,7 +253,7 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
           value={config?.defaultLagDays ?? 0}
           onChange={(e) => updateConfig({ defaultLagDays: Number(e.target.value) || 0 })}
           disabled={locked}
-          className="w-20 rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
+          className="w-20 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
         />
       </div>
 

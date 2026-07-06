@@ -33,7 +33,7 @@ export interface ReadbackPanelProps {
 }
 
 const panelShell =
-  'rounded-xl border border-c-border-subtle bg-c-surface p-3';
+  'rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3';
 
 function stepIcon(type: ReadbackStep['type']) {
   switch (type) {

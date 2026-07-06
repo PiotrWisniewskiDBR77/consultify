@@ -113,7 +113,7 @@ export const TemplateLifecycleActions: React.FC<TemplateLifecycleActionsProps> =
             if (e.target === e.currentTarget) close();
           }}
         >
-          <div className="w-[420px] max-w-full rounded-xl border border-c-border-subtle bg-c-surface shadow-2xl">
+          <div className="w-[420px] max-w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl">
             <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
               <h2
                 id={`${testId}-dialog-title`}

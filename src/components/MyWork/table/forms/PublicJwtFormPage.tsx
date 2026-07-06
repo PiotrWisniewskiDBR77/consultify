@@ -291,7 +291,7 @@ export function PublicJwtFormPage({
     <div className="min-h-screen bg-c-surface-raised px-4 py-12" data-testid="public-jwt-form-page">
       <form
         onSubmit={handleSubmit}
-        className="mx-auto max-w-lg rounded-2xl border border-c-border-subtle bg-c-surface p-8 shadow-sm"
+        className="mx-auto max-w-lg rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-8 shadow-sm"
       >
         <h1 className="mb-1 text-xl font-semibold text-c-text">{form.name}</h1>
         {form.description && <p className="mb-2 text-sm text-c-text-muted">{form.description}</p>}

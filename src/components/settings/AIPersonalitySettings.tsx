@@ -108,7 +108,7 @@ export const AIPersonalitySettings: React.FC = () => {
         </button>
       </div>
 
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <div className="flex items-center gap-2">
           <MessageSquare size={18} className="text-blue-500" />
           <h3 className="text-lg font-semibold text-c-text">

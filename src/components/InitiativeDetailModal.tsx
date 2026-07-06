@@ -441,7 +441,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
     return (
       <div className="fixed inset-0 z-overlay flex items-center justify-center bg-c-surface dark:bg-black/80 backdrop-blur-sm p-4 transition-all">
-        <div className="bg-c-surface border border-c-border-subtle rounded-xl w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
           {/* Header with Module Indicator */}
           <div className="border-b border-c-border-subtle bg-c-surface-raised dark:bg-c-bg">
             {/* Module Transition Indicator */}
@@ -643,7 +643,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       {suggestedIdeas.map((idea) => (
                         <div
                           key={idea.id}
-                          className="bg-c-surface rounded-lg border border-c-border-subtle p-3"
+                          className="bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03] p-3"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
@@ -712,7 +712,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       {suggestedNotes.map((note) => (
                         <div
                           key={note.id}
-                          className="bg-c-surface rounded-lg border border-c-border-subtle p-3"
+                          className="bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03] p-3"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
@@ -806,7 +806,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                         <Sparkles size={16} className="text-c-accent dark:text-c-accent" />{' '}
                         {t('initiative.oneLiner')}
                       </h3>
-                      <div className="bg-c-surface p-4 rounded-lg border border-c-border-subtle space-y-3">
+                      <div className="bg-c-surface p-4 rounded-lg border border-slate-200/60 dark:border-white/[0.03] space-y-3">
                         <p className="text-xs text-c-text-muted font-mono mb-2">
                           Structure: Achieve [X] by changing [Y] so that [Z improves]
                         </p>
@@ -924,7 +924,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     <div className="grid grid-cols-2 gap-4">
                       <InputGroup label={t('initiative.nameLabel')}>
                         <input
-                          className="w-full bg-c-surface dark:bg-c-bg border border-c-border-subtle rounded-lg p-3 text-c-text focus:border-c-accent outline-none"
+                          className="w-full bg-c-surface dark:bg-c-bg border border-slate-200/60 dark:border-white/[0.03] rounded-lg p-3 text-c-text focus:border-c-accent outline-none"
                           value={initiative.name}
                           onChange={(e) => setInitiative({ ...initiative, name: e.target.value })}
                         />
@@ -1074,7 +1074,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     {['Process', 'Behavior', 'Capability'].map((type) => (
                       <div
                         key={type}
-                        className="bg-c-surface p-3 rounded-lg border border-c-border-subtle"
+                        className="bg-c-surface p-3 rounded-lg border border-slate-200/60 dark:border-white/[0.03]"
                       >
                         <h4 className="text-xs font-bold text-c-text-muted uppercase mb-2 border-b border-c-border-subtle pb-1 flex justify-between">
                           {t(`initiative.${type.toLowerCase()}Changes`)}
@@ -2075,7 +2075,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     <InputGroup label={t('initiative.capexEst')}>
                       <input
                         type="number"
-                        className="w-full bg-c-surface dark:bg-c-bg border border-c-border-subtle rounded-lg p-3 text-c-text focus:border-c-accent outline-none"
+                        className="w-full bg-c-surface dark:bg-c-bg border border-slate-200/60 dark:border-white/[0.03] rounded-lg p-3 text-c-text focus:border-c-accent outline-none"
                         value={initiative.costCapex || 0}
                         onChange={(e) =>
                           setInitiative({
@@ -2088,7 +2088,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     <InputGroup label={t('initiative.opexEst')}>
                       <input
                         type="number"
-                        className="w-full bg-c-surface dark:bg-c-bg border border-c-border-subtle rounded-lg p-3 text-c-text focus:border-c-accent outline-none"
+                        className="w-full bg-c-surface dark:bg-c-bg border border-slate-200/60 dark:border-white/[0.03] rounded-lg p-3 text-c-text focus:border-c-accent outline-none"
                         value={initiative.costOpex || 0}
                         onChange={(e) =>
                           setInitiative({ ...initiative, costOpex: parseInt(e.target.value) })
@@ -2147,7 +2147,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     </div>
                   )}
 
-                  <div className="w-full bg-c-surface rounded-lg p-4 border border-c-border-subtle text-left">
+                  <div className="w-full bg-c-surface rounded-lg p-4 border border-slate-200/60 dark:border-white/[0.03] text-left">
                     <span className="text-xs uppercase text-c-text-muted">
                       {t('initiative.socialImpact')}
                     </span>
@@ -2311,7 +2311,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
                   {/* Current Status Info */}
                   <div className="grid grid-cols-2 gap-6">
-                    <div className="bg-c-surface p-4 rounded-lg border border-c-border-subtle">
+                    <div className="bg-c-surface p-4 rounded-lg border border-slate-200/60 dark:border-white/[0.03]">
                       <h4 className="text-xs font-bold text-c-text-muted uppercase mb-3">
                         {t('initiative.currentStatus')}
                       </h4>
@@ -2339,7 +2339,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       )}
                     </div>
 
-                    <div className="bg-c-surface p-4 rounded-lg border border-c-border-subtle">
+                    <div className="bg-c-surface p-4 rounded-lg border border-slate-200/60 dark:border-white/[0.03]">
                       <h4 className="text-xs font-bold text-c-text-muted uppercase mb-3">
                         {t('initiative.nextAction')}
                       </h4>
@@ -2501,7 +2501,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       (initiative.teamMembers || []).map((member, idx) => (
                         <div
                           key={member.id}
-                          className="bg-c-surface p-4 rounded-lg border border-c-border-subtle flex items-center gap-4"
+                          className="bg-c-surface p-4 rounded-lg border border-slate-200/60 dark:border-white/[0.03] flex items-center gap-4"
                         >
                           <div className="w-10 h-10 rounded-full bg-c-accent flex items-center justify-center text-white font-bold">
                             {member.user?.firstName?.[0] || '?'}
@@ -2630,7 +2630,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       (initiative.relatedInitiatives || []).map((rel, idx) => (
                         <div
                           key={rel.id}
-                          className="bg-c-surface p-3 rounded-lg border border-c-border-subtle flex items-center gap-3"
+                          className="bg-c-surface p-3 rounded-lg border border-slate-200/60 dark:border-white/[0.03] flex items-center gap-3"
                         >
                           <select
                             value={rel.relationType}
@@ -2696,7 +2696,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
             {activeTab === 'comments' && (
               <div className="space-y-6 pb-10">
                 {/* New Comment Input */}
-                <div className="bg-c-surface dark:bg-c-bg rounded-xl p-4 border border-c-border-subtle shadow-sm">
+                <div className="bg-c-surface dark:bg-c-bg rounded-xl p-4 border border-slate-200/60 dark:border-white/[0.03] shadow-sm">
                   <div className="flex gap-3">
                     <div className="w-10 h-10 rounded-full bg-c-info flex items-center justify-center text-white font-bold shrink-0">
                       {t('common.you')}
@@ -2753,7 +2753,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     (initiative.comments || []).map((comment) => (
                       <div
                         key={comment.id}
-                        className="bg-c-surface dark:bg-c-bg rounded-xl p-4 border border-c-border-subtle"
+                        className="bg-c-surface dark:bg-c-bg rounded-xl p-4 border border-slate-200/60 dark:border-white/[0.03]"
                       >
                         <div className="flex gap-3">
                           <div className="w-10 h-10 rounded-full bg-c-tag-8 flex items-center justify-center text-white font-bold shrink-0">

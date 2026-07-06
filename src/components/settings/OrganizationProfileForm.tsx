@@ -559,7 +559,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
       {/* Sections */}
       <div className="space-y-4">
         {/* Industry Context */}
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden">
           {renderSectionHeader('industry', 'Industry Context', <Briefcase size={20} />)}
           {expandedSections.industry && (
             <div className="p-6 space-y-4 border-t border-c-border-subtle dark:border-navy-700">
@@ -621,7 +621,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         </div>
 
         {/* Company Info */}
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden">
           {renderSectionHeader('company', 'Company Information', <Building2 size={20} />)}
           {expandedSections.company && (
             <div className="p-6 space-y-4 border-t border-c-border-subtle dark:border-navy-700">
@@ -717,7 +717,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         </div>
 
         {/* Strategic Context */}
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden">
           {renderSectionHeader('strategic', 'Strategic Context', <Target size={20} />)}
           {expandedSections.strategic && (
             <div className="p-6 space-y-4 border-t border-c-border-subtle dark:border-navy-700">
@@ -792,7 +792,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         </div>
 
         {/* Digital Context */}
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden">
           {renderSectionHeader('digital', 'Digital & Technology', <Cpu size={20} />)}
           {expandedSections.digital && (
             <div className="p-6 space-y-4 border-t border-c-border-subtle dark:border-navy-700">
@@ -863,7 +863,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         </div>
 
         {/* Market Context */}
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden">
           {renderSectionHeader('market', 'Market & Competition', <TrendingUp size={20} />)}
           {expandedSections.market && (
             <div className="p-6 space-y-4 border-t border-c-border-subtle dark:border-navy-700">
@@ -921,7 +921,7 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
         </div>
 
         {/* Constraints */}
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden">
           {renderSectionHeader('constraints', 'Constraints & Risk', <Shield size={20} />)}
           {expandedSections.constraints && (
             <div className="p-6 space-y-4 border-t border-c-border-subtle dark:border-navy-700">

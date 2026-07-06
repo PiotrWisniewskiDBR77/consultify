@@ -286,7 +286,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={isPl ? 'np. Raport tygodniowy' : 'e.g. Weekly Report'}
-                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
+                  className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
                 />
               </div>
               <div>
@@ -325,7 +325,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                 <select
                   value={sourceId}
                   onChange={(e) => setSourceId(e.target.value)}
-                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
+                  className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
                 >
                   <option value="">{isPl ? 'Wybierz widok...' : 'Select view...'}</option>
                   {views.map((v) => (
@@ -400,7 +400,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       value={(channelConfig.to as string) || ''}
                       onChange={(e) => updateConfig('to', e.target.value)}
                       placeholder="user@example.com, team@example.com"
-                      className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-xs border-c-border-subtle bg-c-surface"
+                      className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs border-c-border-subtle bg-c-surface"
                     />
                   </div>
                 )}
@@ -414,7 +414,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       value={(channelConfig.webhookUrl as string) || ''}
                       onChange={(e) => updateConfig('webhookUrl', e.target.value)}
                       placeholder="https://hooks.slack.com/services/..."
-                      className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-xs border-c-border-subtle bg-c-surface"
+                      className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs border-c-border-subtle bg-c-surface"
                     />
                   </div>
                 )}
@@ -428,7 +428,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       value={(channelConfig.url as string) || ''}
                       onChange={(e) => updateConfig('url', e.target.value)}
                       placeholder="https://api.example.com/webhook"
-                      className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-xs border-c-border-subtle bg-c-surface"
+                      className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs border-c-border-subtle bg-c-surface"
                     />
                   </div>
                 )}
@@ -473,7 +473,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                   value={schedule}
                   onChange={(e) => setSchedule(e.target.value)}
                   placeholder="0 9 * * 1"
-                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-xs border-c-border-subtle bg-c-surface"
+                  className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs border-c-border-subtle bg-c-surface"
                 />
               </div>
             </div>
@@ -643,7 +643,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
               return (
                 <div
                   key={dist.id}
-                  className="group flex items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 transition-colors hover:border-c-border-subtle bg-c-surface hover:border-c-border-subtle"
+                  className="group flex items-center gap-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-4 py-3 transition-colors hover:border-c-border-subtle bg-c-surface hover:border-c-border-subtle"
                 >
                   <ChannelIcon
                     size={16}

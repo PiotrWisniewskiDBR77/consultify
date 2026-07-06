@@ -1211,7 +1211,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.12 }}
-              className="w-full max-w-2xl rounded-xl bg-c-surface border border-c-border-subtle shadow-2xl"
+              className="w-full max-w-2xl rounded-xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">

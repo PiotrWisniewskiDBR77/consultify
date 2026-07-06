@@ -79,7 +79,7 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ article, onArticleClick }) =>
 
   return (
     <div
-      className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface shadow-xl transition-all group hover:shadow-2xl cursor-pointer"
+      className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl transition-all group hover:shadow-2xl cursor-pointer"
       onClick={() => onArticleClick(article)}
     >
       {/* Video Teaser / Thumbnail */}

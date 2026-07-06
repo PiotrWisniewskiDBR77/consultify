@@ -111,7 +111,7 @@ export const TransformationScorecard: React.FC<Props> = ({ projectId, fetcher })
 
   const wrap = (children: React.ReactNode) => (
     <section
-      className="rounded-xl border border-c-border-subtle bg-c-surface p-4"
+      className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4"
       data-testid="transformation-scorecard"
     >
       {children}

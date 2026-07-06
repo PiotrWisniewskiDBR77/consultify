@@ -225,7 +225,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('settings.shortcuts.search', 'Search shortcuts...')}
-              className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)]"
+              className="w-full pl-10 pr-4 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-[color:var(--c-focus)]"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -233,7 +233,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+              className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
             >
               <option value="all">
                 {t('settings.shortcuts.editor.allCategories', 'All Categories')}
@@ -250,7 +250,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
 
       {/* Shortcuts List */}
       {!loadError && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl overflow-hidden">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl overflow-hidden">
           <div className="grid grid-cols-[2fr,1fr,auto] gap-4 p-3 bg-c-surface-raised border-b border-c-border-subtle dark:border-navy-700 text-sm font-medium text-c-text-muted">
             <span>{t('settings.shortcuts.editor.actionHeader', 'Action')}</span>
             <span>{t('settings.shortcuts.editor.shortcutHeader', 'Shortcut')}</span>

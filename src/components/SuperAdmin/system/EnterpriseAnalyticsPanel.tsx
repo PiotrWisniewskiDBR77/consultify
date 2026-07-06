@@ -337,7 +337,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
-              className="appearance-none pl-3 pr-8 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text"
+              className="appearance-none pl-3 pr-8 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text"
             >
               {TIME_RANGES.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -376,7 +376,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
               {loadError ? (
-                <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
+                <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
                   <DegradedState title="Analytics dashboard unavailable" description={loadError} />
                 </div>
               ) : (
@@ -486,7 +486,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
           {activeTab === 'reports' && (
             <div className="space-y-6">
               {loadError ? (
-                <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
+                <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
                   <DegradedState title="Report generation unavailable" description={loadError} />
                 </div>
               ) : (
@@ -564,7 +564,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
               )}
 
               {scheduledLoadError ? (
-                <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
+                <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
                   <DegradedState
                     title="Scheduled reports unavailable"
                     description={scheduledLoadError}

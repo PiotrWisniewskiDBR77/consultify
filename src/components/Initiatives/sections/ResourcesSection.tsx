@@ -181,7 +181,7 @@ const TableAIMenu: React.FC<{
       </button>
       {isOpen && (
         <div
-          className="absolute right-0 top-7 z-30 w-48 rounded-xl border border-c-border dark:border-navy-700/70 bg-c-surface p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30"
+          className="absolute right-0 top-7 z-30 w-48 rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700/70 bg-c-surface p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30"
           onClick={(e) => e.stopPropagation()}
         >
           {actions.map((a) => (
@@ -1978,7 +1978,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                       <MoreVertical size={14} />
                     </button>
                     {menuId === item.id && (
-                      <div className="absolute right-0 top-8 z-20 w-36 rounded-xl border border-c-border dark:border-navy-700/70 bg-c-surface p-1.5 shadow-xl">
+                      <div className="absolute right-0 top-8 z-20 w-36 rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700/70 bg-c-surface p-1.5 shadow-xl">
                         <button
                           onClick={() => {
                             setMenuId(null);
@@ -2306,7 +2306,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
                       <MoreVertical size={14} />
                     </button>
                     {menuId === item.id && (
-                      <div className="absolute right-0 top-8 z-20 w-36 rounded-xl border border-c-border dark:border-navy-700/70 bg-c-surface p-1.5 shadow-xl">
+                      <div className="absolute right-0 top-8 z-20 w-36 rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700/70 bg-c-surface p-1.5 shadow-xl">
                         <button
                           onClick={() => {
                             setMenuId(null);
@@ -2625,7 +2625,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                       <MoreVertical size={14} />
                     </button>
                     {menuId === item.id && (
-                      <div className="absolute right-0 top-8 z-20 w-36 rounded-xl border border-c-border dark:border-navy-700/70 bg-c-surface p-1.5 shadow-xl">
+                      <div className="absolute right-0 top-8 z-20 w-36 rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700/70 bg-c-surface p-1.5 shadow-xl">
                         <button
                           onClick={() => {
                             setMenuId(null);
@@ -2999,7 +2999,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                       <MoreVertical size={14} />
                     </button>
                     {menuId === item.id && (
-                      <div className="absolute right-0 top-8 z-20 w-36 rounded-xl border border-c-border dark:border-navy-700/70 bg-c-surface p-1.5 shadow-xl">
+                      <div className="absolute right-0 top-8 z-20 w-36 rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700/70 bg-c-surface p-1.5 shadow-xl">
                         <button
                           onClick={() => {
                             setMenuId(null);

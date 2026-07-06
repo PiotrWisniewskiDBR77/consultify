@@ -186,7 +186,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
   if (organizations.length === 0) {
     return (
       <>
-        <div className="p-8 text-center bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 shadow-sm">
+        <div className="p-8 text-center bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 shadow-sm">
           <Building2
             size={48}
             className="mx-auto text-c-text-secondary mb-4"
@@ -277,7 +277,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
         </div>
         {organizations.length > 1 && (
           <select
-            className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg px-3 py-2 text-sm"
+            className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg px-3 py-2 text-sm"
             value={selectedOrg?.id}
             onChange={(e) => handleOrgChange(e.target.value)}
           >
@@ -292,7 +292,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
 
       {/* Billing & Tokens Card */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6 shadow-sm">
+        <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-navy-900 flex items-center gap-2 mb-4">
             <CreditCard
               size={20}
@@ -336,7 +336,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
           </button>
         </div>
 
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6 shadow-sm">
+        <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-navy-900 flex items-center gap-2 mb-4">
             <Coins size={20} className="text-c-text-muted" />
             Token Balance & Usage
@@ -403,7 +403,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
       </div>
 
       {/* Token Ledger / Recent Activity */}
-      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 shadow-sm overflow-hidden">
+      <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-c-border-subtle dark:border-navy-700 bg-c-surface-raised">
           <h3 className="text-lg font-semibold text-navy-900 flex items-center gap-2">
             <Coins size={20} className="text-c-text-muted" />
@@ -466,7 +466,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
       </div>
 
       {/* Finance Defaults Card */}
-      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6 shadow-sm">
+      <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 p-6 shadow-sm">
         <h3 className="text-lg font-semibold text-navy-900 flex items-center gap-2 mb-4">
           <Calculator size={20} className="text-c-text-muted" />
           {t('settings.financeDefaults', 'Finance Defaults')}
@@ -491,7 +491,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               onChange={(e) =>
                 setFinanceSettings((p) => ({ ...p, defaultWacc: Number(e.target.value) }))
               }
-              className="w-full px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-sm"
+              className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface text-sm"
             />
           </div>
           <div>
@@ -503,7 +503,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               onChange={(e) =>
                 setFinanceSettings((p) => ({ ...p, defaultCurrency: e.target.value }))
               }
-              className="w-full px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-sm"
+              className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface text-sm"
             >
               <option value="PLN">PLN</option>
               <option value="EUR">EUR</option>
@@ -523,7 +523,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               onChange={(e) =>
                 setFinanceSettings((p) => ({ ...p, defaultHorizonYears: Number(e.target.value) }))
               }
-              className="w-full px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-sm"
+              className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface text-sm"
             />
           </div>
         </div>
@@ -540,7 +540,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
       </div>
 
       {/* Members List */}
-      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 shadow-sm overflow-hidden">
+      <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-c-border-subtle dark:border-navy-700 flex items-center justify-between bg-c-surface-raised">
           <h3 className="text-lg font-semibold text-navy-900 flex items-center gap-2">
             <Users size={20} className="text-c-text-muted" />
@@ -567,7 +567,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                   value={newMemberEmail}
                   onChange={(e) => setNewMemberEmail(e.target.value)}
                   placeholder="Enter User ID (or Email if supported)"
-                  className="w-full px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface text-sm"
                 />
               </div>
               <div className="w-40">
@@ -577,7 +577,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                 <select
                   value={newMemberRole}
                   onChange={(e) => setNewMemberRole(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface text-sm"
                 >
                   <option value="ADMIN">Admin</option>
                   <option value="MEMBER">Member</option>

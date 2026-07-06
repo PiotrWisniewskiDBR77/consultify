@@ -255,7 +255,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
     >
       <div
         ref={modalRef}
-        className="bg-c-surface border border-c-border-subtle rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl"
+        className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl"
         role="dialog"
         aria-labelledby="modal-title"
         aria-modal="true"

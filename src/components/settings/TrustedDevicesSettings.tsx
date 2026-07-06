@@ -282,7 +282,7 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
             <button
               onClick={() => setShowDurationDropdown(!showDurationDropdown)}
               disabled={savingDuration}
-              className="flex items-center gap-2 px-4 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg hover:border-c-accent dark:hover:border-c-accent transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg hover:border-c-accent dark:hover:border-c-accent transition-colors"
             >
               {savingDuration ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -296,7 +296,7 @@ export const TrustedDevicesSettings: React.FC<TrustedDevicesSettingsProps> = ({
               )}
             </button>
             {showDurationDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg shadow-lg z-10">
+              <div className="absolute right-0 mt-2 w-48 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg shadow-lg z-10">
                 {durationOptions.map((option) => (
                   <button
                     key={option.value}

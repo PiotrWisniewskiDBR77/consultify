@@ -400,7 +400,7 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="w-[560px] max-h-[80vh] overflow-auto rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl">
+      <div className="w-[560px] max-h-[80vh] overflow-auto rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl">
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-c-accent" />

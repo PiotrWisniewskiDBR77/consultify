@@ -308,7 +308,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       </div>
 
       {/* Default Project View */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <LayoutGrid size={20} className="text-c-accent" />
           {t('settings.work.defaultView', 'Default Project View')}
@@ -358,7 +358,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       </div>
 
       {/* Task Defaults - NEW SECTION */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Flag size={20} className="text-amber-500" />
           {t('settings.work.taskDefaults', 'Task Defaults')}
@@ -440,7 +440,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       </div>
 
       {/* Snooze & Focus Settings - NEW SECTION */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <AlarmClock size={20} className="text-indigo-500" />
           {t('settings.work.snoozeAndFocus', 'Snooze & Focus')}
@@ -599,7 +599,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       </div>
 
       {/* Task Sorting & Display */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <ArrowUpDown size={20} className="text-blue-500" />
           {t('settings.work.taskDisplay', 'Task Display & Sorting')}
@@ -727,7 +727,7 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       </div>
 
       {/* Automation Settings */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Archive size={20} className="text-amber-500" />
           {t('settings.work.automation', 'Automation & Defaults')}

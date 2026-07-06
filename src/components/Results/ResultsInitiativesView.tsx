@@ -227,7 +227,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
   if (initiatives.length === 0) {
     return (
       <div className="p-4">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-c-border-subtle bg-c-surface p-6">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
           <div className="text-lg font-semibold text-c-text">
             {t('results.initiatives.emptyTitle', 'No tracked initiatives in this bucket')}
           </div>
@@ -390,7 +390,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                 text={initiative.summaryText}
                 compact
               >
-                <div className="mt-3 rounded-xl border border-c-border-subtle bg-c-surface p-3">
+                <div className="mt-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
                   <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
                     {t('results.initiatives.management', 'Initiative & KPI governance')}
                   </div>
@@ -493,7 +493,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
           </div>
 
           {/* §27-exempt: TableWithPreviewLayout-coupled — checkbox selection drives the right-hand initiative preview pane; custom resizable columns + fixed minWidth layout */}
-          <div className="bg-c-surface backdrop-blur border border-c-border-subtle rounded-xl overflow-x-auto">
+          <div className="bg-c-surface backdrop-blur border border-slate-200/60 dark:border-white/[0.03] rounded-xl overflow-x-auto">
             <table className="w-full table-fixed" style={{ minWidth: 1100 }}>
               <colgroup>
                 <col className="w-10" />

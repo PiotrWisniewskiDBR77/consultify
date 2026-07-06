@@ -599,7 +599,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     style={{ backgroundColor: accentColor }}
                   />
                   {showColorPicker && (
-                    <div className="absolute left-0 top-6 z-overlay p-2 rounded-xl bg-c-surface shadow-xl border border-c-border-subtle flex flex-wrap gap-1 w-[140px]">
+                    <div className="absolute left-0 top-6 z-overlay p-2 rounded-xl bg-c-surface shadow-xl border border-slate-200/60 dark:border-white/[0.03] flex flex-wrap gap-1 w-[140px]">
                       {ROW_ACCENT_COLORS.map((c) => (
                         <button
                           key={c}
@@ -1004,7 +1004,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                         {isPl ? 'Dodaj powiązanie' : 'Add relation'}
                       </button>
                       {relationDropdownOpen && (
-                        <div className="absolute left-0 top-full mt-1 z-overlay w-64 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl overflow-hidden">
+                        <div className="absolute left-0 top-full mt-1 z-overlay w-64 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl overflow-hidden">
                           <div className="p-2 border-b border-c-border-subtle">
                             <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-c-surface-raised">
                               <Search size={12} className="text-c-text-muted flex-shrink-0" />
@@ -1094,7 +1094,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 {!locked && (
                   <div ref={commentComposerRef} className="relative flex items-end gap-2 pt-2">
                     {mentionQuery !== null && mentionSuggestions.length > 0 && (
-                      <div className="absolute bottom-full left-0 mb-1 w-64 rounded-xl border border-c-border-subtle bg-c-surface shadow-lg max-h-40 overflow-y-auto z-overlay">
+                      <div className="absolute bottom-full left-0 mb-1 w-64 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-lg max-h-40 overflow-y-auto z-overlay">
                         {mentionSuggestions.map((user) => (
                           <button
                             key={user.id}
@@ -1149,7 +1149,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                           ? 'Dodaj komentarz... (@ aby wspomnieć)'
                           : 'Add a comment... (@ to mention)'
                       }
-                      className="flex-1 min-h-[40px] rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-c-focus resize-y"
+                      className="flex-1 min-h-[40px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-c-focus resize-y"
                     />
                     <button
                       type="button"
@@ -1223,7 +1223,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                         {isPl ? 'Dołącz artefakt' : 'Attach artifact'}
                       </button>
                       {artifactDropdownOpen && (
-                        <div className="absolute left-0 top-full mt-1 z-overlay w-64 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl overflow-hidden">
+                        <div className="absolute left-0 top-full mt-1 z-overlay w-64 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl overflow-hidden">
                           <div className="p-2 border-b border-c-border-subtle">
                             <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-c-surface-raised">
                               <Search size={12} className="text-c-text-muted flex-shrink-0" />

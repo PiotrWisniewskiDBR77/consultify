@@ -152,7 +152,7 @@ export const EmojiCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
         {value || <Smile size={14} className="text-c-text-secondary" />}
       </button>
       {showPicker && !locked && (
-        <div className="absolute left-0 top-full mt-1 z-50 p-2 rounded-xl bg-c-surface shadow-xl border border-c-border-subtle flex flex-wrap gap-1 w-[180px]">
+        <div className="absolute left-0 top-full mt-1 z-50 p-2 rounded-xl bg-c-surface shadow-xl border border-slate-200/60 dark:border-white/[0.03] flex flex-wrap gap-1 w-[180px]">
           {EMOJI_QUICK.map((e) => (
             <button
               key={e}
@@ -183,7 +183,7 @@ export const ColorCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
       />
       <span className="text-[10px] text-c-text-muted font-mono">{value || '#—'}</span>
       {showPicker && !locked && (
-        <div className="absolute left-0 top-full mt-1 z-50 p-2 rounded-xl bg-c-surface shadow-xl border border-c-border-subtle flex flex-wrap gap-1 w-[140px]">
+        <div className="absolute left-0 top-full mt-1 z-50 p-2 rounded-xl bg-c-surface shadow-xl border border-slate-200/60 dark:border-white/[0.03] flex flex-wrap gap-1 w-[140px]">
           {COLOR_QUICK.map((c) => (
             <button
               key={c}

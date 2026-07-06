@@ -91,7 +91,7 @@ export const TabeleTemplatesGrid: React.FC<TabeleTemplatesGridProps> = ({
           <div
             key={tpl.id}
             data-testid={`${testId}-card`}
-            className="group relative text-left p-4 rounded-xl border border-c-border-subtle bg-c-surface hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all"
+            className="group relative text-left p-4 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all"
           >
             <button
               type="button"

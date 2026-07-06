@@ -280,7 +280,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 text-center">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-c-text">
             {rulesLoadError ? '--' : rules.length}
           </p>
@@ -288,7 +288,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
             {t('settings.personalAutomation.stats.active', 'Active Automations')}
           </p>
         </div>
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 text-center">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-c-text">
             {rulesLoadError ? '--' : rules.reduce((sum, r) => sum + r.runCount, 0)}
           </p>
@@ -296,7 +296,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
             {t('settings.personalAutomation.stats.totalRuns', 'Total Runs')}
           </p>
         </div>
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 text-center">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-green-600">
             {logsLoadError
               ? '--'
@@ -436,7 +436,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
             {templates.map((template) => (
               <div
                 key={template.id}
-                className="p-4 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl"
+                className="p-4 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div>
@@ -466,7 +466,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
 
       {/* Logs Tab */}
       {activeTab === 'logs' && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl overflow-hidden">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl overflow-hidden">
           {logsLoadError && (
             <div className="p-4">
               <DegradedState title="Automation history unavailable" description={logsLoadError} />

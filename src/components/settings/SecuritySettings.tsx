@@ -189,7 +189,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
       </div>
 
       {/* Change Password Section */}
-      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
+      <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden">
         <div className="p-6 border-b border-c-border-subtle dark:border-navy-700">
           <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Key className="w-5 h-5 text-c-accent" />
@@ -215,7 +215,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                 type={showCurrentPassword ? 'text' : 'password'}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full pl-11 pr-11 py-3 rounded-xl border border-c-border-subtle dark:border-navy-700 bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all"
+                className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all"
                 placeholder="••••••••"
               />
               <button
@@ -239,7 +239,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                 type={showNewPassword ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full pl-11 pr-11 py-3 rounded-xl border border-c-border-subtle dark:border-navy-700 bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all"
+                className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all"
                 placeholder="••••••••"
               />
               <button
@@ -299,7 +299,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full pl-11 pr-11 py-3 rounded-xl border border-c-border-subtle dark:border-navy-700 bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all"
+                className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all"
                 placeholder="••••••••"
               />
               {confirmPassword && (
@@ -354,7 +354,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
       </div>
 
       {/* Active Sessions Section */}
-      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
+      <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden">
         <div className="p-6 border-b border-c-border-subtle dark:border-navy-700 flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
@@ -441,7 +441,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
       </div>
 
       {/* Security Documents Section */}
-      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
+      <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden">
         <div className="p-6 border-b border-c-border-subtle dark:border-navy-700">
           <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <FileText className="w-5 h-5 text-c-text-muted" />

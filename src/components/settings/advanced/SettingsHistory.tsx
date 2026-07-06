@@ -181,14 +181,14 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search changes..."
-                className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-amber-500"
+                className="w-full pl-10 pr-4 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-amber-500"
               />
             </div>
 
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+              className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
             >
               <option value="all">All Categories</option>
               {categories.map((cat) => (
@@ -201,7 +201,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d' | 'all')}
-              className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+              className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
             >
               <option value="7d">Last 7 days</option>
               <option value="30d">Last 30 days</option>
@@ -211,7 +211,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
           </div>
 
           {/* History List */}
-          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl overflow-hidden">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl overflow-hidden">
             {filteredEntries.length === 0 ? (
               <div className="p-8 text-center text-c-text-muted">
                 <History size={48} className="mx-auto mb-3 opacity-50" />
@@ -324,17 +324,17 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 text-center">
+            <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4 text-center">
               <p className="text-2xl font-bold text-c-text">{entries.length}</p>
               <p className="text-sm text-c-text-muted">Total Changes</p>
             </div>
-            <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 text-center">
+            <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4 text-center">
               <p className="text-2xl font-bold text-c-text">
                 {new Set(entries.map((e) => e.category)).size}
               </p>
               <p className="text-sm text-c-text-muted">Categories</p>
             </div>
-            <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 text-center">
+            <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4 text-center">
               <p className="text-2xl font-bold text-c-text">
                 {
                   entries.filter((e) => new Date(e.timestamp) > new Date(Date.now() - 86400000))

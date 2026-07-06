@@ -140,7 +140,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({ initiative, startCol, endCol,
       </div>
 
       {/* Tooltip on hover */}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-c-surface text-c-text text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 shadow-xl border border-c-border">
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-c-surface text-c-text text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 shadow-xl border border-slate-200/60 dark:border-white/[0.03]">
         <div className="font-medium mb-1">{initiative.name}</div>
         <div className="text-c-text-muted">
           {initiative.targetQuarter || 'No timeline'} • {initiative.progress}% complete
@@ -283,7 +283,7 @@ export const PortfolioTimelineView: React.FC<PortfolioTimelineViewProps> = ({
           </button>
         </div>
 
-        <div className="flex items-center gap-1 bg-c-surface rounded-lg p-1 border border-c-border">
+        <div className="flex items-center gap-1 bg-c-surface rounded-lg p-1 border border-slate-200/60 dark:border-white/[0.03]">
           <button
             onClick={() => setZoom(1)}
             className={`px-3 py-1 text-xs font-medium rounded ${zoom === 1 ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted'}`}

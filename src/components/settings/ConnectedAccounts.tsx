@@ -189,7 +189,7 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
           return (
             <div
               key={provider.id}
-              className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4"
+              className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4">

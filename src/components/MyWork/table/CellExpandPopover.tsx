@@ -122,7 +122,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
       <div
         ref={popoverRef}
         onClick={(e) => e.stopPropagation()}
-        className="w-[340px] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl overflow-hidden"
+        className="w-[340px] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden"
         style={style}
       >
         {/* Header */}
@@ -232,7 +232,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                     onChange={(e) => setNewOption(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAddOption()}
                     placeholder={isPl ? 'Nowa opcja...' : 'New option...'}
-                    className="flex-1 rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[10px] outline-none focus:ring-2 focus:ring-blue-500/30"
+                    className="flex-1 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2.5 py-1.5 text-[10px] outline-none focus:ring-2 focus:ring-blue-500/30"
                   />
                   <button
                     onClick={handleAddOption}

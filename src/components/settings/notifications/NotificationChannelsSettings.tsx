@@ -533,7 +533,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
       />
 
       {/* In-App Notification Center */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-3 rounded-xl bg-blue-600">
             <Bell size={24} className="text-white" />
@@ -623,7 +623,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
                   inApp: { ...channels.inApp, maxNotifications: parseInt(e.target.value) },
                 })
               }
-              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+              className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
             >
               <option value={50}>
                 {t('settings.notifications.channels.notificationCount', '{{count}} notifications', {
@@ -651,7 +651,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
       </div>
 
       {/* Email (always connected) */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-xl bg-danger-500">

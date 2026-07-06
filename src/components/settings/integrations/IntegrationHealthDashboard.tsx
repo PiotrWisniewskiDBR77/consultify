@@ -335,7 +335,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
       {/* Overview Stats */}
       {!loadError && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 text-center">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4 text-center">
             <p className="text-2xl font-bold text-c-text">
               {integrations.length}
             </p>
@@ -355,7 +355,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
               {t('integrations.health.statWarnings', 'Warnings')}
             </p>
           </div>
-          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 text-center">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4 text-center">
             <p className="text-2xl font-bold text-c-text">
               {totalStats.requestsToday}
             </p>
@@ -363,7 +363,7 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
               {t('integrations.health.statRequestsToday', 'Requests Today')}
             </p>
           </div>
-          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 text-center">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4 text-center">
             <p className="text-2xl font-bold text-c-text">
               {totalStats.requestsThisMonth.toLocaleString()}
             </p>

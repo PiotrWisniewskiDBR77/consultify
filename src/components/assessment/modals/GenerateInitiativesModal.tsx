@@ -449,7 +449,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Szukaj raportu..."
-                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface dark:bg-c-bg text-c-text text-sm"
+                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface dark:bg-c-bg text-c-text text-sm"
                       />
                     </div>
                   )}

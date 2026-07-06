@@ -83,7 +83,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
   return (
     <div
       data-testid={testId}
-      className="w-[360px] max-w-[90vw] rounded-lg border border-c-border-subtle bg-c-surface shadow-xl"
+      className="w-[360px] max-w-[90vw] rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl"
       role="dialog"
       aria-label={isPl ? 'Źródła rekordu' : 'Record sources'}
     >

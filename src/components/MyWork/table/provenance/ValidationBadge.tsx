@@ -145,7 +145,7 @@ export const ValidationBadge: React.FC<ValidationBadgeProps> = ({
       {open && (
         <div
           role="menu"
-          className="absolute left-0 top-full mt-1 z-50 min-w-[160px] rounded-lg border border-c-border-subtle bg-c-surface shadow-lg p-1"
+          className="absolute left-0 top-full mt-1 z-50 min-w-[160px] rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-lg p-1"
           data-testid={`${testId}-menu`}
         >
           {visibleAllowed.map((next) => (

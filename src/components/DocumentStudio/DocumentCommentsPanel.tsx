@@ -272,7 +272,7 @@ export function DocumentCommentsPanel({
       </div>
 
       {/* Composer (document-level) */}
-      <div className="mb-3 rounded-lg border border-c-border-subtle bg-c-surface p-3">
+      <div className="mb-3 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
         <textarea
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
@@ -280,7 +280,7 @@ export function DocumentCommentsPanel({
             'documentStudio.comments.composerPlaceholder',
             'Add document-level review comment…'
           )}
-          className="min-h-[80px] w-full resize-y rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text outline-none focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus"
+          className="min-h-[80px] w-full resize-y rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text outline-none focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus"
           data-testid="document-comments-composer"
         />
         <div className="mt-2 flex justify-end">
@@ -299,7 +299,7 @@ export function DocumentCommentsPanel({
 
       {/* Open / Resolved filter */}
       <div
-        className="mb-3 flex items-center gap-1 rounded-lg border border-c-border-subtle bg-c-surface p-1"
+        className="mb-3 flex items-center gap-1 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-1"
         role="tablist"
         aria-label={t('documentStudio.comments.filterLabel', 'Filter threads')}
       >
@@ -332,7 +332,7 @@ export function DocumentCommentsPanel({
       ) : null}
 
       {!loading && visibleThreads.length === 0 ? (
-        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary">
+        <div className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs text-c-text-secondary">
           {threads.length === 0
             ? t('documentStudio.comments.empty', 'No comments yet.')
             : t('documentStudio.comments.emptyFilter', 'No threads match this filter.')}

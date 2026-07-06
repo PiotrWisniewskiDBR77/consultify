@@ -246,7 +246,7 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
                   className="fixed inset-0 z-40"
                   onClick={() => setPriorityDropdownOpen(false)}
                 />
-                <div className="absolute left-0 top-full mt-1 z-50 w-44 rounded-lg border border-c-border-subtle bg-c-surface py-2 shadow-xl">
+                <div className="absolute left-0 top-full mt-1 z-50 w-44 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface py-2 shadow-xl">
                   {priorityOptions.map((opt) => (
                     <label
                       key={opt.id}
@@ -269,7 +269,7 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
 
         {/* Timeline area */}
         <div className="flex-1 overflow-auto p-4" ref={chartRef}>
-          <div className="min-h-[400px] rounded-xl border border-c-border-subtle bg-c-surface">
+          <div className="min-h-[400px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface">
             {/* X-axis labels */}
             <div className="flex justify-between px-4 py-2 text-[10px] uppercase tracking-wider text-c-text-muted border-b border-c-border-subtle">
               <span>

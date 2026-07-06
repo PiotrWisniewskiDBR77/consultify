@@ -775,7 +775,7 @@ export const PresentationsHub: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <div className="rounded-xl border border-c-border-subtle bg-c-surface p-8 text-center">
+                <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-8 text-center">
                   <Presentation
                     size={48}
                     className="mx-auto text-c-text-muted mb-4"
@@ -830,7 +830,7 @@ export const PresentationsHub: React.FC = () => {
       {/* Rename modal */}
       {renameModalDeck && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 w-full max-w-md shadow-xl">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-6 w-full max-w-md shadow-xl">
             <h3 className="text-lg font-semibold text-c-text mb-4">
               {t('presentations.actions.rename', 'Rename')}
             </h3>
@@ -838,7 +838,7 @@ export const PresentationsHub: React.FC = () => {
               type="text"
               value={renameValue}
               onChange={(e) => setRenameValue(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg bg-c-surface border border-c-border-subtle text-c-text focus:ring-2 focus:ring-c-focus"
+              className="w-full px-4 py-2 rounded-lg bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-c-text focus:ring-2 focus:ring-c-focus"
               placeholder={t('presentations.renamePlaceholder', 'Deck title')}
               autoFocus
             />

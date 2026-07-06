@@ -275,7 +275,7 @@ export const FieldManager: React.FC<FieldManagerProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={isPl ? 'Szukaj pola...' : 'Search fields...'}
-              className="w-full pl-7 pr-3 py-1.5 rounded-lg border border-c-border-subtle bg-c-surface text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+              className="w-full pl-7 pr-3 py-1.5 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
             />
           </div>
         </div>
@@ -484,7 +484,7 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
           value={name}
           onChange={(e) => setName(e.target.value)}
           disabled={locked}
-          className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
+          className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
         />
       </div>
 
@@ -499,7 +499,7 @@ const FieldEditPanel: React.FC<FieldEditPanelProps> = ({
           disabled={locked}
           rows={2}
           placeholder={isPl ? 'Opcjonalny opis pola...' : 'Optional field description...'}
-          className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 resize-none disabled:opacity-50"
+          className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 resize-none disabled:opacity-50"
         />
       </div>
 
@@ -687,7 +687,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
       onClick={onClose}
     >
       <div
-        className="w-[420px] max-h-[80vh] overflow-auto rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl"
+        className="w-[420px] max-h-[80vh] overflow-auto rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -713,7 +713,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={isPl ? 'np. Status, Priorytet...' : 'e.g. Status, Priority...'}
-              className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+              className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               autoFocus
             />
           </div>
@@ -756,7 +756,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
                 value={selectOptions}
                 onChange={(e) => setSelectOptions(e.target.value)}
                 placeholder="Option 1, Option 2, Option 3"
-                className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               />
             </div>
           )}
@@ -770,7 +770,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
                 value={linkedTableId}
                 onChange={(e) => setLinkedTableId(e.target.value)}
                 placeholder="table-uuid..."
-                className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               />
             </div>
           )}
@@ -784,7 +784,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
                 value={formulaExpr}
                 onChange={(e) => setFormulaExpr(e.target.value)}
                 placeholder="IF({Status} = 'Done', 1, 0)"
-                className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs font-mono text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs font-mono text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               />
             </div>
           )}
@@ -800,7 +800,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
                 max={10}
                 value={ratingMax}
                 onChange={(e) => setRatingMax(Number(e.target.value))}
-                className="w-20 rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-20 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               />
             </div>
           )}
@@ -813,7 +813,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({ isPl, onClose, onAdd })
               <select
                 value={currencySymbol}
                 onChange={(e) => setCurrencySymbol(e.target.value)}
-                className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               >
                 {['$', '€', 'zł', '£', '¥', 'CHF'].map((s) => (
                   <option key={s} value={s}>

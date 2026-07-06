@@ -1577,7 +1577,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
             <MoreHorizontal className="w-4 h-4" />
           </button>
           {showMenu && (
-            <div className="absolute right-0 top-full mt-1 w-40 bg-c-surface rounded-lg shadow-lg border border-c-border-subtle py-1 z-20">
+            <div className="absolute right-0 top-full mt-1 w-40 bg-c-surface rounded-lg shadow-lg border border-slate-200/60 dark:border-white/[0.03] py-1 z-20">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -2451,7 +2451,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                     placeholder={
                       isPl ? 'Opisz co należy zmienić...' : 'Describe what should be changed...'
                     }
-                    className="flex-1 px-3 py-2 text-[11px] bg-c-surface border border-c-border-subtle rounded-lg resize-none h-14 focus:ring-1 focus:ring-amber-500 leading-relaxed"
+                    className="flex-1 px-3 py-2 text-[11px] bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg resize-none h-14 focus:ring-1 focus:ring-amber-500 leading-relaxed"
                   />
                   <button
                     onClick={handleAddComment}

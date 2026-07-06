@@ -139,7 +139,7 @@ const ColumnFilterDropdown: React.FC<{
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-c-surface border border-c-border rounded-lg shadow-xl overflow-hidden">
+          <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg shadow-xl overflow-hidden">
             <div className="max-h-[200px] overflow-y-auto p-2">
               {options.map((o) => (
                 <label
@@ -412,7 +412,7 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
 
       {/* Initiative ROI Table */}
       {/* §27-exempt: financial-calculation — bespoke sort/filter state drives both table and KPI summary cards above; inline MoreVertical action menus are context-specific */}
-      <div className="bg-c-surface border border-c-border rounded-xl overflow-hidden">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>

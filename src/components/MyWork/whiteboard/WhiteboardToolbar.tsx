@@ -141,7 +141,7 @@ const ToolbarOverflow: React.FC<{ label: string; items: OverflowItem[] }> = ({ l
             ref={menuRef}
             data-testid="whiteboard-toolbar-overflow-menu"
             role="menu"
-            className="fixed z-[1000] w-[200px] bg-c-surface border border-c-border-subtle rounded-xl shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] py-1 max-h-[70vh] overflow-y-auto"
+            className="fixed z-[1000] w-[200px] bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] py-1 max-h-[70vh] overflow-y-auto"
             style={{ top: coords.top, left: coords.left }}
           >
             {items.map((it) => {

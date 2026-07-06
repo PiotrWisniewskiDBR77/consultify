@@ -475,7 +475,7 @@ export const ROIAnalysisView: React.FC = () => {
       )}
       {/* Portfolio summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-xl bg-white dark:bg-c-surface border border-c-border/70 dark:border-c-border p-4">
+        <div className="rounded-xl bg-white dark:bg-c-surface border border-slate-200/60 dark:border-white/[0.03]/70 dark:border-c-border p-4">
           <div className="flex items-center gap-2 mb-1">
             <DollarSign size={16} className="text-c-text-secondary" />
             <span className="text-xs font-medium text-c-text-muted uppercase">
@@ -486,7 +486,7 @@ export const ROIAnalysisView: React.FC = () => {
             {formatCurrency(totalPlanned)}
           </p>
         </div>
-        <div className="rounded-xl bg-white dark:bg-c-surface border border-c-border/70 dark:border-c-border p-4">
+        <div className="rounded-xl bg-white dark:bg-c-surface border border-slate-200/60 dark:border-white/[0.03]/70 dark:border-c-border p-4">
           <div className="flex items-center gap-2 mb-1">
             <Target size={16} className="text-c-text-secondary" />
             <span className="text-xs font-medium text-c-text-muted uppercase">
@@ -497,7 +497,7 @@ export const ROIAnalysisView: React.FC = () => {
             {formatCurrency(totalRealized)}
           </p>
         </div>
-        <div className="rounded-xl bg-white dark:bg-c-surface border border-c-border/70 dark:border-c-border p-4">
+        <div className="rounded-xl bg-white dark:bg-c-surface border border-slate-200/60 dark:border-white/[0.03]/70 dark:border-c-border p-4">
           <div className="flex items-center gap-2 mb-1">
             {totalVariance >= 0 ? (
               <TrendingUp size={16} className="text-emerald-400" />
@@ -603,7 +603,7 @@ export const ROIAnalysisView: React.FC = () => {
 
       {/* Initiative list table */}
       {/* §27-exempt: financial-calculation — sort state drives bar chart order; lock-conditional disabled row actions and custom ColumnFilterDropdown in Status header cannot be expressed through FilterableTable column API without destructive rewrite */}
-      <div className="bg-white dark:bg-c-surface border border-c-border/70 dark:border-c-border rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-c-surface border border-slate-200/60 dark:border-white/[0.03]/70 dark:border-c-border rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>

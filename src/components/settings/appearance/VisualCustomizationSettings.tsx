@@ -200,7 +200,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
       </div>
 
       {/* Theme Selection */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text">
           {t('settings.appearance.theme', 'Theme')}
         </h3>
@@ -238,7 +238,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
       </div>
 
       {/* Accent Color */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text">
           {t('settings.appearance.accentColor', 'Accent Color')}
         </h3>
@@ -277,7 +277,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
       </div>
 
       {/* Typography */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Type size={20} className="text-blue-500" />
           {t('settings.accessibility.typographyTitle', 'Typography')}
@@ -291,7 +291,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
             <select
               value={settings.fontFamily}
               onChange={(e) => setSettings({ ...settings, fontFamily: e.target.value })}
-              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+              className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
             >
               {fontFamilies.map((font) => (
                 <option key={font.id} value={font.value}>
@@ -343,7 +343,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
       </div>
 
       {/* Layout Density */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Layout size={20} className="text-green-500" />
           {t('settings.appearance.visual.displayDensity', 'Display Density')}
@@ -398,7 +398,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
       </div>
 
       {/* Additional Options */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text">
           {t('settings.appearance.visual.additionalOptions', 'Additional Options')}
         </h3>
@@ -474,7 +474,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
       </div>
 
       {/* Custom CSS */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Code size={20} className="text-amber-500" />

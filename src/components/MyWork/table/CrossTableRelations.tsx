@@ -211,7 +211,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[600px] max-w-[95vw] max-h-[85vh] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl overflow-hidden flex flex-col"
+        className="w-[600px] max-w-[95vw] max-h-[85vh] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -332,7 +332,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
                             <button
                               key={n.id}
                               onClick={() => setLinkSource(n.id)}
-                              className="px-2 py-1 rounded-lg text-[9px] font-medium bg-c-surface border border-c-border-subtle text-c-text-secondary hover:border-c-accent transition-colors truncate max-w-[120px]"
+                              className="px-2 py-1 rounded-lg text-[9px] font-medium bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-c-text-secondary hover:border-c-accent transition-colors truncate max-w-[120px]"
                             >
                               {n.data?.label || n.id}
                             </button>

@@ -362,7 +362,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
 
                         {/* Project Menu */}
                         {menuId === project.id && (
-                          <div className="absolute right-0 top-full mt-1 z-50 w-40 bg-c-surface rounded-lg shadow-lg border border-c-border-subtle py-1">
+                          <div className="absolute right-0 top-full mt-1 z-50 w-40 bg-c-surface rounded-lg shadow-lg border border-slate-200/60 dark:border-white/[0.03] py-1">
                             {onUpdateProject && (
                               <button
                                 onClick={(e) => {

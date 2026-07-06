@@ -1277,7 +1277,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
           onClick={() => setConnectModalApp(null)}
         >
           <div
-            className="w-full max-w-md rounded-2xl border border-c-border-subtle dark:border-navy-700 bg-c-surface shadow-2xl"
+            className="w-full max-w-md rounded-2xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 p-5 border-b border-c-border-subtle dark:border-navy-700">

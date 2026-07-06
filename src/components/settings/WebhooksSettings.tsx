@@ -439,7 +439,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
 
       {/* New Webhook Form */}
       {showNew && !loadError && (
-        <div className="p-6 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700 space-y-4">
+        <div className="p-6 bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 space-y-4">
           <h4 className="text-sm font-semibold text-c-text">
             {t('settings.webhooks.createNew', 'Create New Webhook')}
           </h4>
@@ -453,7 +453,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
               value={newWebhook.name}
               onChange={(e) => setNewWebhook((prev) => ({ ...prev, name: e.target.value }))}
               placeholder={t('settings.webhooks.namePlaceholder', 'My Webhook')}
-              className="w-full px-3 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg bg-c-surface text-c-text"
+              className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-600 rounded-lg bg-c-surface text-c-text"
             />
           </div>
 
@@ -466,7 +466,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
               value={newWebhook.url}
               onChange={(e) => setNewWebhook((prev) => ({ ...prev, url: e.target.value }))}
               placeholder="https://api.example.com/webhook"
-              className="w-full px-3 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg bg-c-surface text-c-text font-mono text-sm"
+              className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-600 rounded-lg bg-c-surface text-c-text font-mono text-sm"
             />
           </div>
 
@@ -502,7 +502,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                 setNewWebhook((prev) => ({ ...prev, signatureSecret: e.target.value }))
               }
               placeholder={t('settings.webhooks.secretPlaceholder', 'HMAC secret for verification')}
-              className="w-full px-3 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg bg-c-surface text-c-text font-mono text-sm"
+              className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-600 rounded-lg bg-c-surface text-c-text font-mono text-sm"
             />
             <p className="text-xs text-c-text-muted mt-1">
               {t(
@@ -566,7 +566,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
             return (
               <div
                 key={webhook.id}
-                className="bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700 overflow-hidden"
+                className="bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden"
               >
                 {/* Webhook Header */}
                 <div className="p-4">

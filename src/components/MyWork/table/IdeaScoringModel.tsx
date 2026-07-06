@@ -178,7 +178,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[560px] max-w-[90vw] max-h-[85vh] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl overflow-hidden flex flex-col"
+        className="w-[560px] max-w-[90vw] max-h-[85vh] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

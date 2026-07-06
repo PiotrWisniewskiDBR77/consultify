@@ -695,7 +695,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                   text={item.summaryText}
                   compact
                 >
-                  <div className="mt-3 rounded-xl border border-c-border-subtle bg-c-surface p-3">
+                  <div className="mt-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
                     <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted dark:text-c-text-muted">
                       {t('results.kpiReports.scorecardFlow', 'Scorecard and reconciliation flow')}
                     </div>
@@ -792,7 +792,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
       </div>
 
       <div className="px-4 pb-4">
-        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-4">
+        <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4">
           <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h3 className="text-sm font-semibold text-c-text">
@@ -830,7 +830,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
               setAiNarrativeHint('');
             }}
           />
-          <div className="relative w-full max-w-lg mx-4 bg-c-surface border border-c-border-subtle rounded-2xl shadow-2xl">
+          <div className="relative w-full max-w-lg mx-4 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-2xl shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-c-info/10">
@@ -1129,7 +1129,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
             className="absolute inset-0 bg-c-bg/60 backdrop-blur-sm"
             onClick={() => (tasksCreating ? null : setTasksModalOpen(false))}
           />
-          <div className="relative w-full max-w-2xl mx-4 bg-c-surface border border-c-border-subtle rounded-2xl shadow-2xl">
+          <div className="relative w-full max-w-2xl mx-4 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-2xl shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
               <h2 className="text-lg font-semibold text-c-text">
                 {t('results.kpiReports.tasks.title', 'Create tasks from action plan')}

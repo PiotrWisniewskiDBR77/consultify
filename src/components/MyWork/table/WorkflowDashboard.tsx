@@ -309,7 +309,7 @@ export function WorkflowDashboard({
                 if (!isLocked) setActivePanel(card.id);
               }}
               disabled={isLocked}
-              className={`group text-left rounded-xl border border-c-border-subtle bg-c-surface p-4 transition-all ${
+              className={`group text-left rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4 transition-all ${
                 isLocked
                   ? 'cursor-not-allowed opacity-60'
                   : 'hover:border-c-border-subtle hover:shadow-md'

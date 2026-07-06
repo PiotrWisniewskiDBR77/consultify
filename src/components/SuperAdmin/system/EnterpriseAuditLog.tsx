@@ -401,7 +401,7 @@ export const EnterpriseAuditLog: React.FC = () => {
               Export
               <ChevronDown className="w-4 h-4" />
             </button>
-            <div className="absolute right-0 mt-2 w-40 bg-c-surface border border-c-border-subtle rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+            <div className="absolute right-0 mt-2 w-40 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
               <button
                 onClick={() => handleExport('csv')}
                 className="w-full px-4 py-2 text-sm text-left text-c-text-secondary hover:bg-c-surface-raised rounded-t-lg"
@@ -430,13 +430,13 @@ export const EnterpriseAuditLog: React.FC = () => {
 
       {/* Stats Cards */}
       {loadError ? (
-        <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
+        <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
           <DegradedState title="Audit log overview unavailable" description={loadError} />
         </div>
       ) : (
         stats && (
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
+            <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
               <div className="text-sm text-c-text-secondary">Total Events</div>
               <div className="text-2xl font-bold text-c-text mt-1">
                 {stats.total || 0}
@@ -480,14 +480,14 @@ export const EnterpriseAuditLog: React.FC = () => {
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
               disabled={!!loadError}
-              className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 ring-c-focus"
+              className="w-full pl-10 pr-4 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 ring-c-focus"
             />
           </div>
           <select
             value={filters.riskLevel}
             onChange={(e) => setFilters({ ...filters, riskLevel: e.target.value })}
             disabled={!!loadError}
-            className="px-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text focus:outline-none focus:ring-2 ring-c-focus"
+            className="px-4 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text focus:outline-none focus:ring-2 ring-c-focus"
           >
             <option value="ALL">All Risk Levels</option>
             <option value="LOW">Low</option>
@@ -518,7 +518,7 @@ export const EnterpriseAuditLog: React.FC = () => {
 
         {/* Advanced Filters */}
         {showFilters && (
-          <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle space-y-4">
+          <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs text-c-text-secondary mb-1">
@@ -528,7 +528,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                   value={filters.actionType}
                   onChange={(e) => setFilters({ ...filters, actionType: e.target.value })}
                   disabled={!!loadError}
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
+                  className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm"
                 >
                   <option value="">All Actions</option>
                   {ACTION_TYPES.map((type) => (
@@ -546,7 +546,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                   value={filters.resourceType}
                   onChange={(e) => setFilters({ ...filters, resourceType: e.target.value })}
                   disabled={!!loadError}
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
+                  className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm"
                 >
                   <option value="">All Resources</option>
                   {RESOURCE_TYPES.map((type) => (
@@ -564,7 +564,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                   value={filters.complianceTag}
                   onChange={(e) => setFilters({ ...filters, complianceTag: e.target.value })}
                   disabled={!!loadError}
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
+                  className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm"
                 >
                   <option value="">All Tags</option>
                   {COMPLIANCE_TAGS.map((tag) => (
@@ -584,7 +584,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                   onChange={(e) => setFilters({ ...filters, userId: e.target.value })}
                   placeholder="Filter by user"
                   disabled={!!loadError}
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
+                  className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm"
                 />
               </div>
               <div>
@@ -596,7 +596,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                   value={filters.startDate}
                   onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
                   disabled={!!loadError}
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
+                  className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm"
                 />
               </div>
               <div>
@@ -608,7 +608,7 @@ export const EnterpriseAuditLog: React.FC = () => {
                   value={filters.endDate}
                   onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
                   disabled={!!loadError}
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
+                  className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm"
                 />
               </div>
             </div>
@@ -631,7 +631,7 @@ export const EnterpriseAuditLog: React.FC = () => {
           {loading ? (
             <LoadingState template="list" />
           ) : loadError ? (
-            <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
+            <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
               <DegradedState title="Audit logs unavailable" description={loadError} />
             </div>
           ) : logs.length === 0 ? (
@@ -650,7 +650,7 @@ export const EnterpriseAuditLog: React.FC = () => {
               return (
                 <div
                   key={log.id}
-                  className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden"
+                  className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden"
                 >
                   <div
                     className="p-4 cursor-pointer hover:bg-c-surface-raised transition-colors"
@@ -862,13 +862,13 @@ export const EnterpriseAuditLog: React.FC = () => {
       {activeView === 'analytics' && (
         <div className="space-y-6">
           {loadError ? (
-            <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
+            <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
               <DegradedState title="Audit analytics unavailable" description={loadError} />
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Activity by Action Type */}
-              <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
+              <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                 <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
                   <Activity className="w-4 h-4 text-c-info" />
                   Activity by Action Type
@@ -895,7 +895,7 @@ export const EnterpriseAuditLog: React.FC = () => {
               </div>
 
               {/* Risk Distribution */}
-              <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
+              <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                 <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
                   <Shield className="w-4 h-4 text-c-accent" />
                   Risk Distribution
@@ -923,7 +923,7 @@ export const EnterpriseAuditLog: React.FC = () => {
               </div>
 
               {/* Compliance Coverage */}
-              <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
+              <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                 <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
                   <Tag className="w-4 h-4 text-c-success" />
                   Compliance Coverage
@@ -946,7 +946,7 @@ export const EnterpriseAuditLog: React.FC = () => {
               </div>
 
               {/* Recent Activity Timeline */}
-              <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
+              <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                 <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-c-warning" />
                   Activity Timeline (Last 7 Days)

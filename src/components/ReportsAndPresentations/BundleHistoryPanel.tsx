@@ -211,7 +211,7 @@ export function BundleHistoryPanel({ refreshSignal }: BundleHistoryPanelProps = 
 
   return (
     <div
-      className="rounded-xl border border-c-border-subtle bg-c-surface"
+      className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface"
       data-testid="bundle-history-panel"
     >
       {/* Loading */}

@@ -2917,7 +2917,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             <div className="lg:col-span-2 space-y-6">
               {/* Summary Section */}
               {selectedInitiative.summary && (
-                <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
+                <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-5">
                   <h3 className="text-xs font-semibold text-c-text-muted uppercase mb-3 flex items-center gap-2">
                     <FileText size={14} />
                     Summary
@@ -2929,7 +2929,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               )}
 
               {/* Tasks Section */}
-              <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
+              <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xs font-semibold text-c-text-muted uppercase flex items-center gap-2">
                     <ListTodo size={14} />
@@ -3053,7 +3053,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             {/* Right Column - Metrics & Info */}
             <div className="space-y-4">
               {/* Key Metrics */}
-              <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
+              <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-5">
                 <h3 className="text-xs font-semibold text-c-text-muted uppercase mb-4">
                   Key Metrics
                 </h3>
@@ -3091,7 +3091,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               </div>
 
               {/* Timeline */}
-              <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
+              <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-5">
                 <h3 className="text-xs font-semibold text-c-text-muted uppercase mb-4 flex items-center gap-2">
                   <Calendar size={14} />
                   Timeline
@@ -3113,7 +3113,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               </div>
 
               {/* Ownership */}
-              <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
+              <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-5">
                 <h3 className="text-xs font-semibold text-c-text-muted uppercase mb-4 flex items-center gap-2">
                   <Users size={14} />
                   Ownership
@@ -4295,7 +4295,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       {isAddMenuOpen ? (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsAddMenuOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 z-50 w-[520px] max-w-[calc(100vw-24px)] rounded-2xl border border-c-border-subtle dark:border-white/[0.08] bg-c-surface shadow-xl shadow-black/20 overflow-hidden">
+          <div className="absolute right-0 top-full mt-2 z-50 w-[520px] max-w-[calc(100vw-24px)] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] dark:border-white/[0.08] bg-c-surface shadow-xl shadow-black/20 overflow-hidden">
             <div className="p-3 border-b border-c-border-subtle dark:border-white/[0.06]">
               <div className="relative">
                 <input

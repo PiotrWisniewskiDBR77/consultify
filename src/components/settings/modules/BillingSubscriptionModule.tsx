@@ -666,7 +666,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6 text-sm text-c-text-muted dark:border-navy-700">
+            <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6 text-sm text-c-text-muted dark:border-navy-700">
               Live pricing plans are currently unavailable. Refresh the page or retry after billing
               services recover.
             </div>
@@ -684,7 +684,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             </div>
           )}
           {isManualBilling && (
-            <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4 text-sm text-c-text-secondary dark:border-navy-700">
+            <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4 text-sm text-c-text-secondary dark:border-navy-700">
               This subscription is managed manually outside Stripe. Contract renewals, invoice
               status, and access changes are handled by your account team.
             </div>
@@ -694,7 +694,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
 
       {/* Usage Tab */}
       {activeTab === 'usage' && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
           <h3 className="text-lg font-semibold text-c-text">Current Usage</h3>
 
           <div className="space-y-6">
@@ -774,7 +774,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
 
       {/* Invoices Tab */}
       {activeTab === 'invoices' && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl overflow-hidden">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-c-border-subtle dark:border-navy-700">
             <h3 className="font-semibold text-c-text">Billing History</h3>
           </div>
@@ -852,7 +852,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             </div>
           )}
 
-          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-c-text">Payment Methods</h3>
               <button className="flex items-center gap-2 px-3 py-1.5 text-sm bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg">

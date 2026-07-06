@@ -243,7 +243,7 @@ function SectionCard({
 }: SectionCardProps): React.ReactElement {
   return (
     <section
-      className="rounded-xl border border-c-border bg-c-surface shadow-sm"
+      className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-sm"
       data-testid={testId}
     >
       <header className="flex flex-wrap items-start justify-between gap-2 border-b border-c-border px-5 py-4">

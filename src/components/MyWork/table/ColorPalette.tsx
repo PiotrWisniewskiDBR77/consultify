@@ -30,7 +30,7 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
   if (!open) return null;
 
   return (
-    <div className="absolute right-0 top-full mt-1 z-overlay w-[240px] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl p-3">
+    <div className="absolute right-0 top-full mt-1 z-overlay w-[240px] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl p-3">
       <div className="flex items-center justify-between mb-2">
         <span className="text-[10px] font-bold uppercase tracking-wider text-c-text-muted">
           <Palette size={10} className="inline mr-1" />

@@ -209,7 +209,7 @@ export const HeatmapControls: React.FC<HeatmapControlsProps> = ({
   if (!open) return null;
 
   return (
-    <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-3">
+    <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl p-3">
       <div className="flex items-center gap-2 mb-2">
         <Flame size={12} className="text-amber-500" />
         <span className="text-[10px] font-bold text-c-text">

@@ -167,7 +167,7 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
       {/* Context menu */}
       {contextMenu && (
         <div
-          className="fixed z-[200] bg-c-surface rounded-lg shadow-xl border border-c-border-subtle py-1 min-w-[150px]"
+          className="fixed z-[200] bg-c-surface rounded-lg shadow-xl border border-slate-200/60 dark:border-white/[0.03] py-1 min-w-[150px]"
           style={{ left: contextMenu.x, top: contextMenu.y - 120 }}
           onClick={(e) => e.stopPropagation()}
         >

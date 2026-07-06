@@ -1703,7 +1703,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                           return (
                             <tr key={conn.id} className="text-c-text-secondary hover:bg-c-surface-raised/40">
                               <td className="px-3 py-2.5">
-                                <span className="w-8 h-8 rounded-lg bg-c-surface/40 border border-c-border-subtle/60 flex items-center justify-center text-c-text-secondary">
+                                <span className="w-8 h-8 rounded-lg bg-c-surface/40 border border-slate-200/60 dark:border-white/[0.03]/60 flex items-center justify-center text-c-text-secondary">
                                   {renderConnectorIcon(conn.id, conn.name)}
                                 </span>
                               </td>
@@ -3233,7 +3233,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           )}
         </h3>
         {v8AuthEscalations.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-c-surface/30 border border-c-border-subtle/40">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-c-surface/30 border border-slate-200/60 dark:border-white/[0.03]/40">
             {t('integrations.syncHub.v8NoEscalations', 'No governed auth escalations are open.')}
           </div>
         ) : (
@@ -3332,7 +3332,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           )}
         </h3>
         {v8ConnectorHealthLoading ? (
-          <div className="flex items-center justify-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-c-surface/30 border border-c-border-subtle/40">
+          <div className="flex items-center justify-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-c-surface/30 border border-slate-200/60 dark:border-white/[0.03]/40">
             <Loader2 size={14} className="animate-spin mr-2" />
             {t(
               'integrations.syncHub.v8ConnectorHealthLoading',
@@ -3340,7 +3340,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             )}
           </div>
         ) : v8ConnectorHealthTargets.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-c-surface/30 border border-c-border-subtle/40">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-c-surface/30 border border-slate-200/60 dark:border-white/[0.03]/40">
             {t(
               'integrations.syncHub.v8NoConnectorTargets',
               'No governed connector targets are available for this workspace yet.'
@@ -3521,7 +3521,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           )}
         </h3>
         {v8Conflicts.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-c-surface/30 border border-c-border-subtle/40">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-c-surface/30 border border-slate-200/60 dark:border-white/[0.03]/40">
             {t('integrations.syncHub.v8NoConflicts', 'No governed sync conflicts are open.')}
           </div>
         ) : (
@@ -3624,7 +3624,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           </div>
         ) : null}
         {v8WorkspacePresence.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-c-surface/30 border border-c-border-subtle/40">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-c-surface/30 border border-slate-200/60 dark:border-white/[0.03]/40">
             {v8WorkspacePresenceFailed
               ? t(
                   'integrations.syncHub.v8WorkspacePresenceFailed',
@@ -3677,7 +3677,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           )}
         </h3>
         {v8WorkspaceLocks.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-c-surface/30 border border-c-border-subtle/40">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm rounded-lg bg-c-surface/30 border border-slate-200/60 dark:border-white/[0.03]/40">
             {t('integrations.syncHub.v8NoLocks', 'No governed workspace locks are active.')}
           </div>
         ) : (
@@ -3725,7 +3725,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             {errors.map((err) => (
               <div
                 key={err.id}
-                className="flex items-start gap-3 p-3 rounded-lg bg-c-surface/40 border border-c-border-subtle/50"
+                className="flex items-start gap-3 p-3 rounded-lg bg-c-surface/40 border border-slate-200/60 dark:border-white/[0.03]/50"
               >
                 <XCircle size={14} className="text-rose-400 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
@@ -3809,7 +3809,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         </div>
       )}
 
-      <div className="rounded-xl border border-c-border-subtle/50 bg-c-surface/20 overflow-hidden">
+      <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03]/50 bg-c-surface/20 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-c-surface/40 text-slate-500 dark:text-slate-400">
@@ -3932,7 +3932,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         </div>
       )}
 
-      <div className="rounded-xl border border-c-border-subtle/50 bg-c-surface/20 overflow-hidden">
+      <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03]/50 bg-c-surface/20 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-c-surface/40 text-slate-500 dark:text-slate-400">
@@ -4180,7 +4180,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       ) : (
         <div className="space-y-3">
           {integrations.map((int) => (
-            <div key={int.id} className="p-3 rounded-lg bg-c-surface/40 border border-c-border-subtle/50">
+            <div key={int.id} className="p-3 rounded-lg bg-c-surface/40 border border-slate-200/60 dark:border-white/[0.03]/50">
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-lg">{CATEGORY_ICONS[int.category] || '🔌'}</span>
                 <div>
@@ -4471,7 +4471,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-c-surface border border-c-border-subtle rounded-xl w-full max-w-lg max-h-[80vh] flex flex-col"
+          className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl w-full max-w-lg max-h-[80vh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">

@@ -347,7 +347,7 @@ export const ApprovalPatternManager: React.FC = () => {
             {patterns.map((pattern) => (
               <div
                 key={pattern.id}
-                className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden"
+                className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden"
               >
                 {/* Pattern Header */}
                 <div

@@ -332,7 +332,7 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
             disabled={locked}
             rows={3}
             placeholder={t('survey.freeTextPlaceholder', 'Type your answer...')}
-            className="w-full px-4 py-3 rounded-lg border border-c-border-subtle bg-c-surface
+            className="w-full px-4 py-3 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface
               text-c-text-secondary focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid text-sm
               resize-none disabled:opacity-60"
           />

@@ -145,7 +145,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
   );
 
   return (
-    <div className="bg-c-surface rounded-xl shadow-lg w-full overflow-hidden border border-c-border-subtle relative">
+    <div className="bg-c-surface rounded-xl shadow-lg w-full overflow-hidden border border-slate-200/60 dark:border-white/[0.03] relative">
       {/* Close button */}
       <button
         className="absolute top-4 right-4 p-2 rounded-full hover:bg-c-surface-raised dark:hover:bg-c-surface-raised text-c-text-muted hover:text-c-text dark:hover:text-c-text-muted transition-colors"
@@ -252,7 +252,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
           {/* Sidebar - Right Column */}
           <div className="space-y-6">
             {/* Impact Scoring */}
-            <section className="bg-c-surface rounded-xl border border-c-border-subtle p-4 shadow-sm">
+            <section className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4 shadow-sm">
               <SectionHeader icon={<span>📊</span>} title="Impact Scoring" />
               <div className="space-y-4 mt-4">
                 <div>
@@ -286,7 +286,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
 
             {/* Documents & Evidence */}
             {documents && documents.length > 0 && (
-              <section className="bg-c-surface rounded-xl border border-c-border-subtle p-4 shadow-sm">
+              <section className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4 shadow-sm">
                 <SectionHeader icon={<span>📁</span>} title="Evidence" />
                 <ul className="mt-4 space-y-3">
                   {documents.map((doc, i) => (

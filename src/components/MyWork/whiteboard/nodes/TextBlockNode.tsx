@@ -28,7 +28,7 @@ export const TextBlockNode: React.FC<NodeProps> = ({ id: nodeId, data, selected 
     <>
       <NodeResizer isVisible={selected && !data?.locked} minWidth={100} minHeight={40} />
       <div
-        className={`relative w-full h-full min-w-[100px] min-h-[40px] overflow-auto p-3 rounded-xl border border-c-border-subtle bg-c-surface dark:backdrop-blur-md shadow-lg dark:shadow-[0_0_12px_rgba(148,163,184,0.15)] transition-shadow ${selected ? 'ring-2 ring-c-border-strong shadow-xl' : ''}`}
+        className={`relative w-full h-full min-w-[100px] min-h-[40px] overflow-auto p-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface dark:backdrop-blur-md shadow-lg dark:shadow-[0_0_12px_rgba(148,163,184,0.15)] transition-shadow ${selected ? 'ring-2 ring-c-border-strong shadow-xl' : ''}`}
         onDoubleClick={() => {
           if (!data?.locked) {
             setEditValue(String(data?.label || ''));

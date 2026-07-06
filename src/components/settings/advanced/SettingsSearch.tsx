@@ -336,7 +336,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
           }}
           onFocus={() => setIsOpen(true)}
           placeholder="Search settings... (Cmd+K)"
-          className="w-full pl-12 pr-4 py-4 text-lg bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full pl-12 pr-4 py-4 text-lg bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
         {query && (
           <button
@@ -350,7 +350,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
 
       {/* Search Results Dropdown */}
       {isOpen && query && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl shadow-lg overflow-hidden">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl shadow-lg overflow-hidden">
           {results.length === 0 ? (
             <div className="p-6 text-center text-c-text-muted">
               <Search size={32} className="mx-auto mb-2 opacity-50" />
@@ -402,7 +402,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
       {!query && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Favorites */}
-          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4">
             <h3 className="font-semibold text-c-text mb-3 flex items-center gap-2">
               <Star size={16} className="text-amber-500" />
               Favorites
@@ -428,7 +428,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
           </div>
 
           {/* Recent Searches */}
-          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4">
             <h3 className="font-semibold text-c-text mb-3 flex items-center gap-2">
               <Clock size={16} className="text-c-text-secondary" />
               Recent Searches
@@ -456,7 +456,7 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
 
       {/* Browse Categories */}
       {!query && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4">
           <h3 className="font-semibold text-c-text mb-3">Browse by Category</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[

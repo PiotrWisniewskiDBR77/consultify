@@ -2005,7 +2005,7 @@ export const ResultsHub: React.FC = () => {
               )}
               {isResultsFlagEnabled('valueDriverTree') && (
                 <div className="shrink-0 px-1">
-                  <div className="rounded-xl border border-c-border-subtle bg-c-surface/40 p-4">
+                  <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface/40 p-4">
                     <h3 className="text-sm font-semibold text-c-text mb-3">
                       {t('results.driverTree.title', 'Value Driver Tree')}
                     </h3>
@@ -2046,7 +2046,7 @@ export const ResultsHub: React.FC = () => {
               </div>
             )}
             {isResultsFlagEnabled('valueDriverTree') && (
-              <div className="rounded-xl border border-c-border-subtle bg-c-surface/40 p-4">
+              <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface/40 p-4">
                 <h3 className="text-sm font-semibold text-c-text mb-3">
                   {t('results.driverTree.title', 'Value Driver Tree')}
                 </h3>

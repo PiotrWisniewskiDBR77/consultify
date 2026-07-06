@@ -280,7 +280,7 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
       </div>
 
       {/* Preferred Contact Method */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4">
           {t('settings.contact.preferredMethod', 'Preferred Contact Method')}
         </h3>
@@ -307,7 +307,7 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
       </div>
 
       {/* Email Addresses */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Mail size={20} className="text-blue-500" />
@@ -347,7 +347,7 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
       </div>
 
       {/* Phone Numbers */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Phone size={20} className="text-green-500" />
@@ -387,7 +387,7 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
       </div>
 
       {/* Addresses */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <MapPin size={20} className="text-amber-500" />
@@ -426,7 +426,7 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
       </div>
 
       {/* Emergency Contacts */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <UserPlus size={20} className="text-danger-500" />
@@ -500,12 +500,12 @@ const EmailCard: React.FC<EmailCardProps> = ({
             value={email.email}
             onChange={(e) => onUpdate({ email: e.target.value })}
             placeholder="email@example.com"
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <select
             value={email.type}
             onChange={(e) => onUpdate({ type: e.target.value as ContactEmail['type'] })}
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           >
             <option value="work">{t('settings.contact.type.work', 'Work')}</option>
             <option value="personal">{t('settings.contact.type.personal', 'Personal')}</option>
@@ -615,19 +615,19 @@ const PhoneCard: React.FC<PhoneCardProps> = ({
             value={phone.phone}
             onChange={(e) => onUpdate({ phone: e.target.value })}
             placeholder="+1 234 567 8900"
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={phone.countryCode || '+1'}
             onChange={(e) => onUpdate({ countryCode: e.target.value })}
             placeholder="+1"
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <select
             value={phone.type}
             onChange={(e) => onUpdate({ type: e.target.value as ContactPhone['type'] })}
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           >
             <option value="work">{t('settings.contact.type.work', 'Work')}</option>
             <option value="mobile">{t('settings.contact.type.mobile', 'Mobile')}</option>
@@ -722,7 +722,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
           <select
             value={address.type || 'office'}
             onChange={(e) => onUpdate({ ...address, type: e.target.value } as any)}
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           >
             <option value="office">{t('settings.contact.type.office', 'Office')}</option>
             <option value="home">{t('settings.contact.type.home', 'Home')}</option>
@@ -735,35 +735,35 @@ const AddressCard: React.FC<AddressCardProps> = ({
             value={address.street || ''}
             onChange={(e) => onUpdate({ street: e.target.value })}
             placeholder={t('settings.contact.street', 'Street Address')}
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={address.city || ''}
             onChange={(e) => onUpdate({ city: e.target.value })}
             placeholder={t('settings.contact.city', 'City')}
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={address.state || ''}
             onChange={(e) => onUpdate({ state: e.target.value })}
             placeholder={t('settings.contact.state', 'State/Province')}
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={address.postalCode || ''}
             onChange={(e) => onUpdate({ postalCode: e.target.value })}
             placeholder={t('settings.contact.postalCode', 'Postal Code')}
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={address.country || ''}
             onChange={(e) => onUpdate({ country: e.target.value })}
             placeholder={t('settings.contact.country', 'Country')}
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
         </div>
         <div className="flex gap-2 mt-4">
@@ -858,28 +858,28 @@ const EmergencyContactCard: React.FC<EmergencyContactCardProps> = ({
             value={contact.name}
             onChange={(e) => onUpdate({ name: e.target.value })}
             placeholder={t('settings.contact.name', 'Name')}
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={contact.relationship}
             onChange={(e) => onUpdate({ relationship: e.target.value })}
             placeholder={t('settings.contact.relationship', 'Relationship')}
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="tel"
             value={contact.phone}
             onChange={(e) => onUpdate({ phone: e.target.value })}
             placeholder={t('settings.contact.phone', 'Phone')}
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="email"
             value={contact.email || ''}
             onChange={(e) => onUpdate({ email: e.target.value })}
             placeholder={t('settings.contact.email', 'Email (optional)')}
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
         </div>
         <div className="flex gap-2 mt-4">

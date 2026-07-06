@@ -221,7 +221,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
       </div>
 
       {/* AI Features Toggles */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Wand2 size={20} className="text-pink-500" />
           AI Features
@@ -274,7 +274,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
       </div>
 
       {/* AI Personality */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Smile size={20} className="text-amber-500" />
           AI Personality
@@ -321,7 +321,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
       </div>
 
       {/* Response Style */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
         <h3 className="text-lg font-semibold text-c-text">Response Style</h3>
 
         {/* Response Length */}
@@ -386,7 +386,7 @@ export const AIBehaviorSettings: React.FC<AIBehaviorSettingsProps> = ({
       </div>
 
       {/* Context Settings */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <BookOpen size={20} className="text-blue-500" />
           Context Sources

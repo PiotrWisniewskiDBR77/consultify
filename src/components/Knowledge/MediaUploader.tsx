@@ -276,7 +276,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
   };
 
   return (
-    <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
+    <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden">
       {/* Tabs */}
       <div className="flex border-b border-c-border-subtle">
         <button

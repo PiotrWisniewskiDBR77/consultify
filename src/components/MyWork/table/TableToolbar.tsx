@@ -336,7 +336,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-1 md:gap-2 bg-c-surface backdrop-blur-sm rounded-2xl shadow-xl border border-c-border-subtle mx-3 my-2 px-4 py-2 flex-shrink-0">
+    <div className="flex flex-wrap items-center gap-1 md:gap-2 bg-c-surface backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200/60 dark:border-white/[0.03] mx-3 my-2 px-4 py-2 flex-shrink-0">
       <div className="text-xs font-semibold text-c-text mr-2">
         {isPl ? 'Tabela' : 'Table'}
       </div>
@@ -434,7 +434,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           onClick={() => setShowSaveViewDialog(false)}
         >
           <div
-            className="bg-c-surface rounded-xl shadow-xl border border-c-border-subtle p-4 w-72"
+            className="bg-c-surface rounded-xl shadow-xl border border-slate-200/60 dark:border-white/[0.03] p-4 w-72"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-sm font-semibold mb-2 text-c-text">
@@ -473,7 +473,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
       {viewContextMenu && (
         <div className="fixed inset-0 z-[60]" onClick={() => setViewContextMenu(null)}>
           <div
-            className="absolute bg-c-surface rounded-lg shadow-xl border border-c-border-subtle py-1 min-w-[140px]"
+            className="absolute bg-c-surface rounded-lg shadow-xl border border-slate-200/60 dark:border-white/[0.03] py-1 min-w-[140px]"
             style={{ left: viewContextMenu.x, top: viewContextMenu.y }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -533,7 +533,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           value={props.filterInput}
           onChange={(e) => props.onFilterInputChange(e.target.value)}
           placeholder={isPl ? 'Filtruj…' : 'Filter…'}
-          className="w-full h-7 pl-7 pr-2 rounded-lg text-[11px] bg-c-surface border border-c-border-subtle text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+          className="w-full h-7 pl-7 pr-2 rounded-lg text-[11px] bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
         />
         {props.filterInput && (
           <button
@@ -699,7 +699,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         {showMoreMenu && (
           <div
             data-testid="table-toolbar-overflow-menu"
-            className="absolute right-0 top-full mt-1 z-50 w-56 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1 max-h-[70vh] overflow-y-auto"
+            className="absolute right-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1 max-h-[70vh] overflow-y-auto"
             role="menu"
           >
             {(() => {
@@ -897,7 +897,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               <ChevronDown size={10} />
             </button>
             {showToolsMenu && (
-              <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1 max-h-[70vh] overflow-y-auto">
+              <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1 max-h-[70vh] overflow-y-auto">
                 <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-secondary">
                   {isPl ? 'Workflow' : 'Workflow'}
                 </div>
@@ -1147,7 +1147,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           <Columns3 size={12} />
         </button>
         {showColumnConfig && (
-          <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-2">
+          <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl p-2">
             {columns.map((col) => (
               <button
                 key={col.key}
@@ -1228,7 +1228,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                   <ArrowRight size={11} /> {isPl ? 'Konwertuj' : 'Convert'} <ChevronDown size={9} />
                 </button>
                 {showBulkConvertMenu && (
-                  <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-1">
+                  <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl p-1">
                     {(['initiative', 'task', 'decision'] as const).map((t) => (
                       <button
                         key={t}

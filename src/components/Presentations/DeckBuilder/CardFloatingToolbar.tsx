@@ -46,7 +46,7 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
 
   return (
     <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-30">
-      <div className="flex items-center gap-1 bg-c-surface border border-c-border-subtle rounded-xl shadow-lg px-2 py-1">
+      <div className="flex items-center gap-1 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-lg px-2 py-1">
         {/* Layout picker */}
         <div className="relative">
           <button
@@ -61,7 +61,7 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
             <Layout size={14} />
           </button>
           {expandedPanel === 'layout' && (
-            <div className="absolute top-full mt-1 left-0 bg-c-surface border border-c-border-subtle rounded-lg shadow-xl p-2 flex gap-1 z-40">
+            <div className="absolute top-full mt-1 left-0 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg shadow-xl p-2 flex gap-1 z-40">
               {LAYOUTS.map((l) => (
                 <button
                   key={l.id}
@@ -97,7 +97,7 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
             <Palette size={14} />
           </button>
           {expandedPanel === 'bg' && (
-            <div className="absolute top-full mt-1 left-0 bg-c-surface border border-c-border-subtle rounded-lg shadow-xl p-2 w-40 z-40">
+            <div className="absolute top-full mt-1 left-0 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg shadow-xl p-2 w-40 z-40">
               {BG_TYPES.map((bg) => (
                 <button
                   key={bg.id}

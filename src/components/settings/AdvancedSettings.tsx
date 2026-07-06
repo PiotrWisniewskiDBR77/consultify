@@ -332,7 +332,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
       </div>
 
       {/* Personal API Keys */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-amber-100 dark:bg-amber-500/20 rounded-lg">
@@ -427,7 +427,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
       </div>
 
       {/* Export Preferences */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <FileDown size={20} className="text-blue-500" />
           {t('settings.advanced.exportPreferences', 'Export Preferences')}
@@ -518,7 +518,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
       </div>
 
       {/* Keyboard Shortcuts */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-c-accent-soft dark:bg-c-accent-soft rounded-lg">
@@ -580,7 +580,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
       </div>
 
       {/* Connected Accounts */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Link2 size={20} className="text-blue-500" />
           {t('settings.advanced.connectedAccounts', 'Connected Accounts')}
@@ -603,7 +603,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
       </div>
 
       {/* Developer Options */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Code size={20} className="text-green-500" />
           {t('settings.advanced.developerOptions', 'Developer Options')}

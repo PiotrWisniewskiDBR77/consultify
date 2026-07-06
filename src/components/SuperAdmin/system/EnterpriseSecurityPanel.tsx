@@ -624,7 +624,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
             <div className="space-y-4">
               {/* Stats */}
               {loadErrors.events ? (
-                <div className="p-6 bg-c-surface rounded-xl border border-c-border-subtle">
+                <div className="p-6 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                   <DegradedState
                     title="Security events unavailable"
                     description={loadErrors.events}
@@ -633,7 +633,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
               ) : (
                 eventStats && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
+                    <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                       <div className="text-sm text-c-text-secondary">Total Events</div>
                       <div className="text-2xl font-semibold text-c-text">
                         {eventStats.total || 0}
@@ -671,7 +671,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                   value={eventFilters.severity}
                   onChange={(e) => setEventFilters({ ...eventFilters, severity: e.target.value })}
                   disabled={!!loadErrors.events}
-                  className="px-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
+                  className="px-4 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm"
                 >
                   <option value="">All Severities</option>
                   {Object.keys(SEVERITY_CONFIG).map((s) => (
@@ -684,7 +684,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                   value={eventFilters.eventType}
                   onChange={(e) => setEventFilters({ ...eventFilters, eventType: e.target.value })}
                   disabled={!!loadErrors.events}
-                  className="px-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
+                  className="px-4 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm"
                 >
                   <option value="">All Event Types</option>
                   {EVENT_TYPES.map((t) => (
@@ -697,7 +697,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                   value={eventFilters.resolved}
                   onChange={(e) => setEventFilters({ ...eventFilters, resolved: e.target.value })}
                   disabled={!!loadErrors.events}
-                  className="px-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
+                  className="px-4 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm"
                 >
                   <option value="">All Status</option>
                   <option value="false">Unresolved</option>
@@ -708,7 +708,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
               {/* Events List */}
               <div className="space-y-2">
                 {loadErrors.events ? (
-                  <div className="p-6 bg-c-surface rounded-xl border border-c-border-subtle">
+                  <div className="p-6 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                     <DegradedState
                       title="Security event list unavailable"
                       description={loadErrors.events}
@@ -797,7 +797,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
               <div className="space-y-2">
                 {loadErrors.sessions ? (
-                  <div className="p-6 bg-c-surface rounded-xl border border-c-border-subtle">
+                  <div className="p-6 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                     <DegradedState
                       title="Active session list unavailable"
                       description={loadErrors.sessions}
@@ -910,7 +910,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
               <div className="space-y-2">
                 {loadErrors.ipRules ? (
-                  <div className="p-6 bg-c-surface rounded-xl border border-c-border-subtle">
+                  <div className="p-6 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                     <DegradedState
                       title="IP access rules unavailable"
                       description={loadErrors.ipRules}
@@ -1001,7 +1001,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {loadErrors.policies ? (
-                  <div className="md:col-span-2 p-6 bg-c-surface rounded-xl border border-c-border-subtle">
+                  <div className="md:col-span-2 p-6 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                     <DegradedState
                       title="Security policies unavailable"
                       description={loadErrors.policies}
@@ -1068,7 +1068,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {loadErrors.compliance ? (
-                  <div className="md:col-span-3 p-6 bg-c-surface rounded-xl border border-c-border-subtle">
+                  <div className="md:col-span-3 p-6 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                     <DegradedState
                       title="Compliance frameworks unavailable"
                       description={loadErrors.compliance}
@@ -1120,7 +1120,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                 )}
               </div>
 
-              <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
+              <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                 <h4 className="font-medium text-c-text mb-3 flex items-center gap-2">
                   <Building className="w-4 h-4 text-c-text-secondary" />
                   SIEM Integration

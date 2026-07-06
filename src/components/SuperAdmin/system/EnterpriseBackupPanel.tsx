@@ -309,7 +309,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
 
       {/* Stats */}
       {hasBackupDataError ? (
-        <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
+        <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
           <DegradedState
             title="Backup overview unavailable"
             description={backupLoadError || scheduleLoadError || 'Backup data is unavailable.'}
@@ -317,13 +317,13 @@ export const EnterpriseBackupPanel: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
+          <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
             <div className="text-sm text-c-text-secondary">Total Backups</div>
             <div className="text-2xl font-semibold text-c-text">
               {backups.length}
             </div>
           </div>
-          <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
+          <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
             <div className="text-sm text-c-text-secondary">Storage Used</div>
             <div className="text-2xl font-semibold text-c-text">
               {formatBytes(getTotalBackupSize())}
@@ -392,7 +392,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                   return (
                     <div
                       key={backup.id}
-                      className="p-4 bg-c-surface rounded-xl border border-c-border-subtle hover:border-c-border-strong transition-colors"
+                      className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] hover:border-c-border-strong transition-colors"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -475,7 +475,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 <button
                   disabled
                   title={destructiveBackupActionReason}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-c-surface border border-c-border-subtle text-c-text text-sm rounded-lg opacity-50 cursor-not-allowed"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-c-text text-sm rounded-lg opacity-50 cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                   Add Schedule
@@ -499,7 +499,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                   schedules.map((schedule) => (
                     <div
                       key={schedule.id}
-                      className="p-4 bg-c-surface rounded-xl border border-c-border-subtle"
+                      className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -571,7 +571,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 description="Retention, encryption, and cloud storage settings are displayed as local defaults until a persisted backup configuration endpoint is connected."
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
+                <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                   <h4 className="font-medium text-c-text mb-4">
                     Retention Policy
                   </h4>
@@ -618,7 +618,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
+                <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                   <h4 className="font-medium text-c-text mb-4">Security</h4>
                   <div className="space-y-4">
                     <label className="flex items-center justify-between">
@@ -650,7 +650,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle md:col-span-2">
+                <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] md:col-span-2">
                   <h4 className="font-medium text-c-text mb-4 flex items-center gap-2">
                     <Cloud className="w-4 h-4 text-c-info" />
                     Cloud Storage
@@ -733,7 +733,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
+              <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                 <h4 className="font-medium text-c-text mb-2">
                   DR Test History
                 </h4>
@@ -750,7 +750,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
       {/* Create Backup Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
-          <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6 w-full max-w-md">
+          <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-6 w-full max-w-md">
             <h3 className="text-xl font-bold text-c-text mb-4">
               Create Backup
             </h3>

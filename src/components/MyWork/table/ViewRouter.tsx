@@ -256,7 +256,7 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
       : processedRows.map((row) => renderRow(row));
 
   return (
-    <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-c-border-subtle bg-c-surface">
+    <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface">
       <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full border-collapse text-left text-[11px]">
         <thead className="sticky top-0 z-10 bg-c-surface-raised backdrop-blur-sm">
           <tr>
@@ -698,7 +698,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
 
       {mobileViewPickerOpen && (
         <div
-          className="md:hidden fixed inset-x-2 z-[45] rounded-xl border border-c-border-subtle bg-c-surface p-2 shadow-xl backdrop-blur-sm"
+          className="md:hidden fixed inset-x-2 z-[45] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-2 shadow-xl backdrop-blur-sm"
           style={{ bottom: 'calc(3.75rem + env(safe-area-inset-bottom, 0px))' }}
         >
           <div className="mb-1 text-center text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">

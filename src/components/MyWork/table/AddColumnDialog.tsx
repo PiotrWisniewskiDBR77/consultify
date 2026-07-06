@@ -189,7 +189,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
 
   return (
     <div className="fixed inset-0 z-context-menu flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="w-[480px] max-h-[85vh] overflow-auto rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl">
+      <div className="w-[480px] max-h-[85vh] overflow-auto rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
           <h3 className="text-sm font-bold text-c-text">
@@ -213,7 +213,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={isPl ? 'np. Status, Priorytet...' : 'e.g. Status, Priority...'}
-              className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+              className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               autoFocus
             />
           </div>
@@ -266,7 +266,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                 value={options}
                 onChange={(e) => setOptions(e.target.value)}
                 placeholder="Option 1, Option 2, Option 3"
-                className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               />
             </div>
           )}
@@ -290,7 +290,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                     value={formula}
                     onChange={(e) => setFormula(e.target.value)}
                     placeholder="{impact} * {effort}"
-                    className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs font-mono text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+                    className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs font-mono text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
                   />
                   <p className="mt-1 text-[9px] text-c-text-secondary">
                     {isPl
@@ -328,7 +328,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                     : 'Assess risk based on company context...'
                 }
                 rows={3}
-                className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
+                className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
               />
             </div>
           )}
@@ -341,7 +341,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
               <select
                 value={currencyCode}
                 onChange={(e) => setCurrencyCode(e.target.value)}
-                className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               >
                 {['USD', 'EUR', 'PLN', 'GBP', 'CHF', 'JPY', 'CAD', 'AUD'].map((c) => (
                   <option key={c} value={c}>
@@ -360,7 +360,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
               <select
                 value={dateFormat}
                 onChange={(e) => setDateFormat(e.target.value)}
-                className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               >
                 <option value="YYYY-MM-DD">YYYY-MM-DD</option>
                 <option value="DD/MM/YYYY">DD/MM/YYYY</option>
@@ -381,7 +381,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                 value={relationTarget}
                 onChange={(e) => setRelationTarget(e.target.value)}
                 placeholder={isPl ? 'np. Inicjatywy, Zadania...' : 'e.g. Initiatives, Tasks...'}
-                className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
               />
               <p className="mt-1 text-[9px] text-c-text-secondary">
                 {isPl
@@ -401,7 +401,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                   value={rollupSource}
                   onChange={(e) => setRollupSource(e.target.value)}
                   placeholder={isPl ? 'np. tasks_relation' : 'e.g. tasks_relation'}
-                  className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+                  className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
                 />
               </div>
               <div>
@@ -411,7 +411,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                 <select
                   value={rollupFunction}
                   onChange={(e) => setRollupFunction(e.target.value)}
-                  className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+                  className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
                 >
                   <option value="count">Count</option>
                   <option value="sum">Sum</option>

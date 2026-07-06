@@ -112,7 +112,7 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
       onClick={onClose}
     >
       <div
-        className="bg-c-surface rounded-2xl shadow-2xl border border-c-border-subtle w-[720px] max-w-[95vw] max-h-[85vh] flex flex-col overflow-hidden"
+        className="bg-c-surface rounded-2xl shadow-2xl border border-slate-200/60 dark:border-white/[0.03] w-[720px] max-w-[95vw] max-h-[85vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -185,7 +185,7 @@ export function TemplateGallery({ workspaceId, onClose, onTemplateUsed }: Templa
                 return (
                   <div
                     key={tpl.id}
-                    className="group relative rounded-xl border border-c-border-subtle bg-c-surface p-4 hover:border-c-accent hover:shadow-md transition-all"
+                    className="group relative rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4 hover:border-c-accent hover:shadow-md transition-all"
                   >
                     {tpl.is_featured && (
                       <div className="absolute top-3 right-3">

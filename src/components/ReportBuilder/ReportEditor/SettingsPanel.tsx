@@ -324,7 +324,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
   return (
     <div className="p-3 space-y-3">
       {/* --- Status bar --- */}
-      <div className="flex items-center justify-between p-2 rounded-lg bg-c-surface border border-c-border-subtle">
+      <div className="flex items-center justify-between p-2 rounded-lg bg-c-surface border border-slate-200/60 dark:border-white/[0.03]">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-md bg-indigo-600/30 flex items-center justify-center">
             <GitBranch className="w-3 h-3 text-indigo-400" />
@@ -370,7 +370,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
                 placeholder={
                   isPl ? 'Co zmieniłeś w tej wersji...' : 'What changed in this version...'
                 }
-                className="w-full px-2.5 py-2 text-[11px] bg-c-surface border border-c-border-subtle rounded-lg resize-none h-14 focus:ring-1 focus:ring-indigo-500 text-c-text-secondary placeholder:text-c-text-secondary leading-relaxed"
+                className="w-full px-2.5 py-2 text-[11px] bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg resize-none h-14 focus:ring-1 focus:ring-indigo-500 text-c-text-secondary placeholder:text-c-text-secondary leading-relaxed"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSaveVersion();
@@ -738,7 +738,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       {/* Header — segmented toggle */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle bg-c-surface">
         {/* Segmented control */}
-        <div className="flex items-center bg-c-surface rounded-lg p-0.5 border border-c-border-subtle">
+        <div className="flex items-center bg-c-surface rounded-lg p-0.5 border border-slate-200/60 dark:border-white/[0.03]">
           {/* Settings pill */}
           <button
             onClick={() => {
@@ -837,7 +837,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                           reportType: MODULE_TOOLS[newSourceType]?.[0]?.value || '',
                         });
                       }}
-                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
+                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     >
                       <option value="ASSESSMENT">📊 Assessment</option>
                       <option value="TOOL">🛠️ Tool</option>
@@ -854,7 +854,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     <select
                       value={templateMeta.reportType || ''}
                       onChange={(e) => onTemplateMetaChange?.({ reportType: e.target.value })}
-                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
+                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     >
                       <option value="">— {isPl ? 'Wybierz' : 'Select'} —</option>
                       {MODULE_TOOLS[templateMeta.sourceType || 'ASSESSMENT']?.map((tool) => (
@@ -884,7 +884,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       value={templateMeta.author || ''}
                       onChange={(e) => onTemplateMetaChange?.({ author: e.target.value })}
                       placeholder={isPl ? 'Imię i nazwisko...' : 'Name...'}
-                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
+                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     />
                   </div>
 
@@ -894,7 +894,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     onChange={(e) => onTemplateMetaChange?.({ description: e.target.value })}
                     placeholder={isPl ? 'Opis szablonu...' : 'Template description...'}
                     rows={2}
-                    className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg resize-none"
+                    className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg resize-none"
                   />
                 </div>
               </SectionCard>
@@ -939,7 +939,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     <select
                       value={intent.audience}
                       onChange={(e) => onIntentChange({ audience: e.target.value as any })}
-                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
+                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     >
                       <option value="executive">{isPl ? 'Zarząd' : 'Executive'}</option>
                       <option value="board">{isPl ? 'Rada' : 'Board'}</option>
@@ -955,7 +955,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     <select
                       value={intent.goal}
                       onChange={(e) => onIntentChange({ goal: e.target.value as any })}
-                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
+                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     >
                       <option value="diagnosis">{isPl ? 'Diagnoza' : 'Diagnosis'}</option>
                       <option value="roadmap">{isPl ? 'Roadmap' : 'Roadmap'}</option>
@@ -1028,7 +1028,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     <select
                       value={intent.targetLength || 'standard'}
                       onChange={(e) => onIntentChange({ targetLength: e.target.value as any })}
-                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
+                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     >
                       <option value="short">{isPl ? 'Krótki' : 'Short'}</option>
                       <option value="standard">Standard</option>
@@ -1044,7 +1044,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       onChange={(e) =>
                         onIntentChange({ requiredSectionsPreset: e.target.value as any })
                       }
-                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
+                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     >
                       <option value="assessment_full">Assessment</option>
                       <option value="board_pack">Board Pack</option>
@@ -1075,7 +1075,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         ? 'Np. "Organizacja potrzebuje fundamentalnej zmiany w podejściu do danych..."'
                         : 'E.g., "The organization needs a fundamental shift in data strategy..."'
                     }
-                    className="w-full px-3 py-2 text-xs bg-c-surface border border-c-border-subtle rounded-lg resize-none h-16"
+                    className="w-full px-3 py-2 text-xs bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg resize-none h-16"
                   />
                   <p className="text-[10px] text-c-text-secondary mt-1">
                     {isPl
@@ -1095,7 +1095,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         ? 'Np. "DRD = Digital Readiness Diagnosis; transformacja cyfrowa; Industry 4.0"'
                         : 'E.g., "DRD = Digital Readiness Diagnosis; digital transformation; Industry 4.0"'
                     }
-                    className="w-full px-3 py-2 text-xs bg-c-surface border border-c-border-subtle rounded-lg resize-none h-16"
+                    className="w-full px-3 py-2 text-xs bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg resize-none h-16"
                   />
                   <p className="text-[10px] text-c-text-secondary mt-1">
                     {isPl
@@ -1218,7 +1218,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   <select
                     value={styling.footerMode || 'minimal'}
                     onChange={(e) => onStylingChange({ footerMode: e.target.value as any })}
-                    className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
+                    className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                   >
                     <option value="none">{isPl ? 'Brak' : 'None'}</option>
                     <option value="minimal">{isPl ? 'Minimalna' : 'Minimal'}</option>
@@ -1263,7 +1263,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     <select
                       value={styling.fontFamily || 'inter'}
                       onChange={(e) => onStylingChange({ fontFamily: e.target.value as any })}
-                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
+                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     >
                       <option value="inter">Inter</option>
                       <option value="roboto">Roboto</option>
@@ -1278,7 +1278,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     <select
                       value={styling.fontSize || 'medium'}
                       onChange={(e) => onStylingChange({ fontSize: e.target.value as any })}
-                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-c-border-subtle rounded-lg"
+                      className="w-full px-2 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg"
                     >
                       <option value="small">{isPl ? 'Mały' : 'Small'}</option>
                       <option value="medium">{isPl ? 'Średni' : 'Medium'}</option>

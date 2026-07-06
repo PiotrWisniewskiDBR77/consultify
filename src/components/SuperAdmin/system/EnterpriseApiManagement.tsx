@@ -561,7 +561,7 @@ export const EnterpriseApiManagement: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               disabled={!!loadError}
-              className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
+              className="w-full pl-10 pr-4 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </div>
 
@@ -569,7 +569,7 @@ export const EnterpriseApiManagement: React.FC = () => {
           {loading ? (
             <LoadingState template="list" />
           ) : loadError ? (
-            <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
+            <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
               <DegradedState title="API keys unavailable" description={loadError} />
             </div>
           ) : filteredKeys.length === 0 ? (
@@ -700,14 +700,14 @@ export const EnterpriseApiManagement: React.FC = () => {
       {activeTab === 'usage' && (
         <div className="space-y-6">
           {loadError ? (
-            <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
+            <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
               <DegradedState
                 title="API key usage unavailable"
                 description="API key usage cannot be inspected because the API key list did not load."
               />
             </div>
           ) : usageLoadError ? (
-            <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
+            <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
               <DegradedState title="API key usage unavailable" description={usageLoadError} />
             </div>
           ) : selectedKeyUsage ? (
@@ -1034,7 +1034,7 @@ const ApiKeyModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-c-text">
             {editKey ? 'Edit API Key' : 'Create API Key'}

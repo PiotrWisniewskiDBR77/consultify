@@ -114,7 +114,7 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({ preferences, onUpdateSchedule
                 type="time"
                 value={localSchedule.quietHoursStart}
                 onChange={(e) => handleTimeChange('quietHoursStart', e.target.value)}
-                className="w-full px-3 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-600 rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
               />
             </div>
             <div>
@@ -125,7 +125,7 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({ preferences, onUpdateSchedule
                 type="time"
                 value={localSchedule.quietHoursEnd}
                 onChange={(e) => handleTimeChange('quietHoursEnd', e.target.value)}
-                className="w-full px-3 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-600 rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
               />
             </div>
           </div>

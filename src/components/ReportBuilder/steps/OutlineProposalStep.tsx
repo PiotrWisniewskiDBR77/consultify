@@ -164,7 +164,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
         {sections.map((section, idx) => (
           <div
             key={section.key}
-            className="group flex items-start gap-3 p-4 rounded-lg border border-c-border-subtle bg-c-surface hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
+            className="group flex items-start gap-3 p-4 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
           >
             {/* Drag handle (visual) */}
             <div className="pt-1 cursor-grab text-c-text-secondary group-hover:text-c-text-muted">
@@ -235,14 +235,14 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             autoFocus
-            className="w-full px-3 py-2 text-sm border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="w-full px-3 py-2 text-sm border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 focus:outline-none"
           />
           <input
             type="text"
             placeholder={isPl ? 'Krótki opis (opcjonalnie)' : 'Brief description (optional)'}
             value={newSummary}
             onChange={(e) => setNewSummary(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="w-full px-3 py-2 text-sm border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 focus:outline-none"
           />
           <div className="flex items-center gap-2">
             <button

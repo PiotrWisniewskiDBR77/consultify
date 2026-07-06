@@ -747,7 +747,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
       <div className="relative mb-8">{renderStepIndicator()}</div>
 
       {/* Step Content */}
-      <div className="bg-c-surface rounded-2xl shadow-lg border border-c-border-subtle p-6 md:p-8">
+      <div className="bg-c-surface rounded-2xl shadow-lg border border-slate-200/60 dark:border-white/[0.03] p-6 md:p-8">
         {/* Step Title */}
         <div className="mb-6 flex items-center justify-between">
           <div>

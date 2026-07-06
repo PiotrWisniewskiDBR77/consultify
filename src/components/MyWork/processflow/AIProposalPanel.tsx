@@ -32,7 +32,7 @@ export interface AIProposalPanelProps {
 }
 
 const panelShell =
-  'rounded-xl border border-c-border-subtle bg-c-surface p-3';
+  'rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3';
 
 function opIcon(action: AIProposalOp['action']) {
   switch (action) {
@@ -200,13 +200,13 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
               {t.before} / {t.after}
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-lg border border-c-border-subtle bg-c-surface p-2">
+              <div className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-2">
                 <div className="mb-1 text-[9px] font-bold uppercase text-c-text-secondary">{t.before}</div>
                 <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-snug text-c-text-secondary">
                   {proposal.readback_before}
                 </pre>
               </div>
-              <div className="rounded-lg border border-c-border-subtle bg-c-surface p-2">
+              <div className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-2">
                 <div className="mb-1 text-[9px] font-bold uppercase text-c-text-secondary">{t.after}</div>
                 <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-snug text-c-text-secondary">
                   {proposal.readback_after}
@@ -275,7 +275,7 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
             value={draftPrompt}
             onChange={(e) => setDraftPrompt(e.target.value)}
             rows={5}
-            className="w-full resize-y rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none ring-c-info placeholder:text-c-text-muted focus:border-c-info focus:ring-2 dark:placeholder:text-c-text-muted"
+            className="w-full resize-y rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none ring-c-info placeholder:text-c-text-muted focus:border-c-info focus:ring-2 dark:placeholder:text-c-text-muted"
             placeholder={isPl ? 'Opisz zmiany w procesie…' : 'Describe the process changes…'}
           />
           <button

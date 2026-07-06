@@ -322,7 +322,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
       {/* ── Toolbar sections ───────────────────────────────────────────── */}
       <div className="flex flex-wrap gap-3">
         {/* Build flow */}
-        <div className="flex-1 min-w-[320px] rounded-xl border border-c-border-subtle bg-c-surface p-2.5">
+        <div className="flex-1 min-w-[320px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-2.5">
           <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
             {isPl ? 'Budowanie procesu' : 'Build flow'}
           </div>
@@ -379,7 +379,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
         </div>
 
         {/* Analyze & validate */}
-        <div className="flex-1 min-w-[260px] rounded-xl border border-c-border-subtle bg-c-surface p-2.5">
+        <div className="flex-1 min-w-[260px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-2.5">
           <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
             {isPl ? 'Analiza i walidacja' : 'Analyze and validate'}
           </div>
@@ -481,7 +481,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
         </div>
 
         {/* Manage canvas — command-row hierarchy: primary (max 4) · secondary · overflow "…" */}
-        <div className="flex-1 min-w-[280px] rounded-xl border border-c-border-subtle bg-c-surface p-2.5">
+        <div className="flex-1 min-w-[280px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-2.5">
           <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
             {isPl ? 'Zarządzanie canvasem' : 'Manage canvas'}
           </div>
@@ -554,7 +554,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               {overflowOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 top-full mt-1 z-50 flex w-48 flex-col rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1"
+                  className="absolute right-0 top-full mt-1 z-50 flex w-48 flex-col rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1"
                 >
                   <button
                     type="button"

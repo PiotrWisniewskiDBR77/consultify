@@ -477,7 +477,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
               value={newKeyName}
               onChange={(e) => setNewKeyName(e.target.value)}
               placeholder={t('settings.api.keyNamePlaceholder', 'e.g., Production API')}
-              className="flex-1 px-3 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg bg-c-surface"
+              className="flex-1 px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-600 rounded-lg bg-c-surface"
             />
             <button
               onClick={createKey}
@@ -703,7 +703,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                         }))
                       }
                       placeholder="1000"
-                      className="w-full px-3 py-2 text-sm bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+                      className="w-full px-3 py-2 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                     />
                   </div>
 

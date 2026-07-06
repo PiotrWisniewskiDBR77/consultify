@@ -185,7 +185,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
       </div>
 
       {/* Startup View */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Home size={20} className="text-blue-500" />
           Startup Preferences
@@ -238,7 +238,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
       </div>
 
       {/* Auto-Save */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <RefreshCw size={20} className="text-green-500" />
           Auto-Save
@@ -289,7 +289,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
       </div>
 
       {/* Confirmation Dialogs */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <MessageSquare size={20} className="text-amber-500" />
           Confirmation Dialogs
@@ -346,7 +346,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
       </div>
 
       {/* Tooltips & Hints */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <HelpCircle size={20} className="text-c-accent" />
           Tooltips & Hints
@@ -410,7 +410,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
       </div>
 
       {/* Regional Settings */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Globe size={20} className="text-indigo-500" />
           Regional Settings
@@ -424,7 +424,7 @@ export const GeneralPreferencesSettings: React.FC<GeneralPreferencesSettingsProp
             <select
               value={settings.dateFormat}
               onChange={(e) => setSettings({ ...settings, dateFormat: e.target.value })}
-              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+              className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
             >
               {dateFormats.map((format) => (
                 <option key={format.value} value={format.value}>

@@ -846,7 +846,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
       {/* Add KPI Modal */}
       {showKpiModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-c-surface border border-c-border dark:border-c-border rounded-xl p-6 w-full max-w-md">
+          <div className="bg-white dark:bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border rounded-xl p-6 w-full max-w-md">
             <h2 className="text-lg font-semibold text-c-text dark:text-white mb-4">
               Add KPI {selectedInitiative ? `for ${selectedInitiative.name}` : ''}
             </h2>

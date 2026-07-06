@@ -346,7 +346,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
             <select
               value={settings.autoSendDelay}
               onChange={(e) => updateSetting('autoSendDelay', parseFloat(e.target.value))}
-              className="w-full px-3 py-2 border border-c-border-subtle dark:border-navy-700 rounded-lg bg-c-surface text-c-text-secondary"
+              className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg bg-c-surface text-c-text-secondary"
             >
               {DELAY_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -404,7 +404,7 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
             <select
               value={settings.ttsSpeed}
               onChange={(e) => updateSetting('ttsSpeed', parseFloat(e.target.value))}
-              className="w-full px-3 py-2 border border-c-border-subtle dark:border-navy-700 rounded-lg bg-c-surface text-c-text-secondary"
+              className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg bg-c-surface text-c-text-secondary"
             >
               {SPEED_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>

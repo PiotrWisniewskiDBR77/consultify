@@ -420,12 +420,12 @@ export const EnterpriseFeatureFlags: React.FC = () => {
       )}
 
       {loadError ? (
-        <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
+        <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
           <DegradedState title="Feature flag overview unavailable" description={loadError} />
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
+          <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
             <div className="text-sm text-c-text-secondary">Total Flags</div>
             <div className="text-2xl font-bold text-c-text">
               {flags.length}
@@ -471,14 +471,14 @@ export const EnterpriseFeatureFlags: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             disabled={!!loadError}
-            className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text placeholder-c-text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            className="w-full pl-10 pr-4 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text placeholder-c-text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           />
         </div>
         <select
           value={filterEnvironment}
           onChange={(e) => setFilterEnvironment(e.target.value)}
           disabled={!!loadError}
-          className="px-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          className="px-4 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <option value="all">All Environments</option>
           {ENVIRONMENTS.map((env) => (
@@ -491,7 +491,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
           disabled={!!loadError}
-          className="px-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          className="px-4 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <option value="all">All Types</option>
           {Object.entries(FLAG_TYPE_CONFIG).map(([key, config]) => (
@@ -511,7 +511,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
 
       {/* Test Context Panel */}
       {!loadError && (
-        <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
+        <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
           <div className="flex items-center gap-2 mb-3">
             <Eye className="w-4 h-4 text-c-info" />
             <span className="text-sm font-medium text-c-text">
@@ -570,7 +570,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
       {/* Flags List */}
       <div className="space-y-2">
         {loadError ? (
-          <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
+          <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
             <DegradedState title="Feature flags unavailable" description={loadError} />
           </div>
         ) : filteredFlags.length === 0 ? (
@@ -590,7 +590,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
             return (
               <div
                 key={flag.id}
-                className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden hover:border-c-border-strong transition-colors"
+                className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden hover:border-c-border-strong transition-colors"
               >
                 <div
                   className="p-4 cursor-pointer"
@@ -915,7 +915,7 @@ const FeatureFlagModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-white/10 p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-white/10 p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-c-text-secondary">
             {flag ? 'Edit Feature Flag' : 'Create Feature Flag'}
@@ -953,7 +953,7 @@ const FeatureFlagModal: React.FC<{
                     flag_key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_'),
                   })
                 }
-                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary"
+                className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-white/10 rounded-lg text-c-text-secondary"
                 placeholder="new_feature"
               />
             </div>
@@ -967,7 +967,7 @@ const FeatureFlagModal: React.FC<{
                 aria-label="Flag Name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary"
+                className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-white/10 rounded-lg text-c-text-secondary"
               />
             </div>
           </div>
@@ -979,7 +979,7 @@ const FeatureFlagModal: React.FC<{
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary"
+              className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-white/10 rounded-lg text-c-text-secondary"
               rows={2}
             />
           </div>
@@ -997,7 +997,7 @@ const FeatureFlagModal: React.FC<{
                     flag_type: e.target.value as FeatureFlag['flag_type'],
                   })
                 }
-                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary"
+                className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-white/10 rounded-lg text-c-text-secondary"
               >
                 {Object.entries(FLAG_TYPE_CONFIG).map(([key, config]) => (
                   <option key={key} value={key}>
@@ -1013,7 +1013,7 @@ const FeatureFlagModal: React.FC<{
               <select
                 value={formData.environment}
                 onChange={(e) => setFormData({ ...formData, environment: e.target.value })}
-                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text-secondary"
+                className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-white/10 rounded-lg text-c-text-secondary"
               >
                 {ENVIRONMENTS.map((env) => (
                   <option key={env} value={env}>

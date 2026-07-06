@@ -202,7 +202,7 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
 
   // Styles
   const cardClass =
-    'bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6';
+    'bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6';
 
   if (loading) {
     return <LoadingState variant="spinner" />;

@@ -215,7 +215,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
         {rules.map((rule) => (
           <div
             key={rule.id}
-            className="p-4 bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700"
+            className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700"
           >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -303,7 +303,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                   onChange={(e) =>
                     handleUpdateRule(rule.id, { priority_filter: e.target.value as any })
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-c-text text-sm focus:ring-2 focus:ring-[color:var(--c-focus)]"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface text-c-text text-sm focus:ring-2 focus:ring-[color:var(--c-focus)]"
                 >
                   <option value="all">
                     {t('settings.notifications.rules.allPriorities', 'All priorities')}
@@ -327,7 +327,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
               <select
                 value={newRuleProjectId}
                 onChange={(e) => setNewRuleProjectId(e.target.value)}
-                className="flex-1 px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-c-text text-sm"
+                className="flex-1 px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface text-c-text text-sm"
               >
                 <option value="">
                   {t('settings.notifications.rules.selectProject', 'Select a project...')}
@@ -359,7 +359,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
       </div>
 
       {/* Digest Settings */}
-      <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 space-y-4">
+      <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center">
@@ -404,7 +404,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 onChange={(e) =>
                   setDigestSettings((prev) => ({ ...prev, frequency: e.target.value as any }))
                 }
-                className="w-full px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-c-text text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface text-c-text text-sm"
               >
                 <option value="instant">Instant (no digest)</option>
                 <option value="hourly">Hourly</option>
@@ -424,7 +424,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                   onChange={(e) =>
                     setDigestSettings((prev) => ({ ...prev, preferred_time: e.target.value }))
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-c-text text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface text-c-text text-sm"
                 />
               </div>
             )}
@@ -433,7 +433,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
       </div>
 
       {/* Keyword Filters */}
-      <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 space-y-4">
+      <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
             <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
@@ -488,7 +488,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
       </div>
 
       {/* VIP Contacts */}
-      <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 space-y-4">
+      <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-pink-100 dark:bg-pink-500/20 flex items-center justify-center">
             <Star className="w-5 h-5 text-pink-600 dark:text-pink-400" />

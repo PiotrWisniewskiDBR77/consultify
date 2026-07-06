@@ -93,7 +93,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
 
   return (
     <div
-      className="flex h-full flex-col overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface"
+      className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface"
       role="grid"
       aria-label={isPl ? 'Tabela sprawozdania finansowego' : 'Financial statement table'}
     >

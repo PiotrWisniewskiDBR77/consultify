@@ -456,7 +456,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
         {activeTab === 'overview' && (
           <div className="space-y-6">
             {/* Decision to Make */}
-            <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
+            <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-5">
               <div className="flex items-center gap-2 mb-3">
                 <AlertOctagon size={16} className="text-c-warning" />
                 <span className="text-xs font-semibold text-c-text-muted uppercase">
@@ -477,7 +477,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Executive One-Liner */}
-              <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
+              <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <Sparkles size={16} className="text-c-accent" />
                   <span className="text-xs font-semibold text-c-text-muted uppercase">
@@ -495,7 +495,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
               </div>
 
               {/* Strategic Fit */}
-              <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
+              <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Target size={16} className="text-c-info" />
@@ -525,7 +525,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
             </div>
 
             {/* Problem Statement */}
-            <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
+            <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-5">
               <div className="flex items-center gap-2 mb-4">
                 <AlertTriangle size={16} className="text-c-warning" />
                 <span className="text-xs font-semibold text-c-text-muted uppercase">
@@ -605,7 +605,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
             />
 
             {/* Summary */}
-            <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
+            <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-5">
               <div className="flex items-center gap-2 mb-3">
                 <FileText size={16} className="text-c-text-secondary" />
                 <span className="text-xs font-semibold text-c-text-muted uppercase">

@@ -280,7 +280,7 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
       {!loadError && (
         <>
           {/* Widget Visibility */}
-          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
               <Eye size={20} className="text-green-500" />
               {t('settings.dashboard.widgetVisibility', 'Widget Visibility')}
@@ -329,7 +329,7 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
           </div>
 
           {/* Display Options */}
-          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
               <Minimize2 size={20} className="text-c-accent" />
               {t('settings.dashboard.displayOptions', 'Display Options')}

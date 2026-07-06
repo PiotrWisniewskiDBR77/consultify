@@ -240,7 +240,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                     }}
                     placeholder="email@example.com"
                     data-testid="deck-invite-email"
-                    className="flex-1 px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-sm"
+                    className="flex-1 px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-sm"
                   />
                   <button
                     onClick={handleInvite}

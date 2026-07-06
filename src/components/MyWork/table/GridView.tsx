@@ -476,7 +476,7 @@ const DataGrid: React.FC<DataGridProps> = ({
   return (
     <div
       data-testid="table-grid"
-      className="flex h-full min-h-0 flex-1 flex-col rounded-xl border border-c-border-subtle bg-c-surface"
+      className="flex h-full min-h-0 flex-1 flex-col rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface"
     >
       <div
         ref={scrollRef}

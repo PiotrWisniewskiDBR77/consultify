@@ -327,11 +327,11 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
 
   // Styles
   const sectionClass =
-    'bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden';
+    'bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden';
   const sectionHeaderClass =
     'p-4 flex items-center justify-between cursor-pointer hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors';
   const inputClass =
-    'w-full px-4 py-3 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all';
+    'w-full px-4 py-3 rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all';
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">

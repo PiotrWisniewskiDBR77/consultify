@@ -7970,7 +7970,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                               <MoreVertical size={14} />
                             </button>
                             {kpiMenuId === kpi.id && (
-                              <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-c-border-subtle bg-c-surface p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30">
+                              <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30">
                                 <button
                                   onClick={() => {
                                     setKpiMenuId(null);
@@ -9930,7 +9930,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 className="fixed inset-0 z-40"
                                 onClick={() => setShowSectionsMenu(false)}
                               />
-                              <div className="absolute left-0 top-full mt-1 z-50 w-72 max-h-[60vh] overflow-y-auto rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1.5">
+                              <div className="absolute left-0 top-full mt-1 z-50 w-72 max-h-[60vh] overflow-y-auto rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1.5">
                                 {sectionGroups.map((grp) => (
                                   <div key={grp.group} className="py-0.5">
                                     <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
@@ -10020,7 +10020,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 className="fixed inset-0 z-40"
                                 onClick={() => setShowNewMenu(false)}
                               />
-                              <div className="absolute left-0 top-full mt-1 z-50 w-52 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1.5">
+                              <div className="absolute left-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1.5">
                                 {newMenuActions.map((item) => (
                                   <button
                                     key={item.id}
@@ -10056,7 +10056,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 className="fixed inset-0 z-40"
                                 onClick={() => setShowExportMenu(false)}
                               />
-                              <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1.5">
+                              <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1.5">
                                 {(
                                   [
                                     {
@@ -10135,7 +10135,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 className="fixed inset-0 z-40"
                                 onClick={() => setShowMaterializeMenu(false)}
                               />
-                              <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1.5">
+                              <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1.5">
                                 {(
                                   [
                                     {
@@ -10249,7 +10249,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                   className="fixed inset-0 z-40"
                                   onClick={() => setShowToolbarKebab(false)}
                                 />
-                                <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1.5">
+                                <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1.5">
                                   {destructiveStatusActions.map((sa) => {
                                     const KebabIcon =
                                       sa.targetStatus === InitiativeStatus.CANCELLED
@@ -10410,7 +10410,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           onClick={() => setShowExportDialog(false)}
         >
           <div
-            className="w-full max-w-lg max-h-[85vh] overflow-hidden rounded-2xl bg-c-surface border border-c-border-subtle shadow-2xl flex flex-col"
+            className="w-full max-w-lg max-h-[85vh] overflow-hidden rounded-2xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">

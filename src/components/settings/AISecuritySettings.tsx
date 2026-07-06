@@ -208,7 +208,7 @@ export function AISecuritySettings() {
       {settings && (
         <>
           {/* Features Section */}
-          <div className="bg-c-surface rounded-xl p-6 shadow-sm border border-c-border-subtle">
+          <div className="bg-c-surface rounded-xl p-6 shadow-sm border border-slate-200/60 dark:border-white/[0.03]">
             <h2 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
               <Zap className="w-5 h-5 text-yellow-500" />
               Włączone funkcje
@@ -241,7 +241,7 @@ export function AISecuritySettings() {
           </div>
 
           {/* Models Section */}
-          <div className="bg-c-surface rounded-xl p-6 shadow-sm border border-c-border-subtle">
+          <div className="bg-c-surface rounded-xl p-6 shadow-sm border border-slate-200/60 dark:border-white/[0.03]">
             <h2 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
               <Settings className="w-5 h-5 text-c-accent" />
               Dozwolone modele
@@ -287,7 +287,7 @@ export function AISecuritySettings() {
           </div>
 
           {/* Limits Section */}
-          <div className="bg-c-surface rounded-xl p-6 shadow-sm border border-c-border-subtle">
+          <div className="bg-c-surface rounded-xl p-6 shadow-sm border border-slate-200/60 dark:border-white/[0.03]">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-c-text flex items-center gap-2">
                 <Clock className="w-5 h-5 text-blue-500" />
@@ -365,7 +365,7 @@ export function AISecuritySettings() {
           </div>
 
           {/* Advanced Settings */}
-          <div className="bg-c-surface rounded-xl p-6 shadow-sm border border-c-border-subtle">
+          <div className="bg-c-surface rounded-xl p-6 shadow-sm border border-slate-200/60 dark:border-white/[0.03]">
             <h2 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
               <Settings className="w-5 h-5 text-c-text-muted" />
               Ustawienia zaawansowane

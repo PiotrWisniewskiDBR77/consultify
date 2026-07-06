@@ -152,7 +152,7 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
       aria-modal="true"
       aria-labelledby="deck-governance-card-title"
     >
-      <div className="max-w-xl w-full mx-4 rounded-xl bg-c-surface border border-c-border-subtle shadow-xl overflow-hidden">
+      <div className="max-w-xl w-full mx-4 rounded-xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] shadow-xl overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
             <ShieldCheck size={16} className="text-c-accent" />

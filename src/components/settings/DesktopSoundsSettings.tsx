@@ -387,7 +387,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
                               soundPerType: { ...prev.soundPerType, [type.id]: e.target.value },
                             }))
                           }
-                          className="px-3 py-1.5 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
+                          className="px-3 py-1.5 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-sm text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none"
                         >
                           {SOUND_OPTIONS.map((opt) => (
                             <option key={opt.value} value={opt.value}>

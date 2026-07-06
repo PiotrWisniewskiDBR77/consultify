@@ -96,7 +96,7 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
       }`}
     >
       {isSelected && (
-        <div className="absolute -top-8 left-0 flex items-center gap-1 bg-c-surface border border-c-border-subtle rounded-lg shadow-lg px-1 py-0.5 z-20">
+        <div className="absolute -top-8 left-0 flex items-center gap-1 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg shadow-lg px-1 py-0.5 z-20">
           <button className="p-1 text-c-text-secondary cursor-grab hover:text-c-text-secondary">
             <GripVertical size={12} />
           </button>

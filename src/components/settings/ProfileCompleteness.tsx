@@ -285,7 +285,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
 
   // Full version
   return (
-    <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl overflow-hidden">
+    <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl overflow-hidden">
       {/* Header with Progress */}
       <div className="p-6 bg-gradient-to-r from-c-accent-soft to-c-accent  border-b border-c-accent dark:border-c-accent">
         <div className="flex items-center justify-between mb-4">

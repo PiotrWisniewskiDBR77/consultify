@@ -81,7 +81,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
       />
 
       {/* Backup Email */}
-      <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 space-y-4">
+      <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center">
             <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -120,7 +120,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
       </div>
 
       {/* Phone Number */}
-      <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 space-y-4">
+      <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-500/20 flex items-center justify-center">
             <Phone className="w-5 h-5 text-green-600 dark:text-green-400" />
@@ -156,7 +156,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
       </div>
 
       {/* Recovery Codes */}
-      <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 space-y-4">
+      <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
@@ -197,7 +197,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
       </div>
 
       {/* Trusted Devices */}
-      <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 space-y-4">
+      <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-c-accent-soft dark:bg-c-accent-soft flex items-center justify-center">
             <Smartphone className="w-5 h-5 text-c-accent" />

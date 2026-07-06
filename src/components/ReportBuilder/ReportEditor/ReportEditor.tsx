@@ -926,7 +926,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             {reportBacklinks.slice(0, 8).map((bl) => (
               <div
                 key={bl.id}
-                className="flex items-center justify-between gap-2 rounded-lg border border-c-border-subtle/[0.08] bg-c-surface/[0.03] px-3 py-2"
+                className="flex items-center justify-between gap-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03]/[0.08] bg-c-surface/[0.03] px-3 py-2"
               >
                 <div className="min-w-0">
                   <div className="truncate text-xs font-medium text-c-text">
@@ -2351,7 +2351,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 {isPl ? 'Generuj' : 'Generate'}
                 <ChevronDown className="w-3 h-3 opacity-60" />
               </button>
-              <div className="absolute right-0 top-full mt-1.5 w-52 bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1 overflow-hidden">
+              <div className="absolute right-0 top-full mt-1.5 w-52 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1 overflow-hidden">
                 <button
                   onClick={() => handleGenerate('new_only')}
                   disabled={isGenerating}
@@ -2440,7 +2440,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                     : 'View'}
                 <ChevronDown className="w-3 h-3 opacity-60" />
               </button>
-              <div className="absolute right-0 top-full mt-1.5 w-52 bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1 overflow-hidden">
+              <div className="absolute right-0 top-full mt-1.5 w-52 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1 overflow-hidden">
                 <button
                   onClick={() => handleViewExport('web')}
                   className="w-full flex items-center gap-2.5 px-3.5 py-2 text-c-text-secondary hover:bg-c-surface-raised transition-colors"

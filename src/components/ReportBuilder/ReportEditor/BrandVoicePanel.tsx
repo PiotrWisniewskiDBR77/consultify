@@ -258,7 +258,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
       )}
 
       {/* Register Selector */}
-      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
+      <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4">
         <label className="mb-1 block text-sm font-medium text-c-text">
           {t.register}
         </label>
@@ -288,7 +288,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
       </div>
 
       {/* Vocabulary */}
-      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
+      <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4">
         <div className="space-y-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-c-text">
@@ -299,7 +299,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
               value={preferredWords}
               onChange={(e) => setPreferredWords(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text placeholder:text-c-text-muted focus:border-c-accent focus:outline-none focus:ring-1 focus:ring-c-focus"
+              className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text placeholder:text-c-text-muted focus:border-c-accent focus:outline-none focus:ring-1 focus:ring-c-focus"
               placeholder={
                 isPl
                   ? 'np. transformacja, optymalizacja, strategia'
@@ -316,7 +316,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
               value={forbiddenWords}
               onChange={(e) => setForbiddenWords(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text placeholder:text-c-text-muted focus:border-c-accent focus:outline-none focus:ring-1 focus:ring-c-focus"
+              className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text placeholder:text-c-text-muted focus:border-c-accent focus:outline-none focus:ring-1 focus:ring-c-focus"
               placeholder={
                 isPl
                   ? 'np. synergia, holistyczny, game-changer'
@@ -328,7 +328,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
       </div>
 
       {/* Hedging Rules */}
-      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
+      <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4">
         <h4 className="mb-3 text-sm font-medium text-c-text">{t.hedgingTitle}</h4>
         <div className="space-y-3">
           <ToggleRow
@@ -353,14 +353,14 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
               max={20}
               value={maxHedging}
               onChange={(e) => setMaxHedging(Math.max(0, parseInt(e.target.value) || 0))}
-              className="w-20 rounded-lg border border-c-border-subtle bg-c-surface px-3 py-1.5 text-center text-sm text-c-text focus:border-c-accent focus:outline-none focus:ring-1 focus:ring-c-focus"
+              className="w-20 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-1.5 text-center text-sm text-c-text focus:border-c-accent focus:outline-none focus:ring-1 focus:ring-c-focus"
             />
           </div>
         </div>
       </div>
 
       {/* Compliance Mode */}
-      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
+      <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4">
         <div className="mb-3 flex items-center gap-2">
           <Shield className="h-4 w-4 text-amber-500" />
           <h4 className="text-sm font-medium text-c-text">{t.complianceTitle}</h4>

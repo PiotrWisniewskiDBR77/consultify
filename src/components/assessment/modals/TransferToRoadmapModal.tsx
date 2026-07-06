@@ -252,7 +252,7 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Dodatkowe uwagi dotyczące planowania..."
                   rows={3}
-                  className="w-full px-4 py-2.5 rounded-lg border border-c-border-subtle bg-c-surface dark:bg-c-bg text-c-text placeholder:text-c-text-muted dark:placeholder:text-c-text-muted resize-none text-sm focus:outline-none focus:ring-2 focus:ring-c-focus"
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface dark:bg-c-bg text-c-text placeholder:text-c-text-muted dark:placeholder:text-c-text-muted resize-none text-sm focus:outline-none focus:ring-2 focus:ring-c-focus"
                 />
               </div>
 

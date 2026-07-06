@@ -51,7 +51,7 @@ export class ViewErrorBoundary extends React.Component<
     return (
       <div
         role="alert"
-        className="flex flex-1 min-h-[200px] flex-col items-center justify-center gap-4 rounded-xl border border-c-border-subtle bg-c-surface px-6 py-10 text-center"
+        className="flex flex-1 min-h-[200px] flex-col items-center justify-center gap-4 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-6 py-10 text-center"
       >
         <div className="max-w-md space-y-2">
           <h3 className="text-sm font-semibold text-c-text">{title}</h3>

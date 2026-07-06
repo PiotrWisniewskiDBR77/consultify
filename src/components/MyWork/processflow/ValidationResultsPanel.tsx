@@ -56,7 +56,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
     );
 
   return (
-    <div className="rounded-xl border border-c-border-subtle bg-c-surface text-sm text-c-text shadow-sm">
+    <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-sm text-c-text shadow-sm">
       <div className="flex items-center justify-between gap-2 border-b border-c-border-subtle px-4 py-3">
         <div className="flex items-center gap-2">
           <h2 className="text-sm font-semibold text-c-text">

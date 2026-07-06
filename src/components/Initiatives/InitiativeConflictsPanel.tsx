@@ -80,7 +80,7 @@ export const InitiativeConflictsPanel: React.FC<InitiativeConflictsPanelProps> =
   const highCount = grouped.high.length;
 
   return (
-    <div className="mt-3 rounded-xl border border-c-border-subtle bg-c-surface p-3">
+    <div className="mt-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold uppercase text-c-text-secondary">{title}</span>

@@ -398,7 +398,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
       {/* Password Policy Tab */}
       {activeTab === 'password' && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
           <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Key size={20} className="text-amber-500" />
             {t('settings.security.passwordPolicy', 'Password Policy')}
@@ -481,7 +481,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
       {/* IP Rules Tab */}
       {activeTab === 'ip' && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
               <Globe size={20} className="text-blue-500" />
@@ -504,12 +504,12 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   value={newIPRule.ipAddress}
                   onChange={(e) => setNewIPRule({ ...newIPRule, ipAddress: e.target.value })}
                   placeholder="IP Address or CIDR"
-                  className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+                  className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                 />
                 <select
                   value={newIPRule.ruleType}
                   onChange={(e) => setNewIPRule({ ...newIPRule, ruleType: e.target.value as any })}
-                  className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+                  className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                 >
                   <option value="allow">Allow</option>
                   <option value="block">Block</option>
@@ -519,7 +519,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   value={newIPRule.description}
                   onChange={(e) => setNewIPRule({ ...newIPRule, description: e.target.value })}
                   placeholder="Description (optional)"
-                  className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+                  className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                 />
               </div>
               <div className="flex gap-2">
@@ -584,7 +584,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
       {/* Security Questions Tab */}
       {activeTab === 'questions' && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
               <HelpCircle size={20} className="text-c-accent" />
@@ -610,7 +610,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                     customQuestion: '',
                   })
                 }
-                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+                className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
               >
                 <option value={0}>-- Select a question or create custom --</option>
                 {predefinedQuestions.map((q) => (
@@ -627,7 +627,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                     setNewQuestion({ ...newQuestion, customQuestion: e.target.value })
                   }
                   placeholder="Or enter custom question..."
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+                  className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                 />
               )}
               <input
@@ -635,7 +635,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                 value={newQuestion.answer}
                 onChange={(e) => setNewQuestion({ ...newQuestion, answer: e.target.value })}
                 placeholder="Your answer"
-                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+                className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
               />
               <div className="flex gap-2">
                 <button
@@ -684,7 +684,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
       {/* Recovery Tab */}
       {activeTab === 'recovery' && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
               <UserPlus size={20} className="text-green-500" />
@@ -707,7 +707,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   onChange={(e) =>
                     setNewRecovery({ ...newRecovery, contactType: e.target.value as any })
                   }
-                  className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+                  className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                 >
                   <option value="email">Email</option>
                   <option value="phone">Phone</option>
@@ -724,7 +724,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                         ? '+1234567890'
                         : 'Name'
                   }
-                  className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+                  className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                 />
               </div>
               <label className="flex items-center gap-2 text-sm">
@@ -809,7 +809,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
       {/* Login Locations Tab */}
       {activeTab === 'locations' && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
           <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <MapPin size={20} className="text-indigo-500" />
             {t('settings.security.loginLocations', 'Recent Login Locations')}
@@ -892,7 +892,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
       {/* Suspicious Activity Tab */}
       {activeTab === 'activity' && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
           <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <AlertTriangle size={20} className="text-amber-500" />
             {t('settings.security.suspiciousActivity', 'Suspicious Activity')}
@@ -958,7 +958,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
 
       {/* Settings Tab */}
       {activeTab === 'settings' && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
               <Settings size={20} className="text-c-text-muted" />
@@ -1047,7 +1047,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                     require_reauth_minutes: parseInt(e.target.value),
                   })
                 }
-                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+                className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
               >
                 <option value={15}>15 minutes</option>
                 <option value={30}>30 minutes</option>

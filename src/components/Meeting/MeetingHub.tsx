@@ -905,7 +905,7 @@ export const MeetingHub: React.FC = () => {
 
       {showCreateModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-c-surface border border-c-border-subtle">
+          <div className="w-full max-w-2xl rounded-2xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03]">
             <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
               <div>
                 <div className="text-sm font-semibold text-c-text">
@@ -1010,7 +1010,7 @@ export const MeetingHub: React.FC = () => {
       ) : null}
       {showDecisionModal && activeMeeting ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-c-surface border border-c-border-subtle">
+          <div className="w-full max-w-lg rounded-2xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03]">
             <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
               <div>
                 <div className="text-sm font-semibold text-c-text">
@@ -1058,7 +1058,7 @@ export const MeetingHub: React.FC = () => {
       ) : null}
       {showFollowUpModal && activeMeeting ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-c-surface border border-c-border-subtle">
+          <div className="w-full max-w-lg rounded-2xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03]">
             <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
               <div>
                 <div className="text-sm font-semibold text-c-text">
@@ -1113,7 +1113,7 @@ export const MeetingHub: React.FC = () => {
       ) : null}
       {showNotesModal && activeMeeting ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-c-surface border border-c-border-subtle max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-2xl rounded-2xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-c-border-subtle">
               <div className="min-w-0">
                 <div className="text-sm font-semibold text-c-text inline-flex items-center gap-2">
@@ -1239,7 +1239,7 @@ export const MeetingHub: React.FC = () => {
       ) : null}
       {deleteTarget ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-c-surface border border-c-border-subtle">
+          <div className="w-full max-w-md rounded-2xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03]">
             <div className="px-5 py-4 border-b border-c-border-subtle">
               <div className="text-sm font-semibold text-c-text">
                 {t('meeting.delete.title', 'Delete meeting')}
@@ -1321,7 +1321,7 @@ const MeetingDetailView: React.FC<{
   const { t } = useTranslation();
   return (
   <div className="p-4 lg:p-6">
-    <div className="rounded-2xl border border-c-border-subtle bg-c-surface overflow-hidden">
+    <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface overflow-hidden">
       <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-c-border-subtle">
         <div className="min-w-0">
           <div className="text-[11px] uppercase tracking-wide text-c-text-muted">
@@ -1423,7 +1423,7 @@ const MeetingDetailView: React.FC<{
           items={meeting.decisions}
           emptyLabel={t('meeting.noDecisionsYet')}
         />
-        <div className="rounded-xl border border-c-border-subtle bg-c-surface p-3 lg:col-span-2">
+        <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 lg:col-span-2">
           <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
             <CheckSquare2 size={14} />
             <span>{t('meeting.followUps2')}</span>
@@ -1537,7 +1537,7 @@ const PreviewSection: React.FC<{
   items: string[];
   emptyLabel: string;
 }> = ({ icon, title, items, emptyLabel }) => (
-  <div className="rounded-xl border border-c-border-subtle bg-c-surface p-3">
+  <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
     <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
       {icon}
       <span>{title}</span>

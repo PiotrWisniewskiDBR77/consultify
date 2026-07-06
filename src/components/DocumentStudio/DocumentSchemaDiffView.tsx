@@ -210,7 +210,7 @@ function SectionDiffCard({ section }: { section: DocumentSectionDiffEntry }): Re
 
   return (
     <li
-      className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
+      className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs"
       data-testid={`diff-section-${section.sectionId}`}
     >
       <div className="flex items-start justify-between gap-2">

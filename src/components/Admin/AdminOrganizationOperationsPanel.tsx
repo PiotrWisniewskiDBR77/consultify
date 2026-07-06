@@ -37,7 +37,7 @@ export const AdminOrganizationOperationsPanel: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5">
+      <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <div className="flex items-center gap-2 text-lg font-semibold text-c-text">

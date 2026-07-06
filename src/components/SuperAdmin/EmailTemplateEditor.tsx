@@ -651,7 +651,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
       {/* Test Send Modal */}
       {showTestSend && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-c-surface border border-c-border-subtle rounded-xl w-full max-w-md p-6 shadow-2xl">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl w-full max-w-md p-6 shadow-2xl">
             <h2 className="text-lg font-semibold text-c-text mb-4">Send Test Email</h2>
 
             <div className="space-y-4">

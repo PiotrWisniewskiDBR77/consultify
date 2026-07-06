@@ -161,7 +161,7 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-xl w-full max-w-lg shadow-2xl"
+        className="bg-white dark:bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle rounded-xl w-full max-w-lg shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

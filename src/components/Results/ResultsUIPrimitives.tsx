@@ -228,7 +228,7 @@ export const ScorecardGrid: React.FC<ScorecardGridProps> = ({ cells }) => (
         : h >= 40 ? 'text-amber-600 dark:text-amber-400'
         : 'text-red-600 dark:text-red-400';
       return (
-        <div key={cell.perspective} className="rounded-xl border border-c-border-subtle bg-c-surface p-3 text-center">
+        <div key={cell.perspective} className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-center">
           <div className="text-xs text-c-text-muted uppercase tracking-wide mb-1">{cell.perspective}</div>
           <div className={`text-xl font-bold ${color}`}>{h}%</div>
           <div className="text-xs text-c-text-muted mt-0.5">{cell.kpiCount} KPI</div>
@@ -247,7 +247,7 @@ interface BdnStatCardProps {
 }
 
 export const BdnStatCard: React.FC<BdnStatCardProps> = ({ label, value, icon }) => (
-  <div data-testid="bdn-stat-card" className="rounded-xl border border-c-border-subtle bg-c-surface p-4 flex items-center gap-3">
+  <div data-testid="bdn-stat-card" className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4 flex items-center gap-3">
     {icon && <div className="text-c-text-muted shrink-0">{icon}</div>}
     <div>
       <div className="text-xs text-c-text-muted">{label}</div>
@@ -303,7 +303,7 @@ function fmtM(v: number): string {
 export const ExecValueHeader: React.FC<ExecValueHeaderProps> = ({
   banked, forecast, atRisk, target, label,
 }) => (
-  <div data-testid="exec-value-header" className="flex flex-wrap gap-6 rounded-xl border border-c-border-subtle bg-c-surface px-6 py-4">
+  <div data-testid="exec-value-header" className="flex flex-wrap gap-6 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-6 py-4">
     {label && <div className="w-full text-xs font-semibold uppercase tracking-widest text-c-text-muted mb-1">{label}</div>}
     <div>
       <div className="text-xs text-c-text-muted">BANKED</div>

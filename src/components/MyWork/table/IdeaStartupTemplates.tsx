@@ -168,7 +168,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-[520px] max-h-[90vh] overflow-y-auto rounded-2xl border border-c-border-subtle bg-c-surface shadow-[0_32px_64px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+      <div className="w-[520px] max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-[0_32px_64px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
         {/* ── Header ─────────────────────────────────────────── */}
         <div className="relative flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
           <div className="absolute inset-0 bg-c-surface-raised" />
@@ -220,7 +220,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                   : 'E.g. I want to structure transformation initiatives and find the best rollout order...'
               }
               autoFocus
-              className="mt-3 w-full rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface px-4 py-3 text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none transition-shadow duration-200"
+              className="mt-3 w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle bg-c-surface px-4 py-3 text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none transition-shadow duration-200"
             />
           </div>
 
@@ -338,7 +338,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                     setStructuredBrief((prev) => ({ ...prev, problem: e.target.value }))
                   }
                   placeholder={isPl ? 'Problem' : 'Problem'}
-                  className="rounded-lg border border-c-border-subtle dark:border-c-border-subtle bg-c-surface px-3 py-2 text-xs"
+                  className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle bg-c-surface px-3 py-2 text-xs"
                 />
                 <input
                   value={structuredBrief.goal}
@@ -346,7 +346,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                     setStructuredBrief((prev) => ({ ...prev, goal: e.target.value }))
                   }
                   placeholder={isPl ? 'Cel / wynik' : 'Goal / outcome'}
-                  className="rounded-lg border border-c-border-subtle dark:border-c-border-subtle bg-c-surface px-3 py-2 text-xs"
+                  className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle bg-c-surface px-3 py-2 text-xs"
                 />
                 <textarea
                   value={structuredBrief.constraints}
@@ -357,7 +357,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                   placeholder={
                     isPl ? 'Ograniczenia, po jednym w linii' : 'Constraints, one per line'
                   }
-                  className="rounded-lg border border-c-border-subtle dark:border-c-border-subtle bg-c-surface px-3 py-2 text-xs resize-none"
+                  className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle bg-c-surface px-3 py-2 text-xs resize-none"
                 />
               </div>
             )}

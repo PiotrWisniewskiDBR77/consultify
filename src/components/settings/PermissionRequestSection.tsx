@@ -253,7 +253,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
 
       {/* New Request Form */}
       {showForm && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 animate-in fade-in slide-in-from-top-2">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 animate-in fade-in slide-in-from-top-2">
           <div className="flex items-center justify-between mb-6">
             <h4 className="text-sm font-bold text-navy-900 uppercase tracking-wider">
               {t('settings.permissions.createRequest', 'Create New Request')}
@@ -421,7 +421,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
       )}
 
       {/* Request History */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl overflow-hidden">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl overflow-hidden">
         <div className="px-6 py-4 border-b border-c-border-subtle dark:border-navy-700 flex items-center justify-between">
           <h4 className="text-sm font-bold text-navy-900 uppercase tracking-wider">
             {t('settings.permissions.history', 'Request History')}

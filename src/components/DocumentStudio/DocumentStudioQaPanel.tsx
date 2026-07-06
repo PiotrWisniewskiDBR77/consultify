@@ -48,7 +48,7 @@ function CategoryReportView({
 }): React.ReactElement {
   const { t } = useTranslation();
   return (
-    <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3">
+    <div className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {report.blocking ? (

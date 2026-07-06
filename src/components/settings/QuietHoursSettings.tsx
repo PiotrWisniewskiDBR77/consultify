@@ -95,7 +95,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
 
   // Styling
   const cardClass =
-    'bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg p-6';
+    'bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg p-6';
   const sectionTitleClass =
     'text-sm font-bold text-navy-900 mb-4 uppercase tracking-wider flex items-center gap-2';
   const inputClass =

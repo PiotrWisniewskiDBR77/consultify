@@ -214,7 +214,7 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
       </div>
 
       {showColorPicker && !locked && (
-        <div className="absolute left-2 top-5 z-20 bg-c-surface border border-c-border-subtle rounded-lg p-1.5 shadow-lg flex flex-wrap gap-1 w-[120px]">
+        <div className="absolute left-2 top-5 z-20 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg p-1.5 shadow-lg flex flex-wrap gap-1 w-[120px]">
           {LANE_COLORS.map((c) => (
             <button
               key={c}

@@ -217,7 +217,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                className="w-full h-64 p-4 border border-c-border-subtle rounded-lg bg-c-surface text-c-text font-mono text-sm focus:ring-2 focus:ring-blue-500 resize-y"
+                className="w-full h-64 p-4 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text font-mono text-sm focus:ring-2 focus:ring-blue-500 resize-y"
               />
               <div className="flex items-center justify-end gap-2">
                 <button
@@ -286,7 +286,7 @@ const SectionEditor: React.FC<SectionEditorProps> = ({ section, onSave, onRegene
                       : 'E.g., "Use more formal language", "Add more technical details"...'
                   }
                   rows={3}
-                  className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 resize-none"
                 />
               </div>
             </div>
@@ -357,7 +357,7 @@ export const ReviewEditStep: React.FC<ReviewEditStepProps> = ({
 
   // Render full preview
   const renderPreview = () => (
-    <div className="bg-c-surface rounded-lg border border-c-border-subtle p-8 prose prose-slate dark:prose-invert max-w-none">
+    <div className="bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03] p-8 prose prose-slate dark:prose-invert max-w-none">
       {enabledSections.map((section) => (
         <div key={section.sectionKey} className="mb-8">
           <h2>{section.title}</h2>

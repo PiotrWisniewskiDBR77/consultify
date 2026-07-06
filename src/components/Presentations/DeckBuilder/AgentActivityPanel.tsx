@@ -35,7 +35,7 @@ const PanelShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     aria-label="AI Activity"
     className="w-72 flex-shrink-0 border-l border-c-border-subtle bg-c-surface flex flex-col"
   >
-    <div className="m-3 rounded-xl border border-c-border-subtle bg-c-surface shadow-sm flex flex-col overflow-hidden">
+    <div className="m-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-sm flex flex-col overflow-hidden">
       <div className="px-3 py-2 border-b border-c-border-subtle">
         <h3 className="text-sm font-semibold text-c-text">AI Activity</h3>
       </div>

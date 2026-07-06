@@ -244,7 +244,7 @@ export const KPIAttributionPanel: React.FC = () => {
 
           {/* Contribution Bar */}
           {attribution.contributions.length > 0 && (
-            <div className="bg-white dark:bg-c-surface rounded-xl border border-c-border dark:border-c-border p-4">
+            <div className="bg-white dark:bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border p-4">
               <h4 className="text-sm font-medium text-c-text-secondary dark:text-c-text-secondary mb-3">
                 {t('kpi.attribution.breakdown', 'Attribution Breakdown')}
               </h4>
@@ -303,7 +303,7 @@ export const KPIAttributionPanel: React.FC = () => {
             {attribution.contributions.map((c) => (
               <div
                 key={c.initiativeId}
-                className="bg-white dark:bg-c-surface rounded-xl border border-c-border dark:border-c-border overflow-hidden"
+                className="bg-white dark:bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border overflow-hidden"
               >
                 <button
                   className="w-full px-4 py-3 flex items-center justify-between hover:bg-c-surface-raised dark:hover:bg-c-surface-raised/50"

@@ -404,7 +404,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                         type={showPasswords ? 'text' : 'password'}
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
-                        className="w-full px-3 py-2.5 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all"
+                        className="w-full px-3 py-2.5 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all"
                       />
                     </div>
                   </div>
@@ -418,7 +418,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                         type={showPasswords ? 'text' : 'password'}
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full px-3 py-2.5 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all"
+                        className="w-full px-3 py-2.5 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all"
                       />
                       <button
                         type="button"
@@ -455,7 +455,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                       type={showPasswords ? 'text' : 'password'}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all"
+                      className="w-full px-3 py-2.5 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent transition-all"
                     />
                     {confirmPassword && !passwordsMatch && (
                       <p className="text-xs text-danger-400 mt-1">
@@ -746,7 +746,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                           'settings.authAccess.emailPlaceholder',
                           'Enter recovery email'
                         )}
-                        className="flex-1 px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
+                        className="flex-1 px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
                       />
                       <button
                         onClick={handleSaveRecovery}
@@ -812,7 +812,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
                         placeholder={t('settings.authAccess.phonePlaceholder', '+48...')}
-                        className="flex-1 px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
+                        className="flex-1 px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text text-sm placeholder:text-c-text-muted dark:placeholder:text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
                       />
                       <button
                         onClick={handleSaveRecovery}

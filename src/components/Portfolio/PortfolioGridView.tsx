@@ -38,7 +38,7 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) 
   return (
     <div
       onClick={onClick}
-      className="bg-c-surface rounded-xl border border-c-border-subtle
+      className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]
                 p-5 cursor-pointer group hover:shadow-lg hover:border-c-border-strong
                 transition-all duration-200"
     >

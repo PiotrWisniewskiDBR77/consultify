@@ -303,7 +303,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
           {selectedIntegration && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Health History */}
-              <div className="lg:col-span-2 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
+              <div className="lg:col-span-2 bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700">
                 <div className="p-4 border-b border-c-border-subtle dark:border-navy-700">
                   <h4 className="text-sm font-semibold text-c-text">
                     {t('settings.health.history', 'Health Check History')}
@@ -355,7 +355,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
               {/* Alert & Reconnection Settings */}
               <div className="space-y-4">
                 {/* Auto Reconnection */}
-                <div className="p-4 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
+                <div className="p-4 bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700">
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-sm font-medium text-c-text flex items-center gap-2">
                       <Zap size={14} />
@@ -385,7 +385,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                 </div>
 
                 {/* Alert Configuration */}
-                <div className="p-4 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
+                <div className="p-4 bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700">
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-sm font-medium text-c-text flex items-center gap-2">
                       <Bell size={14} />
@@ -415,7 +415,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                 </div>
 
                 {/* Health Check Schedule */}
-                <div className="p-4 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
+                <div className="p-4 bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700">
                   <h5 className="text-sm font-medium text-c-text mb-3">
                     {t('settings.health.checkSchedule', 'Check Schedule')}
                   </h5>

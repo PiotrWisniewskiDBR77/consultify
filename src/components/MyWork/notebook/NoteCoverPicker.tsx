@@ -59,7 +59,7 @@ export const IconPickerButton: React.FC<IconPickerButtonProps> = ({
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-xl border border-c-border-subtle bg-c-surface p-2 shadow-lg dark:border-navy-700 dark:bg-navy-900">
+        <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-2 shadow-lg dark:border-navy-700 dark:bg-navy-900">
           <div className="mb-1.5 flex items-center justify-between px-1">
             <span className="flex items-center gap-1.5 text-[11px] font-medium text-c-text-muted">
               <Smile size={12} />
@@ -182,7 +182,7 @@ export const CoverUrlModal: React.FC<{
       onMouseDown={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-2xl border border-c-border-subtle bg-c-surface p-4 shadow-xl dark:border-navy-700 dark:bg-navy-900"
+        className="w-full max-w-sm rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4 shadow-xl dark:border-navy-700 dark:bg-navy-900"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="mb-2 flex items-center justify-between">
@@ -199,7 +199,7 @@ export const CoverUrlModal: React.FC<{
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && submit()}
           placeholder="https://…"
-          className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text outline-none focus:border-[var(--c-focus-solid)] dark:border-navy-700 dark:bg-navy-800 dark:text-c-text"
+          className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text outline-none focus:border-[var(--c-focus-solid)] dark:border-navy-700 dark:bg-navy-800 dark:text-c-text"
         />
         <div className="mt-3 flex justify-end gap-2">
           <button

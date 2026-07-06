@@ -600,7 +600,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = React.memo(
             {showAutocomplete && (
               <div
                 ref={acRef}
-                className="absolute left-3 top-full z-50 mt-1 max-h-48 w-72 overflow-auto rounded-xl border border-c-border-subtle bg-c-surface shadow-xl"
+                className="absolute left-3 top-full z-50 mt-1 max-h-48 w-72 overflow-auto rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl"
               >
                 {autocompleteItems.map((item, idx) => (
                   <button

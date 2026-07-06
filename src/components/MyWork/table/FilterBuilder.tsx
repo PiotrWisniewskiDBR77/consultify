@@ -163,7 +163,7 @@ export interface FilterBuilderProps {
 // ── Value Input Components ───────────────────────────────────────────────────
 
 const inputCls =
-  'w-full rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30';
+  'w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30';
 
 interface ValueInputProps {
   field: TablePlatformField;
@@ -311,7 +311,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
         <ChevronDown size={10} className="text-c-text-secondary flex-shrink-0" />
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 w-full rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-1 max-h-48 overflow-auto">
+        <div className="absolute left-0 top-full mt-1 z-50 w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl p-1 max-h-48 overflow-auto">
           {options.map((opt) => {
             const val = opt.name ?? opt.id;
             const isSelected = selected.includes(val);
@@ -439,7 +439,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
   if (!open) return null;
 
   return (
-    <div className="absolute left-0 top-full mt-1 z-50 w-[480px] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl">
+    <div className="absolute left-0 top-full mt-1 z-50 w-[480px] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2">
@@ -506,7 +506,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
                 <select
                   value={rule.fieldId}
                   onChange={(e) => handleFieldChange(idx, e.target.value)}
-                  className="flex-1 min-w-[100px] rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+                  className="flex-1 min-w-[100px] rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
                 >
                   {filterableFields.map((f) => (
                     <option key={f.id} value={f.id}>
@@ -519,7 +519,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
                 <select
                   value={rule.operator}
                   onChange={(e) => handleOperatorChange(idx, e.target.value, fieldType)}
-                  className="w-32 rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
+                  className="w-32 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-blue-500/30"
                 >
                   {operators.map((op) => (
                     <option key={op.value} value={op.value}>

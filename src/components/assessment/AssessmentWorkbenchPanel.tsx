@@ -175,7 +175,7 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
   return (
     <section
       id="assessment-workbench-panel"
-      className="rounded-2xl border border-c-border-subtle bg-c-surface p-4 shadow-sm"
+      className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4 shadow-sm"
     >
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
@@ -375,7 +375,7 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
           </div>
           <div className="mt-4 grid gap-2">
             <select
-              className="rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
               value={evidenceKind}
               onChange={(event) => setEvidenceKind(event.target.value)}
             >
@@ -386,13 +386,13 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
               <option value="external_url">external_url</option>
             </select>
             <input
-              className="rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
               placeholder="Evidence ref"
               value={evidenceRef}
               onChange={(event) => setEvidenceRef(event.target.value)}
             />
             <input
-              className="rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
               placeholder="Optional label"
               value={evidenceLabel}
               onChange={(event) => setEvidenceLabel(event.target.value)}
@@ -427,24 +427,24 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
           <div className="font-medium text-c-text">Score Proposal</div>
           <div className="mt-3 grid gap-2">
             <textarea
-              className="min-h-20 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
+              className="min-h-20 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
               placeholder="Scoring rationale"
               value={scoreRationale}
               onChange={(event) => setScoreRationale(event.target.value)}
             />
             <textarea
-              className="min-h-16 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm font-mono"
+              className="min-h-16 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm font-mono"
               value={scoreValuesRaw}
               onChange={(event) => setScoreValuesRaw(event.target.value)}
             />
             <input
-              className="rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
               value={scoreConfidence}
               onChange={(event) => setScoreConfidence(event.target.value)}
               placeholder="Confidence 0-1"
             />
             <textarea
-              className="min-h-16 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
+              className="min-h-16 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
               placeholder="Assumptions, one per line"
               value={scoreAssumptions}
               onChange={(event) => setScoreAssumptions(event.target.value)}
@@ -515,7 +515,7 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
               </button>
             </div>
             <textarea
-              className="min-h-16 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm font-mono"
+              className="min-h-16 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm font-mono"
               value={overrideScoreRaw}
               onChange={(event) => setOverrideScoreRaw(event.target.value)}
             />
@@ -526,25 +526,25 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
           <div className="font-medium text-c-text">Interpretation Proposal</div>
           <div className="mt-3 grid gap-2">
             <textarea
-              className="min-h-20 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
+              className="min-h-20 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
               placeholder="Interpretation summary"
               value={interpretationSummary}
               onChange={(event) => setInterpretationSummary(event.target.value)}
             />
             <textarea
-              className="min-h-16 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
+              className="min-h-16 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
               placeholder="Key findings, one per line"
               value={interpretationFindings}
               onChange={(event) => setInterpretationFindings(event.target.value)}
             />
             <textarea
-              className="min-h-16 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
+              className="min-h-16 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
               placeholder="Limits"
               value={interpretationLimits}
               onChange={(event) => setInterpretationLimits(event.target.value)}
             />
             <textarea
-              className="min-h-16 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
+              className="min-h-16 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
               placeholder="Next actions, one per line"
               value={interpretationActions}
               onChange={(event) => setInterpretationActions(event.target.value)}
@@ -620,7 +620,7 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
               </button>
             </div>
             <textarea
-              className="min-h-16 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
+              className="min-h-16 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
               placeholder="Override summary"
               value={overrideSummary}
               onChange={(event) => setOverrideSummary(event.target.value)}
@@ -632,7 +632,7 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
           <div className="font-medium text-c-text">Promotion</div>
           <div className="mt-3 grid gap-2">
             <select
-              className="rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
               value={promotionTargetKind}
               onChange={(event) =>
                 setPromotionTargetKind(
@@ -644,7 +644,7 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
               <option value="interview_insight">interview_insight</option>
             </select>
             <input
-              className="rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
               placeholder={
                 promotionTargetKind === 'interview_insight'
                   ? 'Leave blank to auto-create draft insight proposal'

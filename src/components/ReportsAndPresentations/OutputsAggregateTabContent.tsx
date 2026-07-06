@@ -822,7 +822,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   if (moduleDisabled) {
     return (
       <div className="flex items-center justify-center h-full p-6">
-        <div className="w-full max-w-xl rounded-2xl border border-c-border-subtle bg-c-surface p-8 text-center">
+        <div className="w-full max-w-xl rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-8 text-center">
           <h2 className="text-lg font-semibold text-c-text">
             {t('rap.moduleDisabled.title', 'Outputs library is turned off')}
           </h2>
@@ -852,7 +852,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   if (!loading && !error && rows.length === 0 && !searchQuery && activeFilters.length === 0) {
     return (
       <div className="flex items-center justify-center h-full p-6">
-        <div className="w-full max-w-xl rounded-2xl border border-c-border-subtle bg-c-surface p-8 text-center">
+        <div className="w-full max-w-xl rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-8 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-crimson-50 text-crimson-600 dark:bg-crimson-950/40 dark:text-crimson-400">
             <Sparkles size={26} />
           </div>
@@ -934,7 +934,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             ) : null}
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3">
+              <div className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
                 <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
                   {t('rap.outputs.preview.lineageRun', 'Run')}
                 </div>
@@ -949,7 +949,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
                 </div>
               </div>
 
-              <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3">
+              <div className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
                 <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
                   {t('rap.outputs.preview.lineageToolCalls', 'Tool calls')}
                 </div>
@@ -966,7 +966,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
                 </div>
               </div>
 
-              <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3">
+              <div className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
                 <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
                   {t('rap.outputs.preview.lineageOutputs', 'Outputs')}
                 </div>

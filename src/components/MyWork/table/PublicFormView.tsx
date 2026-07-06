@@ -225,7 +225,7 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
   return (
     <div className="flex min-h-screen items-start justify-center bg-c-surface-raised px-4 py-12">
       <div className="w-full max-w-lg">
-        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-8 shadow-sm">
+        <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-8 shadow-sm">
           {/* Header */}
           <h1 className="mb-1 text-2xl font-bold text-c-text">{form.name}</h1>
           {form.description && (

@@ -238,7 +238,7 @@ export const LegalPanel: React.FC = () => {
           {grouped.map(([type, items]) => (
             <div
               key={type}
-              className="bg-c-surface border border-c-border-subtle rounded-xl overflow-hidden"
+              className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl overflow-hidden"
             >
               <div className="px-6 py-4 border-b border-c-border-subtle flex items-center justify-between">
                 <div className="font-medium text-c-text">{type}</div>

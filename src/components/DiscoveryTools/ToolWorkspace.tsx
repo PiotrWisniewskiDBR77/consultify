@@ -818,7 +818,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                 <select
                   value={reviewDecisionOwnerId}
                   onChange={(e) => setReviewDecisionOwnerId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid"
                 >
                   <option value="">{isPolish ? '-- Wybierz --' : '-- Select --'}</option>
                   {users.map((user) => (
@@ -836,7 +836,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                   type="date"
                   value={reviewDueDate}
                   onChange={(e) => setReviewDueDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid"
                 />
               </div>
               <div>
@@ -848,7 +848,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                   onChange={(e) =>
                     setReviewPriority(e.target.value as 'low' | 'medium' | 'high' | 'critical')
                   }
-                  className="w-full px-3 py-2 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid"
                 >
                   <option value="low">{isPolish ? 'Niski' : 'Low'}</option>
                   <option value="medium">{isPolish ? 'Sredni' : 'Medium'}</option>

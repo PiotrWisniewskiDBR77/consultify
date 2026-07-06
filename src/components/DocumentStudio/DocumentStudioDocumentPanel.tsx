@@ -347,7 +347,7 @@ function SourceListPanel({
         ].map(([label, value]) => (
           <div
             key={label}
-            className="rounded-lg border border-c-border-subtle bg-c-surface p-2"
+            className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-2"
           >
             <div className="text-[10px] uppercase tracking-wide text-c-text-secondary">{label}</div>
             <div className="mt-1 font-semibold text-c-text">{value}</div>
@@ -366,7 +366,7 @@ function SourceListPanel({
           {sourceRows.map(({ ref, key, used, connector }, index) => (
             <li
               key={`${key}:${index}`}
-              className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs"
             >
               <div className="font-medium text-c-text">
                 {ref.sourceTitle || ref.sourceId}
@@ -473,7 +473,7 @@ function PropertiesPanel({
         {rows.map(([label, value]) => (
           <div
             key={label}
-            className="rounded-lg border border-c-border-subtle bg-c-surface p-3"
+            className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3"
           >
             <dt className="text-[10px] font-medium uppercase tracking-wide text-c-text-secondary">
               {label}
@@ -498,7 +498,7 @@ function OutlinePanel({
   const { t } = useTranslation();
   return (
     <div className="flex h-full flex-col overflow-y-auto p-3">
-      <div className="mb-3 rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs">
+      <div className="mb-3 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs">
         <div className="font-medium text-c-text">
           {t('documentStudio.panel.sectionsCount', {
             defaultValue: '{{count}} sections',
@@ -591,7 +591,7 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
         </div>
       ) : null}
       {!loading && !error && entries.length === 0 ? (
-        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary">
+        <div className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs text-c-text-secondary">
           {t('documentStudio.panel.activityEmpty', 'No activity has been recorded yet.')}
         </div>
       ) : null}
@@ -599,7 +599,7 @@ function ActivityPanel({ artifactId }: { artifactId: string }): React.ReactEleme
         {entries.map((entry) => (
           <li
             key={entry.entryId}
-            className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
+            className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="font-medium text-c-text">{entry.action}</div>
@@ -683,13 +683,13 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
           )}
         </p>
       </div>
-      <div className="mb-3 rounded-lg border border-c-border-subtle bg-c-surface p-3">
+      <div className="mb-3 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
         <label className="mb-2 block text-xs text-c-text-secondary">
           {t('documentStudio.panel.shareLabel', 'Label')}
           <input
             value={label}
             onChange={(event) => setLabel(event.target.value)}
-            className="mt-1 h-9 w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm"
+            className="mt-1 h-9 w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 text-sm"
             placeholder={t('documentStudio.documentPanel.reviewNamePlaceholder', 'Client review')}
           />
         </label>
@@ -698,7 +698,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
           <select
             value={scope}
             onChange={(event) => setScope(event.target.value as DocumentShareLinkAccessScope)}
-            className="mt-1 h-9 w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm"
+            className="mt-1 h-9 w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 text-sm"
           >
             <option value="read">{t('documentStudio.panel.scopeRead', 'Read')}</option>
             <option value="comment">{t('documentStudio.panel.scopeComment', 'Comment')}</option>
@@ -726,7 +726,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
         </div>
       ) : null}
       {!loading && links.length === 0 ? (
-        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary">
+        <div className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs text-c-text-secondary">
           {t('documentStudio.panel.shareEmpty', 'No share links yet.')}
         </div>
       ) : null}
@@ -734,7 +734,7 @@ function ShareLinksPanel({ artifactId }: { artifactId: string }): React.ReactEle
         {links.map((link) => (
           <li
             key={link.shareLinkId}
-            className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
+            className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="font-medium text-c-text">
@@ -832,7 +832,7 @@ function AudienceVariantsPanel({ artifactId }: { artifactId: string }): React.Re
         </div>
       ) : null}
       {!loading && variants.length === 0 ? (
-        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary">
+        <div className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs text-c-text-secondary">
           {t('documentStudio.panel.variantsEmpty', 'No active audience profiles are available.')}
         </div>
       ) : null}
@@ -840,7 +840,7 @@ function AudienceVariantsPanel({ artifactId }: { artifactId: string }): React.Re
         {variants.map((variant) => (
           <li
             key={variant.profile.profileId}
-            className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
+            className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs"
           >
             <div className="font-medium text-c-text">
               {variant.profile.name}
@@ -948,7 +948,7 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
           <select
             value={selectedVersionId}
             onChange={(event) => setSelectedVersionId(event.target.value)}
-            className="mt-1 h-9 w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm"
+            className="mt-1 h-9 w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 text-sm"
             data-testid="schema-diff-baseline-select"
           >
             <option value="">
@@ -966,7 +966,7 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
       ) : null}
       {result ? (
         <div className="space-y-3">
-          <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs">
+          <div className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs">
             <div className="font-medium text-c-text">{result.summary}</div>
             <div className="mt-1 text-c-text-secondary">
               {t('documentStudio.panel.diffBaseline', {
@@ -985,7 +985,7 @@ function SchemaDiffPanel({ artifactId }: { artifactId: string }): React.ReactEle
             ].map(([label, value]) => (
               <div
                 key={label}
-                className="rounded-lg border border-c-border-subtle bg-c-surface p-2"
+                className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-2"
               >
                 <div className="text-[10px] uppercase tracking-wide text-c-text-secondary">{label}</div>
                 <div className="mt-1 font-semibold text-c-text">{value}</div>
@@ -1087,7 +1087,7 @@ function ManifestGatePanel(): React.ReactElement {
               {[...result.mustViolations, ...result.shouldViolations].map((violation) => (
                 <li
                   key={`${violation.ruleId}:${violation.message}`}
-                  className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
+                  className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs"
                 >
                   <div className="font-medium text-c-text">
                     {violation.ruleId} · {violation.severity.toUpperCase()}
@@ -1245,14 +1245,14 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
             : t('documentStudio.panel.refresh', 'Refresh')}
         </Button>
       </div>
-      <div className="mb-3 rounded-lg border border-c-border-subtle bg-c-surface p-3">
+      <div className="mb-3 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
         <label className="mb-2 block text-xs text-c-text-secondary">
           {t('documentStudio.panel.reviewersLabel', 'Reviewers (comma-separated user ids)')}
           <input
             value={participantInput}
             onChange={(event) => setParticipantInput(event.target.value)}
             placeholder="user-1,user-2"
-            className="mt-1 h-9 w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm"
+            className="mt-1 h-9 w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 text-sm"
           />
         </label>
         <label className="mb-2 block text-xs text-c-text-secondary">
@@ -1262,7 +1262,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
             onChange={(event) =>
               setQuorumPolicy(event.target.value as DocumentApprovalQuorumPolicy)
             }
-            className="mt-1 h-9 w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm"
+            className="mt-1 h-9 w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 text-sm"
           >
             <option value="single_approval">
               {t('documentStudio.panel.quorumSingle', 'Single approval')}
@@ -1278,7 +1278,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
           <textarea
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            className="mt-1 min-h-[64px] w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm"
+            className="mt-1 min-h-[64px] w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm"
           />
         </label>
         <Button type="button" size="sm" onClick={requestApproval} disabled={submitting}>
@@ -1292,7 +1292,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
         <input
           value={decisionComment}
           onChange={(event) => setDecisionComment(event.target.value)}
-          className="mt-1 h-9 w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 text-sm"
+          className="mt-1 h-9 w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 text-sm"
           placeholder={t(
             'documentStudio.documentPanel.reviewerCommentPlaceholder',
             'Optional reviewer comment'
@@ -1305,7 +1305,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
         </div>
       ) : null}
       {!loading && approvals.length === 0 ? (
-        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary">
+        <div className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs text-c-text-secondary">
           {t('documentStudio.panel.approvalsEmpty', 'No approval requests yet.')}
         </div>
       ) : null}
@@ -1313,7 +1313,7 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
         {approvals.map((approval) => (
           <li
             key={approval.approvalId}
-            className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
+            className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="font-medium text-c-text">
@@ -1523,7 +1523,7 @@ function ContentLibraryPanel({
       <label className="mb-3 block text-xs font-medium text-c-text-secondary">
         {t('documentStudio.panel.insertIntoSection', 'Insert into section')}
         <select
-          className="mt-1 w-full rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text"
+          className="mt-1 w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2 py-1 text-xs text-c-text"
           value={targetSectionId}
           onChange={(event) => setTargetSectionId(event.target.value)}
         >
@@ -1535,7 +1535,7 @@ function ContentLibraryPanel({
         </select>
       </label>
       {!loading && blocks.length === 0 ? (
-        <div className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs text-c-text-secondary">
+        <div className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs text-c-text-secondary">
           {t('documentStudio.panel.libraryEmpty', 'No reusable blocks match this document yet.')}
         </div>
       ) : null}
@@ -1543,7 +1543,7 @@ function ContentLibraryPanel({
         {blocks.map((block) => (
           <li
             key={block.contentBlockId}
-            className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
+            className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs"
           >
             <div className="font-medium text-c-text">{block.name}</div>
             <div className="mt-1 text-c-text-secondary">
@@ -2180,7 +2180,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       )}
 
       <div className="flex flex-col gap-3 overflow-y-auto p-6">
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-c-border-subtle bg-c-surface p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
           <div>
             <h2 className="text-sm font-semibold text-c-text">
               {t('documentStudio.panel.documentPreview', 'Document preview')}

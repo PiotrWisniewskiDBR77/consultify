@@ -172,7 +172,7 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-5">
+      <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5">
         <div className="flex items-start gap-3">
           <Users size={18} className="text-c-text-secondary mt-0.5" strokeWidth={1.5} />
           <div className="flex-1">
@@ -203,7 +203,7 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="colleague@company.com"
-                className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-sm text-c-text placeholder:text-c-text-muted"
+                className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-sm text-c-text placeholder:text-c-text-muted"
               />
             </div>
             <div className="w-32">
@@ -213,7 +213,7 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-sm text-c-text"
+                className="w-full px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-sm text-c-text"
               >
                 <option value="MEMBER">Member</option>
                 <option value="ADMIN">Admin</option>
@@ -274,7 +274,7 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-5">
+      <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5">
         <div className="flex items-start gap-3">
           <CreditCard size={18} className="text-c-text-secondary mt-0.5" strokeWidth={1.5} />
           <div className="flex-1">
@@ -329,7 +329,7 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
           </p>
         )}
       </div>
-      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-5">
+      <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5">
         <h3 className="text-sm font-semibold text-c-text flex items-center gap-2">
           <Gauge size={16} className="text-c-text-secondary" strokeWidth={1.5} />
           {t('organization.billing.tokensTitle', 'Token Balance')}
@@ -454,7 +454,7 @@ const LimitsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
 
   if (error || !snapshot) {
     return (
-      <div className="max-w-4xl rounded-xl border border-c-border-subtle bg-c-surface">
+      <div className="max-w-4xl rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface">
         <ErrorState
           message={t('organization.limits.loadFailed', 'Could not load plan limits.')}
           retry={() => void reload()}
@@ -465,7 +465,7 @@ const LimitsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-5">
+      <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5">
         <div className="flex items-center gap-2 mb-4">
           <Gauge size={16} className="text-c-text-secondary" strokeWidth={1.5} />
           <h3 className="text-sm font-semibold text-c-text">
@@ -690,7 +690,7 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
           {domainActionError}
         </div>
       )}
-      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-5">
+      <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5">
         <div className="flex items-start gap-3">
           <Globe size={18} className="text-c-text-secondary mt-0.5" strokeWidth={1.5} />
           <div className="flex-1">
@@ -750,7 +750,7 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
           </div>
         </div>
       </div>
-      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-5">
+      <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5">
         <h3 className="text-sm font-semibold text-c-text mb-3">
           {t('organization.domains.approvedTitle', 'Approved Email Domains')}
         </h3>
@@ -886,7 +886,7 @@ const BrandingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-5">
+      <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5">
         <div className="flex items-center gap-2 mb-4">
           <Palette size={16} className="text-c-text-secondary" strokeWidth={1.5} />
           <h3 className="text-sm font-semibold text-c-text">
@@ -941,7 +941,7 @@ const BrandingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
           </div>
         </div>
       </div>
-      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-5">
+      <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5">
         <div className="flex items-center gap-2 mb-4">
           <Globe size={16} className="text-c-text-secondary" strokeWidth={1.5} />
           <h3 className="text-sm font-semibold text-c-text">

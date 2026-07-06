@@ -531,7 +531,7 @@ export const EconomicsHub: React.FC<EconomicsHubProps> = ({ initialTab = 'list' 
           {approvedAnalyses.map((analysis) => (
             <div
               key={analysis.id}
-              className="bg-c-surface border border-c-border-subtle rounded-xl overflow-hidden"
+              className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl overflow-hidden"
             >
               <div className="px-4 py-3 border-b border-c-border-subtle flex items-center justify-between">
                 <div className="flex items-center gap-3">

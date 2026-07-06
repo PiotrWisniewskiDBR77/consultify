@@ -197,7 +197,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
               return (
                 <div
                   key={stat.label}
-                  className="rounded-xl bg-c-surface border border-c-border-subtle p-3"
+                  className="rounded-xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] p-3"
                 >
                   <div className="flex items-center gap-1.5 mb-1">
                     <Icon size={11} style={{ color: stat.color }} />
@@ -214,7 +214,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
           </div>
 
           {/* Completeness gauge */}
-          <div className="rounded-xl bg-c-surface border border-c-border-subtle p-3">
+          <div className="rounded-xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] p-3">
             <span className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-2 block">
               {isPl ? 'Kompletność danych' : 'Data completeness'}
             </span>
@@ -249,7 +249,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
               {selectDistributions.map(({ column, distribution }) => (
                 <div
                   key={column.key}
-                  className="rounded-xl bg-c-surface border border-c-border-subtle p-3"
+                  className="rounded-xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] p-3"
                 >
                   <span className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-2 block">
                     {column.header}
@@ -284,7 +284,7 @@ export const TableSummaryDashboard: React.FC<TableSummaryDashboardProps> = ({
               {numberStats.map(({ column, avg, min, max, sum }) => (
                 <div
                   key={column.key}
-                  className="rounded-xl bg-c-surface border border-c-border-subtle p-3"
+                  className="rounded-xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] p-3"
                 >
                   <span className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1 block">
                     {column.header}

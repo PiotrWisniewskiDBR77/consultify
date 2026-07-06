@@ -150,7 +150,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
   };
   return (
     <div
-      className={`bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden ${className}`}
+      className={`bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden ${className}`}
     >
       {/* Header with filters */}
       <div className="px-4 py-3 border-b border-c-border-subtle flex flex-wrap items-center justify-between gap-4">
@@ -176,7 +176,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                     reportType: (e.target.value as ManagementReportType) || undefined,
                   })
                 }
-                className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-c-surface border border-c-border rounded-lg focus:outline-none focus:ring-2 focus:ring-c-focus"
+                className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg focus:outline-none focus:ring-2 focus:ring-c-focus"
               >
                 <option value="">All Types</option>
                 <option value="TEAM_MEETING">Team Meeting</option>
@@ -201,7 +201,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                     scope: (e.target.value as ManagementReportScope) || undefined,
                   })
                 }
-                className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-c-surface border border-c-border rounded-lg focus:outline-none focus:ring-2 focus:ring-c-focus"
+                className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg focus:outline-none focus:ring-2 focus:ring-c-focus"
               >
                 <option value="">All Scopes</option>
                 <option value="PROJECT">Project</option>
@@ -223,7 +223,7 @@ export const ReportHistoryTable: React.FC<ReportHistoryTableProps> = ({
                     status: (e.target.value as ManagementReportStatus) || undefined,
                   })
                 }
-                className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-c-surface border border-c-border rounded-lg focus:outline-none focus:ring-2 focus:ring-c-focus"
+                className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg focus:outline-none focus:ring-2 focus:ring-c-focus"
               >
                 <option value="">All Status</option>
                 <option value="DRAFT">Draft</option>

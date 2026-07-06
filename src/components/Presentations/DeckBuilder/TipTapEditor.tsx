@@ -114,7 +114,7 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
       {/* Custom floating toolbar */}
       {showToolbar && (
         <div
-          className="absolute flex items-center gap-0.5 bg-c-surface border border-c-border-subtle rounded-lg shadow-xl px-1 py-0.5 z-30"
+          className="absolute flex items-center gap-0.5 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg shadow-xl px-1 py-0.5 z-30"
           style={{ top: toolbarPos.top, left: toolbarPos.left, transform: 'translateX(-50%)' }}
           onMouseDown={(e) => e.preventDefault()}
         >

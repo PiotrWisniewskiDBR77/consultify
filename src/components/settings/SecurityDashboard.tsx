@@ -293,7 +293,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Score */}
         <div className="lg:col-span-1">
-          <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6 h-full">
+          <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 p-6 h-full">
             <h3 className="text-sm font-medium text-c-text-muted mb-4">
               {t('security.dashboard.securityScore', 'Security Score')}
             </h3>
@@ -329,7 +329,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
 
         {/* Score Breakdown */}
         <div className="lg:col-span-2">
-          <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6 h-full">
+          <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 p-6 h-full">
             <h3 className="text-sm font-medium text-c-text-muted mb-4">
               {t('security.dashboard.scoreBreakdown', 'Score Breakdown')}
             </h3>
@@ -509,7 +509,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
       {/* Compliance Badges & Recent Events */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Compliance Status */}
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6">
+        <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
               <Award className="w-5 h-5 text-c-accent" />
@@ -545,7 +545,7 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
         </div>
 
         {/* Recent Security Events */}
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6">
+        <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
               <Activity className="w-5 h-5 text-blue-500" />
@@ -655,7 +655,7 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
   return (
     <button
       onClick={onClick}
-      className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-4 text-left hover:shadow-lg hover:border-c-accent dark:hover:border-c-accent transition-all group"
+      className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 p-4 text-left hover:shadow-lg hover:border-c-accent dark:hover:border-c-accent transition-all group"
     >
       <div
         className={`w-12 h-12 rounded-xl ${statusColors[status]} flex items-center justify-center mb-3`}

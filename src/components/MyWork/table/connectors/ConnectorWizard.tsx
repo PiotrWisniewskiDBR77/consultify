@@ -289,7 +289,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
   /* ---- Render helpers ---- */
 
   const inputCls =
-    'w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus transition-colors';
+    'w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus transition-colors';
 
   const labelCls = 'block text-xs font-medium text-c-text-muted mb-1';
 

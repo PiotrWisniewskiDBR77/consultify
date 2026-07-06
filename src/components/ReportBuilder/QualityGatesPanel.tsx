@@ -234,7 +234,7 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
     errorCount > 0 ? 'text-danger-400' : warningCount > 0 ? 'text-amber-400' : 'text-emerald-400';
 
   return (
-    <div className={`rounded-xl bg-c-surface border border-c-border-subtle p-4 ${className}`}>
+    <div className={`rounded-xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] p-4 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">

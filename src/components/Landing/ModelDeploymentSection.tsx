@@ -121,7 +121,7 @@ export const ModelDeploymentSection: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: idx * 0.08 }}
                 viewport={{ once: true }}
-                className="rounded-2xl border border-c-border bg-c-surface p-5 backdrop-blur-sm"
+                className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5 backdrop-blur-sm"
               >
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-c-accent text-white shadow-lg shadow-c-accent/20 mb-4">
                   <Icon size={16} />

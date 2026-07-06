@@ -131,7 +131,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                     className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[min(28rem,90%)] opacity-0 group-hover:opacity-100 transition-opacity z-10"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="flex items-center gap-1.5 bg-c-surface border border-c-border-subtle rounded-lg shadow-lg px-2 py-1.5">
+                    <div className="flex items-center gap-1.5 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg shadow-lg px-2 py-1.5">
                       <Sparkles size={13} className="text-c-accent shrink-0" />
                       <input
                         type="text"

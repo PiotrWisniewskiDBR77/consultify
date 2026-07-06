@@ -103,7 +103,7 @@ export const ProfitHeroSection: React.FC<ProfitHeroSectionProps> = ({
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.12 }}
-            className="relative rounded-2xl overflow-hidden bg-c-surface border border-c-border shadow-2xl"
+            className="relative rounded-2xl overflow-hidden bg-c-surface border border-slate-200/60 dark:border-white/[0.03] shadow-2xl"
           >
             <div className="p-6 border-b border-c-border">
               <p className="text-sm font-black text-c-text">

@@ -271,7 +271,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
           {moreOpen && (
             <div
               role="menu"
-              className="absolute top-full right-0 mt-1 min-w-[12rem] bg-c-surface border border-c-border-subtle rounded-lg shadow-xl p-1 z-50"
+              className="absolute top-full right-0 mt-1 min-w-[12rem] bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg shadow-xl p-1 z-50"
             >
               {overflowItems.map((item) => (
                 <button

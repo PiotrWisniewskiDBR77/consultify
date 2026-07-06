@@ -113,7 +113,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
       </div>
 
       {/* Main Table */}
-      <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
+      <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden">
         {/* Header */}
         <div className="grid grid-cols-12 gap-4 p-4 border-b border-c-border-subtle dark:border-navy-700 text-sm font-medium text-c-text-muted">
           <div className="col-span-4">{t('settings.notifications.activity', 'Activity')}</div>

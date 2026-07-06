@@ -147,7 +147,7 @@ export const KnowledgePulse: React.FC<KnowledgePulseProps> = ({
   };
 
   return (
-    <div className="w-72 shrink-0 rounded-2xl border border-c-border-subtle overflow-hidden bg-c-surface flex flex-col">
+    <div className="w-72 shrink-0 rounded-2xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden bg-c-surface flex flex-col">
       <div className="flex items-center justify-between px-3 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2 text-sm font-semibold text-c-danger">
           <HeartPulse size={16} />

@@ -223,7 +223,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
       </div>
 
       {/* Bio/About Me */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4">
           {t('settings.profile.professional.bio', 'About Me')}
         </h3>
@@ -243,7 +243,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
       </div>
 
       {/* Skills */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Tag size={20} className="text-blue-500" />
           {t('settings.profile.professional.skills', 'Skills')}
@@ -283,7 +283,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
       </div>
 
       {/* Certifications */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Award size={20} className="text-amber-500" />
@@ -322,7 +322,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
       </div>
 
       {/* Education */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <GraduationCap size={20} className="text-green-500" />
@@ -361,7 +361,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
       </div>
 
       {/* Work Experience */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Briefcase size={20} className="text-indigo-500" />
@@ -400,7 +400,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
       </div>
 
       {/* Social Links */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Link2 size={20} className="text-pink-500" />
           {t('settings.profile.professional.socialLinks', 'Social Links')}
@@ -469,41 +469,41 @@ const CertificationCard: React.FC<CertificationCardProps> = ({
             value={cert.name}
             onChange={(e) => onUpdate({ name: e.target.value })}
             placeholder="Certification Name"
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={cert.issuer}
             onChange={(e) => onUpdate({ issuer: e.target.value })}
             placeholder="Issuing Organization"
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="date"
             value={cert.issueDate}
             onChange={(e) => onUpdate({ issueDate: e.target.value })}
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="date"
             value={cert.expiryDate || ''}
             onChange={(e) => onUpdate({ expiryDate: e.target.value || undefined })}
             placeholder="Expiry Date (optional)"
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={cert.credentialId || ''}
             onChange={(e) => onUpdate({ credentialId: e.target.value })}
             placeholder="Credential ID (optional)"
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="url"
             value={cert.credentialUrl || ''}
             onChange={(e) => onUpdate({ credentialUrl: e.target.value })}
             placeholder="Verification URL (optional)"
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
         </div>
         <div className="flex gap-2 mt-4">
@@ -594,21 +594,21 @@ const EducationCard: React.FC<EducationCardProps> = ({
             value={edu.institution}
             onChange={(e) => onUpdate({ institution: e.target.value })}
             placeholder="Institution Name"
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={edu.degree}
             onChange={(e) => onUpdate({ degree: e.target.value })}
             placeholder="Degree"
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={edu.fieldOfStudy || ''}
             onChange={(e) => onUpdate({ fieldOfStudy: e.target.value })}
             placeholder="Field of Study (optional)"
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <div className="flex items-center gap-2">
             <input
@@ -623,14 +623,14 @@ const EducationCard: React.FC<EducationCardProps> = ({
             type="date"
             value={edu.startDate}
             onChange={(e) => onUpdate({ startDate: e.target.value })}
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           {!edu.isCurrent && (
             <input
               type="date"
               value={edu.endDate || ''}
               onChange={(e) => onUpdate({ endDate: e.target.value || undefined })}
-              className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+              className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
             />
           )}
           <textarea
@@ -638,7 +638,7 @@ const EducationCard: React.FC<EducationCardProps> = ({
             onChange={(e) => onUpdate({ description: e.target.value })}
             placeholder="Description (optional)"
             rows={3}
-            className="md:col-span-2 px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg resize-none"
+            className="md:col-span-2 px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg resize-none"
           />
         </div>
         <div className="flex gap-2 mt-4">
@@ -719,21 +719,21 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
             value={work.company}
             onChange={(e) => onUpdate({ company: e.target.value })}
             placeholder="Company Name"
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={work.position}
             onChange={(e) => onUpdate({ position: e.target.value })}
             placeholder="Position/Title"
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <input
             type="text"
             value={work.location || ''}
             onChange={(e) => onUpdate({ location: e.target.value })}
             placeholder="Location (optional)"
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           <div className="flex items-center gap-2">
             <input
@@ -748,14 +748,14 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
             type="date"
             value={work.startDate}
             onChange={(e) => onUpdate({ startDate: e.target.value })}
-            className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+            className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
           />
           {!work.isCurrent && (
             <input
               type="date"
               value={work.endDate || ''}
               onChange={(e) => onUpdate({ endDate: e.target.value || undefined })}
-              className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+              className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
             />
           )}
           <textarea
@@ -763,7 +763,7 @@ const WorkExperienceCard: React.FC<WorkExperienceCardProps> = ({
             onChange={(e) => onUpdate({ description: e.target.value })}
             placeholder="Description (optional)"
             rows={3}
-            className="md:col-span-2 px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg resize-none"
+            className="md:col-span-2 px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg resize-none"
           />
         </div>
         <div className="flex gap-2 mt-4">

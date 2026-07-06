@@ -193,7 +193,7 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
       onClick={onClose}
     >
       <div
-        className="bg-c-surface rounded-2xl shadow-2xl border border-c-border-subtle w-[420px] max-h-[70vh] flex flex-col overflow-hidden"
+        className="bg-c-surface rounded-2xl shadow-2xl border border-slate-200/60 dark:border-white/[0.03] w-[420px] max-h-[70vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -284,7 +284,7 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
         {/* Restore confirmation dialog */}
         {confirmRestore && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/30 rounded-2xl">
-            <div className="bg-c-surface rounded-xl shadow-xl border border-c-border-subtle p-4 w-72">
+            <div className="bg-c-surface rounded-xl shadow-xl border border-slate-200/60 dark:border-white/[0.03] p-4 w-72">
               <h4 className="text-sm font-bold text-c-text mb-2">
                 {isPl ? 'Przywrócić migawkę?' : 'Restore snapshot?'}
               </h4>

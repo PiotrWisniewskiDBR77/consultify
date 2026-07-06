@@ -175,7 +175,7 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
       </div>
 
       {/* Sidebar Configuration */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
         <h3 className="text-lg font-semibold text-c-text">Sidebar</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -255,7 +255,7 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
       </div>
 
       {/* UI Elements */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text">UI Elements</h3>
 
         <div className="space-y-3">
@@ -319,7 +319,7 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
       </div>
 
       {/* Default View */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text">Startup View</h3>
         <p className="text-sm text-c-text-muted">
           Choose which view to show when you log in
@@ -343,7 +343,7 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
       </div>
 
       {/* Toolbar Items */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text">Toolbar Items</h3>
         <p className="text-sm text-c-text-muted">
           Choose which items appear in the header toolbar
@@ -370,7 +370,7 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
       </div>
 
       {/* Quick Access */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text">Quick Access Menu</h3>
         <p className="text-sm text-c-text-muted">
           Customize quick actions in the + menu

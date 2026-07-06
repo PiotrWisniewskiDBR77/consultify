@@ -379,7 +379,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
   if (phases.length === 0) {
     return (
       <div
-        className={`bg-c-surface rounded-xl border border-c-border-subtle p-12 text-center ${className}`}
+        className={`bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-12 text-center ${className}`}
       >
         <Calendar className="w-12 h-12 mx-auto mb-3 text-c-text-secondary" />
         <p className="text-lg font-medium text-c-text">No schedule data</p>
@@ -392,7 +392,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
 
   return (
     <div
-      className={`bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden ${className}`}
+      className={`bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden ${className}`}
     >
       {/* D4.2: Clean Toolbar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle bg-c-surface-raised">
@@ -409,7 +409,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
         </div>
         <div className="flex items-center gap-3">
           {/* Zoom controls */}
-          <div className="flex items-center bg-c-surface rounded-lg border border-c-border-subtle">
+          <div className="flex items-center bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03]">
             <button
               onClick={() => setZoom('year')}
               className={`px-3 py-1.5 text-xs font-medium transition-colors rounded-l-lg ${

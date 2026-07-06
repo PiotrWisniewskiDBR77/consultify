@@ -42,7 +42,7 @@ export const LinkNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) =>
           isn't cropped by the rounded corners / og-image crop below. */}
       <CommentPinBadge nodeId={nodeId} count={commentCount} />
       <div
-        className={`relative w-[220px] rounded-xl border border-c-border-subtle bg-c-surface dark:backdrop-blur-md shadow-sm dark:shadow-[0_0_12px_rgba(59,130,246,0.15)] transition-shadow overflow-hidden cursor-pointer hover:shadow-md ${selected ? 'ring-2 ring-c-border-strong shadow-lg' : ''}`}
+        className={`relative w-[220px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface dark:backdrop-blur-md shadow-sm dark:shadow-[0_0_12px_rgba(59,130,246,0.15)] transition-shadow overflow-hidden cursor-pointer hover:shadow-md ${selected ? 'ring-2 ring-c-border-strong shadow-lg' : ''}`}
         onClick={handleClick}
       >
         <Handle

@@ -81,7 +81,7 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
                 <div
                   className="
                                     absolute left-1/2 -translate-x-1/2 bottom-full mb-2
-                                    px-3 py-2 rounded-lg bg-c-surface border border-c-border-subtle
+                                    px-3 py-2 rounded-lg bg-c-surface border border-slate-200/60 dark:border-white/[0.03]
                                     text-xs text-c-text-secondary w-48 text-center shadow-lg dark:shadow-none
                                     opacity-0 invisible group-hover:opacity-100 group-hover:visible
                                     transition-all duration-200 z-50

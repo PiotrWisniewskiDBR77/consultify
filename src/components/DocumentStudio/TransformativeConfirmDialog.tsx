@@ -83,7 +83,7 @@ export const TransformativeConfirmDialog: React.FC<TransformativeConfirmDialogPr
         aria-labelledby="transformative-confirm-title"
         aria-describedby="transformative-confirm-description"
         tabIndex={-1}
-        className="w-full max-w-md rounded-xl border border-c-border bg-c-surface p-5 shadow-[0_25px_50px_rgba(0,0,0,0.15),0_12px_24px_rgba(0,0,0,0.1)] outline-none dark:shadow-[0_25px_50px_rgba(0,0,0,0.5),0_12px_24px_rgba(0,0,0,0.4)]"
+        className="w-full max-w-md rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5 shadow-[0_25px_50px_rgba(0,0,0,0.15),0_12px_24px_rgba(0,0,0,0.1)] outline-none dark:shadow-[0_25px_50px_rgba(0,0,0,0.5),0_12px_24px_rgba(0,0,0,0.4)]"
       >
         <div className="flex items-start gap-3">
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-c-warning/15 text-c-warning">

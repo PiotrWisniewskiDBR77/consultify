@@ -56,7 +56,7 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
   return (
     <div
       ref={toolbarRef}
-      className="absolute z-50 flex items-center gap-0.5 rounded-xl border border-c-border-subtle bg-c-surface shadow-lg backdrop-blur-sm px-1 py-0.5"
+      className="absolute z-50 flex items-center gap-0.5 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-lg backdrop-blur-sm px-1 py-0.5"
       style={{
         left: position.x,
         top: position.y - 44,
@@ -166,7 +166,7 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
 
       {showLinks && onArtifactLinksChange && (
         <div
-          className="absolute top-full left-0 mt-1 w-64 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-3 z-50"
+          className="absolute top-full left-0 mt-1 w-64 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl p-3 z-50"
           onKeyDown={handleKeyDown}
         >
           <div className="text-[11px] font-semibold text-c-text-secondary mb-2">

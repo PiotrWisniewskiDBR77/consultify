@@ -139,7 +139,7 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -213,7 +213,7 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
                   : 'E.g., "Focus on financial aspects", "Include competitor comparison"...'
               }
               rows={3}
-              className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 resize-none"
             />
           </div>
         </div>
@@ -313,7 +313,7 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
               const bt = blockTypes.find((b) => b.id === id);
               if (bt && !title) setTitle(bt.name);
             }}
-            className="w-full mb-4 px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500"
+            className="w-full mb-4 px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500"
           >
             <option value="">{isPl ? 'Custom (tytuł + prompt)' : 'Custom (title + prompt)'}</option>
             {isLoadingBlocks ? (
@@ -339,7 +339,7 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
             placeholder={isPl ? 'Wprowadź tytuł...' : 'Enter title...'}
             autoFocus
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-            className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500"
           />
         </div>
 

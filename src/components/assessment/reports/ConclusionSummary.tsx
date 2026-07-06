@@ -77,7 +77,7 @@ export const ConclusionExecutiveSummary: React.FC<{
 }> = ({ vm, language = 'pl' }) => {
   const L = LABELS[language];
   return (
-    <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
+    <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
       {/* Verdict headline — answer-first thesis */}
       <div className="mb-4">
         <div className="text-xs font-semibold uppercase tracking-wide text-c-accent mb-1">
@@ -122,7 +122,7 @@ export const FoFRoadBar: React.FC<{
   const isPL = language === 'pl';
   const scaleMax = 5;
   return (
-    <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
+    <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
       <p className="mb-4 text-sm font-medium text-c-text">{summary}</p>
       <div className="space-y-3">
         {items.map((it, idx) => {
@@ -192,7 +192,7 @@ export const ConclusionGapCards: React.FC<{
   return (
     <div className="space-y-4">
       {cards.map((card, idx) => (
-        <div key={idx} className="rounded-xl border border-c-border-subtle bg-c-surface p-5">
+        <div key={idx} className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5">
           <div className="flex items-start justify-between gap-3 mb-3">
             <h4 className="font-bold text-c-text">{card.title}</h4>
             <span className="shrink-0 rounded-md bg-c-accent-soft px-2 py-0.5 text-xs font-semibold text-c-accent">

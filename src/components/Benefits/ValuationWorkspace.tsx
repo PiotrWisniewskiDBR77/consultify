@@ -537,7 +537,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
 
       <div className={hideSidebar ? '' : 'grid grid-cols-12 gap-4'}>
         {!hideSidebar && (
-          <div className="col-span-4 bg-white dark:bg-c-surface rounded-xl border border-c-border-subtle dark:border-c-border-subtle overflow-hidden">
+          <div className="col-span-4 bg-white dark:bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle overflow-hidden">
             <div className="px-4 py-3 border-b border-c-border-subtle dark:border-c-border-subtle flex items-center justify-between">
               <div className="text-sm font-semibold text-c-text dark:text-white">
                 {t('valuation.list.title', 'Valuations')}
@@ -613,7 +613,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
           className={
             hideSidebar
               ? 'w-full'
-              : 'col-span-8 bg-white dark:bg-c-surface rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-5'
+              : 'col-span-8 bg-white dark:bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle p-5'
           }
         >
           {!selectedId || !selected ? (
@@ -1080,7 +1080,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                   )}
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-xl p-4">
+                    <div className="bg-white dark:bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle rounded-xl p-4">
                       <div className="flex items-center justify-between gap-2 mb-3">
                         <div className="text-sm font-semibold text-c-text dark:text-white">
                           {t('valuation.advisory.title', 'Valuation advisory')}
@@ -1281,7 +1281,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                       )}
                     </div>
 
-                    <div className="bg-white dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-xl p-4">
+                    <div className="bg-white dark:bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle rounded-xl p-4">
                       <div className="flex items-center justify-between gap-2 mb-3">
                         <div className="text-sm font-semibold text-c-text dark:text-white">
                           {t('valuation.negotiation.title', 'Negotiation pack')}
@@ -1529,7 +1529,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
 
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-xl p-6 w-full max-w-lg">
+          <div className="bg-white dark:bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle rounded-xl p-6 w-full max-w-lg">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-c-text dark:text-white">
                 {t('valuation.create.title', 'New valuation')}

@@ -235,7 +235,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
       </div>
 
       {/* Profile Visibility */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <UserCircle size={20} className="text-blue-500" />
           {t('settings.privacy.profileVisibility', 'Profile Visibility')}
@@ -305,7 +305,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
       </div>
 
       {/* Activity & Status */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Activity size={20} className="text-green-500" />
           {t('settings.privacy.activityStatus', 'Activity & Status')}
@@ -391,7 +391,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
       </div>
 
       {/* Data Sharing & Analytics */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <BarChart3 size={20} className="text-c-accent" />
           {t('settings.privacy.dataSharing', 'Data Sharing')}
@@ -484,7 +484,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
       </div>
 
       {/* Marketing Preferences */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Mail size={20} className="text-amber-500" />
           {t('settings.privacy.marketing', 'Communication Preferences')}
@@ -568,7 +568,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
       </div>
 
       {/* Data Export & Deletion */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Download size={20} className="text-blue-500" />
           {t('settings.privacy.dataManagement', 'Data Management')}

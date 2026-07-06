@@ -76,7 +76,7 @@ type GoalItem = PreviewableItem & {
 };
 
 const INPUT_CLASS =
-  'w-full rounded-xl border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus';
+  'w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus';
 
 const normalizeGoal = (goal: GoalApiRow, rollup?: GoalRollup): GoalItem => ({
   id: goal.id,
@@ -618,7 +618,7 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {t('results.tabs.initiatives', 'Initiatives')}
             </div>
-            <div className="mt-2 rounded-xl border border-c-border-subtle bg-c-surface p-3 max-h-44 overflow-y-auto space-y-2">
+            <div className="mt-2 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 max-h-44 overflow-y-auto space-y-2">
               {initiativeOptions.length === 0 ? (
                 <div className="text-sm text-slate-500 dark:text-slate-400">
                   {t(

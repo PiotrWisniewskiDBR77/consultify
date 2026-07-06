@@ -273,7 +273,7 @@ const SmartSnoozePopover: React.FC<{
       initial={{ opacity: 0, scale: 0.95, y: -4 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="absolute right-0 top-full mt-1 z-20 bg-c-surface rounded-lg shadow-hig-lg border border-c-border-subtle py-1 min-w-[160px]"
+      className="absolute right-0 top-full mt-1 z-20 bg-c-surface rounded-lg shadow-hig-lg border border-slate-200/60 dark:border-white/[0.03] py-1 min-w-[160px]"
     >
       <div className="px-3 py-1.5 text-[10px] font-semibold text-c-text-secondary uppercase tracking-wider">
         {t('myWork.focus.snooze.moveTo', 'Move to')}
@@ -816,7 +816,7 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.95, y: 20 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-c-surface rounded-xl shadow-hig-lg border border-c-border-subtle w-full max-w-md mx-4"
+        className="bg-c-surface rounded-xl shadow-hig-lg border border-slate-200/60 dark:border-white/[0.03] w-full max-w-md mx-4"
       >
         <div className="p-6">
           <h3 className="text-lg font-bold text-c-text mb-2">
@@ -1677,7 +1677,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
   return (
     <div className="p-4 h-full min-h-0">
       <div className="mb-4 grid grid-cols-1 xl:grid-cols-3 gap-3">
-        <div className="rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3">
+        <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-4 py-3">
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
@@ -1733,7 +1733,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
           </div>
         </div>
 
-        <div className="rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3">
+        <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-4 py-3">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
             {t('myWork.focus.capacity', 'Capacity summary')}
           </div>
@@ -1778,7 +1778,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
           </label>
         </div>
 
-        <div className="rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3">
+        <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-4 py-3">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
             {t('myWork.focus.limits', 'Limits')}
           </div>
@@ -1797,7 +1797,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
                   }))
                 }
                 onBlur={() => persistFocusRules(focusRules, activeTemplate)}
-                className="mt-1 w-full rounded-lg border border-c-border bg-c-surface text-c-text px-3 py-2"
+                className="mt-1 w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text px-3 py-2"
               />
             </label>
             <label className="text-xs text-c-text-secondary">
@@ -1814,7 +1814,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
                   }))
                 }
                 onBlur={() => persistFocusRules(focusRules, activeTemplate)}
-                className="mt-1 w-full rounded-lg border border-c-border bg-c-surface text-c-text px-3 py-2"
+                className="mt-1 w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text px-3 py-2"
               />
             </label>
           </div>

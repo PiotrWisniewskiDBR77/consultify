@@ -396,7 +396,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
 
     return (
       <div className="flex items-center justify-center h-full p-6">
-        <div className="w-full max-w-4xl rounded-2xl border border-c-border-subtle bg-c-surface p-6">
+        <div className="w-full max-w-4xl rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
           <div className="flex items-start gap-4">
             <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-300">
               <FileText size={20} />

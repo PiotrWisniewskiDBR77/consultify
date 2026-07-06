@@ -647,7 +647,7 @@ export const AuditsHub: React.FC = () => {
           )}
 
           {loading ? (
-            <div className="flex items-center justify-center gap-2 rounded-xl border border-c-border bg-c-surface py-12 text-sm text-c-text-muted">
+            <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface py-12 text-sm text-c-text-muted">
               <Loader2 className="h-4 w-4 animate-spin" />
               {t('audit.loading')}
             </div>
@@ -660,7 +660,7 @@ export const AuditsHub: React.FC = () => {
                   (⋮) carries Open · Generate surveys · Open preview/Edit/Archive
                   (Edit+Archive disabled — no wired UI/API yet, see
                   auditProgramEditStubFlag.ts) · Delete. */}
-              <div className="h-[calc(100vh-260px)] min-h-[420px] flex overflow-hidden rounded-xl border border-c-border bg-c-surface">
+              <div className="h-[calc(100vh-260px)] min-h-[420px] flex overflow-hidden rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface">
                 <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
                   <StandardTable
                     columns={columns}

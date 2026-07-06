@@ -117,7 +117,7 @@ export const ConvertChecklistModal: React.FC<ConvertChecklistModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden border border-c-border-subtle">
+      <div className="bg-c-surface rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden border border-slate-200/60 dark:border-white/[0.03]">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">

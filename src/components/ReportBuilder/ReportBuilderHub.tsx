@@ -627,7 +627,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
           return (
             <div
               key={rType}
-              className="border border-c-border-subtle rounded-xl bg-c-surface"
+              className="border border-slate-200/60 dark:border-white/[0.03] rounded-xl bg-c-surface"
             >
               <button
                 className="w-full flex items-center gap-3 px-4 py-3 text-left hover:opacity-90/[0.03] transition-colors rounded-xl"
@@ -728,7 +728,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
         {filteredTemplates.map((tpl) => (
           <div
             key={tpl.id}
-            className="border border-c-border-subtle rounded-xl bg-c-surface p-4 flex flex-col gap-3 hover:border-c-accent transition-colors"
+            className="border border-slate-200/60 dark:border-white/[0.03] rounded-xl bg-c-surface p-4 flex flex-col gap-3 hover:border-c-accent transition-colors"
           >
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">

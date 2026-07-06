@@ -64,7 +64,7 @@ export const WhiteboardSelectionBar: React.FC<WhiteboardSelectionBarProps> = ({
 
   return (
     <div
-      className={`absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-c-surface backdrop-blur-sm rounded-2xl border border-c-border-subtle shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-2 py-1.5 ${ENTER_ANIMATION.slideUp}`}
+      className={`absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-c-surface backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-white/[0.03] shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-2 py-1.5 ${ENTER_ANIMATION.slideUp}`}
       role="toolbar"
       aria-label={t('myWork.whiteboard.selectionBar.ariaLabel')}
     >

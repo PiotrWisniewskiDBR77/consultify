@@ -254,7 +254,7 @@ function CreateModelWizard({
     : ['Name', 'Sources', 'KPIs', 'Dimensions', 'Trust'];
 
   const inputCls =
-    'w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-tag-2';
+    'w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-tag-2';
 
   return (
     <div
@@ -600,7 +600,7 @@ function ModelCard({
 
   return (
     <div
-      className="rounded-xl border border-c-border-subtle bg-c-surface p-4 hover:shadow-md transition-shadow cursor-pointer"
+      className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4 hover:shadow-md transition-shadow cursor-pointer"
       onClick={onSelect}
     >
       <div className="flex items-start justify-between mb-3">
@@ -723,7 +723,7 @@ function EditModelModal({
   const [saving, setSaving] = useState(false);
 
   const inputCls =
-    'w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-crimson-500/40';
+    'w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-crimson-500/40';
 
   const dirty =
     name.trim() !== (model.name ?? '').trim() ||

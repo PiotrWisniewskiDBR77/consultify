@@ -61,7 +61,7 @@ export const SheetsTabContent: React.FC<SheetsTabContentProps> = ({
 
   return (
     <div className="flex items-center justify-center h-full p-6">
-      <div className="w-full max-w-2xl rounded-2xl border border-c-border-subtle bg-c-surface p-8">
+      <div className="w-full max-w-2xl rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-8">
         <div className="flex items-start gap-4">
           <div className="mt-0.5 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
             <Table2 size={24} />

@@ -293,7 +293,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 
       {/* Custom Rules Tab */}
       {activeTab === 'rules' && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-c-text">
               Custom Notification Rules
@@ -377,7 +377,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                             conditions: [{ ...rule.conditions[0], value: e.target.value }],
                           })
                         }
-                        className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+                        className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                       >
                         {notificationTypes.map((type) => (
                           <option key={type.id} value={type.id}>
@@ -397,7 +397,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                             actions: [{ ...rule.actions[0], channel: e.target.value }],
                           })
                         }
-                        className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+                        className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                       >
                         <option value="all">Notify on all channels</option>
                         <option value="desktop">Desktop only</option>
@@ -426,7 +426,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 
       {/* Quiet Hours Tab */}
       {activeTab === 'quiet' && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
               <BellOff size={20} className="text-c-text-muted" />
@@ -457,7 +457,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                     type="time"
                     value={quietHours.startTime}
                     onChange={(e) => setQuietHours({ ...quietHours, startTime: e.target.value })}
-                    className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+                    className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                   />
                 </div>
                 <div>
@@ -468,7 +468,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                     type="time"
                     value={quietHours.endTime}
                     onChange={(e) => setQuietHours({ ...quietHours, endTime: e.target.value })}
-                    className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+                    className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                   />
                 </div>
               </div>
@@ -522,7 +522,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 
       {/* Sounds Tab */}
       {activeTab === 'sounds' && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
               <Volume2 size={20} className="text-blue-500" />
@@ -583,7 +583,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                           sounds: { ...soundSettings.sounds, [type.id]: e.target.value },
                         })
                       }
-                      className="px-3 py-1.5 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg text-sm"
+                      className="px-3 py-1.5 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg text-sm"
                     >
                       {soundOptions.map((sound) => (
                         <option key={sound.id} value={sound.id}>
@@ -603,7 +603,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
       {activeTab === 'devices' && (
         <div className="space-y-4">
           {/* Desktop */}
-          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
                 <Monitor size={20} className="text-c-accent" />
@@ -675,7 +675,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
           </div>
 
           {/* Mobile */}
-          <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
                 <Smartphone size={20} className="text-green-500" />
@@ -742,7 +742,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
 
       {/* Digest Tab */}
       {activeTab === 'digest' && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
               <Layers size={20} className="text-amber-500" />
@@ -780,7 +780,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                     onChange={(e) =>
                       setDigestSettings({ ...digestSettings, frequency: e.target.value as any })
                     }
-                    className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+                    className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                   >
                     <option value="hourly">Hourly</option>
                     <option value="daily">Daily</option>
@@ -795,7 +795,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                     type="time"
                     value={digestSettings.time}
                     onChange={(e) => setDigestSettings({ ...digestSettings, time: e.target.value })}
-                    className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+                    className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                   />
                 </div>
               </div>

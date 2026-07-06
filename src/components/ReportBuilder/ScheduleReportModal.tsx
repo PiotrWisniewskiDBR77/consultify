@@ -149,7 +149,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg mx-4 bg-c-surface rounded-2xl shadow-2xl border border-c-border-subtle overflow-hidden">
+      <div className="relative w-full max-w-lg mx-4 bg-c-surface rounded-2xl shadow-2xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
           <div>

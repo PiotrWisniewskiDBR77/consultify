@@ -702,7 +702,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               <select
                 value={moduleFilter}
                 onChange={(e) => setModuleFilter(e.target.value as typeof moduleFilter)}
-                className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium bg-c-surface border border-c-border-subtle text-c-text hover:border-c-accent focus:border-c-accent focus:ring-1 focus:ring-c-focus transition-all duration-200 cursor-pointer"
+                className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-c-text hover:border-c-accent focus:border-c-accent focus:ring-1 focus:ring-c-focus transition-all duration-200 cursor-pointer"
               >
                 <option value="all">All Modules</option>
                 <option value="assessment">Assessment ({moduleCounts.assessment})</option>
@@ -721,7 +721,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               <select
                 value={formatFilter}
                 onChange={(e) => setFormatFilter(e.target.value as typeof formatFilter)}
-                className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium bg-c-surface border border-c-border-subtle text-c-text hover:border-c-accent focus:border-c-accent focus:ring-1 focus:ring-c-focus transition-all duration-200 cursor-pointer"
+                className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-c-text hover:border-c-accent focus:border-c-accent focus:ring-1 focus:ring-c-focus transition-all duration-200 cursor-pointer"
               >
                 <option value="all">All Formats</option>
                 <option value="vertical">Vertical ({formatCounts.vertical})</option>
@@ -761,7 +761,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search templates..."
                 autoFocus
-                className="w-full pl-10 pr-10 py-2 rounded-lg bg-c-surface border border-c-border-subtle text-c-text placeholder:text-c-text-muted focus:border-c-accent focus:ring-1 focus:ring-c-focus transition-all"
+                className="w-full pl-10 pr-10 py-2 rounded-lg bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-c-text placeholder:text-c-text-muted focus:border-c-accent focus:ring-1 focus:ring-c-focus transition-all"
               />
               {searchQuery && (
                 <button
@@ -783,7 +783,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
       <div className="flex-1 min-h-0 flex gap-1.5 p-4">
         <div className="flex-1 min-w-0 overflow-y-auto">
           {filteredTemplates.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-c-border-subtle rounded-xl">
+            <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl">
               <div className="p-4 rounded-full bg-c-surface-raised inline-block mb-4">
                 <FileText size={28} className="text-c-text-secondary" />
               </div>
@@ -797,7 +797,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               </p>
             </div>
           ) : (
-            <div className="bg-c-surface border border-c-border-subtle rounded-xl overflow-x-auto">
+            <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl overflow-x-auto">
               <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full" style={{ minWidth: 900 }}>
                 <thead>
                   <tr className="border-b border-c-border-subtle bg-c-surface-raised sticky top-0 z-10">
@@ -1144,7 +1144,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
           const audienceConfig = getAudienceBadgeConfig(previewTpl.audience);
           return (
             <div className="shrink-0 overflow-y-auto" style={{ width: 'clamp(340px, 28%, 480px)' }}>
-              <div className="rounded-xl bg-c-surface border border-c-border-subtle/[0.06] backdrop-blur">
+              <div className="rounded-xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03]/[0.06] backdrop-blur">
                 <div className="sticky top-0 z-10 flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle/[0.05] bg-c-surface backdrop-blur">
                   <h3 className="flex-1 min-w-0 truncate text-sm font-semibold text-c-text">
                     {previewTpl.name}

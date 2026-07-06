@@ -409,7 +409,7 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
         if (e.target === overlayRef.current) onClose();
       }}
     >
-      <div className="w-full max-w-2xl mx-4 rounded-2xl bg-c-surface border border-c-border-subtle shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="w-full max-w-2xl mx-4 rounded-2xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
           <h2 className="text-base font-semibold text-c-text">
             {pl ? 'Nowa notatka' : 'New Note'}
@@ -471,7 +471,7 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
               <button
                 key={tmpl.id}
                 onClick={() => handleSelect(tmpl)}
-                className="group flex items-start gap-3.5 w-full p-4 rounded-xl text-left border border-c-border-subtle hover:border-c-border-strong hover:shadow-md bg-c-surface transition-all duration-150 hover:-translate-y-0.5"
+                className="group flex items-start gap-3.5 w-full p-4 rounded-xl text-left border border-slate-200/60 dark:border-white/[0.03] hover:border-c-border-strong hover:shadow-md bg-c-surface transition-all duration-150 hover:-translate-y-0.5"
               >
                 <div
                   className={`shrink-0 p-2.5 rounded-lg bg-gradient-to-br ${tmpl.gradient} text-white`}

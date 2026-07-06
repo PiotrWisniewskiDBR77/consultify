@@ -66,7 +66,7 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[440px] bg-c-surface rounded-2xl border border-c-border-subtle shadow-2xl p-6"
+        className="w-[440px] bg-c-surface rounded-2xl border border-slate-200/60 dark:border-white/[0.03] shadow-2xl p-6"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -131,7 +131,7 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={isPl ? 'Zostaw puste = bez hasła' : 'Leave empty = no password'}
-                className="w-full px-3 py-2 text-xs rounded-lg border border-c-border-subtle bg-c-surface"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface"
               />
             </div>
 
@@ -145,7 +145,7 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
                 type="datetime-local"
                 value={expiresAt}
                 onChange={(e) => setExpiresAt(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-lg border border-c-border-subtle bg-c-surface"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface"
               />
             </div>
           </>

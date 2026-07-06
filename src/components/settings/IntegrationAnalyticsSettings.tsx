@@ -313,7 +313,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
         <>
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-4 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
+            <div className="p-4 bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-c-text-muted">
                   {t('settings.analytics.totalRequests', 'Total Requests')}
@@ -328,7 +328,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
               </p>
             </div>
 
-            <div className="p-4 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
+            <div className="p-4 bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-c-text-muted">
                   {t('settings.analytics.avgLatency', 'Avg Latency')}
@@ -344,7 +344,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
               </p>
             </div>
 
-            <div className="p-4 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
+            <div className="p-4 bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-c-text-muted">
                   {t('settings.analytics.totalCost', 'Total Cost')}
@@ -359,7 +359,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
               </p>
             </div>
 
-            <div className="p-4 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
+            <div className="p-4 bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-c-text-muted">
                   {t('settings.analytics.errors', 'Errors')}
@@ -382,7 +382,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
           {metrics.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Requests Over Time */}
-              <div className="p-6 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
+              <div className="p-6 bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700">
                 <h4 className="text-sm font-semibold text-c-text mb-4">
                   {t('settings.analytics.requestsOverTime', 'Requests Over Time')}
                 </h4>
@@ -410,7 +410,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
               </div>
 
               {/* Latency Over Time */}
-              <div className="p-6 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
+              <div className="p-6 bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700">
                 <h4 className="text-sm font-semibold text-c-text mb-4">
                   {t('settings.analytics.latencyOverTime', 'Latency Over Time')}
                 </h4>
@@ -445,7 +445,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
               </div>
 
               {/* Success vs Failures */}
-              <div className="p-6 bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700 lg:col-span-2">
+              <div className="p-6 bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 lg:col-span-2">
                 <h4 className="text-sm font-semibold text-c-text mb-4">
                   {t('settings.analytics.successVsFailures', 'Success vs Failures')}
                 </h4>
@@ -479,7 +479,7 @@ export const IntegrationAnalyticsSettings: React.FC<IntegrationAnalyticsSettings
           )}
 
           {/* Logs Table */}
-          <div className="bg-c-surface rounded-lg border border-c-border-subtle dark:border-navy-700">
+          <div className="bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700">
             <div className="p-4 border-b border-c-border-subtle dark:border-navy-700 flex items-center justify-between">
               <h4 className="text-sm font-semibold text-c-text">
                 {t('settings.analytics.recentLogs', 'Recent Logs')}

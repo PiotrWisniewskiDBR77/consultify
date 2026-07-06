@@ -154,7 +154,7 @@ export const AIInboxAutomationSettings: React.FC = () => {
           </p>
         </div>
 
-        <div className="rounded-xl border border-c-border-subtle dark:border-navy-700 bg-c-surface p-5">
+        <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
@@ -202,7 +202,7 @@ export const AIInboxAutomationSettings: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-          <div className="rounded-xl border border-c-border-subtle dark:border-navy-700 bg-c-surface p-5">
+          <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface p-5">
             <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
               <Sparkles size={16} className="text-c-accent" />
               {isPolish ? 'Ewale i koszt' : 'Evals and cost'}
@@ -236,7 +236,7 @@ export const AIInboxAutomationSettings: React.FC = () => {
             </p>
           </div>
 
-          <div className="rounded-xl border border-c-border-subtle dark:border-navy-700 bg-c-surface p-5">
+          <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface p-5">
             <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
               <Inbox size={16} className="text-emerald-500" />
               {isPolish ? 'Canonical inbox' : 'Canonical inbox'}
@@ -266,7 +266,7 @@ export const AIInboxAutomationSettings: React.FC = () => {
             </p>
           </div>
 
-          <div className="rounded-xl border border-c-border-subtle dark:border-navy-700 bg-c-surface p-5">
+          <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface p-5">
             <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
               <DollarSign size={16} className="text-amber-500" />
               {isPolish ? 'Szybki kontekst' : 'Quick context'}

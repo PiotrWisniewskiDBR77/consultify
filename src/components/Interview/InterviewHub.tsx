@@ -4938,7 +4938,7 @@ export const InterviewHub: React.FC = () => {
           <div
             key={session.id}
             onClick={() => (onCardClick ? onCardClick(session.id) : handleViewSession(session))}
-            className="group relative bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden cursor-pointer hover:shadow-lg hover:border-c-border-strong transition duration-200"
+            className="group relative bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden cursor-pointer hover:shadow-lg hover:border-c-border-strong transition duration-200"
           >
             {/* Header */}
             <div className="p-4 pb-2">
@@ -9654,7 +9654,7 @@ Return ONLY the answer text (no markdown fences).`;
       {/* Reminder Modal */}
       {showReminderModal && selectedAssignment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl w-full max-w-md mx-4">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl w-full max-w-md mx-4">
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h2 className="text-lg font-semibold text-c-text">
                 {isPolish ? 'Wyślij przypomnienie' : 'Send Reminder'}
@@ -9730,7 +9730,7 @@ Return ONLY the answer text (no markdown fences).`;
           from the Trash view; the backend rejects deletes on non-trashed sessions. */}
       {sessionDeleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl w-full max-w-md mx-4">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl w-full max-w-md mx-4">
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h2 className="text-lg font-semibold text-c-text">
                 {isPolish ? 'Usuń sesję na stałe' : 'Delete session forever'}
@@ -9809,7 +9809,7 @@ Return ONLY the answer text (no markdown fences).`;
       {/* Send Back Modal */}
       {showSendBackModal && selectedAssignment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl w-full max-w-md mx-4">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl w-full max-w-md mx-4">
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h2 className="text-lg font-semibold text-c-text">
                 {isPolish ? 'Zwróć do poprawy' : 'Send Back for Revision'}
@@ -9876,7 +9876,7 @@ Return ONLY the answer text (no markdown fences).`;
           Degrades gracefully when no AI assessment exists. */}
       {showApproveModal && selectedAssignment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[88vh] overflow-hidden flex flex-col">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[88vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h2 className="text-lg font-semibold text-c-text flex items-center gap-2">
                 <Check size={18} className="text-emerald-500" />
@@ -10016,7 +10016,7 @@ Return ONLY the answer text (no markdown fences).`;
       {/* #7b — Change due date modal (wired to manageAssignment, mode 'update'). */}
       {showDueDateModal && selectedAssignment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl w-full max-w-md mx-4">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl w-full max-w-md mx-4">
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h2 className="text-lg font-semibold text-c-text flex items-center gap-2">
                 <CalendarClock size={18} className="text-primary-500" />
@@ -10085,7 +10085,7 @@ Return ONLY the answer text (no markdown fences).`;
       {/* Analytics Modal (Placeholder) */}
       {showAnalytics && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                 <BarChart3 size={20} className="text-primary-400" />

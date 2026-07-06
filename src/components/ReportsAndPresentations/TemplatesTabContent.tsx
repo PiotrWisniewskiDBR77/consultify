@@ -452,7 +452,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           {families.map((f) => (
             <div
               key={f.key}
-              className="rounded-xl border border-c-border-subtle bg-c-surface p-4"
+              className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4"
             >
               <h4 className="text-sm font-semibold text-c-text">
                 {f.title}

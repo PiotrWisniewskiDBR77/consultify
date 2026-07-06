@@ -191,7 +191,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
 
   return (
     <div className="sticky bottom-4 z-50 mx-4">
-      <div className="bg-c-surface/95 backdrop-blur-xl border border-c-border-subtle rounded-xl shadow-2xl overflow-hidden">
+      <div className="bg-c-surface/95 backdrop-blur-xl border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl overflow-hidden">
         {/* Result Toast */}
         {result && (
           <div

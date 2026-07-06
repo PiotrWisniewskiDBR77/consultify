@@ -581,7 +581,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
               onClick={() => setFiltersOpen(false)}
               aria-label={t('common.close', 'Close')}
             />
-            <div className="absolute right-0 mt-2 z-50 w-[320px] rounded-xl border border-c-border bg-c-surface shadow-xl overflow-hidden">
+            <div className="absolute right-0 mt-2 z-50 w-[320px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl overflow-hidden">
               <div className="p-3 border-b border-c-border-subtle">
                 <div className="text-xs font-semibold text-c-text">
                   {t('common.filters', 'Filters')}

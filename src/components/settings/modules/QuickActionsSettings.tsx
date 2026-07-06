@@ -94,7 +94,7 @@ export const QuickActionsSettings: React.FC<QuickActionsSettingsProps> = ({ curr
         </button>
       </div>
 
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <Search size={20} className="text-blue-500" />
@@ -114,7 +114,7 @@ export const QuickActionsSettings: React.FC<QuickActionsSettingsProps> = ({ curr
         </div>
       </div>
 
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4">Quick Actions</h3>
         <div className="space-y-2">
           {actions.map((action, i) => (

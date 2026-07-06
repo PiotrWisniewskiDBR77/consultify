@@ -2450,7 +2450,7 @@ export const FinanceHub: React.FC = () => {
       openStatement || isModelWorkspace || openAnalysis || isBudgetPrediction || openValuation;
     return (
       <div className="p-4 lg:p-6">
-        <div className="bg-c-surface backdrop-blur border border-c-border-subtle rounded-xl overflow-hidden">
+        <div className="bg-c-surface backdrop-blur border border-slate-200/60 dark:border-white/[0.03] rounded-xl overflow-hidden">
           {!openStatement && (
             <div className="px-4 py-3 border-b border-c-border-subtle flex items-center justify-between">
               <div className="min-w-0">
@@ -2677,7 +2677,7 @@ export const FinanceHub: React.FC = () => {
       return (
         <>
           <div className="flex items-center justify-center p-6">
-          <div className="w-full max-w-3xl rounded-2xl border border-c-border-subtle bg-c-surface p-6">
+          <div className="w-full max-w-3xl rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
             <div className="flex items-start gap-4">
               <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-300">
                 <Target size={20} />
@@ -2721,7 +2721,7 @@ export const FinanceHub: React.FC = () => {
       return (
         <>
           <div className="flex items-center justify-center p-6">
-          <div className="w-full max-w-3xl rounded-2xl border border-c-border-subtle bg-c-surface p-6">
+          <div className="w-full max-w-3xl rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
             <div className="flex items-start gap-4">
               <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-crimson-500/10 text-crimson-600 dark:text-crimson-300">
                 <Calculator size={20} />
@@ -2759,7 +2759,7 @@ export const FinanceHub: React.FC = () => {
                         },
                       })
                     }
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-c-border-subtle bg-c-surface px-3.5 py-2 text-sm font-medium text-c-text-secondary transition hover:border-crimson-300 hover:text-crimson-700 dark:hover:text-crimson-300"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3.5 py-2 text-sm font-medium text-c-text-secondary transition hover:border-crimson-300 hover:text-crimson-700 dark:hover:text-crimson-300"
                   >
                     <Sparkles size={14} />
                     {t('finance.model.emptyAskTeresa', 'Ask Teresa to start')}

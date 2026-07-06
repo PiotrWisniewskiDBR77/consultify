@@ -83,7 +83,7 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg mx-4 bg-c-surface border border-c-border-subtle rounded-2xl shadow-2xl">
+      <div className="relative w-full max-w-lg mx-4 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-2xl shadow-2xl">
         {/* Header */}
         <div className="flex items-center gap-3 px-6 py-4 border-b border-c-border-subtle">
           <div className="p-2 rounded-lg bg-c-accent-soft0">
@@ -114,7 +114,7 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
               onChange={(e) => setTitle(e.target.value)}
               placeholder={isPl ? 'Nazwa inicjatywy…' : 'Initiative name…'}
               disabled={submitting || success}
-              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-focus disabled:opacity-50 transition-colors"
+              className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-focus disabled:opacity-50 transition-colors"
             />
           </div>
 
@@ -129,7 +129,7 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
               placeholder={isPl ? 'Opis inicjatywy…' : 'Initiative description…'}
               rows={5}
               disabled={submitting || success}
-              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-focus disabled:opacity-50 resize-none transition-colors"
+              className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-focus disabled:opacity-50 resize-none transition-colors"
             />
           </div>
 

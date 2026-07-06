@@ -281,7 +281,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
         </p>
       </header>
 
-      <section className="rounded-xl border border-c-border-subtle bg-c-surface p-4 shadow-sm">
+      <section className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4 shadow-sm">
         <h3 className="text-sm font-semibold text-c-text">
           {t('documentStudio.templateArchitect.draftHeading', 'Draft a new template')}
         </h3>
@@ -298,7 +298,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                 'documentStudio.templateArchitect.templateNamePlaceholder',
                 'e.g., Quarterly Board Memo template'
               )}
-              className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
@@ -308,7 +308,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
             <select
               value={documentType}
               onChange={(e) => setDocumentType(e.target.value as DocumentTypeKey)}
-              className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
             >
               {documentTypeOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -330,7 +330,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                 'documentStudio.templateArchitect.purposePlaceholder',
                 'What kind of documents will this template produce, and for whom?'
               )}
-              className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
               minLength={8}
               required
             />
@@ -344,7 +344,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
               value={audience}
               onChange={(e) => setAudience(e.target.value)}
               placeholder={t('documentStudio.templateArchitect.audiencePlaceholder', 'e.g., Board, CEO, CFO')}
-              className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
@@ -354,7 +354,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value as 'pl' | 'en')}
-              className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
             >
               <option value="pl">{t('documentStudio.templateArchitect.langPolish', 'Polish')}</option>
               <option value="en">{t('documentStudio.templateArchitect.langEnglish', 'English')}</option>
@@ -424,7 +424,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
         </div>
       ) : null}
 
-      <section className="rounded-xl border border-c-border-subtle bg-c-surface p-4 shadow-sm">
+      <section className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-c-text">
             {t('documentStudio.templateArchitect.registryHeading', 'Template registry')}

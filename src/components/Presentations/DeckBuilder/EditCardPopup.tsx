@@ -140,7 +140,7 @@ export const EditCardPopup: React.FC<EditCardPopupProps> = ({
   const filteredActions = QUICK_ACTIONS.filter((a) => a.category === activeCategory);
 
   return (
-    <div className="absolute bottom-4 left-4 w-72 bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl z-40 overflow-hidden">
+    <div className="absolute bottom-4 left-4 w-72 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl z-40 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
         <div className="flex items-center gap-1.5">

@@ -137,7 +137,7 @@ const SectionCard: React.FC<{
   onAction?: () => void;
   children: React.ReactNode;
 }> = ({ title, subtitle, icon: Icon, actionLabel, onAction, children }) => (
-  <section className="rounded-2xl border border-c-border-subtle dark:border-navy-700 bg-c-surface p-5 shadow-sm">
+  <section className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface p-5 shadow-sm">
     <div className="flex items-start justify-between gap-4">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-c-accent-soft text-c-accent dark:bg-c-accent-soft">

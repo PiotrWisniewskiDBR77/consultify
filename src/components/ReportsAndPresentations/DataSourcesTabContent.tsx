@@ -149,7 +149,7 @@ export const DataSourcesTabContent: React.FC = () => {
         </header>
 
         {/* Połącz źródło */}
-        <section className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
+        <section className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4">
           <h3 className="mb-2 text-sm font-semibold text-c-text">
             Połącz źródło
           </h3>
@@ -204,7 +204,7 @@ export const DataSourcesTabContent: React.FC = () => {
         </section>
 
         {/* Zbierz przez formularz */}
-        <section className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
+        <section className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4">
           <h3 className="mb-2 text-sm font-semibold text-c-text">
             Zbierz przez formularz
           </h3>

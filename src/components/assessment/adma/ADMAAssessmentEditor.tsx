@@ -714,7 +714,7 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
                     placeholder={
                       isPolish ? 'Dodaj notatki lub dowody...' : 'Add notes or evidence...'
                     }
-                    className="mt-2 w-full h-32 p-3 border border-c-border-subtle rounded-lg bg-c-surface dark:bg-c-bg text-c-text resize-none disabled:opacity-60"
+                    className="mt-2 w-full h-32 p-3 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface dark:bg-c-bg text-c-text resize-none disabled:opacity-60"
                   />
                 )}
               </div>

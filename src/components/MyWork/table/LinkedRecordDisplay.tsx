@@ -258,7 +258,7 @@ export const LinkedRecordDisplay: React.FC<LinkedRecordDisplayProps> = React.mem
               </button>
               {/* Hover preview */}
               {hoveredId === link.id && (
-                <div className="absolute bottom-full left-0 z-50 mb-1 w-56 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl">
+                <div className="absolute bottom-full left-0 z-50 mb-1 w-56 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl">
                   <HoverPreviewCard
                     recordId={link.id}
                     linkedTableId={linkedTableId}

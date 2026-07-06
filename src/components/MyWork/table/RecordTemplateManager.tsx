@@ -100,7 +100,7 @@ export const RecordTemplateManager: React.FC<RecordTemplateManagerProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[520px] max-w-[95vw] max-h-[80vh] flex flex-col rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl"
+        className="w-[520px] max-w-[95vw] max-h-[80vh] flex flex-col rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -334,7 +334,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[480px] max-w-[95vw] max-h-[80vh] flex flex-col rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl"
+        className="w-[480px] max-w-[95vw] max-h-[80vh] flex flex-col rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -366,7 +366,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={isPl ? 'np. Zadanie standardowe' : 'e.g. Standard Task'}
-              className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-c-focus"
+              className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-xs text-c-text outline-none focus:ring-2 focus:ring-c-focus"
               autoFocus
             />
           </div>
@@ -446,7 +446,7 @@ const TemplateFieldInput: React.FC<TemplateFieldInputProps> = ({
   isPl,
 }) => {
   const inputClass =
-    'w-full rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text-secondary outline-none focus:ring-2 focus:ring-c-focus';
+    'w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2.5 py-1.5 text-[11px] text-c-text-secondary outline-none focus:ring-2 focus:ring-c-focus';
 
   const renderInput = () => {
     switch (field.fieldType) {
@@ -597,7 +597,7 @@ export const TemplateDropdown: React.FC<TemplateDropdownProps> = ({
     <div className="fixed inset-0 z-[150]" onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-[240px] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl overflow-hidden"
+        className="w-[240px] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden"
         style={style}
       >
         <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">

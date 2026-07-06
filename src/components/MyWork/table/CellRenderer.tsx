@@ -97,7 +97,7 @@ const SelectCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
         {!locked && <ChevronDown size={10} />}
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 w-36 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-1 max-h-48 overflow-auto">
+        <div className="absolute left-0 top-full mt-1 z-50 w-36 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl p-1 max-h-48 overflow-auto">
           {options.map((opt) => (
             <button
               key={opt}
@@ -181,7 +181,7 @@ const MultiSelectCell: React.FC<CellProps> = ({ column, value, onChange, locked 
         {!locked && <ChevronDown size={10} className="text-c-text-secondary ml-0.5" />}
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 w-40 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-1 max-h-48 overflow-auto">
+        <div className="absolute left-0 top-full mt-1 z-50 w-40 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl p-1 max-h-48 overflow-auto">
           {options.map((opt) => (
             <button
               key={opt}
@@ -431,7 +431,7 @@ const StatusCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
         {!locked && <ChevronDown size={10} />}
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 w-40 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-1">
+        <div className="absolute left-0 top-full mt-1 z-50 w-40 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl p-1">
           {statusOptions.map((opt) => {
             const d = STATUS_DISPLAY[opt];
             return (

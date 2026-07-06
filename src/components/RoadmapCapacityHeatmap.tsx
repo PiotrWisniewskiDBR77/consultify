@@ -136,7 +136,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
   }, [capacityData]);
 
   return (
-    <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
+    <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden">
       {/* Header */}
       <div className="px-4 py-3 border-b border-c-border-subtle">
         <div className="flex items-center justify-between">

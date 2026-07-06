@@ -126,7 +126,7 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
     'w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle dark:border-navy-700 rounded-md text-navy-900 focus:ring-2 focus:ring-[color:var(--c-focus)] outline-none transition-all';
   const labelClass = 'text-xs font-medium text-c-text-muted';
   const cardClass =
-    'bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg p-6';
+    'bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg p-6';
   const sectionTitleClass =
     'text-sm font-bold text-navy-900 mb-4 uppercase tracking-wider flex items-center gap-2';
   const toggleClass = (enabled: boolean) =>

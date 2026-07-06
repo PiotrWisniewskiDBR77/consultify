@@ -168,7 +168,7 @@ function ModuleLinkSection({
   }, [modelId, moduleKey, fieldMappings, selectedTableId, isPl, onSyncComplete]);
 
   const inputCls =
-    'w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-1.5 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-tag-2';
+    'w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-1.5 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-tag-2';
 
   return (
     <div className={`rounded-xl border ${cfg.borderColor} overflow-hidden`}>
@@ -362,7 +362,7 @@ export const ConsultifyLinkPanel: React.FC<ConsultifyLinkPanelProps> = ({
   }, [loadData]);
 
   const inputCls =
-    'w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-1.5 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-tag-2';
+    'w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-1.5 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-tag-2';
 
   return (
     <div className="h-full flex flex-col">

@@ -296,7 +296,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
 
       {/* Alert Settings Panel */}
       {showAlertSettings && (
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6 animate-in slide-in-from-top-2 duration-300">
+        <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 p-6 animate-in slide-in-from-top-2 duration-300">
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-semibold text-c-text flex items-center gap-2">
               <Bell className="w-5 h-5 text-c-accent" />
@@ -385,13 +385,13 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('security.events.search', 'Search events...')}
-            className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg text-c-text placeholder-c-text-muted focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg text-c-text placeholder-c-text-muted focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
           />
         </div>
         <div className="relative">
           <button
             onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-            className="flex items-center gap-2 px-4 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg hover:border-c-accent dark:hover:border-c-accent transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg hover:border-c-accent dark:hover:border-c-accent transition-colors"
           >
             <Filter className="w-4 h-4 text-c-text-muted" />
             <span className="text-sm font-medium text-c-text-secondary">
@@ -400,7 +400,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
             <ChevronDown className="w-4 h-4 text-c-text-muted" />
           </button>
           {showFilterDropdown && (
-            <div className="absolute right-0 mt-2 w-48 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg shadow-lg z-10">
+            <div className="absolute right-0 mt-2 w-48 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg shadow-lg z-10">
               {EVENT_TYPES.map((type) => (
                 <button
                   key={type.value}
@@ -447,7 +447,7 @@ export const SecurityEventsSettings: React.FC<SecurityEventsSettingsProps> = ({
           }
         />
       ) : (
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 overflow-hidden">
           <div className="divide-y divide-c-border-subtle dark:divide-white/5">
             {filteredEvents.map((event) => (
               <div

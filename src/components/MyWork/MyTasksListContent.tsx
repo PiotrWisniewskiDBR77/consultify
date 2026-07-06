@@ -809,7 +809,7 @@ const TaskTableRow: React.FC<{
                   onKeyDown={(e) => {
                     if (e.key === 'Escape') setInlineDropdown(null);
                   }}
-                  className="h-8 px-2 text-sm rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+                  className="h-8 px-2 text-sm rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
                 />
               </motion.div>
             )}

@@ -58,7 +58,7 @@ export const TeamSection: React.FC<InitiativeSectionProps> = ({
             onChange={(e) => setOwnerId(e.target.value)}
             disabled={!canEditOwner}
             title={!canEditOwner ? t('initiatives.teamSection.cannotEditOwner') : undefined}
-            className="w-full px-3 py-2 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-secondary focus:outline-none focus:border-blue-400"
+            className="w-full px-3 py-2 rounded-lg bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-sm text-c-text-secondary focus:outline-none focus:border-blue-400"
           >
             <option value="">{t('initiatives.teamSection.selectOwner')}</option>
             {users.map((user) => (
@@ -89,7 +89,7 @@ export const TeamSection: React.FC<InitiativeSectionProps> = ({
             onChange={(e) => setSponsorId(e.target.value)}
             disabled={!canEditOwner}
             title={!canEditOwner ? t('initiatives.teamSection.cannotEditSponsor') : undefined}
-            className="w-full px-3 py-2 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-secondary focus:outline-none focus:border-c-focus-solid"
+            className="w-full px-3 py-2 rounded-lg bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-sm text-c-text-secondary focus:outline-none focus:border-c-focus-solid"
           >
             <option value="">{t('initiatives.teamSection.selectSponsor')}</option>
             {users.map((user) => (

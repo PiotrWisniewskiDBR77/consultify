@@ -76,7 +76,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   const needsValue = (op: FilterOperator) => op !== 'not_empty' && op !== 'is_empty';
 
   return (
-    <div className="absolute left-0 top-full mt-1 z-overlay w-[400px] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl">
+    <div className="absolute left-0 top-full mt-1 z-overlay w-[400px] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl">
       <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-c-text">
@@ -126,7 +126,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             <select
               value={rule.column}
               onChange={(e) => updateRule(rule.id, { column: e.target.value })}
-              className="flex-1 rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              className="flex-1 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               {columns.map((col) => (
                 <option key={col.key} value={col.key}>
@@ -137,7 +137,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             <select
               value={rule.operator}
               onChange={(e) => updateRule(rule.id, { operator: e.target.value as FilterOperator })}
-              className="w-28 rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              className="w-28 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               {OPERATORS.map((op) => (
                 <option key={op.value} value={op.value}>
@@ -150,7 +150,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                 value={String(rule.value ?? '')}
                 onChange={(e) => updateRule(rule.id, { value: e.target.value })}
                 placeholder="..."
-                className="w-24 rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                className="w-24 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               />
             )}
             <button

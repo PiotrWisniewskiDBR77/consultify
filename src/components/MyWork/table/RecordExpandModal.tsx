@@ -187,7 +187,7 @@ const FieldValueDisplay: React.FC<{
       <input
         value={String(value)}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text outline-none focus:ring-2 focus:ring-c-focus"
+        className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2 py-1 text-xs text-c-text outline-none focus:ring-2 focus:ring-c-focus"
       />
     );
   }

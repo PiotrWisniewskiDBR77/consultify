@@ -302,7 +302,7 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
                 <div
                   role="listbox"
                   aria-label={isPl ? 'Wspomnij osobę' : 'Mention a teammate'}
-                  className="absolute bottom-full left-0 mb-1 w-64 rounded-xl border border-c-border-subtle bg-c-surface shadow-lg max-h-40 overflow-y-auto z-overlay"
+                  className="absolute bottom-full left-0 mb-1 w-64 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-lg max-h-40 overflow-y-auto z-overlay"
                 >
                   {mentionSuggestions.map((user) => (
                     <button

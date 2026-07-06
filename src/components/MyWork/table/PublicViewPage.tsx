@@ -79,7 +79,7 @@ export default function PublicViewPage() {
       <div className="flex min-h-screen items-center justify-center bg-c-surface-raised">
         <form
           onSubmit={handlePasswordSubmit}
-          className="rounded-2xl border border-c-border-subtle bg-c-surface p-8 w-full max-w-sm shadow-sm text-center space-y-4"
+          className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-8 w-full max-w-sm shadow-sm text-center space-y-4"
         >
           <div className="flex justify-center">
             <div className="p-3 rounded-full bg-c-surface-raised">
@@ -137,7 +137,7 @@ export default function PublicViewPage() {
   return (
     <div className="min-h-screen bg-c-surface-raised p-4 md:p-8">
       <div className="mx-auto max-w-7xl">
-        <div className="rounded-2xl border border-c-border-subtle bg-c-surface shadow-sm overflow-hidden">
+        <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-sm overflow-hidden">
           <GridView rows={data.rows} columns={data.columns} locked={true} />
         </div>
         <p className="mt-4 text-center text-xs text-c-text-secondary">

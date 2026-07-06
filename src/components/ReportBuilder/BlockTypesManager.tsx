@@ -413,7 +413,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value as typeof categoryFilter)}
-                className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium bg-c-surface border border-c-border-subtle text-c-text hover:border-c-accent focus:border-c-accent focus:ring-1 focus:ring-c-focus transition duration-200 cursor-pointer"
+                className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-c-text hover:border-c-accent focus:border-c-accent focus:ring-1 focus:ring-c-focus transition duration-200 cursor-pointer"
               >
                 <option value="all">All Categories</option>
                 <option value="content">Content ({categoryCounts.content})</option>
@@ -431,7 +431,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
               <select
                 value={renderFilter}
                 onChange={(e) => setRenderFilter(e.target.value as typeof renderFilter)}
-                className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium bg-c-surface border border-c-border-subtle text-c-text hover:border-c-accent focus:border-c-accent focus:ring-1 focus:ring-c-focus transition duration-200 cursor-pointer"
+                className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-c-text hover:border-c-accent focus:border-c-accent focus:ring-1 focus:ring-c-focus transition duration-200 cursor-pointer"
               >
                 <option value="all">All Renders</option>
                 <option value="markdown">Markdown</option>
@@ -475,7 +475,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search blocks..."
                 autoFocus
-                className="w-full pl-10 pr-10 py-2 rounded-lg bg-c-surface border border-c-border-subtle text-c-text placeholder:text-c-text-muted focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
+                className="w-full pl-10 pr-10 py-2 rounded-lg bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-c-text placeholder:text-c-text-muted focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
               />
               {searchQuery && (
                 <button
@@ -496,7 +496,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
       {/* Table Container - matching TemplatesManager style */}
       <div className="flex-1 overflow-y-auto p-4">
         {filteredBlocks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-c-border-subtle rounded-xl">
+          <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl">
             <div className="p-4 rounded-full bg-c-surface-raised inline-block mb-4">
               <Blocks size={28} className="text-c-text-secondary" />
             </div>
@@ -510,7 +510,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
             </p>
           </div>
         ) : (
-          <div className="bg-c-surface border border-c-border-subtle rounded-xl overflow-hidden">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl overflow-hidden">
             <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full" style={{ minWidth: 900 }}>
               <thead>
                 <tr className="border-b border-c-border-subtle bg-c-surface-raised sticky top-0 z-10">
@@ -771,7 +771,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                   <input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
+                    className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
                   />
                 </div>
                 <div>
@@ -781,7 +781,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                   <select
                     value={renderKind}
                     onChange={(e) => setRenderKind(e.target.value as BlockRenderKind)}
-                    className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
+                    className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
                   >
                     <option value="markdown">markdown</option>
                     <option value="callout">callout</option>
@@ -800,7 +800,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                 <input
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
+                  className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
                 />
               </div>
 
@@ -813,7 +813,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                     value={sourceTypesText}
                     onChange={(e) => setSourceTypesText(e.target.value)}
                     placeholder="ASSESSMENT, TOOL"
-                    className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
+                    className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -824,7 +824,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                     <select
                       value={defaultLength}
                       onChange={(e) => setDefaultLength(e.target.value as SectionLength)}
-                      className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
+                      className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
                     >
                       <option value="short">Short</option>
                       <option value="medium">Medium</option>
@@ -838,7 +838,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                     <select
                       value={defaultLanguage}
                       onChange={(e) => setDefaultLanguage(e.target.value as SectionLanguage)}
-                      className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
+                      className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
                     >
                       <option value="business">Business</option>
                       <option value="technical">Technical</option>
@@ -857,7 +857,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                   onChange={(e) => setPromptTemplate(e.target.value)}
                   rows={6}
                   placeholder='E.g. "Write a section about ... using data: {{facts}}"'
-                  className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text font-mono text-xs focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
+                  className="w-full px-3 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text font-mono text-xs focus:border-c-accent focus:ring-1 focus:ring-c-focus transition"
                 />
               </div>
             </div>

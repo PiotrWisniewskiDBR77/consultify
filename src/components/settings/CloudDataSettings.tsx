@@ -209,7 +209,7 @@ export const CloudDataSettings: React.FC = () => {
             <select
               value={newProvider}
               onChange={(e) => setNewProvider(e.target.value)}
-              className="w-full px-3 py-2 text-sm bg-c-surface border border-c-border-subtle dark:border-navy-600 rounded-lg"
+              className="w-full px-3 py-2 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-600 rounded-lg"
             >
               {Object.keys(PROVIDER_LABELS).map((key) => (
                 <option key={key} value={key}>
@@ -227,7 +227,7 @@ export const CloudDataSettings: React.FC = () => {
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder={t('cloud.sourceNamePlaceholder', 'e.g. Company Drive')}
-              className="w-full px-3 py-2 text-sm bg-c-surface border border-c-border-subtle dark:border-navy-600 rounded-lg"
+              className="w-full px-3 py-2 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-600 rounded-lg"
             />
           </div>
           <div className="flex gap-2 justify-end">
@@ -260,7 +260,7 @@ export const CloudDataSettings: React.FC = () => {
           {sources.map((source) => (
             <div
               key={source.id}
-              className="flex items-center justify-between p-3 bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700"
+              className="flex items-center justify-between p-3 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700"
             >
               <div className="flex items-center gap-3">
                 <span className="text-xl">{PROVIDER_ICONS[source.provider] || '📁'}</span>

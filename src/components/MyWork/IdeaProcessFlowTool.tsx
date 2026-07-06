@@ -2560,7 +2560,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               round-trips through hydration (bug L-04). Solid c-* tokens only
               (no /alpha suffix — those don't emit rules for hex-valued c-*
               tokens, see finding_c_token_alpha_colormix). */}
-          <div className="absolute top-2 left-2 z-20 flex items-center gap-0.5 rounded-xl border border-c-border-subtle bg-c-surface shadow-sm px-1 py-0.5">
+          <div className="absolute top-2 left-2 z-20 flex items-center gap-0.5 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-sm px-1 py-0.5">
             <button
               type="button"
               onClick={() => setShowGrid((prev) => !prev)}

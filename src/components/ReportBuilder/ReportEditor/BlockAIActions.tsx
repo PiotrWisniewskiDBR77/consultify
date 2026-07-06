@@ -254,7 +254,7 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
 
   return (
     <div
-      className="absolute right-0 top-full mt-2 w-80 bg-c-surface rounded-xl shadow-2xl border border-c-border-subtle z-30 overflow-hidden"
+      className="absolute right-0 top-full mt-2 w-80 bg-c-surface rounded-xl shadow-2xl border border-slate-200/60 dark:border-white/[0.03] z-30 overflow-hidden"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}
@@ -354,7 +354,7 @@ export const BlockAIActions: React.FC<BlockAIActionsProps> = ({
             onChange={(e) => setCustomInstruction(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCustomSubmit()}
             placeholder={isPl ? 'Własna instrukcja...' : 'Custom instruction...'}
-            className="flex-1 px-3 py-2 text-xs bg-c-surface border border-c-border-subtle rounded-lg focus:ring-1 focus:ring-c-focus focus:border-c-accent"
+            className="flex-1 px-3 py-2 text-xs bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg focus:ring-1 focus:ring-c-focus focus:border-c-accent"
             disabled={isProcessing}
           />
           <button

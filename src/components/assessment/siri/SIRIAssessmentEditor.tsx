@@ -339,7 +339,7 @@ const PrioritisationAreaCard: React.FC<{
   isPolish: boolean;
 }> = ({ area, state, onChange, readOnly, isPolish }) => {
   return (
-    <div className="bg-c-surface dark:bg-c-bg rounded-lg border border-c-border-subtle p-4">
+    <div className="bg-c-surface dark:bg-c-bg rounded-lg border border-slate-200/60 dark:border-white/[0.03] p-4">
       <div className="flex items-center justify-between mb-3">
         <div>
           <h4 className="font-medium text-c-text">
@@ -724,7 +724,7 @@ export const SIRIAssessmentEditor: React.FC<Props> = ({
                     placeholder={
                       isPolish ? 'Dodaj notatki lub dowody...' : 'Add notes or evidence...'
                     }
-                    className="mt-2 w-full h-32 p-3 border border-c-border-subtle rounded-lg bg-c-surface dark:bg-c-bg text-c-text resize-none disabled:opacity-60"
+                    className="mt-2 w-full h-32 p-3 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface dark:bg-c-bg text-c-text resize-none disabled:opacity-60"
                   />
                 )}
               </div>

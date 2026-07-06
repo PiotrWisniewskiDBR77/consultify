@@ -332,7 +332,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
               {customTemplates.map((template) => (
                 <div
                   key={template.id}
-                  className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-4 flex items-center justify-between"
+                  className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-4 flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{template.icon}</span>
@@ -394,7 +394,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
                   value={newTemplateName}
                   onChange={(e) => setNewTemplateName(e.target.value)}
                   placeholder={t('settings.templates.namePlaceholder', 'My Settings Template')}
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
@@ -410,7 +410,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
                     'Describe this template...'
                   )}
                   rows={3}
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>

@@ -831,7 +831,7 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
     return (
       <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg">
         <div className="flex-1 p-4">
-          <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-c-border-subtle rounded-xl">
+          <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl">
             <CheckCircle2 size={48} className="text-c-text-muted mb-4" />
             <h3 className="text-lg font-medium text-c-text-secondary mb-2">
               No tasks yet

@@ -3236,7 +3236,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
           {/* Idea lifecycle stage badge */}
           {ideaStage && (
-            <div className="absolute top-2 right-2 z-20 px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-c-surface backdrop-blur-sm border border-c-border-subtle text-c-text-secondary shadow-sm">
+            <div className="absolute top-2 right-2 z-20 px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-c-surface backdrop-blur-sm border border-slate-200/60 dark:border-white/[0.03] text-c-text-secondary shadow-sm">
               {ideaStage}
             </div>
           )}
@@ -3245,7 +3245,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           {isObserver && (
             <div
               data-testid="whiteboard-observer-badge"
-              className="absolute top-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-c-surface backdrop-blur-sm border border-c-border-subtle text-c-text-secondary shadow-sm"
+              className="absolute top-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-c-surface backdrop-blur-sm border border-slate-200/60 dark:border-white/[0.03] text-c-text-secondary shadow-sm"
             >
               <svg
                 className="w-3 h-3"
@@ -3343,7 +3343,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               className="absolute inset-0 z-30 flex items-center justify-center backdrop-blur-[1px]"
               style={{ backgroundColor: 'color-mix(in srgb, var(--c-bg) 45%, transparent)' }}
             >
-              <div className="w-full max-w-lg rounded-2xl border border-c-border-subtle bg-c-surface p-4 shadow-2xl dark:shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+              <div className="w-full max-w-lg rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4 shadow-2xl dark:shadow-[0_0_40px_rgba(0,0,0,0.5)]">
                 <div className="text-sm font-semibold text-c-text">
                   {t('myWork.whiteboard.outlineImport.title')}
                 </div>

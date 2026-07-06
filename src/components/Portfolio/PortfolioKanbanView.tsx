@@ -90,7 +90,7 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ initiative, onClick, isDragging
     <div
       onClick={onClick}
       className={`
-        bg-c-surface rounded-xl border border-c-border
+        bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]
         p-3 cursor-pointer group transition-all
         hover:bg-c-surface-raised
         ${isDragging ? 'shadow-hig-xl dark:shadow-hig-dark-xl scale-[1.02] rotate-1' : ''}

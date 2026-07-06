@@ -88,7 +88,7 @@ const ProfilesList: React.FC = () => {
         {profiles.map((profile) => (
           <div
             key={profile.id}
-            className="p-5 bg-c-surface rounded-xl border border-c-border-subtle"
+            className="p-5 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]"
           >
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 bg-c-accent flex items-center justify-center flex-shrink-0">
@@ -251,7 +251,7 @@ export const ReportsComposer: React.FC<ReportsComposerProps> = ({
       </div>
 
       {/* Tab Content */}
-      <div className="bg-c-surface rounded-xl shadow border border-c-border-subtle p-6">
+      <div className="bg-c-surface rounded-xl shadow border border-slate-200/60 dark:border-white/[0.03] p-6">
         {activeTab === 'blocks' && <BlockTypesManager embedded />}
         {activeTab === 'templates' && (
           <TemplatesManager embedded onUseTemplate={handleUseTemplate} />

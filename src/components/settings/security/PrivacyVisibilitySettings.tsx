@@ -258,7 +258,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
       </div>
 
       {/* Profile Visibility Section */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Shield size={20} className="text-blue-500" />
           Profile Visibility
@@ -298,7 +298,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
       </div>
 
       {/* Activity Controls Section */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Activity size={20} className="text-green-500" />
           Activity Controls
@@ -369,7 +369,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
       </div>
 
       {/* Directory & Search Section */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Search size={20} className="text-amber-500" />
           Directory & Search
@@ -401,7 +401,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
               onChange={(e) =>
                 setSettings({ ...settings, allowMentionsFrom: e.target.value as any })
               }
-              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+              className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
             >
               <option value="all">Everyone</option>
               <option value="team">Team members only</option>
@@ -418,7 +418,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
               onChange={(e) =>
                 setSettings({ ...settings, allowDirectMessagesFrom: e.target.value as any })
               }
-              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+              className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
             >
               <option value="all">Everyone</option>
               <option value="team">Team members only</option>
@@ -429,7 +429,7 @@ export const PrivacyVisibilitySettings: React.FC<PrivacyVisibilitySettingsProps>
       </div>
 
       {/* Profile Sections Visibility */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Info size={20} className="text-indigo-500" />
           Profile Sections

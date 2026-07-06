@@ -281,7 +281,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
             {files.map((f, idx) => (
               <div
                 key={`${f.name}-${idx}`}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-c-surface border border-c-border-subtle"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-c-surface border border-slate-200/60 dark:border-white/[0.03]"
               >
                 <FileText className="w-4 h-4 text-c-text-secondary flex-shrink-0" />
                 <div className="flex-1 min-w-0">

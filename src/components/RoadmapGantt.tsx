@@ -637,7 +637,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
         {/* Right: Controls — clearly separated groups */}
         <div className="flex items-center gap-3">
           {/* Group 1: Zoom */}
-          <div className="flex items-center bg-c-surface rounded-lg border border-c-border p-0.5">
+          <div className="flex items-center bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03] p-0.5">
             <button
               onClick={() => setZoomLevel('month')}
               className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${

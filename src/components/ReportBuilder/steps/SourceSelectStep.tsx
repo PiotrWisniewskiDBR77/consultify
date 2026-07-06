@@ -226,7 +226,7 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={isPl ? 'Szukaj...' : 'Search...'}
-              className="w-full pl-10 pr-4 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
@@ -315,7 +315,7 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
               value={reportTitle}
               onChange={(e) => onTitleChange(e.target.value)}
               placeholder={isPl ? 'Wprowadź tytuł raportu...' : 'Enter report title...'}
-              className="w-full px-4 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
@@ -333,7 +333,7 @@ export const SourceSelectStep: React.FC<SourceSelectStepProps> = ({
                   : 'Describe the report purpose, target audience, decisions it should support...'
               }
               rows={3}
-              className="w-full px-4 py-2 border border-c-border-subtle rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-2 border border-slate-200/60 dark:border-white/[0.03] rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             />
             <p className="text-xs text-c-text-secondary mt-1">
               {isPl

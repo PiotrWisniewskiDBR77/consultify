@@ -79,7 +79,7 @@ export const ProblemPlatformSection: React.FC = () => {
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="flex flex-col rounded-2xl border border-c-border bg-c-surface p-8 backdrop-blur-xl"
+            className="flex flex-col rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-8 backdrop-blur-xl"
           >
             <div className="flex items-start gap-4 mb-6">
               <div
@@ -140,7 +140,7 @@ export const ProblemPlatformSection: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
             viewport={{ once: true }}
-            className="flex flex-col rounded-2xl border border-c-border bg-c-surface p-8 backdrop-blur-xl"
+            className="flex flex-col rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-8 backdrop-blur-xl"
           >
             <div className="flex items-start gap-4 mb-6">
               <div

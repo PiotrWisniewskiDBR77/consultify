@@ -107,7 +107,7 @@ const WorkspaceStatCard: React.FC<{
   helper: string;
   icon: React.ReactNode;
 }> = ({ label, value, helper, icon }) => (
-  <div className="rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3">
+  <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-4 py-3">
     <div className="flex items-start justify-between gap-3">
       <div>
         <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
@@ -134,7 +134,7 @@ const FieldShell: React.FC<{ label: string; children: React.ReactNode }> = ({
 );
 
 const INPUT_CLASS =
-  'w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus';
+  'w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus';
 
 const TEXTAREA_CLASS = `${INPUT_CLASS} min-h-[88px]`;
 
@@ -193,7 +193,7 @@ const KpiMultiSelect: React.FC<{
   };
 
   return (
-    <div className="rounded-xl border border-c-border-subtle bg-c-surface p-3">
+    <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
       <div className="max-h-44 overflow-y-auto space-y-2">
         {options.length === 0 ? (
           <div className="text-sm text-c-text-muted">
@@ -512,7 +512,7 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
       </div>
 
       {createOpen && (
-        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-base font-semibold text-c-text">
@@ -881,7 +881,7 @@ export const ResultsWallboardsView: React.FC<WorkspaceViewProps> = ({
       </div>
 
       {createOpen && (
-        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-base font-semibold text-c-text">
@@ -1239,7 +1239,7 @@ export const ResultsKpiConnectorsView: React.FC<WorkspaceViewProps> = ({
       </div>
 
       {createOpen && (
-        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-base font-semibold text-c-text">

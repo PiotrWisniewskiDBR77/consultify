@@ -591,7 +591,7 @@ export const InfoSections: React.FC = () => {
                   transition={{ delay: idx * 0.1, duration: 0.5 }}
                   className="space-y-6 group"
                 >
-                  <div className="w-20 h-20 bg-c-surface rounded-xl flex items-center justify-center border border-c-border shadow-premium group-hover:shadow-glow transition-all duration-500 text-c-text">
+                  <div className="w-20 h-20 bg-c-surface rounded-xl flex items-center justify-center border border-slate-200/60 dark:border-white/[0.03] shadow-premium group-hover:shadow-glow transition-all duration-500 text-c-text">
                     <Icon size={36} strokeWidth={1.5} />
                   </div>
                   <div className="space-y-3">
@@ -693,7 +693,7 @@ export const InfoSections: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-c-surface rounded-xl p-8 border border-c-border shadow-xl"
+            className="bg-c-surface rounded-xl p-8 border border-slate-200/60 dark:border-white/[0.03] shadow-xl"
           >
             {faqs.map((faq, idx) => (
               <FAQItem

@@ -255,7 +255,7 @@ const SingleSelectEditor: React.FC<CellEditorProps> = ({
 
   return (
     <div ref={ref} className="relative">
-      <div className="w-full rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-1 max-h-48 overflow-auto">
+      <div className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl p-1 max-h-48 overflow-auto">
         {options.map((opt) => {
           const optVal = String(opt.name ?? opt.id);
           return (
@@ -336,7 +336,7 @@ const MultiSelectEditor: React.FC<CellEditorProps> = ({
 
   return (
     <div ref={ref} className="relative">
-      <div className="w-full rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-1 max-h-48 overflow-auto">
+      <div className="w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl p-1 max-h-48 overflow-auto">
         {options.map((opt) => {
           const optVal = String(opt.name ?? opt.id);
           const isSelected = selected.includes(optVal);

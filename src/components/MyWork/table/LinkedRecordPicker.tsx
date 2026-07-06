@@ -309,7 +309,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[1px]">
         <div
           ref={containerRef}
-          className="flex h-[620px] max-h-[85vh] w-[520px] flex-col overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl"
+          className="flex h-[620px] max-h-[85vh] w-[520px] flex-col overflow-hidden rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl"
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-c-border-subtle px-5 py-3">
@@ -357,7 +357,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                     </span>
                     {/* Expand popover */}
                     {expandedChipId === link.id && expandData && (
-                      <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-xl border border-c-border-subtle bg-c-surface p-3 shadow-xl">
+                      <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 shadow-xl">
                         <div className="mb-2 text-xs font-bold text-c-text">
                           {link.displayValue}
                         </div>

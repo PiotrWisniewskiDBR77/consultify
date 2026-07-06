@@ -306,7 +306,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
       </div>
 
       {/* Data Retention Settings */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Clock size={20} className="text-blue-500" />
@@ -331,7 +331,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
               <select
                 value={value}
                 onChange={(e) => setRetention({ ...retention, [key]: parseInt(e.target.value) })}
-                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+                className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
               >
                 {retentionOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -376,7 +376,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
               <select
                 value={anonymizationSchedule}
                 onChange={(e) => setAnonymizationSchedule(e.target.value)}
-                className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+                className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
               >
                 <option value="weekly">Weekly</option>
                 <option value="monthly">Monthly</option>
@@ -388,7 +388,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
       </div>
 
       {/* Export Format Selection */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Download size={20} className="text-c-accent" />
           Export Format
@@ -451,7 +451,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
       </div>
 
       {/* Data Categories */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Archive size={20} className="text-amber-500" />
           Data Categories
@@ -543,7 +543,7 @@ export const DataControlsExtended: React.FC<DataControlsExtendedProps> = ({
       </div>
 
       {/* Data Portability */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
           <Upload size={20} className="text-indigo-500" />
           Data Portability

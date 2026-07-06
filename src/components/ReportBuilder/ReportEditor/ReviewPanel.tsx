@@ -509,7 +509,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
   return (
     <div className="space-y-3">
       {/* ===== WORKFLOW ===== */}
-      <div className="p-3 bg-c-surface rounded-lg border border-c-border-subtle">
+      <div className="p-3 bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03]">
         <div className="text-[8px] font-bold text-c-text-secondary uppercase tracking-[0.15em] mb-2.5">
           {isPolish ? 'Workflow' : 'Workflow'}
         </div>

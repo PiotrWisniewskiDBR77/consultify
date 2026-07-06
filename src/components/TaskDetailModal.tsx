@@ -130,7 +130,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
 
     return (
       <div className="fixed inset-0 z-overlay flex items-center justify-center bg-slate-900/50 dark:bg-navy-950/90 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-        <div className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col h-[85vh]">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col h-[85vh]">
           {/* Initiative Context Banner */}
           {initiative && (
             <div className="px-4 py-2.5 border-b border-c-border-subtle bg-c-surface-raised flex items-center gap-3 shrink-0">
@@ -351,7 +351,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                     <textarea
                       value={task.expectedOutcome || ''}
                       onChange={(e) => setTask({ ...task, expectedOutcome: e.target.value })}
-                      className="w-full h-24 bg-c-surface border border-c-border-subtle rounded-lg p-3 text-sm text-c-text focus:border-c-focus-solid outline-none resize-none transition-all placeholder:text-c-text-muted"
+                      className="w-full h-24 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg p-3 text-sm text-c-text focus:border-c-focus-solid outline-none resize-none transition-all placeholder:text-c-text-muted"
                       placeholder="e.g., Reduce customer onboarding time by 20%..."
                     />
                   </div>
@@ -431,7 +431,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                     <textarea
                       value={task.description || ''}
                       onChange={(e) => setTask({ ...task, description: e.target.value })}
-                      className="w-full h-64 bg-c-surface border border-c-border-subtle rounded-lg p-4 text-sm text-c-text focus:border-blue-500/50 outline-none resize-none font-mono leading-relaxed placeholder:text-c-text-muted"
+                      className="w-full h-64 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg p-4 text-sm text-c-text focus:border-blue-500/50 outline-none resize-none font-mono leading-relaxed placeholder:text-c-text-muted"
                       placeholder="Use markdown for detailed execution steps..."
                     />
                   </div>
@@ -468,7 +468,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                       type="text"
                       value={task.weightReason || ''}
                       onChange={(e) => setTask({ ...task, weightReason: e.target.value })}
-                      className="mt-3 w-full bg-c-surface border border-c-border-subtle rounded-lg px-3 py-2 text-xs text-c-text placeholder:text-c-text-muted outline-none focus:border-c-focus-solid"
+                      className="mt-3 w-full bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg px-3 py-2 text-xs text-c-text placeholder:text-c-text-muted outline-none focus:border-c-focus-solid"
                       placeholder="Reason for weight (e.g., Critical path item, High risk...)"
                     />
                   </div>
@@ -550,7 +550,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                       onChange={(e) =>
                         setTask({ ...task, acceptanceCriteria: e.target.value.split('\n') })
                       }
-                      className="w-full h-40 bg-c-surface border border-c-border-subtle rounded-lg p-3 text-sm text-c-text focus:border-green-500/30 outline-none resize-none placeholder:text-c-text-muted"
+                      className="w-full h-40 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg p-3 text-sm text-c-text focus:border-green-500/30 outline-none resize-none placeholder:text-c-text-muted"
                       placeholder="- [ ] Metric A > 50%&#10;- [ ] User Flow Tested"
                     />
                   </div>

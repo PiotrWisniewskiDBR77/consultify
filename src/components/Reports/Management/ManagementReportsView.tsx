@@ -327,7 +327,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
       <div className="p-6">
         {viewMode === 'selector' && (
           <div className="max-w-3xl mx-auto">
-            <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
+            <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-6">
               <div className="flex items-center gap-2 mb-6">
                 <Sparkles size={20} className="text-c-accent" />
                 <h2 className="text-lg font-semibold text-c-text">
@@ -564,7 +564,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
         {viewMode === 'preview' && currentReport && (
           <div className="max-w-5xl mx-auto space-y-6">
             {/* Export Controls */}
-            <div className="flex items-center justify-between bg-c-surface rounded-xl border border-c-border-subtle p-4">
+            <div className="flex items-center justify-between bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4">
               <div className="text-sm text-c-text-muted">
                 Report ID:{' '}
                 <code className="px-1 py-0.5 bg-c-surface-raised rounded">
@@ -641,7 +641,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
 
         {viewMode === 'settings' && (
           <div className="max-w-3xl mx-auto">
-            <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6 space-y-4">
+            <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-6 space-y-4">
               <h2 className="text-lg font-semibold text-c-text flex items-center gap-2">
                 <Settings size={18} />
                 Reporting Settings

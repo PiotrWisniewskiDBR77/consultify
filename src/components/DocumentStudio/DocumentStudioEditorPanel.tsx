@@ -341,7 +341,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
           <label className="flex flex-col gap-1 text-xs text-c-text-secondary">
             <span>{t('documentStudio.editor.target', 'Target block')}</span>
             <select
-              className="h-9 rounded-lg border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text"
+              className="h-9 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2 text-sm text-c-text"
               value={targetKey}
               onChange={(event) => setTargetKey(event.target.value)}
             >
@@ -362,7 +362,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
           <label className="flex flex-col gap-1 text-xs text-c-text-secondary">
             <span>{t('documentStudio.editor.sectionTarget', 'Target section')}</span>
             <select
-              className="h-9 rounded-lg border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text"
+              className="h-9 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2 text-sm text-c-text"
               value={sectionTargetId}
               onChange={(event) => setSectionTargetId(event.target.value)}
             >
@@ -387,7 +387,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
         <label className="flex flex-col gap-1 text-xs text-c-text-secondary">
           <span>{t('documentStudio.editor.instruction', 'Edit instruction')}</span>
           <textarea
-            className="min-h-[72px] rounded-lg border border-c-border-subtle bg-c-surface px-2 py-2 text-sm text-c-text"
+            className="min-h-[72px] rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2 py-2 text-sm text-c-text"
             value={instruction}
             onChange={(event) => setInstruction(event.target.value)}
             placeholder={t(
@@ -502,7 +502,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
       ) : null}
 
       {auditTrail.length > 0 ? (
-        <div className="mt-3 rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs">
+        <div className="mt-3 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs">
           <div className="mb-2 font-semibold text-c-text-secondary">
             {t('documentStudio.editor.auditTrail', 'Audit trail')}
           </div>

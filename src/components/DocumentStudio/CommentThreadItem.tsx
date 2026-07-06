@@ -104,7 +104,7 @@ export function CommentThreadItem({
 
   return (
     <li
-      className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs"
+      className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 text-xs"
       data-testid={`comment-thread-${thread.threadId}`}
     >
       {/* Header: anchor pill + status chip */}
@@ -209,7 +209,7 @@ export function CommentThreadItem({
             value={replyDraft}
             onChange={(event) => setReplyDraft(event.target.value)}
             placeholder={t('documentStudio.comments.replyPlaceholder', 'Write a reply…')}
-            className="min-h-[56px] w-full resize-y rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-xs text-c-text outline-none focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus"
+            className="min-h-[56px] w-full resize-y rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2.5 py-1.5 text-xs text-c-text outline-none focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus"
             data-testid={`comment-reply-input-${thread.threadId}`}
           />
           <div className="mt-1.5 flex justify-end gap-1.5">
@@ -249,7 +249,7 @@ export function CommentThreadItem({
               'documentStudio.comments.resolveReasonPlaceholder',
               'Optional resolution reason…'
             )}
-            className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-xs text-c-text outline-none focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus"
+            className="w-full rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2.5 py-1.5 text-xs text-c-text outline-none focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus"
             data-testid={`comment-resolve-reason-${thread.threadId}`}
           />
           <div className="mt-1.5 flex justify-end gap-1.5">

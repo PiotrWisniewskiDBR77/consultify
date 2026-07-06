@@ -173,7 +173,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
       onClick={onClose}
     >
       <div
-        className="w-[600px] max-w-[95vw] max-h-[85vh] bg-c-surface rounded-2xl border border-c-border-subtle shadow-2xl overflow-hidden flex flex-col"
+        className="w-[600px] max-w-[95vw] max-h-[85vh] bg-c-surface rounded-2xl border border-slate-200/60 dark:border-white/[0.03] shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -216,7 +216,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
                   placeholder={isPl ? 'np. Raport tygodniowy' : 'e.g. Weekly Report'}
                 />
               </div>
@@ -229,7 +229,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                 <select
                   value={form.sourceType}
                   onChange={(e) => setForm((p) => ({ ...p, sourceType: e.target.value as any }))}
-                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-c-border-subtle bg-c-surface text-c-text outline-none"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text outline-none"
                 >
                   <option value="table">{isPl ? 'Tabela' : 'Table'}</option>
                   <option value="view">{isPl ? 'Widok' : 'View'}</option>
@@ -245,7 +245,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                   type="text"
                   value={form.sourceId}
                   onChange={(e) => setForm((p) => ({ ...p, sourceId: e.target.value }))}
-                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
                   placeholder={isPl ? 'ID tabeli lub widoku' : 'Table or view ID'}
                 />
               </div>
@@ -291,7 +291,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                       type="text"
                       value={(form.channelConfig.to as string) || ''}
                       onChange={(e) => updateChannelConfig('to', e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
+                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
                       placeholder="user@example.com, team@example.com"
                     />
                   </div>
@@ -305,7 +305,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                       type="url"
                       value={(form.channelConfig.webhookUrl as string) || ''}
                       onChange={(e) => updateChannelConfig('webhookUrl', e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
+                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
                       placeholder="https://hooks.slack.com/services/..."
                     />
                   </div>
@@ -319,7 +319,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                       type="url"
                       value={(form.channelConfig.url as string) || ''}
                       onChange={(e) => updateChannelConfig('url', e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
+                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
                       placeholder="https://api.example.com/webhook"
                     />
                   </div>
@@ -357,7 +357,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                   type="text"
                   value={form.schedule}
                   onChange={(e) => setForm((p) => ({ ...p, schedule: e.target.value }))}
-                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:ring-1 focus:ring-blue-500 outline-none"
                   placeholder="0 9 * * 1 (Mon 9am)"
                 />
               </div>
@@ -408,7 +408,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                 return (
                   <div
                     key={dist.id}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-c-border-subtle bg-c-surface hover:border-c-border-subtle transition-colors"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface hover:border-c-border-subtle transition-colors"
                   >
                     <ChannelIcon
                       size={14}

@@ -251,7 +251,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-[480px] max-w-[95vw] h-[70vh] max-h-[600px] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl overflow-hidden flex flex-col"
+        className="w-[480px] max-w-[95vw] h-[70vh] max-h-[600px] rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -274,7 +274,7 @@ export const AICopilotMode: React.FC<AICopilotModeProps> = ({
               <ChevronDown size={9} />
             </button>
             {showModeSelector && (
-              <div className="absolute top-full left-0 mt-1 z-50 w-48 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-1.5">
+              <div className="absolute top-full left-0 mt-1 z-50 w-48 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl p-1.5">
                 {(
                   Object.entries(MODE_CONFIG) as [CopilotMode, (typeof MODE_CONFIG)[CopilotMode]][]
                 ).map(([key, config]) => (

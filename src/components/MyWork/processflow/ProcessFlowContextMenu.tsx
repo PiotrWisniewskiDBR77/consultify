@@ -58,7 +58,7 @@ export const ProcessFlowContextMenu: React.FC<ProcessFlowContextMenuProps> = ({
   return (
     <div
       ref={menuRef}
-      className="fixed z-overlay min-w-[180px] rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1"
+      className="fixed z-overlay min-w-[180px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1"
       style={{ top: y, left: x }}
     >
       {actions.map((action) => (

@@ -887,7 +887,7 @@ function FormPreview({
 
   return (
     <div className="mx-auto max-w-lg">
-      <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-8 shadow-sm">
+      <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-8 shadow-sm">
         <h3 className="mb-1 text-xl font-semibold text-c-text">{name}</h3>
         {description && (
           <p className="mb-6 text-sm text-c-text-muted">{description}</p>

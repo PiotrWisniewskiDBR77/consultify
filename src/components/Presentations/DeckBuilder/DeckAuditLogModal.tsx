@@ -1147,7 +1147,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="max-w-2xl w-full rounded-xl bg-c-surface border border-c-border-subtle shadow-xl flex flex-col max-h-[90vh] overflow-hidden"
+        className="max-w-2xl w-full rounded-xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] shadow-xl flex flex-col max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <header className="flex items-center justify-between px-5 py-3 border-b border-c-border-subtle">

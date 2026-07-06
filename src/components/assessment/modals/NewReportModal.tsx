@@ -279,7 +279,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                   value={reportName}
                   onChange={(e) => setReportName(e.target.value)}
                   placeholder="np. Raport DRD Q1 2025"
-                  className="w-full px-4 py-2.5 rounded-lg border border-c-border-subtle bg-c-surface dark:bg-c-bg text-c-text placeholder:text-c-text-muted dark:placeholder:text-c-text-muted"
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface dark:bg-c-bg text-c-text placeholder:text-c-text-muted dark:placeholder:text-c-text-muted"
                 />
               </div>
 
@@ -295,7 +295,7 @@ export const NewReportModal: React.FC<NewReportModalProps> = ({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Szukaj assessmentu..."
-                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface dark:bg-c-bg text-c-text placeholder:text-c-text-muted dark:placeholder:text-c-text-muted text-sm"
+                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface dark:bg-c-bg text-c-text placeholder:text-c-text-muted dark:placeholder:text-c-text-muted text-sm"
                   />
                 </div>
               )}

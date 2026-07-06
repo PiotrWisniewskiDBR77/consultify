@@ -532,7 +532,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
       {activeView === 'overview' && (
         <div className="space-y-6">
           {healthLoadError ? (
-            <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
+            <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
               <DegradedState
                 title="System health overview unavailable"
                 description={healthLoadError}
@@ -601,7 +601,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
 
               {/* Resource Usage */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
+                <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                   <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
                     <MemoryStick className="w-4 h-4 text-c-info" />
                     Memory Usage
@@ -626,7 +626,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
+                <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                   <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
                     <Cpu className="w-4 h-4 text-c-warning" />
                     System Load
@@ -659,7 +659,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
               </div>
 
               {/* AI Providers Status */}
-              <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
+              <div className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                 <h3 className="text-sm font-medium text-c-text mb-4 flex items-center gap-2">
                   <Brain className="w-4 h-4 text-c-accent" />
                   AI Provider Status
@@ -712,7 +712,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
       {activeView === 'services' && (
         <div className="space-y-4">
           {healthLoadError ? (
-            <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
+            <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
               <DegradedState title="Service health unavailable" description={healthLoadError} />
             </div>
           ) : (
@@ -723,7 +723,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                 return (
                   <div
                     key={service.name}
-                    className="p-4 bg-c-surface rounded-xl border border-c-border-subtle hover:border-c-border-strong transition-colors"
+                    className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] hover:border-c-border-strong transition-colors"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -775,7 +775,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
       {activeView === 'metrics' && (
         <div className="space-y-6">
           {healthLoadError ? (
-            <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
+            <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
               <DegradedState title="Health metrics unavailable" description={healthLoadError} />
             </div>
           ) : (
@@ -809,7 +809,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                 ].map(({ label, value, trend, icon: Icon }) => (
                   <div
                     key={label}
-                    className="p-4 bg-c-surface rounded-xl border border-c-border-subtle"
+                    className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]"
                   >
                     <div className="flex items-center justify-between mb-2">
                       <Icon className="w-4 h-4 text-c-text-secondary" />
@@ -827,7 +827,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                 ))}
               </div>
 
-              <div className="p-6 bg-c-surface rounded-xl border border-c-border-subtle">
+              <div className="p-6 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]">
                 <h3 className="text-sm font-medium text-c-text mb-4">
                   System Information
                 </h3>
@@ -943,7 +943,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
           )}
 
           {alertsLoadError ? (
-            <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
+            <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
               <DegradedState
                 title="Alert configuration unavailable"
                 description={alertsLoadError}
@@ -960,7 +960,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
             alerts.map((alert) => (
               <div
                 key={alert.id}
-                className="p-4 bg-c-surface rounded-xl border border-c-border-subtle"
+                className="p-4 bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03]"
               >
                 <div className="flex items-center justify-between">
                   <div>

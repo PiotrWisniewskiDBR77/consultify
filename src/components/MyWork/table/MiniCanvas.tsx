@@ -323,7 +323,7 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
   ];
 
   return (
-    <div className="rounded-2xl border border-c-border-subtle overflow-hidden bg-c-surface">
+    <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden bg-c-surface">
       {/* Toolbar */}
       {!locked && (
         <div className="flex items-center gap-1 px-3 py-2 border-b border-c-border-subtle bg-c-surface-raised">

@@ -260,7 +260,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     >
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
       <div
-        className="relative w-[520px] max-h-[420px] bg-c-surface rounded-2xl shadow-2xl border border-c-border-subtle overflow-hidden flex flex-col"
+        className="relative w-[520px] max-h-[420px] bg-c-surface rounded-2xl shadow-2xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search input */}

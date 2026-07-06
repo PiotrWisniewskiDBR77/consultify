@@ -46,7 +46,7 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
 
   return (
     <div className="absolute top-3 left-3 z-20 flex flex-col gap-2 max-w-[280px]">
-      <div className="rounded-2xl border border-c-border-subtle bg-c-surface dark:backdrop-blur-xl backdrop-blur-sm shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-3 py-2.5">
+      <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface dark:backdrop-blur-xl backdrop-blur-sm shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-3 py-2.5">
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-c-text-muted">
@@ -101,7 +101,7 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
       </div>
 
       {(activityLog.length > 0 || libraryItems.length > 0 || historyLog.length > 0) && (
-        <div className="rounded-2xl border border-c-border-subtle bg-c-surface dark:backdrop-blur-xl backdrop-blur-sm shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-3 py-2.5 space-y-2">
+        <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface dark:backdrop-blur-xl backdrop-blur-sm shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-3 py-2.5 space-y-2">
           <div className="flex items-center justify-between gap-3">
             <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-c-text-muted">
               {t('myWork.whiteboard.sessionPanel.opsGovernance')}

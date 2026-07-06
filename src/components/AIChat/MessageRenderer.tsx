@@ -884,7 +884,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                           )
                         }
                         rows={3}
-                        className="w-full text-xs bg-c-surface border border-c-border rounded-lg p-2 outline-none focus:ring-2 focus:ring-c-focus"
+                        className="w-full text-xs bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg p-2 outline-none focus:ring-2 focus:ring-c-focus"
                       />
                       <div className="flex flex-wrap gap-2">
                         <button
@@ -1063,7 +1063,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   {msg.role === 'ai' &&
                     !msg.isStreaming &&
                     (msg as any).metadata?.agentAudit?.kind === 'verdict' && (
-                      <div className="mt-3 p-3 bg-c-surface border border-c-border rounded-lg">
+                      <div className="mt-3 p-3 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg">
                         {(() => {
                           const audit = (msg as any).metadata?.agentAudit || {};
                           const verdict = audit?.verdict || {};
@@ -1334,7 +1334,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     value={editingText}
                     onChange={(e) => setEditingText(e.target.value)}
                     rows={3}
-                    className="w-full text-sm bg-c-surface border border-c-border rounded-lg p-2 outline-none focus:ring-2 focus:ring-c-focus text-c-text"
+                    className="w-full text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg p-2 outline-none focus:ring-2 focus:ring-c-focus text-c-text"
                   />
                   <div className="flex items-center justify-end gap-2">
                     <button

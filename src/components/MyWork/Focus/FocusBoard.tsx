@@ -647,7 +647,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-c-surface rounded-xl border border-c-border-subtle p-8 text-center"
+            className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-8 text-center"
           >
             <div className="w-16 h-16 mx-auto mb-4 bg-c-surface-raised rounded-xl flex items-center justify-center">
               <Target size={32} className="text-c-text-secondary" />
@@ -691,7 +691,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-c-surface rounded-xl border border-c-border-subtle p-4"
+            className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4"
           >
             <h4 className="text-sm font-bold text-c-text mb-4 flex items-center gap-2">
               <Sparkles size={16} className="text-primary-500" />
@@ -739,7 +739,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
               {suggestions.suggestedTasks.slice(0, 3).map((suggestion) => (
                 <div
                   key={suggestion.taskId}
-                  className="flex items-center justify-between p-3 bg-c-surface rounded-lg border border-c-border-subtle"
+                  className="flex items-center justify-between p-3 bg-c-surface rounded-lg border border-slate-200/60 dark:border-white/[0.03]"
                 >
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-c-text truncate">
@@ -764,7 +764,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
       </AnimatePresence>
 
       {/* Execution Score */}
-      <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
+      <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs text-c-text-muted uppercase tracking-wider mb-1">

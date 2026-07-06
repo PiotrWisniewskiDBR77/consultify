@@ -253,7 +253,7 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-c-border bg-c-surface">
+      <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface">
         {toolbar}
         <div className="px-3 py-6 text-center text-sm text-c-text-muted">
           {t('initiatives.calendarView.loading')}
@@ -263,7 +263,7 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
   }
   if (!range) {
     return (
-      <div className="rounded-xl border border-c-border bg-c-surface">
+      <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface">
         {toolbar}
         <div className="px-3 py-8 text-center text-sm text-c-text-muted">
           {t('initiatives.calendarView.empty')}
@@ -328,7 +328,7 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
   }>;
 
   return (
-    <div className="rounded-xl border border-c-border bg-c-surface select-none">
+    <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface select-none">
       {toolbar}
       <div className="overflow-x-auto">
         {/* Time header */}

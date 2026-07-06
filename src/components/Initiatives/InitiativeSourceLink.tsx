@@ -100,7 +100,7 @@ export const InitiativeSourceLink: React.FC<InitiativeSourceLinkProps> = ({
   };
 
   return (
-    <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
+    <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-5">
       <div className="flex items-center gap-2 mb-2">
         {getSourceIcon()}
         <span className="text-xs font-semibold text-c-text-muted uppercase">

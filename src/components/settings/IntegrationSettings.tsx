@@ -1032,7 +1032,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
               return (
                 <div
                   key={p.id}
-                  className="bg-c-surface p-6 rounded-xl border border-c-border-subtle dark:border-navy-700 flex flex-col justify-between hover:shadow-lg transition-shadow"
+                  className="bg-c-surface p-6 rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 flex flex-col justify-between hover:shadow-lg transition-shadow"
                 >
                   <div>
                     <div className="flex items-center gap-3 mb-4">
@@ -1258,7 +1258,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                           projectChannelMappings: communicationMappings,
                         })
                       }
-                      className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg text-sm"
+                      className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg text-sm"
                       placeholder="https://hooks.slack.com/... or Teams incoming webhook"
                     />
                   </div>
@@ -1279,7 +1279,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               projectChannelMappings: next,
                             });
                           }}
-                          className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg text-sm"
+                          className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg text-sm"
                         >
                           <option value="">Select project</option>
                           {projects.map((project) => (
@@ -1298,7 +1298,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               projectChannelMappings: next,
                             });
                           }}
-                          className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg text-sm"
+                          className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg text-sm"
                           placeholder="channel-id"
                         />
                         <input
@@ -1311,7 +1311,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               projectChannelMappings: next,
                             });
                           }}
-                          className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg text-sm"
+                          className="px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg text-sm"
                           placeholder="Optional project-specific webhook URL"
                         />
                         <button
@@ -1325,7 +1325,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               projectChannelMappings: next,
                             });
                           }}
-                          className="px-3 py-2 rounded-lg text-sm bg-c-surface border border-c-border-subtle text-c-text-secondary hover:text-rose-600 hover:bg-rose-50 dark:border-navy-700"
+                          className="px-3 py-2 rounded-lg text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] text-c-text-secondary hover:text-rose-600 hover:bg-rose-50 dark:border-navy-700"
                         >
                           Remove
                         </button>
@@ -1514,7 +1514,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
 
           {/* Webhooks List */}
           {webhooks.length === 0 ? (
-            <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-12 text-center">
+            <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 p-12 text-center">
               <Webhook size={48} className="mx-auto text-c-text-secondary mb-4" />
               <h3 className="text-lg font-semibold text-c-text-secondary mb-2">
                 No webhooks configured
@@ -1528,7 +1528,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
               {webhooks.map((webhook) => (
                 <div
                   key={webhook.id}
-                  className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6"
+                  className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 p-6"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div>
@@ -1767,7 +1767,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
               <Loader2 size={24} className="animate-spin text-indigo-600" />
             </div>
           ) : mcpProviders.length === 0 ? (
-            <div className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-12 text-center">
+            <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 p-12 text-center">
               <Database size={48} className="mx-auto text-c-text-secondary mb-4" />
               <h3 className="text-lg font-semibold text-c-text-secondary mb-2">
                 {t('settings.mcp.emptyTitle', 'No MCP providers configured')}
@@ -1781,7 +1781,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
               {mcpProviders.map((p: any) => (
                 <div
                   key={p.id}
-                  className="bg-c-surface rounded-xl border border-c-border-subtle dark:border-navy-700 p-6"
+                  className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 p-6"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>

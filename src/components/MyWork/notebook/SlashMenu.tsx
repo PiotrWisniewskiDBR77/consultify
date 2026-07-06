@@ -496,7 +496,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
   return (
     <div
       ref={menuRef}
-      className="absolute z-50 w-72 max-h-80 overflow-y-auto rounded-xl border border-c-border-subtle bg-c-surface shadow-lg py-1"
+      className="absolute z-50 w-72 max-h-80 overflow-y-auto rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-lg py-1"
       style={{ top, left }}
     >
       {SLASH_GROUP_ORDER.map((groupId) => {

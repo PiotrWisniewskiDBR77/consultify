@@ -174,7 +174,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
 
               {/* Context Menu */}
               {contextMenuIndex === index && (
-                <div className="absolute right-0 top-full mt-1 w-36 bg-c-surface border border-c-border-subtle rounded-lg shadow-xl z-50 py-1">
+                <div className="absolute right-0 top-full mt-1 w-36 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg shadow-xl z-50 py-1">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

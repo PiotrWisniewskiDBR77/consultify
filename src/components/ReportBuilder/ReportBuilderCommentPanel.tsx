@@ -453,7 +453,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
               <ChevronDown size={12} className="inline ml-1" />
             </button>
             {showTypeSelector && (
-              <div className="absolute bottom-full left-0 mb-1 bg-c-surface rounded-lg shadow-lg border border-c-border-subtle py-1 z-10 min-w-[140px]">
+              <div className="absolute bottom-full left-0 mb-1 bg-c-surface rounded-lg shadow-lg border border-slate-200/60 dark:border-white/[0.03] py-1 z-10 min-w-[140px]">
                 {(['FEEDBACK', 'SUGGESTION', 'QUESTION', 'CHANGE_REQUEST'] as CommentType[]).map(
                   (type) => (
                     <button

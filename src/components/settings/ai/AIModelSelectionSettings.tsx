@@ -297,7 +297,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
 
       {/* Default Model Tab */}
       {activeTab === 'models' && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-4">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-4">
           <h3 className="text-lg font-semibold text-c-text">
             Select Default AI Model
           </h3>
@@ -353,7 +353,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
 
       {/* Use Cases Tab */}
       {activeTab === 'usecases' && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
           <h3 className="text-lg font-semibold text-c-text">
             Model per Use Case
           </h3>
@@ -381,7 +381,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
                 <select
                   value={settings[settingKey] as string}
                   onChange={(e) => setSettings({ ...settings, [settingKey]: e.target.value })}
-                  className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+                  className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
                 >
                   <option value="">Use Default Model</option>
                   {availableModels
@@ -400,7 +400,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
 
       {/* Advanced Tab */}
       {activeTab === 'advanced' && (
-        <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6 space-y-6">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6 space-y-6">
           <h3 className="text-lg font-semibold text-c-text">
             Advanced Settings
           </h3>

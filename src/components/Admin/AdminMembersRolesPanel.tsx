@@ -302,7 +302,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
         {ROLE_GUIDANCE.map((item) => (
           <div
             key={item.role}
-            className="rounded-xl border border-c-border-subtle bg-c-surface p-4"
+            className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4"
           >
             <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
               {item.role === 'OWNER' ? (
@@ -325,7 +325,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
       </div>
 
       {/* Members table + invite */}
-      <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5">
+      <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h3 className="text-lg font-semibold text-c-text">
@@ -433,7 +433,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
       </div>
 
       {/* Team invite code */}
-      <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5">
+      <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h3 className="text-lg font-semibold text-c-text">

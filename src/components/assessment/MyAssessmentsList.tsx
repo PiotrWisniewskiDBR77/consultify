@@ -299,7 +299,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search assessments..."
-            className="w-full pl-10 pr-4 py-2.5 bg-c-surface border border-c-border-subtle rounded-lg text-c-text placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-c-focus"
+            className="w-full pl-10 pr-4 py-2.5 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg text-c-text placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-c-focus"
           />
         </div>
 
@@ -322,7 +322,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
 
       {/* Filter Panel */}
       {showFilters && (
-        <div className="p-4 bg-c-surface border border-c-border-subtle rounded-xl">
+        <div className="p-4 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl">
           <div className="flex flex-wrap gap-4">
             {/* Status Filter */}
             <div>
@@ -407,7 +407,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
           )}
         </div>
       ) : (
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
+        <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden">
           {/* Table Header */}
           <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-slate-50 dark:bg-navy-950/50 border-b border-c-border-subtle text-sm font-medium text-c-text-muted">
             <div
@@ -527,7 +527,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
                       </button>
 
                       {openMenuId === assessment.id && (
-                        <div className="absolute right-0 top-full mt-1 w-48 bg-c-surface border border-c-border-subtle rounded-lg shadow-lg z-10 py-1">
+                        <div className="absolute right-0 top-full mt-1 w-48 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg shadow-lg z-10 py-1">
                           <button
                             onClick={() => {
                               onExportAssessment?.(assessment.id, 'pdf');

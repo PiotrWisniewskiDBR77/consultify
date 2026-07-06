@@ -245,7 +245,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
       </div>
 
       {/* Status Message */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <MessageSquare size={20} className="text-blue-500" />
           {t('settings.availability.statusMessage', 'Status Message')}
@@ -267,7 +267,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
       </div>
 
       {/* Working Hours */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Clock size={20} className="text-green-500" />
           {t('settings.availability.workingHours', 'Working Hours')}
@@ -325,7 +325,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
       </div>
 
       {/* Do Not Disturb Hours */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-c-text mb-4 flex items-center gap-2">
           <Moon size={20} className="text-indigo-500" />
           {t('settings.availability.dndHours', 'Do Not Disturb Hours')}
@@ -410,7 +410,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
       </div>
 
       {/* Out of Office Periods */}
-      <div className="bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-xl p-6">
+      <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-c-text flex items-center gap-2">
             <Calendar size={20} className="text-amber-500" />
@@ -487,7 +487,7 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
               type="date"
               value={period.startDate}
               onChange={(e) => onUpdate({ startDate: e.target.value })}
-              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+              className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
             />
           </div>
           <div>
@@ -498,7 +498,7 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
               type="date"
               value={period.endDate}
               onChange={(e) => onUpdate({ endDate: e.target.value })}
-              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+              className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
             />
           </div>
           <div className="md:col-span-2">
@@ -513,7 +513,7 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
                 'settings.availability.reasonPlaceholder',
                 'e.g., Vacation, Conference'
               )}
-              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-navy-700 rounded-lg"
+              className="w-full px-3 py-2 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 rounded-lg"
             />
           </div>
           <div className="flex items-center gap-2">

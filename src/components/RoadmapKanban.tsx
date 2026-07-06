@@ -64,7 +64,7 @@ const SortableItem: React.FC<{ id: string; initiative: FullInitiative; onClick: 
       {...attributes}
       {...listeners}
       onClick={onClick}
-      className="bg-c-surface p-3 rounded-lg mb-2 border border-c-border-subtle hover:border-c-border-strong hover:shadow-lg transition-all cursor-pointer group relative"
+      className="bg-c-surface p-3 rounded-lg mb-2 border border-slate-200/60 dark:border-white/[0.03] hover:border-c-border-strong hover:shadow-lg transition-all cursor-pointer group relative"
     >
       <div className="flex items-start gap-3">
         {/* Drag Handle */}

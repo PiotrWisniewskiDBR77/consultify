@@ -58,7 +58,7 @@ export const SettingsTaxonomyPanel: React.FC<SettingsTaxonomyPanelProps> = ({
                 return (
                   <div
                     key={scope}
-                    className="rounded-xl border border-c-border-subtle dark:border-navy-700 bg-c-surface p-4"
+                    className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface p-4"
                   >
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-c-accent-soft text-c-accent dark:bg-c-accent-soft">
                       <Icon size={18} />
@@ -85,7 +85,7 @@ export const SettingsTaxonomyPanel: React.FC<SettingsTaxonomyPanelProps> = ({
                 return (
                   <div
                     key={impact}
-                    className="flex items-start gap-3 rounded-xl border border-c-border-subtle dark:border-navy-700 bg-c-surface p-3"
+                    className="flex items-start gap-3 rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700 bg-c-surface p-3"
                   >
                     <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300">
                       <Icon size={14} />

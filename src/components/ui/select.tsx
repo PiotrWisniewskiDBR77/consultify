@@ -122,7 +122,7 @@ const SelectContent = ({
 }) => (
   <div
     className={cn(
-      'relative z-dropdown min-w-[8rem] overflow-hidden rounded-lg border border-c-border-subtle bg-c-surface shadow-md',
+      'relative z-dropdown min-w-[8rem] overflow-hidden rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-md',
       className
     )}
   >

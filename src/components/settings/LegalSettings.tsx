@@ -152,7 +152,7 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
           return (
             <div
               key={doc.id}
-              className="flex items-center justify-between p-4 rounded-lg border border-c-border-subtle bg-c-surface transition-colors"
+              className="flex items-center justify-between p-4 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className={`${info.color}`}>{info.icon}</div>

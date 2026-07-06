@@ -46,7 +46,7 @@ export const OnboardingFirstLoginCTA: React.FC = () => {
 
     const id = toast.custom(
       (toastInstance) => (
-        <div className="max-w-sm w-full bg-c-surface border border-c-border-subtle shadow-xl rounded-xl p-4">
+        <div className="max-w-sm w-full bg-c-surface border border-slate-200/60 dark:border-white/[0.03] shadow-xl rounded-xl p-4">
           <div className="text-sm font-bold text-c-text">
             {t('help.onboarding.cta.toast.title', 'Start onboarding')}
           </div>

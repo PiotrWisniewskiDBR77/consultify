@@ -3052,7 +3052,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         loading={portfolioMetrics.isHealthLoading}
       />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-c-text-muted uppercase tracking-wide">
@@ -3065,7 +3065,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             <CheckCircle2 className="text-emerald-400" />
           </div>
         </div>
-        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-c-text-muted uppercase tracking-wide">
@@ -3078,7 +3078,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             <AlertTriangle className="text-danger-400" />
           </div>
         </div>
-        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-c-text-muted uppercase tracking-wide">
@@ -3091,7 +3091,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             <Scale className="text-amber-400" />
           </div>
         </div>
-        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-c-text-muted uppercase tracking-wide">
@@ -3104,7 +3104,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             <Target className="text-blue-400" />
           </div>
         </div>
-        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-c-text-muted uppercase tracking-wide">
@@ -3117,7 +3117,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             <LayoutDashboard className="text-c-text-muted" />
           </div>
         </div>
-        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-c-text-muted uppercase tracking-wide">
@@ -3132,7 +3132,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             <Clock className="text-amber-400" />
           </div>
         </div>
-        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4 sm:col-span-2 lg:col-span-3">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4 sm:col-span-2 lg:col-span-3">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-c-text-muted uppercase tracking-wide">
               {t('execution.portfolio.escalationsGates')}
@@ -3287,7 +3287,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       accent,
       tasks,
     }) => (
-      <div className="min-w-[280px] flex-1 bg-c-surface/70 rounded-xl border border-c-border-subtle overflow-hidden">
+      <div className="min-w-[280px] flex-1 bg-c-surface/70 rounded-xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden">
         <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
           <div className={`text-xs font-semibold uppercase tracking-wide ${accent}`}>{title}</div>
           <span className="text-xs text-c-text-muted bg-c-surface-raised px-2 py-0.5 rounded-full">
@@ -3325,7 +3325,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             )}
           </Callout>
         )}
-        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-sm font-semibold text-c-text">
@@ -3347,7 +3347,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
         <div className="space-y-2">
           {listItems.length === 0 ? (
-            <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 text-center text-sm text-c-text-muted">
+            <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-6 text-center text-sm text-c-text-muted">
               {t('execution.empty.noDeadlines')}
             </div>
           ) : (
@@ -3476,7 +3476,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       accent,
       items,
     }) => (
-      <div className="min-w-[280px] flex-1 bg-c-surface/70 rounded-xl border border-c-border-subtle overflow-hidden">
+      <div className="min-w-[280px] flex-1 bg-c-surface/70 rounded-xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden">
         <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
           <div className={`text-xs font-semibold uppercase tracking-wide ${accent}`}>{title}</div>
           <span className="text-xs text-c-text-muted bg-c-surface-raised px-2 py-0.5 rounded-full">
@@ -3506,7 +3506,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             )}
           </Callout>
         )}
-        <div className="bg-c-surface border border-c-border-subtle rounded-xl p-4">
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-4">
           <div className="text-sm font-semibold text-c-text">
             {t('execution.tabs.decisions', 'Decisions')}
           </div>
@@ -3824,7 +3824,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               key={row.id}
               type="button"
               onClick={row.onClick}
-              className="text-left rounded-xl border border-c-border-subtle bg-c-surface p-3 hover:border-c-border-strong transition-colors"
+              className="text-left rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 hover:border-c-border-strong transition-colors"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
@@ -4847,7 +4847,7 @@ Please return:
 
         {renderActionCenter()}
 
-        <details className="rounded-xl border border-c-border-subtle bg-c-surface">
+        <details className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface">
           <summary className="cursor-pointer px-4 py-3 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
             {t('execution.reports.workloadPreview', 'Workload preview')}
           </summary>

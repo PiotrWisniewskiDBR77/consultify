@@ -489,7 +489,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                       value={outcome}
                       onChange={(e) => setOutcome(e.target.value)}
                       placeholder={t('decisions.rationalePlaceholder', 'Explain your decision...')}
-                      className="w-full p-3 text-sm bg-c-surface border border-c-border-subtle rounded-lg resize-none h-20 focus:ring-2 focus:ring-c-focus focus:border-transparent"
+                      className="w-full p-3 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg resize-none h-20 focus:ring-2 focus:ring-c-focus focus:border-transparent"
                     />
                   </div>
 
