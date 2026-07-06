@@ -365,7 +365,7 @@ const NotificationTableRow: React.FC<{
         onClick(notification);
       }}
       className={`
-        group relative cursor-pointer border-b border-c-border-subtle
+        group relative cursor-pointer border-b border-slate-200/60 dark:border-white/[0.03]
         transition-colors duration-150
         ${isSelected ? SELECTED_ROW_CLASS : ''}
         hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
@@ -1079,7 +1079,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setMutedTypesOpen(false)} />
                     <div className="absolute right-0 top-full mt-2 z-50 w-72 rounded-xl bg-c-surface-raised border border-c-border shadow-xl overflow-hidden">
-                      <div className="px-3 py-2 border-b border-c-border-subtle flex items-center justify-between">
+                      <div className="px-3 py-2 border-b border-slate-200/60 dark:border-white/[0.03] flex items-center justify-between">
                         <span className="text-xs font-semibold text-c-text-secondary">
                           {isPolish ? 'Wyciszone typy (sesja)' : 'Muted types (session)'}
                         </span>

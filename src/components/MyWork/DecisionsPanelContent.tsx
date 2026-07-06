@@ -525,7 +525,7 @@ const DecisionTableRow: React.FC<{
       onClick={() => onClick?.(decision.id, decision)}
       onDoubleClick={() => onOpenFull?.(decision.id, decision)}
       className={`
-        group relative cursor-pointer border-b border-c-border-subtle
+        group relative cursor-pointer border-b border-slate-200/60 dark:border-white/[0.03]
         ${isSelected ? SELECTED_ROW_CLASS : isPreviewed ? PREVIEW_SELECTED_ROW_CLASS : ''}
         transition-colors duration-150
         hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
@@ -801,7 +801,7 @@ const AwaitingDecisionTableRow: React.FC<{
       onClick={() => onClick?.(decision.id, decision)}
       onDoubleClick={() => onOpenFull?.(decision.id, decision)}
       className={`
-        group relative cursor-pointer border-b border-c-border-subtle
+        group relative cursor-pointer border-b border-slate-200/60 dark:border-white/[0.03]
         ${isSelected ? SELECTED_ROW_CLASS : isPreviewed ? PREVIEW_SELECTED_ROW_CLASS : ''}
         transition-colors duration-150
         hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
