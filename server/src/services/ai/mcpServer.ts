@@ -113,23 +113,15 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
       ),
     }),
   },
-  create_initiative: {
-    name: 'create_initiative',
-    description: 'Create a new initiative in the project. REQUIRES USER APPROVAL before execution.',
-    type: TOOL_TYPE.MUTATION,
-    parameters: z.object({
-      projectId: z.string().describe('The project to add the initiative to'),
-      title: z.string().describe('Title of the initiative'),
-      description: z.string().describe('Detailed description'),
-      priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).describe('Priority level'),
-      estimatedEffort: z.string().optional().describe('Estimated effort (e.g., "2 weeks")'),
-    }),
-    returns: z.object({
-      id: z.string(),
-      status: z.string(),
-      message: z.string(),
-    }),
-  },
+  // NOTE: the legacy `create_initiative` MUTATION tool (SQLite-era, approval-
+  // gated) was removed here (Teresa "all 8 tools" higiena, T-hig) — it was
+  // registered but NEVER exposed to the chat pipeline (AIPipeline.ts's
+  // CHAT_CREATION_TOOLS only ever passed generate_deliverable/generate_initiative),
+  // its fallback INSERT used SQLite datetime('now') syntax, and no live route or
+  // test called it. generate_initiative (below) is the single canonical path —
+  // it goes through createInitiativeService.js (the Postgres-correct funnel),
+  // not the legacy DbPromise.run insert. See createInitiativeService.js for the
+  // canonical create path used everywhere else in the app.
   // ── SPEC_01 kręgosłup czat→deliverable (Tryb A function-calling) ──
   // READ (auto-exec): tworzy SZKIELET draftu (odwracalny, lifecycle='draft') i
   // odpala generację w tle. Approval dotyczy dopiero eksportu (M17 L-01), nie
