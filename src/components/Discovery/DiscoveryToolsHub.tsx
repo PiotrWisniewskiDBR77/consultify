@@ -716,6 +716,29 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [previewItemId, setPreviewItemId] = useState<string | null>(null);
+  const [selectedLibraryIds, setSelectedLibraryIds] = useState<Set<string>>(new Set());
+  const [selectedSessionsIds, setSelectedSessionsIds] = useState<Set<string>>(new Set());
+  const [selectedReportsIds, setSelectedReportsIds] = useState<Set<string>>(new Set());
+  const makeTableSelection = (
+    ids: Set<string>,
+    setIds: React.Dispatch<React.SetStateAction<Set<string>>>,
+    rows: Array<{ id: string }>,
+  ) => ({
+    selectedIds: ids,
+    onToggleRow: (id: string) =>
+      setIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      }),
+    onToggleAll: () =>
+      setIds((prev) =>
+        rows.length > 0 && prev.size >= rows.length ? new Set<string>() : new Set(rows.map((r) => r.id)),
+      ),
+    isAllSelected: ids.size > 0 && ids.size >= rows.length,
+    isIndeterminate: ids.size > 0 && ids.size < rows.length,
+  });
   const [previewFullSession, setPreviewFullSession] = useState<any | null>(null);
   const [previewFullLoading, setPreviewFullLoading] = useState(false);
   const [previewFullAssessment, setPreviewFullAssessment] = useState<any | null>(null);
@@ -3500,6 +3523,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             ) : (
               <FilterableTable
                 columns={libraryColumns}
+                selection={makeTableSelection(selectedLibraryIds, setSelectedLibraryIds, filteredLibraryItems as Array<{ id: string }>)}
                 data={filteredLibraryItems}
                 selectedRowId={previewItemId}
                 onRowClick={(row) => setPreviewItemId(row.id)}
@@ -3693,6 +3717,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           >
             <FilterableTable
               columns={sessionsColumns}
+              selection={makeTableSelection(selectedSessionsIds, setSelectedSessionsIds, unifiedSessionsData as Array<{ id: string }>)}
               data={unifiedSessionsData as any}
               selectedRowId={previewItemId}
               onRowClick={(row) => setPreviewItemId(row.id)}
@@ -4071,6 +4096,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         >
           <FilterableTable
             columns={columns}
+            selection={makeTableSelection(selectedReportsIds, setSelectedReportsIds, currentData as Array<{ id: string }>)}
             data={currentData}
             onRowClick={(row) => setPreviewItemId(row.id)}
             onRowDoubleClick={(row) => {

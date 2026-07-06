@@ -198,7 +198,7 @@ const FilterDropdown: React.FC<{
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-xl overflow-hidden">
+          <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-white/[0.08] rounded-xl shadow-xl overflow-hidden">
             <div className="max-h-[200px] overflow-y-auto p-2">
               {column.filterOptions.map((option) => (
                 <label
