@@ -5,16 +5,16 @@
  * shell (MyWorkSheetsDeepLinkRedirect, AppRoutes.tsx:495-516) that immediately
  * navigates to the SAME table-platform grid Ideas Table uses:
  *   /my-work/ideas/:workspaceId/workspace/table?tpTable=:tableId
- * i.e. "Sheet/Workbook" and "Ideas Table" share one grid implementation
- * (GridView.tsx, data-testid="table-grid" / "table-row-{id}"). This spec
- * drives that canonical route directly (equivalent coverage, avoids an extra
- * client-side redirect hop).
+ * i.e. "Sheet/Workbook" and "Ideas Table" share one grid implementation. This
+ * spec drives that canonical route directly (equivalent coverage, avoids an
+ * extra client-side redirect hop).
  *
- * Editable surface used here: the toolbar "Add blank row" action (title
- * attribute, proven stable in m08-table-acceptance.spec.ts S05/S16) is the
- * most reliable cross-run mutation -- inline cell text editing in this grid
- * has no data-testid on individual cells, so row-count is the deterministic
- * persistence probe (same approach as the existing M08 S16 test).
+ * CORRECTION (found by running this against the live mock harness): the grid
+ * actually mounted here is the newer P15 table platform, not the legacy
+ * GridView.tsx (which has data-testid="table-row-{id}"). This surface renders
+ * a real semantic <table> (rowgroup/row/cell) with a visible "Add row" button
+ * and a "Saved Ns ago" autosave indicator -- so the persistence probe uses
+ * `table tbody tr` row count instead.
  */
 import { expect, Page, test } from '@playwright/test';
 
@@ -69,10 +69,6 @@ async function dismissOnboarding(page: Page) {
   }
 }
 
-function byTitle(page: Page, title: string) {
-  return page.locator(`[title="${title}"]`).first();
-}
-
 test.describe('Sheet / Workbook (table-platform grid) — edit persistence [@module:sheets]', () => {
   test.setTimeout(90000);
 
@@ -94,18 +90,20 @@ test.describe('Sheet / Workbook (table-platform grid) — edit persistence [@mod
       page.getByRole('region', { name: /Idea map workspace|Obszar roboczy mapy idei/ })
     ).toBeVisible({ timeout: 30000 });
 
-    const rowLocator = page.locator('[data-testid^="table-row-"]');
+    const rowLocator = page.locator('table tbody tr');
+    await expect(rowLocator.first()).toBeVisible({ timeout: 15000 });
     const rowCountBefore = await rowLocator.count();
 
-    const addBlankRow = byTitle(page, 'Add blank row');
-    await expect(addBlankRow).toBeVisible({ timeout: 30000 });
-    await addBlankRow.click({ force: true });
+    const addRowBtn = page.getByRole('button', { name: /^Add row$/i }).first();
+    await expect(addRowBtn).toBeVisible({ timeout: 30000 });
+    await addRowBtn.click({ force: true });
 
     await expect(page.getByText(/Coś poszło nie tak|Something went wrong/i)).toHaveCount(0);
     await expect(rowLocator).toHaveCount(rowCountBefore + 1, { timeout: 10000 });
 
-    // Give the map-sync optimistic write time to flush before reload (matches
-    // the proven S16 pattern in tests/e2e/smoke/m08-table-acceptance.spec.ts).
+    // Give the autosave write time to flush before reload ("Saved Ns ago"
+    // indicator confirms this grid autosaves; mirrors the proven S16 pattern
+    // in tests/e2e/smoke/m08-table-acceptance.spec.ts).
     await page.waitForTimeout(2500);
 
     await gotoTable(page, idea.id);
@@ -115,7 +113,7 @@ test.describe('Sheet / Workbook (table-platform grid) — edit persistence [@mod
     ).toBeVisible({ timeout: 30000 });
 
     // KEY ASSERT: the added row survived the reload.
-    await expect(page.locator('[data-testid^="table-row-"]')).toHaveCount(rowCountBefore + 1, {
+    await expect(page.locator('table tbody tr')).toHaveCount(rowCountBefore + 1, {
       timeout: 15000,
     });
   });
