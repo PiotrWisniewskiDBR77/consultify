@@ -1328,7 +1328,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                             ))}
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
+                        <tbody className="divide-y divide-slate-200/60 dark:divide-white/[0.03]">
                           {(() => {
                             const firstPeriod = Object.values(outputs)[0]?.[outputTab];
                             if (!firstPeriod) return null;
@@ -1497,7 +1497,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                             </th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
+                        <tbody className="divide-y divide-slate-200/60 dark:divide-white/[0.03]">
                           {validations.slice(0, 60).map((v, i) => (
                             <tr
                               key={i}

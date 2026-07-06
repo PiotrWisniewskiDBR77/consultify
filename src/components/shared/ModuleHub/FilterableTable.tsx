@@ -552,7 +552,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
 
   return (
     <div className={canvasClassName}>
-      <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-hidden">
+      <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.03] rounded-xl overflow-hidden">
         <div className="w-full overflow-x-auto">
           <table /* §27-exempt: to JEST kanoniczny komponent FilterableTable (§2 SSOT) — surowy <table> tutaj to jego implementacja, nie luka */ className="w-full table-fixed" style={{ minWidth: 980 }}>
             <thead className="sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur-hig">

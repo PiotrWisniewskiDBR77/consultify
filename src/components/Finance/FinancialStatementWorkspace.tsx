@@ -1029,7 +1029,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                       <th className="pb-2 text-right">{t('finance.statements.value', 'Value')}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200 dark:divide-navy-800">
+                  <tbody className="divide-y divide-slate-200/60 dark:divide-white/[0.03]">
                     {mappedValues.map((value) => (
                       <tr key={value.id}>
                         <td className="py-2 text-slate-900 dark:text-white">

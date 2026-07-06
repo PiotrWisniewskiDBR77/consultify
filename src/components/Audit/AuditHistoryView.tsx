@@ -198,7 +198,7 @@ export const AuditHistoryView: React.FC<AuditHistoryViewProps> = ({
               <p>Brak zapisanych akcji.</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-200 dark:divide-slate-800">
+            <div className="divide-y divide-slate-200/60 dark:divide-white/[0.03]">
               {events.map((event) => (
                 <AuditEventCard key={event.id} event={event} />
               ))}
