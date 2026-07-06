@@ -686,12 +686,13 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
         renderPreview={renderPreview}
         renderPreviewFooter={renderPreviewFooter}
       >
+        <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl">
         <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */
-          className="w-full table-fixed bg-c-bg"
+          className="w-full table-fixed bg-c-surface"
           style={{ minWidth: tableMinWidth }}
         >
           <thead className="sticky top-0 z-10 bg-c-surface-raised shadow-[0_1px_0_rgba(15,23,42,0.08)] backdrop-blur dark:shadow-[0_1px_0_rgba(255,255,255,0.10)]">
-            <tr className="border-b border-c-border">
+            <tr className="border-b border-c-border-subtle">
               <th className="px-2 py-3" style={{ width: columnWidths.select }}>
                 <button
                   onClick={() => {
@@ -1240,6 +1241,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
             })}
           </tbody>
         </table>
+        </div>
       </TableWithPreviewLayout>
     </div>
   );
