@@ -19,12 +19,30 @@
  *
  * UI path: right-click a table tab → "Rename"/"Zmień nazwę" → an
  * `input.w-24` appears (TableTabStrip.tsx:121, no data-testid) → type → Enter.
+ *
+ * FEATURE-FLAG GATE (root-caused): the whole Table Platform code path is
+ * gated behind the `tablePlatformMetadataFirst` flag
+ * (src/hooks/useFeatureFlags.tsx:138, `defaultValue: false`,
+ * `allowLocalOverride: false` — it can only come from the backend, not
+ * localStorage). `useTablePlatformBridge.ts:161-162` computes
+ * `isNewPlatform = enabled && isEnabled('tablePlatformMetadataFirst') && ...`,
+ * and `useTablePlatformIntegration.ts:264` gates the whole integration
+ * (`active`) on that. The flag value comes from
+ * `GET /api/feature-flags/runtime` (server/src/routes/featureFlags.routes.ts:212),
+ * which reads a `feature_flags` DB table — empty under a fresh MOCK_DB org, so
+ * the flag defaults to false and TableTabStrip never renders. Fixed by
+ * seeding the flag via `POST /api/feature-flags` using a SUPERADMIN token
+ * from `test-support/bootstrap` (that route is superadmin-gated;
+ * `role: 'SUPERADMIN'` is a supported bootstrap request field —
+ * server/src/routes/testSupport.routes.ts:569/678).
  */
 import { expect, test } from '@playwright/test';
 
 import { seedE2EAuthWithBootstrap } from '../smoke/runtime-gate-helpers';
 import { suppressOnboarding } from '../smoke/work-canvas-helpers';
 import { waitVisible } from './_helpers';
+
+const TEST_SUPPORT_KEY = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 const WORKSPACE_REGION = /Idea map workspace|Obszar roboczy mapy idei/;
@@ -44,6 +62,46 @@ async function getSeededToken(page: import('@playwright/test').Page): Promise<st
   const token = await page.evaluate(() => window.localStorage.getItem('token'));
   if (!token) throw new Error('seedE2EAuthWithBootstrap did not leave a token in localStorage');
   return token;
+}
+
+/**
+ * Ensure the `tablePlatformMetadataFirst` flag is enabled globally so the
+ * Table Platform code path (and the rename fix under test) activates. Mints
+ * a fresh SUPERADMIN bootstrap token to call the superadmin-gated
+ * POST /api/feature-flags. A 409 (already exists) means a previous run
+ * already seeded it — treated as success, not an error.
+ */
+async function ensureTablePlatformFlagEnabled(page: import('@playwright/test').Page) {
+  const runId = `tp-rename-flag-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  const bootstrap = await page.request
+    .post(`${API_BASE_URL}/api/test-support/bootstrap`, {
+      headers: { 'x-test-support-key': TEST_SUPPORT_KEY, 'content-type': 'application/json' },
+      data: { runId, role: 'SUPERADMIN' },
+      timeout: 40000,
+    })
+    .catch(() => null);
+  if (!bootstrap || !bootstrap.ok()) return false;
+  const payload = (await bootstrap.json().catch(() => null)) as { token?: string } | null;
+  const superToken = payload?.token;
+  if (!superToken) return false;
+
+  const res = await page.request
+    .post(`${API_BASE_URL}/api/feature-flags`, {
+      headers: { Authorization: `Bearer ${superToken}` },
+      data: {
+        flag_key: 'tablePlatformMetadataFirst',
+        name: 'Table Platform: Metadata-First Backend',
+        enabled: true,
+        flag_type: 'boolean',
+        rollout_percentage: 100,
+        environment: 'production',
+        organization_id: null,
+      },
+      timeout: 40000,
+    })
+    .catch(() => null);
+  // 201 created or 409 already-exists both mean the flag is now (or already) on.
+  return Boolean(res && (res.status() === 201 || res.status() === 409));
 }
 
 async function createIdea(page: import('@playwright/test').Page, token: string, title: string) {
@@ -94,6 +152,14 @@ async function dismissOnboardingButtons(page: import('@playwright/test').Page) {
 test.describe('M08 Ideas · Table Platform — rename persists', () => {
   test('rename via tab context menu survives a hard reload', async ({ page }) => {
     test.setTimeout(180000);
+
+    const flagEnabled = await ensureTablePlatformFlagEnabled(page);
+    test.skip(
+      !flagEnabled,
+      'Could not enable tablePlatformMetadataFirst via POST /api/feature-flags (superadmin bootstrap ' +
+        'or the flags endpoint is unavailable under this harness) — Table Platform cannot activate ' +
+        'without it, so the rename fix under test is unreachable. See useTablePlatformBridge.ts:161-162.'
+    );
 
     await suppressOnboarding(page);
     await seedE2EAuthWithBootstrap(page);
