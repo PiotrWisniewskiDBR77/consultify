@@ -3520,6 +3520,150 @@ async function resolveCanonicalMapOwner(ideaId: string, orgId: string): Promise<
 }
 
 /**
+ * A1/DP-3 read-side unification (finding: metrics/export-csv/artifacts read
+ * strategy diverged from `GET /my-ideas/:id/map`).
+ *
+ * `GET /map` picks the row it serves via TWO different strategies depending on
+ * environment:
+ *   - shared mode (ENABLE_SHARED_IDEA_MAPS + `is_canonical` column present):
+ *     the row flagged `is_canonical = TRUE` — the single board every org member
+ *     reads/writes, independent of who currently "owns" the idea.
+ *   - legacy/fallback mode (flag off, or column not migrated yet): the idea
+ *     OWNER's row (`resolveCanonicalMapOwner`) — same as the A1 write-through.
+ *
+ * `metrics/map`, `export-csv` and `objects/:objectId/artifacts` GET handlers
+ * used ONLY the second (owner) strategy, unconditionally — so once migration T2
+ * lets `is_canonical` point at a row different from the owner's, those three
+ * endpoints would read a stale/different row than the main map view. This
+ * helper is the single place that picks the strategy so all read call sites
+ * agree with `GET /map`.
+ *
+ * Returns the resolved row's identifying key so callers can plug it into their
+ * existing single-idea SELECT ... WHERE clause:
+ *   - `{ mode: 'canonical' }` → filter by `idea_id = ? AND organization_id = ? AND is_canonical = TRUE`
+ *   - `{ mode: 'owner', userId }` → filter by `idea_id = ? AND user_id = ? AND organization_id = ?`
+ *   - `null` → no idea found in this org (caller should 404), OR shared mode is
+ *     active but no canonical row exists yet for this idea (migration T2 not
+ *     run) — caller should treat this the same as "not found" rather than
+ *     silently falling back to a different row.
+ */
+type MapReadStrategy = { mode: 'canonical' } | { mode: 'owner'; userId: string };
+
+async function resolveMapReadRow(ideaId: string, orgId: string): Promise<MapReadStrategy | null> {
+  const mapCols = await getTableColumns('my_idea_maps');
+
+  if (sharedIdeaMapsActive(mapCols)) {
+    // Mirrors `GET /map`'s shared-mode branch: existence is keyed off the
+    // canonical row itself, not the idea's current owner.
+    const canonical = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM my_idea_maps WHERE idea_id = ? AND organization_id = ? AND is_canonical = TRUE LIMIT 1`,
+      [ideaId, orgId]
+    );
+    if (!canonical) return null;
+    return { mode: 'canonical' };
+  }
+
+  const ownerUserId = await resolveCanonicalMapOwner(ideaId, orgId);
+  if (!ownerUserId) return null;
+  return { mode: 'owner', userId: ownerUserId };
+}
+
+type IdeaMapMetric = { nodes: number; edges: number; items: number; updatedAt: string | null };
+
+function countMetricArrays(nodesJson: unknown, edgesJson: unknown): IdeaMapMetric {
+  let n = 0;
+  let e = 0;
+  try {
+    const arr = JSON.parse(String(nodesJson ?? '[]'));
+    n = Array.isArray(arr) ? arr.length : 0;
+  } catch {
+    n = 0;
+  }
+  try {
+    const arr = JSON.parse(String(edgesJson ?? '[]'));
+    e = Array.isArray(arr) ? arr.length : 0;
+  } catch {
+    e = 0;
+  }
+  return { nodes: n, edges: e, items: n + e, updatedAt: null };
+}
+
+/**
+ * Bulk read for `metrics/map` (shared by the inline `ideaId === 'metrics'`
+ * branch on `GET /my-ideas/:id/map` and the standalone `GET
+ * /my-ideas/metrics/map` route), unified onto the SAME read strategy as
+ * `GET /map` (see `resolveMapReadRow`):
+ *   - shared mode (flag + `is_canonical` column present): one row per idea,
+ *     selected by `is_canonical = TRUE` — the exact row every member's single-
+ *     idea `GET /map` call resolves to.
+ *   - legacy/fallback mode: the idea owner's row via the `my_ideas` join
+ *     (unchanged from the prior owner-only behavior).
+ * A given environment is uniformly in one mode or the other (mode depends only
+ * on schema/flag, not on any one idea's data), so ids are never split across
+ * both queries.
+ */
+async function queryIdeaMapMetrics(
+  ideaIds: string[],
+  orgId: string
+): Promise<Record<string, IdeaMapMetric>> {
+  const metrics: Record<string, IdeaMapMetric> = {};
+  if (!ideaIds.length) return metrics;
+
+  const mapCols = await getTableColumns('my_idea_maps');
+  const placeholders = queryHelpers.buildInPlaceholders(ideaIds);
+
+  const rows = sharedIdeaMapsActive(mapCols)
+    ? (await queryHelpers.queryAll<any>(
+        `
+        SELECT
+          m.idea_id as "ideaId",
+          m.nodes_json as "nodesJson",
+          m.edges_json as "edgesJson",
+          m.updated_at as "updatedAt"
+        FROM my_idea_maps m
+        WHERE m.organization_id = ?
+          AND m.is_canonical = TRUE
+          AND m.idea_id IN (${placeholders})
+      `,
+        [orgId, ...ideaIds]
+      )) || []
+    : // A1 (D-WB-2) read-side parity: join through my_ideas so each idea's row is
+      // read via its OWNER's user_id (the canonical row PUT/sync now write to — see
+      // resolveCanonicalMapOwner) instead of the caller's own user_id. A single-owner
+      // caller is unaffected (own ideas: ownerUserId === userId); a non-owner org
+      // member now sees the real shared counts instead of 0.
+      (await queryHelpers.queryAll<any>(
+        `
+        SELECT
+          m.idea_id as "ideaId",
+          m.nodes_json as "nodesJson",
+          m.edges_json as "edgesJson",
+          m.updated_at as "updatedAt"
+        FROM my_idea_maps m
+        JOIN my_ideas i ON i.id = m.idea_id AND i.user_id = m.user_id
+        WHERE m.organization_id = ? AND i.organization_id = ?
+          AND m.idea_id IN (${placeholders})
+      `,
+        [orgId, orgId, ...ideaIds]
+      )) || [];
+
+  const byId = new Map<string, any>();
+  for (const row of rows) {
+    const rowIdeaId = String(row?.ideaId || '').trim();
+    if (rowIdeaId) byId.set(rowIdeaId, row);
+  }
+
+  for (const id of ideaIds) {
+    const row = byId.get(id);
+    const metric = countMetricArrays(row?.nodesJson, row?.edgesJson);
+    metric.updatedAt = row?.updatedAt || null;
+    metrics[id] = metric;
+  }
+
+  return metrics;
+}
+
+/**
  * B1 (M09 facilitation enforcement) — is the CALLING user gated to read-only because
  * they hold the 'observer' role in an ACTIVE facilitation session for this whiteboard?
  *
@@ -3676,56 +3820,7 @@ router.get(
 
       if (!ids.length) return res.json({ metrics: {} });
 
-      // A1 (D-WB-2) read-side parity: join through my_ideas so each idea's row is
-      // read via its OWNER's user_id (the canonical row PUT/sync now write to — see
-      // resolveCanonicalMapOwner) instead of the caller's own user_id. A single-owner
-      // caller is unaffected (own ideas: ownerUserId === userId); a non-owner org
-      // member now sees the real shared counts instead of 0.
-      const placeholders = queryHelpers.buildInPlaceholders(ids);
-      const rows =
-        (await queryHelpers.queryAll<any>(
-          `
-          SELECT
-            m.idea_id as "ideaId",
-            m.nodes_json as "nodesJson",
-            m.edges_json as "edgesJson",
-            m.updated_at as "updatedAt"
-          FROM my_idea_maps m
-          JOIN my_ideas i ON i.id = m.idea_id AND i.user_id = m.user_id
-          WHERE m.organization_id = ? AND i.organization_id = ?
-            AND m.idea_id IN (${placeholders})
-        `,
-          [orgId, orgId, ...ids]
-        )) || [];
-
-      const byId = new Map<string, any>();
-      for (const row of rows) {
-        const rowIdeaId = String(row?.ideaId || '').trim();
-        if (rowIdeaId) byId.set(rowIdeaId, row);
-      }
-
-      const metrics: Record<string, any> = {};
-      for (const id of ids) {
-        const row = byId.get(id);
-        let n = 0;
-        let e = 0;
-        if (row) {
-          try {
-            const arr = JSON.parse(String(row.nodesJson || '[]'));
-            n = Array.isArray(arr) ? arr.length : 0;
-          } catch {
-            n = 0;
-          }
-          try {
-            const arr = JSON.parse(String(row.edgesJson || '[]'));
-            e = Array.isArray(arr) ? arr.length : 0;
-          } catch {
-            e = 0;
-          }
-        }
-        metrics[id] = { nodes: n, edges: e, items: n + e, updatedAt: row?.updatedAt || null };
-      }
-
+      const metrics = await queryIdeaMapMetrics(ids, orgId);
       return res.json({ metrics });
     }
     if (!ideaId || ideaId === 'all') return res.status(400).json({ error: 'Invalid idea id' });
@@ -3991,54 +4086,7 @@ router.get(
 
     if (!ids.length) return res.json({ metrics: {} });
 
-    // A1 (D-WB-2) read-side parity: join through my_ideas so each idea's row is read
-    // via its OWNER's user_id (the canonical row PUT/sync write to) instead of the
-    // caller's own user_id — see resolveCanonicalMapOwner.
-    const placeholders = queryHelpers.buildInPlaceholders(ids);
-    const rows =
-      (await queryHelpers.queryAll<any>(
-        `
-        SELECT
-          m.idea_id as "ideaId",
-          m.nodes_json as "nodesJson",
-          m.edges_json as "edgesJson",
-          m.updated_at as "updatedAt"
-        FROM my_idea_maps m
-        JOIN my_ideas i ON i.id = m.idea_id AND i.user_id = m.user_id
-        WHERE m.organization_id = ? AND i.organization_id = ?
-          AND m.idea_id IN (${placeholders})
-      `,
-        [orgId, orgId, ...ids]
-      )) || [];
-
-    const byId = new Map<string, any>();
-    for (const r of rows) {
-      const id = String(r?.ideaId || '').trim();
-      if (id) byId.set(id, r);
-    }
-
-    const metrics: Record<string, any> = {};
-    for (const id of ids) {
-      const row = byId.get(id);
-      let n = 0;
-      let e = 0;
-      if (row) {
-        try {
-          const arr = JSON.parse(String(row.nodesJson || '[]'));
-          n = Array.isArray(arr) ? arr.length : 0;
-        } catch {
-          n = 0;
-        }
-        try {
-          const arr = JSON.parse(String(row.edgesJson || '[]'));
-          e = Array.isArray(arr) ? arr.length : 0;
-        } catch {
-          e = 0;
-        }
-      }
-      metrics[id] = { nodes: n, edges: e, items: n + e, updatedAt: row?.updatedAt || null };
-    }
-
+    const metrics = await queryIdeaMapMetrics(ids, orgId);
     res.json({ metrics });
   })
 );
@@ -5968,16 +6016,23 @@ router.get(
 
     if (!(await requireTables(res, ['my_idea_maps']))) return;
 
-    // A1 (D-WB-2): read the canonical (idea-owner's) row so a non-owner org member
-    // sees the artifact links they (or a teammate) just attached via the shared
-    // write path above — see resolveCanonicalMapOwner.
-    const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
-    if (!canonicalUserId) return res.status(404).json({ error: 'Idea map not found' });
+    // Read-side parity with GET /map (see resolveMapReadRow): shared mode reads
+    // the is_canonical row; legacy/fallback mode reads the idea-owner's row so a
+    // non-owner org member sees the artifact links they (or a teammate) just
+    // attached via the shared write path above.
+    const strategy = await resolveMapReadRow(ideaId, orgId);
+    if (!strategy) return res.status(404).json({ error: 'Idea map not found' });
 
-    const map = await queryHelpers.queryOne<any>(
-      `SELECT nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-      [ideaId, canonicalUserId, orgId]
-    );
+    const map =
+      strategy.mode === 'canonical'
+        ? await queryHelpers.queryOne<any>(
+            `SELECT nodes_json FROM my_idea_maps WHERE idea_id = ? AND organization_id = ? AND is_canonical = TRUE LIMIT 1`,
+            [ideaId, orgId]
+          )
+        : await queryHelpers.queryOne<any>(
+            `SELECT nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+            [ideaId, strategy.userId, orgId]
+          );
     if (!map) return res.status(404).json({ error: 'Idea map not found' });
 
     let nodes: any[];
@@ -9631,16 +9686,22 @@ router.get(
     if (!ideaId) return res.status(400).json({ error: 'Invalid idea id' });
 
     try {
-      // A1 (D-WB-2): read the canonical (idea-owner's) row so a non-owner org member
-      // can export the shared table/whiteboard data instead of 404'ing — see
-      // resolveCanonicalMapOwner.
-      const canonicalUserId = await resolveCanonicalMapOwner(ideaId, orgId);
-      if (!canonicalUserId) return res.status(404).json({ error: 'Idea map not found' });
+      // Read-side parity with GET /map (see resolveMapReadRow): shared mode reads
+      // the is_canonical row; legacy/fallback mode reads the idea-owner's row so a
+      // non-owner org member can still export the shared table/whiteboard data.
+      const strategy = await resolveMapReadRow(ideaId, orgId);
+      if (!strategy) return res.status(404).json({ error: 'Idea map not found' });
 
-      const mapRow = await queryHelpers.queryOne<any>(
-        `SELECT nodes_json, extensions_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
-        [ideaId, canonicalUserId, orgId]
-      );
+      const mapRow =
+        strategy.mode === 'canonical'
+          ? await queryHelpers.queryOne<any>(
+              `SELECT nodes_json, extensions_json FROM my_idea_maps WHERE idea_id = ? AND organization_id = ? AND is_canonical = TRUE LIMIT 1`,
+              [ideaId, orgId]
+            )
+          : await queryHelpers.queryOne<any>(
+              `SELECT nodes_json, extensions_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+              [ideaId, strategy.userId, orgId]
+            );
       if (!mapRow) return res.status(404).json({ error: 'Idea map not found' });
 
       let nodes: any[] = [];
