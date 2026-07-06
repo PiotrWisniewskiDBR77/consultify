@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Capture job start
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
@@ -72,7 +72,7 @@ jobs:
     timeout-minutes: 3
     needs: lint-typecheck
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 50
       - name: Setup Node.js
@@ -101,7 +101,7 @@ jobs:
     timeout-minutes: 3
     needs: lint-typecheck
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Capture job start
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
       - name: Setup Node.js
@@ -128,7 +128,7 @@ jobs:
     timeout-minutes: 5
     needs: lint-typecheck
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -221,7 +221,7 @@ jobs:
     timeout-minutes: 3
     needs: lint-typecheck
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Capture job start
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
       - name: Setup Node.js
@@ -246,7 +246,7 @@ jobs:
     timeout-minutes: 20
     needs: lint-typecheck
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Deferred outside main/develop
         if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         run: |
@@ -292,7 +292,7 @@ jobs:
       matrix:
         shard: [1, 2, 3, 4]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Deferred outside main/develop
         if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         run: |
@@ -340,7 +340,7 @@ jobs:
     needs: lint-typecheck
     if: ${{ github.event_name == 'pull_request' || github.ref_name == 'Londyn' || github.ref_name == 'main' || github.ref_name == 'develop' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Capture job start
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
       - name: Setup Node.js
@@ -368,7 +368,7 @@ jobs:
     timeout-minutes: 10
     needs: lint-typecheck
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Deferred outside main/develop
         if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         run: |
@@ -437,7 +437,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Deferred outside main/develop
         if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         run: |
@@ -525,7 +525,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Deferred outside main/develop
         if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         run: |
@@ -605,7 +605,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Deferred outside main/develop
         if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         run: |
@@ -659,7 +659,7 @@ jobs:
     timeout-minutes: 5
     needs: lint-typecheck
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Capture job start
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
@@ -694,7 +694,7 @@ jobs:
     needs: [lint-typecheck, security-integrity]
     if: ${{ github.event_name != 'pull_request' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -725,7 +725,7 @@ jobs:
     timeout-minutes: 10
     needs: [unit-tests, component-tests]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Deferred outside main/develop
         if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         run: |
@@ -805,7 +805,7 @@ jobs:
     timeout-minutes: 20
     needs: [unit-tests, component-tests]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Deferred outside main/develop
         if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         run: |
@@ -863,7 +863,7 @@ jobs:
     outputs:
       run_readiness: ${{ steps.decide.outputs.run_readiness }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -918,7 +918,7 @@ jobs:
     needs: [unit-tests, component-tests, readiness-paths]
     if: ${{ needs.readiness-paths.outputs.run_readiness == 'true' && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Capture job start
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
 
@@ -970,7 +970,7 @@ jobs:
     needs: [unit-tests, component-tests]
     if: ${{ github.event_name != 'pull_request' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -1031,7 +1031,7 @@ jobs:
     needs: [unit-tests, component-tests]
     if: ${{ github.event_name != 'pull_request' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -1078,7 +1078,7 @@ jobs:
     timeout-minutes: 10
     needs: [unit-tests]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Deferred outside main/develop
         if: ${{ !(github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
         run: |
@@ -1180,7 +1180,7 @@ jobs:
     needs: [unit-tests, component-tests, integration-tests]
     if: ${{ github.event_name == 'pull_request' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Deferred outside main/develop
@@ -1225,7 +1225,7 @@ jobs:
     needs: [unit-tests, component-tests, integration-tests]
     if: ${{ github.event_name != 'pull_request' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -1408,7 +1408,7 @@ jobs:
       ]
     if: always()
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4

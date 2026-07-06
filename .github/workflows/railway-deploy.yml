@@ -61,7 +61,7 @@ jobs:
         run: |
           apk add --no-cache git >/dev/null
 
-      - uses: actions/checkout@v5.0.1
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 1
 
@@ -196,7 +196,7 @@ jobs:
         run: |
           apk add --no-cache git >/dev/null
 
-      - uses: actions/checkout@v5.0.1
+      - uses: actions/checkout@v7
 
       - name: Install bash (required by gate scripts)
         run: |
