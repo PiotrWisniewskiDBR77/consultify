@@ -86,7 +86,7 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
               type="button"
               disabled={disabled}
               onClick={() => removeTag(tag)}
-              className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface px-2 py-1 text-[10px] font-medium text-c-text-secondary dark:text-c-text disabled:opacity-50"
+              className="inline-flex items-center gap-1 rounded-full border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface px-2 py-1 text-[10px] font-medium text-c-text-secondary dark:text-c-text disabled:opacity-50"
             >
               <span>#{tag}</span>
               <span className="text-c-text-secondary">x</span>

@@ -121,7 +121,7 @@ export const NotebookTopicChips: React.FC<NotebookTopicChipsProps> = ({
       {topics.map((t) => (
         <span
           key={t.id}
-          className="group inline-flex items-center gap-1 rounded-full border border-c-border-subtle bg-c-surface-raised pl-2 pr-1.5 py-0.5 text-[11px] font-medium text-c-text-secondary"
+          className="group inline-flex items-center gap-1 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised pl-2 pr-1.5 py-0.5 text-[11px] font-medium text-c-text-secondary"
         >
           <button
             type="button"

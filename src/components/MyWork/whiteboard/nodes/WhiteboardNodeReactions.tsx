@@ -107,7 +107,7 @@ export const WhiteboardNodeReactions: React.FC<WhiteboardNodeReactionsProps> = (
             <button
               type="button"
               data-testid="wb-reaction-toggle"
-              className="flex items-center justify-center w-5 h-5 rounded-full border border-c-border-subtle bg-c-surface text-[10px] text-c-text-muted shadow-sm hover:bg-c-surface-raised transition-colors"
+              className="flex items-center justify-center w-5 h-5 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-[10px] text-c-text-muted shadow-sm hover:bg-c-surface-raised transition-colors"
               title="Add reaction"
               onClick={(e) => {
                 e.stopPropagation();

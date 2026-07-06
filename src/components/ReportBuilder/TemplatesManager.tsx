@@ -223,7 +223,7 @@ const rowVariants = {
 
 // Identity tone (canon §4.0a): leading dot only, neutral chip shell — never colored fill.
 const NEUTRAL_CHIP =
-  'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-c-border-subtle bg-c-surface-raised/[0.04] text-c-text-secondary';
+  'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised/[0.04] text-c-text-secondary';
 
 // Get type badge config
 const getTypeBadgeConfig = (isSystem: boolean) => {

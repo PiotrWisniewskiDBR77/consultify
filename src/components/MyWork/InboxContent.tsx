@@ -2463,7 +2463,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             </span>
             {item.suggestedAction && (
               <span
-                className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border border-c-border-subtle bg-c-surface-raised text-[10px] font-medium text-c-text-secondary cursor-help"
+                className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised text-[10px] font-medium text-c-text-secondary cursor-help"
                 title={item.suggestedReason || (isPolish ? 'Sugestia AI' : 'AI suggestion')}
               >
                 AI:{' '}
@@ -3209,7 +3209,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                           type="button"
                           onClick={toggleCap}
                           data-testid={`inbox-section-show-more-${section.id}`}
-                          className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border-subtle px-3 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
+                          className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-full border border-slate-200/60 dark:border-white/[0.03] px-3 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
                         >
                           <ChevronDown size={12} />
                           {isPolish
@@ -3220,7 +3220,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                         <button
                           type="button"
                           onClick={toggleCap}
-                          className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border-subtle px-3 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
+                          className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-full border border-slate-200/60 dark:border-white/[0.03] px-3 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
                         >
                           <ChevronUp size={12} />
                           {isPolish ? 'Pokaż mniej' : 'Show less'}

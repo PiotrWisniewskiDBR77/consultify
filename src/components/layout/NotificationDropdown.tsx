@@ -453,7 +453,7 @@ export const NotificationDropdown = () => {
                             {/* Icon with severity color dot */}
                             <div className="relative mt-0.5 shrink-0">
                               <div
-                                className={`w-9 h-9 rounded-full flex items-center justify-center ${!notification.isRead ? 'bg-c-surface-raised shadow-sm border border-c-border-subtle' : 'bg-c-surface'}`}
+                                className={`w-9 h-9 rounded-full flex items-center justify-center ${!notification.isRead ? 'bg-c-surface-raised shadow-sm border border-slate-200/60 dark:border-white/[0.03]' : 'bg-c-surface'}`}
                               >
                                 {getIcon(notification.type)}
                               </div>

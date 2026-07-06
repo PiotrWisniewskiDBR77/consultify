@@ -1186,7 +1186,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                   type="button"
                   disabled={tasksCreating}
                   onClick={() => setTasksModalOpen(false)}
-                  className="h-9 px-4 rounded-full text-sm font-medium border border-c-border-subtle bg-transparent text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-60"
+                  className="h-9 px-4 rounded-full text-sm font-medium border border-slate-200/60 dark:border-white/[0.03] bg-transparent text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-60"
                 >
                   {t('common.cancel', 'Cancel')}
                 </button>

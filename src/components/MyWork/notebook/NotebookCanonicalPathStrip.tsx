@@ -125,7 +125,7 @@ export const NotebookCanonicalPathStrip: React.FC<NotebookCanonicalPathStripProp
             <button
               type="button"
               onClick={onHandoffRadar}
-              className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle bg-c-surface-raised px-2.5 py-1 text-[11px] font-medium text-c-text-secondary transition hover:bg-c-surface-raised dark:border-white/[0.07] dark:bg-navy-800/40 dark:text-c-text-secondary dark:hover:bg-white/[0.08]"
+              className="inline-flex items-center gap-1 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised px-2.5 py-1 text-[11px] font-medium text-c-text-secondary transition hover:bg-c-surface-raised dark:border-white/[0.07] dark:bg-navy-800/40 dark:text-c-text-secondary dark:hover:bg-white/[0.08]"
             >
               <Radar size={12} />
               Radar
@@ -135,7 +135,7 @@ export const NotebookCanonicalPathStrip: React.FC<NotebookCanonicalPathStripProp
             <button
               type="button"
               onClick={onHandoffInitiatives}
-              className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle bg-c-surface-raised px-2.5 py-1 text-[11px] font-medium text-c-text-secondary transition hover:bg-c-surface-raised dark:border-white/[0.07] dark:bg-navy-800/40 dark:text-c-text-secondary dark:hover:bg-white/[0.08]"
+              className="inline-flex items-center gap-1 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised px-2.5 py-1 text-[11px] font-medium text-c-text-secondary transition hover:bg-c-surface-raised dark:border-white/[0.07] dark:bg-navy-800/40 dark:text-c-text-secondary dark:hover:bg-white/[0.08]"
             >
               <Lightbulb size={12} />
               {isPolish ? 'Inicjatywy' : 'Initiatives'}

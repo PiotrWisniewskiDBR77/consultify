@@ -4639,7 +4639,7 @@ Please return:
                 {report.followUpActions.map((a) => (
                   <span
                     key={a}
-                    className="inline-block rounded-full border border-c-border-subtle bg-c-surface-raised px-2 py-0.5 text-[10px] font-medium text-c-text-secondary"
+                    className="inline-block rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised px-2 py-0.5 text-[10px] font-medium text-c-text-secondary"
                   >
                     {a}
                   </span>
@@ -4658,7 +4658,7 @@ Please return:
                 {report.degradedFlags.map((flag) => (
                   <span
                     key={flag}
-                    className="inline-block rounded-full border border-c-border-subtle bg-c-surface-raised px-2 py-0.5 text-[10px] text-c-text-muted"
+                    className="inline-block rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised px-2 py-0.5 text-[10px] text-c-text-muted"
                   >
                     {flag}
                   </span>

@@ -513,7 +513,7 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
 
       {/* Presence badge */}
       {connected && otherUsers.length > 0 && (
-        <div className="absolute top-3 right-3 z-overlay flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm shadow-lg border border-c-border-subtle dark:border-c-border-subtle">
+        <div className="absolute top-3 right-3 z-overlay flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm shadow-lg border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle">
           <Users size={12} className="text-c-success" />
           <span className="text-[10px] font-bold text-c-text-secondary dark:text-c-text-muted">
             {otherUsers.length + 1}

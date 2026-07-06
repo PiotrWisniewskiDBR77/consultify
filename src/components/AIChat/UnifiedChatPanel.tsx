@@ -5642,7 +5642,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     key={item.label}
                     type="button"
                     onClick={() => handleSendMessage(item.prompt)}
-                    className="rounded-full border border-c-border-subtle bg-c-surface px-3 py-1 text-[11px] font-medium text-c-text-secondary transition-colors hover:border-c-border-strong hover:bg-c-surface-raised hover:text-c-text"
+                    className="rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-1 text-[11px] font-medium text-c-text-secondary transition-colors hover:border-c-border-strong hover:bg-c-surface-raised hover:text-c-text"
                   >
                     {item.label}
                   </button>
@@ -5871,7 +5871,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           {isBotTyping && !streamedContent && !isStreaming && (
             <div className="mx-auto w-full max-w-5xl flex gap-2 justify-start">
               <div
-                className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full bg-c-surface-raised border border-c-border-subtle flex items-center justify-center shrink-0 mt-0.5`}
+                className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full bg-c-surface-raised border border-slate-200/60 dark:border-white/[0.03] flex items-center justify-center shrink-0 mt-0.5`}
               >
                 <TeresaMark
                   size={isCompact ? 12 : 14}
@@ -5923,7 +5923,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     <button
                       key={prompt}
                       onClick={() => handleSendMessage(prompt)}
-                      className="px-2.5 py-1 text-[11px] font-medium rounded-full border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:border-c-border-strong hover:text-c-text transition-colors duration-200"
+                      className="px-2.5 py-1 text-[11px] font-medium rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:border-c-border-strong hover:text-c-text transition-colors duration-200"
                     >
                       {prompt}
                     </button>

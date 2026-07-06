@@ -244,7 +244,7 @@ export const BrandKitGovernanceSettings: React.FC<BrandKitGovernanceSettingsProp
         </div>
         <div className="flex items-center gap-2">
           {!canEdit && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-c-surface-raised text-c-text-secondary border border-c-border-subtle dark:border-navy-700">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-c-surface-raised text-c-text-secondary border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700">
               <Lock size={12} />
               Read-only
             </span>

@@ -880,7 +880,7 @@ const AwaitingDecisionTableRow: React.FC<{
       {!hiddenColumns?.has('project') && (
         <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.project }}>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full border border-c-border-subtle bg-c-surface-raised flex items-center justify-center text-xs font-medium text-c-text-secondary">
+            <div className="w-7 h-7 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised flex items-center justify-center text-xs font-medium text-c-text-secondary">
               {getInitials(decision.ownerName)}
             </div>
             <div className="flex min-w-0 flex-col text-left">

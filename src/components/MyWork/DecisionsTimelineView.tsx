@@ -207,7 +207,7 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
         <div className="flex items-center gap-3 px-4 py-3 border-b border-c-border-subtle bg-c-surface">
           {/* Zoom controls — pill button group */}
           <div
-            className="inline-flex rounded-full border border-c-border-subtle bg-c-surface-raised p-0.5"
+            className="inline-flex rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised p-0.5"
             role="group"
           >
             {zoomOptions.map((opt) => (

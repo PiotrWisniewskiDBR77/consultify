@@ -198,7 +198,7 @@ const FilterDropdown: React.FC<{
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-white/[0.08] rounded-xl shadow-xl overflow-hidden">
+          <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-xl overflow-hidden">
             <div className="max-h-[200px] overflow-y-auto p-2">
               {column.filterOptions.map((option) => (
                 <label
@@ -746,7 +746,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                     colSpan={visibleColumns.length + (hideRowActions ? 0 : 1)}
                     className="px-4 py-14 text-center text-slate-500 dark:text-slate-400"
                   >
-                    <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/70 dark:bg-white/[0.03] px-6 py-8 text-sm">
+                    <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-slate-50/70 dark:bg-white/[0.03] px-6 py-8 text-sm">
                       {emptyMessage}
                     </div>
                   </td>

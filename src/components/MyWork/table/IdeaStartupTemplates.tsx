@@ -324,7 +324,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                   key={start.id}
                   type="button"
                   onClick={() => handlePopularStart(start)}
-                  className="rounded-full border border-c-border-subtle bg-c-surface-raised px-3 py-1.5 text-[11px] font-medium text-c-text-secondary hover:border-c-accent hover:text-c-accent"
+                  className="rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised px-3 py-1.5 text-[11px] font-medium text-c-text-secondary hover:border-c-accent hover:text-c-accent"
                 >
                   {isPl ? start.labelPl : start.labelEn}
                 </button>

@@ -1884,7 +1884,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
                 actions={
                   <button
                     onClick={() => onItemClick?.(selectedItem)}
-                    className="inline-flex items-center gap-2 h-9 px-4 rounded-full border border-c-border-subtle bg-transparent text-c-text-secondary hover:bg-c-surface-raised transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 text-xs font-medium"
+                    className="inline-flex items-center gap-2 h-9 px-4 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-transparent text-c-text-secondary hover:bg-c-surface-raised transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 text-xs font-medium"
                     title={t('common.open', 'Open')}
                   >
                     <ArrowRight size={14} />
@@ -1913,7 +1913,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
                           handleSnooze(selectedItem, next[selectedItem.column]);
                       }}
                       disabled={selectedItem.column === 'later'}
-                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed"
                       title={t('myWork.focus.actions.snooze', 'Snooze')}
                     >
                       <Clock size={14} />
@@ -1922,7 +1922,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
                     <button
                       onClick={() => setDelegateItem(selectedItem)}
                       disabled={selectedItem.type !== 'task'}
-                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed"
                       title={t('myWork.focus.actions.delegate', 'Delegate')}
                     >
                       <UserPlus size={14} />

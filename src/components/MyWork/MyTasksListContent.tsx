@@ -822,7 +822,7 @@ const TaskTableRow: React.FC<{
         <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.assignee }}>
           <div className="flex items-center gap-2">
             {assigneeInitial ? (
-              <div className="w-6 h-6 rounded-full border border-c-border-subtle bg-c-surface-raised flex items-center justify-center text-[10px] font-semibold text-c-text-secondary">
+              <div className="w-6 h-6 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised flex items-center justify-center text-[10px] font-semibold text-c-text-secondary">
                 {assigneeInitial}
               </div>
             ) : (

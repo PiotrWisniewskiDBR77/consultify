@@ -344,7 +344,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
                   <button
                     key={item.key}
                     onClick={() => handleAnnaPrompt(item.prompt, item.key)}
-                    className="rounded-full border border-c-border-subtle bg-c-surface px-3.5 py-2 text-xs font-semibold text-c-text-secondary transition-all duration-200 hover:bg-c-surface-raised hover:text-c-text"
+                    className="rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3.5 py-2 text-xs font-semibold text-c-text-secondary transition-all duration-200 hover:bg-c-surface-raised hover:text-c-text"
                   >
                     {item.label}
                   </button>
@@ -421,7 +421,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
         >
           {/* Left: Spotify tagline + No credit card */}
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="inline-flex items-center gap-2.5 rounded-full px-5 py-2.5 bg-c-surface-raised border border-c-border-subtle backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2.5 rounded-full px-5 py-2.5 bg-c-surface-raised border border-slate-200/60 dark:border-white/[0.03] backdrop-blur-sm">
               <span className="text-xs font-black text-c-text-secondary uppercase tracking-widest">
                 {t(
                   'landing.profitHero.billboardShort',

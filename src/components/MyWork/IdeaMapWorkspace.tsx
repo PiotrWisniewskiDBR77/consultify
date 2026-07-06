@@ -2748,7 +2748,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               const ps = rootNode?.data?.pipelineStage;
               if (!ps || ps === 'draft') return null;
               return (
-                <span className="rounded-full bg-c-surface dark:bg-c-surface-raised px-2 py-0.5 text-[10px] font-medium text-c-text-secondary dark:text-c-text border border-c-border-subtle dark:border-c-border-subtle">
+                <span className="rounded-full bg-c-surface dark:bg-c-surface-raised px-2 py-0.5 text-[10px] font-medium text-c-text-secondary dark:text-c-text border border-slate-200/60 dark:border-white/[0.03] dark:border-c-border-subtle">
                   {ps}
                 </span>
               );

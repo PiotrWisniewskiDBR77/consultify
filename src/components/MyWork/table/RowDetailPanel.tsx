@@ -1521,7 +1521,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                         key={chip.id}
                         type="button"
                         onClick={() => onNodeClick?.(chip.id)}
-                        className="inline-flex items-center gap-1 max-w-full px-2.5 py-1 rounded-full text-[11px] font-medium bg-c-surface-raised text-c-text-secondary border border-c-border-subtle hover:bg-c-accent-soft hover:border-c-accent hover:text-c-accent transition-colors truncate"
+                        className="inline-flex items-center gap-1 max-w-full px-2.5 py-1 rounded-full text-[11px] font-medium bg-c-surface-raised text-c-text-secondary border border-slate-200/60 dark:border-white/[0.03] hover:bg-c-accent-soft hover:border-c-accent hover:text-c-accent transition-colors truncate"
                       >
                         <span className="truncate">{chip.label}</span>
                       </button>

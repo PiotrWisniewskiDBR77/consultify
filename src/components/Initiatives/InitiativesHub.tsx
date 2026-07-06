@@ -2206,7 +2206,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // Active / All scope toggle (matches agreed UI spec)
   const scopeToggle = (
     <div
-      className="inline-flex items-center rounded-full border border-c-border-subtle bg-c-surface-raised p-0.5"
+      className="inline-flex items-center rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised p-0.5"
       role="radiogroup"
       aria-label={t('initiatives.scope.label', 'Scope')}
     >
@@ -2262,7 +2262,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           type="button"
           onClick={() => void handleMaterializePortfolio('deck')}
           disabled={isMaterializing}
-          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           title={
             i18n.language?.startsWith('pl')
               ? 'Zrób materiał z portfela (prezentacja)'
@@ -2280,7 +2280,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       <button
         type="button"
         onClick={() => navigate(ROUTES.ROI)}
-        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors"
+        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors"
         title={i18n.language?.startsWith('pl') ? 'Widok ROI i realizacji wartości' : 'ROI & Value Realization'}
       >
         <TrendingUp size={13} />

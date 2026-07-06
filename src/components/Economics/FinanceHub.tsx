@@ -2462,7 +2462,7 @@ export const FinanceHub: React.FC = () => {
                 </div>
               </div>
               <button
-                className="h-9 px-4 rounded-full border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+                className="h-9 px-4 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                 onClick={handleShowList}
               >
                 {t('common.backToList', 'Wróć do listy')}

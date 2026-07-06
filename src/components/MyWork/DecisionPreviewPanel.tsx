@@ -839,7 +839,7 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
         actions={
           <button
             onClick={() => onOpenFullDetail(decisionId, decision)}
-            className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+            className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
             title={isPolish ? 'Otwórz pełny widok' : 'Open full detail'}
           >
             <ExternalLink size={13} />

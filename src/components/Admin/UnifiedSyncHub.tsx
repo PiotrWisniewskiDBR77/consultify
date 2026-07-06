@@ -1716,13 +1716,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                   {(conn.capabilities || []).slice(0, 4).map((cap) => (
                                     <span
                                       key={cap}
-                                      className="px-1.5 py-0.5 rounded-full bg-c-surface-raised/60 text-[10px] text-slate-300 border border-c-border-subtle"
+                                      className="px-1.5 py-0.5 rounded-full bg-c-surface-raised/60 text-[10px] text-slate-300 border border-slate-200/60 dark:border-white/[0.03]"
                                     >
                                       {cap}
                                     </span>
                                   ))}
                                   {(conn.capabilities || []).length > 4 && (
-                                    <span className="px-1.5 py-0.5 rounded-full bg-c-surface-raised/30 text-[10px] text-slate-400 dark:text-slate-500 border border-c-border-subtle">
+                                    <span className="px-1.5 py-0.5 rounded-full bg-c-surface-raised/30 text-[10px] text-slate-400 dark:text-slate-500 border border-slate-200/60 dark:border-white/[0.03]">
                                       +{(conn.capabilities || []).length - 4}
                                     </span>
                                   )}
@@ -1733,13 +1733,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                   {(conn.configFields || []).slice(0, 4).map((field) => (
                                     <span
                                       key={field}
-                                      className="px-1.5 py-0.5 rounded-full bg-c-surface-raised/60 text-[10px] text-slate-300 border border-c-border-subtle"
+                                      className="px-1.5 py-0.5 rounded-full bg-c-surface-raised/60 text-[10px] text-slate-300 border border-slate-200/60 dark:border-white/[0.03]"
                                     >
                                       {formatConfigFieldLabel(field)}
                                     </span>
                                   ))}
                                   {(conn.configFields || []).length > 4 && (
-                                    <span className="px-1.5 py-0.5 rounded-full bg-c-surface-raised/30 text-[10px] text-slate-400 dark:text-slate-500 border border-c-border-subtle">
+                                    <span className="px-1.5 py-0.5 rounded-full bg-c-surface-raised/30 text-[10px] text-slate-400 dark:text-slate-500 border border-slate-200/60 dark:border-white/[0.03]">
                                       +{(conn.configFields || []).length - 4}
                                     </span>
                                   )}
@@ -2490,7 +2490,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                       {int.connector.capabilities.map((cap) => (
                         <span
                           key={cap}
-                          className="px-2 py-0.5 rounded-full bg-c-surface-raised text-xs text-slate-400 dark:text-slate-500 border border-c-border-subtle"
+                          className="px-2 py-0.5 rounded-full bg-c-surface-raised text-xs text-slate-400 dark:text-slate-500 border border-slate-200/60 dark:border-white/[0.03]"
                         >
                           read:{cap}
                         </span>
@@ -3852,7 +3852,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         )}
                       </td>
                       <td className="px-3 py-2.5">
-                        <span className="px-2 py-0.5 rounded-full text-xs bg-c-surface-raised border border-c-border-subtle text-slate-300">
+                        <span className="px-2 py-0.5 rounded-full text-xs bg-c-surface-raised border border-slate-200/60 dark:border-white/[0.03] text-slate-300">
                           {item.connectorId}
                         </span>
                       </td>
@@ -3970,7 +3970,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                       </div>
                     </td>
                     <td className="px-3 py-2.5">
-                      <span className="px-2 py-0.5 rounded-full text-xs bg-c-surface-raised border border-c-border-subtle text-slate-300">
+                      <span className="px-2 py-0.5 rounded-full text-xs bg-c-surface-raised border border-slate-200/60 dark:border-white/[0.03] text-slate-300">
                         {row.connectorId}
                       </span>
                     </td>
@@ -4140,13 +4140,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                           {target.integrationName}
                         </div>
                         <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-400 dark:text-slate-500">
-                          <span className="px-2 py-0.5 rounded-full bg-c-surface-raised border border-c-border-subtle">
+                          <span className="px-2 py-0.5 rounded-full bg-c-surface-raised border border-slate-200/60 dark:border-white/[0.03]">
                             lifetime {policy?.typicalTokenLifetimeMinutes ?? 'none'}m
                           </span>
-                          <span className="px-2 py-0.5 rounded-full bg-c-surface-raised border border-c-border-subtle">
+                          <span className="px-2 py-0.5 rounded-full bg-c-surface-raised border border-slate-200/60 dark:border-white/[0.03]">
                             refresh window {policy?.refreshWindowMinutes ?? 'none'}m
                           </span>
-                          <span className="px-2 py-0.5 rounded-full bg-c-surface-raised border border-c-border-subtle">
+                          <span className="px-2 py-0.5 rounded-full bg-c-surface-raised border border-slate-200/60 dark:border-white/[0.03]">
                             retries {policy?.maxRetryAttempts ?? 'none'}
                           </span>
                         </div>
@@ -4195,7 +4195,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 {(int.connector?.capabilities || []).map((cap) => (
                   <span
                     key={cap}
-                    className="px-2 py-0.5 rounded-full bg-c-surface-raised text-xs text-slate-400 dark:text-slate-500 border border-c-border-subtle"
+                    className="px-2 py-0.5 rounded-full bg-c-surface-raised text-xs text-slate-400 dark:text-slate-500 border border-slate-200/60 dark:border-white/[0.03]"
                   >
                     read:{cap}
                   </span>

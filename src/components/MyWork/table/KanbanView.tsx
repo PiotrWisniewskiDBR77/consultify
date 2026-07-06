@@ -205,7 +205,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                       <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-c-border-subtle">
                         {person ? (
                           <div className="flex items-center gap-1">
-                            <div className="w-4 h-4 rounded-full bg-c-surface-raised border border-c-border-subtle flex items-center justify-center text-[7px] font-bold text-c-text-secondary">
+                            <div className="w-4 h-4 rounded-full bg-c-surface-raised border border-slate-200/60 dark:border-white/[0.03] flex items-center justify-center text-[7px] font-bold text-c-text-secondary">
                               {String(person).charAt(0).toUpperCase()}
                             </div>
                             <span className="text-[9px] text-c-text-muted truncate max-w-[80px]">

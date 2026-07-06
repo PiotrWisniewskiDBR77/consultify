@@ -1709,7 +1709,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 {String(row.name || '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')}
               </div>
               {row.isComingSoon ? (
-                <span className="shrink-0 inline-flex items-center h-5 px-1.5 rounded-full text-[10px] border border-c-border-subtle bg-c-surface-raised text-c-text-muted">
+                <span className="shrink-0 inline-flex items-center h-5 px-1.5 rounded-full text-[10px] border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised text-c-text-muted">
                   {t('common.comingSoon', 'Soon')}
                 </span>
               ) : null}
@@ -1770,7 +1770,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         ],
         render: (row) => (
           // canon §4.0a: neutral chip shell; signal carried by the leading dot.
-          <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-c-border-subtle bg-c-surface-raised text-c-text-secondary">
+          <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised text-c-text-secondary">
             <span
               className={`h-1.5 w-1.5 rounded-full ${
                 row.isLicensed ? 'bg-amber-500' : 'bg-emerald-500'
@@ -1794,7 +1794,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row) => (
           // canon §3.5/§4.0: status carried by signal dot only; chip shell stays neutral
           // (no status-colored background fill).
-          <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-c-border-subtle bg-c-surface-raised text-c-text-secondary">
+          <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-slate-200/60 dark:border-white/[0.03] bg-c-surface-raised text-c-text-secondary">
             <span
               className={`h-1.5 w-1.5 rounded-full ${
                 row.isActive ? 'bg-emerald-500' : 'bg-c-text-muted'

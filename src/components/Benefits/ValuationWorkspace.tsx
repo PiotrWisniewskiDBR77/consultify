@@ -1196,7 +1196,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                     <div className="text-sm font-semibold text-c-text dark:text-white">
                                       {r.title}
                                     </div>
-                                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-c-surface text-c-text-secondary border border-c-border-subtle dark:bg-c-surface-raised dark:text-c-text-secondary font-medium">
+                                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-c-surface text-c-text-secondary border border-slate-200/60 dark:border-white/[0.03] dark:bg-c-surface-raised dark:text-c-text-secondary font-medium">
                                       {r.category}
                                     </span>
                                   </div>
