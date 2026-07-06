@@ -1119,7 +1119,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                     onFocusIndexChange(index);
                   }}
                   onDoubleClick={() => onOpenIdea(idea)}
-                  className={`group cursor-pointer border-b border-c-border-subtle transition-colors ${
+                  className={`group cursor-pointer border-b border-slate-200/50 dark:border-white/[0.03] transition-colors ${
                     isPreviewSelected
                       ? SELECTED_ROW_CLASS
                       : isChecked

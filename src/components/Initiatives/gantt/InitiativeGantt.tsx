@@ -214,7 +214,7 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
 
   // Toolbar (zoom + status filter) — rendered above the grid in all states.
   const toolbar = (
-    <div className="flex items-center gap-2 px-3 py-1.5 border-b border-c-border-subtle">
+    <div className="flex items-center gap-2 px-3 py-1.5 border-b border-slate-200/50 dark:border-white/[0.03]">
       {statuses.length > 0 && (
         <select
           aria-label={t('initiatives.calendarView.allStatuses', 'All statuses')}
@@ -333,13 +333,13 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
       <div className="overflow-x-auto">
         {/* Time header */}
         <div
-          className="relative flex border-b border-c-border-subtle"
+          className="relative flex border-b border-slate-200/50 dark:border-white/[0.03]"
           style={{ minWidth: gridMinWidth }}
         >
           {cols.map((c) => (
             <div
               key={c.ms}
-              className="flex-1 px-2 py-1.5 text-[10px] text-c-text-muted border-r border-c-border-subtle whitespace-nowrap"
+              className="flex-1 px-2 py-1.5 text-[10px] text-c-text-muted border-r border-slate-200/50 dark:border-white/[0.03] whitespace-nowrap"
             >
               {c.label}
             </div>
@@ -400,7 +400,7 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
             return (
               <div
                 key={item.id}
-                className="relative h-8 border-b border-c-border-subtle"
+                className="relative h-8 border-b border-slate-200/50 dark:border-white/[0.03]"
               >
                 <div
                   className={`absolute top-1.5 h-5 rounded flex items-center px-1.5 transition-opacity ${TYPE_BAR[item.type]} ${saving ? 'opacity-60' : ''} ${
