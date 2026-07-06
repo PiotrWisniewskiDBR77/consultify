@@ -168,7 +168,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-c-border-subtle dark:border-c-border">
+      <div className="flex items-center justify-between px-6 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
         <div className="flex items-center gap-2">
           <Play size={14} className="text-c-warning" />
           <span className="text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted">
@@ -248,7 +248,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
                   {b.nodes.map((node, idx) => (
                     <div
                       key={node.id}
-                      className={`p-4 rounded-2xl bg-c-surface-raised ${colors.bg} border border-c-border-subtle dark:border-c-border animate-slide-up`}
+                      className={`p-4 rounded-2xl bg-c-surface-raised ${colors.bg} border border-c-border-subtle dark:border-c-border-subtle animate-slide-up`}
                       style={{ animationDelay: `${idx * 100}ms` }}
                     >
                       <div className="flex items-start gap-2">
@@ -278,7 +278,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
 
                 {/* Presenter Notes */}
                 {showNotes && b.nodes.some((n) => n.notes) && (
-                  <div className="mt-6 rounded-2xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border overflow-hidden">
+                  <div className="mt-6 rounded-2xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle overflow-hidden">
                     <button
                       onClick={() => setShowNotes((p) => !p)}
                       className="w-full flex items-center gap-2 px-4 py-2.5 text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
@@ -310,7 +310,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
       </div>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between px-6 py-4 border-t border-c-border-subtle dark:border-c-border">
+      <div className="flex items-center justify-between px-6 py-4 border-t border-c-border-subtle dark:border-c-border-subtle">
         <button
           onClick={goPrev}
           disabled={currentSlide === 0}

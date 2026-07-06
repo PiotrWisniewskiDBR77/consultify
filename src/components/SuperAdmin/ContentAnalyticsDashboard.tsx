@@ -100,7 +100,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            className="px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+            className="px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
           >
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>
@@ -109,7 +109,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
           </select>
           <button
             onClick={loadDashboard}
-            className="p-2 text-slate-400 dark:text-slate-500 hover:text-white bg-c-surface-raised border border-c-border rounded-lg"
+            className="p-2 text-slate-400 dark:text-slate-500 hover:text-white bg-c-surface-raised border border-c-border-subtle rounded-lg"
           >
             <RefreshCw size={16} />
           </button>
@@ -166,7 +166,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
       {/* Performance Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Playbook Runs */}
-        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-xl p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Activity size={18} className="text-blue-400" />
@@ -205,7 +205,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
         </div>
 
         {/* Email Stats */}
-        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-xl p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Send size={18} className="text-pink-400" />
@@ -226,7 +226,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-xl p-4">
           <h3 className="font-semibold text-c-text mb-4 flex items-center gap-2">
             <Zap size={18} className="text-amber-400" />
             Quick Actions
@@ -269,7 +269,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
       {/* Top Content Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Top Playbooks */}
-        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-xl p-4">
           <h3 className="font-semibold text-c-text mb-4 flex items-center gap-2">
             <Play size={18} className="text-blue-400" />
             Top Playbooks
@@ -304,7 +304,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
         </div>
 
         {/* Top Emails */}
-        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-xl p-4">
           <h3 className="font-semibold text-c-text mb-4 flex items-center gap-2">
             <Mail size={18} className="text-pink-400" />
             Top Email Templates
@@ -341,7 +341,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
 
       {/* Usage by Category */}
       {data.usageByCategory && data.usageByCategory.length > 0 && (
-        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-xl p-4">
           <h3 className="font-semibold text-c-text mb-4 flex items-center gap-2">
             <FolderOpen size={18} className="text-primary-400" />
             Usage by Category
@@ -371,7 +371,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
 
       {/* Recent Activity */}
       {data.recentActivity && data.recentActivity.length > 0 && (
-        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-xl p-4">
           <h3 className="font-semibold text-c-text mb-4 flex items-center gap-2">
             <Activity size={18} className="text-emerald-400" />
             Recent Activity
@@ -380,7 +380,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
             {data.recentActivity.slice(0, 10).map((event) => (
               <div
                 key={event.id}
-                className="flex items-center justify-between py-2 border-b border-c-border/30 last:border-0"
+                className="flex items-center justify-between py-2 border-b border-c-border-subtle/30 last:border-0"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-c-surface flex items-center justify-center">

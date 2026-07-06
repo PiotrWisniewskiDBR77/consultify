@@ -211,7 +211,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
                         ? 'border-c-border-strong bg-c-surface-raised'
-                        : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20 bg-c-surface-raised'
+                        : 'border-c-border-subtle hover:border-c-border-subtle dark:hover:border-white/20 bg-c-surface-raised'
                     )}
                   >
                     <div
@@ -255,7 +255,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                       'p-3 rounded-lg border-2 transition-all duration-200 text-left',
                       isSelected
                         ? 'border-c-border-strong bg-c-surface-raised'
-                        : 'border-c-border hover:border-c-border-strong'
+                        : 'border-c-border-subtle hover:border-c-border-strong'
                     )}
                   >
                     <span
@@ -470,7 +470,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                       'p-3 rounded-xl border-2 transition-all duration-200 text-left',
                       isSelected
                         ? 'border-c-border-strong bg-c-surface-raised'
-                        : 'border-c-border hover:border-c-border-strong'
+                        : 'border-c-border-subtle hover:border-c-border-strong'
                     )}
                   >
                     <div
@@ -522,7 +522,7 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
                       'p-4 rounded-xl border-2 transition-all duration-200 text-center',
                       isSelected
                         ? 'border-c-border-strong bg-c-surface-raised'
-                        : 'border-c-border hover:border-c-border-strong'
+                        : 'border-c-border-subtle hover:border-c-border-strong'
                     )}
                   >
                     <span

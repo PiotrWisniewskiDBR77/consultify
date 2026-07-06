@@ -759,7 +759,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                 onClick={() =>
                   setScheduleModal({ open: true, templateId: tpl.id, templateName: tpl.name })
                 }
-                className="px-3 py-1.5 text-xs font-medium border border-c-border text-c-text-secondary hover:opacity-90 rounded-lg transition-colors"
+                className="px-3 py-1.5 text-xs font-medium border border-c-border-subtle text-c-text-secondary hover:opacity-90 rounded-lg transition-colors"
                 title={t('rbHub.scheduleFromTemplate', 'Zaplanuj raport z szablonu')}
               >
                 <Calendar size={14} />

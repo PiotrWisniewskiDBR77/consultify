@@ -53,7 +53,7 @@ const META: Record<
 };
 
 const INACTIVE_CLASS =
-  'bg-transparent text-c-text-secondary border-c-border';
+  'bg-transparent text-c-text-secondary border-c-border-subtle';
 
 export const TemplateLifecycleFilter: React.FC<TemplateLifecycleFilterProps> = ({
   value,

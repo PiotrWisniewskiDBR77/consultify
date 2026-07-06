@@ -30,7 +30,7 @@ const GAP = 6;
 const PANEL_MIN_WIDTH = 220;
 
 const PANEL_CLASS =
-  'fixed z-modal min-w-[220px] max-w-[320px] rounded-xl border border-c-border bg-c-surface-raised ' +
+  'fixed z-modal min-w-[220px] max-w-[320px] rounded-xl border border-c-border-subtle bg-c-surface-raised ' +
   'p-1 shadow-[0_8px_30px_rgba(15,23,42,0.12)] focus:outline-none';
 
 export const MENU_3_DROPDOWN_ITEM_CLASS =

@@ -496,7 +496,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
   return (
     <div
       ref={menuRef}
-      className="absolute z-50 w-72 max-h-80 overflow-y-auto rounded-xl border border-c-border bg-c-surface shadow-lg py-1"
+      className="absolute z-50 w-72 max-h-80 overflow-y-auto rounded-xl border border-c-border-subtle bg-c-surface shadow-lg py-1"
       style={{ top, left }}
     >
       {SLASH_GROUP_ORDER.map((groupId) => {
@@ -528,8 +528,8 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
                   <span
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${
                       cmd.aiCommand
-                        ? 'border-c-border bg-c-surface-raised text-c-text-secondary'
-                        : 'border-c-border bg-c-surface text-c-text-muted'
+                        ? 'border-c-border-subtle bg-c-surface-raised text-c-text-secondary'
+                        : 'border-c-border-subtle bg-c-surface text-c-text-muted'
                     }`}
                   >
                     {cmd.icon}

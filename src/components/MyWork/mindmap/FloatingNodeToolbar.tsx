@@ -183,7 +183,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         transform: 'translateX(-50%)',
       }}
     >
-      <div className="flex items-center gap-0.5 rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border shadow-hig-xl px-1 py-0.5">
+      <div className="flex items-center gap-0.5 rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border-subtle shadow-hig-xl px-1 py-0.5">
         {/* Multi-select label — replaces the single-node growth affordances */}
         {isMulti && (
           <div className="flex h-9 items-center px-2 text-[10px] font-semibold text-c-text-secondary dark:text-c-text-muted whitespace-nowrap">
@@ -379,7 +379,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             className={btnClass(openDropdown === 'color')}
           >
             <div
-              className="w-3.5 h-3.5 rounded-full border border-c-border-subtle dark:border-c-border"
+              className="w-3.5 h-3.5 rounded-full border border-c-border-subtle dark:border-c-border-subtle"
               style={{ backgroundColor: style.color || 'var(--c-tag-2)' }}
             />
           </button>
@@ -504,7 +504,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
               <GitPullRequest size={13} />
             </button>
             {openDropdown === 'convertBranch' && (
-              <div className="absolute top-full right-0 mt-1 z-[100] min-w-[180px] py-1.5 px-1 rounded-hig-xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border shadow-hig-xl animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute top-full right-0 mt-1 z-[100] min-w-[180px] py-1.5 px-1 rounded-hig-xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border-subtle shadow-hig-xl animate-in fade-in zoom-in-95 duration-100">
                 <div className="px-3 pt-1 pb-1 text-[9px] font-semibold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
                   {isPl ? 'Konwertuj gałąź na...' : 'Convert branch to...'}
                 </div>

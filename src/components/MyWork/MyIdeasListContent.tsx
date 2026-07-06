@@ -187,7 +187,7 @@ const TOOL_CONFIG: Record<
     borderColor: 'border-blue-400/30',
     label: 'Recommendation map',
     labelPl: 'Mapa rekomendacji',
-    badgeClass: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
+    badgeClass: 'border border-c-border-subtle bg-c-surface-raised text-c-text-secondary',
     badgeIconClass: 'text-primary-600 dark:text-primary-300',
   },
   table: {
@@ -197,7 +197,7 @@ const TOOL_CONFIG: Record<
     borderColor: 'border-sky-400/30',
     label: 'Table',
     labelPl: 'Tabela',
-    badgeClass: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
+    badgeClass: 'border border-c-border-subtle bg-c-surface-raised text-c-text-secondary',
     badgeIconClass: 'text-sky-600 dark:text-sky-300',
   },
   process_flow: {
@@ -207,7 +207,7 @@ const TOOL_CONFIG: Record<
     borderColor: 'border-emerald-400/30',
     label: 'Process Flow',
     labelPl: 'Proces',
-    badgeClass: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
+    badgeClass: 'border border-c-border-subtle bg-c-surface-raised text-c-text-secondary',
     badgeIconClass: 'text-emerald-600 dark:text-emerald-300',
   },
   whiteboard: {
@@ -217,7 +217,7 @@ const TOOL_CONFIG: Record<
     borderColor: 'border-amber-400/30',
     label: 'Whiteboard',
     labelPl: 'Whiteboard',
-    badgeClass: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
+    badgeClass: 'border border-c-border-subtle bg-c-surface-raised text-c-text-secondary',
     badgeIconClass: 'text-amber-600 dark:text-amber-300',
   },
 };
@@ -1520,7 +1520,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                 key={target}
                 onClick={() => handleConvert(target)}
                 disabled={converting}
-                className="text-left p-3 rounded-xl border border-c-border hover:bg-black/[0.04] dark:hover:bg-white/[0.03] transition-colors disabled:opacity-60"
+                className="text-left p-3 rounded-xl border border-c-border-subtle hover:bg-black/[0.04] dark:hover:bg-white/[0.03] transition-colors disabled:opacity-60"
               >
                 <div className="flex items-center gap-2 text-sm font-semibold text-c-text-secondary">
                   <Icon size={16} className={color} />
@@ -1586,7 +1586,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
             placeholder={isPolish ? 'np. backlog' : 'e.g. backlog'}
-            className="w-full h-10 px-3 rounded-xl border border-c-border bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
+            className="w-full h-10 px-3 rounded-xl border border-c-border-subtle bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
             autoFocus
           />
         </div>

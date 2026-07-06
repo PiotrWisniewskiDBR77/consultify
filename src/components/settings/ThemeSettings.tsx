@@ -214,7 +214,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
       icon: Monitor,
       label: t('settings.appearance.system', 'System'),
       description: t('settings.appearance.systemDesc', 'Match your device'),
-      preview: 'bg-gradient-to-r from-white to-c-surface border-c-border dark:border-navy-700',
+      preview: 'bg-gradient-to-r from-white to-c-surface border-c-border-subtle dark:border-navy-700',
     },
   ];
 
@@ -261,7 +261,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
                         ? 'border-c-border-strong bg-c-surface-raised'
-                        : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20 bg-c-surface-raised'
+                        : 'border-c-border-subtle hover:border-c-border-subtle dark:hover:border-white/20 bg-c-surface-raised'
                     )}
                   >
                     <div
@@ -331,7 +331,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
               })}
 
               <label
-                className="relative w-12 h-12 rounded-xl bg-c-surface-raised border border-dashed border-c-border
+                className="relative w-12 h-12 rounded-xl bg-c-surface-raised border border-dashed border-c-border-subtle
                            cursor-pointer hover:border-c-border-strong transition-all duration-200
                            flex items-center justify-center"
                 title={t('settings.appearance.customColor', 'Custom color')}
@@ -401,7 +401,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       'hover:scale-[1.02] active:scale-[0.98]',
                       isSelected
                         ? 'border-c-border-strong bg-c-surface-raised'
-                        : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20 bg-c-surface-raised'
+                        : 'border-c-border-subtle hover:border-c-border-subtle dark:hover:border-white/20 bg-c-surface-raised'
                     )}
                   >
                     {/* Mini density preview */}

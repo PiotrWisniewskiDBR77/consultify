@@ -130,10 +130,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
 
     return (
       <div className="fixed inset-0 z-overlay flex items-center justify-center bg-slate-900/50 dark:bg-navy-950/90 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-        <div className="bg-c-surface border border-c-border rounded-xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col h-[85vh]">
+        <div className="bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col h-[85vh]">
           {/* Initiative Context Banner */}
           {initiative && (
-            <div className="px-4 py-2.5 border-b border-c-border bg-c-surface-raised flex items-center gap-3 shrink-0">
+            <div className="px-4 py-2.5 border-b border-c-border-subtle bg-c-surface-raised flex items-center gap-3 shrink-0">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded bg-blue-600 flex items-center justify-center">
                   <Target size={12} className="text-white" />
@@ -154,7 +154,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
           )}
 
           {/* Header */}
-          <div className="p-4 border-b border-c-border flex justify-between items-start bg-c-surface-raised shrink-0">
+          <div className="p-4 border-b border-c-border-subtle flex justify-between items-start bg-c-surface-raised shrink-0">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-[10px] uppercase font-bold tracking-wider text-c-text-muted">
@@ -189,7 +189,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
               />
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-c-surface p-1 rounded border border-c-border shadow-sm dark:shadow-none">
+              <div className="flex items-center gap-2 bg-c-surface p-1 rounded border border-c-border-subtle shadow-sm dark:shadow-none">
                 <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-600 flex items-center justify-center text-xs font-bold text-blue-700 dark:text-white uppercase">
                   {task.assignee?.firstName?.[0] || '?'}
                 </div>
@@ -219,7 +219,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
           {/* Main Content Layout */}
           <div className="flex flex-1 overflow-hidden">
             {/* LEFT COLUMN: Sidebar Navigation & Metadata */}
-            <div className="w-64 bg-c-surface-raised  border-c-border flex flex-col shrink-0">
+            <div className="w-64 bg-c-surface-raised  border-c-border-subtle flex flex-col shrink-0">
               <nav className="p-2 space-y-1">
                 {[
                   { id: 'strategy', label: 'Strategic Context', icon: Target },
@@ -243,9 +243,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                 ))}
               </nav>
 
-              <div className="mt-auto p-4 space-y-4 border-t border-c-border">
+              <div className="mt-auto p-4 space-y-4 border-t border-c-border-subtle">
                 {/* AI Insight Card (Mini) */}
-                <div className="bg-c-surface-raised border border-c-border rounded p-3">
+                <div className="bg-c-surface-raised border border-c-border-subtle rounded p-3">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-xs font-bold text-c-info flex items-center gap-1">
                       <Sparkles size={12} /> AI Insight
@@ -253,7 +253,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                     <button
                       onClick={generateAiInsight}
                       disabled={aiLoading}
-                      className="text-[10px] bg-c-surface hover:bg-c-surface-raised px-2 py-0.5 rounded text-c-info transition-colors border border-c-border"
+                      className="text-[10px] bg-c-surface hover:bg-c-surface-raised px-2 py-0.5 rounded text-c-info transition-colors border border-c-border-subtle"
                     >
                       {aiLoading ? 'Thinking...' : 'Refresh'}
                     </button>
@@ -295,7 +295,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                       type="date"
                       value={task.dueDate ? task.dueDate.split('T')[0] : ''}
                       onChange={(e) => setTask({ ...task, dueDate: e.target.value })}
-                      className="w-full bg-c-surface border border-c-border rounded px-2 py-1.5 text-xs text-c-text"
+                      className="w-full bg-c-surface border border-c-border-subtle rounded px-2 py-1.5 text-xs text-c-text"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -306,7 +306,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                       <select
                         value={task.status}
                         onChange={(e) => setTask({ ...task, status: e.target.value as TaskStatus })}
-                        className="w-full bg-c-surface border border-c-border rounded px-1 py-1.5 text-xs text-c-text"
+                        className="w-full bg-c-surface border border-c-border-subtle rounded px-1 py-1.5 text-xs text-c-text"
                       >
                         {['todo', 'in_progress', 'review', 'done', 'blocked'].map((s) => (
                           <option key={s} value={s}>
@@ -322,7 +322,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                       <select
                         value={task.priority}
                         onChange={(e) => setTask({ ...task, priority: e.target.value as any })}
-                        className="w-full bg-c-surface border border-c-border rounded px-1 py-1.5 text-xs text-c-text"
+                        className="w-full bg-c-surface border border-c-border-subtle rounded px-1 py-1.5 text-xs text-c-text"
                       >
                         {['low', 'medium', 'high', 'urgent'].map((p: any) => (
                           <option key={p} value={p}>
@@ -351,13 +351,13 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                     <textarea
                       value={task.expectedOutcome || ''}
                       onChange={(e) => setTask({ ...task, expectedOutcome: e.target.value })}
-                      className="w-full h-24 bg-c-surface border border-c-border rounded-lg p-3 text-sm text-c-text focus:border-c-focus-solid outline-none resize-none transition-all placeholder:text-c-text-muted"
+                      className="w-full h-24 bg-c-surface border border-c-border-subtle rounded-lg p-3 text-sm text-c-text focus:border-c-focus-solid outline-none resize-none transition-all placeholder:text-c-text-muted"
                       placeholder="e.g., Reduce customer onboarding time by 20%..."
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-6">
-                    <div className="p-4 rounded-lg bg-c-surface-raised border border-c-border">
+                    <div className="p-4 rounded-lg bg-c-surface-raised border border-c-border-subtle">
                       <h4 className="text-xs font-bold text-c-text-muted uppercase mb-3">
                         Decision Impact
                       </h4>
@@ -378,7 +378,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                                 },
                               })
                             }
-                            className="w-full bg-c-surface border border-c-border rounded px-2 py-1.5 text-xs text-c-text"
+                            className="w-full bg-c-surface border border-c-border-subtle rounded px-2 py-1.5 text-xs text-c-text"
                           >
                             {[
                               'CONTINUE',
@@ -409,7 +409,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                                 },
                               })
                             }
-                            className="w-full bg-c-surface border border-c-border rounded px-2 py-1.5 text-xs text-c-text placeholder:text-c-text-muted"
+                            className="w-full bg-c-surface border border-c-border-subtle rounded px-2 py-1.5 text-xs text-c-text placeholder:text-c-text-muted"
                             placeholder="If successful, we will..."
                           />
                         </div>
@@ -431,13 +431,13 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                     <textarea
                       value={task.description || ''}
                       onChange={(e) => setTask({ ...task, description: e.target.value })}
-                      className="w-full h-64 bg-c-surface border border-c-border rounded-lg p-4 text-sm text-c-text focus:border-blue-500/50 outline-none resize-none font-mono leading-relaxed placeholder:text-c-text-muted"
+                      className="w-full h-64 bg-c-surface border border-c-border-subtle rounded-lg p-4 text-sm text-c-text focus:border-blue-500/50 outline-none resize-none font-mono leading-relaxed placeholder:text-c-text-muted"
                       placeholder="Use markdown for detailed execution steps..."
                     />
                   </div>
 
                   {/* Task Weight for Progress Calculation */}
-                  <div className="p-4 rounded-lg bg-c-surface-raised border border-c-border">
+                  <div className="p-4 rounded-lg bg-c-surface-raised border border-c-border-subtle">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-xs font-bold text-c-info flex items-center gap-2">
                         <Target size={14} /> Task Weight (Progress Impact)
@@ -457,7 +457,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                           className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
                             (task.weight || 1) === w
                               ? 'bg-navy-900 text-white shadow-sm dark:bg-white dark:text-navy-950'
-                              : 'bg-c-surface text-c-text-secondary border border-c-border hover:border-c-border-strong'
+                              : 'bg-c-surface text-c-text-secondary border border-c-border-subtle hover:border-c-border-strong'
                           }`}
                         >
                           {w}x
@@ -468,7 +468,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                       type="text"
                       value={task.weightReason || ''}
                       onChange={(e) => setTask({ ...task, weightReason: e.target.value })}
-                      className="mt-3 w-full bg-c-surface border border-c-border rounded-lg px-3 py-2 text-xs text-c-text placeholder:text-c-text-muted outline-none focus:border-c-focus-solid"
+                      className="mt-3 w-full bg-c-surface border border-c-border-subtle rounded-lg px-3 py-2 text-xs text-c-text placeholder:text-c-text-muted outline-none focus:border-c-focus-solid"
                       placeholder="Reason for weight (e.g., Critical path item, High risk...)"
                     />
                   </div>
@@ -497,7 +497,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                   </div>
 
                   {/* Evidence Requirements */}
-                  <div className="p-4 rounded-lg bg-c-surface-raised border border-c-border space-y-4">
+                  <div className="p-4 rounded-lg bg-c-surface-raised border border-c-border-subtle space-y-4">
                     <p className="text-xs text-c-text-muted">
                       Select required evidence types to mark this task as "Verified Done".
                     </p>
@@ -527,7 +527,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                             Array.isArray(task.evidenceRequired) &&
                             task.evidenceRequired.includes(type as any)
                               ? 'bg-green-100 dark:bg-green-500/20 border-green-500 dark:border-green-500/50 text-green-700 dark:text-green-400'
-                              : 'bg-white dark:bg-transparent border-c-border text-c-text-muted hover:border-c-border-strong'
+                              : 'bg-white dark:bg-transparent border-c-border-subtle text-c-text-muted hover:border-c-border-strong'
                           }`}
                         >
                           {type}
@@ -550,7 +550,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                       onChange={(e) =>
                         setTask({ ...task, acceptanceCriteria: e.target.value.split('\n') })
                       }
-                      className="w-full h-40 bg-c-surface border border-c-border rounded-lg p-3 text-sm text-c-text focus:border-green-500/30 outline-none resize-none placeholder:text-c-text-muted"
+                      className="w-full h-40 bg-c-surface border border-c-border-subtle rounded-lg p-3 text-sm text-c-text focus:border-green-500/30 outline-none resize-none placeholder:text-c-text-muted"
                       placeholder="- [ ] Metric A > 50%&#10;- [ ] User Flow Tested"
                     />
                   </div>
@@ -650,7 +650,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
                       task.changeLog.map((log, i: number) => (
                         <div
                           key={i}
-                          className="flex gap-3 text-xs p-3 rounded bg-c-surface-raised border border-c-border"
+                          className="flex gap-3 text-xs p-3 rounded bg-c-surface-raised border border-c-border-subtle"
                         >
                           <div className="mt-0.5">
                             <GitCommit size={14} className="text-c-text-muted" />
@@ -692,7 +692,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t border-c-border bg-c-surface-raised flex justify-between items-center shrink-0">
+          <div className="p-4 border-t border-c-border-subtle bg-c-surface-raised flex justify-between items-center shrink-0">
             <div className="text-[10px] text-c-text-muted">
               {task.updatedAt ? `Last updated: ${new Date(task.updatedAt).toLocaleString()}` : ''}
             </div>

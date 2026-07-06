@@ -104,7 +104,7 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
           return (
             <div
               key={table.id}
-              className="flex items-center h-7 px-2 bg-c-surface rounded-t border border-b-0 border-c-border"
+              className="flex items-center h-7 px-2 bg-c-surface rounded-t border border-b-0 border-c-border-subtle"
             >
               <input
                 ref={renameInputRef}
@@ -167,7 +167,7 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
       {/* Context menu */}
       {contextMenu && (
         <div
-          className="fixed z-[200] bg-c-surface rounded-lg shadow-xl border border-c-border py-1 min-w-[150px]"
+          className="fixed z-[200] bg-c-surface rounded-lg shadow-xl border border-c-border-subtle py-1 min-w-[150px]"
           style={{ left: contextMenu.x, top: contextMenu.y - 120 }}
           onClick={(e) => e.stopPropagation()}
         >

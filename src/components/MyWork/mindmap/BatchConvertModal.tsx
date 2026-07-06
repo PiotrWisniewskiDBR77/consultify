@@ -80,7 +80,7 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
   return (
     <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-c-bg">
       <div className="w-full max-w-md rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div>
             <h3 className="text-sm font-bold text-c-text dark:text-c-text">
               {isPl ? 'Konwersja zbiorcza' : 'Batch Convert'}
@@ -140,7 +140,7 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
           </div>
         </div>
 
-        <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border flex items-center gap-2">
+        <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border-subtle flex items-center gap-2">
           <button
             onClick={() => handleConvert('initiative')}
             disabled={locked || selected.size === 0 || converting}

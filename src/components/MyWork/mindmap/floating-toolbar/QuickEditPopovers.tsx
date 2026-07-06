@@ -35,7 +35,7 @@ export const QuickNotesPopover: React.FC<QuickNotesPopoverProps> = ({
   }, [nodeId, value, onSave, onClose]);
 
   return (
-    <div className="w-64 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl p-3">
+    <div className="w-64 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle shadow-xl p-3">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-c-text-secondary dark:text-c-text-muted">
           <StickyNote size={12} />
@@ -53,7 +53,7 @@ export const QuickNotesPopover: React.FC<QuickNotesPopoverProps> = ({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder={isPl ? 'Dodaj notatkę…' : 'Add a note…'}
-        className="w-full h-20 text-xs bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border rounded-lg p-2 resize-none focus:outline-none focus:ring-1 focus:ring-c-border"
+        className="w-full h-20 text-xs bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg p-2 resize-none focus:outline-none focus:ring-1 focus:ring-c-border"
         onKeyDown={(e) => {
           if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSave();
         }}
@@ -113,7 +113,7 @@ export const QuickTagsPopover: React.FC<QuickTagsPopoverProps> = ({
   );
 
   return (
-    <div className="w-64 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl p-3">
+    <div className="w-64 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle shadow-xl p-3">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-c-text-secondary dark:text-c-text-muted">
           <Hash size={12} />
@@ -153,7 +153,7 @@ export const QuickTagsPopover: React.FC<QuickTagsPopoverProps> = ({
             }
           }}
           placeholder={isPl ? 'Nowy tag…' : 'New tag…'}
-          className="flex-1 h-7 px-2 text-xs bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border rounded-lg focus:outline-none focus:ring-1 focus:ring-c-border"
+          className="flex-1 h-7 px-2 text-xs bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg focus:outline-none focus:ring-1 focus:ring-c-border"
         />
         <button
           onClick={addTag}
@@ -196,7 +196,7 @@ export const QuickLinkPopover: React.FC<QuickLinkPopoverProps> = ({
   }, [nodeId, value, onSave, onClose]);
 
   return (
-    <div className="w-64 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl p-3">
+    <div className="w-64 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle shadow-xl p-3">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-c-text-secondary dark:text-c-text-muted">
           <Link2 size={12} />
@@ -214,7 +214,7 @@ export const QuickLinkPopover: React.FC<QuickLinkPopoverProps> = ({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="https://…"
-        className="w-full h-8 text-xs bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border rounded-lg px-2 focus:outline-none focus:ring-1 focus:ring-c-border"
+        className="w-full h-8 text-xs bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-lg px-2 focus:outline-none focus:ring-1 focus:ring-c-border"
         onKeyDown={(e) => {
           if (e.key === 'Enter') handleSave();
         }}

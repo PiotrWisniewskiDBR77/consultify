@@ -191,7 +191,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
 
   return (
     <div className="sticky bottom-4 z-50 mx-4">
-      <div className="bg-c-surface/95 backdrop-blur-xl border border-c-border rounded-xl shadow-2xl overflow-hidden">
+      <div className="bg-c-surface/95 backdrop-blur-xl border border-c-border-subtle rounded-xl shadow-2xl overflow-hidden">
         {/* Result Toast */}
         {result && (
           <div
@@ -307,7 +307,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
               {showMoreActions && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setShowMoreActions(false)} />
-                  <div className="absolute bottom-full right-0 mb-2 w-48 bg-c-surface-raised border border-c-border rounded-xl shadow-xl z-20 py-1">
+                  <div className="absolute bottom-full right-0 mb-2 w-48 bg-c-surface-raised border border-c-border-subtle rounded-xl shadow-xl z-20 py-1">
                     {onRemoveTags && availableTags.length > 0 && (
                       <button
                         onClick={() => {
@@ -332,7 +332,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                         Archive
                       </button>
                     )}
-                    <hr className="my-1 border-c-border" />
+                    <hr className="my-1 border-c-border-subtle" />
                     <button
                       onClick={() => {
                         setActiveMode('delete');
@@ -399,7 +399,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
         )}
 
         {activeMode === 'addTags' && (
-          <div className="px-4 py-3 border-t border-c-border/50 bg-c-surface-raised/50">
+          <div className="px-4 py-3 border-t border-c-border-subtle/50 bg-c-surface-raised/50">
             <div className="flex items-center justify-between mb-3">
               <span className="font-medium text-c-text">Add Tags to {selectedCount} items</span>
               <button
@@ -461,7 +461,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
         )}
 
         {activeMode === 'removeTags' && (
-          <div className="px-4 py-3 border-t border-c-border/50 bg-c-surface-raised/50">
+          <div className="px-4 py-3 border-t border-c-border-subtle/50 bg-c-surface-raised/50">
             <div className="flex items-center justify-between mb-3">
               <span className="font-medium text-c-text">Remove Tags from {selectedCount} items</span>
               <button
@@ -523,7 +523,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
         )}
 
         {activeMode === 'setCategory' && (
-          <div className="px-4 py-3 border-t border-c-border/50 bg-c-surface-raised/50">
+          <div className="px-4 py-3 border-t border-c-border-subtle/50 bg-c-surface-raised/50">
             <div className="flex items-center justify-between mb-3">
               <span className="font-medium text-c-text">Set Category for {selectedCount} items</span>
               <button
@@ -539,7 +539,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
             <select
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
-              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
             >
               <option value="">Select a category...</option>
               {availableCategories.map((cat) => (
@@ -634,7 +634,7 @@ const ActionPanel: React.FC<ActionPanelProps> = ({
   const variantStyles = {
     default: {
       bg: 'bg-c-surface-raised/50',
-      border: 'border-c-border/50',
+      border: 'border-c-border-subtle/50',
       button: 'bg-primary-500 hover:bg-primary-600',
       icon: <AlertTriangle size={16} className="text-slate-400 dark:text-slate-500" />,
     },

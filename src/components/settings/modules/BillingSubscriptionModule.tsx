@@ -658,7 +658,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                     </button>
                   )}
                   {plan.price === null && (
-                    <button className="w-full mt-4 py-2 px-4 border border-c-border dark:border-navy-600 text-c-text-secondary rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-800 text-sm font-medium transition-colors">
+                    <button className="w-full mt-4 py-2 px-4 border border-c-border-subtle dark:border-navy-600 text-c-text-secondary rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-800 text-sm font-medium transition-colors">
                       {t('access.cta.contactSales')}
                     </button>
                   )}

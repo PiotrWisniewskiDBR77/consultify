@@ -223,7 +223,7 @@ export const FlowEdgeComponent: React.FC<EdgeProps> = ({
                 if (data?.onConditionChange) data.onConditionChange(id, e.target.value);
               }}
               disabled={edgeLocked}
-              className="text-[8px] bg-c-surface border border-c-border rounded"
+              className="text-[8px] bg-c-surface border border-c-border-subtle rounded"
             >
               {CONDITION_TYPES.map((ct) => (
                 <option key={ct} value={ct}>

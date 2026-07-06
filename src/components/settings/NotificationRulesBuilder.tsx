@@ -280,7 +280,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                       onChange={(e) =>
                         handleUpdateRule(rule.id, { [option.key]: e.target.checked })
                       }
-                      className="rounded border-c-border text-c-accent focus:ring-[color:var(--c-focus)]"
+                      className="rounded border-c-border-subtle text-c-accent focus:ring-[color:var(--c-focus)]"
                     />
                     <option.icon className="w-4 h-4 text-c-text-secondary" />
                     <span className="text-sm text-c-text-secondary">

@@ -222,7 +222,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                       className={`w-5 h-5 rounded-full border-2 shadow-sm hover:scale-110 transition-transform ${
                         nodeStyle.color === c
                           ? 'border-c-accent ring-2 ring-c-accent'
-                          : 'border-c-border dark:border-c-border'
+                          : 'border-c-border-subtle dark:border-c-border-subtle'
                       }`}
                       style={{ backgroundColor: c }}
                     />
@@ -313,7 +313,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
           {THEMES.map((theme) => (
             <div
               key={theme.id}
-              className="flex items-center gap-3 p-2.5 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
+              className="flex items-center gap-3 p-2.5 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
             >
               <div className="flex gap-0.5 shrink-0">
                 {theme.colors.map((c, i) => (

@@ -782,7 +782,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                               selection.selectRowLabel ??
                               t('common.selectRow', isPolish ? 'Zaznacz wiersz' : 'Select row')
                             }
-                            className="h-3.5 w-3.5 rounded border-c-border text-c-info focus:ring-c-focus cursor-pointer"
+                            className="h-3.5 w-3.5 rounded border-c-border-subtle text-c-info focus:ring-c-focus cursor-pointer"
                           />
                         ) : column.render ? (
                           column.render(row)

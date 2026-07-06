@@ -284,7 +284,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
               editable: Boolean(onChangeInitiativeStatus),
               renderEditor: onChangeInitiativeStatus
                 ? (onClose) => (
-                    <div className="w-56 rounded-xl border border-c-border bg-c-surface-raised shadow-xl p-2">
+                    <div className="w-56 rounded-xl border border-c-border-subtle bg-c-surface-raised shadow-xl p-2">
                       <div className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
                         {t('common.status', 'Status')}
                       </div>
@@ -515,7 +515,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                       type="checkbox"
                       checked={selectedIds.size === sortedItems.length && sortedItems.length > 0}
                       onChange={toggleSelectAll}
-                      className="w-4 h-4 rounded border-c-border bg-c-surface text-c-focus-solid focus:ring-c-focus"
+                      className="w-4 h-4 rounded border-c-border-subtle bg-c-surface text-c-focus-solid focus:ring-c-focus"
                     />
                   </th>
                   <th className="text-left px-4 py-2">
@@ -579,7 +579,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                           type="checkbox"
                           checked={selectedIds.has(initiative.id)}
                           onChange={() => toggleSelect(initiative.id)}
-                          className="w-4 h-4 rounded border-c-border bg-c-surface text-c-focus-solid focus:ring-c-focus"
+                          className="w-4 h-4 rounded border-c-border-subtle bg-c-surface text-c-focus-solid focus:ring-c-focus"
                         />
                       </td>
 

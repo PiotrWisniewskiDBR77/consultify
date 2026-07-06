@@ -407,7 +407,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
           <button
             onClick={handleExportConfig}
             disabled={!!loadError}
-            className="flex items-center gap-2 px-3 py-2 bg-c-surface hover:bg-c-surface-raised border border-c-border text-c-text-secondary rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-c-surface hover:bg-c-surface-raised border border-c-border-subtle text-c-text-secondary rounded-lg transition-colors"
           >
             <Download className="w-4 h-4" />
             Export
@@ -424,7 +424,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       </div>
 
       {/* Environment Selector */}
-      <div className="flex items-center gap-2 p-2 bg-c-surface-raised rounded-xl border border-c-border w-fit">
+      <div className="flex items-center gap-2 p-2 bg-c-surface-raised rounded-xl border border-c-border-subtle w-fit">
         {ENVIRONMENTS.map((env) => (
           <button
             key={env}
@@ -458,7 +458,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             disabled={!!loadError}
-            className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border rounded-lg text-c-text placeholder:text-c-text-muted"
+            className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text placeholder:text-c-text-muted"
           />
         </div>
         <div className="flex gap-1 p-1 bg-c-surface-raised rounded-lg">
@@ -490,12 +490,12 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       )}
 
       {loadError ? (
-        <div className="rounded-xl border border-c-border bg-c-surface p-6">
+        <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
           <DegradedState title="Configuration overview unavailable" description={loadError} />
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+          <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
             <div className="text-sm text-c-text-secondary">Total Configs</div>
             <div className="text-2xl font-bold text-c-text">
               {configs.length}
@@ -525,7 +525,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       {loading ? (
         <LoadingState template="list" />
       ) : loadError ? (
-        <div className="rounded-xl border border-c-border bg-c-surface p-6">
+        <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
           <DegradedState title="System configuration unavailable" description={loadError} />
         </div>
       ) : (
@@ -540,7 +540,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
             return (
               <div
                 key={category}
-                className="bg-c-surface-raised rounded-xl border border-c-border overflow-hidden"
+                className="bg-c-surface-raised rounded-xl border border-c-border-subtle overflow-hidden"
               >
                 <button
                   onClick={() => toggleCategory(category)}
@@ -728,7 +728,7 @@ const ConfigEditModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay">
-      <div className="bg-c-surface rounded-xl border border-c-border p-6 w-full max-w-lg">
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6 w-full max-w-lg">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-c-text">Edit Configuration</h3>
           <button
@@ -766,7 +766,7 @@ const ConfigEditModal: React.FC<{
               <select
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
-                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
+                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
               >
                 <option value="true">True</option>
                 <option value="false">False</option>
@@ -776,7 +776,7 @@ const ConfigEditModal: React.FC<{
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 rows={6}
-                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text font-mono text-sm"
+                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text font-mono text-sm"
               />
             ) : (
               <input
@@ -790,7 +790,7 @@ const ConfigEditModal: React.FC<{
                 value={value}
                 aria-label="Configuration Value"
                 onChange={(e) => setValue(e.target.value)}
-                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
+                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
               />
             )}
           </div>

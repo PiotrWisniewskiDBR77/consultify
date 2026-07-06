@@ -164,7 +164,7 @@ export const CronBuilder: React.FC<CronBuilderProps> = ({
               className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
                 isActive
                   ? 'border-c-accent bg-c-accent-soft text-c-accent'
-                  : 'border-c-border-subtle bg-c-surface hover:border-c-border'
+                  : 'border-c-border-subtle bg-c-surface hover:border-c-border-subtle'
               }`}
             >
               {isActive && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
@@ -189,7 +189,7 @@ export const CronBuilder: React.FC<CronBuilderProps> = ({
           className={`w-full rounded-lg border px-3 py-2 font-mono text-sm ${
             customInput && !validation.valid
               ? 'border-c-danger bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] border-c-danger bg-[color-mix(in_srgb,var(--c-danger)_18%,transparent)]'
-              : 'border-c-border-subtle bg-c-surface border-c-border bg-c-surface-raised'
+              : 'border-c-border-subtle bg-c-surface border-c-border-subtle bg-c-surface-raised'
           }`}
         />
         {customInput && validation.valid && validation.description && (
@@ -215,7 +215,7 @@ export const CronBuilder: React.FC<CronBuilderProps> = ({
           <select
             value={timezone || 'UTC'}
             onChange={(e) => onTimezoneChange(e.target.value)}
-            className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border bg-c-surface-raised"
+            className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface-raised"
           >
             {COMMON_TIMEZONES.map((tz) => (
               <option key={tz} value={tz}>

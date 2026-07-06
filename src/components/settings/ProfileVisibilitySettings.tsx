@@ -188,7 +188,7 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
               className={`p-4 rounded-lg border-2 text-left transition-all ${
                 visibility.profile === option.value
                   ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
-                  : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-white/20'
+                  : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border-subtle dark:hover:border-white/20'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -311,7 +311,7 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     visibility.allowMentionsFrom === option.value
                       ? 'bg-c-accent-soft dark:bg-c-accent-soft text-c-accent border-2 border-c-accent'
-                      : 'bg-c-surface-raised text-c-text-secondary border-2 border-transparent hover:border-c-border dark:border-navy-700'
+                      : 'bg-c-surface-raised text-c-text-secondary border-2 border-transparent hover:border-c-border-subtle dark:border-navy-700'
                   }`}
                 >
                   {option.label}
@@ -338,7 +338,7 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     visibility.allowDirectMessagesFrom === option.value
                       ? 'bg-c-accent-soft dark:bg-c-accent-soft text-c-accent border-2 border-c-accent'
-                      : 'bg-c-surface-raised text-c-text-secondary border-2 border-transparent hover:border-c-border dark:border-navy-700'
+                      : 'bg-c-surface-raised text-c-text-secondary border-2 border-transparent hover:border-c-border-subtle dark:border-navy-700'
                   }`}
                 >
                   {option.label}

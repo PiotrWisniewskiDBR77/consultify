@@ -77,7 +77,7 @@ export const ProcessFlowNodeCommentThread: React.FC<ProcessFlowNodeCommentThread
   if (!open) return null;
 
   return (
-    <div className="fixed top-0 right-0 bottom-0 z-[86] w-[360px] max-w-[85vw] bg-c-surface border-l border-c-border shadow-2xl flex flex-col overflow-hidden">
+    <div className="fixed top-0 right-0 bottom-0 z-[86] w-[360px] max-w-[85vw] bg-c-surface border-l border-c-border-subtle shadow-2xl flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-c-border-subtle">
         <div className="min-w-0 flex-1">
@@ -155,7 +155,7 @@ export const ProcessFlowNodeCommentThread: React.FC<ProcessFlowNodeCommentThread
                 placeholder={
                   isPl ? 'Napisz komentarz... (@wzmianka)' : 'Write a comment... (@mention)'
                 }
-                className="w-full px-3 py-2 rounded-xl border border-c-border bg-c-bg text-[11px] text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus resize-none"
+                className="w-full px-3 py-2 rounded-xl border border-c-border-subtle bg-c-bg text-[11px] text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus resize-none"
               />
               <AtSign size={10} className="absolute right-2.5 bottom-2.5 text-c-text-muted" />
             </div>

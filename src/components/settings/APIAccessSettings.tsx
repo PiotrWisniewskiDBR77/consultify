@@ -477,7 +477,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
               value={newKeyName}
               onChange={(e) => setNewKeyName(e.target.value)}
               placeholder={t('settings.api.keyNamePlaceholder', 'e.g., Production API')}
-              className="flex-1 px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg bg-c-surface"
+              className="flex-1 px-3 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg bg-c-surface"
             />
             <button
               onClick={createKey}
@@ -490,7 +490,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                 setShowNew(false);
                 setNewKeyName('');
               }}
-              className="px-4 py-2 border border-c-border dark:border-navy-600 rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700"
+              className="px-4 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700"
             >
               {t('common.cancel', 'Cancel')}
             </button>
@@ -719,7 +719,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                             type="checkbox"
                             checked={keySettings[key.id]?.scopes?.includes(scope.id) || false}
                             onChange={() => toggleScope(key.id, scope.id)}
-                            className="w-4 h-4 rounded border-c-border dark:border-navy-700 text-brand focus:ring-[color:var(--c-focus)]"
+                            className="w-4 h-4 rounded border-c-border-subtle dark:border-navy-700 text-brand focus:ring-[color:var(--c-focus)]"
                           />
                           <div>
                             <span className="text-sm font-medium text-c-text-secondary">

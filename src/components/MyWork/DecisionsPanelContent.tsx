@@ -1890,7 +1890,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                               ? 'bg-c-text border-c-text text-c-surface'
                               : someSelected
                                 ? 'bg-c-text/60 border-c-text text-c-surface'
-                                : 'border-c-border hover:border-c-border-strong text-transparent hover:text-c-text-muted'
+                                : 'border-c-border-subtle hover:border-c-border-strong text-transparent hover:text-c-text-muted'
                           }
                         `}
                       >
@@ -2081,7 +2081,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                                         ? 'translateY(-100%)'
                                         : undefined,
                                   }}
-                                  className="z-modal flex flex-col overflow-y-auto rounded-2xl border border-c-border bg-c-surface-raised p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:shadow-black/35"
+                                  className="z-modal flex flex-col overflow-y-auto rounded-2xl border border-c-border-subtle bg-c-surface-raised p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:shadow-black/35"
                                   onClick={(event) => event.stopPropagation()}
                                 >
                                   <div className="px-2 pb-2 pt-1">
@@ -2156,7 +2156,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                                                   return next;
                                                 });
                                               }}
-                                              className="h-3.5 w-3.5 rounded border-c-border text-c-text focus:ring-c-focus"
+                                              className="h-3.5 w-3.5 rounded border-c-border-subtle text-c-text focus:ring-c-focus"
                                             />
                                             <span className="flex-1 text-[12px] font-medium text-c-text-secondary">
                                               {label}
@@ -2179,7 +2179,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                                         onChange={(event) =>
                                           updateRowDescriptionSetting(event.target.checked)
                                         }
-                                        className="h-3.5 w-3.5 rounded border-c-border text-c-text focus:ring-c-focus"
+                                        className="h-3.5 w-3.5 rounded border-c-border-subtle text-c-text focus:ring-c-focus"
                                       />
                                       <span className="flex-1 text-[12px] font-medium text-c-text-secondary">
                                         {isPolish

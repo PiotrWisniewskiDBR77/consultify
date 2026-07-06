@@ -52,7 +52,7 @@ export const NotebookProgressChip: React.FC<NotebookProgressChipProps> = ({
   );
 
   return (
-    <div className="mt-3 flex items-center flex-wrap gap-1.5 rounded-xl border border-c-border bg-c-surface-raised px-3 py-1.5">
+    <div className="mt-3 flex items-center flex-wrap gap-1.5 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-1.5">
       {/* Step 1: Sources */}
       <button
         type="button"

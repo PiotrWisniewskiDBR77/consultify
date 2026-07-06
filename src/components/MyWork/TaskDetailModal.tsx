@@ -205,7 +205,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 border border-c-border rounded-lg bg-c-surface-raised text-c-text focus:ring-2 focus:ring-c-focus outline-none"
+                  className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface-raised text-c-text focus:ring-2 focus:ring-c-focus outline-none"
                   placeholder="Enter task title"
                   autoFocus
                 />
@@ -220,7 +220,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
-                    className="w-full px-3 py-2 border border-c-border rounded-lg bg-c-surface-raised text-c-text outline-none"
+                    className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface-raised text-c-text outline-none"
                   >
                     <option value="todo">Todo</option>
                     <option value="in_progress">In Progress</option>
@@ -235,7 +235,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   <select
                     value={priority}
                     onChange={(e) => setPriority(e.target.value)}
-                    className="w-full px-3 py-2 border border-c-border rounded-lg bg-c-surface-raised text-c-text outline-none"
+                    className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface-raised text-c-text outline-none"
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -259,7 +259,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2 border border-c-border rounded-lg bg-c-surface-raised text-c-text outline-none"
+                    className="w-full pl-10 pr-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface-raised text-c-text outline-none"
                   />
                 </div>
               </div>
@@ -309,7 +309,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
-                  className="w-full px-3 py-2 border border-c-border rounded-lg bg-c-surface-raised text-c-text focus:ring-2 focus:ring-c-focus outline-none resize-none"
+                  className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface-raised text-c-text focus:ring-2 focus:ring-c-focus outline-none resize-none"
                   placeholder="Add details..."
                 />
               </div>
@@ -337,13 +337,13 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                         onChange={(e) =>
                           updateChecklistItem(item.id, { completed: e.target.checked })
                         }
-                        className="rounded border-c-border text-blue-600 focus:ring-c-focus"
+                        className="rounded border-c-border-subtle text-blue-600 focus:ring-c-focus"
                       />
                       <input
                         type="text"
                         value={item.text}
                         onChange={(e) => updateChecklistItem(item.id, { text: e.target.value })}
-                        className="flex-1 px-2 py-1 text-sm border-b border-transparent focus:border-c-border text-c-text bg-transparent outline-none"
+                        className="flex-1 px-2 py-1 text-sm border-b border-transparent focus:border-c-border-subtle text-c-text bg-transparent outline-none"
                         placeholder="Subtask..."
                       />
                       <button
@@ -372,7 +372,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 <select
                   value={initiativeId}
                   onChange={(e) => setInitiativeId(e.target.value)}
-                  className="w-full px-3 py-2 border border-c-border rounded-lg bg-c-surface-raised text-c-text text-sm outline-none"
+                  className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface-raised text-c-text text-sm outline-none"
                 >
                   <option value="">Select Initiative (Optional)</option>
                   {initiatives.map((initiative) => (
@@ -391,7 +391,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 <select
                   value={assigneeId}
                   onChange={(e) => setAssigneeId(e.target.value)}
-                  className="w-full px-3 py-2 border border-c-border rounded-lg bg-c-surface-raised text-c-text text-sm outline-none"
+                  className="w-full px-3 py-2 border border-c-border-subtle rounded-lg bg-c-surface-raised text-c-text text-sm outline-none"
                 >
                   <option value="">Unassigned</option>
                   {users.map((user) => (

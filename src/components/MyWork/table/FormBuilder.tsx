@@ -604,7 +604,7 @@ function FieldListPanel({
                           onUpdate(fc.fieldId, { conditionalVisibility: undefined });
                         }
                       }}
-                      className="h-3.5 w-3.5 rounded border-c-border"
+                      className="h-3.5 w-3.5 rounded border-c-border-subtle"
                     />
                   </label>
                   {fc.conditionalVisibility && (
@@ -935,7 +935,7 @@ function renderPreviewInput(fieldType: FieldType | string) {
     case 'longText':
       return <textarea disabled rows={3} className={base} />;
     case 'checkbox':
-      return <input type="checkbox" disabled className="h-4 w-4 rounded border-c-border" />;
+      return <input type="checkbox" disabled className="h-4 w-4 rounded border-c-border-subtle" />;
     case 'date':
       return <input type="date" disabled className={base} />;
     case 'number':

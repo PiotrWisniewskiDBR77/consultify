@@ -156,7 +156,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={onCancel}
-                  className="flex-1 px-4 py-2 border border-c-border text-c-text-secondary rounded-lg hover:bg-c-surface-raised transition"
+                  className="flex-1 px-4 py-2 border border-c-border-subtle text-c-text-secondary rounded-lg hover:bg-c-surface-raised transition"
                 >
                   {t('common.cancel', 'Cancel')}
                 </button>
@@ -192,7 +192,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
                   {t('mfa.setup.manualEntry', 'Or enter this code manually:')}
                 </p>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 text-sm bg-c-surface px-3 py-2 rounded border border-c-border font-mono break-all">
+                  <code className="flex-1 text-sm bg-c-surface px-3 py-2 rounded border border-c-border-subtle font-mono break-all">
                     {setupData.manualEntry}
                   </code>
                   <button
@@ -233,7 +233,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
                   value={verificationCode}
                   onChange={handleCodeChange}
                   placeholder="000000"
-                  className="text-center text-3xl font-mono tracking-[0.5em] w-48 px-4 py-3 border-2 border-c-border rounded-lg focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus bg-c-surface text-c-text"
+                  className="text-center text-3xl font-mono tracking-[0.5em] w-48 px-4 py-3 border-2 border-c-border-subtle rounded-lg focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus bg-c-surface text-c-text"
                   autoFocus
                 />
               </div>
@@ -241,7 +241,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep('scan')}
-                  className="flex-1 px-4 py-2 border border-c-border text-c-text-secondary rounded-lg hover:bg-c-surface-raised transition"
+                  className="flex-1 px-4 py-2 border border-c-border-subtle text-c-text-secondary rounded-lg hover:bg-c-surface-raised transition"
                 >
                   {t('common.back', 'Back')}
                 </button>
@@ -292,7 +292,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
                   {backupCodes.map((code, index) => (
                     <code
                       key={index}
-                      className="text-sm bg-c-surface px-3 py-2 rounded border border-c-border font-mono text-center"
+                      className="text-sm bg-c-surface px-3 py-2 rounded border border-c-border-subtle font-mono text-center"
                     >
                       {code}
                     </code>

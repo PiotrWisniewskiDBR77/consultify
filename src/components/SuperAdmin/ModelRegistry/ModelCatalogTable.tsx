@@ -188,7 +188,7 @@ function ActionsMenu({
         <MoreVertical size={16} className="text-c-text-secondary" />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-48 bg-c-surface border border-c-border rounded-xl shadow-xl z-20 py-1">
+        <div className="absolute right-0 top-full mt-1 w-48 bg-c-surface border border-c-border-subtle rounded-xl shadow-xl z-20 py-1">
           <button
             onClick={() => {
               onEdit(model);
@@ -217,7 +217,7 @@ function ActionsMenu({
           >
             <Wifi size={14} /> Test Connection
           </button>
-          <div className="border-t border-c-border my-1" />
+          <div className="border-t border-c-border-subtle my-1" />
           <button
             onClick={() => {
               onDelete(model);
@@ -274,7 +274,7 @@ function EditModelModal({ model, onClose, onSaved }: EditModelModalProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-c-surface rounded-xl shadow-2xl max-w-lg w-full">
-        <div className="p-6 border-b border-c-border">
+        <div className="p-6 border-b border-c-border-subtle">
           <h2 className="text-xl font-bold text-c-text">Edit Model</h2>
           <p className="text-sm text-c-text-muted mt-1">
             Update provider configuration for {model.name}
@@ -289,7 +289,7 @@ function EditModelModal({ model, onClose, onSaved }: EditModelModalProps) {
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
+              className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -301,7 +301,7 @@ function EditModelModal({ model, onClose, onSaved }: EditModelModalProps) {
                 type="text"
                 value={form.provider}
                 onChange={(e) => setForm({ ...form, provider: e.target.value })}
-                className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
+                className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
               />
             </div>
             <div>
@@ -312,7 +312,7 @@ function EditModelModal({ model, onClose, onSaved }: EditModelModalProps) {
                 type="text"
                 value={form.model_id}
                 onChange={(e) => setForm({ ...form, model_id: e.target.value })}
-                className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border rounded-lg text-c-text font-mono text-sm"
+                className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text font-mono text-sm"
               />
             </div>
           </div>
@@ -324,7 +324,7 @@ function EditModelModal({ model, onClose, onSaved }: EditModelModalProps) {
               <select
                 value={form.tier}
                 onChange={(e) => setForm({ ...form, tier: e.target.value })}
-                className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
+                className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
               >
                 <option value="">No tier</option>
                 <option value="primary">Primary</option>
@@ -352,15 +352,15 @@ function EditModelModal({ model, onClose, onSaved }: EditModelModalProps) {
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={3}
-              className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
+              className="w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
               placeholder="Optional description..."
             />
           </div>
         </div>
-        <div className="p-6 border-t border-c-border flex justify-end gap-3">
+        <div className="p-6 border-t border-c-border-subtle flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2.5 border border-c-border rounded-lg text-c-text-secondary hover:bg-c-surface-raised"
+            className="px-4 py-2.5 border border-c-border-subtle rounded-lg text-c-text-secondary hover:bg-c-surface-raised"
           >
             Cancel
           </button>
@@ -600,38 +600,38 @@ export const ModelCatalogTable: React.FC = () => {
       </div>
 
       {loadError ? (
-        <div className="bg-c-surface rounded-xl border border-c-border p-6">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
           <DegradedState title="Model catalog unavailable" description={loadError} />
         </div>
       ) : (
         <>
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="bg-c-surface rounded-xl border border-c-border p-4">
+            <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
               <div className="text-sm text-c-text-muted">Total</div>
               <div className="text-2xl font-bold text-c-text">
                 {models.length}
               </div>
             </div>
-            <div className="bg-c-surface rounded-xl border border-c-border p-4">
+            <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
               <div className="text-sm text-c-text-muted">Active</div>
               <div className="text-2xl font-bold text-c-success">
                 {models.filter((m) => m.isActive).length}
               </div>
             </div>
-            <div className="bg-c-surface rounded-xl border border-c-border p-4">
+            <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
               <div className="text-sm text-c-info">TEXT_LLM</div>
               <div className="text-2xl font-bold text-c-text">
                 {models.filter((m) => m.kind === 'TEXT_LLM').length}
               </div>
             </div>
-            <div className="bg-c-surface rounded-xl border border-c-border p-4">
+            <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
               <div className="text-sm text-c-accent">IMAGE_MODEL</div>
               <div className="text-2xl font-bold text-c-text">
                 {models.filter((m) => m.kind === 'IMAGE_MODEL').length}
               </div>
             </div>
-            <div className="bg-c-surface rounded-xl border border-c-border p-4">
+            <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
               <div className="text-sm text-c-warning">BUSINESS_MODEL</div>
               <div className="text-2xl font-bold text-c-text">
                 {models.filter((m) => m.kind === 'BUSINESS_MODEL').length}
@@ -655,14 +655,14 @@ export const ModelCatalogTable: React.FC = () => {
                   'Search by name, model ID, provider...'
                 )}
                 disabled={!!loadError}
-                className="w-full pl-10 pr-4 h-9 bg-c-surface border border-c-border rounded-lg text-c-text text-sm placeholder-c-text-muted"
+                className="w-full pl-10 pr-4 h-9 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm placeholder-c-text-muted"
               />
             </div>
             <select
               value={filterKind}
               onChange={(e) => setFilterKind(e.target.value as ModelKind | '')}
               disabled={!!loadError}
-              className="h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
+              className="h-9 px-3 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
             >
               <option value="">All Kinds</option>
               <option value="TEXT_LLM">TEXT_LLM</option>
@@ -675,7 +675,7 @@ export const ModelCatalogTable: React.FC = () => {
               className={`flex items-center gap-2 px-3 h-9 border rounded-lg text-sm transition-colors ${
                 showFilters
                   ? 'bg-c-accent border-c-accent text-c-text'
-                  : 'bg-c-surface border-c-border text-c-text-secondary hover:bg-c-surface-raised'
+                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised'
               }`}
             >
               <Filter size={14} />
@@ -684,7 +684,7 @@ export const ModelCatalogTable: React.FC = () => {
           </div>
 
           {showFilters && (
-            <div className="grid grid-cols-3 gap-4 p-4 bg-c-surface-raised rounded-xl border border-c-border">
+            <div className="grid grid-cols-3 gap-4 p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
               <div>
                 <label className="block text-xs text-c-text-muted mb-1">
                   Provider Type
@@ -692,7 +692,7 @@ export const ModelCatalogTable: React.FC = () => {
                 <select
                   value={filterProviderType}
                   onChange={(e) => setFilterProviderType(e.target.value as ProviderType | '')}
-                  className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
+                  className="w-full h-9 px-3 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
                 >
                   <option value="">All</option>
                   <option value="direct">Direct</option>
@@ -708,7 +708,7 @@ export const ModelCatalogTable: React.FC = () => {
                 <select
                   value={filterHealth}
                   onChange={(e) => setFilterHealth(e.target.value as HealthStatus | '')}
-                  className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
+                  className="w-full h-9 px-3 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
                 >
                   <option value="">All</option>
                   <option value="healthy">Healthy</option>
@@ -724,7 +724,7 @@ export const ModelCatalogTable: React.FC = () => {
                 <select
                   value={filterActive}
                   onChange={(e) => setFilterActive(e.target.value as '' | 'active' | 'inactive')}
-                  className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
+                  className="w-full h-9 px-3 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
                 >
                   <option value="">All</option>
                   <option value="active">Active</option>
@@ -735,11 +735,11 @@ export const ModelCatalogTable: React.FC = () => {
           )}
 
           {/* Table */}
-          <div className="bg-c-surface rounded-xl border border-c-border overflow-hidden">
+          <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
             <div className="overflow-x-auto">
               <table /* §27-todo: lista encji → migracja do FilterableTable + Menu 1/2/3 (kanon §2); swiadomie oznaczona, nie przepisana w tej sesji */  className="w-full">
                 <thead>
-                  <tr className="border-b border-c-border">
+                  <tr className="border-b border-c-border-subtle">
                     <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                       Name
                     </th>

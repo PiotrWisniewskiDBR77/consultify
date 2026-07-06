@@ -228,7 +228,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
           {relays.map((relay) => (
             <div
               key={relay.id}
-              className="group flex items-center gap-3 rounded-xl border border-c-border bg-c-surface px-4 py-3 hover:border-c-border transition-colors"
+              className="group flex items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 hover:border-c-border-subtle transition-colors"
             >
               <div className="flex-shrink-0">
                 <div
@@ -272,7 +272,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
                 {menuOpen === relay.id && (
                   <>
                     <div className="fixed inset-0 z-dropdown" onClick={() => setMenuOpen(null)} />
-                    <div className="absolute right-0 top-full mt-1 z-overlay w-48 rounded-xl border border-c-border bg-c-surface shadow-xl py-1">
+                    <div className="absolute right-0 top-full mt-1 z-overlay w-48 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1">
                       <MenuBtn
                         icon={
                           testingId === relay.id ? (
@@ -311,7 +311,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
                           setEditingRelay(relay);
                         }}
                       />
-                      <div className="my-1 border-t border-c-border" />
+                      <div className="my-1 border-t border-c-border-subtle" />
                       <MenuBtn
                         icon={<Trash2 size={13} />}
                         label={isPl ? 'Usuń' : 'Delete'}
@@ -434,7 +434,7 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={isPl ? 'np. Zapier — nowe rekordy' : 'e.g. Zapier — new records'}
-            className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-tag-2 focus:border-c-tag-2"
+            className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-tag-2 focus:border-c-tag-2"
           />
         </div>
 
@@ -448,7 +448,7 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
             onChange={(e) => setTargetUrl(e.target.value)}
             placeholder="https://hooks.zapier.com/hooks/catch/..."
             type="url"
-            className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-tag-2 focus:border-c-tag-2"
+            className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-tag-2 focus:border-c-tag-2"
           />
         </div>
 
@@ -463,7 +463,7 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
             placeholder={isPl ? 'Klucz do podpisu HMAC-SHA256' : 'Key for HMAC-SHA256 signing'}
             type="password"
             autoComplete="off"
-            className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-tag-2 focus:border-c-tag-2"
+            className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-tag-2 focus:border-c-tag-2"
           />
           <p className="mt-1 text-[10px] text-c-text-secondary">
             {isPl
@@ -487,7 +487,7 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
                   className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
                     eventTypes.includes(opt.value)
                       ? 'bg-c-tag-2 border-c-tag-2'
-                      : 'border-c-border'
+                      : 'border-c-border-subtle'
                   }`}
                   onClick={() => toggleEvent(opt.value)}
                 >

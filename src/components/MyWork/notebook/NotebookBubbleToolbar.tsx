@@ -89,7 +89,7 @@ export const NotebookBubbleToolbar: React.FC<NotebookBubbleToolbarProps> = ({ ed
         const text = state.doc.textBetween(from, to, ' ').trim();
         return text.length > 0;
       }}
-      className="flex items-center gap-0.5 rounded-lg border border-c-border bg-c-surface p-1 shadow-lg dark:border-navy-700 dark:bg-navy-900"
+      className="flex items-center gap-0.5 rounded-lg border border-c-border-subtle bg-c-surface p-1 shadow-lg dark:border-navy-700 dark:bg-navy-900"
     >
       <MarkBtn
         icon={Bold}

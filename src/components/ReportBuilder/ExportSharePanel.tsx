@@ -434,7 +434,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                     type="checkbox"
                     checked={showBranding}
                     onChange={(e) => setShowBranding(e.target.checked)}
-                    className="rounded border-c-border"
+                    className="rounded border-c-border-subtle"
                   />
                   {isPl ? 'Pokaż branding Consultify' : 'Show Consultify branding'}
                 </label>

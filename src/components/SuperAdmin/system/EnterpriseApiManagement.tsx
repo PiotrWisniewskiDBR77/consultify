@@ -561,7 +561,7 @@ export const EnterpriseApiManagement: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               disabled={!!loadError}
-              className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border rounded-lg text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
+              className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </div>
 
@@ -569,7 +569,7 @@ export const EnterpriseApiManagement: React.FC = () => {
           {loading ? (
             <LoadingState template="list" />
           ) : loadError ? (
-            <div className="rounded-xl border border-c-border bg-c-surface p-6">
+            <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
               <DegradedState title="API keys unavailable" description={loadError} />
             </div>
           ) : filteredKeys.length === 0 ? (
@@ -587,7 +587,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                   className={`p-4 rounded-xl border transition-colors ${
                     key.revoked_at
                       ? 'bg-c-danger/5 border-c-danger/20 opacity-60'
-                      : 'bg-c-surface border-c-border hover:border-c-border-strong'
+                      : 'bg-c-surface border-c-border-subtle hover:border-c-border-strong'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -700,14 +700,14 @@ export const EnterpriseApiManagement: React.FC = () => {
       {activeTab === 'usage' && (
         <div className="space-y-6">
           {loadError ? (
-            <div className="rounded-xl border border-c-border bg-c-surface p-6">
+            <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
               <DegradedState
                 title="API key usage unavailable"
                 description="API key usage cannot be inspected because the API key list did not load."
               />
             </div>
           ) : usageLoadError ? (
-            <div className="rounded-xl border border-c-border bg-c-surface p-6">
+            <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
               <DegradedState title="API key usage unavailable" description={usageLoadError} />
             </div>
           ) : selectedKeyUsage ? (
@@ -731,13 +731,13 @@ export const EnterpriseApiManagement: React.FC = () => {
 
               {/* Usage Stats */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+                <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
                   <div className="text-sm text-c-text-secondary">Total Requests</div>
                   <div className="text-2xl font-bold text-c-text">
                     {selectedKeyUsage.usage.totals?.total_requests?.toLocaleString() || 0}
                   </div>
                 </div>
-                <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+                <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
                   <div className="text-sm text-c-text-secondary">
                     Avg Response Time
                   </div>
@@ -745,7 +745,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                     {Math.round(selectedKeyUsage.usage.totals?.avg_response_time || 0)}ms
                   </div>
                 </div>
-                <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+                <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
                   <div className="text-sm text-c-text-secondary">Error Rate</div>
                   <div className="text-2xl font-bold text-c-text">
                     {selectedKeyUsage.usage.totals?.total_requests
@@ -758,7 +758,7 @@ export const EnterpriseApiManagement: React.FC = () => {
                     %
                   </div>
                 </div>
-                <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+                <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
                   <div className="text-sm text-c-text-secondary">Total Errors</div>
                   <div className="text-2xl font-bold text-c-danger">
                     {selectedKeyUsage.usage.totals?.total_errors || 0}
@@ -767,7 +767,7 @@ export const EnterpriseApiManagement: React.FC = () => {
               </div>
 
               {/* Usage Chart */}
-              <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+              <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
                 <h4 className="text-sm font-medium text-c-text mb-4">Requests Over Time</h4>
                 <div className="flex items-end gap-2 h-32">
                   {selectedKeyUsage.usage.usage?.length > 0 ? (
@@ -794,7 +794,7 @@ export const EnterpriseApiManagement: React.FC = () => {
 
               {/* Top Endpoints */}
               {selectedKeyUsage.usage.endpoints?.length > 0 && (
-                <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+                <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
                   <h4 className="text-sm font-medium text-c-text mb-4">Top Endpoints</h4>
                   <div className="space-y-2">
                     {selectedKeyUsage.usage.endpoints.map((endpoint, i) => (
@@ -875,7 +875,7 @@ export const EnterpriseApiManagement: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+            <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
               <h4 className="font-medium text-c-text mb-3 flex items-center gap-2">
                 <Shield className="w-4 h-4 text-c-accent" />
                 Authentication
@@ -889,7 +889,7 @@ export const EnterpriseApiManagement: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+            <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
               <h4 className="font-medium text-c-text mb-3 flex items-center gap-2">
                 <Zap className="w-4 h-4 text-c-warning" />
                 Rate Limits
@@ -909,7 +909,7 @@ export const EnterpriseApiManagement: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+            <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
               <h4 className="font-medium text-c-text mb-3 flex items-center gap-2">
                 <Globe className="w-4 h-4 text-c-success" />
                 Base URL
@@ -921,7 +921,7 @@ export const EnterpriseApiManagement: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+            <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
               <h4 className="font-medium text-c-text mb-3 flex items-center gap-2">
                 <Activity className="w-4 h-4 text-c-info" />
                 Response Format
@@ -940,7 +940,7 @@ export const EnterpriseApiManagement: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+          <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
             <h4 className="font-medium text-c-text mb-4">Available Scopes</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
               {AVAILABLE_SCOPES.map((scope) => (
@@ -1034,7 +1034,7 @@ const ApiKeyModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-c-surface rounded-xl border border-c-border p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-c-text">
             {editKey ? 'Edit API Key' : 'Create API Key'}
@@ -1055,7 +1055,7 @@ const ApiKeyModal: React.FC<{
               value={formData.organizationId}
               disabled={!!editKey}
               onChange={(e) => setFormData({ ...formData, organizationId: e.target.value })}
-              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
+              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
             >
               {organizations.map((org) => (
                 <option key={org.id} value={org.id}>
@@ -1072,7 +1072,7 @@ const ApiKeyModal: React.FC<{
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
+              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
               placeholder="My API Key"
             />
           </div>
@@ -1082,7 +1082,7 @@ const ApiKeyModal: React.FC<{
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
+              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
               rows={2}
               placeholder="Optional description"
             />
@@ -1096,7 +1096,7 @@ const ApiKeyModal: React.FC<{
                 onChange={(e) =>
                   setFormData({ ...formData, key_type: e.target.value as ApiKey['key_type'] })
                 }
-                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
+                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
               >
                 <option value="org">Organization</option>
                 <option value="user">User</option>
@@ -1109,7 +1109,7 @@ const ApiKeyModal: React.FC<{
                 type="date"
                 value={formData.expires_at}
                 onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
-                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
+                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
               />
             </div>
           </div>
@@ -1125,7 +1125,7 @@ const ApiKeyModal: React.FC<{
                 onChange={(e) =>
                   setFormData({ ...formData, rate_limit_per_minute: parseInt(e.target.value) })
                 }
-                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
+                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
               />
             </div>
             <div>
@@ -1138,7 +1138,7 @@ const ApiKeyModal: React.FC<{
                 onChange={(e) =>
                   setFormData({ ...formData, rate_limit_per_day: parseInt(e.target.value) })
                 }
-                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
+                className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
               />
             </div>
           </div>
@@ -1151,7 +1151,7 @@ const ApiKeyModal: React.FC<{
               type="text"
               value={formData.allowed_ips}
               onChange={(e) => setFormData({ ...formData, allowed_ips: e.target.value })}
-              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
+              className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
               placeholder="Leave empty for all IPs"
             />
           </div>

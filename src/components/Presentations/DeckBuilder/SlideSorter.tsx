@@ -206,7 +206,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
       <div className="p-2 border-t border-c-border-subtle">
         <button
           onClick={onAddCard}
-          className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-c-border text-xs text-c-text-secondary hover:border-c-accent hover:text-c-accent transition-colors"
+          className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-c-border-subtle text-xs text-c-text-secondary hover:border-c-accent hover:text-c-accent transition-colors"
         >
           <Plus size={12} /> {t('presentations.builder.addBlank', 'New slide')}
         </button>

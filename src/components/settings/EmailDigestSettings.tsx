@@ -254,7 +254,7 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({ curren
                         'w-6 h-6 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0',
                         emailSettings[key]
                           ? 'bg-navy-900 border-navy-900 text-white dark:bg-c-surface dark:border-white dark:text-navy-950'
-                          : 'border-c-border hover:border-c-border-strong'
+                          : 'border-c-border-subtle hover:border-c-border-strong'
                       )}
                     >
                       {emailSettings[key] && (

@@ -270,7 +270,7 @@ const NewDecisionModal: React.FC<{
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t('decisions.field.titlePlaceholder', 'What needs to be decided?')}
-              className="w-full px-4 py-2.5 rounded-lg border border-c-border bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
+              className="w-full px-4 py-2.5 rounded-lg border border-c-border-subtle bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </div>
 
@@ -284,7 +284,7 @@ const NewDecisionModal: React.FC<{
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('decisions.field.descriptionPlaceholder', 'Add context or details...')}
               rows={3}
-              className="w-full px-4 py-2.5 rounded-lg border border-c-border bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus resize-none"
+              className="w-full px-4 py-2.5 rounded-lg border border-c-border-subtle bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus resize-none"
             />
           </div>
 
@@ -297,7 +297,7 @@ const NewDecisionModal: React.FC<{
               <select
                 value={decisionType}
                 onChange={(e) => setDecisionType(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+                className="w-full px-4 py-2.5 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
               >
                 <option value="GENERAL">📋 General</option>
                 <option value="INITIATIVE_APPROVAL">🎯 Initiative Approval</option>
@@ -316,7 +316,7 @@ const NewDecisionModal: React.FC<{
                 onChange={(e) =>
                   setPriority(e.target.value as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL')
                 }
-                className="w-full px-4 py-2.5 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+                className="w-full px-4 py-2.5 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
               >
                 <option value="LOW">🟢 Low</option>
                 <option value="MEDIUM">🟡 Medium</option>
@@ -339,7 +339,7 @@ const NewDecisionModal: React.FC<{
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
               min={today}
-              className="w-full px-4 py-2.5 rounded-lg border border-c-border bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+              className="w-full px-4 py-2.5 rounded-lg border border-c-border-subtle bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
             <p className="text-xs text-c-text-muted mt-1">
               {t('decisions.field.dueDateHint', 'Leave empty if no specific deadline')}
@@ -362,7 +362,7 @@ const NewDecisionModal: React.FC<{
                 'decisions.field.assigneePlaceholder',
                 'Enter email or leave empty for auto-assign'
               )}
-              className="w-full px-4 py-2.5 rounded-lg border border-c-border bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
+              className="w-full px-4 py-2.5 rounded-lg border border-c-border-subtle bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </div>
         </div>
@@ -385,7 +385,7 @@ const NewDecisionModal: React.FC<{
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 rounded-lg border border-c-border text-c-text-secondary hover:bg-c-surface-raised font-medium transition-colors"
+            className="flex-1 px-4 py-2.5 rounded-lg border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised font-medium transition-colors"
           >
             {t('decisions.cancel', 'Cancel')}
           </button>
@@ -484,7 +484,7 @@ const DelegateModal: React.FC<{
               value={toUserId}
               onChange={(e) => setToUserId(e.target.value)}
               placeholder={t('decisions.enterUserId', 'Enter user email or ID')}
-              className="w-full px-4 py-2.5 rounded-lg border border-c-border bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
+              className="w-full px-4 py-2.5 rounded-lg border border-c-border-subtle bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </div>
 
@@ -497,7 +497,7 @@ const DelegateModal: React.FC<{
               onChange={(e) => setNote(e.target.value)}
               placeholder={t('decisions.notePlaceholder', 'Add a message for the new assignee...')}
               rows={2}
-              className="w-full px-4 py-2.5 rounded-lg border border-c-border bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus resize-none"
+              className="w-full px-4 py-2.5 rounded-lg border border-c-border-subtle bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus resize-none"
             />
           </div>
         </div>
@@ -505,7 +505,7 @@ const DelegateModal: React.FC<{
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 rounded-lg border border-c-border text-c-text-secondary hover:bg-c-surface-raised font-medium transition-colors"
+            className="flex-1 px-4 py-2.5 rounded-lg border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised font-medium transition-colors"
           >
             {t('decisions.cancel', 'Cancel')}
           </button>
@@ -864,7 +864,7 @@ const DecisionCard: React.FC<{
                 e.stopPropagation();
                 onDelegate(decision);
               }}
-              className="px-3 py-2 rounded-lg bg-c-surface border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors text-xs font-medium flex items-center justify-center gap-1.5"
+              className="px-3 py-2 rounded-lg bg-c-surface border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised transition-colors text-xs font-medium flex items-center justify-center gap-1.5"
               title={t('decisions.delegate', 'Delegate')}
             >
               <UserPlus size={14} />
@@ -875,7 +875,7 @@ const DecisionCard: React.FC<{
             {/* View Details */}
             <button
               onClick={() => onClick?.(decision.id)}
-              className="flex-1 px-3 py-2 rounded-lg bg-c-surface border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors text-xs font-medium flex items-center justify-center gap-1.5"
+              className="flex-1 px-3 py-2 rounded-lg bg-c-surface border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised transition-colors text-xs font-medium flex items-center justify-center gap-1.5"
             >
               {t('decisions.viewDetails', 'View Details')}
               <ChevronRight size={14} />
@@ -1328,7 +1328,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('decisions.search', 'Search...')}
-              className="w-full pl-9 pr-4 py-2 rounded-lg border border-c-border bg-c-surface text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
+              className="w-full pl-9 pr-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
             />
           </div>
 
@@ -1339,7 +1339,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
               className={`px-3 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition-colors ${
                 filterType !== 'all'
                   ? 'border-c-border-strong bg-c-surface-raised text-c-text'
-                  : 'border-c-border text-c-text-secondary hover:bg-c-surface-raised'
+                  : 'border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised'
               }`}
             >
               <Filter size={16} />
@@ -1357,7 +1357,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
             </button>
 
             {showFilters && (
-              <div className="absolute right-0 top-full mt-1 w-52 bg-c-surface-raised rounded-lg shadow-lg border border-c-border py-1 z-20">
+              <div className="absolute right-0 top-full mt-1 w-52 bg-c-surface-raised rounded-lg shadow-lg border border-c-border-subtle py-1 z-20">
                 <div className="px-3 py-1.5 text-[10px] font-semibold text-c-text-muted uppercase tracking-wider">
                   {t('decisions.filterByStatus', 'By Status')}
                 </div>
@@ -1419,7 +1419,7 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
           <select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value as SortOrder)}
-            className="px-3 py-2 rounded-lg border border-c-border bg-c-surface text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+            className="px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             <option value="newest">↓ {t('decisions.sortNewest', 'Newest')}</option>
             <option value="oldest">↑ {t('decisions.sortOldest', 'Oldest')}</option>

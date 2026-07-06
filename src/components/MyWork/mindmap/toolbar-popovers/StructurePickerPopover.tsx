@@ -81,8 +81,8 @@ export const StructurePickerPopover: React.FC<StructurePickerPopoverProps> = ({
   onClose,
 }) => {
   return (
-    <div className="w-64 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl overflow-hidden">
-      <div className="px-3 py-2 border-b border-c-border-subtle dark:border-c-border">
+    <div className="w-64 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle shadow-xl overflow-hidden">
+      <div className="px-3 py-2 border-b border-c-border-subtle dark:border-c-border-subtle">
         <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
           {isPl ? 'Typ struktury' : 'Structure Type'}
         </div>

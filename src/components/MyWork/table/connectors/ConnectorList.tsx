@@ -132,7 +132,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
         return (
           <div
             key={c.id}
-            className="group flex items-center gap-3 rounded-xl border border-c-border bg-c-surface px-4 py-3 hover:border-c-border transition-colors"
+            className="group flex items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 hover:border-c-border-subtle transition-colors"
           >
             {/* Icon */}
             <div className="flex-shrink-0">
@@ -177,7 +177,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
               {menuOpen === c.id && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-c-border bg-c-surface shadow-xl py-1">
+                  <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1">
                     <MenuBtn
                       icon={<Play size={13} />}
                       label={isPl ? 'Uruchom teraz' : 'Run now'}
@@ -202,7 +202,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
                         onEdit(c);
                       }}
                     />
-                    <div className="my-1 border-t border-c-border" />
+                    <div className="my-1 border-t border-c-border-subtle" />
                     <MenuBtn
                       icon={<Trash2 size={13} />}
                       label={isPl ? 'Usuń' : 'Delete'}

@@ -177,7 +177,7 @@ export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({ isPl, onAction, 
   };
 
   return (
-    <div className="w-[280px] max-h-[440px] overflow-y-auto rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl">
+    <div className="w-[280px] max-h-[440px] overflow-y-auto rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle shadow-xl">
       <div className="p-2 sticky top-0 bg-c-surface-raised dark:bg-c-surface z-10">
         <div className="relative">
           <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-c-text-secondary" />
@@ -185,7 +185,7 @@ export const MoreToolsPanel: React.FC<MoreToolsPanelProps> = ({ isPl, onAction, 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={isPl ? 'Szukaj narzędzi…' : 'Search tools…'}
-            className="w-full pl-7 pr-2 py-1.5 text-[11px] rounded-lg bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border text-c-text-secondary dark:text-c-text placeholder:text-c-text-muted outline-none focus:ring-1 focus:ring-c-border"
+            className="w-full pl-7 pr-2 py-1.5 text-[11px] rounded-lg bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle text-c-text-secondary dark:text-c-text placeholder:text-c-text-muted outline-none focus:ring-1 focus:ring-c-border"
             autoFocus
           />
         </div>

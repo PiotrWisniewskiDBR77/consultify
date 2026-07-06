@@ -98,9 +98,9 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
   );
 
   return (
-    <div className="flex w-80 shrink-0 flex-col overflow-hidden rounded-2xl border border-c-border/70 bg-c-surface dark:border-white/[0.06] dark:bg-navy-950">
+    <div className="flex w-80 shrink-0 flex-col overflow-hidden rounded-2xl border border-c-border-subtle/70 bg-c-surface dark:border-white/[0.06] dark:bg-navy-950">
       {/* Rail header with tabs */}
-      <div className="flex items-center gap-1 border-b border-c-border/60 px-2 py-1.5 dark:border-white/[0.06]">
+      <div className="flex items-center gap-1 border-b border-c-border-subtle/60 px-2 py-1.5 dark:border-white/[0.06]">
         {tabBtn('work', <Wrench size={11} />, isPolish ? 'Praca' : 'Work')}
         {tabBtn('context', <Layers size={11} />, isPolish ? 'Kontekst' : 'Context')}
         <button

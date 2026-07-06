@@ -304,7 +304,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
         </div>
 
         {/* ── AI Activity Timeline ─────────────────────────────────── */}
-        <div className="rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface p-2.5">
+        <div className="rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface p-2.5">
           <button
             type="button"
             onClick={() => toggleSection('timeline')}
@@ -340,7 +340,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                   return (
                     <div
                       key={entry.id}
-                      className="rounded-lg border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface-raised overflow-hidden"
+                      className="rounded-lg border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface-raised overflow-hidden"
                     >
                       <button
                         type="button"
@@ -373,7 +373,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                       </button>
 
                       {isExpanded && (
-                        <div className="px-2.5 pb-2.5 space-y-1.5 border-t border-c-border-subtle dark:border-c-border">
+                        <div className="px-2.5 pb-2.5 space-y-1.5 border-t border-c-border-subtle dark:border-c-border-subtle">
                           <div className="pt-2">
                             <div className="text-[9px] font-bold uppercase tracking-wider text-c-text-secondary mb-1">
                               {isPl ? 'Narzędzie' : 'Tool'}
@@ -495,7 +495,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                       className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${
                         isActive
                           ? `${cfg.color} ring-1 ring-current/20`
-                          : 'text-c-text-secondary dark:text-c-text-muted bg-c-surface-raised dark:bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-c-surface-raised border border-c-border-subtle dark:border-c-border'
+                          : 'text-c-text-secondary dark:text-c-text-muted bg-c-surface-raised dark:bg-c-surface-raised hover:bg-c-surface-raised dark:hover:bg-c-surface-raised border border-c-border-subtle dark:border-c-border-subtle'
                       }`}
                     >
                       <Icon size={11} />
@@ -515,7 +515,7 @@ export const AIGovernancePanel: React.FC<AIGovernancePanelProps> = ({
                 </div>
               )}
               {governance.reviewNote && (
-                <div className="text-[10px] text-c-text-secondary dark:text-c-text-muted bg-c-surface-raised dark:bg-c-surface-raised rounded-lg p-2 border border-c-border-subtle dark:border-c-border">
+                <div className="text-[10px] text-c-text-secondary dark:text-c-text-muted bg-c-surface-raised dark:bg-c-surface-raised rounded-lg p-2 border border-c-border-subtle dark:border-c-border-subtle">
                   <MessageSquare size={9} className="inline mr-1 text-c-text-secondary" />
                   {governance.reviewNote}
                 </div>
@@ -670,7 +670,7 @@ export const AIGovernanceBadge: React.FC<AIGovernanceBadgeProps> = ({ mapExtensi
       className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all hover:scale-[1.02] ${
         unreviewed
           ? 'bg-c-surface-raised dark:bg-c-surface-raised text-c-warning dark:text-c-warning border border-c-warning dark:border-c-warning animate-pulse'
-          : 'bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text-muted border border-c-border-subtle dark:border-c-border'
+          : 'bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text-muted border border-c-border-subtle dark:border-c-border-subtle'
       }`}
       title={
         isPl

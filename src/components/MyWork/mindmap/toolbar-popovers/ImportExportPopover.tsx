@@ -88,7 +88,7 @@ export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({
   return (
     <div
       data-testid="mindmap-import-export-popover"
-      className="w-56 max-h-[420px] overflow-y-auto rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl"
+      className="w-56 max-h-[420px] overflow-y-auto rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle shadow-xl"
     >
       <div className="px-1 py-1">
         <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
@@ -113,7 +113,7 @@ export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({
           );
         })}
       </div>
-      <div className="border-t border-c-border-subtle dark:border-c-border px-1 py-1">
+      <div className="border-t border-c-border-subtle dark:border-c-border-subtle px-1 py-1">
         <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
           {isPl ? 'Eksport' : 'Export'}
         </div>
@@ -136,7 +136,7 @@ export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({
           );
         })}
       </div>
-      <div className="border-t border-c-border-subtle dark:border-c-border px-1 py-1">
+      <div className="border-t border-c-border-subtle dark:border-c-border-subtle px-1 py-1">
         <button
           data-testid="mindmap-import-export-action-mm_snapshot_history"
           onClick={(event) => {

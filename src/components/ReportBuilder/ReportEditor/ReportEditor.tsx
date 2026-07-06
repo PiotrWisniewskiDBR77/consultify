@@ -2351,7 +2351,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 {isPl ? 'Generuj' : 'Generate'}
                 <ChevronDown className="w-3 h-3 opacity-60" />
               </button>
-              <div className="absolute right-0 top-full mt-1.5 w-52 bg-c-surface border border-c-border rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1 overflow-hidden">
+              <div className="absolute right-0 top-full mt-1.5 w-52 bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1 overflow-hidden">
                 <button
                   onClick={() => handleGenerate('new_only')}
                   disabled={isGenerating}
@@ -2382,7 +2382,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                     </div>
                   </div>
                 </button>
-                <div className="border-t border-c-border my-1" />
+                <div className="border-t border-c-border-subtle my-1" />
                 <button
                   onClick={() => handleGenerate('all')}
                   disabled={isGenerating}
@@ -2440,7 +2440,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                     : 'View'}
                 <ChevronDown className="w-3 h-3 opacity-60" />
               </button>
-              <div className="absolute right-0 top-full mt-1.5 w-52 bg-c-surface border border-c-border rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1 overflow-hidden">
+              <div className="absolute right-0 top-full mt-1.5 w-52 bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1 overflow-hidden">
                 <button
                   onClick={() => handleViewExport('web')}
                   className="w-full flex items-center gap-2.5 px-3.5 py-2 text-c-text-secondary hover:bg-c-surface-raised transition-colors"
@@ -2455,7 +2455,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                     </div>
                   </div>
                 </button>
-                <div className="border-t border-c-border my-1" />
+                <div className="border-t border-c-border-subtle my-1" />
                 <div className="px-3.5 py-1">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-c-text-secondary">
                     {isPl ? 'Eksport i zapis do wersji' : 'Export & save to versions'}
@@ -2558,7 +2558,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                   <div key={chapter.key} className="space-y-4">
                     {/* Chapter Header */}
                     {chapter.key !== '__ungrouped__' && (
-                      <div className="flex items-center gap-3 pt-6 pb-2 border-b-2 border-c-border">
+                      <div className="flex items-center gap-3 pt-6 pb-2 border-b-2 border-c-border-subtle">
                         <div className="w-8 h-8 rounded-lg bg-c-accent flex items-center justify-center text-c-text text-sm font-bold">
                           {chapters.filter((c) => c.key !== '__ungrouped__').indexOf(chapter) + 1}
                         </div>
@@ -2695,7 +2695,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             {/* Add Block Button */}
             <button
               onClick={() => setShowBlockPalette(true)}
-              className="w-full py-4 border-2 border-dashed border-c-border rounded-xl text-c-text-secondary hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all flex items-center justify-center gap-2"
+              className="w-full py-4 border-2 border-dashed border-c-border-subtle rounded-xl text-c-text-secondary hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all flex items-center justify-center gap-2"
             >
               <Plus className="w-5 h-5" />
               {isPl ? 'Dodaj blok' : 'Add block'}

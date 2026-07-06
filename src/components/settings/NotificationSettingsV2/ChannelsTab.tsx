@@ -127,7 +127,7 @@ const ChannelsTab: React.FC<ChannelsTabProps> = ({
                 className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
                   enabled
                     ? 'bg-navy-900 border-brand text-white'
-                    : 'border-c-border dark:border-navy-600'
+                    : 'border-c-border-subtle dark:border-navy-600'
                 }`}
               >
                 {enabled && <Check size={14} />}

@@ -745,12 +745,12 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
 
   return (
     <div
-      className="fixed top-0 right-0 bottom-0 z-modal w-[420px] max-w-[90vw] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border-l border-c-border-subtle dark:border-c-border shadow-2xl flex flex-col overflow-hidden"
+      className="fixed top-0 right-0 bottom-0 z-modal w-[420px] max-w-[90vw] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border-l border-c-border-subtle dark:border-c-border-subtle shadow-2xl flex flex-col overflow-hidden"
       data-testid="unified-node-detail-drawer"
       data-variant={variant}
     >
       {/* Header */}
-      <div className="flex items-start gap-3 px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
+      <div className="flex items-start gap-3 px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             {isAI ? (
@@ -803,7 +803,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
 
       {/* Idea variant quick actions */}
       {isIdea && (
-        <div className="flex items-center gap-1.5 px-5 py-2 border-b border-c-border-subtle dark:border-c-border">
+        <div className="flex items-center gap-1.5 px-5 py-2 border-b border-c-border-subtle dark:border-c-border-subtle">
           {onDrillDown && (
             <button
               onClick={() => onDrillDown(nodeData.nodeId)}
@@ -829,7 +829,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
         {/* ── Basic Info: Status + Semantic Type ── */}
-        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <ToggleBlock
             title={isPl ? 'Informacje podstawowe' : 'Basic Info'}
             icon={<Info size={14} />}
@@ -905,7 +905,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                       }}
                       disabled={locked}
                       placeholder={isPl ? 'Przypisz właściciela...' : 'Assign owner...'}
-                      className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface text-xs text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus transition-all disabled:opacity-50"
+                      className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-xs text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus transition-all disabled:opacity-50"
                     />
                   </div>
                 </>
@@ -920,7 +920,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                   value={nodeData.semanticType || ''}
                   onChange={(e) => onUpdateNode(nodeData.nodeId, { semanticType: e.target.value })}
                   disabled={locked || (!isIdea && isProtected)}
-                  className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus transition-all disabled:opacity-50"
+                  className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus transition-all disabled:opacity-50"
                 >
                   {SEMANTIC_TYPE_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -935,7 +935,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
 
         {/* ── idea: Description (markdown) ── */}
         {isIdea && (
-          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <ToggleBlock title={isPl ? 'Opis' : 'Description'} icon={<FileText size={14} />} defaultOpen>
               {editingDesc && !locked ? (
                 <textarea
@@ -946,7 +946,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                   placeholder={
                     isPl ? 'Dodaj opis (obsługuje **markdown**)...' : 'Add description (supports **markdown**)...'
                   }
-                  className="w-full min-h-[100px] text-xs text-c-text bg-c-surface-raised dark:bg-c-surface rounded-xl p-3 border border-c-border-subtle dark:border-c-border outline-none resize-y placeholder:text-c-text-muted font-mono mt-2"
+                  className="w-full min-h-[100px] text-xs text-c-text bg-c-surface-raised dark:bg-c-surface rounded-xl p-3 border border-c-border-subtle dark:border-c-border-subtle outline-none resize-y placeholder:text-c-text-muted font-mono mt-2"
                   rows={4}
                 />
               ) : (
@@ -971,7 +971,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         )}
 
         {/* ── Notes & Context depth fields ── */}
-        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <ToggleBlock
             title={isPl ? 'Notatki i kontekst' : 'Notes & Context'}
             icon={<StickyNote size={14} />}
@@ -989,7 +989,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                   disabled={locked || (!isIdea && isProtected)}
                   rows={3}
                   placeholder={isPl ? 'Dodaj notatki, szczegóły...' : 'Add notes, details...'}
-                  className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus resize-none transition-all disabled:opacity-50"
+                  className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus resize-none transition-all disabled:opacity-50"
                 />
               </div>
               <DepthField
@@ -1025,7 +1025,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         </div>
 
         {/* ── Tags ── */}
-        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <ToggleBlock
             title={isPl ? 'Tagi i klasyfikacja' : 'Tags & Classification'}
             icon={<Tag size={14} />}
@@ -1065,7 +1065,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                   }}
                   disabled={locked || (!isIdea && isProtected)}
                   placeholder={isPl ? 'Dodaj tag...' : 'Add tag...'}
-                  className="flex-1 px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
+                  className="flex-1 px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
                 />
                 <button
                   type="button"
@@ -1082,7 +1082,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
 
         {/* ── idea: AI Context (real LLM) ── */}
         {isIdea && (
-          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <ToggleBlock
               title={isPl ? 'Kontekst AI' : 'AI Context'}
               icon={<Sparkles size={14} />}
@@ -1177,7 +1177,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         )}
 
         {/* ── Evidence & Sources ── */}
-        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <ToggleBlock
             title={isPl ? 'Dowody i źródła' : 'Evidence & Sources'}
             badge={String(nodeData.evidenceLinks?.length || 0)}
@@ -1192,7 +1192,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                 return (
                   <div
                     key={item.id}
-                    className={`rounded-xl border border-c-border-subtle dark:border-c-border px-3 py-2 bg-c-surface-raised dark:bg-c-surface flex items-center gap-2 ${isClickable ? 'cursor-pointer hover:bg-c-surface dark:hover:bg-c-surface-raised transition-colors' : ''}`}
+                    className={`rounded-xl border border-c-border-subtle dark:border-c-border-subtle px-3 py-2 bg-c-surface-raised dark:bg-c-surface flex items-center gap-2 ${isClickable ? 'cursor-pointer hover:bg-c-surface dark:hover:bg-c-surface-raised transition-colors' : ''}`}
                     onClick={() => handleEvidenceLinkClick(item)}
                   >
                     <div className="flex-1 min-w-0">
@@ -1243,7 +1243,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                       if (e.key === 'Escape') setShowEvidenceForm(false);
                     }}
                     placeholder={isPl ? 'Tytuł dowodu...' : 'Evidence title...'}
-                    className="w-full text-[10px] bg-c-surface dark:bg-c-surface-raised rounded-lg px-2.5 py-1.5 border border-c-border-subtle dark:border-c-border outline-none text-c-text-secondary placeholder:text-c-text-muted"
+                    className="w-full text-[10px] bg-c-surface dark:bg-c-surface-raised rounded-lg px-2.5 py-1.5 border border-c-border-subtle dark:border-c-border-subtle outline-none text-c-text-secondary placeholder:text-c-text-muted"
                   />
                   <input
                     value={newEvidenceUrl}
@@ -1253,7 +1253,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                       if (e.key === 'Escape') setShowEvidenceForm(false);
                     }}
                     placeholder={isPl ? 'URL (opcjonalnie)' : 'URL (optional)'}
-                    className="w-full text-[10px] bg-c-surface dark:bg-c-surface-raised rounded-lg px-2.5 py-1.5 border border-c-border-subtle dark:border-c-border outline-none text-c-text-secondary placeholder:text-c-text-muted"
+                    className="w-full text-[10px] bg-c-surface dark:bg-c-surface-raised rounded-lg px-2.5 py-1.5 border border-c-border-subtle dark:border-c-border-subtle outline-none text-c-text-secondary placeholder:text-c-text-muted"
                   />
                   <div className="flex gap-1.5">
                     <button
@@ -1281,7 +1281,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         </div>
 
         {/* ── Linked artifacts ── */}
-        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <ToggleBlock
             title={isPl ? 'Powiązane artefakty' : 'Linked artifacts'}
             badge={String(isIdea ? artifactLinksState.length : nodeData.artifactLinks?.length || 0)}
@@ -1411,7 +1411,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
 
         {/* ── idea: Attachments (URL list) ── */}
         {isIdea && (
-          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <ToggleBlock
               title={isPl ? 'Załączniki' : 'Attachments'}
               icon={<Paperclip size={14} />}
@@ -1470,7 +1470,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                         if (e.key === 'Enter') handleAddAttachment();
                       }}
                       placeholder={isPl ? 'Wklej URL...' : 'Paste URL...'}
-                      className="flex-1 text-[10px] bg-c-surface-raised dark:bg-c-surface rounded-lg px-2.5 py-1.5 border border-c-border-subtle dark:border-c-border outline-none text-c-text-secondary placeholder:text-c-text-muted"
+                      className="flex-1 text-[10px] bg-c-surface-raised dark:bg-c-surface rounded-lg px-2.5 py-1.5 border border-c-border-subtle dark:border-c-border-subtle outline-none text-c-text-secondary placeholder:text-c-text-muted"
                     />
                     <button
                       onClick={handleAddAttachment}
@@ -1487,7 +1487,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
 
         {/* ── idea: Comments ── */}
         {isIdea && (
-          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <ToggleBlock
               title={isPl ? 'Komentarze' : 'Comments'}
               icon={<MessageSquare size={14} />}
@@ -1530,7 +1530,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                       }
                     }}
                     placeholder={isPl ? 'Dodaj komentarz...' : 'Add comment...'}
-                    className="flex-1 text-[11px] bg-c-surface-raised dark:bg-c-surface rounded-lg px-2.5 py-2 border border-c-border-subtle dark:border-c-border outline-none text-c-text-secondary placeholder:text-c-text-muted resize-none"
+                    className="flex-1 text-[11px] bg-c-surface-raised dark:bg-c-surface rounded-lg px-2.5 py-2 border border-c-border-subtle dark:border-c-border-subtle outline-none text-c-text-secondary placeholder:text-c-text-muted resize-none"
                     rows={2}
                   />
                   <button
@@ -1548,7 +1548,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
 
         {/* ── mindmap: AI expand into map ── */}
         {!isIdea && !isProtected && (
-          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-2">
               {isPl ? 'AI: Rozwiń temat' : 'AI: Expand Topic'}
             </div>
@@ -1577,7 +1577,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                 {aiSuggestions.map((s, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center gap-2 p-2 rounded-xl bg-c-surface dark:bg-c-surface-raised border border-c-border-subtle dark:border-c-border hover:bg-c-surface dark:hover:bg-c-surface-raised transition-colors"
+                    className="flex items-center gap-2 p-2 rounded-xl bg-c-surface dark:bg-c-surface-raised border border-c-border-subtle dark:border-c-border-subtle hover:bg-c-surface dark:hover:bg-c-surface-raised transition-colors"
                   >
                     <Zap size={10} className="text-c-text-secondary shrink-0" />
                     <span className="text-[11px] text-c-text-secondary dark:text-c-text flex-1">
@@ -1598,7 +1598,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
 
         {/* ── mindmap: Company Context ── */}
         {!isIdea && (
-          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <ToggleBlock
               title={isPl ? 'Kontekst firmy' : 'Company Context'}
               badge={loadingContext ? '...' : String(companyContext.length)}
@@ -1622,7 +1622,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                   {companyContext.map((item) => (
                     <div
                       key={item.id}
-                      className="p-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border"
+                      className="p-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle"
                     >
                       <div className="flex items-start gap-2">
                         <div className="mt-0.5 shrink-0">
@@ -1670,7 +1670,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
 
         {/* ── Related / Linked nodes ── */}
         {!isIdea && relatedNodes.length > 0 && (
-          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <ToggleBlock
               title={isPl ? 'Powiązane węzły' : 'Related Nodes'}
               badge={String(relatedNodes.length)}
@@ -1697,7 +1697,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
           </div>
         )}
         {isIdea && linkedNodeLabels.length > 0 && (
-          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <ToggleBlock
               title={isPl ? 'Powiązania' : 'Links'}
               badge={String(linkedNodeLabels.length)}
@@ -1721,7 +1721,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
 
         {/* ── mindmap: Drill down ── */}
         {!isIdea && onDrillDown && !isProtected && (
-          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <button
               onClick={() => onDrillDown(nodeData.nodeId)}
               className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-c-surface-raised transition-all"
@@ -1736,7 +1736,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
 
         {/* ── mindmap: Maturity callout ── */}
         {!isIdea && !isProtected && (
-          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <Callout
               variant={
                 status === 'validated' || status === 'ready_to_convert'
@@ -1776,7 +1776,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
         )}
 
         {/* ── AI history ── */}
-        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <ToggleBlock
             title={isPl ? 'Historia AI' : 'AI history'}
             badge={String(nodeData.aiExpansionHistory?.length || 0)}
@@ -1788,7 +1788,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
                 {nodeData.aiExpansionHistory.map((entry) => (
                   <div
                     key={`${entry.timestamp}-${entry.prompt}`}
-                    className="rounded-xl border border-c-border-subtle dark:border-c-border px-3 py-2 bg-c-surface-raised dark:bg-c-surface"
+                    className="rounded-xl border border-c-border-subtle dark:border-c-border-subtle px-3 py-2 bg-c-surface-raised dark:bg-c-surface"
                   >
                     <div className="text-[10px] text-c-text-secondary mb-1">
                       {new Date(entry.timestamp).toLocaleString()}
@@ -1816,7 +1816,7 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
 
       {/* ── mindmap: Convert footer ── */}
       {!isIdea && !isProtected && status !== 'converted' && (
-        <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border flex items-center gap-2">
+        <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border-subtle flex items-center gap-2">
           <button
             onClick={() => onConvertNode?.(nodeData.nodeId, 'initiative')}
             disabled={locked}
@@ -1888,7 +1888,7 @@ const DepthField: React.FC<{
         disabled={disabled}
         rows={2}
         placeholder={placeholder}
-        className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus resize-none transition-all disabled:opacity-50"
+        className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus resize-none transition-all disabled:opacity-50"
       />
     </div>
   );

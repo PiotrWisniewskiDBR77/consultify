@@ -672,7 +672,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                       onClick={() => handleSelectAll(!allSelected)}
                       className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
                         allSelected
-                          ? 'bg-c-text text-c-bg border-c-border'
+                          ? 'bg-c-text text-c-bg border-c-border-subtle'
                           : someSelected
                             ? 'bg-c-accent/10 border-c-accent'
                             : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-500 dark:hover:text-slate-400'
@@ -865,7 +865,7 @@ export const AdminInitiativeTemplatesPanel: React.FC = () => {
                               }}
                               className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
                                 selectedIds.has(template.id)
-                                  ? 'bg-c-text text-c-bg border-c-border'
+                                  ? 'bg-c-text text-c-bg border-c-border-subtle'
                                   : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
                               }`}
                             >

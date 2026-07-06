@@ -276,7 +276,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       quietHours.daysOfWeek.includes(day.value)
                         ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border-2 border-indigo-500'
-                        : 'bg-c-surface-raised text-c-text-secondary border-2 border-transparent hover:border-c-border dark:border-navy-700'
+                        : 'bg-c-surface-raised text-c-text-secondary border-2 border-transparent hover:border-c-border-subtle dark:border-navy-700'
                     }`}
                     title={day.fullLabel}
                   >

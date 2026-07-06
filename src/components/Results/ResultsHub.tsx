@@ -168,7 +168,7 @@ const ResultsControlSelect: React.FC<ResultsControlSelectProps> = ({
       aria-label={ariaLabel}
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="h-9 rounded-full border border-c-border bg-c-surface px-3 pr-8 text-sm text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-c-focus"
+      className="h-9 rounded-full border border-c-border-subtle bg-c-surface px-3 pr-8 text-sm text-c-text-secondary focus:outline-none focus:ring-2 focus:ring-c-focus"
     >
       {options.map((option) => (
         <option key={option.value} value={option.value}>

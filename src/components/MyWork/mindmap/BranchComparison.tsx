@@ -172,7 +172,7 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
 
   return (
     <div className="fixed inset-0 z-[92] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl flex flex-col">
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-c-border-subtle dark:border-c-border">
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
         <button
           onClick={onClose}
           className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:text-c-text-muted dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
@@ -191,7 +191,7 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
             <select
               value={leftBranch}
               onChange={(e) => setLeftBranch(e.target.value)}
-              className="flex-1 px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface text-[11px] font-bold text-c-text-secondary dark:text-c-text"
+              className="flex-1 px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-[11px] font-bold text-c-text-secondary dark:text-c-text"
             >
               <option value="">{isPl ? '-- Wybierz --' : '-- Select --'}</option>
               {branches.map((b) => (
@@ -204,7 +204,7 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
             <select
               value={rightBranch}
               onChange={(e) => setRightBranch(e.target.value)}
-              className="flex-1 px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface text-[11px] font-bold text-c-text-secondary dark:text-c-text"
+              className="flex-1 px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-[11px] font-bold text-c-text-secondary dark:text-c-text"
             >
               <option value="">{isPl ? '-- Wybierz --' : '-- Select --'}</option>
               {branches.map((b) => (

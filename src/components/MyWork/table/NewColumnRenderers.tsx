@@ -178,7 +178,7 @@ export const ColorCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
     <div className="relative flex items-center gap-1.5">
       <button
         onClick={() => !locked && setShowPicker(!showPicker)}
-        className="w-5 h-5 rounded-md border-2 border-c-border shadow-sm hover:scale-110 transition-transform"
+        className="w-5 h-5 rounded-md border-2 border-c-border-subtle shadow-sm hover:scale-110 transition-transform"
         style={{ backgroundColor: value || '#e2e8f0' }}
       />
       <span className="text-[10px] text-c-text-muted font-mono">{value || '#—'}</span>
@@ -191,7 +191,7 @@ export const ColorCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
                 onChange(c);
                 setShowPicker(false);
               }}
-              className="w-5 h-5 rounded-md border-2 border-c-border hover:scale-110 transition-transform"
+              className="w-5 h-5 rounded-md border-2 border-c-border-subtle hover:scale-110 transition-transform"
               style={{ backgroundColor: c }}
             />
           ))}

@@ -241,7 +241,7 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
               data-testid={`ai-editor-level-${meta.id}`}
               className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-left text-xs transition ${
                 selected
-                  ? 'border-c-border bg-c-surface-raised'
+                  ? 'border-c-border-subtle bg-c-surface-raised'
                   : 'border-c-border-subtle bg-c-surface hover:bg-c-surface-raised'
               } ${disabled ? 'cursor-not-allowed opacity-40' : ''}`}
               title={
@@ -296,7 +296,7 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
           type="button"
           onClick={propose}
           disabled={proposing || !prompt.trim() || !tableId}
-          className="inline-flex items-center gap-1 rounded-md border border-c-border bg-c-surface px-2.5 py-1 text-xs text-c-text hover:bg-c-bg disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface px-2.5 py-1 text-xs text-c-text hover:bg-c-bg disabled:opacity-50"
           data-testid="ai-editor-propose"
         >
           {proposing ? (

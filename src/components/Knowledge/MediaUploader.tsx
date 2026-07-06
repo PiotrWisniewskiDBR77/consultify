@@ -276,9 +276,9 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
   };
 
   return (
-    <div className="bg-c-surface rounded-xl border border-c-border overflow-hidden">
+    <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
       {/* Tabs */}
-      <div className="flex border-b border-c-border">
+      <div className="flex border-b border-c-border-subtle">
         <button
           onClick={() => setActiveTab('upload')}
           className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors
@@ -333,7 +333,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                                 ${
                                   isDragging
                                     ? 'border-c-success bg-[color-mix(in_srgb,var(--c-success)_12%,transparent)]'
-                                    : 'border-c-border hover:border-c-border-strong hover:bg-c-surface-raised'
+                                    : 'border-c-border-subtle hover:border-c-border-strong hover:bg-c-surface-raised'
                                 }`}
             >
               <input
@@ -442,7 +442,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                   value={youtubeUrl}
                   onChange={(e) => setYoutubeUrl(e.target.value)}
                   placeholder="https://youtube.com/watch?v=..."
-                  className="w-full bg-c-surface-raised border border-c-border rounded-lg pl-10 pr-4 py-3
+                  className="w-full bg-c-surface-raised border border-c-border-subtle rounded-lg pl-10 pr-4 py-3
                                         text-c-text-muted placeholder-c-text-muted focus:outline-none focus:border-c-danger"
                 />
               </div>
@@ -489,7 +489,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                   value={webUrl}
                   onChange={(e) => setWebUrl(e.target.value)}
                   placeholder="https://example.com/article"
-                  className="w-full bg-c-surface-raised border border-c-border rounded-lg pl-10 pr-4 py-3
+                  className="w-full bg-c-surface-raised border border-c-border-subtle rounded-lg pl-10 pr-4 py-3
                                         text-c-text-muted placeholder-c-text-muted focus:outline-none focus:border-c-info"
                 />
               </div>
@@ -566,7 +566,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-3 bg-c-surface-raised border-t border-c-border">
+      <div className="px-6 py-3 bg-c-surface-raised border-t border-c-border-subtle">
         <p className="text-c-text-muted text-xs text-center">
           Max file size: 100MB • Audio/Video: max 60 min • Supported: PDF, Word, Excel, PowerPoint,
           Audio, Video, Images, YouTube, Web URLs

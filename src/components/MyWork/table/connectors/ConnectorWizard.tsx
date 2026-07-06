@@ -289,7 +289,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
   /* ---- Render helpers ---- */
 
   const inputCls =
-    'w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus transition-colors';
+    'w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus transition-colors';
 
   const labelCls = 'block text-xs font-medium text-c-text-muted mb-1';
 
@@ -313,7 +313,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
               ${
                 selected
                   ? 'border-c-accent bg-c-accent-soft shadow-sm'
-                  : 'border-c-border hover:border-c-border bg-c-surface'
+                  : 'border-c-border-subtle hover:border-c-border-subtle bg-c-surface'
               }
             `}
           >
@@ -635,7 +635,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       </div>
 
       {/* Mapping table */}
-      <div className="rounded-xl border border-c-border overflow-hidden">
+      <div className="rounded-xl border border-c-border-subtle overflow-hidden">
         {/* Header */}
         <div className="grid grid-cols-12 gap-2 bg-c-surface-raised px-3 py-2 text-[11px] font-semibold text-c-text-muted uppercase tracking-wider">
           <div className="col-span-3">{isPl ? 'Źródło' : 'Source'}</div>
@@ -830,12 +830,12 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
       </div>
 
       {/* Run now toggle */}
-      <label className="flex items-center gap-3 rounded-lg border border-c-border p-3 cursor-pointer hover:bg-c-surface-raised transition-colors">
+      <label className="flex items-center gap-3 rounded-lg border border-c-border-subtle p-3 cursor-pointer hover:bg-c-surface-raised transition-colors">
         <input
           type="checkbox"
           checked={runNow}
           onChange={(e) => setRunNow(e.target.checked)}
-          className="h-4 w-4 rounded border-c-border text-c-accent focus:ring-c-focus"
+          className="h-4 w-4 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
         />
         <div>
           <p className="text-sm font-medium text-c-text">
@@ -973,7 +973,7 @@ const SummaryCard: React.FC<{
   value: string;
   icon?: React.ReactNode;
 }> = ({ label, value, icon }) => (
-  <div className="rounded-lg border border-c-border bg-c-surface-raised p-3">
+  <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3">
     <p className="text-[11px] font-medium text-c-text-muted uppercase tracking-wider mb-1">
       {label}
     </p>

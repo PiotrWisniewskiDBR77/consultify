@@ -596,7 +596,7 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
             if (e.key === 'Enter' && canSave) void handleSave();
           }}
           placeholder={pl ? 'np. Strategia 2026' : 'e.g. Strategy 2026'}
-          className="w-full px-3 py-2 mb-4 rounded-lg border border-c-border bg-c-surface text-c-text text-sm outline-none focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)]"
+          className="w-full px-3 py-2 mb-4 rounded-lg border border-c-border-subtle bg-c-surface text-c-text text-sm outline-none focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)]"
         />
 
         <span className="block text-sm font-medium text-c-text-secondary mb-1.5">
@@ -609,7 +609,7 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
             className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
               scope === 'personal'
                 ? 'border-c-border-strong bg-c-surface-raised text-c-text'
-                : 'border-c-border text-c-text-secondary hover:bg-c-surface-raised'
+                : 'border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised'
             }`}
           >
             <Lock size={15} />
@@ -621,7 +621,7 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
             className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
               scope === 'team'
                 ? 'border-c-border-strong bg-c-surface-raised text-c-text'
-                : 'border-c-border text-c-text-secondary hover:bg-c-surface-raised'
+                : 'border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised'
             }`}
           >
             <Users size={15} />
@@ -638,7 +638,7 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
               <select
                 value={teamId}
                 onChange={(e) => setTeamId(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-c-border bg-c-surface text-c-text text-sm outline-none focus:ring-2 focus:ring-[var(--c-focus)]"
+                className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text text-sm outline-none focus:ring-2 focus:ring-[var(--c-focus)]"
               >
                 {teams.map((t) => (
                   <option key={t.id} value={t.id}>

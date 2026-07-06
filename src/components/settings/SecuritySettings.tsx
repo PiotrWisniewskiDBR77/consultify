@@ -272,7 +272,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                   {passwordRequirements[key as keyof typeof passwordRequirements] ? (
                     <CheckCircle className="w-4 h-4 text-emerald-500" />
                   ) : (
-                    <div className="w-4 h-4 rounded-full border-2 border-c-border" />
+                    <div className="w-4 h-4 rounded-full border-2 border-c-border-subtle" />
                   )}
                   <span
                     className={

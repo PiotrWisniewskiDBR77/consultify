@@ -383,7 +383,7 @@ export const SuperAdminAISettings: React.FC = () => {
   if (!settings) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="bg-c-surface rounded-xl border border-c-border p-6 max-w-xl w-full">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6 max-w-xl w-full">
           <DegradedState
             title="AI settings unavailable"
             description={loadError || 'Failed to load settings'}
@@ -443,7 +443,7 @@ export const SuperAdminAISettings: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Default Provider & Fallback Chain */}
-        <div className="bg-c-surface rounded-xl border border-c-border p-6">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 rounded-lg bg-c-info/20">
               <Server size={20} className="text-c-info" />
@@ -466,7 +466,7 @@ export const SuperAdminAISettings: React.FC = () => {
             <select
               value={settings.defaultProvider || ''}
               onChange={(e) => updateSetting('defaultProvider', e.target.value || null)}
-              className="w-full px-4 py-3 bg-c-surface border border-c-border rounded-xl text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus transition-colors"
+              className="w-full px-4 py-3 bg-c-surface border border-c-border-subtle rounded-xl text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus transition-colors"
             >
               <option value="">Auto-select</option>
               {providers.map((p) => (
@@ -502,7 +502,7 @@ export const SuperAdminAISettings: React.FC = () => {
                     <Reorder.Item
                       key={providerId}
                       value={providerId}
-                      className="flex items-center gap-3 px-4 py-3 bg-c-surface-raised border border-c-border rounded-xl cursor-grab active:cursor-grabbing"
+                      className="flex items-center gap-3 px-4 py-3 bg-c-surface-raised border border-c-border-subtle rounded-xl cursor-grab active:cursor-grabbing"
                     >
                       <GripVertical size={16} className="text-c-text-muted" />
                       <span className="text-xs font-mono text-c-text-muted w-6">
@@ -544,7 +544,7 @@ export const SuperAdminAISettings: React.FC = () => {
         </div>
 
         {/* Rate Limits */}
-        <div className="bg-c-surface rounded-xl border border-c-border p-6">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 rounded-lg bg-c-warning/20">
               <Gauge size={20} className="text-c-warning" />
@@ -572,7 +572,7 @@ export const SuperAdminAISettings: React.FC = () => {
                     parseInt(e.target.value)
                   )
                 }
-                className="w-full px-4 py-3 bg-c-surface border border-c-border rounded-xl text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus"
+                className="w-full px-4 py-3 bg-c-surface border border-c-border-subtle rounded-xl text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus"
               />
             </div>
 
@@ -590,7 +590,7 @@ export const SuperAdminAISettings: React.FC = () => {
                     parseInt(e.target.value)
                   )
                 }
-                className="w-full px-4 py-3 bg-c-surface border border-c-border rounded-xl text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus"
+                className="w-full px-4 py-3 bg-c-surface border border-c-border-subtle rounded-xl text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus"
               />
             </div>
 
@@ -602,7 +602,7 @@ export const SuperAdminAISettings: React.FC = () => {
                 type="number"
                 value={settings.globalTokenLimit || 10000000}
                 onChange={(e) => updateSetting('globalTokenLimit', parseInt(e.target.value))}
-                className="w-full px-4 py-3 bg-c-surface border border-c-border rounded-xl text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus"
+                className="w-full px-4 py-3 bg-c-surface border border-c-border-subtle rounded-xl text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus"
               />
               <p className="text-xs text-c-text-muted mt-1">
                 {((settings.globalTokenLimit || 10000000) / 1000000).toFixed(1)}M tokens
@@ -617,7 +617,7 @@ export const SuperAdminAISettings: React.FC = () => {
                 type="number"
                 value={settings.maxTokensPerRequest || 8192}
                 onChange={(e) => updateSetting('maxTokensPerRequest', parseInt(e.target.value))}
-                className="w-full px-4 py-3 bg-c-surface border border-c-border rounded-xl text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus"
+                className="w-full px-4 py-3 bg-c-surface border border-c-border-subtle rounded-xl text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus"
               />
             </div>
 
@@ -629,7 +629,7 @@ export const SuperAdminAISettings: React.FC = () => {
                 type="number"
                 value={settings.maxContextWindowSize || 128000}
                 onChange={(e) => updateSetting('maxContextWindowSize', parseInt(e.target.value))}
-                className="w-full px-4 py-3 bg-c-surface border border-c-border rounded-xl text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus"
+                className="w-full px-4 py-3 bg-c-surface border border-c-border-subtle rounded-xl text-c-text focus:border-c-accent focus:ring-1 focus:ring-c-focus"
               />
               <p className="text-xs text-c-text-muted mt-1">
                 {((settings.maxContextWindowSize || 128000) / 1000).toFixed(0)}K context
@@ -639,7 +639,7 @@ export const SuperAdminAISettings: React.FC = () => {
         </div>
 
         {/* Security & PII */}
-        <div className="bg-c-surface rounded-xl border border-c-border p-6">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 rounded-lg bg-c-danger/20">
               <Shield size={20} className="text-c-danger" />
@@ -667,7 +667,7 @@ export const SuperAdminAISettings: React.FC = () => {
                     className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${
                       settings.piiDetectionSensitivity === option.value
                         ? 'bg-c-accent/10 border-c-accent/50'
-                        : 'bg-c-surface-raised border-c-border hover:border-c-border-strong'
+                        : 'bg-c-surface-raised border-c-border-subtle hover:border-c-border-strong'
                     }`}
                   >
                     <input
@@ -701,7 +701,7 @@ export const SuperAdminAISettings: React.FC = () => {
             </div>
 
             {/* Require Encryption */}
-            <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-xl border border-c-border">
+            <div className="flex items-center justify-between p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
               <div className="flex items-center gap-3">
                 <Lock size={20} className="text-c-success" />
                 <div>
@@ -725,7 +725,7 @@ export const SuperAdminAISettings: React.FC = () => {
         </div>
 
         {/* Circuit Breaker & Data Residency */}
-        <div className="bg-c-surface rounded-xl border border-c-border p-6">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 rounded-lg bg-c-info/20">
               <Activity size={20} className="text-c-info" />
@@ -742,7 +742,7 @@ export const SuperAdminAISettings: React.FC = () => {
 
           <div className="space-y-6">
             {/* Circuit Breaker */}
-            <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+            <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
               <div className="flex items-center gap-2 mb-4">
                 <Zap size={18} className="text-c-warning" />
                 <span className="font-medium text-c-text">Circuit Breaker</span>
@@ -763,7 +763,7 @@ export const SuperAdminAISettings: React.FC = () => {
                         parseInt(e.target.value)
                       )
                     }
-                    className="w-full px-3 py-2 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
+                    className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
                   />
                   <p className="text-xs text-c-text-muted mt-1">
                     failures before trip
@@ -783,7 +783,7 @@ export const SuperAdminAISettings: React.FC = () => {
                         parseInt(e.target.value)
                       )
                     }
-                    className="w-full px-3 py-2 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
+                    className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
                   />
                   <p className="text-xs text-c-text-muted mt-1">before retry</p>
                 </div>
@@ -802,7 +802,7 @@ export const SuperAdminAISettings: React.FC = () => {
                     className={`flex flex-col p-4 rounded-xl border cursor-pointer transition-all ${
                       settings.dataResidency === option.value
                         ? 'bg-c-accent/10 border-c-accent/50'
-                        : 'bg-c-surface-raised border-c-border hover:border-c-border-strong'
+                        : 'bg-c-surface-raised border-c-border-subtle hover:border-c-border-strong'
                     }`}
                   >
                     <input

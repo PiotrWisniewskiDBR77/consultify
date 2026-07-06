@@ -106,7 +106,7 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
   return (
     <div className="fixed inset-0 z-[92] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-c-border-subtle dark:border-c-border">
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
         <button
           onClick={onClose}
           className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:text-c-text-muted dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
@@ -139,7 +139,7 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
                     style={{ paddingLeft: `${idx * 3}%`, paddingRight: `${idx * 3}%` }}
                   >
                     <div
-                      className={`flex-1 py-4 px-5 rounded-xl ${stage.bg} border border-c-border-subtle dark:border-c-border transition-all`}
+                      className={`flex-1 py-4 px-5 rounded-xl ${stage.bg} border border-c-border-subtle dark:border-c-border-subtle transition-all`}
                       style={{ borderLeftColor: stage.color, borderLeftWidth: 4 }}
                     >
                       <div className="flex items-center justify-between">
@@ -178,7 +178,7 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
           </div>
 
           {/* Branch breakdown */}
-          <div className="mt-8 pt-6 border-t border-c-border-subtle dark:border-c-border">
+          <div className="mt-8 pt-6 border-t border-c-border-subtle dark:border-c-border-subtle">
             <h3 className="text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted mb-3 flex items-center gap-2">
               <TrendingUp size={14} />
               {isPl ? 'Konwersja per gałąź' : 'Conversion per branch'}
@@ -187,7 +187,7 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
               {branchStats.map(([bk, stats]) => (
                 <div
                   key={bk}
-                  className="p-3 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border"
+                  className="p-3 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle"
                 >
                   <div className="text-[11px] font-bold text-c-text-secondary dark:text-c-text capitalize">
                     {bk}

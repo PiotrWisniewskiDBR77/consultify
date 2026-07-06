@@ -45,7 +45,7 @@ export const KnowledgePopover: React.FC<KnowledgePopoverProps> = ({ isPl, onActi
   };
 
   return (
-    <div className="w-56 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl">
+    <div className="w-56 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle shadow-xl">
       <div className="px-1 py-1">
         <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
           {isPl ? 'Karty wiedzy' : 'Knowledge cards'}
@@ -64,7 +64,7 @@ export const KnowledgePopover: React.FC<KnowledgePopoverProps> = ({ isPl, onActi
           );
         })}
       </div>
-      <div className="border-t border-c-border-subtle dark:border-c-border px-1 py-1">
+      <div className="border-t border-c-border-subtle dark:border-c-border-subtle px-1 py-1">
         <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
           {isPl ? 'Z platformy' : 'From platform'}
         </div>

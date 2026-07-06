@@ -490,7 +490,7 @@ export const AccessLimitsTab: React.FC = () => {
                   <select
                     value={(settings as any)?.autoTierDirection || 'both'}
                     onChange={(e) => updateSetting('autoTierDirection' as any, e.target.value)}
-                    className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text"
+                    className="w-full bg-c-surface-raised/50 border border-c-border-subtle rounded-lg p-2 text-c-text"
                   >
                     <option value="up">Promote Only</option>
                     <option value="down">Demote Only</option>
@@ -505,7 +505,7 @@ export const AccessLimitsTab: React.FC = () => {
                   <select
                     value={(settings as any)?.autoTierMaxTier || 'PREMIUM'}
                     onChange={(e) => updateSetting('autoTierMaxTier' as any, e.target.value)}
-                    className="w-full bg-c-surface-raised/50 border border-c-border rounded-lg p-2 text-c-text"
+                    className="w-full bg-c-surface-raised/50 border border-c-border-subtle rounded-lg p-2 text-c-text"
                   >
                     <option value="BUDGET">Budget Only</option>
                     <option value="STANDARD">Up to Standard</option>
@@ -599,7 +599,7 @@ export const AccessLimitsTab: React.FC = () => {
                         <select
                           value={user.currentTier}
                           onChange={() => {}}
-                          className="bg-c-surface-raised border border-c-border rounded px-2 py-1 text-c-text text-sm"
+                          className="bg-c-surface-raised border border-c-border-subtle rounded px-2 py-1 text-c-text text-sm"
                         >
                           {USER_TIERS.map((t) => (
                             <option key={t.id} value={t.id}>

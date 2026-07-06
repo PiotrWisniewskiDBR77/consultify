@@ -20,7 +20,7 @@ export const SubMapBreadcrumb: React.FC<SubMapBreadcrumbProps> = ({ path, onNavi
   if (path.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-1 px-3 py-2 rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border shadow-2xl">
+    <div className="flex items-center gap-1 px-3 py-2 rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border-subtle shadow-2xl">
       <button
         onClick={() => onNavigate(null)}
         className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"

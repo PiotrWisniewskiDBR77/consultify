@@ -131,7 +131,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-2xl border border-c-border bg-c-surface shadow-2xl overflow-hidden">
+        <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl overflow-hidden">
           {/* Header */}
           <div className="px-3 py-2 border-b border-c-border-subtle">
             <span className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider">
@@ -207,7 +207,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyDown={handleCreateKeyDown}
                   placeholder={isPl ? 'Nazwa widoku…' : 'View name…'}
-                  className="w-full rounded-lg border border-c-border bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-c-focus"
+                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-c-focus"
                 />
                 <div className="flex items-center gap-1">
                   {CREATE_VIEW_TYPES.map((vt) => {
@@ -235,7 +235,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                     type="checkbox"
                     checked={newPersonal}
                     onChange={(e) => setNewPersonal(e.target.checked)}
-                    className="rounded border-c-border text-c-accent focus:ring-c-focus h-3.5 w-3.5"
+                    className="rounded border-c-border-subtle text-c-accent focus:ring-c-focus h-3.5 w-3.5"
                   />
                   <Lock size={10} className="text-c-text-muted" />
                   <span className="text-[10px] text-c-text-muted">

@@ -1668,7 +1668,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                               type="checkbox"
                               checked={webhookForm.eventTypes.includes(event.type)}
                               onChange={() => toggleEventType(event.type)}
-                              className="w-4 h-4 rounded border-c-border dark:border-navy-700 text-c-accent focus:ring-[color:var(--c-focus)]"
+                              className="w-4 h-4 rounded border-c-border-subtle dark:border-navy-700 text-c-accent focus:ring-[color:var(--c-focus)]"
                             />
                             <div>
                               <span className="text-sm font-medium text-c-text-secondary">

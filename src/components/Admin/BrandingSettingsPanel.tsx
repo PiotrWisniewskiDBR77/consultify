@@ -670,7 +670,7 @@ export const BrandingSettingsPanel: React.FC<BrandingSettingsPanelProps> = ({ cl
                   <textarea
                     value={branding.customCss}
                     onChange={(e) => updateField('customCss', e.target.value)}
-                    className="w-full px-3 py-2 bg-c-surface text-green-400 font-mono text-sm border border-c-border rounded-lg"
+                    className="w-full px-3 py-2 bg-c-surface text-green-400 font-mono text-sm border border-c-border-subtle rounded-lg"
                     rows={6}
                     placeholder="/* Custom CSS overrides */"
                   />

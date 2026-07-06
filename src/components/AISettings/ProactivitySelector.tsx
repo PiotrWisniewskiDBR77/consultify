@@ -200,7 +200,7 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                                 ${
                                   isSelected
                                     ? `bg-gradient-to-br ${config.bgGradient} ${config.borderColor} border-2 shadow-xl ${config.glowColor}`
-                                    : 'bg-c-surface-raised border border-c-border-subtle hover:border-c-border hover:bg-c-surface-raised'
+                                    : 'bg-c-surface-raised border border-c-border-subtle hover:border-c-border-subtle hover:bg-c-surface-raised'
                                 }
                                 ${!allowed ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
                                 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}

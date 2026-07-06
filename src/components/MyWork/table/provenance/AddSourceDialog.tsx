@@ -122,9 +122,9 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
         onSubmit={(e) => {
           void handleSubmit(e);
         }}
-        className="w-[420px] max-w-full rounded-xl border border-c-border bg-c-surface shadow-2xl"
+        className="w-[420px] max-w-full rounded-xl border border-c-border-subtle bg-c-surface shadow-2xl"
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-c-border">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
           <h2
             id={`${testId}-title`}
             className="text-sm font-semibold text-c-text"
@@ -155,7 +155,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
             <select
               value={type}
               onChange={(e) => setType(e.target.value as SourceType)}
-              className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+              className="mt-1 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 py-1.5 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
               data-testid={`${testId}-type`}
             >
               {SOURCE_TYPE_OPTIONS.map((opt) => (
@@ -175,7 +175,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
               value={uri}
               onChange={(e) => setUri(e.target.value)}
               placeholder="https://…"
-              className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+              className="mt-1 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 py-1.5 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
               data-testid={`${testId}-uri`}
             />
           </label>
@@ -194,7 +194,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
               value={contribution}
               onChange={(e) => setContribution(e.target.value)}
               placeholder="0.80"
-              className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+              className="mt-1 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 py-1.5 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
               data-testid={`${testId}-contribution`}
             />
           </label>
@@ -207,7 +207,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={2}
-              className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1.5 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus resize-none"
+              className="mt-1 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 py-1.5 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus resize-none"
               data-testid={`${testId}-note`}
             />
           </label>
@@ -223,7 +223,7 @@ export const AddSourceDialog: React.FC<AddSourceDialogProps> = ({
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-c-border">
+        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-c-border-subtle">
           <button
             type="button"
             onClick={() => {

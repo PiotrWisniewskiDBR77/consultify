@@ -141,7 +141,7 @@ export const RunHistoryPanel: React.FC<RunHistoryPanelProps> = ({
           {isPl ? 'Brak uruchomień' : 'No runs yet'}
         </p>
       ) : (
-        <div className="rounded-xl border border-c-border overflow-hidden divide-y divide-c-border-subtle">
+        <div className="rounded-xl border border-c-border-subtle overflow-hidden divide-y divide-c-border-subtle">
           {runs.map((run) => {
             const isExpanded = expandedRun === run.id;
             return (
@@ -248,7 +248,7 @@ const StatCard: React.FC<{
           : 'text-c-text';
 
   return (
-    <div className="rounded-lg border border-c-border bg-c-surface-raised p-2.5 text-center">
+    <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-2.5 text-center">
       <p className="text-[10px] font-medium text-c-text-muted uppercase tracking-wider mb-0.5">
         {label}
       </p>

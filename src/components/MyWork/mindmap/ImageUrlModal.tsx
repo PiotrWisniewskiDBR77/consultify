@@ -32,7 +32,7 @@ export const ImageUrlModal: React.FC<ImageUrlModalProps> = ({ open, onClose, onS
       onClick={onClose}
     >
       <div
-        className="w-80 rounded-lg border border-c-border-subtle bg-c-surface-raised p-4 shadow-xl dark:border-c-border dark:bg-c-surface"
+        className="w-80 rounded-lg border border-c-border-subtle bg-c-surface-raised p-4 shadow-xl dark:border-c-border-subtle dark:bg-c-surface"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
@@ -54,7 +54,7 @@ export const ImageUrlModal: React.FC<ImageUrlModalProps> = ({ open, onClose, onS
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
           placeholder={isPl ? 'URL obrazka...' : 'Image URL...'}
-          className="mb-3 w-full rounded border border-c-border-subtle px-3 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border dark:bg-c-surface dark:text-c-text"
+          className="mb-3 w-full rounded border border-c-border-subtle px-3 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border-subtle dark:bg-c-surface dark:text-c-text"
         />
 
         {url.trim() && (
@@ -62,7 +62,7 @@ export const ImageUrlModal: React.FC<ImageUrlModalProps> = ({ open, onClose, onS
             <img
               src={url}
               alt="preview"
-              className="max-h-24 max-w-full rounded border border-c-border-subtle object-contain dark:border-c-border"
+              className="max-h-24 max-w-full rounded border border-c-border-subtle object-contain dark:border-c-border-subtle"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = 'none';
               }}

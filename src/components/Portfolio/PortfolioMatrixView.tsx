@@ -229,7 +229,7 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
       </div>
 
       {/* Matrix Chart */}
-      <div className="flex-1 relative bg-c-bg rounded-xl border border-c-border overflow-hidden">
+      <div className="flex-1 relative bg-c-bg rounded-xl border border-c-border-subtle overflow-hidden">
         {/* Quadrant backgrounds */}
         <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
           {/* Top Left - Quick Wins */}

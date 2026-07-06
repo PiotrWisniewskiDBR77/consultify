@@ -208,7 +208,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           <select
             value={selectedTemplateId}
             onChange={(e) => setSelectedTemplateId(e.target.value)}
-            className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+            className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             <option value="">
               {t('documentStudio.intake.noTemplateOption', 'No template — Mode 1 (free generation)')}
@@ -276,7 +276,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
             'documentStudio.intake.descriptionPlaceholder',
             'e.g., Prepare an interview summary report for the client board: scope, key findings, risks, recommendations.'
           )}
-          className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+          className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
           required
           minLength={10}
         />
@@ -294,7 +294,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
             'documentStudio.intake.titlePlaceholder',
             'Auto-derived from description if empty'
           )}
-          className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+          className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
         />
       </label>
 
@@ -306,7 +306,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           <select
             value={documentType}
             onChange={(e) => setDocumentType(e.target.value as DocumentTypeKey | '')}
-            className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+            className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             {DOCUMENT_TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -323,7 +323,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value as 'pl' | 'en')}
-            className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+            className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             <option value="pl">{t('documentStudio.intake.languagePolish', 'Polish')}</option>
             <option value="en">{t('documentStudio.intake.languageEnglish', 'English')}</option>
@@ -337,7 +337,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           <select
             value={density}
             onChange={(e) => setDensity(e.target.value as DocumentDensity)}
-            className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+            className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             {DENSITY_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -354,7 +354,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           <select
             value={goal}
             onChange={(e) => setGoal(e.target.value as DocumentGoal)}
-            className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+            className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
           >
             {GOAL_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -377,7 +377,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
             'documentStudio.intakeForm.audiencePlaceholder',
             'e.g., CEO, CFO, Transformation Officer'
           )}
-          className="rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+          className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
         />
       </label>
 
@@ -387,7 +387,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
             type="checkbox"
             checked={useLlm}
             onChange={(e) => setUseLlm(e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-c-border text-c-focus-solid focus:ring-c-focus"
+            className="mt-0.5 h-4 w-4 rounded border-c-border-subtle text-c-focus-solid focus:ring-c-focus"
           />
           <span>
             <span className="font-medium text-c-text">

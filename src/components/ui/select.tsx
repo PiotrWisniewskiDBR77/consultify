@@ -54,7 +54,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           onChange={(e) => onChange?.(e.target.value)}
           disabled={disabled}
           className={cn(
-            'flex w-full items-center justify-between rounded-lg border border-c-border bg-c-surface-raised text-c-text',
+            'flex w-full items-center justify-between rounded-lg border border-c-border-subtle bg-c-surface-raised text-c-text',
             'transition-colors placeholder:text-c-text-muted',
             'focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] focus-visible:border-c-accent',
             'disabled:cursor-not-allowed disabled:opacity-50',
@@ -93,7 +93,7 @@ const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
     <button
       ref={ref}
       className={cn(
-        'flex h-9 w-full items-center justify-between rounded-lg border border-c-border bg-c-surface-raised px-3 py-2 text-sm text-c-text',
+        'flex h-9 w-full items-center justify-between rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm text-c-text',
         'transition-colors placeholder:text-c-text-muted',
         'focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] focus-visible:border-c-accent',
         'disabled:cursor-not-allowed disabled:opacity-50',
@@ -122,7 +122,7 @@ const SelectContent = ({
 }) => (
   <div
     className={cn(
-      'relative z-dropdown min-w-[8rem] overflow-hidden rounded-lg border border-c-border bg-c-surface shadow-md',
+      'relative z-dropdown min-w-[8rem] overflow-hidden rounded-lg border border-c-border-subtle bg-c-surface shadow-md',
       className
     )}
   >

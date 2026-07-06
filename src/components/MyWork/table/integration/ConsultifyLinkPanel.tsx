@@ -168,7 +168,7 @@ function ModuleLinkSection({
   }, [modelId, moduleKey, fieldMappings, selectedTableId, isPl, onSyncComplete]);
 
   const inputCls =
-    'w-full rounded-lg border border-c-border bg-c-surface px-3 py-1.5 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-tag-2';
+    'w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-1.5 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-tag-2';
 
   return (
     <div className={`rounded-xl border ${cfg.borderColor} overflow-hidden`}>
@@ -195,12 +195,12 @@ function ModuleLinkSection({
 
       {/* Status bar */}
       {status && (
-        <div className="flex items-center gap-4 px-4 py-2 bg-c-surface border-t border-c-border">
+        <div className="flex items-center gap-4 px-4 py-2 bg-c-surface border-t border-c-border-subtle">
           <span className="text-[10px] text-c-text-muted">
             {status.linked ? (
               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-success border border-c-success text-c-success">{isPl ? 'Aktywne' : 'Active'}</span>
             ) : (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-surface-raised border border-c-border text-c-text-muted">{isPl ? 'Nieaktywne' : 'Inactive'}</span>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-surface-raised border border-c-border-subtle text-c-text-muted">{isPl ? 'Nieaktywne' : 'Inactive'}</span>
             )}
           </span>
           {status.lastSync && (
@@ -221,7 +221,7 @@ function ModuleLinkSection({
 
       {/* Expanded mapping UI */}
       {expanded && (
-        <div className="px-4 py-3 space-y-3 border-t border-c-border">
+        <div className="px-4 py-3 space-y-3 border-t border-c-border-subtle">
           {/* Select table */}
           <div>
             <label className="block text-[11px] font-medium text-c-text-muted mb-1">
@@ -362,12 +362,12 @@ export const ConsultifyLinkPanel: React.FC<ConsultifyLinkPanelProps> = ({
   }, [loadData]);
 
   const inputCls =
-    'w-full rounded-lg border border-c-border bg-c-surface px-3 py-1.5 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-tag-2';
+    'w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-1.5 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-tag-2';
 
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-c-border">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
         <div>
           <h3 className="text-sm font-semibold text-c-text">
             {isPl ? 'Połączenie z Consultify' : 'Consultify Link'}
@@ -384,7 +384,7 @@ export const ConsultifyLinkPanel: React.FC<ConsultifyLinkPanelProps> = ({
       </div>
 
       {/* Model selector */}
-      <div className="px-5 py-3 border-b border-c-border">
+      <div className="px-5 py-3 border-b border-c-border-subtle">
         <label className="block text-[11px] font-medium text-c-text-muted mb-1">
           {isPl ? 'Model danych' : 'Data Model'}
         </label>

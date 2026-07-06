@@ -86,7 +86,7 @@ function getStatusIndicator(status: OperationStatus): React.ReactNode {
     case 'pending':
     default:
       return (
-        <div className="w-5 h-5 rounded-full border-2 border-c-border flex items-center justify-center">
+        <div className="w-5 h-5 rounded-full border-2 border-c-border-subtle flex items-center justify-center">
           <Circle size={8} className="text-c-text-secondary" />
         </div>
       );

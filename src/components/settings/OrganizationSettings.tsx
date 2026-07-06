@@ -491,7 +491,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               onChange={(e) =>
                 setFinanceSettings((p) => ({ ...p, defaultWacc: Number(e.target.value) }))
               }
-              className="w-full px-3 py-2 rounded-lg border border-c-border dark:border-navy-700 bg-c-surface text-sm"
+              className="w-full px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-sm"
             />
           </div>
           <div>
@@ -503,7 +503,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               onChange={(e) =>
                 setFinanceSettings((p) => ({ ...p, defaultCurrency: e.target.value }))
               }
-              className="w-full px-3 py-2 rounded-lg border border-c-border dark:border-navy-700 bg-c-surface text-sm"
+              className="w-full px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-sm"
             >
               <option value="PLN">PLN</option>
               <option value="EUR">EUR</option>
@@ -523,7 +523,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               onChange={(e) =>
                 setFinanceSettings((p) => ({ ...p, defaultHorizonYears: Number(e.target.value) }))
               }
-              className="w-full px-3 py-2 rounded-lg border border-c-border dark:border-navy-700 bg-c-surface text-sm"
+              className="w-full px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-sm"
             />
           </div>
         </div>
@@ -567,7 +567,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                   value={newMemberEmail}
                   onChange={(e) => setNewMemberEmail(e.target.value)}
                   placeholder="Enter User ID (or Email if supported)"
-                  className="w-full px-3 py-2 rounded-lg border border-c-border dark:border-navy-700 bg-c-surface text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-sm"
                 />
               </div>
               <div className="w-40">
@@ -577,7 +577,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
                 <select
                   value={newMemberRole}
                   onChange={(e) => setNewMemberRole(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-c-border dark:border-navy-700 bg-c-surface text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-c-border-subtle dark:border-navy-700 bg-c-surface text-sm"
                 >
                   <option value="ADMIN">Admin</option>
                   <option value="MEMBER">Member</option>

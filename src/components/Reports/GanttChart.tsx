@@ -379,7 +379,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
   if (phases.length === 0) {
     return (
       <div
-        className={`bg-c-surface rounded-xl border border-c-border p-12 text-center ${className}`}
+        className={`bg-c-surface rounded-xl border border-c-border-subtle p-12 text-center ${className}`}
       >
         <Calendar className="w-12 h-12 mx-auto mb-3 text-c-text-secondary" />
         <p className="text-lg font-medium text-c-text">No schedule data</p>
@@ -392,10 +392,10 @@ export const GanttChart: React.FC<GanttChartProps> = ({
 
   return (
     <div
-      className={`bg-c-surface rounded-xl border border-c-border overflow-hidden ${className}`}
+      className={`bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden ${className}`}
     >
       {/* D4.2: Clean Toolbar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-c-border bg-c-surface-raised">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle bg-c-surface-raised">
         <div className="flex items-center gap-3">
           <h3 className="font-semibold text-c-text">
             {isPolish ? 'Roadmapa Transformacji' : 'Transformation Roadmap'}
@@ -409,7 +409,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
         </div>
         <div className="flex items-center gap-3">
           {/* Zoom controls */}
-          <div className="flex items-center bg-c-surface rounded-lg border border-c-border">
+          <div className="flex items-center bg-c-surface rounded-lg border border-c-border-subtle">
             <button
               onClick={() => setZoom('year')}
               className={`px-3 py-1.5 text-xs font-medium transition-colors rounded-l-lg ${
@@ -422,7 +422,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
             </button>
             <button
               onClick={() => setZoom('quarter')}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors border-x border-c-border ${
+              className={`px-3 py-1.5 text-xs font-medium transition-colors border-x border-c-border-subtle ${
                 zoom === 'quarter'
                   ? 'bg-c-info/15 text-c-info'
                   : 'text-c-text-muted hover:text-c-text'
@@ -538,7 +538,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
       )}
 
       {/* Legend */}
-      <div className="px-4 py-2 border-b border-c-border flex items-center gap-6 text-xs flex-wrap">
+      <div className="px-4 py-2 border-b border-c-border-subtle flex items-center gap-6 text-xs flex-wrap">
         {Object.entries(STATUS_CONFIG).map(([key, config]) => (
           <div key={key} className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: config.color }} />
@@ -570,15 +570,15 @@ export const GanttChart: React.FC<GanttChartProps> = ({
       <div className="overflow-x-auto">
         <div style={{ minWidth: totalWidth + 200 }}>
           {/* Timeline header */}
-          <div className="flex border-b border-c-border">
-            <div className="w-48 flex-shrink-0 px-4 py-2 bg-c-surface-raised font-medium text-sm text-c-text-secondary border-r border-c-border">
+          <div className="flex border-b border-c-border-subtle">
+            <div className="w-48 flex-shrink-0 px-4 py-2 bg-c-surface-raised font-medium text-sm text-c-text-secondary border-r border-c-border-subtle">
               {isPolish ? 'Faza' : 'Phase'}
             </div>
             <div className="flex">
               {timelineHeaders.map((header) => (
                 <div
                   key={header.key}
-                  className="flex-shrink-0 px-2 py-2 text-center text-xs font-medium text-c-text-muted border-r border-c-border"
+                  className="flex-shrink-0 px-2 py-2 text-center text-xs font-medium text-c-text-muted border-r border-c-border-subtle"
                   style={{
                     width:
                       (cellWidth * header.span) /
@@ -680,12 +680,12 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: phaseIndex * 0.1 }}
-                  className={`flex border-b border-c-border hover:bg-c-surface-raised transition-colors ${
+                  className={`flex border-b border-c-border-subtle hover:bg-c-surface-raised transition-colors ${
                     isCritical ? 'bg-c-danger/5' : ''
                   }`}
                 >
                   {/* Phase name */}
-                  <div className="w-48 flex-shrink-0 px-4 py-3 border-r border-c-border">
+                  <div className="w-48 flex-shrink-0 px-4 py-3 border-r border-c-border-subtle">
                     <div className="flex items-center gap-2">
                       {/* D4.1: Warning indicator */}
                       {hasWarning && (
@@ -717,7 +717,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                       {timelineHeaders.map((header) => (
                         <div
                           key={header.key}
-                          className="flex-shrink-0 border-r border-c-border"
+                          className="flex-shrink-0 border-r border-c-border-subtle"
                           style={{
                             width:
                               (cellWidth * header.span) /
@@ -788,7 +788,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
       </div>
 
       {/* Summary footer */}
-      <div className="px-4 py-3 bg-c-surface-raised border-t border-c-border">
+      <div className="px-4 py-3 bg-c-surface-raised border-t border-c-border-subtle">
         <div className="flex items-center justify-between text-sm">
           <span className="text-c-text-secondary">
             {isPolish ? 'Całkowity czas transformacji' : 'Total transformation time'}:{' '}

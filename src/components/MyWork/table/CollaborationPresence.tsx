@@ -217,18 +217,18 @@ export const WorkspacePresenceIndicator: React.FC<WorkspacePresenceIndicatorProp
                 title={`${user.id}${user.isTyping ? (isPl ? ' (pisze…)' : ' (typing…)') : ''}`}
               >
                 <div
-                  className="w-5 h-5 rounded-full border-2 border-c-border flex items-center justify-center text-[7px] font-black text-white"
+                  className="w-5 h-5 rounded-full border-2 border-c-border-subtle flex items-center justify-center text-[7px] font-black text-white"
                   style={{ backgroundColor: user.color }}
                 >
                   {getInitials(user.name)}
                 </div>
                 {user.isTyping && (
-                  <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-c-border animate-pulse" />
+                  <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-c-border-subtle animate-pulse" />
                 )}
               </div>
             ))}
             {activeUsers.length > 5 && (
-              <div className="w-5 h-5 rounded-full bg-c-border-subtle border-2 border-c-border flex items-center justify-center text-[7px] font-bold text-c-text-muted">
+              <div className="w-5 h-5 rounded-full bg-c-border-subtle border-2 border-c-border-subtle flex items-center justify-center text-[7px] font-bold text-c-text-muted">
                 +{activeUsers.length - 5}
               </div>
             )}
@@ -449,24 +449,24 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
                   <img
                     src={user.avatar}
                     alt={user.name}
-                    className="w-5 h-5 rounded-full border-2 border-c-border"
+                    className="w-5 h-5 rounded-full border-2 border-c-border-subtle"
                     style={{ borderColor: user.color }}
                   />
                 ) : (
                   <div
-                    className="w-5 h-5 rounded-full border-2 border-c-border flex items-center justify-center text-[7px] font-black text-white"
+                    className="w-5 h-5 rounded-full border-2 border-c-border-subtle flex items-center justify-center text-[7px] font-black text-white"
                     style={{ backgroundColor: user.color }}
                   >
                     {getInitials(user.name)}
                   </div>
                 )}
                 {user.isTyping && (
-                  <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-c-border animate-pulse" />
+                  <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-c-border-subtle animate-pulse" />
                 )}
               </div>
             ))}
             {activeUsers.length > 5 && (
-              <div className="w-5 h-5 rounded-full bg-c-border-subtle border-2 border-c-border flex items-center justify-center text-[7px] font-bold text-c-text-muted">
+              <div className="w-5 h-5 rounded-full bg-c-border-subtle border-2 border-c-border-subtle flex items-center justify-center text-[7px] font-bold text-c-text-muted">
                 +{activeUsers.length - 5}
               </div>
             )}

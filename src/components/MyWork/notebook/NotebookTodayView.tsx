@@ -139,7 +139,7 @@ export const NotebookTodayView: React.FC<NotebookTodayViewProps> = ({
   ) => {
     const rows = data[key];
     return (
-      <section className="rounded-xl border border-c-border bg-c-surface">
+      <section className="rounded-xl border border-c-border-subtle bg-c-surface">
         <header className="flex items-center gap-2 border-b border-c-border-subtle px-3 py-2">
           <span className="text-c-text-muted">{icon}</span>
           <h3 className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">

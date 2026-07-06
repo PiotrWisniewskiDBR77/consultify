@@ -492,7 +492,7 @@ const DataGrid: React.FC<DataGridProps> = ({
               >
                 <input
                   type="checkbox"
-                  className="rounded border-c-border"
+                  className="rounded border-c-border-subtle"
                   checked={allSelected}
                   disabled={locked}
                   onChange={toggleSelectAll}
@@ -628,7 +628,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                     />
                     <input
                       type="checkbox"
-                      className="rounded border-c-border"
+                      className="rounded border-c-border-subtle"
                       checked={selected}
                       disabled={locked}
                       onClick={(e) => {

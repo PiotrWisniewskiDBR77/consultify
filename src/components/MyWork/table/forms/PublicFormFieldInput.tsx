@@ -163,7 +163,7 @@ export function PublicFormFieldInput({ field, value, onChange, error }: PublicFo
                       checked ? selected.filter((s) => s !== opt.name) : [...selected, opt.name]
                     );
                   }}
-                  className="h-4 w-4 rounded border-c-border text-c-info focus:ring-c-focus"
+                  className="h-4 w-4 rounded border-c-border-subtle text-c-info focus:ring-c-focus"
                 />
                 <span className="text-sm text-c-text-secondary">{opt.name}</span>
               </label>

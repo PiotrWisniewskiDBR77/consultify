@@ -106,7 +106,7 @@ export const EmptyStateView: React.FC<EmptyStateViewProps> = ({
         <button
           type="button"
           onClick={onImportCSV}
-          className="inline-flex flex-1 min-w-[8.5rem] items-center justify-center gap-2 rounded-xl border border-c-border bg-c-surface px-3 py-2.5 text-xs font-semibold text-c-text-secondary shadow-sm hover:bg-c-surface-raised transition-colors"
+          className="inline-flex flex-1 min-w-[8.5rem] items-center justify-center gap-2 rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2.5 text-xs font-semibold text-c-text-secondary shadow-sm hover:bg-c-surface-raised transition-colors"
         >
           <Upload className="h-3.5 w-3.5 shrink-0" />
           {isPl ? 'Importuj CSV' : 'Import CSV'}

@@ -228,7 +228,7 @@ export const KnowledgePulse: React.FC<KnowledgePulseProps> = ({
                   {group.length === 0 ? (
                     <button
                       onClick={() => setPickerType(type)}
-                      className="w-full rounded-lg border border-dashed border-c-border px-3 py-2 text-[11px] text-c-text-muted hover:bg-c-surface-raised hover:border-c-border-strong transition-colors text-left"
+                      className="w-full rounded-lg border border-dashed border-c-border-subtle px-3 py-2 text-[11px] text-c-text-muted hover:bg-c-surface-raised hover:border-c-border-strong transition-colors text-left"
                     >
                       {pl ? 'Brak w top 3 — przeglądaj wszystkie' : 'Not in top 3 — browse all'}
                     </button>
@@ -236,7 +236,7 @@ export const KnowledgePulse: React.FC<KnowledgePulseProps> = ({
                     group.map((item) => (
                       <div
                         key={item.id}
-                        className="rounded-lg border border-c-border bg-c-surface-raised px-3 py-2"
+                        className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2"
                       >
                         <div className="text-xs font-medium text-c-text truncate">
                           {item.title}

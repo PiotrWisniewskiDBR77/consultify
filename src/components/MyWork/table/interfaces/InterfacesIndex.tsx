@@ -226,7 +226,7 @@ export function InterfacesIndex({
   if (editingInterface) {
     return (
       <div className="flex h-full flex-col">
-        <div className="flex items-center justify-between border-b border-c-border-subtle px-4 py-2 border-c-border">
+        <div className="flex items-center justify-between border-b border-c-border-subtle px-4 py-2 border-c-border-subtle">
           <button
             onClick={() => {
               setEditingInterface(null);
@@ -319,7 +319,7 @@ export function InterfacesIndex({
             <button
               key={tpl.key}
               onClick={() => handleCreateFromTemplate(tpl)}
-              className="group flex flex-col items-center rounded-2xl border border-c-border-subtle bg-c-surface p-6 text-center transition-all hover:border-c-accent hover:shadow-md border-c-border bg-c-surface-raised hover:border-c-accent"
+              className="group flex flex-col items-center rounded-2xl border border-c-border-subtle bg-c-surface p-6 text-center transition-all hover:border-c-accent hover:shadow-md border-c-border-subtle bg-c-surface-raised hover:border-c-accent"
             >
               <div className="mb-3 rounded-xl bg-c-accent p-3 text-c-accent transition-colors group-hover:bg-c-accent-soft text-c-accent">
                 {tpl.icon}
@@ -358,7 +358,7 @@ export function InterfacesIndex({
         {interfaces.map((iface) => (
           <div
             key={iface.id}
-            className="group relative rounded-2xl border border-c-border-subtle bg-c-surface p-5 transition-shadow hover:shadow-md border-c-border bg-c-surface-raised"
+            className="group relative rounded-2xl border border-c-border-subtle bg-c-surface p-5 transition-shadow hover:shadow-md border-c-border-subtle bg-c-surface-raised"
           >
             {/* Placeholder thumbnail */}
             <div className="mb-3 flex h-24 items-center justify-center rounded-xl bg-c-accent-soft">

@@ -850,7 +850,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                 value={actionFilter}
                 onChange={(e) => setActionFilter(e.target.value)}
                 aria-label="Filter by action"
-                className="rounded-md border border-c-border bg-c-surface px-2 py-1 text-[11px] text-c-text focus:outline-none focus:ring-1 focus:ring-c-focus"
+                className="rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-[11px] text-c-text focus:outline-none focus:ring-1 focus:ring-c-focus"
               >
                 <option value="">All actions</option>
                 {uniqueActions.map((a) => (
@@ -874,7 +874,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
                 aria-label="Filter from date"
-                className="rounded-md border border-c-border bg-c-surface px-2 py-1 text-[11px] text-c-text focus:outline-none focus:ring-1 focus:ring-c-focus"
+                className="rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-[11px] text-c-text focus:outline-none focus:ring-1 focus:ring-c-focus"
               />
               <label
                 htmlFor="audit-date-to"
@@ -888,7 +888,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
                 aria-label="Filter to date"
-                className="rounded-md border border-c-border bg-c-surface px-2 py-1 text-[11px] text-c-text focus:outline-none focus:ring-1 focus:ring-c-focus"
+                className="rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-[11px] text-c-text focus:outline-none focus:ring-1 focus:ring-c-focus"
               />
             </div>
 
@@ -925,7 +925,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                       aria-haspopup="menu"
                       aria-expanded={savedViewsOpen}
                       aria-label="Saved views"
-                      className="inline-flex items-center gap-1 rounded-md border border-c-border bg-c-surface px-2 py-1 text-[11px] font-medium text-c-text hover:bg-c-surface-raised"
+                      className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-[11px] font-medium text-c-text hover:bg-c-surface-raised"
                     >
                       <Bookmark size={11} />
                       Saved views
@@ -964,7 +964,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                                 setSaveDraftOpen(false);
                               }
                             }}
-                            className="w-full rounded-md border border-c-border bg-c-surface px-2 py-1 text-[12px] text-c-text focus:outline-none focus:ring-1 focus:ring-c-focus"
+                            className="w-full rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-[12px] text-c-text focus:outline-none focus:ring-1 focus:ring-c-focus"
                             placeholder="e.g. AI activity, last 7 days"
                           />
                           {saveDraftError ? (
@@ -1179,7 +1179,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
               type="button"
               onClick={handleCopyShareLink}
               aria-label="Copy a shareable link with the current filters"
-              className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-surface-raised"
+              className="inline-flex items-center gap-1.5 rounded-md border border-c-border-subtle bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-surface-raised"
             >
               <Link2 size={12} />
               {shareCopied ? 'Link copied!' : 'Copy share link'}
@@ -1189,7 +1189,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
               onClick={handleExportCsv}
               disabled={exportDisabled}
               aria-label="Export filtered audit log as CSV"
-              className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1.5 rounded-md border border-c-border-subtle bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Download size={12} />
               Export CSV
@@ -1200,7 +1200,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                 onClick={() => void loadMore()}
                 disabled={loadingMore}
                 aria-label="Load more events"
-                className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-1.5 rounded-md border border-c-border-subtle bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loadingMore ? (
                   <>

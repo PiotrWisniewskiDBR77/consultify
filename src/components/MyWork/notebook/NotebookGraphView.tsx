@@ -214,7 +214,7 @@ export const NotebookGraphView: React.FC<NotebookGraphViewProps> = ({
       </div>
 
       <div
-        className="overflow-hidden rounded-xl border border-c-border bg-slate-50/40 dark:border-white/10 dark:bg-white/[0.02]"
+        className="overflow-hidden rounded-xl border border-c-border-subtle bg-slate-50/40 dark:border-white/10 dark:bg-white/[0.02]"
         style={{ height }}
       >
         {!loading && isEmpty ? (

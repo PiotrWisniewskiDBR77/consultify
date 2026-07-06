@@ -58,7 +58,7 @@ const RadioGroupItem = React.forwardRef<HTMLButtonElement, RadioGroupItemProps>(
           'aspect-square h-4 w-4 rounded-full border transition-colors',
           'focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-c-surface',
           'disabled:cursor-not-allowed disabled:opacity-50',
-          isSelected ? 'border-c-accent text-c-accent' : 'border-c-border text-c-text',
+          isSelected ? 'border-c-accent text-c-accent' : 'border-c-border-subtle text-c-text',
           className
         )}
         onClick={() => context.onValueChange(value)}

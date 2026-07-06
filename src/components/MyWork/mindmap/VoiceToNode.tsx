@@ -124,7 +124,7 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
   return (
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
       <div className="w-full max-w-md rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
+        <div className="px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Mic size={16} className="text-c-danger" />
             <h3 className="text-sm font-bold text-c-text dark:text-c-text">
@@ -175,7 +175,7 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
               <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1.5">
                 {isPl ? 'Transkrypcja' : 'Transcript'}
               </div>
-              <div className="p-3 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border text-[11px] text-c-text-secondary dark:text-c-text leading-relaxed">
+              <div className="p-3 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle text-[11px] text-c-text-secondary dark:text-c-text leading-relaxed">
                 {transcript}
               </div>
             </div>
@@ -202,10 +202,10 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border flex items-center gap-2">
+        <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border-subtle flex items-center gap-2">
           <button
             onClick={onClose}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border-subtle text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>

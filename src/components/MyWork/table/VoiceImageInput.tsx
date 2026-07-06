@@ -402,7 +402,7 @@ export const VoiceImageInput: React.FC<VoiceImageInputProps> = ({
                     type="checkbox"
                     checked={idea.selected}
                     onChange={() => toggleIdea(idx)}
-                    className="w-3.5 h-3.5 rounded border-c-border text-c-accent focus:ring-c-focus"
+                    className="w-3.5 h-3.5 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
                   />
                   <div className="flex-1 min-w-0">
                     <span className="text-[11px] font-medium text-c-text block truncate">

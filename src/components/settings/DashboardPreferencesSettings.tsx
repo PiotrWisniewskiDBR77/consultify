@@ -264,7 +264,7 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
         <button
           onClick={handleReset}
           disabled={!!loadError}
-          className="flex items-center gap-2 px-4 py-2 text-c-text-secondary hover:text-c-text dark:hover:text-white border border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-navy-600 rounded-lg transition-colors text-sm"
+          className="flex items-center gap-2 px-4 py-2 text-c-text-secondary hover:text-c-text dark:hover:text-white border border-c-border-subtle dark:border-navy-700 hover:border-c-border-subtle dark:hover:border-navy-600 rounded-lg transition-colors text-sm"
         >
           <RotateCcw size={14} />
           {t('settings.dashboard.resetDefaults', 'Reset to Defaults')}

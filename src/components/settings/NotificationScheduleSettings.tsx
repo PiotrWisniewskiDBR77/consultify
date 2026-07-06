@@ -70,7 +70,7 @@ export const NotificationScheduleSettings: React.FC<NotificationScheduleSettings
               type="time"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
-              className="w-full px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg bg-c-surface"
+              className="w-full px-3 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg bg-c-surface"
             />
           </div>
           <div>
@@ -81,7 +81,7 @@ export const NotificationScheduleSettings: React.FC<NotificationScheduleSettings
               type="time"
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
-              className="w-full px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg bg-c-surface"
+              className="w-full px-3 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg bg-c-surface"
             />
           </div>
         </div>

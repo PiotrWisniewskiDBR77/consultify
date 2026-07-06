@@ -490,7 +490,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                     setInitiative({ ...initiative, applicantOneLiner: e.target.value })
                   }
                   placeholder="Achieve [X] by changing [Y] so that [Z improves]"
-                  className="w-full h-24 text-sm text-c-text-secondary bg-c-surface-raised border border-c-border rounded-lg p-3 focus:outline-none focus:border-c-accent resize-none"
+                  className="w-full h-24 text-sm text-c-text-secondary bg-c-surface-raised border border-c-border-subtle rounded-lg p-3 focus:outline-none focus:border-c-accent resize-none"
                 />
               </div>
 
@@ -551,7 +551,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                       })
                     }
                     placeholder="What is visible?"
-                    className="w-full text-sm text-c-text-secondary bg-c-surface-raised border border-c-border rounded-lg p-3 focus:outline-none focus:border-c-accent"
+                    className="w-full text-sm text-c-text-secondary bg-c-surface-raised border border-c-border-subtle rounded-lg p-3 focus:outline-none focus:border-c-accent"
                   />
                 </div>
                 <div>
@@ -572,7 +572,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                       })
                     }
                     placeholder="Why is it happening?"
-                    className="w-full text-sm text-c-text-secondary bg-c-surface-raised border border-c-border rounded-lg p-3 focus:outline-none focus:border-c-accent"
+                    className="w-full text-sm text-c-text-secondary bg-c-surface-raised border border-c-border-subtle rounded-lg p-3 focus:outline-none focus:border-c-accent"
                   />
                 </div>
                 <div>
@@ -593,7 +593,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                       })
                     }
                     placeholder="What if we do nothing?"
-                    className="w-full text-sm text-c-text-secondary bg-c-surface-raised border border-c-border rounded-lg p-3 focus:outline-none focus:border-c-accent"
+                    className="w-full text-sm text-c-text-secondary bg-c-surface-raised border border-c-border-subtle rounded-lg p-3 focus:outline-none focus:border-c-accent"
                   />
                 </div>
               </div>
@@ -616,7 +616,7 @@ export const InitiativeDetailCard: React.FC<InitiativeDetailCardProps> = ({
                 value={initiative.summary || ''}
                 onChange={(e) => setInitiative({ ...initiative, summary: e.target.value })}
                 placeholder="Brief description of this initiative..."
-                className="w-full h-32 text-sm text-c-text-secondary bg-c-surface-raised border border-c-border rounded-lg p-3 focus:outline-none focus:border-c-accent resize-none"
+                className="w-full h-32 text-sm text-c-text-secondary bg-c-surface-raised border border-c-border-subtle rounded-lg p-3 focus:outline-none focus:border-c-accent resize-none"
               />
             </div>
           </div>

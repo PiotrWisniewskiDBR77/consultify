@@ -204,11 +204,11 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
       data-testid="intake-jwt-panel-overlay"
     >
       <section
-        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl border-c-border bg-c-surface-raised"
+        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl border-c-border-subtle bg-c-surface-raised"
         data-testid="intake-jwt-panel"
         aria-label="Form intake settings"
       >
-        <header className="flex items-center justify-between border-b border-c-border-subtle px-5 py-3 border-c-border">
+        <header className="flex items-center justify-between border-b border-c-border-subtle px-5 py-3 border-c-border-subtle">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-c-success" />
             <h2 className="text-sm font-semibold text-c-text">
@@ -243,7 +243,7 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
           ) : !context ? null : (
             <>
               <section
-                className="rounded-md border border-c-border-subtle bg-c-surface-raised p-3 border-c-border bg-c-surface-raised"
+                className="rounded-md border border-c-border-subtle bg-c-surface-raised p-3 border-c-border-subtle bg-c-surface-raised"
                 aria-label="Intake summary"
               >
                 <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
@@ -285,7 +285,7 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
               </section>
 
               <section
-                className="rounded-md border border-c-border-subtle p-3 border-c-border"
+                className="rounded-md border border-c-border-subtle p-3 border-c-border-subtle"
                 aria-label="Allow-list editor"
               >
                 <div className="mb-2 flex items-center justify-between">
@@ -296,7 +296,7 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
                     <button
                       type="button"
                       onClick={handleSelectAll}
-                      className="rounded-md border border-c-border px-2 py-0.5 text-[11px] text-c-text-secondary hover:bg-c-surface-raised border-c-border text-c-text-muted hover:bg-c-surface-raised"
+                      className="rounded-md border border-c-border-subtle px-2 py-0.5 text-[11px] text-c-text-secondary hover:bg-c-surface-raised border-c-border-subtle text-c-text-muted hover:bg-c-surface-raised"
                       data-testid="intake-allow-list-select-all"
                     >
                       Select all
@@ -304,7 +304,7 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
                     <button
                       type="button"
                       onClick={handleClearAllowList}
-                      className="inline-flex items-center gap-1 rounded-md border border-c-border px-2 py-0.5 text-[11px] text-c-text-secondary hover:bg-c-surface-raised border-c-border text-c-text-muted hover:bg-c-surface-raised"
+                      className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle px-2 py-0.5 text-[11px] text-c-text-secondary hover:bg-c-surface-raised border-c-border-subtle text-c-text-muted hover:bg-c-surface-raised"
                       data-testid="intake-allow-list-clear"
                       aria-label="Clear allow-list (use form fields)"
                     >
@@ -364,7 +364,7 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
               </section>
 
               <section
-                className="rounded-md border border-c-border-subtle p-3 border-c-border"
+                className="rounded-md border border-c-border-subtle p-3 border-c-border-subtle"
                 aria-label="Issue intake link"
               >
                 <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
@@ -380,7 +380,7 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
                     onChange={(e) => setSubject(e.target.value)}
                     maxLength={SUBJECT_MAX_CHARS}
                     placeholder="recipient@partner.com"
-                    className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1 text-xs text-c-text border-c-border bg-c-surface-raised text-c-text"
+                    className="mt-1 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text border-c-border-subtle bg-c-surface-raised text-c-text"
                     data-testid="intake-issue-subject"
                     aria-label="Recipient subject"
                   />
@@ -390,7 +390,7 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
                   <select
                     value={ttlSeconds}
                     onChange={(e) => setTtlSeconds(Number(e.target.value))}
-                    className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1 text-xs text-c-text border-c-border bg-c-surface-raised text-c-text"
+                    className="mt-1 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text border-c-border-subtle bg-c-surface-raised text-c-text"
                     data-testid="intake-issue-ttl"
                     aria-label="Expires in"
                   >

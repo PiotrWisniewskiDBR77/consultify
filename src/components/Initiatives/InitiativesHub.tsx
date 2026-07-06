@@ -1607,7 +1607,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               </button>
               <button
                 onClick={() => setLoadError(null)}
-                className="h-9 rounded-lg border border-c-border px-3 text-sm text-c-text-secondary hover:bg-c-surface-raised"
+                className="h-9 rounded-lg border border-c-border-subtle px-3 text-sm text-c-text-secondary hover:bg-c-surface-raised"
               >
                 {t('initiatives.hub.dismiss')}
               </button>
@@ -1763,7 +1763,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           <button
             type="button"
             onClick={() => navigate(buildInitiativeDeepLink(item.id, { module: 'economics', tab: 'models' }))}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised transition"
           >
             {i18n.language?.startsWith('pl') ? 'Finanse' : 'Finance'}
           </button>
@@ -2262,7 +2262,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           type="button"
           onClick={() => void handleMaterializePortfolio('deck')}
           disabled={isMaterializing}
-          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           title={
             i18n.language?.startsWith('pl')
               ? 'Zrób materiał z portfela (prezentacja)'
@@ -2280,7 +2280,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       <button
         type="button"
         onClick={() => navigate(ROUTES.ROI)}
-        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors"
+        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors"
         title={i18n.language?.startsWith('pl') ? 'Widok ROI i realizacji wartości' : 'ROI & Value Realization'}
       >
         <TrendingUp size={13} />
@@ -2760,7 +2760,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
               {/* D1.1: Level info callout */}
               {newLevel && (
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-c-surface-raised border border-c-border">
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-c-surface-raised border border-c-border-subtle">
                   <Shield
                     size={14}
                     className="text-c-text-muted mt-0.5 flex-shrink-0"
@@ -2879,7 +2879,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             <button
               disabled={isCreating}
               onClick={() => setShowNewModal(false)}
-              className="w-full mt-2 py-2 text-sm text-c-text-muted hover:text-c-text transition-colors border border-c-border rounded-lg hover:bg-c-surface-raised disabled:opacity-50"
+              className="w-full mt-2 py-2 text-sm text-c-text-muted hover:text-c-text transition-colors border border-c-border-subtle rounded-lg hover:bg-c-surface-raised disabled:opacity-50"
             >
               {t('initiatives.form.cancel')}
             </button>

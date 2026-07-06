@@ -505,7 +505,7 @@ export const DecisionPreviewFooter: React.FC<{
             {snoozeOpen ? (
               <>
                 <div className="fixed inset-0 z-dropdown" onClick={onCloseSnooze} />
-                <div className="absolute right-0 top-full mt-2 z-overlay w-56 rounded-xl border border-c-border bg-c-surface-raised shadow-xl overflow-hidden">
+                <div className="absolute right-0 top-full mt-2 z-overlay w-56 rounded-xl border border-c-border-subtle bg-c-surface-raised shadow-xl overflow-hidden">
                   {(['1h', '4h', 'tomorrow', 'week'] as const).map((p) => (
                     <button
                       key={p}
@@ -839,7 +839,7 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
         actions={
           <button
             onClick={() => onOpenFullDetail(decisionId, decision)}
-            className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+            className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
             title={isPolish ? 'Otwórz pełny widok' : 'Open full detail'}
           >
             <ExternalLink size={13} />

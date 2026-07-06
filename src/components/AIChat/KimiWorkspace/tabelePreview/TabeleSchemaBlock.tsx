@@ -72,7 +72,7 @@ export function TabeleSchemaBlock({ field, onClickProposal }: TabeleSchemaBlockP
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-hig-full border border-c-border bg-c-surface-raised px-2.5 py-1 font-mono text-xs font-medium text-c-text/[0.11]/[0.075]">
+          <span className="rounded-hig-full border border-c-border-subtle bg-c-surface-raised px-2.5 py-1 font-mono text-xs font-medium text-c-text/[0.11]/[0.075]">
             {field.fieldType || t('kimi.tabele.schema.defaultType', { defaultValue: 'text' })}
           </span>
           <span

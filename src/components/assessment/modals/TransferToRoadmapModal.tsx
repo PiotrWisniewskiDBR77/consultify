@@ -232,7 +232,7 @@ export const TransferToRoadmapModal: React.FC<TransferToRoadmapModalProps> = ({
                                                 ${
                                                   priority === opt.value
                                                     ? `${opt.color} border-current`
-                                                    : 'bg-c-surface dark:bg-c-bg text-c-text-secondary dark:text-c-text-muted border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
+                                                    : 'bg-c-surface dark:bg-c-bg text-c-text-secondary dark:text-c-text-muted border-c-border-subtle hover:border-c-border-subtle dark:hover:border-white/20'
                                                 }
                                             `}
                     >

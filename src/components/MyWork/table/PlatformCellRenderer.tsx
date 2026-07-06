@@ -148,7 +148,7 @@ const CheckboxDisplay: React.FC<{ value: unknown; onChange?: (v: unknown) => voi
         className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
           checked
             ? 'bg-c-text border-c-text text-c-bg'
-            : 'border-c-border hover:border-c-accent'
+            : 'border-c-border-subtle hover:border-c-accent'
         }`}
       >
         {checked && <Check size={12} />}

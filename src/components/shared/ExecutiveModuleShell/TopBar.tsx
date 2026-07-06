@@ -181,7 +181,7 @@ const OverflowMenu: React.FC<{ chips: TopBarChipDescriptor[] }> = ({ chips }) =>
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-full mt-1 z-dropdown min-w-[200px] rounded-token-md border border-c-border bg-c-surface p-1 shadow-lg"
+          className="absolute right-0 top-full mt-1 z-dropdown min-w-[200px] rounded-token-md border border-c-border-subtle bg-c-surface p-1 shadow-lg"
           data-testid="mels-topbar-overflow-menu"
           onClick={() => setOpen(false)}
         >
@@ -230,7 +230,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   return (
     <div
       className={
-        'h-14 border-b border-c-border bg-c-surface flex items-center px-4 gap-3 flex-shrink-0 relative z-sticky ' +
+        'h-14 border-b border-c-border-subtle bg-c-surface flex items-center px-4 gap-3 flex-shrink-0 relative z-sticky ' +
         (className ?? '')
       }
       data-testid={testId ?? 'mels-topbar'}

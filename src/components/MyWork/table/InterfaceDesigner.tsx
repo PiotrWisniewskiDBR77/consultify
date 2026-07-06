@@ -341,7 +341,7 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
               className={`border rounded-lg p-4 cursor-pointer transition-all ${
                 selectedBlock === block.id
                   ? 'border-blue-500 ring-2 ring-blue-200'
-                  : 'border-c-border-subtle hover:border-c-border'
+                  : 'border-c-border-subtle hover:border-c-border-subtle'
               } ${draggedIndex === index ? 'opacity-50' : ''}`}
               onClick={() => setSelectedBlock(block.id)}
             >

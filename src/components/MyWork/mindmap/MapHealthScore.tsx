@@ -231,7 +231,7 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
 
   return (
     <div className="absolute top-14 right-3 z-[89]">
-      <div className="rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border shadow-2xl overflow-hidden min-w-[180px]">
+      <div className="rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border-subtle shadow-2xl overflow-hidden min-w-[180px]">
         <button
           onClick={() => setExpanded(!expanded)}
           className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"

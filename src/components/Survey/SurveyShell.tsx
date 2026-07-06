@@ -232,7 +232,7 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
                     ${
                       isSelected
                         ? 'border-c-accent bg-c-accent-soft text-c-accent ring-1 ring-c-accent'
-                        : 'border-c-border hover:border-c-accent text-c-text-secondary'
+                        : 'border-c-border-subtle hover:border-c-accent text-c-text-secondary'
                     } ${locked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
                   <span className="flex items-center gap-2">
@@ -276,7 +276,7 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
                     ${
                       isSelected
                         ? 'border-c-accent bg-c-accent-soft text-c-accent'
-                        : 'border-c-border hover:border-c-accent text-c-text-secondary'
+                        : 'border-c-border-subtle hover:border-c-accent text-c-text-secondary'
                     } ${locked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
                   <span className="flex items-center gap-2">
@@ -311,7 +311,7 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
                     ${
                       isSelected
                         ? 'border-c-accent bg-c-accent text-white'
-                        : 'border-c-border hover:border-c-accent text-c-text-muted'
+                        : 'border-c-border-subtle hover:border-c-accent text-c-text-muted'
                     } ${locked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
                   {val}
@@ -332,7 +332,7 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
             disabled={locked}
             rows={3}
             placeholder={t('survey.freeTextPlaceholder', 'Type your answer...')}
-            className="w-full px-4 py-3 rounded-lg border border-c-border bg-c-surface
+            className="w-full px-4 py-3 rounded-lg border border-c-border-subtle bg-c-surface
               text-c-text-secondary focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid text-sm
               resize-none disabled:opacity-60"
           />
@@ -348,7 +348,7 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
     >
       {/* Left Nav — Section list (hidden in focus mode on mobile) */}
       {!focusMode && (
-        <nav className="w-full lg:w-64 flex-shrink-0 border-b lg:border-b-0 lg:border-r border-c-border bg-c-surface-raised p-4">
+        <nav className="w-full lg:w-64 flex-shrink-0 border-b lg:border-b-0 lg:border-r border-c-border-subtle bg-c-surface-raised p-4">
           <div className="mb-4">
             <div className="flex items-center gap-2 text-xs text-c-text-muted mb-1">
               <Clock className="w-3 h-3" />
@@ -389,7 +389,7 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
                     {isComplete ? (
                       <CheckCircle2 className="w-4 h-4 text-c-success flex-shrink-0" />
                     ) : (
-                      <span className="w-4 h-4 rounded-full border border-c-border flex-shrink-0" />
+                      <span className="w-4 h-4 rounded-full border border-c-border-subtle flex-shrink-0" />
                     )}
                     <span className="truncate">{section.title[language] || section.title.en}</span>
                     <span className="ml-auto text-xs text-c-text-muted">
@@ -406,7 +406,7 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
       {/* Canvas — Questions */}
       <main className="flex-1 p-6 lg:p-8 overflow-auto">
         {locked && (
-          <div className="max-w-2xl mb-6 rounded-xl border border-c-border bg-c-surface-raised px-4 py-3">
+          <div className="max-w-2xl mb-6 rounded-xl border border-c-border-subtle bg-c-surface-raised px-4 py-3">
             <div className="font-medium text-c-text">
               {t('survey.readOnlyTitle', 'Read-only mode')}
             </div>
@@ -481,7 +481,7 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
             </div>
 
             {/* Navigation */}
-            <div className="flex items-center justify-between mt-8 pt-6 border-t border-c-border max-w-2xl">
+            <div className="flex items-center justify-between mt-8 pt-6 border-t border-c-border-subtle max-w-2xl">
               <button
                 type="button"
                 onClick={() => goToSection(currentSection - 1)}
@@ -522,7 +522,7 @@ export const SurveyShell: React.FC<SurveyShellProps> = ({
 
       {/* Properties Strip (non-focus mode) */}
       {!focusMode && (
-        <aside className="hidden xl:block w-56 flex-shrink-0 border-l border-c-border bg-c-surface-raised p-4">
+        <aside className="hidden xl:block w-56 flex-shrink-0 border-l border-c-border-subtle bg-c-surface-raised p-4">
           <h3 className="text-xs font-semibold text-c-text-muted uppercase tracking-wider mb-3">
             {t('survey.properties', 'Properties')}
           </h3>

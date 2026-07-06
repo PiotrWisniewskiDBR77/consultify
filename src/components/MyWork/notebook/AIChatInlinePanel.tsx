@@ -426,7 +426,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
               key={label}
               onClick={() => insertElement(action)}
               disabled={!editor}
-              className="group relative flex flex-col items-center gap-1 py-2 px-1 rounded-xl bg-c-surface-raised border border-slate-200/30 dark:border-white/[0.05] hover:bg-c-surface-raised hover:border-c-border hover:shadow-sm disabled:opacity-40 transition-all duration-200"
+              className="group relative flex flex-col items-center gap-1 py-2 px-1 rounded-xl bg-c-surface-raised border border-slate-200/30 dark:border-white/[0.05] hover:bg-c-surface-raised hover:border-c-border-subtle hover:shadow-sm disabled:opacity-40 transition-all duration-200"
               title={isPl ? labelPl : label}
             >
               <Icon size={16} className={iconColor} />
@@ -466,7 +466,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
                 key={id}
                 onClick={() => handleConvertAction(id)}
                 disabled={disabled}
-                className="group flex items-center gap-2 px-2.5 py-2 rounded-xl bg-c-surface-raised border border-c-border-subtle hover:bg-c-surface-raised hover:border-c-border transition-all duration-200 hover:shadow-sm disabled:opacity-40"
+                className="group flex items-center gap-2 px-2.5 py-2 rounded-xl bg-c-surface-raised border border-c-border-subtle hover:bg-c-surface-raised hover:border-c-border-subtle transition-all duration-200 hover:shadow-sm disabled:opacity-40"
                 title={
                   disabled && isDeliverable && convertBlockedReason
                     ? convertBlockedReason
@@ -553,7 +553,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
                 {onAskAI && (
                   <button
                     onClick={onAskAI}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[10px] font-bold bg-c-surface-raised text-c-text hover:bg-c-surface-raised border border-c-border-subtle hover:border-c-border transition-all"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-[10px] font-bold bg-c-surface-raised text-c-text hover:bg-c-surface-raised border border-c-border-subtle hover:border-c-border-subtle transition-all"
                   >
                     <Sparkles size={11} className="text-c-text-muted" />
                     {isPl ? 'Zapytaj AI' : 'Ask AI'}
@@ -582,7 +582,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
           onDragStart={handleDragStart}
           className={`group relative rounded-2xl border transition-all duration-300 ${
             input.trim()
-              ? 'border-c-border bg-c-surface-raised shadow-sm cursor-grab active:cursor-grabbing'
+              ? 'border-c-border-subtle bg-c-surface-raised shadow-sm cursor-grab active:cursor-grabbing'
               : 'border-c-border-subtle bg-c-surface-raised'
           }`}
         >

@@ -513,7 +513,7 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
 
       {/* Presence badge */}
       {connected && otherUsers.length > 0 && (
-        <div className="absolute top-3 right-3 z-overlay flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm shadow-lg border border-c-border-subtle dark:border-c-border">
+        <div className="absolute top-3 right-3 z-overlay flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm shadow-lg border border-c-border-subtle dark:border-c-border-subtle">
           <Users size={12} className="text-c-success" />
           <span className="text-[10px] font-bold text-c-text-secondary dark:text-c-text-muted">
             {otherUsers.length + 1}
@@ -522,7 +522,7 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
             {otherUsers.slice(0, 4).map((u, idx) => (
               <div
                 key={u.id}
-                className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-c-text border-2 border-c-border dark:border-c-border"
+                className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-c-text border-2 border-c-border-subtle dark:border-c-border-subtle"
                 style={{ backgroundColor: u.color || CURSOR_COLORS[idx % CURSOR_COLORS.length] }}
                 title={u.name}
               >

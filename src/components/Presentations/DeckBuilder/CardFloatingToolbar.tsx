@@ -72,7 +72,7 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
                   className={`w-10 h-8 rounded border text-[10px] font-mono flex items-center justify-center ${
                     card.layout_id === l.id
                       ? 'border-c-accent bg-c-accent-soft'
-                      : 'border-c-border-subtle hover:border-c-border'
+                      : 'border-c-border-subtle hover:border-c-border-subtle'
                   }`}
                   title={l.label}
                 >

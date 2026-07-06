@@ -177,7 +177,7 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
             </button>
             <button
               onClick={handleCopy}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-c-surface hover:bg-c-surface-raised text-c-text border border-c-border text-xs font-medium transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-c-surface hover:bg-c-surface-raised text-c-text border border-c-border-subtle text-xs font-medium transition-colors"
             >
               <Copy size={12} />
               {pl ? 'Kopiuj' : 'Copy'}

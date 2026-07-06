@@ -373,8 +373,8 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
     <>
       <div className="fixed inset-0 bg-c-bg backdrop-blur-sm z-context-menu" onClick={onClose} />
       <div className="fixed top-[14%] left-1/2 -translate-x-1/2 w-full max-w-md z-context-menu">
-        <div className="bg-c-surface-raised dark:bg-c-surface rounded-xl shadow-2xl border border-c-border-subtle dark:border-c-border overflow-hidden">
-          <div className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-c-border-subtle dark:border-c-border">
+        <div className="bg-c-surface-raised dark:bg-c-surface rounded-xl shadow-2xl border border-c-border-subtle dark:border-c-border-subtle overflow-hidden">
+          <div className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-c-border-subtle dark:border-c-border-subtle">
             <Search size={16} className="text-c-text-secondary shrink-0" />
             <input
               ref={inputRef}
@@ -437,7 +437,7 @@ export const MindmapCommandPalette: React.FC<MindmapCommandPaletteProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-3 px-3.5 py-1.5 border-t border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface-raised text-[10px] text-c-text-secondary dark:text-c-text-secondary">
+          <div className="flex items-center gap-3 px-3.5 py-1.5 border-t border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface-raised text-[10px] text-c-text-secondary dark:text-c-text-secondary">
             <span className="flex items-center gap-1">
               <kbd className="px-1 py-0.5 bg-c-surface-raised dark:bg-c-surface-raised rounded">↑↓</kbd>
               {isPl ? 'Nawiguj' : 'Navigate'}

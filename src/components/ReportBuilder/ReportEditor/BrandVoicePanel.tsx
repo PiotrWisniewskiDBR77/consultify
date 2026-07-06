@@ -270,7 +270,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
               className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
                 register === opt
                   ? 'border-c-accent bg-c-accent-soft'
-                  : 'border-c-border-subtle hover:border-c-border'
+                  : 'border-c-border-subtle hover:border-c-border-subtle'
               }`}
             >
               <input
@@ -299,7 +299,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
               value={preferredWords}
               onChange={(e) => setPreferredWords(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder:text-c-text-muted focus:border-c-accent focus:outline-none focus:ring-1 focus:ring-c-focus"
+              className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text placeholder:text-c-text-muted focus:border-c-accent focus:outline-none focus:ring-1 focus:ring-c-focus"
               placeholder={
                 isPl
                   ? 'np. transformacja, optymalizacja, strategia'
@@ -316,7 +316,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
               value={forbiddenWords}
               onChange={(e) => setForbiddenWords(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder:text-c-text-muted focus:border-c-accent focus:outline-none focus:ring-1 focus:ring-c-focus"
+              className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text placeholder:text-c-text-muted focus:border-c-accent focus:outline-none focus:ring-1 focus:ring-c-focus"
               placeholder={
                 isPl
                   ? 'np. synergia, holistyczny, game-changer'
@@ -353,7 +353,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
               max={20}
               value={maxHedging}
               onChange={(e) => setMaxHedging(Math.max(0, parseInt(e.target.value) || 0))}
-              className="w-20 rounded-lg border border-c-border bg-c-surface px-3 py-1.5 text-center text-sm text-c-text focus:border-c-accent focus:outline-none focus:ring-1 focus:ring-c-focus"
+              className="w-20 rounded-lg border border-c-border-subtle bg-c-surface px-3 py-1.5 text-center text-sm text-c-text focus:border-c-accent focus:outline-none focus:ring-1 focus:ring-c-focus"
             />
           </div>
         </div>

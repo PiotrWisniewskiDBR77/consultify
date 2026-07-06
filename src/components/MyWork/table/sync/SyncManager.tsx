@@ -184,7 +184,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
     return (
       <div className="flex h-full flex-col">
         {/* Header */}
-        <div className="flex items-center gap-2 border-b border-c-border-subtle px-5 py-4 border-c-border">
+        <div className="flex items-center gap-2 border-b border-c-border-subtle px-5 py-4 border-c-border-subtle">
           <button
             onClick={resetWizard}
             className="rounded-lg p-1 transition-colors hover:bg-c-surface-raised"
@@ -198,7 +198,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
         </div>
 
         {/* Step indicator */}
-        <div className="flex items-center gap-1 border-b border-c-border-subtle px-5 py-3 border-c-border">
+        <div className="flex items-center gap-1 border-b border-c-border-subtle px-5 py-3 border-c-border-subtle">
           {WIZARD_STEPS.map((step, idx) => (
             <React.Fragment key={step.key}>
               {idx > 0 && <ArrowRight size={10} className="text-c-text-secondary" />}
@@ -233,7 +233,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                     className={`rounded-xl border p-3 text-center text-xs font-medium transition-colors ${
                       sourceType === type
                         ? 'border-c-info bg-c-info text-c-info border-c-info bg-c-info text-c-info'
-                        : 'border-c-border-subtle text-c-text-secondary hover:border-c-border text-c-text-muted'
+                        : 'border-c-border-subtle text-c-text-secondary hover:border-c-border-subtle text-c-text-muted'
                     }`}
                   >
                     {type === 'table'
@@ -255,7 +255,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                   <select
                     value={sourceTableId}
                     onChange={(e) => setSourceTableId(e.target.value)}
-                    className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border bg-c-surface"
+                    className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
                   >
                     <option value="">{isPl ? 'Wybierz tabelę...' : 'Select table...'}</option>
                     {tables
@@ -279,7 +279,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                     value={sourceTableId}
                     onChange={(e) => setSourceTableId(e.target.value)}
                     placeholder="https://example.com/data.csv"
-                    className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border bg-c-surface"
+                    className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
                   />
                 </div>
               )}
@@ -294,7 +294,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                     value={sourceTableId}
                     onChange={(e) => setSourceTableId(e.target.value)}
                     placeholder="https://docs.google.com/spreadsheets/d/..."
-                    className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border bg-c-surface"
+                    className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
                   />
                 </div>
               )}
@@ -309,7 +309,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
               <select
                 value={targetTableId}
                 onChange={(e) => setTargetTableId(e.target.value)}
-                className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border bg-c-surface"
+                className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
               >
                 {tables.map((t) => (
                   <option key={t.id} value={t.id}>
@@ -353,13 +353,13 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                           }))
                         }
                         placeholder={f.name}
-                        className="flex-1 rounded-lg border border-c-border-subtle px-2.5 py-1.5 text-xs border-c-border bg-c-surface"
+                        className="flex-1 rounded-lg border border-c-border-subtle px-2.5 py-1.5 text-xs border-c-border-subtle bg-c-surface"
                       />
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="rounded-lg border border-dashed border-c-border p-4 text-center text-xs text-c-text-secondary border-c-border">
+                <div className="rounded-lg border border-dashed border-c-border-subtle p-4 text-center text-xs text-c-text-secondary border-c-border-subtle">
                   {isPl
                     ? 'Pola zostaną automatycznie dopasowane po nazwie.'
                     : 'Fields will be auto-matched by name.'}
@@ -379,7 +379,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                   className={`flex items-center gap-2 rounded-xl border p-3 text-xs font-medium transition-colors ${
                     syncMode === 'one_way'
                       ? 'border-c-info bg-c-info text-c-info border-c-info bg-c-info'
-                      : 'border-c-border-subtle text-c-text-secondary hover:border-c-border'
+                      : 'border-c-border-subtle text-c-text-secondary hover:border-c-border-subtle'
                   }`}
                 >
                   <ArrowRight size={14} />
@@ -390,7 +390,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                   className={`flex items-center gap-2 rounded-xl border p-3 text-xs font-medium transition-colors ${
                     syncMode === 'two_way'
                       ? 'border-c-info bg-c-info text-c-info border-c-info bg-c-info'
-                      : 'border-c-border-subtle text-c-text-secondary hover:border-c-border'
+                      : 'border-c-border-subtle text-c-text-secondary hover:border-c-border-subtle'
                   }`}
                 >
                   <ArrowLeftRight size={14} />
@@ -405,7 +405,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
               <h4 className="text-xs font-semibold uppercase tracking-wider text-c-text-muted">
                 {isPl ? 'Podsumowanie' : 'Summary'}
               </h4>
-              <div className="space-y-2 rounded-xl border border-c-border-subtle bg-c-surface-raised p-4 border-c-border bg-c-surface">
+              <div className="space-y-2 rounded-xl border border-c-border-subtle bg-c-surface-raised p-4 border-c-border-subtle bg-c-surface">
                 <Row label={isPl ? 'Źródło' : 'Source'} value={getTableName(sourceTableId)} />
                 <Row label={isPl ? 'Cel' : 'Target'} value={getTableName(targetTableId)} />
                 <Row
@@ -436,7 +436,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-c-border-subtle px-5 py-3 border-c-border">
+        <div className="flex items-center justify-between border-t border-c-border-subtle px-5 py-3 border-c-border-subtle">
           <button
             onClick={() => {
               if (stepIndex === 0) resetWizard();
@@ -474,7 +474,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-c-border-subtle px-5 py-4 border-c-border">
+      <div className="flex items-center justify-between border-b border-c-border-subtle px-5 py-4 border-c-border-subtle">
         <div className="flex items-center gap-2">
           <button
             onClick={onClose}
@@ -533,7 +533,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
               return (
                 <div
                   key={sync.id}
-                  className="group flex items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 transition-colors hover:border-c-border bg-c-surface hover:border-c-border"
+                  className="group flex items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 transition-colors hover:border-c-border-subtle bg-c-surface hover:border-c-border-subtle"
                 >
                   <div className="flex-shrink-0">
                     {sync.sync_mode === 'two_way' ? (

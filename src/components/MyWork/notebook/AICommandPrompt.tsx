@@ -133,7 +133,7 @@ export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
 
   return (
     <div
-      className={`flex items-center gap-2 rounded-lg border border-c-border/60 dark:border-slate-800/40 bg-c-surface-raised px-3 py-1.5 ${className}`}
+      className={`flex items-center gap-2 rounded-lg border border-c-border-subtle/60 dark:border-slate-800/40 bg-c-surface-raised px-3 py-1.5 ${className}`}
     >
       <Sparkles size={14} className="shrink-0 text-c-text-muted" />
       <input

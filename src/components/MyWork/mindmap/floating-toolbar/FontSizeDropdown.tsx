@@ -14,7 +14,7 @@ export const FontSizeDropdown: React.FC<FontSizeDropdownProps> = ({
   onClose,
 }) => {
   return (
-    <div className="w-24 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl py-1">
+    <div className="w-24 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle shadow-xl py-1">
       {SIZES.map((s) => {
         const isActive = current === s;
         return (

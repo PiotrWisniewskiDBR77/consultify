@@ -147,7 +147,7 @@ export const SourceCandidateCard: React.FC<SourceCandidateCardProps> = ({
             'shrink-0 inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs',
             selected
               ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
-              : 'border-c-border bg-c-surface-raised text-c-text hover:bg-c-surface-raised disabled:opacity-50',
+              : 'border-c-border-subtle bg-c-surface-raised text-c-text hover:bg-c-surface-raised disabled:opacity-50',
           ].join(' ')}
           data-testid="candidate-toggle"
           aria-pressed={selected}

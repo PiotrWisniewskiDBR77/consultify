@@ -44,14 +44,14 @@ function DatasetTable({ dataset }: { dataset: MaterialDataset }): React.ReactEle
           </span>
         )}
       </div>
-      <div className="max-h-72 overflow-auto rounded-lg border border-c-border">
+      <div className="max-h-72 overflow-auto rounded-lg border border-c-border-subtle">
         <table className="w-full border-collapse text-left text-xs">
           <thead className="sticky top-0 bg-c-surface-raised">
             <tr>
               {cols.map((c) => (
                 <th
                   key={c}
-                  className="whitespace-nowrap border-b border-c-border px-3 py-2 font-semibold text-c-text-secondary"
+                  className="whitespace-nowrap border-b border-c-border-subtle px-3 py-2 font-semibold text-c-text-secondary"
                 >
                   {c}
                 </th>
@@ -165,7 +165,7 @@ export const DataSourcesTabContent: React.FC = () => {
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
                   data-testid="rap-data-connector-select"
-                  className="rounded-md border border-c-border bg-c-surface px-2 py-1 text-xs text-c-text"
+                  className="rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text"
                 >
                   {types.map((t) => (
                     <option key={t} value={t}>
@@ -191,7 +191,7 @@ export const DataSourcesTabContent: React.FC = () => {
                 spellCheck={false}
                 rows={4}
                 data-testid="rap-data-config"
-                className="mt-1 w-full rounded-md border border-c-border bg-c-surface-raised px-2 py-1.5 font-mono text-xs text-c-text"
+                className="mt-1 w-full rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 font-mono text-xs text-c-text"
               />
               {connectorError && (
                 <p className="mt-2 text-xs text-amber-600" data-testid="rap-data-connector-error">
@@ -214,7 +214,7 @@ export const DataSourcesTabContent: React.FC = () => {
               onChange={(e) => setFormId(e.target.value)}
               placeholder="ID formularza intake"
               data-testid="rap-data-form-id"
-              className="min-w-[14rem] flex-1 rounded-md border border-c-border bg-c-surface px-2 py-1 text-xs text-c-text"
+              className="min-w-[14rem] flex-1 rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text"
             />
             <button
               type="button"

@@ -435,7 +435,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({ curr
                             'px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
                             quietHours.daysOfWeek.includes(day.value)
                               ? 'bg-c-accent-soft text-c-accent border-c-accent'
-                              : 'bg-c-surface-raised text-c-text-secondary border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
+                              : 'bg-c-surface-raised text-c-text-secondary border-c-border-subtle hover:border-c-border-subtle dark:hover:border-white/20'
                           )}
                         >
                           {t(`settings.availability.days.${day.key}.short`, day.label)}

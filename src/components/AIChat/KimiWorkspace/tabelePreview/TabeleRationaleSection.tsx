@@ -16,7 +16,7 @@ const PROPOSAL_STYLES = {
     'border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100',
   rejected:
     'border-danger-300/80 bg-danger-50 text-danger-900 dark:border-danger-300/[0.25] dark:bg-danger-300/[0.12] dark:text-danger-100',
-  none: 'border-c-border bg-c-surface-raised text-c-text/[0.11]/[0.075]',
+  none: 'border-c-border-subtle bg-c-surface-raised text-c-text/[0.11]/[0.075]',
 } as const;
 
 export function TabeleRationaleSection({
@@ -95,7 +95,7 @@ export function TabeleRationaleSection({
               rationale.citedSourceIds.map((sourceId) => (
                 <span
                   key={sourceId}
-                  className="rounded-hig-full border border-c-border bg-c-surface-raised px-2.5 py-1 font-mono text-xs text-c-text/[0.10]/[0.065]"
+                  className="rounded-hig-full border border-c-border-subtle bg-c-surface-raised px-2.5 py-1 font-mono text-xs text-c-text/[0.10]/[0.065]"
                 >
                   {sourceId}
                 </span>

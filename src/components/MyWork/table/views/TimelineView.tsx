@@ -296,7 +296,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
       onMouseLeave={dragState ? handleMouseUp : undefined}
     >
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-c-border">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-c-border-subtle">
         <span className="text-xs font-bold text-c-text-muted">
           {isPl ? 'Oś czasu' : 'Timeline'}
           <span className="ml-2 text-[10px] font-normal text-c-text-secondary">
@@ -338,11 +338,11 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
       <div className="flex-1 flex overflow-hidden">
         {/* Left labels */}
         <div
-          className="flex-shrink-0 border-r border-c-border overflow-y-auto"
+          className="flex-shrink-0 border-r border-c-border-subtle overflow-y-auto"
           style={{ width: LABEL_WIDTH }}
         >
           <div
-            className="sticky top-0 z-10 bg-c-surface border-b border-c-border px-3 flex items-center"
+            className="sticky top-0 z-10 bg-c-surface border-b border-c-border-subtle px-3 flex items-center"
             style={{ height: HEADER_HEIGHT }}
           >
             <span className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider">
@@ -352,7 +352,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
           {timelineRecords.map((tr) => (
             <div
               key={tr.record.id}
-              className="flex items-center px-3 border-b border-c-border cursor-pointer hover:bg-c-surface-raised transition-colors"
+              className="flex items-center px-3 border-b border-c-border-subtle cursor-pointer hover:bg-c-surface-raised transition-colors"
               style={{ height: ROW_HEIGHT }}
               onClick={() => onRecordClick?.(tr.record.id)}
             >
@@ -367,13 +367,13 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
         <div ref={scrollRef} className="flex-1 overflow-auto relative">
           {/* Header row */}
           <div
-            className="sticky top-0 z-10 flex bg-c-surface border-b border-c-border"
+            className="sticky top-0 z-10 flex bg-c-surface border-b border-c-border-subtle"
             style={{ width: totalWidth, height: HEADER_HEIGHT }}
           >
             {slots.map((slot, i) => (
               <div
                 key={i}
-                className={`flex-shrink-0 flex items-center justify-center border-r border-c-border text-[9px] font-medium ${
+                className={`flex-shrink-0 flex items-center justify-center border-r border-c-border-subtle text-[9px] font-medium ${
                   slot.isToday
                     ? 'text-c-accent bg-c-accent-soft'
                     : 'text-c-text-muted'
@@ -394,7 +394,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
             {slots.map((_, i) => (
               <div
                 key={i}
-                className="absolute top-0 bottom-0 border-r border-c-border"
+                className="absolute top-0 bottom-0 border-r border-c-border-subtle"
                 style={{ left: i * colWidth, width: 0 }}
               />
             ))}

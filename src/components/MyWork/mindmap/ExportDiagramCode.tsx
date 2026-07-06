@@ -116,7 +116,7 @@ export const ExportDiagramCode: React.FC<ExportDiagramCodeProps> = ({
   return (
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
       <div className="w-full max-w-lg rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Code size={16} className="text-c-warning" />
             <h3 className="text-sm font-bold text-c-text dark:text-c-text">
@@ -148,7 +148,7 @@ export const ExportDiagramCode: React.FC<ExportDiagramCodeProps> = ({
           </div>
 
           <div className="relative">
-            <pre className="p-3 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border text-[10px] text-c-text-secondary dark:text-c-text-muted overflow-auto max-h-[350px] whitespace-pre-wrap font-mono">
+            <pre className="p-3 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle text-[10px] text-c-text-secondary dark:text-c-text-muted overflow-auto max-h-[350px] whitespace-pre-wrap font-mono">
               {code}
             </pre>
             <button

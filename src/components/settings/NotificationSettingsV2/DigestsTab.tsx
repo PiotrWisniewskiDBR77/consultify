@@ -96,7 +96,7 @@ const DigestsTab: React.FC<DigestsTabProps> = ({ preferences, onUpdateDigests })
               type="time"
               value={localDigests.dailyTime}
               onChange={(e) => handleChange('dailyTime', e.target.value)}
-              className="px-2 py-1 border border-c-border dark:border-navy-600 rounded bg-c-surface text-sm"
+              className="px-2 py-1 border border-c-border-subtle dark:border-navy-600 rounded bg-c-surface text-sm"
             />
           </div>
         )}
@@ -131,7 +131,7 @@ const DigestsTab: React.FC<DigestsTabProps> = ({ preferences, onUpdateDigests })
               <select
                 value={localDigests.weeklyDay}
                 onChange={(e) => handleChange('weeklyDay', e.target.value)}
-                className="px-2 py-1 border border-c-border dark:border-navy-600 rounded bg-c-surface text-sm"
+                className="px-2 py-1 border border-c-border-subtle dark:border-navy-600 rounded bg-c-surface text-sm"
               >
                 {DAYS_OF_WEEK.map(({ value, label }) => (
                   <option key={value} value={value}>
@@ -146,7 +146,7 @@ const DigestsTab: React.FC<DigestsTabProps> = ({ preferences, onUpdateDigests })
                 type="time"
                 value={localDigests.weeklyTime}
                 onChange={(e) => handleChange('weeklyTime', e.target.value)}
-                className="px-2 py-1 border border-c-border dark:border-navy-600 rounded bg-c-surface text-sm"
+                className="px-2 py-1 border border-c-border-subtle dark:border-navy-600 rounded bg-c-surface text-sm"
               />
             </div>
           </div>
@@ -194,7 +194,7 @@ const DigestsTab: React.FC<DigestsTabProps> = ({ preferences, onUpdateDigests })
               className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
                 localDigests[key as keyof DigestSettings]
                   ? 'bg-navy-900 border-brand text-white'
-                  : 'border-c-border dark:border-navy-600'
+                  : 'border-c-border-subtle dark:border-navy-600'
               }`}
             >
               {localDigests[key as keyof DigestSettings] && <Check size={14} />}

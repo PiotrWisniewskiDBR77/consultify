@@ -436,7 +436,7 @@ function FieldInput({ fieldType, options, value, onChange, hasError }: FieldInpu
                     const next = isChecked ? selected.filter((v) => v !== val) : [...selected, val];
                     onChange(next.length > 0 ? next : undefined);
                   }}
-                  className="h-4 w-4 rounded border-c-border"
+                  className="h-4 w-4 rounded border-c-border-subtle"
                 />
                 <span className="text-c-text">{o.name ?? val}</span>
               </label>

@@ -277,7 +277,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         </div>
 
         {/* Mode switcher */}
-        <div className="flex gap-0.5 rounded-lg border border-c-border p-0.5">
+        <div className="flex gap-0.5 rounded-lg border border-c-border-subtle p-0.5">
           {(['month', 'week'] as const).map((m) => (
             <button
               key={m}
@@ -320,8 +320,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   cell.isCurrentMonth
                     ? isToday
                       ? 'border-c-accent bg-c-accent-soft'
-                      : 'border-c-border bg-c-surface bg-[color-mix(in_srgb,var(--c-surface)_50%25,transparent)]'
-                    : 'border-c-border bg-[color-mix(in_srgb,var(--c-surface-raised)_30%25,transparent)] bg-[color-mix(in_srgb,var(--c-bg)_30%25,transparent)]'
+                      : 'border-c-border-subtle bg-c-surface bg-[color-mix(in_srgb,var(--c-surface)_50%25,transparent)]'
+                    : 'border-c-border-subtle bg-[color-mix(in_srgb,var(--c-surface-raised)_30%25,transparent)] bg-[color-mix(in_srgb,var(--c-bg)_30%25,transparent)]'
                 }`}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={() => handleDrop(cell.date)}
@@ -383,7 +383,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 className={`rounded-lg border p-2 transition-colors ${
                   isToday
                     ? 'border-c-accent bg-c-accent-soft'
-                    : 'border-c-border bg-c-surface bg-[color-mix(in_srgb,var(--c-surface)_50%25,transparent)]'
+                    : 'border-c-border-subtle bg-c-surface bg-[color-mix(in_srgb,var(--c-surface)_50%25,transparent)]'
                 }`}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={() => handleDrop(dateStr)}
@@ -406,7 +406,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   ))}
                   <button
                     onClick={() => onAddRecord({ [dateFieldId]: dateStr })}
-                    className="w-full flex items-center justify-center gap-0.5 py-1 rounded border border-dashed border-c-border text-[8px] text-c-text-secondary hover:text-c-accent hover:border-c-accent transition-colors"
+                    className="w-full flex items-center justify-center gap-0.5 py-1 rounded border border-dashed border-c-border-subtle text-[8px] text-c-text-secondary hover:text-c-accent hover:border-c-accent transition-colors"
                   >
                     <Plus size={8} />
                   </button>

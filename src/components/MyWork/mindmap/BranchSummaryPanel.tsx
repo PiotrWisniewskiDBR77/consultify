@@ -171,8 +171,8 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
 
   return (
     <div className="fixed inset-y-0 right-0 z-overlay flex">
-      <div className="w-[380px] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border-l border-c-border-subtle dark:border-c-border shadow-2xl flex flex-col rounded-l-2xl">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle dark:border-c-border">
+      <div className="w-[380px] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border-l border-c-border-subtle dark:border-c-border-subtle shadow-2xl flex flex-col rounded-l-2xl">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <FileText size={16} className="text-c-text-secondary shrink-0" />
           <h3 className="text-sm font-semibold text-c-text dark:text-c-text truncate flex-1">
             {branchLabel || (isPl ? 'Podsumowanie gałęzi' : 'Branch Summary')}
@@ -225,7 +225,7 @@ export const BranchSummaryPanel: React.FC<BranchSummaryPanelProps> = ({
         </div>
 
         {summary && !loading && (
-          <div className="px-4 py-3 border-t border-c-border-subtle dark:border-c-border">
+          <div className="px-4 py-3 border-t border-c-border-subtle dark:border-c-border-subtle">
             <button
               type="button"
               onClick={copyToClipboard}

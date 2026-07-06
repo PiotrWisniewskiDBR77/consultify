@@ -186,7 +186,7 @@ const ValueRow: React.FC<{
 const EmptyState: React.FC<{ error?: string | null; t: TFunction }> = ({ error, t }) => (
   <div
     role="alert"
-    className="rounded-2xl border border-dashed border-c-border dark:border-navy-700 bg-c-surface-raised p-6 text-sm text-c-text-secondary"
+    className="rounded-2xl border border-dashed border-c-border-subtle dark:border-navy-700 bg-c-surface-raised p-6 text-sm text-c-text-secondary"
   >
     <div className="flex items-center gap-3">
       <AlertTriangle size={18} className="text-amber-500" />

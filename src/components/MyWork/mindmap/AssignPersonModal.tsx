@@ -46,7 +46,7 @@ export const AssignPersonModal: React.FC<AssignPersonModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-80 rounded-lg border border-c-border-subtle bg-c-surface-raised p-4 shadow-xl dark:border-c-border dark:bg-c-surface"
+        className="w-80 rounded-lg border border-c-border-subtle bg-c-surface-raised p-4 shadow-xl dark:border-c-border-subtle dark:bg-c-surface"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
@@ -69,7 +69,7 @@ export const AssignPersonModal: React.FC<AssignPersonModalProps> = ({
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
           placeholder={isPl ? 'Imię i nazwisko...' : 'Name...'}
-          className="mb-2 w-full rounded border border-c-border-subtle px-3 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border dark:bg-c-surface dark:text-c-text"
+          className="mb-2 w-full rounded border border-c-border-subtle px-3 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border-subtle dark:bg-c-surface dark:text-c-text"
         />
 
         {uniqueRecent.length > 0 && (

@@ -453,7 +453,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
               value={newWebhook.name}
               onChange={(e) => setNewWebhook((prev) => ({ ...prev, name: e.target.value }))}
               placeholder={t('settings.webhooks.namePlaceholder', 'My Webhook')}
-              className="w-full px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg bg-c-surface text-c-text"
+              className="w-full px-3 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg bg-c-surface text-c-text"
             />
           </div>
 
@@ -466,7 +466,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
               value={newWebhook.url}
               onChange={(e) => setNewWebhook((prev) => ({ ...prev, url: e.target.value }))}
               placeholder="https://api.example.com/webhook"
-              className="w-full px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg bg-c-surface text-c-text font-mono text-sm"
+              className="w-full px-3 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg bg-c-surface text-c-text font-mono text-sm"
             />
           </div>
 
@@ -482,7 +482,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                   className={`px-3 py-1 text-sm rounded-full transition-colors ${
                     newWebhook.events.includes(event)
                       ? 'bg-navy-900 text-white'
-                      : 'bg-c-surface border border-c-border dark:border-navy-600 text-c-text-secondary'
+                      : 'bg-c-surface border border-c-border-subtle dark:border-navy-600 text-c-text-secondary'
                   }`}
                 >
                   {event}
@@ -502,7 +502,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                 setNewWebhook((prev) => ({ ...prev, signatureSecret: e.target.value }))
               }
               placeholder={t('settings.webhooks.secretPlaceholder', 'HMAC secret for verification')}
-              className="w-full px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg bg-c-surface text-c-text font-mono text-sm"
+              className="w-full px-3 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg bg-c-surface text-c-text font-mono text-sm"
             />
             <p className="text-xs text-c-text-muted mt-1">
               {t(
@@ -536,7 +536,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = 
                   filterRules: {},
                 });
               }}
-              className="px-4 py-2 border border-c-border dark:border-navy-600 rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700"
+              className="px-4 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700"
             >
               {t('common.cancel', 'Cancel')}
             </button>

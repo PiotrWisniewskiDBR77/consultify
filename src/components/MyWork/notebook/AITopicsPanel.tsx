@@ -220,7 +220,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
         </div>
       </div>
 
-      <div className="px-3 py-2 border-b border-c-border bg-c-surface-raised">
+      <div className="px-3 py-2 border-b border-c-border-subtle bg-c-surface-raised">
         <p className="text-[11px] text-c-text-secondary leading-relaxed">
           {isPl
             ? 'To są sugestie AI: tematy, które warto rozważyć w kontekście tej notatki. Wybierz temat i zdecyduj co dalej: dodaj do notatki jako blok, doprecyzuj treść, usuń (AI podmieni na inny), albo wrzuć do czata, żeby pogłębić analizę.'
@@ -261,7 +261,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
           topics.map((topic) => (
             <div
               key={topic}
-              className="rounded-xl border border-c-border bg-c-surface-raised px-3 py-2.5"
+              className="rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"
             >
               <div className="flex items-start justify-between gap-2">
                 {editingTopic === topic ? (
@@ -270,7 +270,7 @@ export const AITopicsPanel: React.FC<AITopicsPanelProps> = ({
                       value={editingValue}
                       onChange={(e) => setEditingValue(e.target.value)}
                       rows={3}
-                      className="w-full rounded-lg border border-c-border bg-c-surface text-c-text text-sm p-2 outline-none focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)] resize-none"
+                      className="w-full rounded-lg border border-c-border-subtle bg-c-surface text-c-text text-sm p-2 outline-none focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)] resize-none"
                       placeholder={isPl ? 'Edytuj temat…' : 'Edit topic…'}
                     />
                     <div className="mt-2 flex items-center gap-2">

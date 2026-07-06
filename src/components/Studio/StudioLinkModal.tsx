@@ -128,7 +128,7 @@ export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-overlay flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-lg bg-c-surface border border-c-border rounded-xl shadow-2xl">
+      <div className="w-full max-w-lg bg-c-surface border border-c-border-subtle rounded-xl shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
           <div className="flex items-center gap-3">
@@ -183,7 +183,7 @@ export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={`Search ${activeTab}s...`}
-              className="w-full pl-9 pr-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-1 focus:ring-c-focus"
+              className="w-full pl-9 pr-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-1 focus:ring-c-focus"
             />
           </div>
         </div>

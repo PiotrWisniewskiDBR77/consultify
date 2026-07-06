@@ -537,8 +537,8 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
 
       <div className={hideSidebar ? '' : 'grid grid-cols-12 gap-4'}>
         {!hideSidebar && (
-          <div className="col-span-4 bg-white dark:bg-c-surface rounded-xl border border-c-border dark:border-c-border overflow-hidden">
-            <div className="px-4 py-3 border-b border-c-border dark:border-c-border flex items-center justify-between">
+          <div className="col-span-4 bg-white dark:bg-c-surface rounded-xl border border-c-border-subtle dark:border-c-border-subtle overflow-hidden">
+            <div className="px-4 py-3 border-b border-c-border-subtle dark:border-c-border-subtle flex items-center justify-between">
               <div className="text-sm font-semibold text-c-text dark:text-white">
                 {t('valuation.list.title', 'Valuations')}
               </div>
@@ -613,7 +613,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
           className={
             hideSidebar
               ? 'w-full'
-              : 'col-span-8 bg-white dark:bg-c-surface rounded-xl border border-c-border dark:border-c-border p-5'
+              : 'col-span-8 bg-white dark:bg-c-surface rounded-xl border border-c-border-subtle dark:border-c-border-subtle p-5'
           }
         >
           {!selectedId || !selected ? (
@@ -707,7 +707,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                       </div>
                     </div>
                     <div
-                      className="flex items-center gap-2 border-b border-c-border dark:border-c-border pb-3"
+                      className="flex items-center gap-2 border-b border-c-border-subtle dark:border-c-border-subtle pb-3"
                       role="tablist"
                       aria-label={t('valuation.steps.label', 'Valuation steps')}
                     >
@@ -723,7 +723,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                             'px-3 py-1.5 rounded-lg text-sm border transition',
                             activeStep === s
                               ? 'bg-c-surface-raised text-c-text border-c-border-strong dark:border-c-border-strong'
-                              : 'bg-white dark:bg-c-surface text-c-text-secondary dark:text-c-text-secondary border-c-border dark:border-c-border hover:bg-c-surface-raised dark:hover:bg-c-surface-raised',
+                              : 'bg-white dark:bg-c-surface text-c-text-secondary dark:text-c-text-secondary border-c-border-subtle dark:border-c-border-subtle hover:bg-c-surface-raised dark:hover:bg-c-surface-raised',
                           ].join(' ')}
                         >
                           {t(`valuation.steps.${s}` as any, s)}
@@ -752,7 +752,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                   )}
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-c-surface-raised dark:bg-c-surface-raised border border-c-border dark:border-c-border rounded-xl p-4">
+                    <div className="bg-c-surface-raised dark:bg-c-surface-raised border border-c-border-subtle dark:border-c-border-subtle rounded-xl p-4">
                       <div className="text-sm font-semibold text-c-text dark:text-white mb-3">
                         {t('valuation.assumptions.dcfTitle', 'DCF assumptions')}
                       </div>
@@ -844,7 +844,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                     'text-[10px] px-1.5 py-0.5 rounded border transition-colors',
                                     assumptions.terminalGrowthPercent === preset.value
                                       ? 'border-c-focus bg-c-info/10 text-c-info dark:text-c-info'
-                                      : 'border-c-border dark:border-c-border-strong text-c-text-muted hover:border-c-border-strong',
+                                      : 'border-c-border-subtle dark:border-c-border-strong text-c-text-muted hover:border-c-border-strong',
                                   ].join(' ')}
                                 >
                                   {preset.label}
@@ -900,7 +900,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                       </div>
                     </div>
 
-                    <div className="bg-c-surface-raised dark:bg-c-surface-raised border border-c-border dark:border-c-border rounded-xl p-4">
+                    <div className="bg-c-surface-raised dark:bg-c-surface-raised border border-c-border-subtle dark:border-c-border-subtle rounded-xl p-4">
                       <div className="text-sm font-semibold text-c-text dark:text-white mb-3">
                         {t('valuation.comps.title', 'Comparable valuation (multiples)')}
                       </div>
@@ -1000,7 +1000,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-c-surface-raised dark:bg-c-surface-raised border border-c-border dark:border-c-border rounded-xl p-4">
+                      <div className="bg-c-surface-raised dark:bg-c-surface-raised border border-c-border-subtle dark:border-c-border-subtle rounded-xl p-4">
                         <div className="text-sm font-semibold text-c-text dark:text-white mb-2">
                           {t('valuation.results.summary', 'Valuation summary')}
                         </div>
@@ -1039,7 +1039,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                           </div>
                         </div>
                       </div>
-                      <div className="bg-c-surface-raised dark:bg-c-surface-raised border border-c-border dark:border-c-border rounded-xl p-4">
+                      <div className="bg-c-surface-raised dark:bg-c-surface-raised border border-c-border-subtle dark:border-c-border-subtle rounded-xl p-4">
                         <div className="text-sm font-semibold text-c-text dark:text-white mb-2">
                           {t('valuation.results.comps', 'Comparable range (if set)')}
                         </div>
@@ -1080,7 +1080,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                   )}
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white dark:bg-c-surface border border-c-border dark:border-c-border rounded-xl p-4">
+                    <div className="bg-white dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-xl p-4">
                       <div className="flex items-center justify-between gap-2 mb-3">
                         <div className="text-sm font-semibold text-c-text dark:text-white">
                           {t('valuation.advisory.title', 'Valuation advisory')}
@@ -1110,8 +1110,8 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                       ) : (
                         <div className="space-y-4">
                           {advisory.driverDecomposition?.drivers?.length > 0 && (
-                            <div className="bg-c-surface-raised dark:bg-c-surface-raised rounded-xl border border-c-border dark:border-c-border overflow-hidden">
-                              <div className="px-4 py-2 border-b border-c-border dark:border-c-border">
+                            <div className="bg-c-surface-raised dark:bg-c-surface-raised rounded-xl border border-c-border-subtle dark:border-c-border-subtle overflow-hidden">
+                              <div className="px-4 py-2 border-b border-c-border-subtle dark:border-c-border-subtle">
                                 <h4 className="text-xs font-semibold text-c-text-secondary dark:text-c-text-secondary uppercase tracking-wide">
                                   {t(
                                     'valuation.advisory.driverDecomposition',
@@ -1121,7 +1121,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                               </div>
                               <table /* §27-exempt: edytor komorkowy/workspace, edycja cell-by-cell */  className="w-full text-xs">
                                 <thead>
-                                  <tr className="text-c-text-muted border-b border-c-border dark:border-c-border">
+                                  <tr className="text-c-text-muted border-b border-c-border-subtle dark:border-c-border-subtle">
                                     <th className="px-3 py-1.5 text-left">
                                       {t('valuation.advisory.driver', 'Driver')}
                                     </th>
@@ -1143,7 +1143,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                   {advisory.driverDecomposition.drivers.map((d: any, i: number) => (
                                     <tr
                                       key={i}
-                                      className="border-b border-c-border dark:border-c-border last:border-0"
+                                      className="border-b border-c-border-subtle dark:border-c-border-subtle last:border-0"
                                     >
                                       <td className="px-3 py-1.5 font-medium text-c-text dark:text-c-text-secondary">
                                         {d.driver}
@@ -1165,7 +1165,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                 </tbody>
                               </table>
                               {advisory.driverDecomposition.summary && (
-                                <div className="px-4 py-2 text-xs text-c-text-muted dark:text-c-text-muted bg-c-surface-raised dark:bg-c-surface border-t border-c-border dark:border-c-border">
+                                <div className="px-4 py-2 text-xs text-c-text-muted dark:text-c-text-muted bg-c-surface-raised dark:bg-c-surface border-t border-c-border-subtle dark:border-c-border-subtle">
                                   {advisory.driverDecomposition.summary}
                                 </div>
                               )}
@@ -1190,13 +1190,13 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                               return (
                                 <div
                                   key={r.id}
-                                  className="p-4 rounded-xl bg-c-surface-raised dark:bg-c-surface-raised border border-c-border dark:border-c-border hover:border-c-border-strong dark:hover:border-c-border-strong transition-colors"
+                                  className="p-4 rounded-xl bg-c-surface-raised dark:bg-c-surface-raised border border-c-border-subtle dark:border-c-border-subtle hover:border-c-border-strong dark:hover:border-c-border-strong transition-colors"
                                 >
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="text-sm font-semibold text-c-text dark:text-white">
                                       {r.title}
                                     </div>
-                                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-c-surface text-c-text-secondary border border-c-border dark:bg-c-surface-raised dark:text-c-text-secondary font-medium">
+                                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-c-surface text-c-text-secondary border border-c-border-subtle dark:bg-c-surface-raised dark:text-c-text-secondary font-medium">
                                       {r.category}
                                     </span>
                                   </div>
@@ -1221,7 +1221,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                   <div className="text-xs text-c-text-secondary dark:text-c-text-secondary mt-2.5 line-clamp-3 leading-relaxed">
                                     {r.mechanism || r.hypothesis}
                                   </div>
-                                  <div className="mt-3 pt-3 border-t border-c-border dark:border-c-border flex items-center gap-2">
+                                  <div className="mt-3 pt-3 border-t border-c-border-subtle dark:border-c-border-subtle flex items-center gap-2">
                                     <button
                                       disabled={busy}
                                       onClick={() => handleConvertRecommendation(String(r.id))}
@@ -1233,7 +1233,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                     <button
                                       disabled={busy}
                                       onClick={() => handleConvertRecommendation(String(r.id))}
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border dark:border-c-border-strong text-c-text-secondary dark:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border-strong text-c-text-secondary dark:text-c-text-secondary hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
                                     >
                                       <ExternalLink size={12} />
                                       {t('valuation.advisory.details', 'Details')}
@@ -1281,7 +1281,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                       )}
                     </div>
 
-                    <div className="bg-white dark:bg-c-surface border border-c-border dark:border-c-border rounded-xl p-4">
+                    <div className="bg-white dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-xl p-4">
                       <div className="flex items-center justify-between gap-2 mb-3">
                         <div className="text-sm font-semibold text-c-text dark:text-white">
                           {t('valuation.negotiation.title', 'Negotiation pack')}
@@ -1380,7 +1380,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="col-span-2 bg-c-surface-raised dark:bg-c-surface-raised border border-c-border dark:border-c-border rounded-xl p-4">
+                      <div className="col-span-2 bg-c-surface-raised dark:bg-c-surface-raised border border-c-border-subtle dark:border-c-border-subtle rounded-xl p-4">
                         <div className="text-sm font-semibold text-c-text dark:text-white mb-2">
                           {t('valuation.steps.sensitivity', 'Sensitivity')}
                         </div>
@@ -1432,7 +1432,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                   <tbody>
                                     {waccValues.map((w) => (
                                       <tr key={w}>
-                                        <td className="px-2 py-1.5 font-medium text-c-text-secondary dark:text-c-text-secondary border-r border-c-border dark:border-c-border">
+                                        <td className="px-2 py-1.5 font-medium text-c-text-secondary dark:text-c-text-secondary border-r border-c-border-subtle dark:border-c-border-subtle">
                                           {w}%
                                         </td>
                                         {gValues.map((g) => {
@@ -1473,7 +1473,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                         ) : null}
                       </div>
 
-                      <div className="bg-c-surface-raised dark:bg-c-surface-raised border border-c-border dark:border-c-border rounded-xl p-4">
+                      <div className="bg-c-surface-raised dark:bg-c-surface-raised border border-c-border-subtle dark:border-c-border-subtle rounded-xl p-4">
                         <div className="text-sm font-semibold text-c-text dark:text-white mb-2">
                           {t('valuation.sensitivity.tornadoTitle', 'Tornado (top drivers)')}
                         </div>
@@ -1529,7 +1529,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
 
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-c-surface border border-c-border dark:border-c-border rounded-xl p-6 w-full max-w-lg">
+          <div className="bg-white dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle rounded-xl p-6 w-full max-w-lg">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-c-text dark:text-white">
                 {t('valuation.create.title', 'New valuation')}

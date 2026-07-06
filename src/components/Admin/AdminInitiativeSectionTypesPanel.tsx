@@ -507,7 +507,7 @@ export const AdminInitiativeSectionTypesPanel: React.FC = () => {
                               }}
                               className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
                                 selectedIds.has(st.id)
-                                  ? 'bg-c-text text-c-bg border-c-border'
+                                  ? 'bg-c-text text-c-bg border-c-border-subtle'
                                   : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
                               }`}
                             >

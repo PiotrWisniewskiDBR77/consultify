@@ -223,19 +223,19 @@ export const PricingPanel: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-c-surface rounded-xl border border-c-border p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
           <div className="text-sm text-c-text-muted">Total Snapshots</div>
           <div className="text-2xl font-bold text-c-text">
             {snapshots.length}
           </div>
         </div>
-        <div className="bg-c-surface rounded-xl border border-c-border p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
           <div className="text-sm text-c-text-muted">Models Priced</div>
           <div className="text-2xl font-bold text-c-text">
             {new Set(snapshots.map((s) => s.modelId)).size}
           </div>
         </div>
-        <div className="bg-c-surface rounded-xl border border-c-border p-4">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
           <div className="text-sm text-c-text-muted">Sources</div>
           <div className="flex items-center gap-2 mt-1">
             {(['api_sync', 'manual', 'contract'] as PriceSource[]).map((s) => {
@@ -249,7 +249,7 @@ export const PricingPanel: React.FC = () => {
 
       {/* Add form */}
       {showAddForm && (
-        <div className="bg-c-surface rounded-xl border border-c-border p-6 space-y-4">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-c-text">
               New Price Snapshot
@@ -271,7 +271,7 @@ export const PricingPanel: React.FC = () => {
                 value={form.provider}
                 onChange={(e) => setForm((p) => ({ ...p, provider: e.target.value }))}
                 placeholder="openrouter"
-                className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
+                className="w-full h-9 px-3 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
               />
             </div>
             <div>
@@ -282,7 +282,7 @@ export const PricingPanel: React.FC = () => {
                 value={form.modelId}
                 onChange={(e) => setForm((p) => ({ ...p, modelId: e.target.value }))}
                 placeholder="openai/gpt-4o"
-                className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
+                className="w-full h-9 px-3 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
               />
             </div>
             <div>
@@ -292,7 +292,7 @@ export const PricingPanel: React.FC = () => {
               <select
                 value={form.source}
                 onChange={(e) => setForm((p) => ({ ...p, source: e.target.value as PriceSource }))}
-                className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
+                className="w-full h-9 px-3 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
               >
                 <option value="manual">Manual</option>
                 <option value="api_sync">API Sync</option>
@@ -307,7 +307,7 @@ export const PricingPanel: React.FC = () => {
                 type="date"
                 value={form.effectiveFrom}
                 onChange={(e) => setForm((p) => ({ ...p, effectiveFrom: e.target.value }))}
-                className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
+                className="w-full h-9 px-3 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
               />
             </div>
           </div>
@@ -322,7 +322,7 @@ export const PricingPanel: React.FC = () => {
                 value={form.inputPer1MTokens}
                 onChange={(e) => setForm((p) => ({ ...p, inputPer1MTokens: e.target.value }))}
                 placeholder="0.00"
-                className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
+                className="w-full h-9 px-3 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
               />
             </div>
             <div>
@@ -335,7 +335,7 @@ export const PricingPanel: React.FC = () => {
                 value={form.outputPer1MTokens}
                 onChange={(e) => setForm((p) => ({ ...p, outputPer1MTokens: e.target.value }))}
                 placeholder="0.00"
-                className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
+                className="w-full h-9 px-3 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
               />
             </div>
             <div>
@@ -348,7 +348,7 @@ export const PricingPanel: React.FC = () => {
                 value={form.perImage}
                 onChange={(e) => setForm((p) => ({ ...p, perImage: e.target.value }))}
                 placeholder="0.000"
-                className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
+                className="w-full h-9 px-3 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
               />
             </div>
             <div>
@@ -361,7 +361,7 @@ export const PricingPanel: React.FC = () => {
                 value={form.perRequest}
                 onChange={(e) => setForm((p) => ({ ...p, perRequest: e.target.value }))}
                 placeholder="0.0000"
-                className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
+                className="w-full h-9 px-3 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
               />
             </div>
           </div>
@@ -371,7 +371,7 @@ export const PricingPanel: React.FC = () => {
               value={form.notes}
               onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
               placeholder="Optional notes about this price entry"
-              className="w-full h-9 px-3 bg-c-surface border border-c-border rounded-lg text-c-text text-sm"
+              className="w-full h-9 px-3 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm"
             />
           </div>
         </div>
@@ -385,15 +385,15 @@ export const PricingPanel: React.FC = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search by model or provider..."
-          className="w-full pl-10 pr-4 h-9 bg-c-surface border border-c-border rounded-lg text-c-text text-sm placeholder-c-text-muted"
+          className="w-full pl-10 pr-4 h-9 bg-c-surface border border-c-border-subtle rounded-lg text-c-text text-sm placeholder-c-text-muted"
         />
       </div>
 
       {/* Pricing table grouped by model */}
-      <div className="bg-c-surface rounded-xl border border-c-border overflow-hidden">
+      <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
         <table /* §27-exempt: panel konfiguracyjny/billingowy, mala tabela ustawien poza zakresem listowym */  className="w-full">
           <thead>
-            <tr className="border-b border-c-border">
+            <tr className="border-b border-c-border-subtle">
               <th className="text-left px-4 py-3 text-xs font-semibold text-c-text-muted uppercase">
                 Model
               </th>

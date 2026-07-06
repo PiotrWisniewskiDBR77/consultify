@@ -281,7 +281,7 @@ const OperationItem: React.FC<{
         <button
           onClick={onToggleSelect}
           className={`flex-shrink-0 w-4 h-4 rounded border transition-colors ${
-            selected ? 'border-c-border bg-c-surface' : 'border-c-border'
+            selected ? 'border-c-border-subtle bg-c-surface' : 'border-c-border-subtle'
           } flex items-center justify-center`}
         >
           {selected && <Check size={10} className="text-white" />}

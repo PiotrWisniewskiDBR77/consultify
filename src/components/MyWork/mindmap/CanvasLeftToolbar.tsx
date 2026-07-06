@@ -428,22 +428,22 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   const toolbarNode = (
     <div
       ref={toolbarRef}
-      className={`fixed top-1/2 -translate-y-1/2 z-[9999] pointer-events-auto flex flex-col items-center gap-0.5 rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border shadow-hig-xl px-1 py-1.5 canvas-left-toolbar-enter${
+      className={`fixed top-1/2 -translate-y-1/2 z-[9999] pointer-events-auto flex flex-col items-center gap-0.5 rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border-subtle shadow-hig-xl px-1 py-1.5 canvas-left-toolbar-enter${
         railLeftPx == null ? ' left-3' : ''
       }`}
       style={railLeftPx == null ? undefined : { left: `${railLeftPx}px` }}
     >
       {SHARED_TOP.map(renderSlot)}
 
-      <div className="w-5 border-t border-c-border-subtle dark:border-c-border my-0.5" />
+      <div className="w-5 border-t border-c-border-subtle dark:border-c-border-subtle my-0.5" />
 
       {contextSlots.map(renderSlot)}
 
-      <div className="w-5 border-t border-c-border-subtle dark:border-c-border my-0.5" />
+      <div className="w-5 border-t border-c-border-subtle dark:border-c-border-subtle my-0.5" />
 
       {SHARED_BOTTOM.map(renderSlot)}
 
-      <div className="w-5 border-t border-c-border-subtle dark:border-c-border my-0.5" />
+      <div className="w-5 border-t border-c-border-subtle dark:border-c-border-subtle my-0.5" />
 
       {getUndoRedoSlots(activeTool).map((slot, idx) => {
         const isDisabled = (slot.id === 'undo' && !canUndo) || (slot.id === 'redo' && !canRedo);

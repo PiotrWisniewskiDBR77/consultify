@@ -239,7 +239,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
   if (showWizard) {
     return (
       <div className="flex h-full flex-col">
-        <div className="flex items-center gap-2 border-b border-c-border-subtle px-5 py-4 border-c-border">
+        <div className="flex items-center gap-2 border-b border-c-border-subtle px-5 py-4 border-c-border-subtle">
           <button
             onClick={resetWizard}
             className="rounded-lg p-1 transition-colors hover:bg-c-surface-raised"
@@ -253,7 +253,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
         </div>
 
         {/* Step indicator */}
-        <div className="flex items-center gap-1 border-b border-c-border-subtle px-5 py-3 border-c-border">
+        <div className="flex items-center gap-1 border-b border-c-border-subtle px-5 py-3 border-c-border-subtle">
           {WIZARD_STEPS.map((s, idx) => (
             <React.Fragment key={s.key}>
               {idx > 0 && <ArrowRight size={10} className="text-c-text-secondary" />}
@@ -286,7 +286,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={isPl ? 'np. Raport tygodniowy' : 'e.g. Weekly Report'}
-                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border bg-c-surface"
+                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
                 />
               </div>
               <div>
@@ -302,7 +302,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                     className={`rounded-xl border p-3 text-center text-xs font-medium transition-colors ${
                       sourceType === 'table'
                         ? 'border-c-tag-4 bg-c-tag-4 text-c-tag-4 border-c-tag-4 bg-c-tag-4'
-                        : 'border-c-border-subtle text-c-text-secondary border-c-border'
+                        : 'border-c-border-subtle text-c-text-secondary border-c-border-subtle'
                     }`}
                   >
                     <FileText size={16} className="mx-auto mb-1" />
@@ -313,7 +313,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                     className={`rounded-xl border p-3 text-center text-xs font-medium transition-colors ${
                       sourceType === 'view'
                         ? 'border-c-tag-4 bg-c-tag-4 text-c-tag-4 border-c-tag-4 bg-c-tag-4'
-                        : 'border-c-border-subtle text-c-text-secondary border-c-border'
+                        : 'border-c-border-subtle text-c-text-secondary border-c-border-subtle'
                     }`}
                   >
                     <Eye size={16} className="mx-auto mb-1" />
@@ -325,7 +325,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                 <select
                   value={sourceId}
                   onChange={(e) => setSourceId(e.target.value)}
-                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border bg-c-surface"
+                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface"
                 >
                   <option value="">{isPl ? 'Wybierz widok...' : 'Select view...'}</option>
                   {views.map((v) => (
@@ -351,7 +351,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                     className={`rounded-xl border p-3 text-center text-xs font-medium transition-colors ${
                       format === f.id
                         ? 'border-c-tag-4 bg-c-tag-4 text-c-tag-4 border-c-tag-4 bg-c-tag-4'
-                        : 'border-c-border-subtle text-c-text-secondary hover:border-c-border'
+                        : 'border-c-border-subtle text-c-text-secondary hover:border-c-border-subtle'
                     }`}
                   >
                     {f.label}
@@ -379,7 +379,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       className={`flex items-center gap-2 rounded-xl border p-3 text-xs font-medium transition-colors ${
                         channel === ch.id
                           ? 'border-c-tag-4 bg-c-tag-4 text-c-tag-4 border-c-tag-4 bg-c-tag-4'
-                          : 'border-c-border-subtle text-c-text-secondary hover:border-c-border'
+                          : 'border-c-border-subtle text-c-text-secondary hover:border-c-border-subtle'
                       }`}
                     >
                       <Icon size={16} />
@@ -400,7 +400,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       value={(channelConfig.to as string) || ''}
                       onChange={(e) => updateConfig('to', e.target.value)}
                       placeholder="user@example.com, team@example.com"
-                      className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-xs border-c-border bg-c-surface"
+                      className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-xs border-c-border-subtle bg-c-surface"
                     />
                   </div>
                 )}
@@ -414,7 +414,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       value={(channelConfig.webhookUrl as string) || ''}
                       onChange={(e) => updateConfig('webhookUrl', e.target.value)}
                       placeholder="https://hooks.slack.com/services/..."
-                      className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-xs border-c-border bg-c-surface"
+                      className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-xs border-c-border-subtle bg-c-surface"
                     />
                   </div>
                 )}
@@ -428,7 +428,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                       value={(channelConfig.url as string) || ''}
                       onChange={(e) => updateConfig('url', e.target.value)}
                       placeholder="https://api.example.com/webhook"
-                      className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-xs border-c-border bg-c-surface"
+                      className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-xs border-c-border-subtle bg-c-surface"
                     />
                   </div>
                 )}
@@ -449,7 +449,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                     className={`flex w-full items-center gap-2 rounded-xl border px-4 py-3 text-xs font-medium transition-colors ${
                       schedule === s.value
                         ? 'border-c-tag-4 bg-c-tag-4 text-c-tag-4 border-c-tag-4 bg-c-tag-4'
-                        : 'border-c-border-subtle text-c-text-secondary hover:border-c-border'
+                        : 'border-c-border-subtle text-c-text-secondary hover:border-c-border-subtle'
                     }`}
                   >
                     {schedule === s.value && <Check size={14} className="text-c-tag-4" />}
@@ -473,7 +473,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                   value={schedule}
                   onChange={(e) => setSchedule(e.target.value)}
                   placeholder="0 9 * * 1"
-                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-xs border-c-border bg-c-surface"
+                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-xs border-c-border-subtle bg-c-surface"
                 />
               </div>
             </div>
@@ -484,7 +484,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
               <h4 className="text-xs font-semibold uppercase tracking-wider text-c-text-muted">
                 {isPl ? 'Podsumowanie' : 'Summary'}
               </h4>
-              <div className="space-y-2 rounded-xl border border-c-border-subtle bg-c-surface-raised p-4 border-c-border bg-c-surface">
+              <div className="space-y-2 rounded-xl border border-c-border-subtle bg-c-surface-raised p-4 border-c-border-subtle bg-c-surface">
                 <SummaryRow label={isPl ? 'Nazwa' : 'Name'} value={name || '—'} />
                 <SummaryRow
                   label={isPl ? 'Źródło' : 'Source'}
@@ -504,7 +504,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
               </div>
 
               {/* Preview box */}
-              <div className="rounded-xl border border-dashed border-c-border bg-c-surface p-4 border-c-border bg-c-surface">
+              <div className="rounded-xl border border-dashed border-c-border-subtle bg-c-surface p-4 border-c-border-subtle bg-c-surface">
                 <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-c-text-muted">
                   <Eye size={14} />
                   {isPl ? 'Podgląd' : 'Preview'}
@@ -543,7 +543,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-c-border-subtle px-5 py-3 border-c-border">
+        <div className="flex items-center justify-between border-t border-c-border-subtle px-5 py-3 border-c-border-subtle">
           <button
             onClick={() => {
               if (stepIndex === 0) resetWizard();
@@ -581,7 +581,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-c-border-subtle px-5 py-4 border-c-border">
+      <div className="flex items-center justify-between border-b border-c-border-subtle px-5 py-4 border-c-border-subtle">
         <div className="flex items-center gap-2">
           <button
             onClick={onClose}
@@ -643,7 +643,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
               return (
                 <div
                   key={dist.id}
-                  className="group flex items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 transition-colors hover:border-c-border bg-c-surface hover:border-c-border"
+                  className="group flex items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 transition-colors hover:border-c-border-subtle bg-c-surface hover:border-c-border-subtle"
                 >
                   <ChannelIcon
                     size={16}

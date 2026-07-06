@@ -3728,7 +3728,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           type="button"
                           onClick={handleExportReportManifest}
                           disabled={reportExporting || reportPack.status !== 'published'}
-                          className="rounded-xl border border-c-border bg-c-surface px-3 py-2 text-xs font-semibold text-c-text-secondary transition hover:border-c-border-strong hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50"
+                          className="rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs font-semibold text-c-text-secondary transition hover:border-c-border-strong hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {reportExporting
                             ? isPolish
@@ -3742,7 +3742,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           type="button"
                           onClick={handleExportReportMarkdown}
                           disabled={reportMarkdownExporting || reportPack.status !== 'published'}
-                          className="rounded-xl border border-c-border bg-c-surface px-3 py-2 text-xs font-semibold text-c-text-secondary transition hover:border-c-border-strong hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50"
+                          className="rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-xs font-semibold text-c-text-secondary transition hover:border-c-border-strong hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {reportMarkdownExporting
                             ? isPolish

@@ -53,7 +53,7 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
   };
 
   return (
-    <div className="w-72 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl p-3 space-y-3">
+    <div className="w-72 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle shadow-xl p-3 space-y-3">
       <div>
         <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-2">
           <CircleDot size={11} />
@@ -63,7 +63,7 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
           value={nodeData?.semanticType || ''}
           onChange={(e) => onUpdate({ semanticType: e.target.value || '' })}
           disabled={disabled}
-          className="w-full rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface px-3 py-2 text-xs text-c-text-secondary dark:text-c-text focus:outline-none focus:ring-2 focus:ring-c-border disabled:opacity-50"
+          className="w-full rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface px-3 py-2 text-xs text-c-text-secondary dark:text-c-text focus:outline-none focus:ring-2 focus:ring-c-border disabled:opacity-50"
         >
           <option value="">{isPl ? 'Wybierz typ semantyczny' : 'Select semantic type'}</option>
           {SEMANTIC_TYPE_OPTIONS.map((option) => (
@@ -86,7 +86,7 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
               type="button"
               disabled={disabled}
               onClick={() => removeTag(tag)}
-              className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface px-2 py-1 text-[10px] font-medium text-c-text-secondary dark:text-c-text disabled:opacity-50"
+              className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface px-2 py-1 text-[10px] font-medium text-c-text-secondary dark:text-c-text disabled:opacity-50"
             >
               <span>#{tag}</span>
               <span className="text-c-text-secondary">x</span>
@@ -107,7 +107,7 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
             placeholder={
               isPl ? 'Dodaj tag lub kilka po przecinku' : 'Add tag or comma-separated tags'
             }
-            className="flex-1 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface px-3 py-2 text-xs text-c-text-secondary dark:text-c-text focus:outline-none focus:ring-2 focus:ring-c-border disabled:opacity-50"
+            className="flex-1 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface px-3 py-2 text-xs text-c-text-secondary dark:text-c-text focus:outline-none focus:ring-2 focus:ring-c-border disabled:opacity-50"
           />
           <button
             type="button"
@@ -139,14 +139,14 @@ export const SemanticControlsPopover: React.FC<SemanticControlsPopoverProps> = (
           placeholder={
             isPl ? 'Krótki kontekst, znaczenie, decyzja...' : 'Short context, meaning, decision...'
           }
-          className="w-full rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface px-3 py-2 text-xs text-c-text-secondary dark:text-c-text focus:outline-none focus:ring-2 focus:ring-c-border resize-none disabled:opacity-50"
+          className="w-full rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface px-3 py-2 text-xs text-c-text-secondary dark:text-c-text focus:outline-none focus:ring-2 focus:ring-c-border resize-none disabled:opacity-50"
         />
       </div>
 
       <button
         type="button"
         onClick={onOpenNodeDetail}
-        className="w-full rounded-xl border border-c-border-subtle dark:border-c-border px-3 py-2 text-[11px] font-semibold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
+        className="w-full rounded-xl border border-c-border-subtle dark:border-c-border-subtle px-3 py-2 text-[11px] font-semibold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised transition-colors"
       >
         {isPl ? 'Otwórz pełne właściwości' : 'Open full properties'}
       </button>

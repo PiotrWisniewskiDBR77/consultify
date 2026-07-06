@@ -208,7 +208,7 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
       <td className="w-10 border-b border-r border-c-border-subtle px-1 py-1 align-middle text-center">
         <input
           type="checkbox"
-          className="rounded border-c-border"
+          className="rounded border-c-border-subtle"
           checked={selectedRowIds.has(row.id)}
           disabled={locked}
           onChange={() => toggleRowSelection(row.id)}

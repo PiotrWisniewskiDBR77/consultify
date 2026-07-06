@@ -503,7 +503,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                       'px-4 py-2.5 rounded-lg text-sm font-medium transition-all border',
                       retention.period === option.value
                         ? 'bg-navy-900 text-white border-navy-900 shadow-sm dark:border-c-accent'
-                        : 'bg-c-surface-raised text-c-text-secondary border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
+                        : 'bg-c-surface-raised text-c-text-secondary border-c-border-subtle hover:border-c-border-subtle dark:hover:border-white/20'
                     )}
                   >
                     {t(option.labelKey, option.labelDefault)}
@@ -722,7 +722,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     <Link
                       key={doc.to}
                       to={doc.to}
-                      className="flex items-start gap-3 p-3 bg-c-surface-raised border border-c-border-subtle rounded-lg hover:border-c-border dark:hover:border-c-accent hover:bg-c-surface-raised dark:hover:bg-c-accent-soft transition-all group"
+                      className="flex items-start gap-3 p-3 bg-c-surface-raised border border-c-border-subtle rounded-lg hover:border-c-border-subtle dark:hover:border-c-accent hover:bg-c-surface-raised dark:hover:bg-c-accent-soft transition-all group"
                     >
                       <Icon
                         size={14}

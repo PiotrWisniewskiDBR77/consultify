@@ -53,7 +53,7 @@ export const AdminOrganizationOperationsPanel: React.FC = () => {
           </div>
           <button
             onClick={() => navigate(ROUTES.ORGANIZATION.PROFILE)}
-            className="inline-flex items-center gap-2 rounded-lg border border-c-border px-4 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg border border-c-border-subtle px-4 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised transition-colors"
           >
             {t('admin.operations.openProfile', 'Open organization profile')}
             <ExternalLink className="h-4 w-4" />

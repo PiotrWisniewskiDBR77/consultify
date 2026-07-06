@@ -90,7 +90,7 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
   return (
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
       <div className="w-full max-w-lg rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <FileText size={16} className="text-c-info" />
             <h3 className="text-sm font-bold text-c-text dark:text-c-text">
@@ -107,7 +107,7 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
 
         <div className="px-5 py-4">
           {/* File upload */}
-          <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-c-border-subtle dark:border-c-border hover:border-c-info transition-colors cursor-pointer mb-3">
+          <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-c-border-subtle dark:border-c-border-subtle hover:border-c-info transition-colors cursor-pointer mb-3">
             <Upload size={16} className="text-c-text-secondary" />
             <span className="text-[11px] text-c-text-secondary dark:text-c-text-muted">
               {isPl ? 'Załaduj plik .txt lub .md' : 'Upload .txt or .md file'}
@@ -123,7 +123,7 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
             placeholder={
               isPl ? 'Lub wklej tekst dokumentu tutaj...' : 'Or paste document text here...'
             }
-            className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-info resize-none mb-3"
+            className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-info resize-none mb-3"
           />
 
           {/* Extract button */}
@@ -163,10 +163,10 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border flex items-center gap-2">
+        <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border-subtle flex items-center gap-2">
           <button
             onClick={onClose}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border-subtle text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>

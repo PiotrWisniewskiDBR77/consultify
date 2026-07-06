@@ -208,15 +208,15 @@ const QuickPreviewBar: React.FC<QuickPreviewBarProps> = ({ intent, styling, isPl
   const langLabel = REPORT_LANGUAGES.find((l) => l.value === intent.language)?.flag || '🌐';
 
   return (
-    <div className="px-3 py-1.5 bg-c-surface border-b border-c-border">
+    <div className="px-3 py-1.5 bg-c-surface border-b border-c-border-subtle">
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-c-surface text-c-text-secondary rounded border border-c-border">
+        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-c-surface text-c-text-secondary rounded border border-c-border-subtle">
           {audienceLabels[intent.audience] || intent.audience}
         </span>
-        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-c-surface text-c-text-secondary rounded border border-c-border">
+        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-c-surface text-c-text-secondary rounded border border-c-border-subtle">
           {orientationLabel}
         </span>
-        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-c-surface text-c-text-secondary rounded border border-c-border">
+        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-c-surface text-c-text-secondary rounded border border-c-border-subtle">
           {langLabel} {intent.language?.toUpperCase()}
         </span>
         <span
@@ -324,7 +324,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
   return (
     <div className="p-3 space-y-3">
       {/* --- Status bar --- */}
-      <div className="flex items-center justify-between p-2 rounded-lg bg-c-surface border border-c-border">
+      <div className="flex items-center justify-between p-2 rounded-lg bg-c-surface border border-c-border-subtle">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-md bg-indigo-600/30 flex items-center justify-center">
             <GitBranch className="w-3 h-3 text-indigo-400" />
@@ -370,7 +370,7 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
                 placeholder={
                   isPl ? 'Co zmieniłeś w tej wersji...' : 'What changed in this version...'
                 }
-                className="w-full px-2.5 py-2 text-[11px] bg-c-surface border border-c-border rounded-lg resize-none h-14 focus:ring-1 focus:ring-indigo-500 text-c-text-secondary placeholder:text-c-text-secondary leading-relaxed"
+                className="w-full px-2.5 py-2 text-[11px] bg-c-surface border border-c-border-subtle rounded-lg resize-none h-14 focus:ring-1 focus:ring-indigo-500 text-c-text-secondary placeholder:text-c-text-secondary leading-relaxed"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSaveVersion();
@@ -402,19 +402,19 @@ const VersionsTabContent: React.FC<VersionsTabContentProps> = ({
       {/* --- Stats --- */}
       {versions.length > 0 && (
         <div className="grid grid-cols-3 gap-1.5">
-          <div className="text-center py-1.5 px-1 rounded-md bg-c-surface border border-c-border">
+          <div className="text-center py-1.5 px-1 rounded-md bg-c-surface border border-c-border-subtle">
             <div className="text-[13px] font-bold text-blue-400 font-mono">{manualCount}</div>
             <div className="text-[8px] text-c-text-secondary uppercase tracking-wider font-semibold">
               {isPl ? 'Ręcznych' : 'Manual'}
             </div>
           </div>
-          <div className="text-center py-1.5 px-1 rounded-md bg-c-surface border border-c-border">
+          <div className="text-center py-1.5 px-1 rounded-md bg-c-surface border border-c-border-subtle">
             <div className="text-[13px] font-bold text-c-text-secondary font-mono">{autoCount}</div>
             <div className="text-[8px] text-c-text-secondary uppercase tracking-wider font-semibold">
               Auto
             </div>
           </div>
-          <div className="text-center py-1.5 px-1 rounded-md bg-c-surface border border-c-border">
+          <div className="text-center py-1.5 px-1 rounded-md bg-c-surface border border-c-border-subtle">
             <div className="text-[13px] font-bold text-amber-400 font-mono">{rollbackCount}</div>
             <div className="text-[8px] text-c-text-secondary uppercase tracking-wider font-semibold">
               {isPl ? 'Cofnięć' : 'Rollback'}
@@ -667,7 +667,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
     return (
       <aside className="relative flex-shrink-0">
-        <div className="w-11 h-full bg-c-bg border-l border-c-border flex flex-col items-center py-3 gap-1">
+        <div className="w-11 h-full bg-c-bg border-l border-c-border-subtle flex flex-col items-center py-3 gap-1">
           {/* Expand */}
           <button
             onClick={onToggleCollapse}
@@ -692,7 +692,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           )}
 
           {/* Divider */}
-          <div className="w-5 border-t border-c-border my-0.5" />
+          <div className="w-5 border-t border-c-border-subtle my-0.5" />
 
           {/* Content */}
           <SideIcon
@@ -736,9 +736,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   return (
     <aside className="w-80 bg-c-surface border-l border-c-border-subtle flex flex-col overflow-hidden flex-shrink-0">
       {/* Header — segmented toggle */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-c-border bg-c-surface">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle bg-c-surface">
         {/* Segmented control */}
-        <div className="flex items-center bg-c-surface rounded-lg p-0.5 border border-c-border">
+        <div className="flex items-center bg-c-surface rounded-lg p-0.5 border border-c-border-subtle">
           {/* Settings pill */}
           <button
             onClick={() => {
@@ -1187,7 +1187,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
                       styling.layoutOrientation === 'vertical'
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-c-border-subtle hover:border-c-border'
+                        : 'border-c-border-subtle hover:border-c-border-subtle'
                     }`}
                   >
                     <Smartphone className="w-8 h-8 text-c-text-secondary" />
@@ -1201,7 +1201,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
                       styling.layoutOrientation === 'horizontal'
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-c-border-subtle hover:border-c-border'
+                        : 'border-c-border-subtle hover:border-c-border-subtle'
                     }`}
                   >
                     <Monitor className="w-8 h-8 text-c-text-secondary" />
@@ -1406,7 +1406,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   ) : (
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="w-full flex items-center justify-center gap-2 px-3 py-2.5 border-2 border-dashed border-c-border rounded-lg text-c-text-secondary hover:border-blue-400 hover:text-blue-500 transition-all text-sm"
+                      className="w-full flex items-center justify-center gap-2 px-3 py-2.5 border-2 border-dashed border-c-border-subtle rounded-lg text-c-text-secondary hover:border-blue-400 hover:text-blue-500 transition-all text-sm"
                     >
                       <Upload className="w-4 h-4" />
                       {isPl ? 'Wgraj logo' : 'Upload logo'}

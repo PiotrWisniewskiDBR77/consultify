@@ -182,7 +182,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
                 type="text"
                 value={section.title}
                 onChange={(e) => updateTitle(section.key, e.target.value)}
-                className="w-full bg-transparent text-sm font-medium text-c-text border-b border-transparent hover:border-c-border focus:border-blue-500 focus:outline-none transition-colors pb-0.5"
+                className="w-full bg-transparent text-sm font-medium text-c-text border-b border-transparent hover:border-c-border-subtle focus:border-blue-500 focus:outline-none transition-colors pb-0.5"
               />
               <p className="text-xs text-c-text-secondary leading-relaxed">
                 {section.summary}
@@ -267,7 +267,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
       ) : (
         <button
           onClick={() => setAddingSection(true)}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-dashed border-c-border text-sm text-c-text-secondary hover:border-blue-400 hover:text-blue-500 dark:hover:border-blue-500 dark:hover:text-blue-400 transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-dashed border-c-border-subtle text-sm text-c-text-secondary hover:border-blue-400 hover:text-blue-500 dark:hover:border-blue-500 dark:hover:text-blue-400 transition-colors"
         >
           <Plus className="w-4 h-4" />
           {isPl ? 'Dodaj sekcję' : 'Add section'}

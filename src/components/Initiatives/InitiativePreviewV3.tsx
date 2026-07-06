@@ -282,7 +282,7 @@ export const InitiativePreviewV3Body: React.FC<{
         String(initiative.sourceType || '').toLowerCase()
       ) ||
         lineage.length > 0) && (
-        <div className="rounded-xl border border-c-border bg-c-surface-raised p-3">
+        <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-3">
           <div className="flex items-center gap-2 mb-2">
             <Link2 size={14} className="text-c-info" />
             <span className="text-[11px] font-semibold text-c-info uppercase tracking-wider">

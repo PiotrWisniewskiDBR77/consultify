@@ -29,7 +29,7 @@ const STYLES: Record<
 > = {
   draft: {
     chipClass:
-      'bg-c-surface-raised text-c-text-secondary border-c-border',
+      'bg-c-surface-raised text-c-text-secondary border-c-border-subtle',
     dotClass: 'text-c-text-secondary',
     icon: <Circle size={11} />,
     en: 'Draft',

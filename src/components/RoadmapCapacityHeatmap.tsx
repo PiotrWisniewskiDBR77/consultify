@@ -136,9 +136,9 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
   }, [capacityData]);
 
   return (
-    <div className="bg-c-surface rounded-xl border border-c-border overflow-hidden">
+    <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-c-border">
+      <div className="px-4 py-3 border-b border-c-border-subtle">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-c-text flex items-center gap-2">
             <Users size={18} className="text-c-text-muted" />
@@ -160,7 +160,7 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-4 gap-4 p-4 border-b border-c-border">
+      <div className="grid grid-cols-4 gap-4 p-4 border-b border-c-border-subtle">
         <div className="text-center">
           <p className="text-xs text-c-text-muted">Team Capacity</p>
           <p className="text-lg font-bold text-c-text">{teamCapacity}h/mo</p>
@@ -244,11 +244,11 @@ export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
       </div>
 
       {/* Legend */}
-      <div className="px-4 py-3 bg-c-surface-raised border-t border-c-border">
+      <div className="px-4 py-3 bg-c-surface-raised border-t border-c-border-subtle">
         <div className="flex items-center justify-center gap-4 text-xs text-c-text-secondary">
           <span className="text-c-text-muted">Utilization:</span>
           <div className="flex items-center gap-1">
-            <div className="w-4 h-4 rounded bg-c-surface-raised border border-c-border" />
+            <div className="w-4 h-4 rounded bg-c-surface-raised border border-c-border-subtle" />
             <span>0%</span>
           </div>
           <div className="flex items-center gap-1">

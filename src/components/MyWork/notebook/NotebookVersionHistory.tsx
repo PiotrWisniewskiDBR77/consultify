@@ -187,7 +187,7 @@ export const NotebookVersionHistory: React.FC<NotebookVersionHistoryProps> = ({
             className={`rounded-lg border px-3 py-2 transition-colors ${
               selectedId === v.id
                 ? 'border-c-info/30 bg-c-info/10'
-                : 'border-c-border hover:bg-c-surface-raised'
+                : 'border-c-border-subtle hover:bg-c-surface-raised'
             }`}
           >
             <div className="flex items-center justify-between gap-2">
@@ -218,7 +218,7 @@ export const NotebookVersionHistory: React.FC<NotebookVersionHistoryProps> = ({
             </div>
 
             {selectedId === v.id && (
-              <div className="mt-2 border-t border-c-border pt-2">
+              <div className="mt-2 border-t border-c-border-subtle pt-2">
                 <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
                   {t.diff}
                 </p>

@@ -253,7 +253,7 @@ export const NotebookHamburgerMenu: React.FC<NotebookHamburgerMenuProps> = (prop
     <div
       ref={menuRef}
       role="menu"
-      className="fixed z-50 min-w-[220px] rounded-lg border border-c-border/70 bg-c-surface py-1 shadow-xl dark:border-navy-700/70 dark:bg-navy-900"
+      className="fixed z-50 min-w-[220px] rounded-lg border border-c-border-subtle/70 bg-c-surface py-1 shadow-xl dark:border-navy-700/70 dark:bg-navy-900"
       style={{ top: y, left: x }}
     >
       {actions.map((action) => (

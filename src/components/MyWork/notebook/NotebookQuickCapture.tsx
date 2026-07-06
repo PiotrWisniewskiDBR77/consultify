@@ -89,7 +89,7 @@ export const NotebookQuickCapture: React.FC<NotebookQuickCaptureProps> = ({
 
   return (
     <div
-      className={`flex items-center gap-2 rounded-xl border border-c-border bg-c-surface/40 px-2.5 py-2 focus-within:border-c-border-strong focus-within:ring-2 focus-within:ring-[var(--c-focus)] ${className}`}
+      className={`flex items-center gap-2 rounded-xl border border-c-border-subtle bg-c-surface/40 px-2.5 py-2 focus-within:border-c-border-strong focus-within:ring-2 focus-within:ring-[var(--c-focus)] ${className}`}
     >
       <span className="text-c-text-muted">
         {isUrl ? <Link2 size={15} /> : <Plus size={15} />}

@@ -114,9 +114,9 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
   };
 
   return (
-    <div className="w-60 max-h-[420px] overflow-y-auto rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl">
+    <div className="w-60 max-h-[420px] overflow-y-auto rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle shadow-xl">
       {resolvedHint && (
-        <div className="px-3 py-2 border-b border-c-border-subtle dark:border-c-border">
+        <div className="px-3 py-2 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="text-[10px] text-c-text-secondary dark:text-c-text-muted font-medium flex items-center gap-1">
             <Sparkles size={10} />
             {resolvedHint}
@@ -143,7 +143,7 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
       </div>
 
       {hasNodeSelected && (
-        <div className="border-t border-c-border-subtle dark:border-c-border px-1 py-1">
+        <div className="border-t border-c-border-subtle dark:border-c-border-subtle px-1 py-1">
           <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
             {isPl ? 'Dla wybranego węzła' : 'For selected node'}
           </div>
@@ -163,7 +163,7 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
         </div>
       )}
 
-      <div className="border-t border-c-border-subtle dark:border-c-border px-1 py-1">
+      <div className="border-t border-c-border-subtle dark:border-c-border-subtle px-1 py-1">
         <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary">
           <Sparkles size={10} className="inline mr-1" />
           {isPl ? 'Generatory AI' : 'AI generators'}

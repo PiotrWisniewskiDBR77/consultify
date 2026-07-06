@@ -131,7 +131,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 
             {isOpen && (
               <div
-                className="absolute bottom-full mb-1 left-0 z-[100] bg-c-surface rounded-lg shadow-xl border border-c-border py-1 min-w-[120px]"
+                className="absolute bottom-full mb-1 left-0 z-[100] bg-c-surface rounded-lg shadow-xl border border-c-border-subtle py-1 min-w-[120px]"
                 onClick={(e) => e.stopPropagation()}
               >
                 {AGG_OPTIONS.map((opt) => (

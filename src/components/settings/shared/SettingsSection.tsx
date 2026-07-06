@@ -233,7 +233,7 @@ export const SettingsInput: React.FC<SettingsInputProps> = ({
           'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent',
           error
             ? 'border-c-danger focus:ring-c-danger'
-            : 'border-c-border hover:border-c-border-strong dark:hover:border-white/20',
+            : 'border-c-border-subtle hover:border-c-border-strong dark:hover:border-white/20',
           className
         )}
       />
@@ -275,7 +275,7 @@ export const SettingsTextarea: React.FC<SettingsTextareaProps> = ({
           'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent',
           error
             ? 'border-c-danger focus:ring-c-danger'
-            : 'border-c-border hover:border-c-border-strong dark:hover:border-white/20',
+            : 'border-c-border-subtle hover:border-c-border-strong dark:hover:border-white/20',
           className
         )}
       />
@@ -319,7 +319,7 @@ export const SettingsSelect: React.FC<SettingsSelectProps> = ({
           'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent',
           error
             ? 'border-c-danger focus:ring-c-danger'
-            : 'border-c-border hover:border-c-border-strong dark:hover:border-white/20',
+            : 'border-c-border-subtle hover:border-c-border-strong dark:hover:border-white/20',
           className
         )}
       >

@@ -467,7 +467,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                                         ${
                                                           isSelected
                                                             ? 'border-c-accent bg-c-accent-soft'
-                                                            : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
+                                                            : 'border-c-border-subtle hover:border-c-border-subtle dark:hover:border-white/20'
                                                         }
                                                     `}
                         >
@@ -479,7 +479,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                                                 ${
                                                                   isSelected
                                                                     ? 'bg-c-accent border-c-accent'
-                                                                    : 'border-c-border'
+                                                                    : 'border-c-border-subtle'
                                                                 }
                                                             `}
                               >
@@ -572,7 +572,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                                 ${
                                                   priorityFilter === opt.value
                                                     ? 'bg-c-accent-soft text-c-accent dark:text-c-accent border-c-accent'
-                                                    : 'bg-c-surface dark:bg-c-bg text-c-text-secondary dark:text-c-text-muted border-c-border-subtle hover:border-c-border'
+                                                    : 'bg-c-surface dark:bg-c-bg text-c-text-secondary dark:text-c-text-muted border-c-border-subtle hover:border-c-border-subtle'
                                                 }
                                             `}
                     >
@@ -642,7 +642,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                                         ${
                                                           isSelected
                                                             ? 'bg-c-accent border-c-accent'
-                                                            : 'border-c-border hover:border-c-accent'
+                                                            : 'border-c-border-subtle hover:border-c-accent'
                                                         }
                                                     `}
                         >

@@ -318,7 +318,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
             className={`rounded-full border px-3 py-1 transition-colors ${
               scope === s
                 ? 'border-sky-500 bg-sky-500/10 text-sky-700 dark:text-sky-300'
-                : 'border-c-border text-c-text-secondary hover:border-sky-300'
+                : 'border-c-border-subtle text-c-text-secondary hover:border-sky-300'
             }`}
           >
             {s === 'local'
@@ -341,7 +341,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
           <label className="flex flex-col gap-1 text-xs text-c-text-secondary">
             <span>{t('documentStudio.editor.target', 'Target block')}</span>
             <select
-              className="h-9 rounded-lg border border-c-border bg-c-surface px-2 text-sm text-c-text"
+              className="h-9 rounded-lg border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text"
               value={targetKey}
               onChange={(event) => setTargetKey(event.target.value)}
             >
@@ -362,7 +362,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
           <label className="flex flex-col gap-1 text-xs text-c-text-secondary">
             <span>{t('documentStudio.editor.sectionTarget', 'Target section')}</span>
             <select
-              className="h-9 rounded-lg border border-c-border bg-c-surface px-2 text-sm text-c-text"
+              className="h-9 rounded-lg border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text"
               value={sectionTargetId}
               onChange={(event) => setSectionTargetId(event.target.value)}
             >
@@ -379,7 +379,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
         ) : (
           <div className="flex flex-col gap-1 text-xs text-c-text-secondary">
             <span>{t('documentStudio.editor.globalScopeLabel', 'Scope')}</span>
-            <span className="rounded-lg border border-c-border bg-c-surface-raised px-2 py-1 text-c-text">
+            <span className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-c-text">
               {t('documentStudio.editor.globalScopeNote', 'Edits every block of every section.')}
             </span>
           </div>
@@ -387,7 +387,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
         <label className="flex flex-col gap-1 text-xs text-c-text-secondary">
           <span>{t('documentStudio.editor.instruction', 'Edit instruction')}</span>
           <textarea
-            className="min-h-[72px] rounded-lg border border-c-border bg-c-surface px-2 py-2 text-sm text-c-text"
+            className="min-h-[72px] rounded-lg border border-c-border-subtle bg-c-surface px-2 py-2 text-sm text-c-text"
             value={instruction}
             onChange={(event) => setInstruction(event.target.value)}
             placeholder={t(
@@ -402,7 +402,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
         <label className="flex items-center gap-2 text-xs text-c-text-secondary">
           <input
             type="checkbox"
-            className="h-4 w-4 rounded border-c-border text-c-focus-solid focus:ring-c-focus"
+            className="h-4 w-4 rounded border-c-border-subtle text-c-focus-solid focus:ring-c-focus"
             checked={useLlm}
             onChange={(e) => setUseLlm(e.target.checked)}
             disabled={submitting}
@@ -458,7 +458,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
               {t('documentStudio.editor.rawBeforeAfter', 'Raw before / after')}
             </summary>
             <div className="mt-2 grid gap-2 md:grid-cols-2">
-              <div className="rounded-md border border-c-border p-2">
+              <div className="rounded-md border border-c-border-subtle p-2">
                 <div className="mb-1 font-semibold text-c-text-muted">
                   {t('documentStudio.editor.before', 'Before')}
                 </div>
@@ -466,7 +466,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
                   {pendingProposal.diff.before}
                 </pre>
               </div>
-              <div className="rounded-md border border-c-border p-2">
+              <div className="rounded-md border border-c-border-subtle p-2">
                 <div className="mb-1 font-semibold text-c-text-muted">
                   {t('documentStudio.editor.after', 'After')}
                 </div>
@@ -502,7 +502,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
       ) : null}
 
       {auditTrail.length > 0 ? (
-        <div className="mt-3 rounded-lg border border-c-border bg-c-surface p-3 text-xs">
+        <div className="mt-3 rounded-lg border border-c-border-subtle bg-c-surface p-3 text-xs">
           <div className="mb-2 font-semibold text-c-text-secondary">
             {t('documentStudio.editor.auditTrail', 'Audit trail')}
           </div>

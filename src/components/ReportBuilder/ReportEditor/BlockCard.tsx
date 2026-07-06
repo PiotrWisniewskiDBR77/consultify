@@ -1422,7 +1422,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
         ${
           isSelected
             ? 'border-blue-500 shadow-lg shadow-blue-500/10'
-            : 'border-c-border-subtle hover:border-c-border'
+            : 'border-c-border-subtle hover:border-c-border-subtle'
         }
         ${!block.enabled ? 'opacity-50' : ''}
       `}
@@ -1834,7 +1834,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                             }}
                             className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded-md transition-all border ${
                               isSelected
-                                ? 'bg-c-surface text-c-text border-c-border shadow-sm'
+                                ? 'bg-c-surface text-c-text border-c-border-subtle shadow-sm'
                                 : 'bg-c-surface text-c-text border-c-border-subtle hover:bg-c-surface-raised'
                             }`}
                           >
@@ -1871,7 +1871,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
                           disabled={!block.content && !block.isGenerated}
                           className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded-md transition-all border ${
                             isSelected
-                              ? 'bg-c-surface-raised text-c-text border-c-border shadow-sm'
+                              ? 'bg-c-surface-raised text-c-text border-c-border-subtle shadow-sm'
                               : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
                           } ${!block.content && !block.isGenerated ? 'opacity-30 cursor-not-allowed' : ''}`}
                         >

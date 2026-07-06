@@ -310,7 +310,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
 
       {/* New Review Form */}
       {showNewReview && (
-        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-lg p-4 space-y-4">
+        <div className="bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-lg p-4 space-y-4">
           <h4 className="font-medium text-c-text">Request New Review</h4>
 
           <div className="grid grid-cols-2 gap-4">
@@ -319,7 +319,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
               <select
                 value={newReview.reviewerId}
                 onChange={(e) => setNewReview((prev) => ({ ...prev, reviewerId: e.target.value }))}
-                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               >
                 <option value="">Select reviewer...</option>
                 {users.map((user) => (
@@ -340,7 +340,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                     priority: e.target.value as ContentReviewPriority,
                   }))
                 }
-                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               >
                 <option value="LOW">Low</option>
                 <option value="NORMAL">Normal</option>
@@ -355,7 +355,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                 type="date"
                 value={newReview.dueDate}
                 onChange={(e) => setNewReview((prev) => ({ ...prev, dueDate: e.target.value }))}
-                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               />
             </div>
           </div>
@@ -379,7 +379,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                     value={item.label}
                     onChange={(e) => updateChecklistItem(item.id, e.target.value)}
                     placeholder="Checklist item..."
-                    className="flex-1 px-3 py-1.5 bg-c-text text-c-bg border border-c-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                    className="flex-1 px-3 py-1.5 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
                   />
                   <button
                     onClick={() => removeChecklistItem(item.id)}
@@ -429,7 +429,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
             return (
               <div
                 key={review.id}
-                className="bg-c-surface-raised/50 border border-c-border/50 rounded-lg overflow-hidden"
+                className="bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-lg overflow-hidden"
               >
                 {/* Header */}
                 <button
@@ -477,7 +477,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
 
                 {/* Expanded content */}
                 {isExpanded && (
-                  <div className="px-4 pb-4 border-t border-c-border/50">
+                  <div className="px-4 pb-4 border-t border-c-border-subtle/50">
                     <div className="pt-4 space-y-4">
                       {/* Review info */}
                       <div className="grid grid-cols-2 gap-4 text-sm">
@@ -546,13 +546,13 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
 
                       {/* Actions for pending reviews */}
                       {isPending && (
-                        <div className="pt-2 border-t border-c-border/50 space-y-3">
+                        <div className="pt-2 border-t border-c-border-subtle/50 space-y-3">
                           <textarea
                             value={reviewNotes}
                             onChange={(e) => setReviewNotes(e.target.value)}
                             placeholder="Add review notes..."
                             rows={2}
-                            className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                            className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/50"
                           />
                           <div className="flex gap-2">
                             <button

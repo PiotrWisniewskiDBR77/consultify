@@ -373,7 +373,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
             className={`text-center text-xs py-6 border-2 border-dashed rounded-lg transition-colors ${
               isOver
                 ? 'border-c-accent/50 text-c-accent'
-                : 'border-c-border text-c-text-muted'
+                : 'border-c-border-subtle text-c-text-muted'
             }`}
           >
             {isOver ? t('execution.kanban.dropHere') : t('execution.kanban.noTasks')}

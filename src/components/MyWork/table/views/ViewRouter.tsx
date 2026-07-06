@@ -176,7 +176,7 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({
     case 'chart':
       return (
         <div className="flex flex-col h-full overflow-hidden">
-          <div className="shrink-0 border-b border-c-border p-3 bg-[color-mix(in_srgb,var(--c-surface-raised)_80%25,transparent)] bg-[color-mix(in_srgb,var(--c-surface)_80%25,transparent)]">
+          <div className="shrink-0 border-b border-c-border-subtle p-3 bg-[color-mix(in_srgb,var(--c-surface-raised)_80%25,transparent)] bg-[color-mix(in_srgb,var(--c-surface)_80%25,transparent)]">
             <ChartConfigPanel config={chartConfig} fields={chartFields} onChange={setChartConfig} />
           </div>
           <div className="flex-1 min-h-0">

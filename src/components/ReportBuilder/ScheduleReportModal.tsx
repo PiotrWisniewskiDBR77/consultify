@@ -180,7 +180,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
               value={scheduleName}
               onChange={(e) => setScheduleName(e.target.value)}
               placeholder={isPl ? 'np. Tygodniowy raport statusu' : 'e.g. Weekly Status Report'}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-c-border bg-c-text text-c-bg placeholder:text-c-text-muted focus:ring-2 focus:ring-c-focus focus:border-c-accent outline-none transition-colors"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-c-border-subtle bg-c-text text-c-bg placeholder:text-c-text-muted focus:ring-2 focus:ring-c-focus focus:border-c-accent outline-none transition-colors"
             />
           </div>
 
@@ -198,7 +198,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
                   className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
                     frequency === opt.value
                       ? 'border-c-accent bg-c-accent-soft0 text-c-accent font-medium'
-                      : 'border-c-border text-c-text-secondary hover:opacity-90'
+                      : 'border-c-border-subtle text-c-text-secondary hover:opacity-90'
                   }`}
                 >
                   {isPl ? opt.labelPl : opt.labelEn}
@@ -216,7 +216,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
               <select
                 value={dayOfWeek}
                 onChange={(e) => setDayOfWeek(Number(e.target.value))}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-c-border bg-c-text text-c-bg focus:ring-2 focus:ring-c-focus focus:border-c-accent outline-none transition-colors"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-c-border-subtle bg-c-text text-c-bg focus:ring-2 focus:ring-c-focus focus:border-c-accent outline-none transition-colors"
               >
                 {DAYS_OF_WEEK.map((d) => (
                   <option key={d.value} value={d.value}>
@@ -236,7 +236,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
               <select
                 value={dayOfMonth}
                 onChange={(e) => setDayOfMonth(Number(e.target.value))}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-c-border bg-c-text text-c-bg focus:ring-2 focus:ring-c-focus focus:border-c-accent outline-none transition-colors"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-c-border-subtle bg-c-text text-c-bg focus:ring-2 focus:ring-c-focus focus:border-c-accent outline-none transition-colors"
               >
                 {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
                   <option key={d} value={d}>
@@ -257,7 +257,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-c-border bg-c-text text-c-bg focus:ring-2 focus:ring-c-focus focus:border-c-accent outline-none transition-colors"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-c-border-subtle bg-c-text text-c-bg focus:ring-2 focus:ring-c-focus focus:border-c-accent outline-none transition-colors"
             />
           </div>
 
@@ -272,7 +272,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
                   type="checkbox"
                   checked={deliveryEmail}
                   onChange={(e) => setDeliveryEmail(e.target.checked)}
-                  className="w-4 h-4 rounded border-c-border text-c-accent focus:ring-c-focus"
+                  className="w-4 h-4 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
                 />
                 <Mail size={16} className="text-c-text-secondary" />
                 <span className="text-sm text-c-text">
@@ -284,7 +284,7 @@ export const ScheduleReportModal: React.FC<ScheduleReportModalProps> = ({
                   type="checkbox"
                   checked={deliveryDashboard}
                   onChange={(e) => setDeliveryDashboard(e.target.checked)}
-                  className="w-4 h-4 rounded border-c-border text-c-accent focus:ring-c-focus"
+                  className="w-4 h-4 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
                 />
                 <Bell size={16} className="text-c-text-secondary" />
                 <span className="text-sm text-c-text">

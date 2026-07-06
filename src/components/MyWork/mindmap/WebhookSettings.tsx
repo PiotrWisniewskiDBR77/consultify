@@ -122,7 +122,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
   return (
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
       <div className="w-full max-w-lg rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Webhook size={16} className="text-c-warning" />
             <h3 className="text-sm font-bold text-c-text dark:text-c-text">
@@ -150,14 +150,14 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
           {webhooks.map((wh) => (
             <div
               key={wh.id}
-              className="p-3 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface"
+              className="p-3 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface"
             >
               <div className="flex items-center gap-2 mb-2">
                 <input
                   value={wh.name}
                   onChange={(e) => updateWebhook(wh.id, { name: e.target.value })}
                   placeholder={isPl ? 'Nazwa (np. Slack)' : 'Name (e.g. Slack)'}
-                  className="flex-1 px-2 py-1 rounded-lg border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface text-[11px] text-c-text-secondary dark:text-c-text placeholder:text-c-text-muted"
+                  className="flex-1 px-2 py-1 rounded-lg border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-[11px] text-c-text-secondary dark:text-c-text placeholder:text-c-text-muted"
                 />
                 <label className="flex items-center gap-1 cursor-pointer">
                   <input
@@ -179,7 +179,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
                 value={wh.url}
                 onChange={(e) => updateWebhook(wh.id, { url: e.target.value })}
                 placeholder="https://hooks.slack.com/services/..."
-                className="w-full px-2 py-1 rounded-lg border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface text-[10px] text-c-text-secondary dark:text-c-text-muted placeholder:text-c-text-muted mb-2 font-mono"
+                className="w-full px-2 py-1 rounded-lg border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-[10px] text-c-text-secondary dark:text-c-text-muted placeholder:text-c-text-muted mb-2 font-mono"
               />
               <div className="flex flex-wrap gap-1">
                 {AVAILABLE_EVENTS.map((evt) => (
@@ -196,10 +196,10 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
           ))}
         </div>
 
-        <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border flex items-center gap-2">
+        <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border-subtle flex items-center gap-2">
           <button
             onClick={addWebhook}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface border border-c-border-subtle dark:border-c-border transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle transition-colors"
           >
             <Plus size={12} />
             {isPl ? 'Dodaj webhook' : 'Add webhook'}

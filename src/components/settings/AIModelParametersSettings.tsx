@@ -209,7 +209,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
             ? isPlatform
               ? 'border-c-accent bg-gradient-to-r from-c-accent-soft to-c-accent-soft'
               : 'border-c-accent bg-c-accent-soft'
-            : 'border-c-border-subtle bg-c-surface-raised hover:border-c-border dark:hover:border-white/10'
+            : 'border-c-border-subtle bg-c-surface-raised hover:border-c-border-subtle dark:hover:border-white/10'
         )}
         onClick={() => toggleModel(model.id)}
       >

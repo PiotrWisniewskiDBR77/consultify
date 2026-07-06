@@ -199,10 +199,10 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
       {/* Provenance chain popover */}
       {showChain && hasChain && (
         <div
-          className="absolute left-0 top-full mt-1 z-50 w-64 rounded-lg border border-c-border bg-c-surface shadow-xl"
+          className="absolute left-0 top-full mt-1 z-50 w-64 rounded-lg border border-c-border-subtle bg-c-surface shadow-xl"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between px-3 py-2 border-b border-c-border">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
             <span className="text-[10px] font-semibold text-c-text-muted uppercase tracking-wider">
               {isPl ? 'Łańcuch pochodzenia' : 'Provenance Chain'}
             </span>
@@ -262,7 +262,7 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
             ))}
           </div>
           {(connectorRunId || recordId) && (
-            <div className="px-3 py-1.5 border-t border-c-border text-[9px] text-c-text-secondary space-y-0.5">
+            <div className="px-3 py-1.5 border-t border-c-border-subtle text-[9px] text-c-text-secondary space-y-0.5">
               {connectorRunId && <p>Run: {connectorRunId.slice(0, 12)}…</p>}
               {recordId && <p>Record: {recordId.slice(0, 12)}…</p>}
             </div>

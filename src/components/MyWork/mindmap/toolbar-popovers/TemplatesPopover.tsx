@@ -101,7 +101,7 @@ export const TemplatesPopover: React.FC<TemplatesPopoverProps> = ({
   };
 
   return (
-    <div className="w-64 max-h-[440px] overflow-y-auto rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl">
+    <div className="w-64 max-h-[440px] overflow-y-auto rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle shadow-xl">
       <div className="p-2">
         <div className="relative">
           <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-c-text-secondary" />
@@ -109,7 +109,7 @@ export const TemplatesPopover: React.FC<TemplatesPopoverProps> = ({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={isPl ? 'Szukaj…' : 'Search…'}
-            className="w-full pl-7 pr-2 py-1.5 text-[11px] rounded-lg bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border text-c-text-secondary dark:text-c-text placeholder:text-c-text-muted outline-none focus:ring-1 focus:ring-c-border"
+            className="w-full pl-7 pr-2 py-1.5 text-[11px] rounded-lg bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle text-c-text-secondary dark:text-c-text placeholder:text-c-text-muted outline-none focus:ring-1 focus:ring-c-border"
             autoFocus
           />
         </div>
@@ -136,7 +136,7 @@ export const TemplatesPopover: React.FC<TemplatesPopoverProps> = ({
 
       {/* Divider between sections */}
       {filteredStarts.length > 0 && templates.length > 0 && (
-        <div className="border-t border-c-border-subtle dark:border-c-border" />
+        <div className="border-t border-c-border-subtle dark:border-c-border-subtle" />
       )}
 
       {/* Templates */}
@@ -163,7 +163,7 @@ export const TemplatesPopover: React.FC<TemplatesPopoverProps> = ({
           </div>
         )}
       </div>
-      <div className="border-t border-c-border-subtle dark:border-c-border px-1 py-1">
+      <div className="border-t border-c-border-subtle dark:border-c-border-subtle px-1 py-1">
         <button
           onClick={() => {
             onOpenGallery();

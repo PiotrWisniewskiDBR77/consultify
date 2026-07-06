@@ -799,7 +799,7 @@ export const PresentationsHub: React.FC = () => {
                         const deck = allDecks.find((d) => d.id === activeDocumentId);
                         if (deck) handleExport(deck);
                       }}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-c-surface-raised text-c-text-secondary border border-c-border-subtle hover:border-c-border transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-c-surface-raised text-c-text-secondary border border-c-border-subtle hover:border-c-border-subtle transition-colors"
                     >
                       <Download size={16} />
                       {t('presentations.actions.export', 'Export')}
@@ -812,7 +812,7 @@ export const PresentationsHub: React.FC = () => {
                           setRenameValue(deck.title);
                         }
                       }}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                     >
                       <Pencil size={16} />
                       {t('presentations.actions.rename', 'Rename')}
@@ -830,7 +830,7 @@ export const PresentationsHub: React.FC = () => {
       {/* Rename modal */}
       {renameModalDeck && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-c-surface border border-c-border rounded-xl p-6 w-full max-w-md shadow-xl">
+          <div className="bg-c-surface border border-c-border-subtle rounded-xl p-6 w-full max-w-md shadow-xl">
             <h3 className="text-lg font-semibold text-c-text mb-4">
               {t('presentations.actions.rename', 'Rename')}
             </h3>
@@ -838,7 +838,7 @@ export const PresentationsHub: React.FC = () => {
               type="text"
               value={renameValue}
               onChange={(e) => setRenameValue(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg bg-c-surface border border-c-border text-c-text focus:ring-2 focus:ring-c-focus"
+              className="w-full px-4 py-2 rounded-lg bg-c-surface border border-c-border-subtle text-c-text focus:ring-2 focus:ring-c-focus"
               placeholder={t('presentations.renamePlaceholder', 'Deck title')}
               autoFocus
             />

@@ -3,7 +3,7 @@
  * Unified UI component for rendering chat actions in AI responses.
  * SPEC-K tool-call card: rounded-lg, h-auto, tokenized (c.*) surfaces.
  * Primary: bg-c-accent-soft, border-c-accent/30 (Harvard Crimson brand accent).
- * Secondary: bg-c-surface-raised, border-c-border.
+ * Secondary: bg-c-surface-raised, border-c-border-subtle.
  * Disabled: opacity-50, cursor-not-allowed, tooltip with reason.
  * Error: c-danger border + inline error message.
  */
@@ -93,7 +93,7 @@ export const ChatActionCard: React.FC<ChatActionCardProps> = ({
   const primaryClasses =
     'bg-c-accent-soft border-c-accent/30 text-c-accent hover:bg-c-accent-soft hover:border-c-accent/50';
   const secondaryClasses =
-    'bg-c-surface-raised border-c-border text-c-text-secondary hover:bg-c-border-subtle hover:text-c-text';
+    'bg-c-surface-raised border-c-border-subtle text-c-text-secondary hover:bg-c-border-subtle hover:text-c-text';
   const disabledClasses = 'opacity-50 cursor-not-allowed';
   const errorClasses = 'border-c-danger/50 bg-c-danger/5';
 

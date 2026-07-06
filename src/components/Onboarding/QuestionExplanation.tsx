@@ -107,7 +107,7 @@ export const QuestionExplanation: React.FC<QuestionExplanationProps> = ({
       {/* Expanded Content */}
       {isExpanded && (
         <div className="px-4 pb-4 pt-0 space-y-3">
-          <div className="flex items-start gap-3 bg-c-surface-raised rounded-lg p-3 border border-c-border">
+          <div className="flex items-start gap-3 bg-c-surface-raised rounded-lg p-3 border border-c-border-subtle">
             <div className="w-8 h-8 rounded-lg bg-c-accent-soft flex items-center justify-center shrink-0">
               <Icon size={16} className="text-c-accent" />
             </div>

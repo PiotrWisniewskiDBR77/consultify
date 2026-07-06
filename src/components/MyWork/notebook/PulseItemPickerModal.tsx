@@ -183,7 +183,7 @@ export const PulseItemPickerModal: React.FC<PulseItemPickerModalProps> = ({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={pl ? 'Szukaj po tytule...' : 'Search by title...'}
-            className="w-full pl-9 pr-4 py-2 rounded-lg border border-c-border bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)] text-sm"
+            className="w-full pl-9 pr-4 py-2 rounded-lg border border-c-border-subtle bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)] text-sm"
           />
         </div>
 
@@ -202,7 +202,7 @@ export const PulseItemPickerModal: React.FC<PulseItemPickerModalProps> = ({
             items.map((item) => (
               <div
                 key={item.id}
-                className="rounded-lg border border-c-border bg-c-surface-raised px-4 py-3 flex items-center justify-between gap-3"
+                className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-4 py-3 flex items-center justify-between gap-3"
               >
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium text-c-text truncate">

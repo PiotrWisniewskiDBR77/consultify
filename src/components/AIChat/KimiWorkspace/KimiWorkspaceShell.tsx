@@ -243,7 +243,7 @@ function TaskProgressBar({
               ) : step.status === 'failed' ? (
                 <X size={12} className="text-danger-500 flex-shrink-0" />
               ) : (
-                <div className="w-3 h-3 rounded-hig-full border border-c-border flex-shrink-0" />
+                <div className="w-3 h-3 rounded-hig-full border border-c-border-subtle flex-shrink-0" />
               )}
               <span
                 className={`${step.status === 'running' ? 'text-c-text font-medium' : 'text-c-text-secondary'}`}

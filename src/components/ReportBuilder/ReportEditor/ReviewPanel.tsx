@@ -509,7 +509,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
   return (
     <div className="space-y-3">
       {/* ===== WORKFLOW ===== */}
-      <div className="p-3 bg-c-surface rounded-lg border border-c-border">
+      <div className="p-3 bg-c-surface rounded-lg border border-c-border-subtle">
         <div className="text-[8px] font-bold text-c-text-secondary uppercase tracking-[0.15em] mb-2.5">
           {isPolish ? 'Workflow' : 'Workflow'}
         </div>
@@ -517,7 +517,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
 
         {/* Distribution */}
         {(reportStatus === 'APPROVED' || isPost) && (
-          <div className="mt-3 pt-2.5 border-t border-c-border">
+          <div className="mt-3 pt-2.5 border-t border-c-border-subtle">
             <div className="text-[8px] font-bold text-c-text-secondary uppercase tracking-[0.15em] mb-2">
               {isPolish ? 'Dystrybucja' : 'Distribution'}
             </div>
@@ -532,7 +532,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
           <button
             onClick={doSendBack}
             disabled={isSubmitting}
-            className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium text-c-text-secondary border border-c-border rounded-md hover:bg-c-surface hover:text-c-text transition-all"
+            className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium text-c-text-secondary border border-c-border-subtle rounded-md hover:bg-c-surface hover:text-c-text transition-all"
           >
             <ArrowLeft className="w-3 h-3" /> {isPolish ? 'Popraw' : 'Revise'}
           </button>
@@ -698,7 +698,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
         {commentsOpen && (
           <div className="mt-1 space-y-1.5">
             {showAddComment && (
-              <div className="p-2 bg-c-surface rounded border border-c-border space-y-1.5">
+              <div className="p-2 bg-c-surface rounded border border-c-border-subtle space-y-1.5">
                 <div className="flex gap-1">
                   {[
                     { v: 'GENERAL' as const, l: isPolish ? 'Ogólny' : 'General' },
@@ -720,7 +720,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                   onChange={(e) => setNewCommentContent(e.target.value)}
                   placeholder={isPolish ? 'Komentarz...' : 'Comment...'}
                   rows={2}
-                  className="w-full px-2 py-1 text-[10px] border border-c-border rounded bg-c-bg text-c-text resize-none outline-none placeholder:text-c-text-muted"
+                  className="w-full px-2 py-1 text-[10px] border border-c-border-subtle rounded bg-c-bg text-c-text resize-none outline-none placeholder:text-c-text-muted"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleAddComment();
                   }}
@@ -761,7 +761,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                   return (
                     <div
                       key={c.id}
-                      className={`p-1.5 rounded border ${open ? 'bg-c-surface border-c-border' : 'bg-c-surface border-c-border opacity-50'}`}
+                      className={`p-1.5 rounded border ${open ? 'bg-c-surface border-c-border-subtle' : 'bg-c-surface border-c-border-subtle opacity-50'}`}
                     >
                       <div className="flex items-start gap-1">
                         <button

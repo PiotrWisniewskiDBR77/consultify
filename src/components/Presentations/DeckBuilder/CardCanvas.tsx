@@ -177,7 +177,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
 
       {/* Speaker Notes */}
       {showNotes && (
-        <div className="h-32 border-t border-c-border bg-c-surface p-3 overflow-y-auto">
+        <div className="h-32 border-t border-c-border-subtle bg-c-surface p-3 overflow-y-auto">
           <p className="text-[10px] font-medium text-c-text-secondary uppercase mb-1">
             {t('presentations.builder.bottomBar.notes', 'Speaker Notes')}
           </p>

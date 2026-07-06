@@ -58,7 +58,7 @@ function SectionHeader({
           aria-expanded={!isCollapsed}
           aria-controls={`${id}-content`}
           onClick={onToggle}
-          className="inline-flex items-center gap-1.5 rounded-hig-full border border-c-border bg-c-surface-raised px-2.5 py-1 text-xs font-medium text-c-text hover:bg-c-border-subtle focus:outline-none focus:ring-2 focus:ring-sky-500/30/[0.11]/[0.075]/[0.11]"
+          className="inline-flex items-center gap-1.5 rounded-hig-full border border-c-border-subtle bg-c-surface-raised px-2.5 py-1 text-xs font-medium text-c-text hover:bg-c-border-subtle focus:outline-none focus:ring-2 focus:ring-sky-500/30/[0.11]/[0.075]/[0.11]"
         >
           {isCollapsed ? (
             <ChevronDown size={14} aria-hidden="true" />
@@ -144,7 +144,7 @@ export function TabelePreviewLayout({
         <header className="border-b border-c-border-subtle pb-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-hig-full border border-c-border bg-c-surface-raised px-3 py-1 text-xs font-medium text-c-text/[0.11]/[0.075]">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-hig-full border border-c-border-subtle bg-c-surface-raised px-3 py-1 text-xs font-medium text-c-text/[0.11]/[0.075]">
                 <Table2 size={14} aria-hidden="true" />
                 {t('kimi.tabele.preview.subtitle', { defaultValue: 'Operational Table' })}
               </div>
@@ -161,7 +161,7 @@ export function TabelePreviewLayout({
               </p>
             </div>
             <div className="flex flex-col items-start gap-2 sm:items-end">
-              <div className="flex items-center gap-2 rounded-hig-full border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-medium text-c-text/[0.11]/[0.075]">
+              <div className="flex items-center gap-2 rounded-hig-full border border-c-border-subtle bg-c-surface-raised px-3 py-1.5 text-xs font-medium text-c-text/[0.11]/[0.075]">
                 <span className="h-2 w-2 rounded-hig-full bg-emerald-500" aria-hidden="true" />
                 {t('kimi.tabele.preview.livePreview', { defaultValue: 'Live preview' })}
               </div>
@@ -212,7 +212,7 @@ export function TabelePreviewLayout({
                   <TabeleSchemaBlock key={field.fieldId || field.name} field={field} />
                 ))
               ) : (
-                <p className="rounded-hig-md border border-dashed border-c-border p-4 text-sm text-c-text-secondary">
+                <p className="rounded-hig-md border border-dashed border-c-border-subtle p-4 text-sm text-c-text-secondary">
                   {t('kimi.tabele.preview.emptySchema', {
                     defaultValue: 'No schema fields are available in this preview yet.',
                   })}
@@ -222,7 +222,7 @@ export function TabelePreviewLayout({
           ) : (
             <p
               id="tabele-preview-schema-heading-content"
-              className="rounded-hig-md border border-dashed border-c-border p-4 text-sm text-c-text-secondary"
+              className="rounded-hig-md border border-dashed border-c-border-subtle p-4 text-sm text-c-text-secondary"
             >
               {t('kimi.tabele.preview.schemaCollapsed', {
                 defaultValue: 'Schema is collapsed for compact review.',
@@ -252,7 +252,7 @@ export function TabelePreviewLayout({
                         <th
                           key={column}
                           scope="col"
-                          className="border-b border-c-border px-3 py-2 font-semibold text-c-text-secondary/[0.10]"
+                          className="border-b border-c-border-subtle px-3 py-2 font-semibold text-c-text-secondary/[0.10]"
                         >
                           {column}
                         </th>
@@ -261,7 +261,7 @@ export function TabelePreviewLayout({
                         <th
                           scope="col"
                           data-testid="tabele-preview-provenance-header"
-                          className="border-b border-c-border px-3 py-2 font-semibold text-c-text-secondary/[0.10]"
+                          className="border-b border-c-border-subtle px-3 py-2 font-semibold text-c-text-secondary/[0.10]"
                         >
                           {provenanceHeaderLabel}
                         </th>
@@ -308,7 +308,7 @@ export function TabelePreviewLayout({
               )}
             </div>
           ) : (
-            <div className="rounded-hig-lg border border-dashed border-c-border p-6 text-center">
+            <div className="rounded-hig-lg border border-dashed border-c-border-subtle p-6 text-center">
               <Rows3 size={28} className="mx-auto text-c-text-secondary" aria-hidden="true" />
               <p className="mt-3 text-sm text-c-text-secondary">
                 {t('kimi.tabele.preview.emptyRecords', {
@@ -356,7 +356,7 @@ export function TabelePreviewLayout({
                   />
                 ))
               ) : (
-                <p className="rounded-hig-md border border-dashed border-c-border p-4 text-sm text-c-text-secondary">
+                <p className="rounded-hig-md border border-dashed border-c-border-subtle p-4 text-sm text-c-text-secondary">
                   {t('kimi.tabele.preview.emptyRelations', {
                     defaultValue: 'No table relations are available in this preview yet.',
                   })}
@@ -366,7 +366,7 @@ export function TabelePreviewLayout({
           ) : (
             <p
               id="tabele-preview-relations-heading-content"
-              className="rounded-hig-md border border-dashed border-c-border p-4 text-sm text-c-text-secondary"
+              className="rounded-hig-md border border-dashed border-c-border-subtle p-4 text-sm text-c-text-secondary"
             >
               {relations.length === 0
                 ? t('kimi.tabele.preview.noRelationsCollapsed', {
@@ -398,7 +398,7 @@ export function TabelePreviewLayout({
               onOpenProposalQueue={onOpenProposalQueue}
             />
           ) : (
-            <div className="rounded-hig-lg border border-dashed border-c-border p-5 text-sm text-c-text-secondary">
+            <div className="rounded-hig-lg border border-dashed border-c-border-subtle p-5 text-sm text-c-text-secondary">
               {t('kimi.tabele.preview.emptyRationale', {
                 defaultValue: 'No AI rationale has been attached to this preview yet.',
               })}

@@ -328,7 +328,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-2 px-3 py-2 bg-c-surface hover:bg-c-surface-raised border border-c-border text-c-text-secondary rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-c-surface hover:bg-c-surface-raised border border-c-border-subtle text-c-text-secondary rounded-lg transition-colors"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -337,7 +337,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
-              className="appearance-none pl-3 pr-8 py-2 bg-c-surface border border-c-border rounded-lg text-c-text"
+              className="appearance-none pl-3 pr-8 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text"
             >
               {TIME_RANGES.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -376,7 +376,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
               {loadError ? (
-                <div className="rounded-xl border border-c-border bg-c-surface p-6">
+                <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
                   <DegradedState title="Analytics dashboard unavailable" description={loadError} />
                 </div>
               ) : (
@@ -420,7 +420,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                   {/* Charts */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* API Chart */}
-                    <div className="p-6 bg-c-surface-raised rounded-xl border border-c-border">
+                    <div className="p-6 bg-c-surface-raised rounded-xl border border-c-border-subtle">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="font-medium text-c-text flex items-center gap-2">
                           <Globe className="w-5 h-5 text-c-accent" />
@@ -445,7 +445,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                     </div>
 
                     {/* AI Chart */}
-                    <div className="p-6 bg-c-surface-raised rounded-xl border border-c-border">
+                    <div className="p-6 bg-c-surface-raised rounded-xl border border-c-border-subtle">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="font-medium text-c-text flex items-center gap-2">
                           <Zap className="w-5 h-5 text-c-accent" />
@@ -471,7 +471,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                   </div>
 
                   {/* Performance Breakdown */}
-                  <div className="p-6 bg-c-surface-raised rounded-xl border border-c-border">
+                  <div className="p-6 bg-c-surface-raised rounded-xl border border-c-border-subtle">
                     <ReadOnlyState
                       title="Performance breakdown unavailable"
                       description="Endpoint-level latency, top endpoints, and error-type distribution require backend analytics fields that are not provided to this panel yet."
@@ -486,7 +486,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
           {activeTab === 'reports' && (
             <div className="space-y-6">
               {loadError ? (
-                <div className="rounded-xl border border-c-border bg-c-surface p-6">
+                <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
                   <DegradedState title="Report generation unavailable" description={loadError} />
                 </div>
               ) : (
@@ -497,7 +497,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                       return (
                         <div
                           key={report.id}
-                          className="p-6 bg-c-surface-raised rounded-xl border border-c-border hover:border-c-accent/50 transition-colors cursor-pointer"
+                          className="p-6 bg-c-surface-raised rounded-xl border border-c-border-subtle hover:border-c-accent/50 transition-colors cursor-pointer"
                           onClick={() => handleExport('pdf')}
                         >
                           <div className="flex items-center gap-3 mb-3">
@@ -528,7 +528,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                     })}
                   </div>
 
-                  <div className="p-6 bg-c-surface-raised rounded-xl border border-c-border">
+                  <div className="p-6 bg-c-surface-raised rounded-xl border border-c-border-subtle">
                     <ReadOnlyState
                       title="Custom report builder unavailable"
                       description="The export buttons can download the currently loaded analytics snapshot, but the custom report builder workflow is not wired to an audited backend yet."
@@ -564,7 +564,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
               )}
 
               {scheduledLoadError ? (
-                <div className="rounded-xl border border-c-border bg-c-surface p-6">
+                <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
                   <DegradedState
                     title="Scheduled reports unavailable"
                     description={scheduledLoadError}
@@ -585,7 +585,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                       key={report.id}
                       className={`p-4 rounded-xl border transition-colors ${
                         report.is_active
-                          ? 'bg-c-surface-raised border-c-border hover:border-c-border-strong'
+                          ? 'bg-c-surface-raised border-c-border-subtle hover:border-c-border-strong'
                           : 'bg-c-surface-raised/50 border-c-border-subtle'
                       }`}
                     >

@@ -114,7 +114,7 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
   return (
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
       <div className="w-full max-w-lg rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Group size={16} className="text-c-info" />
             <h3 className="text-sm font-bold text-c-text dark:text-c-text">
@@ -163,7 +163,7 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
               {clusters.map((cluster) => (
                 <div
                   key={cluster.id}
-                  className="p-3 rounded-xl border border-c-border-subtle dark:border-c-border"
+                  className="p-3 rounded-xl border border-c-border-subtle dark:border-c-border-subtle"
                   style={{ borderLeftColor: cluster.color, borderLeftWidth: 3 }}
                 >
                   <div className="flex items-center gap-2 mb-1.5">

@@ -292,7 +292,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                 </button>
 
                 {menuOpen === category.id && (
-                  <div className="absolute right-0 top-full mt-1 w-40 bg-c-surface-raised border border-c-border rounded-lg shadow-xl z-10 py-1">
+                  <div className="absolute right-0 top-full mt-1 w-40 bg-c-surface-raised border border-c-border-subtle rounded-lg shadow-xl z-10 py-1">
                     <button
                       onClick={() => startEdit(category)}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-c-surface-raised/50"
@@ -307,7 +307,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                       <Plus size={14} />
                       Add Subcategory
                     </button>
-                    <div className="border-t border-c-border my-1" />
+                    <div className="border-t border-c-border-subtle my-1" />
                     <button
                       onClick={() => handleDelete(category.id)}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-danger-400 hover:bg-danger-500/10"
@@ -324,7 +324,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
 
         {/* Children */}
         {hasChildren && isExpanded && (
-          <div className="ml-2 border-l border-c-border/50 pl-2">
+          <div className="ml-2 border-l border-c-border-subtle/50 pl-2">
             {category.children!.map((child) => renderCategory(child, depth + 1))}
           </div>
         )}
@@ -371,7 +371,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
 
       {/* New Category Form */}
       {showNewForm && (
-        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-lg p-4 space-y-4">
+        <div className="bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-lg p-4 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">Name</label>
@@ -380,7 +380,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                 placeholder="Category name..."
-                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               />
             </div>
             <div>
@@ -390,7 +390,7 @@ export const ContentCategoriesManager: React.FC<ContentCategoriesManagerProps> =
                 value={formData.description}
                 onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                 placeholder="Optional description..."
-                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               />
             </div>
           </div>

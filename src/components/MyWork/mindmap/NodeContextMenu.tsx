@@ -586,7 +586,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
 
           {submenu === group.titleEn && (
             <div
-              className="absolute left-full top-0 ml-1 min-w-[200px] py-1.5 px-1 rounded-xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border shadow-2xl animate-in fade-in slide-in-from-left-1 duration-100"
+              className="absolute left-full top-0 ml-1 min-w-[200px] py-1.5 px-1 rounded-xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border-subtle shadow-2xl animate-in fade-in slide-in-from-left-1 duration-100"
               onMouseEnter={() => {
                 if (submenuTimerRef.current) window.clearTimeout(submenuTimerRef.current);
               }}

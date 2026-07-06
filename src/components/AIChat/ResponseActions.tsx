@@ -141,7 +141,7 @@ export const ResponseActions: React.FC<ResponseActionsProps> = ({ actions, onAct
                                     ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-900/50'
                                     : action.type === 'execute'
                                       ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/50'
-                                      : 'bg-c-surface-raised text-c-text-secondary border-c-border hover:bg-c-border-subtle hover:text-c-text'
+                                      : 'bg-c-surface-raised text-c-text-secondary border-c-border-subtle hover:bg-c-border-subtle hover:text-c-text'
                                 }
                                 ${isLoading ? 'opacity-60 cursor-wait' : ''}
                             `}

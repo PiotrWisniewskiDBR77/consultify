@@ -121,7 +121,7 @@ export const NotebookTopicChips: React.FC<NotebookTopicChipsProps> = ({
       {topics.map((t) => (
         <span
           key={t.id}
-          className="group inline-flex items-center gap-1 rounded-full border border-c-border bg-c-surface-raised pl-2 pr-1.5 py-0.5 text-[11px] font-medium text-c-text-secondary"
+          className="group inline-flex items-center gap-1 rounded-full border border-c-border-subtle bg-c-surface-raised pl-2 pr-1.5 py-0.5 text-[11px] font-medium text-c-text-secondary"
         >
           <button
             type="button"
@@ -165,7 +165,7 @@ export const NotebookTopicChips: React.FC<NotebookTopicChipsProps> = ({
               }}
               disabled={busy}
               placeholder={isPl ? 'Nowy temat…' : 'New topic…'}
-              className="w-32 rounded-full border border-c-border bg-c-surface px-2 py-0.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)]"
+              className="w-32 rounded-full border border-c-border-subtle bg-c-surface px-2 py-0.5 text-[11px] text-c-text outline-none focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)]"
             />
             <button
               type="button"
@@ -181,7 +181,7 @@ export const NotebookTopicChips: React.FC<NotebookTopicChipsProps> = ({
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="inline-flex items-center gap-1 rounded-full border border-dashed border-c-border px-2 py-0.5 text-[11px] text-c-text-muted hover:text-c-text hover:border-c-border-strong transition-colors"
+            className="inline-flex items-center gap-1 rounded-full border border-dashed border-c-border-subtle px-2 py-0.5 text-[11px] text-c-text-muted hover:text-c-text hover:border-c-border-strong transition-colors"
           >
             <Plus size={11} />
             {isPl ? 'Temat' : 'Topic'}

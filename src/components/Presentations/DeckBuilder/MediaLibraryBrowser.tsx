@@ -205,7 +205,7 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
       <div className="px-3 py-2 border-t border-c-border-subtle">
         <button
           onClick={handleUpload}
-          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-c-border text-xs text-c-text-secondary hover:text-c-accent hover:border-c-accent transition-colors"
+          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-c-border-subtle text-xs text-c-text-secondary hover:text-c-accent hover:border-c-accent transition-colors"
         >
           <Upload size={12} />
           {t('presentations.builder.mediaLibrary.upload', 'Upload images')}

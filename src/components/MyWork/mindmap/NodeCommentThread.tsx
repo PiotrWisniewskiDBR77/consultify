@@ -225,9 +225,9 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed top-0 right-0 bottom-0 z-[86] w-[360px] max-w-[85vw] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border-l border-c-border-subtle dark:border-c-border shadow-2xl flex flex-col overflow-hidden">
+    <div className="fixed top-0 right-0 bottom-0 z-[86] w-[360px] max-w-[85vw] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border-l border-c-border-subtle dark:border-c-border-subtle shadow-2xl flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-c-border-subtle dark:border-c-border">
+      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
         <MessageSquare size={14} className="text-c-info shrink-0" />
         <div className="min-w-0 flex-1">
           <div className="text-[11px] font-bold text-c-text dark:text-c-text truncate">
@@ -295,14 +295,14 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
 
       {/* Input */}
       {!locked && (
-        <div className="px-4 py-3 border-t border-c-border-subtle dark:border-c-border">
+        <div className="px-4 py-3 border-t border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-end gap-2">
             <div className="flex-1 relative">
               {mentionQuery !== null && mentionSuggestions.length > 0 && (
                 <div
                   role="listbox"
                   aria-label={isPl ? 'Wspomnij osobę' : 'Mention a teammate'}
-                  className="absolute bottom-full left-0 mb-1 w-64 rounded-xl border border-c-border bg-c-surface shadow-lg max-h-40 overflow-y-auto z-overlay"
+                  className="absolute bottom-full left-0 mb-1 w-64 rounded-xl border border-c-border-subtle bg-c-surface shadow-lg max-h-40 overflow-y-auto z-overlay"
                 >
                   {mentionSuggestions.map((user) => (
                     <button
@@ -332,7 +332,7 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
                 placeholder={
                   isPl ? 'Napisz komentarz... (@wzmianka)' : 'Write a comment... (@mention)'
                 }
-                className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface text-[11px] text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-info resize-none"
+                className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-[11px] text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-info resize-none"
               />
               <AtSign size={10} className="absolute right-2.5 bottom-2.5 text-c-text-secondary" />
             </div>

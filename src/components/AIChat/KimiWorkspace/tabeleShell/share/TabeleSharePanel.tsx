@@ -271,7 +271,7 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
             void refreshPacks();
           }}
           disabled={submitting || conversionsLoading || !tableId}
-          className="inline-flex items-center gap-1 rounded-md border border-c-border bg-c-surface-raised px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised disabled:opacity-50"
           data-testid="share-panel-refresh"
           aria-label={t('kimi.tabeleShell.share.refreshAriaLabel', 'Refresh share panel')}
         >
@@ -306,7 +306,7 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
                 className={`flex items-start gap-2 rounded-md border px-2 py-1.5 text-left text-xs transition ${
                   checked
                     ? 'border-sky-500 bg-sky-50 text-sky-900 dark:border-sky-400 dark:bg-sky-950 dark:text-sky-100'
-                    : 'border-c-border bg-c-surface text-c-text hover:bg-c-surface-raised'
+                    : 'border-c-border-subtle bg-c-surface text-c-text hover:bg-c-surface-raised'
                 }`}
               >
                 <opt.Icon className="mt-0.5 h-3.5 w-3.5 flex-none" />
@@ -338,7 +338,7 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
                 ? t('kimi.tabeleShell.share.titlePlaceholderDoc', 'Initiative briefing')
                 : t('kimi.tabeleShell.share.titlePlaceholderDeck', 'Initiative deck'),
           })}
-          className="mt-1 w-full rounded-md border border-c-border bg-c-surface px-2 py-1 text-xs text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-1 focus:ring-c-border"
+          className="mt-1 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-1 focus:ring-c-border"
           data-testid="share-title-input"
           aria-label={t('kimi.tabeleShell.share.titleAriaLabel', 'Conversion title')}
         />

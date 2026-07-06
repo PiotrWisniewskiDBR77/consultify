@@ -449,7 +449,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                 <div className="border-t border-c-border-subtle pt-6">
                   <button
                     onClick={handleCreateClean}
-                    className="w-full p-4 rounded-xl border-2 border-dashed border-c-border hover:border-c-accent hover:bg-c-accent-soft transition-all group"
+                    className="w-full p-4 rounded-xl border-2 border-dashed border-c-border-subtle hover:border-c-accent hover:bg-c-accent-soft transition-all group"
                   >
                     <div className="flex items-center justify-center gap-3">
                       <div className="p-2 bg-c-surface-raised rounded-lg group-hover:bg-c-accent-soft dark:group-hover:bg-c-accent-soft transition-colors">

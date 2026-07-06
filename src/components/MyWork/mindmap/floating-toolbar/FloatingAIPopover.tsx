@@ -63,9 +63,9 @@ export const FloatingAIPopover: React.FC<FloatingAIPopoverProps> = ({
   };
 
   return (
-    <div className="w-52 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl py-1">
+    <div className="w-52 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle shadow-xl py-1">
       {hint && (
-        <div className="px-3 py-2 border-b border-c-border-subtle dark:border-c-border">
+        <div className="px-3 py-2 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="text-[10px] text-c-text-secondary dark:text-c-text-muted font-medium flex items-center gap-1">
             <Sparkles size={10} />
             {hint}
@@ -82,7 +82,7 @@ export const FloatingAIPopover: React.FC<FloatingAIPopoverProps> = ({
         <MessageCircle size={12} className="shrink-0" />
         {isPl ? 'Zapytaj AI o ten węzeł' : 'Ask AI about this node'}
       </button>
-      <div className="border-t border-c-border-subtle dark:border-c-border my-0.5" />
+      <div className="border-t border-c-border-subtle dark:border-c-border-subtle my-0.5" />
       {AI_ACTIONS.map((a) => {
         const Icon = a.iconEl;
         return (

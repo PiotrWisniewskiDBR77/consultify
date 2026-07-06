@@ -133,7 +133,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
   return (
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
       <div className="w-full max-w-2xl rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div>
             <div className="flex items-center gap-2">
               <Target size={16} className="text-c-warning" />
@@ -213,7 +213,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
                 {sorted.map((rec) => (
                   <div
                     key={rec.nodeId}
-                    className="flex items-center gap-3 p-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border"
+                    className="flex items-center gap-3 p-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle"
                   >
                     <div className="w-6 h-6 rounded-full bg-c-surface-raised text-c-warning dark:text-c-warning flex items-center justify-center text-[10px] font-bold shrink-0">
                       {rec.rank}
@@ -252,10 +252,10 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
         </div>
 
         {recommendations.length > 0 && (
-          <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border flex items-center gap-2">
+          <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border-subtle flex items-center gap-2">
             <button
               onClick={onClose}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border-subtle text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
             >
               {isPl ? 'Anuluj' : 'Cancel'}
             </button>

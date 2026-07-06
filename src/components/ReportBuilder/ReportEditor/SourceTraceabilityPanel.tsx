@@ -149,7 +149,7 @@ const SourceTraceabilityPanel: React.FC<SourceTraceabilityPanelProps> = ({
 
   return (
     <div className="flex flex-col gap-1 py-2">
-      <div className="px-4 pb-2 mb-1 border-b border-c-border">
+      <div className="px-4 pb-2 mb-1 border-b border-c-border-subtle">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-c-text">
           {isPl ? 'Źródła danych' : 'Data Sources'}
         </h3>

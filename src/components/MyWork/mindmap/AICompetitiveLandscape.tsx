@@ -99,7 +99,7 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
   return (
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
       <div className="w-full max-w-2xl rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div>
             <div className="flex items-center gap-2">
               <Globe size={16} className="text-c-info" />
@@ -157,7 +157,7 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                 return (
                   <div
                     key={comp.id}
-                    className={`p-3 rounded-xl border transition-all ${isAdded ? 'border-c-success bg-c-surface-raised' : 'border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface'}`}
+                    className={`p-3 rounded-xl border transition-all ${isAdded ? 'border-c-success bg-c-surface-raised' : 'border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface'}`}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
@@ -211,7 +211,7 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                       )}
                     </div>
                     {comp.differentiator && (
-                      <div className="mt-2 pt-2 border-t border-c-border-subtle dark:border-c-border">
+                      <div className="mt-2 pt-2 border-t border-c-border-subtle dark:border-c-border-subtle">
                         <span className="text-[8px] font-bold text-c-text-secondary dark:text-c-text-muted uppercase tracking-wider">
                           {isPl ? 'Nasz wyróżnik' : 'Our edge'}:{' '}
                         </span>
@@ -224,7 +224,7 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                 );
               })}
 
-              <div className="flex items-center gap-2 pt-2 border-t border-c-border-subtle dark:border-c-border">
+              <div className="flex items-center gap-2 pt-2 border-t border-c-border-subtle dark:border-c-border-subtle">
                 <button
                   onClick={analyze}
                   disabled={loading}

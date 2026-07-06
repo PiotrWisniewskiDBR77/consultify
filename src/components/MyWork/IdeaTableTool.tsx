@@ -1254,7 +1254,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               (usePlatform ? platformIntegration.toggleRowSelection : toggleRowSelection)(row.id)
             }
             onClick={(e) => e.stopPropagation()}
-            className="w-3.5 h-3.5 rounded border-c-border text-c-text-muted focus:ring-c-focus"
+            className="w-3.5 h-3.5 rounded border-c-border-subtle text-c-text-muted focus:ring-c-focus"
           />
         </td>
         <td className="w-10 px-1 py-1.5 text-[10px] text-c-text-muted text-right select-none tabular-nums">
@@ -1516,7 +1516,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   onClick={() => setShowSaveViewDialog(false)}
                 >
                   <div
-                    className="bg-c-surface rounded-xl shadow-xl border border-c-border p-4 w-72"
+                    className="bg-c-surface rounded-xl shadow-xl border border-c-border-subtle p-4 w-72"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <h3 className="text-sm font-semibold mb-2 text-c-text">
@@ -1527,7 +1527,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       value={saveViewName}
                       onChange={(e) => setSaveViewName(e.target.value)}
                       placeholder={isPl ? 'Nazwa widoku…' : 'View name…'}
-                      className="w-full h-8 px-3 rounded-lg text-xs bg-c-surface-raised border border-c-border outline-none focus:ring-2 focus:ring-c-focus mb-3"
+                      className="w-full h-8 px-3 rounded-lg text-xs bg-c-surface-raised border border-c-border-subtle outline-none focus:ring-2 focus:ring-c-focus mb-3"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && saveViewName.trim()) {
                           saveCurrentView(saveViewName.trim(), columns);
@@ -1561,7 +1561,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               {viewContextMenu && (
                 <div className="fixed inset-0 z-[60]" onClick={() => setViewContextMenu(null)}>
                   <div
-                    className="absolute bg-c-surface rounded-lg shadow-xl border border-c-border py-1 min-w-[140px]"
+                    className="absolute bg-c-surface rounded-lg shadow-xl border border-c-border-subtle py-1 min-w-[140px]"
                     style={{ left: viewContextMenu.x, top: viewContextMenu.y }}
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -2023,7 +2023,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       <ChevronDown size={10} />
                     </button>
                     {showToolsMenu && (
-                      <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-c-border bg-c-surface shadow-xl py-1 max-h-[70vh] overflow-y-auto">
+                      <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1 max-h-[70vh] overflow-y-auto">
                         <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
                           {isPl ? 'Workflow' : 'Workflow'}
                         </div>
@@ -2077,7 +2077,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           <Send size={14} className="text-c-tag-4" />
                           {isPl ? 'Dystrybucja' : 'Distribution'}
                         </button>
-                        <div className="border-t border-c-border my-1" />
+                        <div className="border-t border-c-border-subtle my-1" />
                         <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
                           {isPl ? 'Budowanie' : 'Build'}
                         </div>
@@ -2121,7 +2121,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           <Download size={14} className="text-c-tag-10" />
                           {isPl ? 'Konektory' : 'Connectors'}
                         </button>
-                        <div className="border-t border-c-border my-1" />
+                        <div className="border-t border-c-border-subtle my-1" />
                         <button
                           onClick={() => {
                             setShowConsultifyLink(true);
@@ -2310,7 +2310,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <Columns3 size={12} />
                 </button>
                 {showColumnConfig && (
-                  <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-c-border bg-c-surface shadow-xl p-2">
+                  <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-2">
                     {_cols.map((col) => (
                       <button
                         key={col.key}
@@ -2382,7 +2382,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           <ChevronDown size={9} />
                         </button>
                         {showBulkConvertMenu && (
-                          <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-c-border bg-c-surface shadow-xl p-1">
+                          <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl p-1">
                             {(['initiative', 'task', 'decision'] as const).map((t) => (
                               <button
                                 key={t}
@@ -2811,7 +2811,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                                 });
                               }
                             }}
-                            className="w-3.5 h-3.5 rounded border-c-border text-c-text-muted focus:ring-c-focus"
+                            className="w-3.5 h-3.5 rounded border-c-border-subtle text-c-text-muted focus:ring-c-focus"
                           />
                         </th>
                         <th className="w-10 px-1 py-2 text-[10px] font-normal text-c-text-muted text-right select-none">
@@ -2831,7 +2831,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                               <input
                                 autoFocus
                                 defaultValue={col.header}
-                                className="w-full bg-c-surface border border-c-border rounded px-1 py-0.5 text-[10px] font-bold uppercase tracking-wider text-c-text-secondary outline-none"
+                                className="w-full bg-c-surface border border-c-border-subtle rounded px-1 py-0.5 text-[10px] font-bold uppercase tracking-wider text-c-text-secondary outline-none"
                                 onBlur={(e) => {
                                   renameColumn(col.key, e.target.value);
                                   setEditingHeaderKey(null);
@@ -3068,7 +3068,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           {colContextMenu && (
             <div className="fixed inset-0 z-[60]" onClick={() => setColContextMenu(null)}>
               <div
-                className="absolute bg-c-surface rounded-lg shadow-xl border border-c-border py-1 min-w-[160px]"
+                className="absolute bg-c-surface rounded-lg shadow-xl border border-c-border-subtle py-1 min-w-[160px]"
                 style={{ left: colContextMenu.x, top: colContextMenu.y }}
                 onClick={(e) => e.stopPropagation()}
               >
@@ -3368,10 +3368,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           onClick={() => setShowInterfaceDesigner(false)}
         >
           <div
-            className="flex-1 m-4 bg-c-surface rounded-2xl border border-c-border shadow-2xl overflow-hidden"
+            className="flex-1 m-4 bg-c-surface rounded-2xl border border-c-border-subtle shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-c-border">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
               <h3 className="text-sm font-semibold text-c-text">
                 {isPl ? 'Projektant interfejsu' : 'Interface Designer'}
               </h3>
@@ -3414,7 +3414,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           onClick={() => setShowFormBuilder(false)}
         >
           <div
-            className="w-[800px] max-w-[95vw] max-h-[85vh] overflow-y-auto bg-c-surface rounded-2xl border border-c-border shadow-2xl"
+            className="w-[800px] max-w-[95vw] max-h-[85vh] overflow-y-auto bg-c-surface rounded-2xl border border-c-border-subtle shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <FormBuilder
@@ -3491,7 +3491,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           onClick={() => setShowConsultifyLink(false)}
         >
           <div
-            className="w-[460px] max-w-[90vw] h-full bg-c-surface border-l border-c-border shadow-2xl overflow-hidden"
+            className="w-[460px] max-w-[90vw] h-full bg-c-surface border-l border-c-border-subtle shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <ConsultifyLinkPanel
@@ -3518,7 +3518,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           onClick={() => setShowWebhookRelays(false)}
         >
           <div
-            className="w-[420px] max-w-[90vw] h-full bg-c-surface border-l border-c-border shadow-2xl overflow-y-auto p-5"
+            className="w-[420px] max-w-[90vw] h-full bg-c-surface border-l border-c-border-subtle shadow-2xl overflow-y-auto p-5"
             onClick={(e) => e.stopPropagation()}
           >
             <WebhookRelayPanel workspaceId={ideaId} onClose={() => setShowWebhookRelays(false)} />
@@ -3533,7 +3533,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           onClick={() => setShowAutomationsManager(false)}
         >
           <div
-            className="w-[480px] max-w-[90vw] h-full bg-c-surface border-l border-c-border shadow-2xl overflow-hidden"
+            className="w-[480px] max-w-[90vw] h-full bg-c-surface border-l border-c-border-subtle shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <AutomationsManager
@@ -3565,7 +3565,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           onClick={() => setShowSyncManager(false)}
         >
           <div
-            className="w-[480px] max-w-[90vw] h-full bg-c-surface border-l border-c-border shadow-2xl overflow-hidden"
+            className="w-[480px] max-w-[90vw] h-full bg-c-surface border-l border-c-border-subtle shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <SyncManager
@@ -3598,7 +3598,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           onClick={() => setShowSharingManager(false)}
         >
           <div
-            className="w-[480px] max-w-[90vw] h-full bg-c-surface border-l border-c-border shadow-2xl overflow-hidden"
+            className="w-[480px] max-w-[90vw] h-full bg-c-surface border-l border-c-border-subtle shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <SharingManager
@@ -3623,7 +3623,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           onClick={() => setShowDistributionManager(false)}
         >
           <div
-            className="w-[480px] max-w-[90vw] h-full bg-c-surface border-l border-c-border shadow-2xl overflow-hidden"
+            className="w-[480px] max-w-[90vw] h-full bg-c-surface border-l border-c-border-subtle shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <DistributionManager
@@ -3643,7 +3643,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           onClick={() => setShowConnectorList(false)}
         >
           <div
-            className="w-[420px] max-w-[90vw] h-full bg-c-surface border-l border-c-border shadow-2xl overflow-y-auto p-5"
+            className="w-[420px] max-w-[90vw] h-full bg-c-surface border-l border-c-border-subtle shadow-2xl overflow-y-auto p-5"
             onClick={(e) => e.stopPropagation()}
           >
             {connectorHistoryTarget ? (

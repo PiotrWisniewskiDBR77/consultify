@@ -83,9 +83,9 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg mx-4 bg-c-surface border border-c-border rounded-2xl shadow-2xl">
+      <div className="relative w-full max-w-lg mx-4 bg-c-surface border border-c-border-subtle rounded-2xl shadow-2xl">
         {/* Header */}
-        <div className="flex items-center gap-3 px-6 py-4 border-b border-c-border">
+        <div className="flex items-center gap-3 px-6 py-4 border-b border-c-border-subtle">
           <div className="p-2 rounded-lg bg-c-accent-soft0">
             <Target className="h-5 w-5 text-c-accent" />
           </div>
@@ -114,7 +114,7 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
               onChange={(e) => setTitle(e.target.value)}
               placeholder={isPl ? 'Nazwa inicjatywy…' : 'Initiative name…'}
               disabled={submitting || success}
-              className="w-full px-3 py-2 bg-c-surface border border-c-border rounded-lg text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-focus disabled:opacity-50 transition-colors"
+              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-focus disabled:opacity-50 transition-colors"
             />
           </div>
 
@@ -129,7 +129,7 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
               placeholder={isPl ? 'Opis inicjatywy…' : 'Initiative description…'}
               rows={5}
               disabled={submitting || success}
-              className="w-full px-3 py-2 bg-c-surface border border-c-border rounded-lg text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-focus disabled:opacity-50 resize-none transition-colors"
+              className="w-full px-3 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus:border-c-accent focus:ring-1 focus:ring-c-focus disabled:opacity-50 resize-none transition-colors"
             />
           </div>
 
@@ -141,7 +141,7 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-c-border">
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-c-border-subtle">
           <button
             onClick={onClose}
             disabled={submitting}

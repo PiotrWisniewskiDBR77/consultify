@@ -79,7 +79,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
     <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-c-bg">
       <div className="w-full max-w-2xl rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-hig-xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div>
             <h3 className="text-sm font-semibold text-c-text dark:text-c-text flex items-center gap-2">
               <GitBranch size={15} className="text-c-text-secondary" />
@@ -100,7 +100,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
         </div>
 
         {/* Diff summary bar */}
-        <div className="px-5 py-2.5 flex items-center gap-3 bg-c-surface-raised dark:bg-c-surface border-b border-c-border-subtle dark:border-c-border">
+        <div className="px-5 py-2.5 flex items-center gap-3 bg-c-surface-raised dark:bg-c-surface border-b border-c-border-subtle dark:border-c-border-subtle">
           {addCount > 0 && (
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-c-success dark:text-c-success bg-c-surface-raised dark:bg-c-surface px-2 py-0.5 rounded-full">
               <Plus size={10} /> {addCount} {isPl ? 'dodano' : 'added'}
@@ -142,7 +142,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
           ) : (
             <table /* §27-exempt: layout specjalizowany/read-only/data-viz, nie kanoniczna lista przegladana */  className="w-full text-xs">
               <thead>
-                <tr className="text-left text-[10px] font-semibold text-c-text-secondary dark:text-c-text-secondary uppercase tracking-wider border-b border-c-border-subtle dark:border-c-border">
+                <tr className="text-left text-[10px] font-semibold text-c-text-secondary dark:text-c-text-secondary uppercase tracking-wider border-b border-c-border-subtle dark:border-c-border-subtle">
                   <th className="py-1.5 w-8" />
                   <th className="py-1.5 w-16">{isPl ? 'Typ' : 'Type'}</th>
                   <th className="py-1.5">{isPl ? 'Węzeł' : 'Node'}</th>
@@ -156,7 +156,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
                   return (
                     <tr
                       key={i}
-                      className={`border-b border-c-border-subtle dark:border-c-border transition-colors ${
+                      className={`border-b border-c-border-subtle dark:border-c-border-subtle transition-colors ${
                         isChecked ? '' : 'opacity-40'
                       }`}
                     >
@@ -203,7 +203,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
 
         {/* Plan summary */}
         {proposal.rationale && (
-          <div className="mx-5 mb-3 px-3 py-2 rounded-hig-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border text-[11px] text-c-text-secondary dark:text-c-text">
+          <div className="mx-5 mb-3 px-3 py-2 rounded-hig-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle text-[11px] text-c-text-secondary dark:text-c-text">
             <strong>{isPl ? 'Plan:' : 'Plan:'}</strong>{' '}
             {isPl
               ? `Dodaj ${selectedCount} wybranych węzłów.`
@@ -214,7 +214,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
         )}
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-c-border-subtle dark:border-c-border flex items-center justify-between">
+        <div className="px-5 py-4 border-t border-c-border-subtle dark:border-c-border-subtle flex items-center justify-between">
           <span className="text-[11px] text-c-text-secondary dark:text-c-text-secondary">
             {isPl
               ? `${selectedCount} z ${addCount} zaznaczonych`
@@ -223,7 +223,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
           <div className="flex gap-2">
             <button
               onClick={onReject}
-              className="px-4 py-1.5 rounded-hig-lg text-xs font-medium border border-c-border-subtle dark:border-c-border text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
+              className="px-4 py-1.5 rounded-hig-lg text-xs font-medium border border-c-border-subtle dark:border-c-border-subtle text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
             >
               {isPl ? 'Odrzuć' : 'Reject'}
             </button>

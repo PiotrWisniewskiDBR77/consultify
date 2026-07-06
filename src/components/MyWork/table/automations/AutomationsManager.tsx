@@ -250,7 +250,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
   if (view === 'create' || view === 'edit') {
     return (
       <div className="flex h-full flex-col">
-        <div className="flex items-center gap-2 border-b border-c-border-subtle px-5 py-4 border-c-border">
+        <div className="flex items-center gap-2 border-b border-c-border-subtle px-5 py-4 border-c-border-subtle">
           <button
             onClick={() => {
               setView('list');
@@ -306,7 +306,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
   if (view === 'history' && historyTarget) {
     return (
       <div className="flex h-full flex-col">
-        <div className="flex items-center gap-2 border-b border-c-border-subtle px-5 py-4 border-c-border">
+        <div className="flex items-center gap-2 border-b border-c-border-subtle px-5 py-4 border-c-border-subtle">
           <button
             onClick={() => {
               setView('list');
@@ -336,7 +336,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
               {runs.map((run) => (
                 <div
                   key={run.id}
-                  className="flex items-start gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 border-c-border bg-c-surface"
+                  className="flex items-start gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 border-c-border-subtle bg-c-surface"
                 >
                   <div className="mt-0.5 flex-shrink-0">
                     {run.status === 'completed' && (
@@ -389,7 +389,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-c-border-subtle px-5 py-4 border-c-border">
+      <div className="flex items-center justify-between border-b border-c-border-subtle px-5 py-4 border-c-border-subtle">
         <div className="flex items-center gap-2">
           <button
             onClick={onClose}
@@ -446,7 +446,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
             {automations.map((auto) => (
               <div
                 key={auto.id}
-                className="group flex items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 transition-colors hover:border-c-border bg-c-surface hover:border-c-border"
+                className="group flex items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 transition-colors hover:border-c-border-subtle bg-c-surface hover:border-c-border-subtle"
               >
                 {/* Status dot */}
                 <div className="flex-shrink-0">
@@ -504,7 +504,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                   {menuOpen === auto.id && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
-                      <div className="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-c-border-subtle bg-c-surface py-1 shadow-xl border-c-border bg-c-surface">
+                      <div className="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-c-border-subtle bg-c-surface py-1 shadow-xl border-c-border-subtle bg-c-surface">
                         <MenuBtn
                           icon={<Play size={13} />}
                           label={isPl ? 'Uruchom teraz' : 'Run now'}
@@ -530,7 +530,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                             setView('edit');
                           }}
                         />
-                        <div className="my-1 border-t border-c-border" />
+                        <div className="my-1 border-t border-c-border-subtle" />
                         <MenuBtn
                           icon={<Trash2 size={13} />}
                           label={isPl ? 'Usuń' : 'Delete'}

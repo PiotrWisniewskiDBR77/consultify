@@ -60,7 +60,7 @@ export const InitiativeIntelligenceTab: React.FC<Props> = ({ initiative, onChang
         </div>
 
         <div className="space-y-4">
-          <div className="bg-c-surface-raised rounded-xl p-4 border border-c-border group focus-within:border-primary-500/50 transition-colors">
+          <div className="bg-c-surface-raised rounded-xl p-4 border border-c-border-subtle group focus-within:border-primary-500/50 transition-colors">
             <label className="flex items-center gap-2 text-sm font-bold text-green-400 mb-2">
               <Lightbulb size={16} /> {t('intelligence.learnedTitle')}
             </label>
@@ -72,7 +72,7 @@ export const InitiativeIntelligenceTab: React.FC<Props> = ({ initiative, onChang
             />
           </div>
 
-          <div className="bg-c-surface-raised rounded-xl p-4 border border-c-border group focus-within:border-amber-500/50 transition-colors">
+          <div className="bg-c-surface-raised rounded-xl p-4 border border-c-border-subtle group focus-within:border-amber-500/50 transition-colors">
             <label className="flex items-center gap-2 text-sm font-bold text-amber-400 mb-2">
               <AlertOctagon size={16} /> {t('intelligence.surprisedTitle')}
             </label>
@@ -84,7 +84,7 @@ export const InitiativeIntelligenceTab: React.FC<Props> = ({ initiative, onChang
             />
           </div>
 
-          <div className="bg-c-surface-raised rounded-xl p-4 border border-c-border group focus-within:border-danger-500/50 transition-colors">
+          <div className="bg-c-surface-raised rounded-xl p-4 border border-c-border-subtle group focus-within:border-danger-500/50 transition-colors">
             <label className="flex items-center gap-2 text-sm font-bold text-danger-400 mb-2">
               <GitBranch size={16} /> {t('intelligence.differentlyTitle')}
             </label>
@@ -100,7 +100,7 @@ export const InitiativeIntelligenceTab: React.FC<Props> = ({ initiative, onChang
 
       {/* Right Column: Pattern Recognition */}
       <div className="space-y-6">
-        <div className="bg-c-surface-raised rounded-xl p-6 border border-c-border h-full flex flex-col">
+        <div className="bg-c-surface-raised rounded-xl p-6 border border-c-border-subtle h-full flex flex-col">
           <h3 className="text-c-text font-bold flex items-center gap-2 mb-6">
             <Brain size={18} className="text-blue-400" /> {t('intelligence.patternsTitle')}
           </h3>

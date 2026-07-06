@@ -324,7 +324,7 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
           </DndContext>
 
           {report.blockOrder.length === 0 && (
-            <div className="border-2 border-dashed border-c-border rounded-xl p-12 text-center">
+            <div className="border-2 border-dashed border-c-border-subtle rounded-xl p-12 text-center">
               <p className="text-c-text-secondary mb-4">
                 No blocks yet. Add one to start.
               </p>

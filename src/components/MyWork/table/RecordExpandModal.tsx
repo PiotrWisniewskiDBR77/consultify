@@ -187,7 +187,7 @@ const FieldValueDisplay: React.FC<{
       <input
         value={String(value)}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-c-border bg-c-surface px-2 py-1 text-xs text-c-text outline-none focus:ring-2 focus:ring-c-focus"
+        className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text outline-none focus:ring-2 focus:ring-c-focus"
       />
     );
   }
@@ -484,7 +484,7 @@ export const RecordExpandModal: React.FC<RecordExpandModalProps> = React.memo(
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleCancelEdit}
-                  className="rounded-xl border border-c-border px-4 py-2 text-xs font-semibold text-c-text-secondary transition-colors hover:bg-c-surface-raised"
+                  className="rounded-xl border border-c-border-subtle px-4 py-2 text-xs font-semibold text-c-text-secondary transition-colors hover:bg-c-surface-raised"
                 >
                   {isPl ? 'Anuluj' : 'Cancel'}
                 </button>

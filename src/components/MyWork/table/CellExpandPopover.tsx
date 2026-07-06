@@ -200,7 +200,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                         className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
                           isSelected
                             ? 'border-transparent'
-                            : 'border-c-border'
+                            : 'border-c-border-subtle'
                         }`}
                         style={isSelected ? { backgroundColor: optColor } : {}}
                       >

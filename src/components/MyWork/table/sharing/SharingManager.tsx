@@ -242,7 +242,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
               {sharedViews.map((view) => (
                 <div
                   key={view.id}
-                  className="flex items-center gap-3 rounded-xl border border-c-border bg-c-surface px-4 py-3"
+                  className="flex items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3"
                 >
                   <Globe size={14} className="text-c-accent shrink-0" />
                   <div className="flex-1 min-w-0">
@@ -290,7 +290,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
 
           {/* Invite form */}
           {showInvite && (
-            <div className="rounded-xl border border-c-border bg-c-surface p-4 mb-4 space-y-3">
+            <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4 mb-4 space-y-3">
               <div>
                 <label className="block text-xs font-medium text-c-text-muted mb-1">
                   Email
@@ -300,7 +300,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="user@example.com"
-                  className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-info"
+                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text placeholder-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-info"
                 />
               </div>
               <div>
@@ -310,7 +310,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                 <select
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value)}
-                  className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-info"
+                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-info"
                 >
                   {ROLES.filter((r) => r.value !== 'owner').map((r) => (
                     <option key={r.value} value={r.value}>
@@ -364,7 +364,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                 return (
                   <div
                     key={collab.id}
-                    className="flex items-center gap-3 rounded-xl border border-c-border bg-c-surface px-4 py-3"
+                    className="flex items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3"
                   >
                     {/* Avatar placeholder */}
                     <div className="w-8 h-8 rounded-full bg-c-accent-soft flex items-center justify-center shrink-0">
@@ -407,7 +407,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                             className="fixed inset-0 z-40"
                             onClick={() => setRoleMenuOpen(null)}
                           />
-                          <div className="absolute right-0 top-full mt-1 z-50 w-36 rounded-xl border border-c-border bg-c-surface shadow-xl py-1">
+                          <div className="absolute right-0 top-full mt-1 z-50 w-36 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1">
                             {ROLES.filter((r) => r.value !== 'owner').map((r) => (
                               <button
                                 key={r.value}
@@ -448,7 +448,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
       {/* ── API tab ───────────────────────────────────────────── */}
       {tab === 'api' && (
         <div className="flex-1 overflow-y-auto">
-          <div className="rounded-xl border border-c-border bg-c-surface p-4 space-y-4">
+          <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4 space-y-4">
             <div className="flex items-center gap-2">
               <Key size={16} className="text-c-warning" />
               <h4 className="text-sm font-semibold text-c-text">
@@ -461,7 +461,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                 Base ID
               </label>
               <div className="flex items-center gap-2">
-                <code className="flex-1 rounded-lg border border-c-border bg-c-bg px-3 py-2 text-xs text-c-text-muted font-mono truncate">
+                <code className="flex-1 rounded-lg border border-c-border-subtle bg-c-bg px-3 py-2 text-xs text-c-text-muted font-mono truncate">
                   {baseId}
                 </code>
                 <button
@@ -480,7 +480,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
               <label className="block text-xs font-medium text-c-text-muted mb-1">
                 {isPl ? 'Endpoint API' : 'API Endpoint'}
               </label>
-              <code className="block rounded-lg border border-c-border bg-c-bg px-3 py-2 text-xs text-c-text-muted font-mono break-all">
+              <code className="block rounded-lg border border-c-border-subtle bg-c-bg px-3 py-2 text-xs text-c-text-muted font-mono break-all">
                 {window.location.origin}/api/table-platform/bases/{baseId}
               </code>
             </div>

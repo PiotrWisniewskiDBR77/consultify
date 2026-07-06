@@ -830,8 +830,8 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
               setAiNarrativeHint('');
             }}
           />
-          <div className="relative w-full max-w-lg mx-4 bg-c-surface border border-c-border rounded-2xl shadow-2xl">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-c-border dark:border-c-border">
+          <div className="relative w-full max-w-lg mx-4 bg-c-surface border border-c-border-subtle rounded-2xl shadow-2xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-c-info/10">
                   <FileText size={16} className="text-c-info" />
@@ -959,7 +959,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                 <div className="text-xs font-semibold uppercase tracking-wider text-c-text-muted dark:text-c-text-muted">
                   {t('results.kpiReports.create.initiatives', 'Observed initiatives')}
                 </div>
-                <div className="mt-2 max-h-32 overflow-auto rounded-lg border border-c-border dark:border-c-border bg-c-surface-raised/40 dark:bg-c-surface-raised/40">
+                <div className="mt-2 max-h-32 overflow-auto rounded-lg border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised/40 dark:bg-c-surface-raised/40">
                   {availableInitiatives.length === 0 ? (
                     <div className="p-3 text-sm text-c-text-muted">
                       {t('results.initiatives.empty', 'No tracked initiatives selected.')}
@@ -1057,7 +1057,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                   placeholder={t('common.search', 'Search')}
                 />
 
-                <div className="mt-2 max-h-56 overflow-auto rounded-lg border border-c-border dark:border-c-border bg-c-surface-raised/40 dark:bg-c-surface-raised/40">
+                <div className="mt-2 max-h-56 overflow-auto rounded-lg border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised/40 dark:bg-c-surface-raised/40">
                   {kpisLoading ? (
                     <div className="p-3 text-sm text-c-text-muted">
                       {t('common.loading', 'Loading...')}
@@ -1129,8 +1129,8 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
             className="absolute inset-0 bg-c-bg/60 backdrop-blur-sm"
             onClick={() => (tasksCreating ? null : setTasksModalOpen(false))}
           />
-          <div className="relative w-full max-w-2xl mx-4 bg-c-surface border border-c-border rounded-2xl shadow-2xl">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-c-border dark:border-c-border">
+          <div className="relative w-full max-w-2xl mx-4 bg-c-surface border border-c-border-subtle rounded-2xl shadow-2xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
               <h2 className="text-lg font-semibold text-c-text">
                 {t('results.kpiReports.tasks.title', 'Create tasks from action plan')}
               </h2>
@@ -1186,7 +1186,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                   type="button"
                   disabled={tasksCreating}
                   onClick={() => setTasksModalOpen(false)}
-                  className="h-9 px-4 rounded-full text-sm font-medium border border-c-border bg-transparent text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-60"
+                  className="h-9 px-4 rounded-full text-sm font-medium border border-c-border-subtle bg-transparent text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-60"
                 >
                   {t('common.cancel', 'Cancel')}
                 </button>

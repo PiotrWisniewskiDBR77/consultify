@@ -341,7 +341,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
   return (
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
       <div className="w-full max-w-md rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Clock size={16} className="text-c-warning" />
             <h3 className="text-sm font-bold text-c-text dark:text-c-text">
@@ -380,7 +380,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                   }
                 }}
                 placeholder={t('Nazwa snapshotu...', 'Snapshot name...')}
-                className="flex-1 rounded border border-c-border-subtle px-2 py-1.5 text-xs outline-none focus:border-c-warning dark:border-c-border dark:bg-c-surface dark:text-c-text"
+                className="flex-1 rounded border border-c-border-subtle px-2 py-1.5 text-xs outline-none focus:border-c-warning dark:border-c-border-subtle dark:bg-c-surface dark:text-c-text"
               />
               <button
                 onClick={save}
@@ -439,10 +439,10 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                     }}
                   >
                     <div
-                      className={`absolute -left-5 top-3 w-3 h-3 rounded-full border-2 border-c-border dark:border-c-border ${dotColor(snap.timestamp)} ${hov ? 'ring-2 ring-c-warning' : ''}`}
+                      className={`absolute -left-5 top-3 w-3 h-3 rounded-full border-2 border-c-border-subtle dark:border-c-border-subtle ${dotColor(snap.timestamp)} ${hov ? 'ring-2 ring-c-warning' : ''}`}
                     />
                     <div
-                      className={`p-3 rounded-xl border transition-all ${hov ? 'bg-c-surface-raised dark:bg-c-surface border-c-warning dark:border-c-warning' : 'bg-c-surface-raised dark:bg-c-surface border-c-border-subtle dark:border-c-border'}`}
+                      className={`p-3 rounded-xl border transition-all ${hov ? 'bg-c-surface-raised dark:bg-c-surface border-c-warning dark:border-c-warning' : 'bg-c-surface-raised dark:bg-c-surface border-c-border-subtle dark:border-c-border-subtle'}`}
                     >
                       <div className="flex items-center gap-1.5 min-w-0">
                         {editing ? (
@@ -502,7 +502,7 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                       </div>
                       {diff && <DiffBadge diff={diff} pl={pl} />}
                       {hov && (
-                        <div className="flex items-center gap-1 mt-2 pt-1.5 border-t border-c-border-subtle dark:border-c-border">
+                        <div className="flex items-center gap-1 mt-2 pt-1.5 border-t border-c-border-subtle dark:border-c-border-subtle">
                           <button
                             onClick={() => restore(snap)}
                             className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-c-warning hover:bg-c-surface-raised transition-colors"

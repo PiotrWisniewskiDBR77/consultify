@@ -135,7 +135,7 @@ export const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) =
     start:
       'rounded-full border-2 border-success-500 bg-success-50 dark:bg-success-900/30 dark:border-success-400',
     end: 'rounded-full border-2 border-danger-500 bg-danger-50 dark:bg-danger-900/30 dark:border-danger-400',
-    action: 'rounded-xl border border-c-border bg-c-surface',
+    action: 'rounded-xl border border-c-border-subtle bg-c-surface',
     // Category node types — shape/border-radius only. Border + soft fill come
     // from the identity token map (SHAPE_TOKENS) applied via inline color-mix,
     // so no forbidden alpha on c-* utilities. Blue-first categorical palette.

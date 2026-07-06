@@ -191,7 +191,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                                     ${
                                       isSelected
                                         ? `bg-gradient-to-br ${providerColor} bg-opacity-20 border-2 border-white/30 shadow-lg`
-                                        : 'bg-c-surface-raised border border-c-border-subtle hover:border-c-border'
+                                        : 'bg-c-surface-raised border border-c-border-subtle hover:border-c-border-subtle'
                                     }
                                     ${!isVisible && showVisibilityToggle ? 'opacity-50' : ''}
                                     ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}

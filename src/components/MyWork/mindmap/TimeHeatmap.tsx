@@ -87,7 +87,7 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
 
   return (
     <div className="fixed inset-0 z-[92] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl flex flex-col">
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-c-border-subtle dark:border-c-border">
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
         <button
           onClick={onClose}
           className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:text-c-text-muted dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
@@ -138,7 +138,7 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
 
           {/* Activity type breakdown */}
           {Object.keys(typeCounts).length > 0 && (
-            <div className="pt-4 border-t border-c-border-subtle dark:border-c-border">
+            <div className="pt-4 border-t border-c-border-subtle dark:border-c-border-subtle">
               <h3 className="text-[11px] font-bold text-c-text-secondary dark:text-c-text-muted mb-3">
                 {isPl ? 'Podział wg typu' : 'Breakdown by type'}
               </h3>
@@ -148,7 +148,7 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
                   .map(([type, count]) => (
                     <div
                       key={type}
-                      className="p-2 rounded-lg bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border"
+                      className="p-2 rounded-lg bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle"
                     >
                       <div className="text-[10px] font-medium text-c-text-secondary dark:text-c-text-muted capitalize">
                         {type.replace(/_/g, ' ')}

@@ -84,9 +84,9 @@ export const PresentMode: React.FC<PresentModeProps> = ({
         </div>
 
         {/* Side panel: notes + next slide + timer */}
-        <div className="w-80 bg-c-surface flex flex-col border-l border-c-border">
+        <div className="w-80 bg-c-surface flex flex-col border-l border-c-border-subtle">
           {/* Timer */}
-          <div className="px-4 py-3 border-b border-c-border">
+          <div className="px-4 py-3 border-b border-c-border-subtle">
             <div className="flex items-center justify-between text-c-text">
               <span className="text-xs opacity-60">
                 {currentIndex + 1} / {cards.length}
@@ -97,7 +97,7 @@ export const PresentMode: React.FC<PresentModeProps> = ({
 
           {/* Next slide preview */}
           {nextCard && (
-            <div className="p-4 border-b border-c-border">
+            <div className="p-4 border-b border-c-border-subtle">
               <p className="text-[10px] text-c-text-secondary uppercase mb-2">Next slide</p>
               <div className="pointer-events-none opacity-80">
                 <CardRenderer card={nextCard} colorSetId={colorSetId} scale={0.3} />
@@ -114,7 +114,7 @@ export const PresentMode: React.FC<PresentModeProps> = ({
           </div>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between p-3 border-t border-c-border">
+          <div className="flex items-center justify-between p-3 border-t border-c-border-subtle">
             <button
               onClick={goPrev}
               disabled={currentIndex === 0}

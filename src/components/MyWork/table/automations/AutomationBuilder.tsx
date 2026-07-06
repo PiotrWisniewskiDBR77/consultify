@@ -198,19 +198,19 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder={isPl ? 'Nazwa automatyzacji...' : 'Automation name...'}
-          className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-4 py-2.5 text-base font-medium border-c-border bg-c-surface-raised"
+          className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-4 py-2.5 text-base font-medium border-c-border-subtle bg-c-surface-raised"
         />
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder={isPl ? 'Opis (opcjonalny)' : 'Description (optional)'}
           rows={2}
-          className="w-full resize-none rounded-lg border border-c-border-subtle bg-c-surface px-4 py-2 text-sm border-c-border bg-c-surface-raised"
+          className="w-full resize-none rounded-lg border border-c-border-subtle bg-c-surface px-4 py-2 text-sm border-c-border-subtle bg-c-surface-raised"
         />
       </div>
 
       {/* Enabled toggle */}
-      <div className="flex items-center justify-between rounded-lg border border-c-border-subtle px-4 py-3 border-c-border">
+      <div className="flex items-center justify-between rounded-lg border border-c-border-subtle px-4 py-3 border-c-border-subtle">
         <span className="text-sm font-medium">{isPl ? 'Aktywna' : 'Enabled'}</span>
         <button
           type="button"
@@ -247,7 +247,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                 className={`flex items-start gap-2.5 rounded-lg border p-3 text-left transition-colors ${
                   isActive
                     ? 'border-c-border-strong bg-c-surface-raised'
-                    : 'border-c-border-subtle bg-c-surface hover:border-c-border'
+                    : 'border-c-border-subtle bg-c-surface hover:border-c-border-subtle'
                 }`}
               >
                 <span
@@ -268,7 +268,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
       </div>
 
       {/* Trigger config */}
-      <div className="rounded-lg border border-c-border-subtle p-4 border-c-border">
+      <div className="rounded-lg border border-c-border-subtle p-4 border-c-border-subtle">
         <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-c-text-muted">
           {isPl ? 'Konfiguracja wyzwalacza' : 'Trigger configuration'}
         </h4>
@@ -302,7 +302,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                       conditionFieldId: e.target.value || undefined,
                     }))
                   }
-                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border bg-c-surface-raised"
+                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm border-c-border-subtle bg-c-surface-raised"
                 >
                   <option value="">{isPl ? '(brak warunku)' : '(no condition)'}</option>
                   {fields.map((f) => (
@@ -347,7 +347,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
           {actions.map((action, idx) => (
             <div
               key={action.id}
-              className="rounded-lg border border-c-border-subtle bg-c-surface p-3 border-c-border bg-c-surface-raised"
+              className="rounded-lg border border-c-border-subtle bg-c-surface p-3 border-c-border-subtle bg-c-surface-raised"
             >
               <div className="mb-2 flex items-center gap-2">
                 <GripVertical className="h-4 w-4 flex-shrink-0 text-c-text-secondary" />
@@ -362,7 +362,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                       actionConfig: {},
                     })
                   }
-                  className="flex-1 rounded border border-c-border-subtle bg-transparent px-2 py-1 text-sm border-c-border"
+                  className="flex-1 rounded border border-c-border-subtle bg-transparent px-2 py-1 text-sm border-c-border-subtle"
                 >
                   {ACTION_OPTIONS.map((opt) => (
                     <option key={opt.type} value={opt.type}>
@@ -406,7 +406,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                     value={(action.actionConfig.url as string) || ''}
                     onChange={(e) => updateActionConfig(action.id, 'url', e.target.value)}
                     placeholder="https://example.com/webhook"
-                    className="w-full rounded border border-c-border-subtle px-2.5 py-1.5 text-sm border-c-border bg-c-surface-raised"
+                    className="w-full rounded border border-c-border-subtle px-2.5 py-1.5 text-sm border-c-border-subtle bg-c-surface-raised"
                   />
                 )}
                 {action.actionType === 'create_record' && fields.length > 0 && (
@@ -420,7 +420,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                   <select
                     value={(action.actionConfig.fieldId as string) || ''}
                     onChange={(e) => updateActionConfig(action.id, 'fieldId', e.target.value)}
-                    className="w-full rounded border border-c-border-subtle bg-transparent px-2.5 py-1.5 text-sm border-c-border"
+                    className="w-full rounded border border-c-border-subtle bg-transparent px-2.5 py-1.5 text-sm border-c-border-subtle"
                   >
                     <option value="">{isPl ? 'Wybierz pole...' : 'Select field...'}</option>
                     {fields.map((f) => (
@@ -444,12 +444,12 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-end gap-3 border-t border-c-border-subtle pt-4 border-c-border">
+      <div className="flex items-center justify-end gap-3 border-t border-c-border-subtle pt-4 border-c-border-subtle">
         <button
           type="button"
           onClick={onCancel}
           disabled={saving}
-          className="rounded-lg border border-c-border-subtle px-4 py-2 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised border-c-border text-c-text-muted hover:bg-c-surface-raised"
+          className="rounded-lg border border-c-border-subtle px-4 py-2 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised border-c-border-subtle text-c-text-muted hover:bg-c-surface-raised"
         >
           {isPl ? 'Anuluj' : 'Cancel'}
         </button>

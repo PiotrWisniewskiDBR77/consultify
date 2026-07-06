@@ -489,7 +489,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                       value={outcome}
                       onChange={(e) => setOutcome(e.target.value)}
                       placeholder={t('decisions.rationalePlaceholder', 'Explain your decision...')}
-                      className="w-full p-3 text-sm bg-c-surface border border-c-border rounded-lg resize-none h-20 focus:ring-2 focus:ring-c-focus focus:border-transparent"
+                      className="w-full p-3 text-sm bg-c-surface border border-c-border-subtle rounded-lg resize-none h-20 focus:ring-2 focus:ring-c-focus focus:border-transparent"
                     />
                   </div>
 
@@ -505,7 +505,7 @@ export const DecisionDetailModal: React.FC<DecisionDetailModalProps> = ({
                     <button
                       onClick={() => handleDecision('REJECTED')}
                       disabled={submitting || !outcome.trim()}
-                      className="px-4 py-2 text-sm font-medium text-c-text-secondary border border-c-border hover:border-danger-300 dark:hover:border-danger-500/50 hover:text-danger-600 dark:hover:text-danger-400 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-4 py-2 text-sm font-medium text-c-text-secondary border border-c-border-subtle hover:border-danger-300 dark:hover:border-danger-500/50 hover:text-danger-600 dark:hover:text-danger-400 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <span className="flex items-center gap-1.5">
                         <XCircle size={14} />

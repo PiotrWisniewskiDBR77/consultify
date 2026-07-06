@@ -186,7 +186,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                   const col = axisOptions.find((c) => c.key === e.target.value);
                   if (col) onAxisChange('x', col);
                 }}
-                className="text-[10px] font-medium px-2 py-1 rounded-lg bg-c-surface border border-c-border text-c-text-secondary"
+                className="text-[10px] font-medium px-2 py-1 rounded-lg bg-c-surface border border-c-border-subtle text-c-text-secondary"
               >
                 {axisOptions.map((c) => (
                   <option key={c.key} value={c.key}>
@@ -205,7 +205,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                   const col = axisOptions.find((c) => c.key === e.target.value);
                   if (col) onAxisChange('y', col);
                 }}
-                className="text-[10px] font-medium px-2 py-1 rounded-lg bg-c-surface border border-c-border text-c-text-secondary"
+                className="text-[10px] font-medium px-2 py-1 rounded-lg bg-c-surface border border-c-border-subtle text-c-text-secondary"
               >
                 {axisOptions.map((c) => (
                   <option key={c.key} value={c.key}>

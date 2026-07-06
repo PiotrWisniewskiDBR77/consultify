@@ -1709,7 +1709,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 {String(row.name || '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')}
               </div>
               {row.isComingSoon ? (
-                <span className="shrink-0 inline-flex items-center h-5 px-1.5 rounded-full text-[10px] border border-c-border bg-c-surface-raised text-c-text-muted">
+                <span className="shrink-0 inline-flex items-center h-5 px-1.5 rounded-full text-[10px] border border-c-border-subtle bg-c-surface-raised text-c-text-muted">
                   {t('common.comingSoon', 'Soon')}
                 </span>
               ) : null}
@@ -1770,7 +1770,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         ],
         render: (row) => (
           // canon §4.0a: neutral chip shell; signal carried by the leading dot.
-          <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-c-border bg-c-surface-raised text-c-text-secondary">
+          <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-c-border-subtle bg-c-surface-raised text-c-text-secondary">
             <span
               className={`h-1.5 w-1.5 rounded-full ${
                 row.isLicensed ? 'bg-amber-500' : 'bg-emerald-500'
@@ -1794,7 +1794,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row) => (
           // canon §3.5/§4.0: status carried by signal dot only; chip shell stays neutral
           // (no status-colored background fill).
-          <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-c-border bg-c-surface-raised text-c-text-secondary">
+          <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-c-border-subtle bg-c-surface-raised text-c-text-secondary">
             <span
               className={`h-1.5 w-1.5 rounded-full ${
                 row.isActive ? 'bg-emerald-500' : 'bg-c-text-muted'
@@ -2853,7 +2853,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     return (
       <div className="h-full flex flex-col overflow-hidden bg-c-bg">
         {/* Header */}
-        <div className="shrink-0 border-b border-c-border bg-c-surface px-6 py-4">
+        <div className="shrink-0 border-b border-c-border-subtle bg-c-surface px-6 py-4">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
@@ -2917,7 +2917,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             <div className="lg:col-span-2 space-y-6">
               {/* Summary Section */}
               {selectedInitiative.summary && (
-                <div className="bg-c-surface rounded-xl border border-c-border p-5">
+                <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
                   <h3 className="text-xs font-semibold text-c-text-muted uppercase mb-3 flex items-center gap-2">
                     <FileText size={14} />
                     Summary
@@ -2929,7 +2929,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               )}
 
               {/* Tasks Section */}
-              <div className="bg-c-surface rounded-xl border border-c-border p-5">
+              <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xs font-semibold text-c-text-muted uppercase flex items-center gap-2">
                     <ListTodo size={14} />
@@ -2974,7 +2974,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     {initiativeTasks.map((task) => (
                       <div
                         key={task.id}
-                        className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-800 rounded-lg border border-c-border hover:border-c-accent/30 transition-colors"
+                        className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-800 rounded-lg border border-c-border-subtle hover:border-c-accent/30 transition-colors"
                       >
                         <div
                           className={`w-2 h-2 rounded-full ${
@@ -3028,7 +3028,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
 
               {/* Source Info */}
               {selectedInitiative.sourceType && (
-                <div className="bg-slate-100/50 dark:bg-navy-900/50 rounded-xl border border-c-border p-4">
+                <div className="bg-slate-100/50 dark:bg-navy-900/50 rounded-xl border border-c-border-subtle p-4">
                   <div className="flex items-center gap-2 text-xs text-c-text-muted">
                     <Zap size={12} className="text-amber-400" />
                     <span>
@@ -3053,7 +3053,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             {/* Right Column - Metrics & Info */}
             <div className="space-y-4">
               {/* Key Metrics */}
-              <div className="bg-c-surface rounded-xl border border-c-border p-5">
+              <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
                 <h3 className="text-xs font-semibold text-c-text-muted uppercase mb-4">
                   Key Metrics
                 </h3>
@@ -3091,7 +3091,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               </div>
 
               {/* Timeline */}
-              <div className="bg-c-surface rounded-xl border border-c-border p-5">
+              <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
                 <h3 className="text-xs font-semibold text-c-text-muted uppercase mb-4 flex items-center gap-2">
                   <Calendar size={14} />
                   Timeline
@@ -3113,7 +3113,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               </div>
 
               {/* Ownership */}
-              <div className="bg-c-surface rounded-xl border border-c-border p-5">
+              <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
                 <h3 className="text-xs font-semibold text-c-text-muted uppercase mb-4 flex items-center gap-2">
                   <Users size={14} />
                   Ownership
@@ -3920,7 +3920,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 String(init?.status || item.status || '').toUpperCase() || 'DRAFT';
               const extraPillBase =
                 'inline-flex items-center justify-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-              const extraPillNeutral = `${extraPillBase} border-c-border bg-c-surface-raised text-c-text-secondary hover:bg-c-surface`;
+              const extraPillNeutral = `${extraPillBase} border-c-border-subtle bg-c-surface-raised text-c-text-secondary hover:bg-c-surface`;
 
               const openChat = async (promptText: string) => {
                 try {
@@ -4295,14 +4295,14 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       {isAddMenuOpen ? (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsAddMenuOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 z-50 w-[520px] max-w-[calc(100vw-24px)] rounded-2xl border border-c-border dark:border-white/[0.08] bg-c-surface shadow-xl shadow-black/20 overflow-hidden">
+          <div className="absolute right-0 top-full mt-2 z-50 w-[520px] max-w-[calc(100vw-24px)] rounded-2xl border border-c-border-subtle dark:border-white/[0.08] bg-c-surface shadow-xl shadow-black/20 overflow-hidden">
             <div className="p-3 border-b border-c-border-subtle dark:border-white/[0.06]">
               <div className="relative">
                 <input
                   value={addMenuQuery}
                   onChange={(e) => setAddMenuQuery(e.target.value)}
                   placeholder={isPolish ? 'Szukaj narzędzia…' : 'Search tools…'}
-                  className="w-full h-9 rounded-full px-4 pr-10 text-sm bg-c-bg/70 border border-c-border text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
+                  className="w-full h-9 rounded-full px-4 pr-10 text-sm bg-c-bg/70 border border-c-border-subtle text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
                 />
                 {addMenuQuery ? (
                   <button
@@ -4327,7 +4327,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                       className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border transition-colors ${
                         active
                           ? 'border-c-accent/40 bg-c-accent-soft text-c-text'
-                          : 'border-c-border bg-c-surface-raised text-c-text-secondary hover:bg-c-surface'
+                          : 'border-c-border-subtle bg-c-surface-raised text-c-text-secondary hover:bg-c-surface'
                       }`}
                     >
                       {c.icon ? (
@@ -4435,7 +4435,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           ${
             isStatusDropdownOpen
               ? 'bg-c-accent-soft border-c-accent text-c-accent'
-              : 'bg-c-surface-raised border-c-border text-c-text-secondary hover:bg-c-surface'
+              : 'bg-c-surface-raised border-c-border-subtle text-c-text-secondary hover:bg-c-surface'
           }
         `}
       >

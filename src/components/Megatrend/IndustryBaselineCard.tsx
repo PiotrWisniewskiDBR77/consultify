@@ -48,14 +48,14 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-32 rounded-2xl border border-c-border dark:border-white/[0.08] bg-c-surface-raised dark:bg-c-surface/[0.04] animate-pulse"
+              className="h-32 rounded-2xl border border-c-border-subtle dark:border-white/[0.08] bg-c-surface-raised dark:bg-c-surface/[0.04] animate-pulse"
             />
           ))}
         </div>
       )}
 
       {error && (
-        <div className="rounded-2xl border border-dashed border-c-border dark:border-white/[0.08] bg-c-surface-raised dark:bg-c-surface/[0.04] p-8 text-center">
+        <div className="rounded-2xl border border-dashed border-c-border-subtle dark:border-white/[0.08] bg-c-surface-raised dark:bg-c-surface/[0.04] p-8 text-center">
           <Globe className="mx-auto mb-3 text-c-text-secondary" size={28} strokeWidth={1.5} />
           <p className="text-base font-medium text-c-text-secondary">
             {t('tools.megatrends.notAvailable', 'Megatrends data is not yet configured')}
@@ -68,7 +68,7 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
       )}
 
       {isEmpty && (
-        <div className="rounded-2xl border border-dashed border-c-border dark:border-white/[0.08] bg-c-surface-raised dark:bg-c-surface/[0.04] p-8 text-center">
+        <div className="rounded-2xl border border-dashed border-c-border-subtle dark:border-white/[0.08] bg-c-surface-raised dark:bg-c-surface/[0.04] p-8 text-center">
           <Globe className="mx-auto mb-3 text-c-text-secondary" size={28} strokeWidth={1.5} />
           <p className="text-base font-medium text-c-text-secondary">
             {t('tools.megatrends.notAvailable', 'Megatrends data is not yet configured')}

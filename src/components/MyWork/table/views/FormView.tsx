@@ -30,7 +30,7 @@ const FieldRenderer: React.FC<{
   isPl: boolean;
 }> = ({ col, value, onChange, isPl }) => {
   const baseInput =
-    'w-full h-9 px-3 rounded-xl text-xs bg-c-surface-raised border border-c-border text-c-text outline-none focus:ring-2 focus:ring-c-focus transition-all';
+    'w-full h-9 px-3 rounded-xl text-xs bg-c-surface-raised border border-c-border-subtle text-c-text outline-none focus:ring-2 focus:ring-c-focus transition-all';
 
   switch (col.type) {
     case 'text':
@@ -86,7 +86,7 @@ const FieldRenderer: React.FC<{
             type="checkbox"
             checked={!!value}
             onChange={(e) => onChange(e.target.checked)}
-            className="w-4 h-4 rounded border-c-border text-c-accent focus:ring-c-focus"
+            className="w-4 h-4 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
           />
           <span className="text-xs text-c-text-muted">
             {value ? (isPl ? 'Tak' : 'Yes') : isPl ? 'Nie' : 'No'}
@@ -114,7 +114,7 @@ const FieldRenderer: React.FC<{
     case 'multiselect': {
       const selected = Array.isArray(value) ? value : value ? String(value).split(',') : [];
       return (
-        <div className="flex flex-wrap gap-1.5 p-2 rounded-xl border border-c-border bg-c-surface-raised min-h-[36px]">
+        <div className="flex flex-wrap gap-1.5 p-2 rounded-xl border border-c-border-subtle bg-c-surface-raised min-h-[36px]">
           {(col.options || []).map((opt, i) => {
             const isSelected = selected.includes(opt);
             const bgColor = col.optionColors?.[opt] || SELECT_COLORS[i % SELECT_COLORS.length];
@@ -282,7 +282,7 @@ export const FormView: React.FC<FormViewProps> = ({
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Navigation bar */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-c-border">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-c-border-subtle">
         <div className="flex items-center gap-2">
           <button
             onClick={goPrev}

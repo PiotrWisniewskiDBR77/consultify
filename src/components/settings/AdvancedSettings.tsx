@@ -815,7 +815,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
                                 setNewKeyPermissions((prev) => prev.filter((p) => p !== perm));
                               }
                             }}
-                            className="w-4 h-4 rounded border-c-border dark:border-navy-700 text-amber-600 focus:ring-amber-500"
+                            className="w-4 h-4 rounded border-c-border-subtle dark:border-navy-700 text-amber-600 focus:ring-amber-500"
                           />
                           <span className="text-sm text-c-text-secondary capitalize">
                             {perm}

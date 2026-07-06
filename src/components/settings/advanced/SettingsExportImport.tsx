@@ -304,7 +304,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
               type="checkbox"
               checked={Object.values(exportConfig).every(Boolean)}
               onChange={(e) => toggleAll(e.target.checked)}
-              className="w-5 h-5 rounded border-c-border dark:border-navy-700 text-emerald-600 focus:ring-emerald-500"
+              className="w-5 h-5 rounded border-c-border-subtle dark:border-navy-700 text-emerald-600 focus:ring-emerald-500"
             />
           </div>
 
@@ -325,7 +325,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
                   onChange={(e) =>
                     setExportConfig({ ...exportConfig, [cat.key]: e.target.checked })
                   }
-                  className="w-5 h-5 rounded border-c-border dark:border-navy-700 text-emerald-600 focus:ring-emerald-500"
+                  className="w-5 h-5 rounded border-c-border-subtle dark:border-navy-700 text-emerald-600 focus:ring-emerald-500"
                 />
               </label>
             ))}
@@ -350,7 +350,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
         </div>
 
         {!importFile ? (
-          <label className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-c-border rounded-xl cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/5 transition-colors">
+          <label className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-c-border-subtle rounded-xl cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/5 transition-colors">
             <FileText size={48} className="text-c-text-secondary mb-3" />
             <p className="font-medium text-c-text-secondary">
               {t('settings.importExport.dropFile', 'Drop settings file here or click to browse')}

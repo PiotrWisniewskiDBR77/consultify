@@ -30,7 +30,7 @@ export const ActivityNode: React.FC<NodeProps<any>> = ({ id, data, selected }) =
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-center min-w-[120px] min-h-[56px] px-3 py-2 rounded-xl border border-c-border bg-c-surface shadow-sm transition-shadow ${
+      className={`relative flex flex-col items-center justify-center min-w-[120px] min-h-[56px] px-3 py-2 rounded-xl border border-c-border-subtle bg-c-surface shadow-sm transition-shadow ${
         selected ? 'ring-2 ring-c-border-strong' : ''
       }`}
       style={{

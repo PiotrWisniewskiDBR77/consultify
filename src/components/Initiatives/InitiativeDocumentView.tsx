@@ -306,7 +306,7 @@ const ExpandableNarrativeField: React.FC<ExpandableNarrativeFieldProps> = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={3}
-        className={`w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder:text-c-text-muted border-b border-c-border focus:border-c-focus-solid transition-colors min-h-[60px] ${
+        className={`w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-c-text-secondary focus:outline-none placeholder:text-c-text-muted border-b border-c-border-subtle focus:border-c-focus-solid transition-colors min-h-[60px] ${
           isExpanded ? 'min-h-[220px] overflow-visible resize-y' : 'h-24 overflow-hidden resize-y'
         }`}
         placeholder={placeholder}
@@ -5333,7 +5333,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           return (
             <div className="relative">
               <div
-                className={`flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold ${currentStatusBg} border ${statusAlertBorder || 'border-c-border'} ${currentStatusColor}`}
+                className={`flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold ${currentStatusBg} border ${statusAlertBorder || 'border-c-border-subtle'} ${currentStatusColor}`}
               >
                 <span className={`w-2 h-2 rounded-full flex-shrink-0 ${currentStatusDot}`} />
                 <span className="flex-1 truncate">{currentStatusLabel}</span>
@@ -5378,7 +5378,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         render: () => (
           <div className="relative">
             <div
-              className={`flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold ${moduleConfig.bgLight} ${moduleConfig.textColor} border border-c-border`}
+              className={`flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold ${moduleConfig.bgLight} ${moduleConfig.textColor} border border-c-border-subtle`}
             >
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${moduleConfig.color}`} />
               <span className="flex-1 truncate">
@@ -5410,7 +5410,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         render: () => (
           <div className="relative">
             <div
-              className={`flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold ${gateVisual.bg} ${gateVisual.text} border ${gateAlertBorder || 'border-c-border'}`}
+              className={`flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold ${gateVisual.bg} ${gateVisual.text} border ${gateAlertBorder || 'border-c-border-subtle'}`}
             >
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${gateVisual.dot}`} />
               <span className="flex-1 truncate">{isPolish ? gateLabel.pl : gateLabel.en}</span>
@@ -5444,7 +5444,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             title={!canEditPriority ? t('initiatives.youCannotEditPriorityAtThis2') : undefined}
           >
             <div
-              className={`flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold ${currentPriorityMeta.bg} border ${priorityAlertBorder || 'border-c-border'} ${currentPriorityMeta.text} ${
+              className={`flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold ${currentPriorityMeta.bg} border ${priorityAlertBorder || 'border-c-border-subtle'} ${currentPriorityMeta.text} ${
                 !canEditPriority ? 'opacity-60' : ''
               }`}
             >
@@ -5487,7 +5487,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             onChange={(e) => setOwnerId(e.target.value)}
             disabled={!canEditOwner}
             title={!canEditOwner ? t('initiatives.youCannotEditOwnerAtThis2') : undefined}
-            className="w-full h-8 px-2.5 rounded-lg text-xs font-semibold bg-c-surface-raised border border-c-border text-c-text-secondary focus:outline-none focus:border-c-focus-solid transition-colors"
+            className="w-full h-8 px-2.5 rounded-lg text-xs font-semibold bg-c-surface-raised border border-c-border-subtle text-c-text-secondary focus:outline-none focus:border-c-focus-solid transition-colors"
           >
             <option value="">{t('initiatives.select2')}</option>
             {users.map((u) => (
@@ -5513,7 +5513,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             onChange={(e) => setTargetDate(e.target.value)}
             disabled={!canEditTargetDate}
             title={!canEditTargetDate ? t('initiatives.youCannotEditTargetDateAt2') : undefined}
-            className="w-full h-8 px-2.5 rounded-lg text-xs bg-c-surface-raised border border-c-border text-c-text-secondary focus:outline-none focus:border-c-focus-solid transition-colors disabled:opacity-60"
+            className="w-full h-8 px-2.5 rounded-lg text-xs bg-c-surface-raised border border-c-border-subtle text-c-text-secondary focus:outline-none focus:border-c-focus-solid transition-colors disabled:opacity-60"
           />
         ),
       },
@@ -5562,7 +5562,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               <a
                 href={sourcePath}
                 title={isPolish ? `Otwórz źródło: ${sourceTitle}` : `Open source: ${sourceTitle}`}
-                className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-c-surface-raised border border-c-border text-c-info hover:bg-c-surface transition-colors truncate"
+                className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-c-surface-raised border border-c-border-subtle text-c-info hover:bg-c-surface transition-colors truncate"
               >
                 <Sparkles size={12} className="shrink-0" />
                 <span className="truncate">
@@ -6053,7 +6053,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         assignment: {
           icon: <User size={12} />,
           label: t('initiatives.assignment2'),
-          style: 'text-c-info bg-c-surface-raised border-c-border',
+          style: 'text-c-info bg-c-surface-raised border-c-border-subtle',
         },
         task_added: {
           icon: <CheckSquare size={12} />,
@@ -6063,7 +6063,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         decision_added: {
           icon: <Scale size={12} />,
           label: t('initiatives.decisionAdded2'),
-          style: 'text-c-info bg-c-surface-raised border-c-border',
+          style: 'text-c-info bg-c-surface-raised border-c-border-subtle',
         },
         risk_added: {
           icon: <AlertTriangle size={12} />,
@@ -6100,7 +6100,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         MAP[type] || {
           icon: <Clock size={12} />,
           label: type.replace(/_/g, ' '),
-          style: 'text-c-text-secondary bg-c-surface-raised border-c-border',
+          style: 'text-c-text-secondary bg-c-surface-raised border-c-border-subtle',
         }
       );
     },
@@ -6362,7 +6362,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             placeholderEn: string,
             placeholderPl: string
           ) => (
-            <div className="rounded-2xl border border-c-border bg-white/70 dark:bg-navy-900/70 p-4 space-y-2">
+            <div className="rounded-2xl border border-c-border-subtle bg-white/70 dark:bg-navy-900/70 p-4 space-y-2">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-semibold text-c-text-secondary">
@@ -6404,7 +6404,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   />
                 </div>
               </div>
-              <div className="min-h-[56px] border-b border-c-border pb-2">
+              <div className="min-h-[56px] border-b border-c-border-subtle pb-2">
                 {items.length === 0 ? (
                   <p className="text-xs text-c-text-secondary italic py-2">
                     {t('initiatives.noItemsYet3')}
@@ -6614,7 +6614,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   />
                 </div>
               </div>
-              <div className="border-b border-c-border pb-2 min-h-[40px]">
+              <div className="border-b border-c-border-subtle pb-2 min-h-[40px]">
                 {items.map((item) =>
                   renderItem(item, onUpdate, onRemove, isPolish ? placeholderPL : placeholderEN)
                 )}
@@ -6794,7 +6794,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       />
                     </div>
                   </div>
-                  <div className="border-b border-c-border pb-2 min-h-[40px]">
+                  <div className="border-b border-c-border-subtle pb-2 min-h-[40px]">
                     {inScopeItems.map((item, i) =>
                       renderScopeItem(
                         item,
@@ -6857,7 +6857,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       />
                     </div>
                   </div>
-                  <div className="border-b border-c-border pb-2 min-h-[40px]">
+                  <div className="border-b border-c-border-subtle pb-2 min-h-[40px]">
                     {outScopeItems.map((item, i) =>
                       renderScopeItem(
                         item,
@@ -6879,7 +6879,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               </div>
 
               {/* ── Horizontal separator ── */}
-              <div className="border-t border-c-border mt-2" />
+              <div className="border-t border-c-border-subtle mt-2" />
 
               {/* ── Kill Criteria (full width, below) ── */}
               <div className="space-y-2 pt-2">
@@ -6986,7 +6986,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     {Object.entries(initiative.effortProfile).map(([key, val]) => (
                       <div
                         key={key}
-                        className="p-2.5 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-c-border"
+                        className="p-2.5 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-c-border-subtle"
                       >
                         <p className="text-[10px] text-c-text-muted capitalize mb-1">
                           {key}
@@ -7455,7 +7455,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               {showCommentsAIModal && commentsAiProposal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
                   <div className="w-full max-w-3xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl">
-                    <div className="flex items-start justify-between px-5 py-4 border-b border-c-border">
+                    <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle">
                       <div>
                         <h3 className="text-sm font-semibold text-c-text">
                           {t('initiatives.proposedCommentChangesAi2')}
@@ -7641,18 +7641,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       </Callout>
                     </div>
 
-                    <div className="px-5 py-4 border-t border-c-border flex items-center justify-end gap-2">
+                    <div className="px-5 py-4 border-t border-c-border-subtle flex items-center justify-end gap-2">
                       <button
                         onClick={closeCommentsAIModal}
                         disabled={isCommentsAIProposing}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50"
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50"
                       >
                         {t('initiatives.cancel2')}
                       </button>
                       <button
                         onClick={() => void applyCommentsAIProposal()}
                         disabled={isCommentsAIProposing}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border text-c-info hover:bg-c-surface-raised transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle text-c-info hover:bg-c-surface-raised transition-colors disabled:opacity-50"
                       >
                         {isCommentsAIProposing ? (
                           <Loader2 size={13} className="animate-spin" />
@@ -7696,12 +7696,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 </div>
               </div>
               {showCreateKpi && (
-                <div className="rounded-2xl border border-c-border bg-white/70 dark:bg-navy-900/70 px-4 py-3 space-y-3">
+                <div className="rounded-2xl border border-c-border-subtle bg-white/70 dark:bg-navy-900/70 px-4 py-3 space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="text-sm text-c-text-secondary">
                       {t('initiatives.addAManualKpiOrLink2')}
                     </p>
-                    <div className="inline-flex rounded-xl border border-c-border p-1 bg-white/80 dark:bg-navy-900/80">
+                    <div className="inline-flex rounded-xl border border-c-border-subtle p-1 bg-white/80 dark:bg-navy-900/80">
                       <button
                         onClick={() => setCreateKpiMode('manual')}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
@@ -7730,7 +7730,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         <select
                           value={createKpiLibraryId}
                           onChange={(e) => setCreateKpiLibraryId(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg border border-c-border bg-white/90 dark:bg-navy-900/70 text-sm"
+                          className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
                         >
                           <option value="">
                             {createKpiLibraryLoading
@@ -7751,31 +7751,31 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       onChange={(e) => setCreateKpiName(e.target.value)}
                       placeholder={t('initiatives.kpiName2')}
                       disabled={createKpiMode === 'linked'}
-                      className="md:col-span-2 px-3 py-2 rounded-lg border border-c-border bg-white/90 dark:bg-navy-900/70 text-sm disabled:opacity-60"
+                      className="md:col-span-2 px-3 py-2 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm disabled:opacity-60"
                     />
                     <input
                       value={createKpiUnit}
                       onChange={(e) => setCreateKpiUnit(e.target.value)}
                       placeholder={t('initiatives.unit2')}
                       disabled={createKpiMode === 'linked'}
-                      className="px-3 py-2 rounded-lg border border-c-border bg-white/90 dark:bg-navy-900/70 text-sm disabled:opacity-60"
+                      className="px-3 py-2 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm disabled:opacity-60"
                     />
                     <input
                       value={createKpiCategory}
                       onChange={(e) => setCreateKpiCategory(e.target.value)}
                       placeholder={t('initiatives.category2')}
-                      className="px-3 py-2 rounded-lg border border-c-border bg-white/90 dark:bg-navy-900/70 text-sm"
+                      className="px-3 py-2 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
                     />
                     <input
                       value={createKpiBaseline}
                       onChange={(e) => setCreateKpiBaseline(e.target.value)}
                       placeholder="Baseline"
-                      className="px-3 py-2 rounded-lg border border-c-border bg-white/90 dark:bg-navy-900/70 text-sm"
+                      className="px-3 py-2 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
                     />
                     <select
                       value={createKpiCadence}
                       onChange={(e) => setCreateKpiCadence(e.target.value)}
-                      className="px-3 py-2 rounded-lg border border-c-border bg-white/90 dark:bg-navy-900/70 text-sm"
+                      className="px-3 py-2 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
                     >
                       {['DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY'].map((option) => (
                         <option key={option} value={option}>
@@ -7790,7 +7790,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           e.target.value as 'realization' | 'post-implementation' | 'both'
                         )
                       }
-                      className="md:col-span-2 px-3 py-2 rounded-lg border border-c-border bg-white/90 dark:bg-navy-900/70 text-sm"
+                      className="md:col-span-2 px-3 py-2 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
                     >
                       <option value="realization">{t('initiatives.realizationOnly2')}</option>
                       <option value="post-implementation">
@@ -7802,13 +7802,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       value={createKpiRealizationTarget}
                       onChange={(e) => setCreateKpiRealizationTarget(e.target.value)}
                       placeholder={t('initiatives.realizationTarget2')}
-                      className="px-3 py-2 rounded-lg border border-c-border bg-white/90 dark:bg-navy-900/70 text-sm"
+                      className="px-3 py-2 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
                     />
                     <input
                       value={createKpiPostImplementationTarget}
                       onChange={(e) => setCreateKpiPostImplementationTarget(e.target.value)}
                       placeholder={t('initiatives.postImplementationTarget2')}
-                      className="px-3 py-2 rounded-lg border border-c-border bg-white/90 dark:bg-navy-900/70 text-sm"
+                      className="px-3 py-2 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
                     />
                   </div>
                   <div className="flex justify-end gap-2">
@@ -7844,31 +7844,31 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     value={editKpiName}
                     onChange={(e) => setEditKpiName(e.target.value)}
                     placeholder={t('initiatives.kpiName2')}
-                    className="md:col-span-2 px-3 py-1.5 rounded-lg border border-c-border bg-white/90 dark:bg-navy-900/70 text-sm"
+                    className="md:col-span-2 px-3 py-1.5 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
                   />
                   <input
                     value={editKpiUnit}
                     onChange={(e) => setEditKpiUnit(e.target.value)}
                     placeholder={t('initiatives.unit2')}
-                    className="px-3 py-1.5 rounded-lg border border-c-border bg-white/90 dark:bg-navy-900/70 text-sm"
+                    className="px-3 py-1.5 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
                   />
                   <input
                     value={editKpiBaseline}
                     onChange={(e) => setEditKpiBaseline(e.target.value)}
                     placeholder="Baseline"
-                    className="px-3 py-1.5 rounded-lg border border-c-border bg-white/90 dark:bg-navy-900/70 text-sm"
+                    className="px-3 py-1.5 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
                   />
                   <input
                     value={editKpiCurrent}
                     onChange={(e) => setEditKpiCurrent(e.target.value)}
                     placeholder={t('initiatives.current2')}
-                    className="px-3 py-1.5 rounded-lg border border-c-border bg-white/90 dark:bg-navy-900/70 text-sm"
+                    className="px-3 py-1.5 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
                   />
                   <input
                     value={editKpiTarget}
                     onChange={(e) => setEditKpiTarget(e.target.value)}
                     placeholder="Target"
-                    className="px-3 py-1.5 rounded-lg border border-c-border bg-white/90 dark:bg-navy-900/70 text-sm"
+                    className="px-3 py-1.5 rounded-lg border border-c-border-subtle bg-white/90 dark:bg-navy-900/70 text-sm"
                   />
                   <div className="md:col-span-6 flex justify-end gap-2">
                     <button
@@ -7887,14 +7887,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   </div>
                 </div>
               )}
-              <div className="rounded-2xl border border-c-border bg-white/70 dark:bg-navy-900/70 p-3">
+              <div className="rounded-2xl border border-c-border-subtle bg-white/70 dark:bg-navy-900/70 p-3">
                 <table
                   /* §27-exempt: tabela dokumentowa/raportowa read-only, do druku/eksportu */ className="w-full text-sm"
                 >
                   {/* §27 — sticky header (KPI list has no sort/expand → kept custom;
                       FilterableTable would drop the inline edit-form + AI-add). */}
                   <thead className="sticky top-0 z-10 bg-c-surface">
-                    <tr className="text-[11px] uppercase tracking-wide text-c-text-muted border-b border-c-border">
+                    <tr className="text-[11px] uppercase tracking-wide text-c-text-muted border-b border-c-border-subtle">
                       <th className="text-left py-2 pr-2">{t('initiatives.kpi2')}</th>
                       <th className="text-left py-2 pr-2">{t('initiatives.phase2')}</th>
                       <th className="text-left py-2 pr-2">{t('initiatives.unit2')}</th>
@@ -7924,7 +7924,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           <td className="py-2 pr-2 text-c-text-secondary">
                             <div className="flex items-center gap-2">
                               <span>{toEnglishKpiName(kpi.name, isPolish)}</span>
-                              <span className="inline-flex items-center rounded-md border border-c-border px-1.5 py-0.5 text-[10px] text-c-text-muted">
+                              <span className="inline-flex items-center rounded-md border border-c-border-subtle px-1.5 py-0.5 text-[10px] text-c-text-muted">
                                 {kpi.definitionSource === 'library'
                                   ? t('initiatives.linked2')
                                   : t('initiatives.manual2')}
@@ -7970,7 +7970,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                               <MoreVertical size={14} />
                             </button>
                             {kpiMenuId === kpi.id && (
-                              <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-c-border bg-c-surface p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30">
+                              <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-c-border-subtle bg-c-surface p-1.5 shadow-xl shadow-slate-900/10 dark:shadow-black/30">
                                 <button
                                   onClick={() => {
                                     setKpiMenuId(null);
@@ -7991,7 +7991,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                   <Copy size={13} />
                                   {t('initiatives.duplicate2')}
                                 </button>
-                                <div className="my-1 border-t border-c-border" />
+                                <div className="my-1 border-t border-c-border-subtle" />
                                 <button
                                   onClick={() => {
                                     setKpiMenuId(null);
@@ -8029,7 +8029,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 </span>
               </div>
               {watchers.length === 0 ? (
-                <div className="p-5 rounded-xl border border-c-border bg-white/70 dark:bg-navy-900/70 text-sm text-c-text-muted">
+                <div className="p-5 rounded-xl border border-c-border-subtle bg-white/70 dark:bg-navy-900/70 text-sm text-c-text-muted">
                   {t('initiatives.noWatchersForThisInitiativeYet2')}
                 </div>
               ) : (
@@ -8037,7 +8037,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   {watchers.map((watcher) => (
                     <div
                       key={watcher.id}
-                      className="flex items-center justify-between p-3 rounded-xl border border-c-border bg-white/70 dark:bg-navy-900/70"
+                      className="flex items-center justify-between p-3 rounded-xl border border-c-border-subtle bg-white/70 dark:bg-navy-900/70"
                     >
                       <div>
                         <p className="text-sm font-medium text-c-text">
@@ -8250,7 +8250,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   {deliverableItems.map((d) => (
                     <li
                       key={d.id}
-                      className="flex items-center gap-2 rounded-lg border border-c-border px-3 py-2"
+                      className="flex items-center gap-2 rounded-lg border border-c-border-subtle px-3 py-2"
                     >
                       <input
                         type="checkbox"
@@ -8339,7 +8339,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   {changeLogItems.map((e: any) => (
                     <li
                       key={e.id}
-                      className="flex items-start gap-3 rounded-lg border border-c-border px-3 py-2"
+                      className="flex items-start gap-3 rounded-lg border border-c-border-subtle px-3 py-2"
                     >
                       <span className="text-[11px] font-mono text-c-text-muted pt-0.5 shrink-0">
                         {e.date}
@@ -8412,7 +8412,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   {okrItems.map((o: any) => (
                     <div
                       key={o.id}
-                      className="rounded-xl border border-c-border p-3 space-y-2"
+                      className="rounded-xl border border-c-border-subtle p-3 space-y-2"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <input
@@ -8480,7 +8480,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 onBlur={saveHypothesis}
                 rows={5}
                 placeholder={t('initiatives.weBelieveThatBecauseWeWill2')}
-                className="w-full rounded-lg border border-c-border bg-transparent px-3 py-2 text-sm text-c-text-secondary focus:outline-none focus:border-teal-400 resize-y"
+                className="w-full rounded-lg border border-c-border-subtle bg-transparent px-3 py-2 text-sm text-c-text-secondary focus:outline-none focus:border-teal-400 resize-y"
               />
             </div>
           );
@@ -8516,7 +8516,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   {owners.map((o, i) => (
                     <div
                       key={i}
-                      className="rounded-xl border border-c-border p-3"
+                      className="rounded-xl border border-c-border-subtle p-3"
                     >
                       <div className="text-[11px] uppercase tracking-wide text-c-text-muted">
                         {o.role}
@@ -8546,7 +8546,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 onBlur={saveLessons}
                 rows={6}
                 placeholder={t('initiatives.whatWorkedWhatDidnTWhat2')}
-                className="w-full rounded-lg border border-c-border bg-transparent px-3 py-2 text-sm text-c-text-secondary focus:outline-none focus:border-teal-400 resize-y"
+                className="w-full rounded-lg border border-c-border-subtle bg-transparent px-3 py-2 text-sm text-c-text-secondary focus:outline-none focus:border-teal-400 resize-y"
               />
             </div>
           );
@@ -9606,7 +9606,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       {showRaidAIModal && raidAiProposal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/40">
           <div className="w-full max-w-3xl rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl shadow-2xl">
-            <div className="flex items-start justify-between px-5 py-4 border-b border-c-border">
+            <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle">
               <div>
                 <h3 className="text-sm font-semibold text-c-text">
                   {t('initiatives.proposedRaidChangesAi2')}
@@ -9800,18 +9800,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               </Callout>
             </div>
 
-            <div className="px-5 py-4 border-t border-c-border flex items-center justify-end gap-2">
+            <div className="px-5 py-4 border-t border-c-border-subtle flex items-center justify-end gap-2">
               <button
                 onClick={closeRaidAIModal}
                 disabled={isRaidAIProposing}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-50"
               >
                 {t('initiatives.cancel2')}
               </button>
               <button
                 onClick={() => void applyRaidAIProposal()}
                 disabled={isRaidAIProposing || !canEditCards}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border text-c-info hover:bg-c-surface-raised transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle text-c-info hover:bg-c-surface-raised transition-colors disabled:opacity-50"
                 title={
                   !canEditCards ? t('initiatives.noEditPermissionAtThisInitiative2') : undefined
                 }
@@ -9930,7 +9930,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 className="fixed inset-0 z-40"
                                 onClick={() => setShowSectionsMenu(false)}
                               />
-                              <div className="absolute left-0 top-full mt-1 z-50 w-72 max-h-[60vh] overflow-y-auto rounded-xl border border-c-border bg-c-surface shadow-xl py-1.5">
+                              <div className="absolute left-0 top-full mt-1 z-50 w-72 max-h-[60vh] overflow-y-auto rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1.5">
                                 {sectionGroups.map((grp) => (
                                   <div key={grp.group} className="py-0.5">
                                     <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
@@ -10020,7 +10020,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 className="fixed inset-0 z-40"
                                 onClick={() => setShowNewMenu(false)}
                               />
-                              <div className="absolute left-0 top-full mt-1 z-50 w-52 rounded-xl border border-c-border bg-c-surface shadow-xl py-1.5">
+                              <div className="absolute left-0 top-full mt-1 z-50 w-52 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1.5">
                                 {newMenuActions.map((item) => (
                                   <button
                                     key={item.id}
@@ -10056,7 +10056,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 className="fixed inset-0 z-40"
                                 onClick={() => setShowExportMenu(false)}
                               />
-                              <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-c-border bg-c-surface shadow-xl py-1.5">
+                              <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1.5">
                                 {(
                                   [
                                     {
@@ -10135,7 +10135,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 className="fixed inset-0 z-40"
                                 onClick={() => setShowMaterializeMenu(false)}
                               />
-                              <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-c-border bg-c-surface shadow-xl py-1.5">
+                              <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1.5">
                                 {(
                                   [
                                     {
@@ -10249,7 +10249,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                   className="fixed inset-0 z-40"
                                   onClick={() => setShowToolbarKebab(false)}
                                 />
-                                <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-c-border bg-c-surface shadow-xl py-1.5">
+                                <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-c-border-subtle bg-c-surface shadow-xl py-1.5">
                                   {destructiveStatusActions.map((sa) => {
                                     const KebabIcon =
                                       sa.targetStatus === InitiativeStatus.CANCELLED
@@ -10410,10 +10410,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           onClick={() => setShowExportDialog(false)}
         >
           <div
-            className="w-full max-w-lg max-h-[85vh] overflow-hidden rounded-2xl bg-c-surface border border-c-border shadow-2xl flex flex-col"
+            className="w-full max-w-lg max-h-[85vh] overflow-hidden rounded-2xl bg-c-surface border border-c-border-subtle shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-c-border">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
               <h2 className="text-base font-semibold text-c-text">
                 {t('initiatives.exportInitiative2')}
               </h2>
@@ -10477,7 +10477,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             </div>
 
             {/* Targets */}
-            <div className="px-5 py-4 border-t border-c-border space-y-2">
+            <div className="px-5 py-4 border-t border-c-border-subtle space-y-2">
               <p className="text-xs font-medium uppercase tracking-wide text-c-text-muted">
                 {t('initiatives.format2')}
               </p>

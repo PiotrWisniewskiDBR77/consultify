@@ -291,7 +291,7 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
                     ${
                       isDragging
                         ? 'border-brand bg-brand/5 dark:bg-brand/10'
-                        : 'border-c-border dark:border-navy-600 hover:border-brand hover:bg-c-surface-raised dark:hover:bg-navy-800/50'
+                        : 'border-c-border-subtle dark:border-navy-600 hover:border-brand hover:bg-c-surface-raised dark:hover:bg-navy-800/50'
                     }
                 `}
       >

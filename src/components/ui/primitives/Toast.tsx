@@ -200,7 +200,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onDismiss, isTop }) => {
         bg-c-surface-raised
         rounded-xl
         shadow-[0_10px_40px_rgba(0,0,0,0.14)]
-        border border-c-border
+        border border-c-border-subtle
       `}
     >
       {/* Icon */}

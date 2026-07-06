@@ -439,7 +439,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                           'p-3 rounded-lg border-2 text-left transition-all duration-200',
                           isSelected
                             ? 'border-c-border-strong bg-c-surface-raised'
-                            : 'border-c-border-subtle hover:border-c-border dark:hover:border-white/20'
+                            : 'border-c-border-subtle hover:border-c-border-subtle dark:hover:border-white/20'
                         )}
                       >
                         <p

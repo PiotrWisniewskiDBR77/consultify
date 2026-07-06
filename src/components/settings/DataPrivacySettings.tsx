@@ -351,7 +351,7 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
                   className={`p-4 rounded-lg border-2 text-left transition-all ${
                     privacySettings.dataRetentionPolicy === option.value
                       ? 'border-c-accent bg-c-accent-soft dark:bg-c-accent-soft'
-                      : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border'
+                      : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border-subtle'
                   }`}
                 >
                   <p

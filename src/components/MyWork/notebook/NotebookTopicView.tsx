@@ -171,7 +171,7 @@ export const NotebookTopicView: React.FC<NotebookTopicViewProps> = ({
                 <button
                   key={n.id}
                   onClick={() => onOpenNote?.(n.id)}
-                  className="w-full text-left rounded-lg border border-c-border bg-c-surface-raised px-2.5 py-2 hover:border-c-border-strong transition-colors"
+                  className="w-full text-left rounded-lg border border-c-border-subtle bg-c-surface-raised px-2.5 py-2 hover:border-c-border-strong transition-colors"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-c-text truncate">
@@ -236,7 +236,7 @@ const Empty: React.FC<{ text: string }> = ({ text }) => (
 );
 
 const ArtifactRow: React.FC<{ artifact: AggregatedArtifact }> = ({ artifact }) => (
-  <div className="flex items-center gap-2 rounded-lg border border-c-border bg-c-surface-raised px-2.5 py-1.5">
+  <div className="flex items-center gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-2.5 py-1.5">
     <span className="text-[11px] uppercase tracking-wide text-c-text-muted shrink-0">
       {artifact.type}
     </span>

@@ -763,7 +763,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                 </div>
 
                 {/* 1. Decision Framing */}
-                <div className="bg-c-surface-raised dark:bg-c-bg p-4 rounded-xl border border-c-border shadow-sm dark:shadow-blue-900/10 flex items-start gap-6">
+                <div className="bg-c-surface-raised dark:bg-c-bg p-4 rounded-xl border border-c-border-subtle shadow-sm dark:shadow-blue-900/10 flex items-start gap-6">
                   <div className="flex-1 space-y-2">
                     <label className="text-xs font-bold text-c-info uppercase tracking-wider flex items-center gap-2">
                       <AlertOctagon size={14} /> {t('initiative.decisionToMake')}
@@ -1888,7 +1888,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                   };
                                   setInitiative({ ...initiative, milestones: list });
                                 }}
-                                className="rounded bg-c-surface dark:bg-c-bg border-c-border dark:border-white/20 text-c-info dark:text-c-info focus:ring-offset-white dark:focus:ring-offset-navy-900"
+                                className="rounded bg-c-surface dark:bg-c-bg border-c-border-subtle dark:border-white/20 text-c-info dark:text-c-info focus:ring-offset-white dark:focus:ring-offset-navy-900"
                               />
                               {t('initiative.decisionGate')}
                             </label>
@@ -2283,7 +2283,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 ? 'bg-c-info border-c-info text-white'
                                 : step.done
                                   ? 'bg-[color-mix(in_srgb,var(--c-success)_25%,transparent)] border-c-success text-c-success'
-                                  : 'bg-c-surface-raised border-c-border text-c-text-secondary dark:text-c-text-muted'
+                                  : 'bg-c-surface-raised border-c-border-subtle text-c-text-secondary dark:text-c-text-muted'
                             }`}
                           >
                             {step.done && initiative.status !== step.status ? '✓' : idx + 1}
@@ -2519,7 +2519,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 };
                                 setInitiative({ ...initiative, teamMembers: updated });
                               }}
-                              className="bg-transparent text-sm font-medium text-c-text outline-none border-b border-dashed border-c-border w-48"
+                              className="bg-transparent text-sm font-medium text-c-text outline-none border-b border-dashed border-c-border-subtle w-48"
                             >
                               <option value="">{t('initiative.selectMember')}</option>
                               {users.map((u) => (
@@ -2668,7 +2668,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                               });
                             }}
                             placeholder={t('initiative.initiativeIdOrNamePlaceholder')}
-                            className="flex-1 bg-transparent text-sm text-c-text outline-none border-b border-dashed border-c-border"
+                            className="flex-1 bg-transparent text-sm text-c-text outline-none border-b border-dashed border-c-border-subtle"
                           />
                           <button
                             onClick={() => {
@@ -2963,7 +2963,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                         versions: [newVersion, ...(initiative.versions || [])],
                       });
                     }}
-                    className="mt-4 w-full py-2 border-2 border-dashed border-c-border text-c-text-muted hover:border-c-info hover:text-c-info text-sm font-medium rounded-lg transition-colors"
+                    className="mt-4 w-full py-2 border-2 border-dashed border-c-border-subtle text-c-text-muted hover:border-c-info hover:text-c-info text-sm font-medium rounded-lg transition-colors"
                   >
                     + Save Version Snapshot
                   </button>

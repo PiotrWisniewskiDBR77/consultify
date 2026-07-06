@@ -102,7 +102,7 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
   return (
     <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-c-bg">
       <div className="w-full max-w-lg rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div className="flex items-center gap-2">
             <SmilePlus size={16} className="text-c-success" />
             <h3 className="text-sm font-bold text-c-text dark:text-c-text">
@@ -189,7 +189,7 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
                   return (
                     <div
                       key={r.nodeId}
-                      className={`flex items-center gap-2.5 p-2.5 rounded-xl ${cfg.bg} border border-c-border-subtle dark:border-c-border`}
+                      className={`flex items-center gap-2.5 p-2.5 rounded-xl ${cfg.bg} border border-c-border-subtle dark:border-c-border-subtle`}
                     >
                       <span className="text-sm shrink-0">{cfg.emoji}</span>
                       <div className="min-w-0 flex-1">
@@ -212,10 +212,10 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
         </div>
 
         {results.length > 0 && (
-          <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border flex items-center gap-2">
+          <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border-subtle flex items-center gap-2">
             <button
               onClick={onClose}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-border-subtle dark:border-c-border-subtle text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
             >
               {isPl ? 'Zamknij' : 'Close'}
             </button>

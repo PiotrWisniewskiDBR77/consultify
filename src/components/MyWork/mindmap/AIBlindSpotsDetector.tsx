@@ -218,7 +218,7 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
             {visibleSpots.map((spot) => (
               <div
                 key={spot.id}
-                className="flex items-start gap-2 p-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border"
+                className="flex items-start gap-2 p-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle"
               >
                 <AlertTriangle
                   size={12}

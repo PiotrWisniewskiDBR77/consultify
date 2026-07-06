@@ -179,7 +179,7 @@ export const RowTemplatePicker: React.FC<RowTemplatePickerProps> = ({
     <div className="fixed inset-0 z-[150]" onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-[280px] rounded-2xl border border-c-border bg-c-surface shadow-2xl overflow-hidden"
+        className="w-[280px] rounded-2xl border border-c-border-subtle bg-c-surface shadow-2xl overflow-hidden"
         style={style}
       >
         <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">

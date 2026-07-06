@@ -149,7 +149,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
         className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
           activeFiltersCount > 0
             ? 'bg-primary-500/10 border-primary-500/30 text-primary-400'
-            : 'bg-c-surface-raised/50 border-c-border/50 text-slate-400 dark:text-slate-500 hover:text-white'
+            : 'bg-c-surface-raised/50 border-c-border-subtle/50 text-slate-400 dark:text-slate-500 hover:text-white'
         }`}
       >
         <Filter size={16} />
@@ -164,9 +164,9 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
   }
 
   return (
-    <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl overflow-hidden">
+    <div className="bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-c-border/50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle/50">
         <div className="flex items-center gap-2">
           <Filter size={18} className="text-primary-400" />
           <span className="font-semibold text-c-text">Filters</span>
@@ -340,7 +340,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                       dateRange: { ...filters.dateRange, from: e.target.value },
                     })
                   }
-                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
                 />
               </div>
               <div>
@@ -354,7 +354,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
                       dateRange: { ...filters.dateRange, to: e.target.value },
                     })
                   }
-                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                  className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
                 />
               </div>
             </div>
@@ -403,7 +403,7 @@ export const ContentFilters: React.FC<ContentFiltersProps> = ({
             <select
               value={filters.language}
               onChange={(e) => onChange({ ...filters, language: e.target.value })}
-              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
             >
               <option value="">All languages</option>
               {languages.map((lang) => (
@@ -437,7 +437,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   children,
 }) => {
   return (
-    <div className="border-b border-c-border/30 last:border-0 pb-4 last:pb-0">
+    <div className="border-b border-c-border-subtle/30 last:border-0 pb-4 last:pb-0">
       <button
         onClick={onToggle}
         className="flex items-center justify-between w-full text-left mb-2"

@@ -623,7 +623,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               className={`flex items-center justify-center h-9 w-9 rounded-lg border transition-all duration-200 ${
                 showSearch
                   ? 'bg-c-accent-soft0 border-c-accent text-c-accent'
-                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border'
+                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border-subtle'
               }`}
               title="Search"
             >
@@ -636,7 +636,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition-all duration-200 ${
                 filter === 'all'
                   ? 'bg-c-accent-soft0 border-c-accent text-c-accent'
-                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border'
+                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border-subtle'
               }`}
             >
               <FileText size={14} />
@@ -657,7 +657,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition-all duration-200 ${
                 filter === 'app'
                   ? 'bg-blue-500/15 border-blue-500 text-blue-300'
-                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border'
+                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border-subtle'
               }`}
             >
               <Package size={14} />
@@ -678,7 +678,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition-all duration-200 ${
                 filter === 'org'
                   ? 'bg-c-accent-soft0 border-c-accent text-c-accent'
-                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border'
+                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border-subtle'
               }`}
             >
               <Building2 size={14} />
@@ -739,7 +739,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
             {/* Primary Action Button - Unified height */}
             <button
               onClick={() => openEditor()}
-              className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-c-accent text-c-text border border-c-border hover:brightness-110 shadow-lg transition-all duration-200"
+              className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-c-accent text-c-text border border-c-border-subtle hover:brightness-110 shadow-lg transition-all duration-200"
             >
               <Plus size={14} />
               <span>New Template</span>
@@ -807,10 +807,10 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                         onClick={() => handleSelectAll(!allSelected)}
                         className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
                           allSelected
-                            ? 'bg-c-surface border-c-border text-c-text'
+                            ? 'bg-c-surface border-c-border-subtle text-c-text'
                             : someSelected
                               ? 'bg-c-accent-soft0 border-c-accent text-c-text'
-                              : 'border-c-border hover:border-c-accent text-transparent hover:text-c-text-secondary'
+                              : 'border-c-border-subtle hover:border-c-accent text-transparent hover:text-c-text-secondary'
                         }`}
                       >
                         {allSelected ? (
@@ -1019,8 +1019,8 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                               }}
                               className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
                                 selectedIds.has(template.id)
-                                  ? 'bg-c-surface border-c-border text-c-text'
-                                  : 'border-c-border hover:border-c-accent'
+                                  ? 'bg-c-surface border-c-border-subtle text-c-text'
+                                  : 'border-c-border-subtle hover:border-c-accent'
                               }`}
                             >
                               {selectedIds.has(template.id) && <CheckSquare size={12} />}

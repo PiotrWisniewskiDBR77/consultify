@@ -375,9 +375,9 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
     nodeData.sourceType === 'ai_suggestion';
 
   return (
-    <div className="fixed top-0 right-0 bottom-0 z-modal w-[420px] max-w-[90vw] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border-l border-c-border-subtle dark:border-c-border shadow-2xl flex flex-col overflow-hidden">
+    <div className="fixed top-0 right-0 bottom-0 z-modal w-[420px] max-w-[90vw] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border-l border-c-border-subtle dark:border-c-border-subtle shadow-2xl flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-start gap-3 px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
+      <div className="flex items-start gap-3 px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             {isAI ? (
@@ -412,7 +412,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
         {/* ── Section 1: Basic Info (Status + Semantic Type) ── */}
-        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <ToggleBlock
             title={isPl ? 'Informacje podstawowe' : 'Basic Info'}
             icon={<Info size={14} />}
@@ -467,7 +467,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                     nodeData && onUpdateNode(nodeData.nodeId, { semanticType: e.target.value })
                   }
                   disabled={locked || isProtected}
-                  className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text focus:outline-none focus:ring-2 focus:ring-c-warning transition-all disabled:opacity-50"
+                  className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text focus:outline-none focus:ring-2 focus:ring-c-warning transition-all disabled:opacity-50"
                 >
                   {SEMANTIC_TYPE_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -481,7 +481,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
         </div>
 
         {/* ── Section 2: Notes & Context ── */}
-        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <ToggleBlock
             title={isPl ? 'Notatki i kontekst' : 'Notes & Context'}
             icon={<StickyNote size={14} />}
@@ -518,7 +518,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                   disabled={locked || isProtected}
                   rows={3}
                   placeholder={isPl ? 'Dodaj notatki, szczegóły...' : 'Add notes, details...'}
-                  className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-warning resize-none transition-all disabled:opacity-50"
+                  className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-warning resize-none transition-all disabled:opacity-50"
                 />
               </div>
               <DepthField
@@ -554,7 +554,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
         </div>
 
         {/* ── Section 3: Tags & Classification ── */}
-        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <ToggleBlock
             title={isPl ? 'Tagi i klasyfikacja' : 'Tags & Classification'}
             icon={<Tag size={14} />}
@@ -589,7 +589,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                   }}
                   disabled={locked || isProtected}
                   placeholder={isPl ? 'Dodaj tag...' : 'Add tag...'}
-                  className="flex-1 px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-warning"
+                  className="flex-1 px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-warning"
                 />
                 <button
                   type="button"
@@ -605,7 +605,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
         </div>
 
         {/* ── Section 4: Evidence & Artifacts ── */}
-        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <ToggleBlock
             title={isPl ? 'Dowody i źródła' : 'Evidence & Sources'}
             badge={String(nodeData.evidenceLinks?.length || 0)}
@@ -620,7 +620,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                 return (
                   <div
                     key={item.id}
-                    className={`rounded-xl border border-c-border-subtle dark:border-c-border px-3 py-2 bg-c-surface-raised dark:bg-c-surface flex items-center gap-2 ${isClickable ? 'cursor-pointer hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors' : ''}`}
+                    className={`rounded-xl border border-c-border-subtle dark:border-c-border-subtle px-3 py-2 bg-c-surface-raised dark:bg-c-surface flex items-center gap-2 ${isClickable ? 'cursor-pointer hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors' : ''}`}
                     onClick={() => {
                       if (isUrl) {
                         window.open(item.url!, '_blank', 'noopener,noreferrer');
@@ -660,7 +660,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
           </ToggleBlock>
         </div>
 
-        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <ToggleBlock
             title={isPl ? 'Powiazane artefakty' : 'Linked artifacts'}
             badge={String(nodeData.artifactLinks?.length || 0)}
@@ -713,7 +713,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
 
         {/* AI: Expand this topic */}
         {!isProtected && (
-          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-2">
               {isPl ? 'AI: Rozwiń temat' : 'AI: Expand Topic'}
             </div>
@@ -743,7 +743,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                 {aiSuggestions.map((s, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center gap-2 p-2 rounded-xl bg-c-surface dark:bg-c-surface-raised border border-c-border-subtle dark:border-c-border hover:bg-c-surface dark:hover:bg-c-surface-raised transition-colors"
+                    className="flex items-center gap-2 p-2 rounded-xl bg-c-surface dark:bg-c-surface-raised border border-c-border-subtle dark:border-c-border-subtle hover:bg-c-surface dark:hover:bg-c-surface-raised transition-colors"
                   >
                     <Zap size={10} className="text-c-text-secondary shrink-0" />
                     <span className="text-[11px] text-c-text-secondary dark:text-c-text flex-1">
@@ -763,7 +763,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
         )}
 
         {/* Company Context */}
-        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <ToggleBlock
             title={isPl ? 'Kontekst firmy' : 'Company Context'}
             badge={loadingContext ? '...' : String(companyContext.length)}
@@ -789,7 +789,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                 {companyContext.map((item) => (
                   <div
                     key={item.id}
-                    className="p-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border"
+                    className="p-2.5 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle"
                   >
                     <div className="flex items-start gap-2">
                       <div className="mt-0.5 shrink-0">
@@ -840,7 +840,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
 
         {/* Related Nodes */}
         {relatedNodes.length > 0 && (
-          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <ToggleBlock
               title={isPl ? 'Powiązane węzły' : 'Related Nodes'}
               badge={String(relatedNodes.length)}
@@ -869,7 +869,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
 
         {/* Drill Down */}
         {onDrillDown && !isProtected && (
-          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <button
               onClick={() => onDrillDown(nodeData.nodeId)}
               className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-c-surface-raised transition-all"
@@ -884,7 +884,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
 
         {/* Evidence / Maturity hint */}
         {!isProtected && (
-          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+          <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
             <Callout
               variant={
                 status === 'validated' || status === 'ready_to_convert'
@@ -923,7 +923,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
           </div>
         )}
 
-        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border">
+        <div className="px-5 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <ToggleBlock
             title={isPl ? 'Historia AI' : 'AI history'}
             badge={String(nodeData.aiExpansionHistory?.length || 0)}
@@ -935,7 +935,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                 {nodeData.aiExpansionHistory.map((entry) => (
                   <div
                     key={`${entry.timestamp}-${entry.prompt}`}
-                    className="rounded-xl border border-c-border-subtle dark:border-c-border px-3 py-2 bg-c-surface-raised dark:bg-c-surface"
+                    className="rounded-xl border border-c-border-subtle dark:border-c-border-subtle px-3 py-2 bg-c-surface-raised dark:bg-c-surface"
                   >
                     <div className="text-[10px] text-c-text-secondary mb-1">
                       {new Date(entry.timestamp).toLocaleString()}
@@ -963,7 +963,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
 
       {/* Footer: Convert */}
       {!isProtected && status !== 'converted' && (
-        <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border flex items-center gap-2">
+        <div className="px-5 py-3 border-t border-c-border-subtle dark:border-c-border-subtle flex items-center gap-2">
           <button
             onClick={() => onConvertNode(nodeData.nodeId, 'initiative')}
             disabled={locked}
@@ -1033,7 +1033,7 @@ const DepthField: React.FC<{
         disabled={disabled}
         rows={2}
         placeholder={placeholder}
-        className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-warning resize-none transition-all disabled:opacity-50"
+        className="w-full px-3 py-2 rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface text-xs text-c-text dark:text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-warning resize-none transition-all disabled:opacity-50"
       />
     </div>
   );

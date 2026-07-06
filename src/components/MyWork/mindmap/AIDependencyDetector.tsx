@@ -150,7 +150,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
   return (
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
       <div className="w-full max-w-2xl rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
-        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div>
             <div className="flex items-center gap-2">
               <Network size={16} className="text-c-text-secondary" />
@@ -209,7 +209,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                 return (
                   <div
                     key={dep.id}
-                    className={`p-3 rounded-xl border transition-all ${isApplied ? 'border-c-success bg-c-surface-raised' : 'border-c-border-subtle dark:border-c-border bg-c-surface-raised dark:bg-c-surface'}`}
+                    className={`p-3 rounded-xl border transition-all ${isApplied ? 'border-c-success bg-c-surface-raised' : 'border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised dark:bg-c-surface'}`}
                   >
                     <div className="flex items-center gap-2 mb-1.5">
                       <span
@@ -262,7 +262,7 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                 );
               })}
 
-              <div className="flex items-center gap-2 pt-2 border-t border-c-border-subtle dark:border-c-border">
+              <div className="flex items-center gap-2 pt-2 border-t border-c-border-subtle dark:border-c-border-subtle">
                 <button
                   onClick={detectDependencies}
                   disabled={loading}

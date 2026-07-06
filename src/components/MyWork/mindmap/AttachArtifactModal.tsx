@@ -51,7 +51,7 @@ export const AttachArtifactModal: React.FC<AttachArtifactModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-96 rounded-lg border border-c-border-subtle bg-c-surface-raised p-4 shadow-xl dark:border-c-border dark:bg-c-surface"
+        className="w-96 rounded-lg border border-c-border-subtle bg-c-surface-raised p-4 shadow-xl dark:border-c-border-subtle dark:bg-c-surface"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
@@ -74,7 +74,7 @@ export const AttachArtifactModal: React.FC<AttachArtifactModalProps> = ({
           <select
             value={type}
             onChange={(e) => setType(e.target.value as ArtifactType)}
-            className="w-full rounded border border-c-border-subtle px-2 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border dark:bg-c-surface dark:text-c-text"
+            className="w-full rounded border border-c-border-subtle px-2 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border-subtle dark:bg-c-surface dark:text-c-text"
           >
             {ARTIFACT_TYPES.map((at) => (
               <option key={at.value} value={at.value}>
@@ -92,7 +92,7 @@ export const AttachArtifactModal: React.FC<AttachArtifactModalProps> = ({
             onChange={(e) => setArtifactId(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
             placeholder={isPl ? 'ID artefaktu...' : 'Artifact ID...'}
-            className="w-full rounded border border-c-border-subtle px-3 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border dark:bg-c-surface dark:text-c-text"
+            className="w-full rounded border border-c-border-subtle px-3 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border-subtle dark:bg-c-surface dark:text-c-text"
           />
         </div>
 
@@ -105,7 +105,7 @@ export const AttachArtifactModal: React.FC<AttachArtifactModalProps> = ({
             onChange={(e) => setLabel(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
             placeholder={isPl ? 'Opis powiązania...' : 'Relationship description...'}
-            className="w-full rounded border border-c-border-subtle px-3 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border dark:bg-c-surface dark:text-c-text"
+            className="w-full rounded border border-c-border-subtle px-3 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border-subtle dark:bg-c-surface dark:text-c-text"
           />
         </div>
 

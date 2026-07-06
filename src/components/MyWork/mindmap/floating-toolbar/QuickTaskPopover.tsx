@@ -42,7 +42,7 @@ export const QuickTaskPopover: React.FC<QuickTaskPopoverProps> = ({
   }, [onAction, onClose]);
 
   return (
-    <div className="w-64 rounded-xl bg-c-surface-raised dark:bg-c-surface shadow-2xl border border-c-border-subtle dark:border-c-border p-3 space-y-2.5">
+    <div className="w-64 rounded-xl bg-c-surface-raised dark:bg-c-surface shadow-2xl border border-c-border-subtle dark:border-c-border-subtle p-3 space-y-2.5">
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold text-c-text-secondary dark:text-c-text flex items-center gap-1.5">
           <CheckSquare size={12} className="text-c-text-secondary" />
@@ -62,7 +62,7 @@ export const QuickTaskPopover: React.FC<QuickTaskPopoverProps> = ({
         onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
         placeholder={isPl ? 'Tytuł zadania…' : 'Task title…'}
         autoFocus
-        className="w-full h-8 px-2.5 rounded-lg text-xs bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border text-c-text-secondary dark:text-c-text-muted placeholder:text-c-text-muted focus:outline-none focus:border-c-border transition-colors"
+        className="w-full h-8 px-2.5 rounded-lg text-xs bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle text-c-text-secondary dark:text-c-text-muted placeholder:text-c-text-muted focus:outline-none focus:border-c-border-subtle transition-colors"
       />
 
       <div className="flex gap-1.5">

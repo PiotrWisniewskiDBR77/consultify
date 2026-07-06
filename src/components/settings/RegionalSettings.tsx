@@ -364,7 +364,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                         className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                           isSelected
                             ? 'border-navy-900 bg-navy-900'
-                            : 'border-c-border'
+                            : 'border-c-border-subtle'
                         }`}
                       >
                         {isSelected && <Check size={10} className="text-white" />}
@@ -421,7 +421,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                         className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                           isSelected
                             ? 'border-navy-900 bg-navy-900'
-                            : 'border-c-border'
+                            : 'border-c-border-subtle'
                         }`}
                       >
                         {isSelected && <Check size={10} className="text-white" />}

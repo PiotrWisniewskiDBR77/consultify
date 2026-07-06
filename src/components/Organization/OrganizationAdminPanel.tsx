@@ -729,13 +729,13 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                   value={customDomainDraft}
                   onChange={(event) => setCustomDomainDraft(event.target.value)}
                   placeholder="app.company.com"
-                  className="flex-1 rounded-lg border border-c-border bg-c-surface-raised px-3 py-2 text-sm text-c-text"
+                  className="flex-1 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm text-c-text"
                 />
                 <button
                   type="button"
                   onClick={() => void handleSaveCustomDomain()}
                   disabled={savingCustomDomain}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-c-border px-3 py-2 text-sm text-c-text-secondary disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-c-border-subtle px-3 py-2 text-sm text-c-text-secondary disabled:opacity-50"
                 >
                   {savingCustomDomain
                     ? t('common.saving', 'Saving...')
@@ -766,7 +766,7 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
             value={newApprovedDomain}
             onChange={(event) => setNewApprovedDomain(event.target.value)}
             placeholder="company.com"
-            className="flex-1 rounded-lg border border-c-border bg-c-surface-raised px-3 py-2 text-sm text-c-text"
+            className="flex-1 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-sm text-c-text"
           />
           <button
             type="button"
@@ -934,7 +934,7 @@ const BrandingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                 value={primaryColor}
                 disabled={savingColor}
                 onChange={(event) => void savePrimaryColor(event.target.value)}
-                className="h-10 w-10 cursor-pointer rounded-lg border border-c-border bg-transparent p-0 disabled:opacity-50"
+                className="h-10 w-10 cursor-pointer rounded-lg border border-c-border-subtle bg-transparent p-0 disabled:opacity-50"
               />
               <code className="text-sm text-c-text-secondary">{primaryColor}</code>
             </div>

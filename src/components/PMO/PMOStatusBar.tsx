@@ -206,7 +206,7 @@ export const PMOStatusBar: React.FC = () => {
                 {blockingIssues.map((issue) => (
                   <div
                     key={issue.id}
-                    className="flex items-start gap-2 p-2 bg-slate-50/30 dark:bg-navy-950/20 rounded border border-c-border hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors cursor-pointer"
+                    className="flex items-start gap-2 p-2 bg-slate-50/30 dark:bg-navy-950/20 rounded border border-c-border-subtle hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors cursor-pointer"
                   >
                     {getIssueIcon(issue.type)}
                     <div className="flex-1 min-w-0">

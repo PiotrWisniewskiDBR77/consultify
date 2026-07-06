@@ -66,7 +66,7 @@ export const ChatHistorySettings: React.FC<ChatHistorySettingsProps> = ({ classN
               disabled
               aria-disabled="true"
               title={t('settings.chat.comingSoonTitle', 'Coming soon')}
-              className="flex items-center gap-2 px-4 py-2 border border-c-border dark:border-navy-600 rounded-lg opacity-50 cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg opacity-50 cursor-not-allowed"
             >
               <Download size={16} />
               {t('settings.chat.export', 'Export History')}

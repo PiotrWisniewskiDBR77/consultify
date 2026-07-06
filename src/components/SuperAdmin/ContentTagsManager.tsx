@@ -212,13 +212,13 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search tags..."
-          className="w-full pl-9 pr-4 py-2 bg-c-surface-raised/50 border border-c-border/50 rounded-lg text-c-text text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+          className="w-full pl-9 pr-4 py-2 bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-lg text-c-text text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
         />
       </div>
 
       {/* New Tag Form */}
       {showNewForm && (
-        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-lg p-4 space-y-4">
+        <div className="bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-lg p-4 space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Name</label>
             <input
@@ -226,7 +226,7 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
               value={formData.name}
               onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
               placeholder="Tag name..."
-              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
               onKeyPress={(e) => e.key === 'Enter' && handleCreate()}
             />
           </div>
@@ -287,7 +287,7 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
               return (
                 <div
                   key={tag.id}
-                  className="flex items-center gap-2 p-2 bg-c-surface-raised/50 border border-c-border/50 rounded-lg"
+                  className="flex items-center gap-2 p-2 bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-lg"
                 >
                   <input
                     type="text"
@@ -363,7 +363,7 @@ export const ContentTagsManager: React.FC<ContentTagsManagerProps> = ({
 
                 {/* Menu */}
                 {menuOpen === tag.id && (
-                  <div className="absolute left-0 top-full mt-1 w-32 bg-c-surface-raised border border-c-border rounded-lg shadow-xl z-10 py-1">
+                  <div className="absolute left-0 top-full mt-1 w-32 bg-c-surface-raised border border-c-border-subtle rounded-lg shadow-xl z-10 py-1">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

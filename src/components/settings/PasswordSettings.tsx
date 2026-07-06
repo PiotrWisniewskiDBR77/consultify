@@ -88,7 +88,7 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
               type={showPasswords ? 'text' : 'password'}
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
+              className="w-full px-3 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
             />
           </div>
         </div>
@@ -106,7 +106,7 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
               type={showPasswords ? 'text' : 'password'}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
+              className="w-full px-3 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
             />
             <button
               type="button"
@@ -144,7 +144,7 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
             type={showPasswords ? 'text' : 'password'}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
+            className="w-full px-3 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg bg-c-surface text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
           />
           {confirmPassword && !passwordsMatch && (
             <p className="text-sm text-rose-500 mt-1">

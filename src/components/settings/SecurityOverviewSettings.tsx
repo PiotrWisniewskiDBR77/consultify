@@ -652,7 +652,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                 onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
                 maxLength={6}
                 placeholder="000000"
-                className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-c-surface-raised border border-c-border rounded-lg text-c-text focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-rose-500 focus:border-transparent"
               />
               <button
                 onClick={disableMfa}
@@ -781,7 +781,7 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                       onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
                       maxLength={6}
                       placeholder="000000"
-                      className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-c-surface-raised border border-c-border rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
+                      className="w-32 px-3 py-2 text-center text-lg font-mono tracking-widest bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text focus:ring-2 focus:ring-[color:var(--c-focus)] focus:border-transparent"
                       onKeyDown={(e) => e.key === 'Enter' && verifyMfa()}
                     />
                     <button

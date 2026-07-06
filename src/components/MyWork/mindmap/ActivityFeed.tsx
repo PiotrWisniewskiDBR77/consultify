@@ -187,8 +187,8 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed top-0 right-0 bottom-0 z-[84] w-[340px] max-w-[85vw] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border-l border-c-border-subtle dark:border-c-border shadow-2xl flex flex-col overflow-hidden">
-      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-c-border-subtle dark:border-c-border">
+    <div className="fixed top-0 right-0 bottom-0 z-[84] w-[340px] max-w-[85vw] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border-l border-c-border-subtle dark:border-c-border-subtle shadow-2xl flex flex-col overflow-hidden">
+      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
         <Clock size={14} className="text-c-warning shrink-0" />
         <span className="text-[11px] font-bold text-c-text dark:text-c-text flex-1">
           {isPl ? 'Aktywność' : 'Activity Feed'}
@@ -202,7 +202,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         </button>
       </div>
 
-      <div className="px-4 py-2 border-b border-c-border-subtle dark:border-c-border flex items-center gap-1 overflow-x-auto">
+      <div className="px-4 py-2 border-b border-c-border-subtle dark:border-c-border-subtle flex items-center gap-1 overflow-x-auto">
         <button
           onClick={() => setFilter(null)}
           className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition-colors shrink-0 ${!filter ? 'bg-c-surface-raised text-c-warning dark:text-c-warning' : 'text-c-text-secondary hover:text-c-text-secondary'}`}

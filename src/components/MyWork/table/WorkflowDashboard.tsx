@@ -312,7 +312,7 @@ export function WorkflowDashboard({
               className={`group text-left rounded-xl border border-c-border-subtle bg-c-surface p-4 transition-all ${
                 isLocked
                   ? 'cursor-not-allowed opacity-60'
-                  : 'hover:border-c-border hover:shadow-md'
+                  : 'hover:border-c-border-subtle hover:shadow-md'
               }`}
             >
               <div className="flex items-center gap-3 mb-3">

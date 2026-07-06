@@ -48,7 +48,7 @@ const GalleryCard = React.memo<{
 
   return (
     <div
-      className="rounded-xl border border-c-border bg-c-surface-raised overflow-hidden cursor-pointer hover:shadow-lg hover:border-c-accent hover:-translate-y-0.5 transition-all group"
+      className="rounded-xl border border-c-border-subtle bg-c-surface-raised overflow-hidden cursor-pointer hover:shadow-lg hover:border-c-accent hover:-translate-y-0.5 transition-all group"
       onClick={() => onClick(record.id)}
     >
       {/* Cover area */}

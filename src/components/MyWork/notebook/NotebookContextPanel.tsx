@@ -494,7 +494,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
     const cfg = SECTION_CFG[k];
     const Icon = cfg.icon;
     return (
-      <div className="px-3 py-3 border-b border-c-border">
+      <div className="px-3 py-3 border-b border-c-border-subtle">
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className={`flex items-center gap-2 text-xs font-semibold ${cfg.color}`}>
             <Icon size={14} />
@@ -534,7 +534,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
     onInsert: () => void;
     onOpen?: () => void;
   }> = ({ title, subtitle, badge, onInsert, onOpen }) => (
-    <div className="rounded-xl border border-c-border bg-c-surface-raised px-3 py-2.5">
+    <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="text-xs font-medium text-c-text truncate">
@@ -603,7 +603,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
           </div>
         ) : (
           <>
-            <div className="px-3 py-3 border-b border-c-border">
+            <div className="px-3 py-3 border-b border-c-border-subtle">
               <EmbeddedView
                 title={pl ? 'Użyte w (backlinks)' : 'Used in (backlinks)'}
                 count={usedIn.length}
@@ -622,7 +622,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                       return (
                         <div
                           key={`${x.sourceType}:${x.sourceId}:${x.id || ''}:${idx}`}
-                          className="rounded-xl border border-c-border bg-c-surface-raised px-3 py-2.5"
+                          className="rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
@@ -697,12 +697,12 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
             </div>
 
             {allLinkedOutputRows.length === 0 && !linkedOutputsBusy && !linkedOutputsErrorMessage ? (
-              <div className="flex items-center gap-2 px-3 py-2 border-b border-c-border text-[11px] text-c-text-muted">
+              <div className="flex items-center gap-2 px-3 py-2 border-b border-c-border-subtle text-[11px] text-c-text-muted">
                 <Link2 size={12} />
                 <span>{pl ? 'Brak powiązanych outputów' : 'No linked outputs'}</span>
               </div>
             ) : (
-              <div className="px-3 py-3 border-b border-c-border">
+              <div className="px-3 py-3 border-b border-c-border-subtle">
               <EmbeddedView
                 title={pl ? 'Powiązane outputy' : 'Linked outputs'}
                 count={allLinkedOutputRows.length}
@@ -719,7 +719,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                     {allLinkedOutputRows.slice(0, 8).map((row) => (
                       <div
                         key={row.artifactId || `${row.kind}:${row.originRecordId}`}
-                        className="rounded-xl border border-c-border bg-c-surface-raised px-3 py-2.5"
+                        className="rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">

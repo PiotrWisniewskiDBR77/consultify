@@ -195,10 +195,10 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
       initial={{ x: 300, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: 300, opacity: 0 }}
-      className="fixed right-0 top-0 bottom-0 w-96 bg-c-surface border-l border-c-border z-40 flex flex-col shadow-2xl"
+      className="fixed right-0 top-0 bottom-0 w-96 bg-c-surface border-l border-c-border-subtle z-40 flex flex-col shadow-2xl"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-c-border">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2.5">
           <div className="p-1.5 bg-c-accent-soft0 rounded-lg">
             <TeresaMark size={18} className="text-c-accent" />
@@ -241,7 +241,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
                   key={qa.label}
                   onClick={() => handleSend(qa.message)}
                   disabled={sending}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-c-text-secondary hover:text-c-accent hover:bg-c-accent-soft0 rounded-lg border border-c-border hover:border-c-accent transition-colors text-left"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-c-text-secondary hover:text-c-accent hover:bg-c-accent-soft0 rounded-lg border border-c-border-subtle hover:border-c-accent transition-colors text-left"
                 >
                   {qa.icon}
                   {qa.label}
@@ -263,7 +263,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
                 className={`px-3 py-2 rounded-xl text-sm ${
                   msg.role === 'user'
                     ? 'bg-c-text text-c-bg rounded-br-sm'
-                    : 'bg-c-surface-raised text-c-text-secondary rounded-bl-sm border border-c-border'
+                    : 'bg-c-surface-raised text-c-text-secondary rounded-bl-sm border border-c-border-subtle'
                 }`}
               >
                 <div className="whitespace-pre-wrap text-xs leading-relaxed">{msg.content}</div>
@@ -273,7 +273,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
               {msg.role === 'assistant' &&
                 msg.diffPreview &&
                 msg.diffPreview.changes.length > 0 && (
-                  <div className="mt-2 rounded-lg bg-c-surface-raised border border-c-border p-2.5">
+                  <div className="mt-2 rounded-lg bg-c-surface-raised border border-c-border-subtle p-2.5">
                     <div className="text-xs text-c-text-secondary mb-1.5 font-medium">
                       {t('reports.agent.proposedChanges', 'Proposed changes:')}
                     </div>
@@ -338,7 +338,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
             <div className="w-6 h-6 rounded-full bg-c-accent-soft0 flex items-center justify-center shrink-0">
               <TeresaMark size={12} className="text-c-accent" />
             </div>
-            <div className="px-3 py-2 rounded-xl bg-c-surface-raised border border-c-border">
+            <div className="px-3 py-2 rounded-xl bg-c-surface-raised border border-c-border-subtle">
               <Loader2 size={14} className="animate-spin text-c-accent" />
             </div>
           </div>
@@ -348,7 +348,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
       </div>
 
       {/* Input */}
-      <div className="border-t border-c-border p-3">
+      <div className="border-t border-c-border-subtle p-3">
         <div className="flex items-end gap-2">
           <textarea
             value={input}
@@ -356,7 +356,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
             onKeyDown={handleKeyDown}
             placeholder={t('reports.agent.placeholder', 'Ask me to modify the report…')}
             rows={1}
-            className="flex-1 px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text placeholder:text-c-text-muted resize-none focus:outline-none focus:border-c-accent"
+            className="flex-1 px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-sm text-c-text placeholder:text-c-text-muted resize-none focus:outline-none focus:border-c-accent"
           />
           <button
             onClick={() => handleSend()}

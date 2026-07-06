@@ -31,7 +31,7 @@ const STATUS_ICONS: Record<string, React.ComponentType<any>> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  idea: 'bg-c-surface-raised border-c-border',
+  idea: 'bg-c-surface-raised border-c-border-subtle',
   exploring: 'bg-c-surface-raised border-c-info',
   validated: 'bg-c-surface-raised border-c-success',
   ready_to_convert: 'bg-c-surface-raised border-c-warning',
@@ -63,7 +63,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   return (
     <div className="fixed inset-0 z-[92] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-c-border-subtle dark:border-c-border">
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
         <button
           onClick={onClose}
           className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:text-c-text-muted dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
@@ -107,7 +107,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                       <button
                         key={node.id}
                         onClick={() => onSelectNode(node.id)}
-                        className="w-full text-left px-3 py-2 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border hover:bg-c-surface-raised dark:hover:bg-c-surface hover:shadow-md transition-all"
+                        className="w-full text-left px-3 py-2 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle hover:bg-c-surface-raised dark:hover:bg-c-surface hover:shadow-md transition-all"
                       >
                         <div className="text-[11px] font-medium text-c-text-secondary dark:text-c-text truncate">
                           {node.label}

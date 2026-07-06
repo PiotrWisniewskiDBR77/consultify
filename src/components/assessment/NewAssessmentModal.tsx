@@ -255,13 +255,13 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
     >
       <div
         ref={modalRef}
-        className="bg-c-surface border border-c-border rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl"
+        className="bg-c-surface border border-c-border-subtle rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl"
         role="dialog"
         aria-labelledby="modal-title"
         aria-modal="true"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-c-border">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
           <div>
             <h2 id="modal-title" className="text-lg font-semibold text-c-text">
               {step === 1 ? 'Select Framework' : 'New Assessment'}
@@ -399,7 +399,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                   placeholder="Enter assessment name..."
                   maxLength={200}
                   className="
-                    w-full h-11 px-4 bg-c-surface-raised border border-c-border rounded-lg
+                    w-full h-11 px-4 bg-c-surface-raised border border-c-border-subtle rounded-lg
                     text-c-text placeholder-c-text-muted
                     focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/25
                     transition-colors
@@ -433,7 +433,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                   maxLength={1000}
                   rows={3}
                   className="
-                    w-full px-4 py-3 bg-c-surface-raised border border-c-border rounded-lg
+                    w-full px-4 py-3 bg-c-surface-raised border border-c-border-subtle rounded-lg
                     text-c-text placeholder-c-text-muted resize-none
                     focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/25
                     transition-colors
@@ -467,7 +467,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                   className="
                     px-4 py-2.5 rounded-lg text-sm font-medium
                     text-c-text-secondary hover:text-c-text
-                    border border-c-border hover:bg-c-surface-raised
+                    border border-c-border-subtle hover:bg-c-surface-raised
                     transition-colors
                   "
                   disabled={isSubmitting}
@@ -502,7 +502,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
 
         {/* Footer - Step 1 only */}
         {step === 1 && (
-          <div className="px-6 py-4 border-t border-c-border bg-c-surface-raised">
+          <div className="px-6 py-4 border-t border-c-border-subtle bg-c-surface-raised">
             <button
               onClick={onClose}
               className="w-full py-2.5 text-sm text-c-text-secondary hover:text-c-text transition-colors"

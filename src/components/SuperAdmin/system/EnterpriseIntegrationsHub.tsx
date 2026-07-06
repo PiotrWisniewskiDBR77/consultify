@@ -433,7 +433,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
 
       {/* Stats */}
       {loadErrors.integrations || loadErrors.webhooks ? (
-        <div className="rounded-xl border border-c-border bg-c-surface p-6">
+        <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
           <DegradedState
             title="Integration overview unavailable"
             description={
@@ -443,7 +443,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+          <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
             <div className="text-sm text-c-text-secondary">Connected</div>
             <div className="text-2xl font-semibold text-c-text">
               {integrations.filter((i) => normalizeStatus(i.status) === 'connected').length}
@@ -461,7 +461,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
               {integrations.filter((i) => normalizeStatus(i.status) === 'error').length}
             </div>
           </div>
-          <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border">
+          <div className="p-4 bg-c-surface-raised rounded-xl border border-c-border-subtle">
             <div className="text-sm text-c-text-secondary">Available</div>
             <div className="text-2xl font-semibold text-c-text">
               {connectorCatalog.filter((c) => c.status === 'available').length}
@@ -532,7 +532,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
               </div>
 
               {loadErrors.integrations ? (
-                <div className="rounded-xl border border-c-border bg-c-surface p-6">
+                <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
                   <DegradedState
                     title="Connected integrations unavailable"
                     description={loadErrors.integrations}
@@ -556,7 +556,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                     return (
                       <div
                         key={integration.id}
-                        className="p-4 bg-c-surface rounded-xl border border-c-border hover:border-c-border-strong transition-colors"
+                        className="p-4 bg-c-surface rounded-xl border border-c-border-subtle hover:border-c-border-strong transition-colors"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
@@ -642,7 +642,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
               </div>
 
               {loadErrors.webhooks ? (
-                <div className="rounded-xl border border-c-border bg-c-surface p-6">
+                <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
                   <DegradedState title="Webhooks unavailable" description={loadErrors.webhooks} />
                 </div>
               ) : (
@@ -664,7 +664,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                       {webhooks.map((webhook) => (
                         <div
                           key={webhook.id}
-                          className="p-4 bg-c-surface rounded-xl border border-c-border hover:border-c-border-strong transition-colors"
+                          className="p-4 bg-c-surface rounded-xl border border-c-border-subtle hover:border-c-border-strong transition-colors"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
@@ -754,13 +754,13 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                     placeholder="Search connectors..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border rounded-lg text-c-text"
+                    className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text"
                   />
                 </div>
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="px-4 py-2 bg-c-surface border border-c-border rounded-lg text-c-text"
+                  className="px-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text"
                 >
                   <option value="all">All Categories</option>
                   {categories.map((cat) => (
@@ -780,7 +780,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                       className={`p-4 rounded-xl border transition-colors ${
                         isConnected
                           ? 'bg-c-success/10 border-c-success/30'
-                          : 'bg-c-surface border-c-border hover:border-c-border-strong'
+                          : 'bg-c-surface border-c-border-subtle hover:border-c-border-strong'
                       }`}
                     >
                       <div className="flex items-start justify-between mb-3">

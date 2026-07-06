@@ -57,7 +57,7 @@ export const DocumentStudioOutlinePanel: React.FC<DocumentStudioOutlinePanelProp
         {outline.sections.map((section, idx) => (
           <li
             key={`${section.title}-${idx}`}
-            className="rounded-lg border border-c-border bg-c-surface p-3 text-sm"
+            className="rounded-lg border border-c-border-subtle bg-c-surface p-3 text-sm"
           >
             <div className="flex items-baseline justify-between gap-2">
               <span className="font-medium text-c-text">

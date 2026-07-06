@@ -194,7 +194,7 @@ export const LegalPanel: React.FC = () => {
           <InfoButton cardId="superadmin-legal" showLabel label="Help" />
           <button
             onClick={fetchDocs}
-            className="flex items-center gap-2 px-3 py-2 bg-c-surface hover:bg-c-surface-raised border border-c-border rounded-lg text-sm text-c-text transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-c-surface hover:bg-c-surface-raised border border-c-border-subtle rounded-lg text-sm text-c-text transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             Refresh
@@ -238,7 +238,7 @@ export const LegalPanel: React.FC = () => {
           {grouped.map(([type, items]) => (
             <div
               key={type}
-              className="bg-c-surface border border-c-border rounded-xl overflow-hidden"
+              className="bg-c-surface border border-c-border-subtle rounded-xl overflow-hidden"
             >
               <div className="px-6 py-4 border-b border-c-border-subtle flex items-center justify-between">
                 <div className="font-medium text-c-text">{type}</div>
@@ -291,7 +291,7 @@ export const LegalPanel: React.FC = () => {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => handleToggle(d.id, !active)}
-                              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-c-border bg-c-surface hover:bg-c-surface-raised text-c-text transition-colors"
+                              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-c-border-subtle bg-c-surface hover:bg-c-surface-raised text-c-text transition-colors"
                               title={active ? 'Archive' : 'Activate'}
                             >
                               {active ? (
@@ -316,7 +316,7 @@ export const LegalPanel: React.FC = () => {
       {showPublishModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-overlay p-4">
           <div className="bg-c-surface rounded-xl shadow-2xl max-w-lg w-full">
-            <div className="p-6 border-b border-c-border flex items-center justify-between">
+            <div className="p-6 border-b border-c-border-subtle flex items-center justify-between">
               <h3 className="text-lg font-semibold text-c-text">
                 Publish Legal Document
               </h3>
@@ -335,7 +335,7 @@ export const LegalPanel: React.FC = () => {
                 <select
                   value={newDoc.doc_type}
                   onChange={(e) => setNewDoc({ ...newDoc, doc_type: e.target.value })}
-                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
                 >
                   {DOC_TYPES.map((t) => (
                     <option key={t} value={t}>
@@ -353,7 +353,7 @@ export const LegalPanel: React.FC = () => {
                   value={newDoc.title}
                   onChange={(e) => setNewDoc({ ...newDoc, title: e.target.value })}
                   placeholder="e.g., Terms of Service v2.0"
-                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -366,7 +366,7 @@ export const LegalPanel: React.FC = () => {
                     value={newDoc.version}
                     onChange={(e) => setNewDoc({ ...newDoc, version: e.target.value })}
                     placeholder="1.0"
-                    className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
+                    className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
                   />
                 </div>
                 <div>
@@ -377,7 +377,7 @@ export const LegalPanel: React.FC = () => {
                     type="date"
                     value={newDoc.effective_from}
                     onChange={(e) => setNewDoc({ ...newDoc, effective_from: e.target.value })}
-                    className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text"
+                    className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text"
                   />
                 </div>
               </div>
@@ -390,7 +390,7 @@ export const LegalPanel: React.FC = () => {
                   onChange={(e) => setNewDoc({ ...newDoc, content_md: e.target.value })}
                   placeholder="Enter document content in Markdown format..."
                   rows={4}
-                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text resize-none font-mono text-sm"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text resize-none font-mono text-sm"
                 />
               </div>
               <div>
@@ -402,14 +402,14 @@ export const LegalPanel: React.FC = () => {
                   onChange={(e) => setNewDoc({ ...newDoc, change_summary: e.target.value })}
                   placeholder="Brief description of changes in this version..."
                   rows={2}
-                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border rounded-lg text-c-text resize-none"
+                  className="w-full px-3 py-2 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text resize-none"
                 />
               </div>
             </div>
-            <div className="p-6 border-t border-c-border flex justify-end gap-3">
+            <div className="p-6 border-t border-c-border-subtle flex justify-end gap-3">
               <button
                 onClick={() => setShowPublishModal(false)}
-                className="px-4 py-2 border border-c-border rounded-lg text-c-text-secondary hover:bg-c-surface-raised"
+                className="px-4 py-2 border border-c-border-subtle rounded-lg text-c-text-secondary hover:bg-c-surface-raised"
               >
                 Cancel
               </button>

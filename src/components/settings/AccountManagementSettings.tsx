@@ -113,7 +113,7 @@ const AccountManagementSettings: React.FC<{ className?: string }> = ({ className
                   value={deleteConfirmText}
                   onChange={(e) => setDeleteConfirmText(e.target.value)}
                   placeholder="DELETE"
-                  className="w-full px-3 py-2 border border-c-border dark:border-navy-600 rounded-lg mb-3"
+                  className="w-full px-3 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg mb-3"
                 />
                 <div className="flex gap-2">
                   <button
@@ -128,7 +128,7 @@ const AccountManagementSettings: React.FC<{ className?: string }> = ({ className
                       setShowDeleteConfirm(false);
                       setDeleteConfirmText('');
                     }}
-                    className="px-4 py-2 border border-c-border dark:border-navy-600 rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700"
+                    className="px-4 py-2 border border-c-border-subtle dark:border-navy-600 rounded-lg hover:bg-c-surface-raised dark:hover:bg-navy-700"
                   >
                     {t('common.cancel', 'Cancel')}
                   </button>

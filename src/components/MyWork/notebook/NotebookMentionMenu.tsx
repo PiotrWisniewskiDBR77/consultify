@@ -230,7 +230,7 @@ export const NotebookMentionMenu: React.FC<NotebookMentionMenuProps> = ({
       ref={menuRef}
       role="listbox"
       aria-label={t('Mention an entity', 'Wzmiankuj encję')}
-      className="absolute z-50 w-72 max-h-80 overflow-y-auto rounded-xl border border-c-border bg-c-surface shadow-lg py-1"
+      className="absolute z-50 w-72 max-h-80 overflow-y-auto rounded-xl border border-c-border-subtle bg-c-surface shadow-lg py-1"
       style={{ top: position.y, left: position.x }}
       onMouseDown={(e) => e.preventDefault()}
     >

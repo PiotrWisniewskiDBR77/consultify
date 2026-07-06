@@ -124,7 +124,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-c-bg">
       <div className="w-full max-w-lg rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
           <div>
             <div className="flex items-center gap-2">
               <GitBranch size={14} className="text-c-text-secondary" />
@@ -184,7 +184,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
                 return (
                   <div
                     key={scenario.id}
-                    className={`p-3 rounded-xl border border-c-border-subtle dark:border-c-border ${cfg.bg}`}
+                    className={`p-3 rounded-xl border border-c-border-subtle dark:border-c-border-subtle ${cfg.bg}`}
                   >
                     <div className="flex items-start gap-2">
                       <Icon size={14} className={`mt-0.5 shrink-0 ${cfg.color}`} />

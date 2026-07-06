@@ -447,7 +447,7 @@ export const LinkedRecordPicker: React.FC<LinkedRecordPickerProps> = React.memo(
                       className={`mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border transition-colors ${
                         isSelected
                           ? 'border-blue-500 bg-blue-500 text-white'
-                          : 'border-c-border'
+                          : 'border-c-border-subtle'
                       }`}
                     >
                       {isSelected && <span className="text-[10px]">✓</span>}

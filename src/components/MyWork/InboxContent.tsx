@@ -176,7 +176,7 @@ const ENTITY_KIND_CONFIG: Record<
     icon: CheckCircle2,
     labelEn: 'Survey',
     labelPl: 'Ankieta',
-    pill: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
+    pill: 'border border-c-border-subtle bg-c-surface-raised text-c-text-secondary',
     borderLeft: 'border-l-c-border-strong',
   },
   decision: {
@@ -190,7 +190,7 @@ const ENTITY_KIND_CONFIG: Record<
     icon: Bell,
     labelEn: 'Notification',
     labelPl: 'Notyfikacja',
-    pill: 'border border-c-border bg-c-surface-raised text-c-text-secondary',
+    pill: 'border border-c-border-subtle bg-c-surface-raised text-c-text-secondary',
     borderLeft: 'border-l-c-border-strong',
   },
 };
@@ -546,13 +546,13 @@ const urgencyConfig: Record<
   },
   normal: {
     icon: Clock,
-    pill: 'border border-c-border bg-c-surface-raised text-c-text-secondary [&>svg]:text-c-text-muted dark:border-transparent',
+    pill: 'border border-c-border-subtle bg-c-surface-raised text-c-text-secondary [&>svg]:text-c-text-muted dark:border-transparent',
     label: 'Normal',
     heatColor: 'border-l-c-border',
   },
   low: {
     icon: Calendar,
-    pill: 'border border-c-border bg-c-surface-raised text-c-text-secondary [&>svg]:text-c-text-muted dark:border-transparent',
+    pill: 'border border-c-border-subtle bg-c-surface-raised text-c-text-secondary [&>svg]:text-c-text-muted dark:border-transparent',
     label: 'Low',
     heatColor: 'border-l-c-border-subtle',
   },
@@ -710,10 +710,10 @@ const slaPill = (
   const isOverdue = sla.isBreached || sla.level === 'L2' || sla.level === 'L3';
   const className =
     sla.level === 'none'
-      ? 'border border-c-border bg-c-surface-raised text-c-text-secondary dark:border-transparent'
+      ? 'border border-c-border-subtle bg-c-surface-raised text-c-text-secondary dark:border-transparent'
       : sla.level === 'L1'
-        ? 'border border-c-border bg-c-surface-raised text-c-text-secondary dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent'
-        : 'border border-c-border bg-c-surface-raised text-c-text-secondary dark:bg-danger-500/15 dark:text-danger-300 dark:border-transparent';
+        ? 'border border-c-border-subtle bg-c-surface-raised text-c-text-secondary dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent'
+        : 'border border-c-border-subtle bg-c-surface-raised text-c-text-secondary dark:bg-danger-500/15 dark:text-danger-300 dark:border-transparent';
   const dot = sla.level === 'none' ? 'bg-slate-400' : isOverdue ? 'bg-danger-500' : 'bg-amber-500';
   return { label, className, dot, title: sla.dueAt ? `due: ${sla.dueAt}` : undefined };
 };
@@ -2463,7 +2463,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             </span>
             {item.suggestedAction && (
               <span
-                className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border border-c-border bg-c-surface-raised text-[10px] font-medium text-c-text-secondary cursor-help"
+                className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border border-c-border-subtle bg-c-surface-raised text-[10px] font-medium text-c-text-secondary cursor-help"
                 title={item.suggestedReason || (isPolish ? 'Sugestia AI' : 'AI suggestion')}
               >
                 AI:{' '}
@@ -2740,7 +2740,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 ? 'bg-c-text border-c-text text-c-surface'
                 : someSelected
                   ? 'bg-c-text/60 border-c-text text-c-surface'
-                  : 'border-c-border text-transparent hover:border-c-border-strong hover:text-c-text-muted'
+                  : 'border-c-border-subtle text-transparent hover:border-c-border-strong hover:text-c-text-muted'
             }`}
           >
             {allSelected ? (
@@ -2946,7 +2946,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0 ${
                   isSelected
                     ? 'bg-c-text border-c-text text-c-surface'
-                    : 'border-c-border hover:border-c-border-strong'
+                    : 'border-c-border-subtle hover:border-c-border-strong'
                 }`}
                 aria-label={
                   isSelected ? (isPolish ? 'Odznacz' : 'Deselect') : isPolish ? 'Zaznacz' : 'Select'
@@ -3209,7 +3209,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                           type="button"
                           onClick={toggleCap}
                           data-testid={`inbox-section-show-more-${section.id}`}
-                          className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border px-3 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
+                          className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border-subtle px-3 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
                         >
                           <ChevronDown size={12} />
                           {isPolish
@@ -3220,7 +3220,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                         <button
                           type="button"
                           onClick={toggleCap}
-                          className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border px-3 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
+                          className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border-subtle px-3 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
                         >
                           <ChevronUp size={12} />
                           {isPolish ? 'Pokaż mniej' : 'Show less'}

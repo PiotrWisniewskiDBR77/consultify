@@ -405,7 +405,7 @@ export const NotebookSlashMenu: React.FC<NotebookSlashMenuProps> = ({
       ref={menuRef}
       role="listbox"
       aria-label={t('Insert block', 'Wstaw blok')}
-      className="fixed z-[60] w-72 max-h-80 overflow-y-auto rounded-md border border-c-border bg-c-surface py-1 text-[13px] shadow-xl dark:border-navy-700 dark:bg-navy-900"
+      className="fixed z-[60] w-72 max-h-80 overflow-y-auto rounded-md border border-c-border-subtle bg-c-surface py-1 text-[13px] shadow-xl dark:border-navy-700 dark:bg-navy-900"
       style={{ top: position.y, left: position.x }}
       // Prevent the editor losing focus / selection while interacting with the menu.
       onPointerDown={(e) => e.preventDefault()}
@@ -451,8 +451,8 @@ export const NotebookSlashMenu: React.FC<NotebookSlashMenuProps> = ({
                     <span
                       className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${
                         block.ai
-                          ? 'border-c-border bg-c-surface-raised text-c-text-secondary dark:border-navy-700 dark:bg-navy-800 dark:text-c-text-secondary'
-                          : 'border-c-border bg-c-surface text-c-text-muted dark:border-navy-700 dark:bg-navy-900 dark:text-c-text-muted'
+                          ? 'border-c-border-subtle bg-c-surface-raised text-c-text-secondary dark:border-navy-700 dark:bg-navy-800 dark:text-c-text-secondary'
+                          : 'border-c-border-subtle bg-c-surface text-c-text-muted dark:border-navy-700 dark:bg-navy-900 dark:text-c-text-muted'
                       }`}
                     >
                       <Icon className="h-4 w-4" strokeWidth={1.75} />

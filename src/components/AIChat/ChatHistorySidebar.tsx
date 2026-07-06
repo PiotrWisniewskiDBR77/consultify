@@ -266,7 +266,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                   }
                 }}
                 placeholder={t('aiChat.folderName', 'Folder name...')}
-                className="flex-1 px-2 py-1.5 text-sm rounded-lg bg-c-surface-raised border border-c-border text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
+                className="flex-1 px-2 py-1.5 text-sm rounded-lg bg-c-surface-raised border border-c-border-subtle text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus"
                 autoFocus
               />
               <button
@@ -362,7 +362,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
 
                         {/* Project Menu */}
                         {menuId === project.id && (
-                          <div className="absolute right-0 top-full mt-1 z-50 w-40 bg-c-surface rounded-lg shadow-lg border border-c-border py-1">
+                          <div className="absolute right-0 top-full mt-1 z-50 w-40 bg-c-surface rounded-lg shadow-lg border border-c-border-subtle py-1">
                             {onUpdateProject && (
                               <button
                                 onClick={(e) => {
@@ -433,7 +433,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                                   {t('aiChat.moveToFolderShort', 'Move to folder')}
                                 </button>
                                 {movePickerId === project.id && (
-                                  <div className="mt-1 max-h-40 overflow-y-auto rounded-md border border-c-border">
+                                  <div className="mt-1 max-h-40 overflow-y-auto rounded-md border border-c-border-subtle">
                                     {project.parentId && (
                                       <button
                                         onClick={(e) => {
@@ -483,7 +483,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                                 )}
                               </div>
                             )}
-                            <div className="my-1 border-t border-c-border" />
+                            <div className="my-1 border-t border-c-border-subtle" />
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -549,7 +549,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                 e.stopPropagation();
                 setShowInput(true);
               }}
-              className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] text-c-text-muted hover:text-c-text border border-dashed border-c-border rounded-md hover:border-c-border-strong transition-colors"
+              className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] text-c-text-muted hover:text-c-text border border-dashed border-c-border-subtle rounded-md hover:border-c-border-strong transition-colors"
             >
               <FolderPlus size={12} />
               {emptyLabel}
@@ -932,7 +932,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
           className={`
                 fixed top-0 h-full z-dropdown
                 bg-c-bg
-                border-r border-c-border
+                border-r border-c-border-subtle
                 shadow-2xl
                 flex flex-col
                 transition-all duration-300 ease-in-out
@@ -1166,7 +1166,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                 {/* Separator between folders and unassigned conversations */}
                 {(personalProjects.length > 0 || teamProjects.length > 0) &&
                   unassignedConversations.length > 0 && (
-                    <div className="border-t border-c-border mx-3" />
+                    <div className="border-t border-c-border-subtle mx-3" />
                   )}
 
                 {/* Unassigned Conversations — also a drop zone to remove from folder */}

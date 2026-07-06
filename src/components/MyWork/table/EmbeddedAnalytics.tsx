@@ -245,7 +245,7 @@ export const HeatmapControls: React.FC<HeatmapControlsProps> = ({
               type="checkbox"
               checked={enabledColumns.has(col.key)}
               onChange={() => onToggleColumn(col.key)}
-              className="w-3 h-3 rounded border-c-border text-c-accent focus:ring-c-focus"
+              className="w-3 h-3 rounded border-c-border-subtle text-c-accent focus:ring-c-focus"
             />
             <span className="text-[10px] text-c-text-secondary">{col.header}</span>
           </label>

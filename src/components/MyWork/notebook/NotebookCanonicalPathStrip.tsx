@@ -35,7 +35,7 @@ export const NotebookCanonicalPathStrip: React.FC<NotebookCanonicalPathStripProp
   onHandoffInitiatives,
 }) => {
   return (
-    <div className="mt-3 rounded-2xl border border-c-border bg-c-surface-raised px-3 py-3 dark:border-c-border-subtle">
+    <div className="mt-3 rounded-2xl border border-c-border-subtle bg-c-surface-raised px-3 py-3 dark:border-c-border-subtle">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary">
@@ -117,7 +117,7 @@ export const NotebookCanonicalPathStrip: React.FC<NotebookCanonicalPathStripProp
       </div>
 
       {(onHandoffRadar || onHandoffInitiatives) && (
-        <div className="mt-3 flex items-center gap-2 border-t border-c-border/50 pt-3 dark:border-white/[0.06]">
+        <div className="mt-3 flex items-center gap-2 border-t border-c-border-subtle/50 pt-3 dark:border-white/[0.06]">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
             {isPolish ? 'Przekaż do:' : 'Send to:'}
           </span>
@@ -125,7 +125,7 @@ export const NotebookCanonicalPathStrip: React.FC<NotebookCanonicalPathStripProp
             <button
               type="button"
               onClick={onHandoffRadar}
-              className="inline-flex items-center gap-1 rounded-full border border-c-border bg-c-surface-raised px-2.5 py-1 text-[11px] font-medium text-c-text-secondary transition hover:bg-c-surface-raised dark:border-white/[0.07] dark:bg-navy-800/40 dark:text-c-text-secondary dark:hover:bg-white/[0.08]"
+              className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle bg-c-surface-raised px-2.5 py-1 text-[11px] font-medium text-c-text-secondary transition hover:bg-c-surface-raised dark:border-white/[0.07] dark:bg-navy-800/40 dark:text-c-text-secondary dark:hover:bg-white/[0.08]"
             >
               <Radar size={12} />
               Radar
@@ -135,7 +135,7 @@ export const NotebookCanonicalPathStrip: React.FC<NotebookCanonicalPathStripProp
             <button
               type="button"
               onClick={onHandoffInitiatives}
-              className="inline-flex items-center gap-1 rounded-full border border-c-border bg-c-surface-raised px-2.5 py-1 text-[11px] font-medium text-c-text-secondary transition hover:bg-c-surface-raised dark:border-white/[0.07] dark:bg-navy-800/40 dark:text-c-text-secondary dark:hover:bg-white/[0.08]"
+              className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle bg-c-surface-raised px-2.5 py-1 text-[11px] font-medium text-c-text-secondary transition hover:bg-c-surface-raised dark:border-white/[0.07] dark:bg-navy-800/40 dark:text-c-text-secondary dark:hover:bg-white/[0.08]"
             >
               <Lightbulb size={12} />
               {isPolish ? 'Inicjatywy' : 'Initiatives'}
@@ -156,7 +156,7 @@ function WorkflowStep(props: {
   disabled?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-c-border bg-c-surface-raised p-3 dark:border-white/[0.06] dark:bg-navy-900/40">
+    <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-3 dark:border-white/[0.06] dark:bg-navy-900/40">
       <div className="flex items-center gap-2 text-[11px] font-semibold text-c-text-secondary">
         {props.icon}
         {props.title}

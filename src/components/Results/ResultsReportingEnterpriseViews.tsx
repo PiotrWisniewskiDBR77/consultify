@@ -134,7 +134,7 @@ const FieldShell: React.FC<{ label: string; children: React.ReactNode }> = ({
 );
 
 const INPUT_CLASS =
-  'w-full rounded-xl border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus';
+  'w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus';
 
 const TEXTAREA_CLASS = `${INPUT_CLASS} min-h-[88px]`;
 
@@ -512,7 +512,7 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
       </div>
 
       {createOpen && (
-        <div className="rounded-2xl border border-c-border bg-c-surface p-5 shadow-sm">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-base font-semibold text-c-text">
@@ -612,7 +612,7 @@ export const ResultsReportSchedulesView: React.FC<WorkspaceViewProps> = ({
             <button
               type="button"
               onClick={() => setCreateOpen(false)}
-              className="rounded-xl border border-c-border px-4 py-2 text-sm text-c-text-secondary"
+              className="rounded-xl border border-c-border-subtle px-4 py-2 text-sm text-c-text-secondary"
             >
               {t('common.cancel', 'Cancel')}
             </button>
@@ -881,7 +881,7 @@ export const ResultsWallboardsView: React.FC<WorkspaceViewProps> = ({
       </div>
 
       {createOpen && (
-        <div className="rounded-2xl border border-c-border bg-c-surface p-5 shadow-sm">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-base font-semibold text-c-text">
@@ -950,7 +950,7 @@ export const ResultsWallboardsView: React.FC<WorkspaceViewProps> = ({
             <button
               type="button"
               onClick={() => setCreateOpen(false)}
-              className="rounded-xl border border-c-border px-4 py-2 text-sm text-c-text-secondary"
+              className="rounded-xl border border-c-border-subtle px-4 py-2 text-sm text-c-text-secondary"
             >
               {t('common.cancel', 'Cancel')}
             </button>
@@ -1239,7 +1239,7 @@ export const ResultsKpiConnectorsView: React.FC<WorkspaceViewProps> = ({
       </div>
 
       {createOpen && (
-        <div className="rounded-2xl border border-c-border bg-c-surface p-5 shadow-sm">
+        <div className="rounded-2xl border border-c-border-subtle bg-c-surface p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-base font-semibold text-c-text">
@@ -1328,7 +1328,7 @@ export const ResultsKpiConnectorsView: React.FC<WorkspaceViewProps> = ({
             <button
               type="button"
               onClick={() => setCreateOpen(false)}
-              className="rounded-xl border border-c-border px-4 py-2 text-sm text-c-text-secondary"
+              className="rounded-xl border border-c-border-subtle px-4 py-2 text-sm text-c-text-secondary"
             >
               {t('common.cancel', 'Cancel')}
             </button>

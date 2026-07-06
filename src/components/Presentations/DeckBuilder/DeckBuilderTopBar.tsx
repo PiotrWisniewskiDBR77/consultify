@@ -173,7 +173,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
   }>;
 
   return (
-    <div className="h-12 border-b border-c-border bg-c-surface flex items-center px-4 gap-3 flex-shrink-0">
+    <div className="h-12 border-b border-c-border-subtle bg-c-surface flex items-center px-4 gap-3 flex-shrink-0">
       {/* Back / Exit */}
       <button
         onClick={goToPresentations}

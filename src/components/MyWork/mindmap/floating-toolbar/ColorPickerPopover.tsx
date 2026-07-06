@@ -77,7 +77,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
   );
 
   return (
-    <div className="w-60 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border shadow-xl p-2">
+    <div className="w-60 rounded-xl bg-c-surface-raised dark:bg-c-surface border border-c-border-subtle dark:border-c-border-subtle shadow-xl p-2">
       {/* Line style */}
       <div className="mb-2">
         <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-c-text-secondary mb-1">
@@ -138,7 +138,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
               className={`w-6 h-6 rounded-lg border-2 transition-all ${
                 currentColor === c
                   ? 'border-c-accent scale-110'
-                  : 'border-transparent hover:border-c-border-subtle dark:hover:border-c-border'
+                  : 'border-transparent hover:border-c-border-subtle dark:hover:border-c-border-subtle'
               }`}
               style={{ backgroundColor: c }}
             />
@@ -159,7 +159,7 @@ export const ColorPickerPopover: React.FC<ColorPickerPopoverProps> = ({
               className={`w-[18px] h-[18px] rounded border transition-all ${
                 currentColor === c
                   ? 'border-c-accent ring-1 ring-c-accent'
-                  : 'border-transparent hover:border-c-border-subtle dark:hover:border-c-border'
+                  : 'border-transparent hover:border-c-border-subtle dark:hover:border-c-border-subtle'
               }`}
               style={{ backgroundColor: c }}
             />

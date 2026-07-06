@@ -165,11 +165,11 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
   return (
     <div className="fixed inset-0 z-modal flex items-start justify-end" onClick={onClose}>
       <div
-        className="w-80 h-full bg-c-surface border-l border-c-border shadow-2xl overflow-auto"
+        className="w-80 h-full bg-c-surface border-l border-c-border-subtle shadow-2xl overflow-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-c-border">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
           <div className="flex items-center gap-2">
             <Settings2 size={14} className="text-c-text-muted" />
             <span className="text-xs font-bold text-c-text">
@@ -591,7 +591,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                         chartAggregation: e.target.value as 'count' | 'sum' | 'avg' | 'min' | 'max',
                       })
                     }
-                    className="w-full h-8 px-2 rounded-lg text-[11px] bg-c-surface-raised border border-c-border text-c-text outline-none focus:ring-2 focus:ring-c-focus"
+                    className="w-full h-8 px-2 rounded-lg text-[11px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none focus:ring-2 focus:ring-c-focus"
                   >
                     <option value="count">Count</option>
                     <option value="sum">Sum</option>
@@ -652,7 +652,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
                       className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
                         isVisible
                           ? 'bg-c-surface border-c-border-strong'
-                          : 'border-c-border'
+                          : 'border-c-border-subtle'
                       }`}
                     >
                       {isVisible && <Check size={10} className="text-c-text" />}
@@ -667,7 +667,7 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 px-4 py-3 border-t border-c-border bg-c-surface">
+        <div className="sticky bottom-0 px-4 py-3 border-t border-c-border-subtle bg-c-surface">
           <div className="flex gap-2">
             <button
               onClick={onClose}
@@ -702,7 +702,7 @@ const Section: React.FC<{
 }> = ({ title, id, expanded, onToggle, children }) => {
   const isOpen = expanded === id;
   return (
-    <div className="border border-c-border rounded-xl overflow-hidden">
+    <div className="border border-c-border-subtle rounded-xl overflow-hidden">
       <button
         onClick={() => onToggle(isOpen ? null : id)}
         className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold text-c-text-muted hover:bg-c-surface-raised transition-colors"
@@ -733,7 +733,7 @@ const FieldSelect: React.FC<{
     <select
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full h-8 px-2 rounded-lg text-[11px] bg-c-surface-raised border border-c-border text-c-text outline-none focus:ring-2 focus:ring-c-focus"
+      className="w-full h-8 px-2 rounded-lg text-[11px] bg-c-surface-raised border border-c-border-subtle text-c-text outline-none focus:ring-2 focus:ring-c-focus"
     >
       {allowEmpty && <option value="">{isPl ? '— Brak —' : '— None —'}</option>}
       {options.map((col) => (
@@ -764,7 +764,7 @@ const FieldMultiSelect: React.FC<{
       <label className="text-[10px] font-bold text-c-text-muted uppercase tracking-wider mb-1 block">
         {label}
       </label>
-      <div className="space-y-0.5 max-h-[120px] overflow-auto rounded-lg border border-c-border p-1">
+      <div className="space-y-0.5 max-h-[120px] overflow-auto rounded-lg border border-c-border-subtle p-1">
         {options.map((col) => {
           const isSelected = selected.includes(col.key);
           return (
@@ -777,7 +777,7 @@ const FieldMultiSelect: React.FC<{
                 className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${
                   isSelected
                     ? 'bg-c-surface border-c-border-strong'
-                    : 'border-c-border'
+                    : 'border-c-border-subtle'
                 }`}
               >
                 {isSelected && <Check size={8} className="text-c-text" />}

@@ -202,7 +202,7 @@ export const EntityLinksPanel: React.FC<EntityLinksPanelProps> = ({
             </button>
 
             {isExpanded && count > 0 && (
-              <div className="ml-5 pl-3 border-l border-c-border space-y-0.5 mb-1">
+              <div className="ml-5 pl-3 border-l border-c-border-subtle space-y-0.5 mb-1">
                 {section.items.map((item) => (
                   <button
                     key={item.id}

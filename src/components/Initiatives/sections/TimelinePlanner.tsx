@@ -956,7 +956,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 8, scale: 0.98 }}
         transition={{ duration: 0.16 }}
-        className="w-full max-w-2xl rounded-2xl border border-c-border bg-c-surface shadow-xl overflow-hidden"
+        className="w-full max-w-2xl rounded-2xl border border-c-border-subtle bg-c-surface shadow-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 space-y-4">
@@ -1036,7 +1036,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={t('initiatives.timelinePlanner.itemNamePlaceholder')}
-                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none"
                   autoFocus
                 />
               </div>
@@ -1058,7 +1058,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         if (t.estimatedHours != null) setEstimatedHours(String(t.estimatedHours));
                       }
                     }}
-                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                   >
                     <option value="">— {t('initiatives.timelinePlanner.selectTask')} —</option>
                     {taskOptions.map((t) => (
@@ -1083,7 +1083,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       const d = decisionOptions.find((x) => x.id === id);
                       if (d) setName(d.title);
                     }}
-                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                   >
                     <option value="">— {t('initiatives.timelinePlanner.selectDecision')} —</option>
                     {decisionOptions.map((d) => (
@@ -1111,7 +1111,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         if (!fixedDate) setFixedDate(toISO(m.date));
                       }
                     }}
-                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                   >
                     <option value="">— {t('initiatives.timelinePlanner.selectMilestone')} —</option>
                     {milestoneOptions.map((m) => (
@@ -1137,7 +1137,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     className={`flex-1 px-3 py-2 rounded-lg text-[11px] border transition-colors ${
                       startTriggerType === 'dependency'
                         ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                        : 'border-c-border text-c-text-muted hover:border-c-border'
+                        : 'border-c-border-subtle text-c-text-muted hover:border-c-border-subtle'
                     }`}
                   >
                     {t('initiatives.timelinePlanner.fromDependencySystem')}
@@ -1150,7 +1150,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     className={`flex-1 px-3 py-2 rounded-lg text-[11px] border transition-colors ${
                       startTriggerType === 'date'
                         ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                        : 'border-c-border text-c-text-muted hover:border-c-border'
+                        : 'border-c-border-subtle text-c-text-muted hover:border-c-border-subtle'
                     }`}
                   >
                     {t('initiatives.timelinePlanner.manualDate')}
@@ -1163,7 +1163,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     className={`flex-1 px-3 py-2 rounded-lg text-[11px] border transition-colors ${
                       startTriggerType === 'event'
                         ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                        : 'border-c-border text-c-text-muted hover:border-c-border'
+                        : 'border-c-border-subtle text-c-text-muted hover:border-c-border-subtle'
                     }`}
                   >
                     {t('initiatives.timelinePlanner.eventTrigger')}
@@ -1180,7 +1180,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   <select
                     value={dependsOnId}
                     onChange={(e) => setDependsOnId(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                   >
                     {depOptions.map((o) => (
                       <option key={o.id} value={o.id}>
@@ -1201,7 +1201,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     type="date"
                     value={fixedDate}
                     onChange={(e) => setFixedDate(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                   />
                 </div>
               )}
@@ -1215,7 +1215,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     value={startTriggerEvent}
                     onChange={(e) => setStartTriggerEvent(e.target.value)}
                     placeholder={t('initiatives.timelinePlanner.placeholderGateApproval')}
-                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                   />
                 </div>
               )}
@@ -1235,7 +1235,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${
                         endSchedulingMode === 'from_duration'
                           ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                          : 'border-c-border text-c-text-muted'
+                          : 'border-c-border-subtle text-c-text-muted'
                       }`}
                     >
                       {t('initiatives.timelinePlanner.fromDuration')}
@@ -1246,7 +1246,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${
                         endSchedulingMode === 'manual_date'
                           ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                          : 'border-c-border text-c-text-muted'
+                          : 'border-c-border-subtle text-c-text-muted'
                       }`}
                     >
                       {t('initiatives.timelinePlanner.manualDate')}
@@ -1257,7 +1257,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${
                         endSchedulingMode === 'from_successor'
                           ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                          : 'border-c-border text-c-text-muted'
+                          : 'border-c-border-subtle text-c-text-muted'
                       }`}
                     >
                       {t('initiatives.timelinePlanner.fromSuccessor')}
@@ -1268,14 +1268,14 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       type="date"
                       value={manualEndDate}
                       onChange={(e) => setManualEndDate(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                     />
                   )}
                   {endSchedulingMode === 'from_successor' && (
                     <select
                       value={successorId}
                       onChange={(e) => setSuccessorId(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                     >
                       <option value="">
                         — {t('initiatives.timelinePlanner.selectSuccessor')} —
@@ -1304,7 +1304,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         value={durationDays}
                         onChange={(e) => setDurationDays(e.target.value)}
                         placeholder="—"
-                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                       />
                     </div>
                     <div>
@@ -1318,7 +1318,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         value={estimatedHours}
                         onChange={(e) => setEstimatedHours(e.target.value)}
                         placeholder="—"
-                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                       />
                     </div>
                   </div>
@@ -1364,7 +1364,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                             e.target.value as 'cyclical' | 'specific_date' | 'after_event'
                           )
                         }
-                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                       >
                         <option value="cyclical">
                           {t('initiatives.timelinePlanner.cyclicalMeeting')}
@@ -1385,7 +1385,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         <select
                           value={infoEventCadence}
                           onChange={(e) => setInfoEventCadence(e.target.value as any)}
-                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                         >
                           <option value="daily">{t('initiatives.timelinePlanner.daily')}</option>
                           <option value="weekly">{t('initiatives.timelinePlanner.weekly')}</option>
@@ -1409,7 +1409,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           value={infoEventReferenceEvent}
                           onChange={(e) => setInfoEventReferenceEvent(e.target.value)}
                           placeholder={t('initiatives.timelinePlanner.placeholderAfterGoGate')}
-                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                         />
                         {submitAttempted && !infoEventReferenceEventValid && (
                           <p className="mt-1 text-[10px] text-danger-500">
@@ -1433,7 +1433,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       value={audience}
                       onChange={(e) => setAudience(e.target.value)}
                       placeholder={t('initiatives.timelinePlanner.placeholderSteeringCommittee')}
-                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1446,7 +1446,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         onChange={(e) =>
                           setInfoEventParticipantMode(e.target.value as 'person' | 'group')
                         }
-                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                       >
                         <option value="group">{t('initiatives.timelinePlanner.group')}</option>
                         <option value="person">{t('initiatives.timelinePlanner.person')}</option>
@@ -1466,7 +1466,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                                 | 'custom_group'
                             )
                           }
-                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                         >
                           {NOTIFICATION_GROUP_OPTIONS.map((g) => (
                             <option key={g.key} value={g.key}>
@@ -1478,7 +1478,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         <select
                           value={infoEventParticipantUserId}
                           onChange={(e) => setInfoEventParticipantUserId(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                         >
                           <option value="">
                             — {t('initiatives.timelinePlanner.selectPerson')} —
@@ -1506,7 +1506,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     <select
                       value={infoAssetType}
                       onChange={(e) => setInfoAssetType(e.target.value as any)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                     >
                       <option value="internal_report">
                         {t('initiatives.timelinePlanner.internalReport')}
@@ -1544,7 +1544,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           const found = availableReports.find((x) => x.id === id);
                           if (found) setInfoAssetLabel(found.title);
                         }}
-                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                       >
                         <option value="">
                           — {t('initiatives.timelinePlanner.selectReport')} —
@@ -1568,7 +1568,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         value={infoAssetUrl}
                         onChange={(e) => setInfoAssetUrl(e.target.value)}
                         placeholder="https://..."
-                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                       />
                     </div>
                   )}
@@ -1583,7 +1583,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         value={infoAssetLabel}
                         onChange={(e) => setInfoAssetLabel(e.target.value)}
                         placeholder={t('initiatives.timelinePlanner.placeholderDeckSprintReview')}
-                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                       />
                     </div>
                   )}
@@ -1626,7 +1626,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       onChange={(e) =>
                         setNotificationRecipientMode(e.target.value as 'person' | 'group')
                       }
-                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                     >
                       <option value="group">{t('initiatives.timelinePlanner.group')}</option>
                       <option value="person">{t('initiatives.timelinePlanner.person')}</option>
@@ -1650,7 +1650,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                                 | 'custom_group'
                             )
                           }
-                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                         >
                           {NOTIFICATION_GROUP_OPTIONS.map((g) => (
                             <option key={g.key} value={g.key}>
@@ -1667,7 +1667,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         <select
                           value={notificationRecipientUserId}
                           onChange={(e) => setNotificationRecipientUserId(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                         >
                           <option value="">
                             — {t('initiatives.timelinePlanner.selectPerson')} —
@@ -1692,7 +1692,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       onChange={(e) =>
                         setNotificationTriggerMode(e.target.value as 'event_based' | 'cyclical')
                       }
-                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                     >
                       <option value="event_based">
                         {t('initiatives.timelinePlanner.eventBased')}
@@ -1716,7 +1716,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                               | 'manual_gate'
                           )
                         }
-                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                       >
                         <option value="on_start">{t('initiatives.timelinePlanner.onStart')}</option>
                         <option value="on_complete">
@@ -1742,7 +1742,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           min={0}
                           value={notificationLeadDays}
                           onChange={(e) => setNotificationLeadDays(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                          className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                         />
                       </div>
                     )}
@@ -1753,7 +1753,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     <select
                       value={notificationCadence}
                       onChange={(e) => setNotificationCadence(e.target.value as any)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                     >
                       <option value="daily">{t('initiatives.timelinePlanner.daily')}</option>
                       <option value="weekly">{t('initiatives.timelinePlanner.weekly')}</option>
@@ -1769,7 +1769,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     <select
                       value={notificationChannel}
                       onChange={(e) => setNotificationChannel(e.target.value as any)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                     >
                       <option value="email">Email</option>
                       <option value="slack">Slack</option>
@@ -1787,7 +1787,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       value={notificationRule}
                       onChange={(e) => setNotificationRule(e.target.value)}
                       placeholder={t('initiatives.timelinePlanner.placeholderCommunicationRule')}
-                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                   <div className="sm:col-span-2">
@@ -1799,7 +1799,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       onChange={(e) => setNotificationMessage(e.target.value)}
                       rows={2}
                       placeholder={t('initiatives.timelinePlanner.placeholderNotificationContent')}
-                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                   <div className="sm:col-span-2 space-y-1.5">
@@ -1827,7 +1827,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         onChange={(e) => setNotificationAiInstruction(e.target.value)}
                         rows={2}
                         placeholder={t('initiatives.timelinePlanner.placeholderAiInstruction')}
-                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                       />
                     )}
                   </div>
@@ -1844,7 +1844,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     <select
                       value={meetingCadence}
                       onChange={(e) => setMeetingCadence(e.target.value as any)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                     >
                       <option value="daily">{t('initiatives.timelinePlanner.daily')}</option>
                       <option value="weekly">{t('initiatives.timelinePlanner.weekly')}</option>
@@ -1860,7 +1860,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     <select
                       value={meetingChannel}
                       onChange={(e) => setMeetingChannel(e.target.value as any)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                     >
                       <option value="online">Online</option>
                       <option value="onsite">{t('initiatives.timelinePlanner.onsite')}</option>
@@ -1876,7 +1876,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       value={meetingAgenda}
                       onChange={(e) => setMeetingAgenda(e.target.value)}
                       placeholder={t('initiatives.timelinePlanner.placeholderMeetingAgenda')}
-                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -1895,7 +1895,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       value={durationDays}
                       onChange={(e) => setDurationDays(e.target.value)}
                       placeholder="—"
-                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                   <div>
@@ -1907,7 +1907,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       value={pauseReason}
                       onChange={(e) => setPauseReason(e.target.value)}
                       placeholder={t('initiatives.timelinePlanner.placeholderPauseReason')}
-                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                     />
                     <p className="mt-1 text-[10px] text-c-text-secondary">
                       {t('initiatives.timelinePlanner.pauseHelp')}
@@ -1925,7 +1925,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   <select
                     value={escalationLevel}
                     onChange={(e) => setEscalationLevel(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm text-c-text-muted focus:border-blue-500 focus:outline-none"
                   >
                     <option value="">— {t('initiatives.timelinePlanner.select')} —</option>
                     <option value="Sponsor">Sponsor</option>
@@ -2258,7 +2258,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none"
+            className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none"
             autoFocus
           />
         </div>
@@ -2280,7 +2280,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   if (t.estimatedHours != null) setEstimatedHours(String(t.estimatedHours));
                 }
               }}
-              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
             >
               <option value="">— {t('initiatives.timelinePlanner.selectTask')} —</option>
               {taskOptions.map((t) => (
@@ -2305,7 +2305,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 const d = decisionOptions.find((x) => x.id === id);
                 if (d) setName(d.title);
               }}
-              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
             >
               <option value="">— {t('initiatives.timelinePlanner.selectDecision')} —</option>
               {decisionOptions.map((d) => (
@@ -2333,7 +2333,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   setFixedDate(toISO(m.date));
                 }
               }}
-              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
             >
               <option value="">— {t('initiatives.timelinePlanner.selectMilestone')} —</option>
               {milestoneOptions.map((m) => (
@@ -2359,7 +2359,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               className={`flex-1 px-3 py-1.5 rounded-lg text-[11px] border transition-colors ${
                 startTriggerType === 'dependency'
                   ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                  : 'border-c-border text-c-text-muted'
+                  : 'border-c-border-subtle text-c-text-muted'
               }`}
             >
               {t('initiatives.timelinePlanner.fromDependencySystem')}
@@ -2372,7 +2372,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               className={`flex-1 px-3 py-1.5 rounded-lg text-[11px] border transition-colors ${
                 startTriggerType === 'date'
                   ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                  : 'border-c-border text-c-text-muted'
+                  : 'border-c-border-subtle text-c-text-muted'
               }`}
             >
               {t('initiatives.timelinePlanner.manualDate')}
@@ -2385,7 +2385,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               className={`flex-1 px-3 py-1.5 rounded-lg text-[11px] border transition-colors ${
                 startTriggerType === 'event'
                   ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                  : 'border-c-border text-c-text-muted'
+                  : 'border-c-border-subtle text-c-text-muted'
               }`}
             >
               {t('initiatives.timelinePlanner.eventTrigger')}
@@ -2401,7 +2401,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             <select
               value={dependsOnId}
               onChange={(e) => setDependsOnId(e.target.value)}
-              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
             >
               <option value="">—</option>
               {depOptions.map((o) => (
@@ -2422,7 +2422,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               type="date"
               value={fixedDate}
               onChange={(e) => setFixedDate(e.target.value)}
-              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
             />
           </div>
         )}
@@ -2437,7 +2437,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               value={startTriggerEvent}
               onChange={(e) => setStartTriggerEvent(e.target.value)}
               placeholder={t('initiatives.timelinePlanner.placeholderGateApproval')}
-              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
             />
           </div>
         )}
@@ -2451,21 +2451,21 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               <button
                 type="button"
                 onClick={() => setEndSchedulingMode('from_duration')}
-                className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'from_duration' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'border-c-border text-c-text-muted'}`}
+                className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'from_duration' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'border-c-border-subtle text-c-text-muted'}`}
               >
                 {t('initiatives.timelinePlanner.fromDuration')}
               </button>
               <button
                 type="button"
                 onClick={() => setEndSchedulingMode('manual_date')}
-                className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'manual_date' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'border-c-border text-c-text-muted'}`}
+                className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'manual_date' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'border-c-border-subtle text-c-text-muted'}`}
               >
                 {t('initiatives.timelinePlanner.manualDate')}
               </button>
               <button
                 type="button"
                 onClick={() => setEndSchedulingMode('from_successor')}
-                className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'from_successor' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'border-c-border text-c-text-muted'}`}
+                className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'from_successor' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'border-c-border-subtle text-c-text-muted'}`}
               >
                 {t('initiatives.timelinePlanner.fromSuccessor')}
               </button>
@@ -2475,14 +2475,14 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 type="date"
                 value={manualEndDate}
                 onChange={(e) => setManualEndDate(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
               />
             )}
             {endSchedulingMode === 'from_successor' && (
               <select
                 value={successorId}
                 onChange={(e) => setSuccessorId(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="">— {t('initiatives.timelinePlanner.selectSuccessor')} —</option>
                 {successorOptions.map((o) => (
@@ -2509,7 +2509,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   value={durationDays}
                   onChange={(e) => setDurationDays(e.target.value)}
                   placeholder="—"
-                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                 />
               </div>
               <div>
@@ -2521,7 +2521,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   value={estimatedHours}
                   onChange={(e) => setEstimatedHours(e.target.value)}
                   placeholder="—"
-                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -2556,7 +2556,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   <button
                     key={val ?? 'pending'}
                     onClick={() => setDecisionOutcome(val)}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-medium border transition-colors ${decisionOutcome === val ? 'border-blue-500 bg-blue-500/10 text-blue-600' : 'border-c-border text-c-text-muted'}`}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-medium border transition-colors ${decisionOutcome === val ? 'border-blue-500 bg-blue-500/10 text-blue-600' : 'border-c-border-subtle text-c-text-muted'}`}
                   >
                     {val === null
                       ? t('initiatives.timelinePlanner.pending')
@@ -2585,7 +2585,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   onChange={(e) =>
                     setInfoEventMode(e.target.value as 'cyclical' | 'specific_date' | 'after_event')
                   }
-                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                 >
                   <option value="cyclical">
                     {t('initiatives.timelinePlanner.cyclicalMeeting')}
@@ -2604,7 +2604,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   <select
                     value={infoEventCadence}
                     onChange={(e) => setInfoEventCadence(e.target.value as any)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                   >
                     <option value="daily">{t('initiatives.timelinePlanner.daily')}</option>
                     <option value="weekly">{t('initiatives.timelinePlanner.weekly')}</option>
@@ -2624,7 +2624,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                     value={infoEventReferenceEvent}
                     onChange={(e) => setInfoEventReferenceEvent(e.target.value)}
                     placeholder={t('initiatives.timelinePlanner.placeholderAfterGoGate')}
-                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                   />
                   {submitAttempted && !infoEventReferenceEventValid && (
                     <p className="mt-1 text-[10px] text-danger-500">
@@ -2648,7 +2648,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 value={audience}
                 onChange={(e) => setAudience(e.target.value)}
                 placeholder={t('initiatives.timelinePlanner.placeholderSteeringCommittee')}
-                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -2661,7 +2661,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   onChange={(e) =>
                     setInfoEventParticipantMode(e.target.value as 'person' | 'group')
                   }
-                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                 >
                   <option value="group">{t('initiatives.timelinePlanner.group')}</option>
                   <option value="person">{t('initiatives.timelinePlanner.person')}</option>
@@ -2672,7 +2672,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   <select
                     value={infoEventParticipantGroupKey}
                     onChange={(e) => setInfoEventParticipantGroupKey(e.target.value as any)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                   >
                     {NOTIFICATION_GROUP_OPTIONS.map((g) => (
                       <option key={g.key} value={g.key}>
@@ -2684,7 +2684,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   <select
                     value={infoEventParticipantUserId}
                     onChange={(e) => setInfoEventParticipantUserId(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                   >
                     <option value="">— {t('initiatives.timelinePlanner.selectPerson')} —</option>
                     {users.map((u) => (
@@ -2708,7 +2708,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               <select
                 value={infoAssetType}
                 onChange={(e) => setInfoAssetType(e.target.value as any)}
-                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="internal_report">
                   {t('initiatives.timelinePlanner.internalReport')}
@@ -2745,7 +2745,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                     const found = availableReports.find((x) => x.id === id);
                     if (found) setInfoAssetLabel(found.title);
                   }}
-                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                 >
                   <option value="">— {t('initiatives.timelinePlanner.selectReport')} —</option>
                   {availableReports.map((r) => (
@@ -2766,7 +2766,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   value={infoAssetUrl}
                   onChange={(e) => setInfoAssetUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                 />
               </div>
             )}
@@ -2780,7 +2780,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   value={infoAssetLabel}
                   onChange={(e) => setInfoAssetLabel(e.target.value)}
                   placeholder={t('initiatives.timelinePlanner.placeholderDeckSprintReview')}
-                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                 />
               </div>
             )}
@@ -2820,7 +2820,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               <select
                 value={notificationCadence}
                 onChange={(e) => setNotificationCadence(e.target.value as any)}
-                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="daily">{t('initiatives.timelinePlanner.daily')}</option>
                 <option value="weekly">{t('initiatives.timelinePlanner.weekly')}</option>
@@ -2836,7 +2836,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               <select
                 value={notificationRecipientMode}
                 onChange={(e) => setNotificationRecipientMode(e.target.value as 'person' | 'group')}
-                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="group">{t('initiatives.timelinePlanner.group')}</option>
                 <option value="person">{t('initiatives.timelinePlanner.person')}</option>
@@ -2851,7 +2851,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   <select
                     value={notificationRecipientGroupKey}
                     onChange={(e) => setNotificationRecipientGroupKey(e.target.value as any)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                   >
                     {NOTIFICATION_GROUP_OPTIONS.map((g) => (
                       <option key={g.key} value={g.key}>
@@ -2868,7 +2868,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   <select
                     value={notificationRecipientUserId}
                     onChange={(e) => setNotificationRecipientUserId(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                   >
                     <option value="">— {t('initiatives.timelinePlanner.selectPerson')} —</option>
                     {users.map((u) => (
@@ -2889,7 +2889,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 onChange={(e) =>
                   setNotificationTriggerMode(e.target.value as 'event_based' | 'cyclical')
                 }
-                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="event_based">{t('initiatives.timelinePlanner.eventBased')}</option>
                 <option value="cyclical">{t('initiatives.timelinePlanner.cyclical')}</option>
@@ -2903,7 +2903,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 <select
                   value={notificationTriggerEvent}
                   onChange={(e) => setNotificationTriggerEvent(e.target.value as any)}
-                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                 >
                   <option value="on_start">{t('initiatives.timelinePlanner.onStart')}</option>
                   <option value="on_complete">{t('initiatives.timelinePlanner.onComplete')}</option>
@@ -2927,7 +2927,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                     min={0}
                     value={notificationLeadDays}
                     onChange={(e) => setNotificationLeadDays(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
                   />
                 </div>
               )}
@@ -2938,7 +2938,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               <select
                 value={notificationChannel}
                 onChange={(e) => setNotificationChannel(e.target.value as any)}
-                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="email">Email</option>
                 <option value="slack">Slack</option>
@@ -2956,7 +2956,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 value={notificationRule}
                 onChange={(e) => setNotificationRule(e.target.value)}
                 placeholder={t('initiatives.timelinePlanner.placeholderCommunicationRule')}
-                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
               />
             </div>
             <div className="sm:col-span-2">
@@ -2968,7 +2968,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 onChange={(e) => setNotificationMessage(e.target.value)}
                 rows={2}
                 placeholder={t('initiatives.timelinePlanner.placeholderMessageContentShort')}
-                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
               />
             </div>
             <div className="sm:col-span-2 space-y-1.5">
@@ -2992,7 +2992,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   onChange={(e) => setNotificationAiInstruction(e.target.value)}
                   rows={2}
                   placeholder={t('initiatives.timelinePlanner.placeholderAiInstructionShort')}
-                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                 />
               )}
             </div>
@@ -3008,7 +3008,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               <select
                 value={meetingCadence}
                 onChange={(e) => setMeetingCadence(e.target.value as any)}
-                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="daily">{t('initiatives.timelinePlanner.daily')}</option>
                 <option value="weekly">{t('initiatives.timelinePlanner.weekly')}</option>
@@ -3024,7 +3024,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               <select
                 value={meetingChannel}
                 onChange={(e) => setMeetingChannel(e.target.value as any)}
-                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="online">Online</option>
                 <option value="onsite">{t('initiatives.timelinePlanner.onsite')}</option>
@@ -3040,7 +3040,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 value={meetingAgenda}
                 onChange={(e) => setMeetingAgenda(e.target.value)}
                 placeholder={t('initiatives.timelinePlanner.placeholderMeetingAgenda')}
-                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
               />
             </div>
           </div>
@@ -3058,7 +3058,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 value={durationDays}
                 onChange={(e) => setDurationDays(e.target.value)}
                 placeholder="—"
-                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
               />
             </div>
             <div>
@@ -3070,7 +3070,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 value={pauseReason}
                 onChange={(e) => setPauseReason(e.target.value)}
                 placeholder={t('initiatives.timelinePlanner.placeholderPauseReasonShort')}
-                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
               />
               <p className="mt-1 text-[10px] text-c-text-secondary">
                 {t('initiatives.timelinePlanner.pauseHelp')}
@@ -3088,7 +3088,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             <select
               value={escalationLevel}
               onChange={(e) => setEscalationLevel(e.target.value)}
-              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border text-sm focus:border-blue-500 focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-c-surface border border-c-border-subtle text-sm focus:border-blue-500 focus:outline-none"
             >
               <option value="">—</option>
               <option value="Sponsor">Sponsor</option>
@@ -3491,7 +3491,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                     type="date"
                     value={toISO(row.startDate)}
                     onChange={(e) => onUpdateStart(e.target.value || null)}
-                    className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-c-border dark:hover:border-c-border focus:border-blue-500 text-c-text-muted focus:outline-none"
+                    className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-c-border-subtle dark:hover:border-c-border-subtle focus:border-blue-500 text-c-text-muted focus:outline-none"
                   />
                 ) : row.schedulingMode === 'after_previous' && row.dependsOnId ? (
                   <span className="text-[10px] text-c-text-secondary italic">
@@ -3502,7 +3502,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                     type="date"
                     value={toISO(row.startDate)}
                     onChange={(e) => onUpdateRow(row.id, { startDate: e.target.value || null })}
-                    className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-c-border dark:hover:border-c-border focus:border-blue-500 text-c-text-muted focus:outline-none"
+                    className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-c-border-subtle dark:hover:border-c-border-subtle focus:border-blue-500 text-c-text-muted focus:outline-none"
                   />
                 ) : (
                   <span className="text-[10px] text-c-text-muted">
@@ -3523,7 +3523,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                 )}
               </div>
               {canEdit && startMenuOpenId === row.id && (
-                <div className="absolute left-1 top-6 z-20 w-[200px] rounded-lg border border-c-border bg-c-surface shadow-lg p-2 space-y-2 text-left">
+                <div className="absolute left-1 top-6 z-20 w-[200px] rounded-lg border border-c-border-subtle bg-c-surface shadow-lg p-2 space-y-2 text-left">
                   <div className="text-[10px] text-c-text-muted">
                     {t('initiatives.timelinePlanner.howToDetermineStart')}
                   </div>
@@ -3543,7 +3543,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                         row.startTriggerType === 'dependency' ||
                         row.schedulingMode === 'after_previous'
                           ? 'border-blue-500 bg-blue-500/10 text-blue-600'
-                          : 'border-c-border text-c-text-muted'
+                          : 'border-c-border-subtle text-c-text-muted'
                       }`}
                     >
                       Dependency
@@ -3561,7 +3561,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       className={`px-1 py-1 rounded text-[9px] border transition-colors ${
                         row.startTriggerType === 'date'
                           ? 'border-blue-500 bg-blue-500/10 text-blue-600'
-                          : 'border-c-border text-c-text-muted'
+                          : 'border-c-border-subtle text-c-text-muted'
                       }`}
                     >
                       {t('initiatives.timelinePlanner.date')}
@@ -3579,7 +3579,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       className={`px-1 py-1 rounded text-[9px] border transition-colors ${
                         row.startTriggerType === 'event'
                           ? 'border-blue-500 bg-blue-500/10 text-blue-600'
-                          : 'border-c-border text-c-text-muted'
+                          : 'border-c-border-subtle text-c-text-muted'
                       }`}
                     >
                       {t('initiatives.timelinePlanner.event')}
@@ -3596,7 +3596,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                           schedulingMode: 'after_previous',
                         })
                       }
-                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-c-border text-c-text-muted focus:border-blue-500 focus:outline-none"
+                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-c-border-subtle text-c-text-muted focus:border-blue-500 focus:outline-none"
                     >
                       <option value="">
                         — {t('initiatives.timelinePlanner.selectDependency')} —
@@ -3622,7 +3622,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                         })
                       }
                       placeholder={t('initiatives.timelinePlanner.eventNamePlaceholder')}
-                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-c-border text-c-text-muted placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
+                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-c-border-subtle text-c-text-muted placeholder:text-c-text-muted focus:border-blue-500 focus:outline-none"
                     />
                   )}
                   {row.startTriggerType === 'date' && (
@@ -3636,7 +3636,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                           schedulingMode: 'fixed_date',
                         })
                       }
-                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-c-border text-c-text-muted focus:border-blue-500 focus:outline-none"
+                      className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-c-border-subtle text-c-text-muted focus:border-blue-500 focus:outline-none"
                     />
                   )}
                 </div>
@@ -3656,7 +3656,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                   type="date"
                   value={toISO(row.endDate)}
                   onChange={(e) => onUpdateRow(row.id, { endDate: e.target.value || null })}
-                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-c-border dark:hover:border-c-border focus:border-blue-500 text-c-text-muted focus:outline-none"
+                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-c-border-subtle dark:hover:border-c-border-subtle focus:border-blue-500 text-c-text-muted focus:outline-none"
                 />
               ) : (
                 <span className="text-[10px] text-c-text-muted">
@@ -3677,7 +3677,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       durationDays: e.target.value ? parseInt(e.target.value, 10) : null,
                     })
                   }
-                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-c-border focus:border-blue-500 text-c-text-muted text-center focus:outline-none"
+                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-c-border-subtle focus:border-blue-500 text-c-text-muted text-center focus:outline-none"
                   placeholder="—"
                 />
               ) : (
@@ -3702,7 +3702,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       estimatedHours: e.target.value ? parseFloat(e.target.value) : null,
                     })
                   }
-                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-c-border focus:border-blue-500 text-c-text-muted text-center focus:outline-none"
+                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-c-border-subtle focus:border-blue-500 text-c-text-muted text-center focus:outline-none"
                   placeholder="—"
                 />
               ) : (
@@ -3723,7 +3723,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       schedulingMode: e.target.value ? 'after_previous' : 'fixed_date',
                     })
                   }
-                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-c-border dark:hover:border-c-border focus:border-blue-500 text-c-text-muted focus:outline-none appearance-none"
+                  className="w-full px-0.5 py-0.5 rounded text-[10px] bg-transparent border border-transparent hover:border-c-border-subtle dark:hover:border-c-border-subtle focus:border-blue-500 text-c-text-muted focus:outline-none appearance-none"
                 >
                   <option value="">—</option>
                   {depOptions
@@ -3757,7 +3757,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                     <MoreVertical size={13} />
                   </button>
                   {menuOpenId === row.id && (
-                    <div className="absolute right-1 top-8 z-20 min-w-[126px] rounded-lg border border-c-border bg-c-surface shadow-lg overflow-hidden">
+                    <div className="absolute right-1 top-8 z-20 min-w-[126px] rounded-lg border border-c-border-subtle bg-c-surface shadow-lg overflow-hidden">
                       <button
                         onClick={() => {
                           setEditingRowId(row.id);
@@ -3808,7 +3808,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[80] bg-black/40 backdrop-blur-[1px] flex items-center justify-center p-4"
           >
-            <div className="w-full max-w-xl rounded-2xl border border-c-border bg-c-surface shadow-xl overflow-hidden">
+            <div className="w-full max-w-xl rounded-2xl border border-c-border-subtle bg-c-surface shadow-xl overflow-hidden">
               <EditRowPanel
                 row={editingRow}
                 rows={rows}

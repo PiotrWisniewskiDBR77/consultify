@@ -133,7 +133,7 @@ export const QaSuggestionList: React.FC<QaSuggestionListProps> = ({
                   <button
                     type="button"
                     onClick={() => onOpenInAiEditor(s)}
-                    className="inline-flex items-center gap-1 rounded-md border border-c-border bg-c-surface-raised px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised"
+                    className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised"
                     data-testid="qa-suggestion-open-ai"
                   >
                     <Sparkles className="h-3 w-3" />{' '}

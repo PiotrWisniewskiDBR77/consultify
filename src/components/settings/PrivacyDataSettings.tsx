@@ -277,7 +277,7 @@ export const PrivacyDataSettings: React.FC<PrivacyDataSettingsProps> = ({
                     className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                       isSelected
                         ? 'border-blue-500 bg-blue-500'
-                        : 'border-c-border'
+                        : 'border-c-border-subtle'
                     }`}
                   >
                     {isSelected && <Check size={12} className="text-white" />}

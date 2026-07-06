@@ -160,14 +160,14 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
                   <div
                     className={`absolute left-2.5 w-3 h-3 rounded-full border-2 ${
                       isCurrent
-                        ? 'bg-c-surface border-c-border'
+                        ? 'bg-c-surface border-c-border-subtle'
                         : 'bg-c-surface-raised border-slate-600'
                     }`}
                   />
 
                   <div
                     className={`bg-slate-800/50 border rounded-lg overflow-hidden ${
-                      isCurrent ? 'border-primary-500/30' : 'border-c-border/50'
+                      isCurrent ? 'border-primary-500/30' : 'border-c-border-subtle/50'
                     }`}
                   >
                     {/* Header */}
@@ -212,7 +212,7 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
 
                     {/* Expanded content */}
                     {isExpanded && (
-                      <div className="px-4 pb-4 border-t border-c-border/50">
+                      <div className="px-4 pb-4 border-t border-c-border-subtle/50">
                         <div className="pt-4 space-y-4">
                           {/* Change notes */}
                           {version.changeNotes && (
@@ -272,7 +272,7 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
 
                           {/* Actions */}
                           {!isCurrent && (
-                            <div className="pt-2 border-t border-c-border/50 flex gap-2">
+                            <div className="pt-2 border-t border-c-border-subtle/50 flex gap-2">
                               <button
                                 onClick={() => handleRestore(version.version)}
                                 disabled={restoring === version.version}

@@ -254,7 +254,7 @@ function CreateModelWizard({
     : ['Name', 'Sources', 'KPIs', 'Dimensions', 'Trust'];
 
   const inputCls =
-    'w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-tag-2';
+    'w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-tag-2';
 
   return (
     <div
@@ -262,11 +262,11 @@ function CreateModelWizard({
       onClick={onClose}
     >
       <div
-        className="w-[560px] max-w-[95vw] max-h-[85vh] bg-c-bg rounded-2xl shadow-2xl border border-c-border flex flex-col overflow-hidden"
+        className="w-[560px] max-w-[95vw] max-h-[85vh] bg-c-bg rounded-2xl shadow-2xl border border-c-border-subtle flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-c-border">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
           <h3 className="text-sm font-semibold text-c-text">
             {isPl ? 'Nowy model danych' : 'New Data Model'}
           </h3>
@@ -279,7 +279,7 @@ function CreateModelWizard({
         </div>
 
         {/* Step indicator */}
-        <div className="flex items-center gap-1 px-5 py-3 border-b border-c-border">
+        <div className="flex items-center gap-1 px-5 py-3 border-b border-c-border-subtle">
           {stepLabels.map((lbl, i) => (
             <React.Fragment key={i}>
               {i > 0 && <ChevronRight size={12} className="text-c-text-secondary" />}
@@ -351,7 +351,7 @@ function CreateModelWizard({
                             : [...p.sourceTables, t.id],
                         }))
                       }
-                      className="rounded border-c-border text-c-tag-2"
+                      className="rounded border-c-border-subtle text-c-tag-2"
                     />
                     <Database size={14} className="text-c-text-secondary" />
                     <span className="text-sm text-c-text-muted">{t.name}</span>
@@ -369,7 +369,7 @@ function CreateModelWizard({
               {wiz.kpis.map((k, idx) => (
                 <div
                   key={idx}
-                  className="p-3 rounded-xl border border-c-border space-y-2 mb-2"
+                  className="p-3 rounded-xl border border-c-border-subtle space-y-2 mb-2"
                 >
                   <div className="grid grid-cols-2 gap-2">
                     <input
@@ -459,7 +459,7 @@ function CreateModelWizard({
               {wiz.dimensions.map((d, idx) => (
                 <div
                   key={idx}
-                  className="p-3 rounded-xl border border-c-border space-y-2 mb-2"
+                  className="p-3 rounded-xl border border-c-border-subtle space-y-2 mb-2"
                 >
                   <div className="grid grid-cols-2 gap-2">
                     <input
@@ -544,7 +544,7 @@ function CreateModelWizard({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-3 border-t border-c-border">
+        <div className="flex items-center justify-between px-5 py-3 border-t border-c-border-subtle">
           <button
             onClick={() => (step === 1 ? onClose() : setStep((s) => (s - 1) as WizardStep))}
             className="px-3 py-1.5 rounded-lg text-xs font-medium text-c-text-muted hover:bg-c-surface-raised"
@@ -600,7 +600,7 @@ function ModelCard({
 
   return (
     <div
-      className="rounded-xl border border-c-border bg-c-surface p-4 hover:shadow-md transition-shadow cursor-pointer"
+      className="rounded-xl border border-c-border-subtle bg-c-surface p-4 hover:shadow-md transition-shadow cursor-pointer"
       onClick={onSelect}
     >
       <div className="flex items-start justify-between mb-3">
@@ -667,7 +667,7 @@ function ModelCard({
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-2 border-t border-c-border">
+      <div className="flex items-center justify-between pt-2 border-t border-c-border-subtle">
         <span className="text-[10px] text-c-text-secondary">
           {model.updated_at
             ? `${isPl ? 'Ost. zmiana' : 'Updated'}: ${new Date(model.updated_at).toLocaleDateString()}`
@@ -723,7 +723,7 @@ function EditModelModal({
   const [saving, setSaving] = useState(false);
 
   const inputCls =
-    'w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-crimson-500/40';
+    'w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-crimson-500/40';
 
   const dirty =
     name.trim() !== (model.name ?? '').trim() ||
@@ -760,10 +760,10 @@ function EditModelModal({
       onClick={onClose}
     >
       <div
-        className="w-[480px] max-w-[95vw] max-h-[85vh] bg-c-bg rounded-2xl shadow-2xl border border-c-border flex flex-col overflow-hidden"
+        className="w-[480px] max-w-[95vw] max-h-[85vh] bg-c-bg rounded-2xl shadow-2xl border border-c-border-subtle flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-c-border">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
           <h3 className="text-sm font-semibold text-c-text">
             {isPl ? 'Edytuj model' : 'Edit model'}
           </h3>
@@ -811,7 +811,7 @@ function EditModelModal({
                   className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                     status === opt
                       ? 'border-crimson-500 bg-crimson-50 text-crimson-700 dark:bg-crimson-500/10 dark:text-crimson-300'
-                      : 'border-c-border text-c-text-muted hover:border-c-border'
+                      : 'border-c-border-subtle text-c-text-muted hover:border-c-border-subtle'
                   }`}
                 >
                   {TRUST_CONFIG[opt]?.icon}
@@ -822,7 +822,7 @@ function EditModelModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-c-border">
+        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-c-border-subtle">
           <Button variant="ghost" size="sm" onClick={onClose} disabled={saving}>
             {isPl ? 'Anuluj' : 'Cancel'}
           </Button>
@@ -1011,7 +1011,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
           onClick={() => setSelectedModel(null)}
         >
           <div
-            className="w-[480px] max-w-[90vw] h-full bg-c-bg border-l border-c-border shadow-2xl overflow-y-auto p-5"
+            className="w-[480px] max-w-[90vw] h-full bg-c-bg border-l border-c-border-subtle shadow-2xl overflow-y-auto p-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -1050,7 +1050,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
                   return (
                     <div
                       key={kpi.kpi_id}
-                      className="p-3 rounded-lg border border-c-border"
+                      className="p-3 rounded-lg border border-c-border-subtle"
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-medium text-c-text-muted">
@@ -1103,7 +1103,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
                 {(selectedModel.sources ?? []).map((s) => (
                   <div
                     key={s.id}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-c-border"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-c-border-subtle"
                   >
                     <Database size={14} className="text-c-text-secondary" />
                     <span className="text-xs text-c-text-muted flex-1">

@@ -207,7 +207,7 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
         <div className="flex items-center gap-3 px-4 py-3 border-b border-c-border-subtle bg-c-surface">
           {/* Zoom controls — pill button group */}
           <div
-            className="inline-flex rounded-full border border-c-border bg-c-surface-raised p-0.5"
+            className="inline-flex rounded-full border border-c-border-subtle bg-c-surface-raised p-0.5"
             role="group"
           >
             {zoomOptions.map((opt) => (
@@ -229,7 +229,7 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
           <div className="relative">
             <button
               onClick={() => setPriorityDropdownOpen((v) => !v)}
-              className="flex items-center gap-2 rounded-lg border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+              className="flex items-center gap-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised transition-colors"
             >
               <GanttChart size={14} />
               {t('myWork.decisions.timeline.priorityFilter', 'Priority')}
@@ -246,7 +246,7 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
                   className="fixed inset-0 z-40"
                   onClick={() => setPriorityDropdownOpen(false)}
                 />
-                <div className="absolute left-0 top-full mt-1 z-50 w-44 rounded-lg border border-c-border bg-c-surface py-2 shadow-xl">
+                <div className="absolute left-0 top-full mt-1 z-50 w-44 rounded-lg border border-c-border-subtle bg-c-surface py-2 shadow-xl">
                   {priorityOptions.map((opt) => (
                     <label
                       key={opt.id}
@@ -256,7 +256,7 @@ export const DecisionsTimelineView: React.FC<DecisionsTimelineViewProps> = ({
                         type="checkbox"
                         checked={priorityFilter.includes(opt.id)}
                         onChange={() => togglePriority(opt.id)}
-                        className="rounded border-c-border bg-c-surface-raised text-c-accent focus:ring-c-focus"
+                        className="rounded border-c-border-subtle bg-c-surface-raised text-c-accent focus:ring-c-focus"
                       />
                       <span className="text-sm text-c-text-secondary">{opt.label}</span>
                     </label>

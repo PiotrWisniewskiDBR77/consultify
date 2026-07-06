@@ -256,7 +256,7 @@ const RoleStep: React.FC<
             className={`relative flex items-start gap-3 rounded-2xl border-2 p-4 text-left transition-all duration-150 ${
               isSelected
                 ? 'border-c-accent bg-c-accent-soft shadow-sm dark:border-c-accent dark:bg-c-accent-soft'
-                : 'border-c-border bg-c-surface hover:border-c-border-subtle dark:bg-c-surface-raised dark:hover:border-c-border'
+                : 'border-c-border-subtle bg-c-surface hover:border-c-border-subtle dark:bg-c-surface-raised dark:hover:border-c-border-subtle'
             }`}
           >
             <span
@@ -327,7 +327,7 @@ const SampleStep: React.FC<
     </div>
 
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <div className="flex flex-col rounded-2xl border-2 border-c-border bg-c-surface p-5 dark:border-c-border-subtle dark:bg-c-surface-raised">
+      <div className="flex flex-col rounded-2xl border-2 border-c-border-subtle bg-c-surface p-5 dark:border-c-border-subtle dark:bg-c-surface-raised">
         <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-c-accent-soft text-c-accent dark:bg-c-accent-soft dark:text-c-accent">
           <FlaskConical size={22} />
         </span>
@@ -345,7 +345,7 @@ const SampleStep: React.FC<
         </Button>
       </div>
 
-      <div className="flex flex-col rounded-2xl border-2 border-c-border bg-c-surface p-5 dark:border-c-border-subtle dark:bg-c-surface-raised">
+      <div className="flex flex-col rounded-2xl border-2 border-c-border-subtle bg-c-surface p-5 dark:border-c-border-subtle dark:bg-c-surface-raised">
         <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-c-surface-raised text-c-text-muted dark:bg-c-surface dark:text-c-text-muted">
           <Rocket size={22} />
         </span>

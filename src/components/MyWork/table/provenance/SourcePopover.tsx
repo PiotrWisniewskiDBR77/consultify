@@ -83,11 +83,11 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
   return (
     <div
       data-testid={testId}
-      className="w-[360px] max-w-[90vw] rounded-lg border border-c-border bg-c-surface shadow-xl"
+      className="w-[360px] max-w-[90vw] rounded-lg border border-c-border-subtle bg-c-surface shadow-xl"
       role="dialog"
       aria-label={isPl ? 'Źródła rekordu' : 'Record sources'}
     >
-      <div className="flex items-center justify-between px-3 py-2 border-b border-c-border">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
             {isPl ? 'Pochodzenie' : 'Provenance'}
@@ -236,7 +236,7 @@ export const SourcePopover: React.FC<SourcePopoverProps> = ({
       </div>
 
       {!readOnly && onAddClick && (
-        <div className="px-3 py-2 border-t border-c-border flex items-center justify-between">
+        <div className="px-3 py-2 border-t border-c-border-subtle flex items-center justify-between">
           <p className="text-[10px] text-c-text-muted">
             {atCap
               ? isPl

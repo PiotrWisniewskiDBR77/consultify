@@ -118,7 +118,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
       {isAdding && (
         <form
           onSubmit={handleSubmit}
-          className="bg-c-surface-raised p-4 rounded-lg border border-c-border animate-in fade-in slide-in-from-top-2"
+          className="bg-c-surface-raised p-4 rounded-lg border border-c-border-subtle animate-in fade-in slide-in-from-top-2"
         >
           <h3 className="font-bold text-c-text mb-4">New Custom Trend</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -132,7 +132,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
                 value={newTrend.label}
                 onChange={(e) => setNewTrend({ ...newTrend, label: e.target.value })}
                 placeholder="e.g. Local Competitor Price War"
-                className="w-full px-3 py-2 rounded border border-c-border dark:bg-c-surface text-sm"
+                className="w-full px-3 py-2 rounded border border-c-border-subtle dark:bg-c-surface text-sm"
               />
             </div>
             <div className="col-span-2">
@@ -144,7 +144,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
                 value={newTrend.description}
                 onChange={(e) => setNewTrend({ ...newTrend, description: e.target.value })}
                 placeholder="Impact on our Q3 sales..."
-                className="w-full px-3 py-2 rounded border border-c-border dark:bg-c-surface text-sm"
+                className="w-full px-3 py-2 rounded border border-c-border-subtle dark:bg-c-surface text-sm"
                 rows={2}
               />
             </div>
@@ -157,7 +157,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
                 onChange={(e) =>
                   setNewTrend({ ...newTrend, type: e.target.value as CustomTrend['type'] })
                 }
-                className="w-full px-3 py-2 rounded border border-c-border dark:bg-c-surface text-sm"
+                className="w-full px-3 py-2 rounded border border-c-border-subtle dark:bg-c-surface text-sm"
               >
                 <option value="Technology">Technology</option>
                 <option value="Business">Business</option>
@@ -173,7 +173,7 @@ export const CustomTrendCard: React.FC<CustomTrendCardProps> = ({ trends, onAdd,
                 onChange={(e) =>
                   setNewTrend({ ...newTrend, ring: e.target.value as CustomTrend['ring'] })
                 }
-                className="w-full px-3 py-2 rounded border border-c-border dark:bg-c-surface text-sm"
+                className="w-full px-3 py-2 rounded border border-c-border-subtle dark:bg-c-surface text-sm"
               >
                 <option value="Now">Impact Now</option>
                 <option value="Watch Closely">Watch Closely</option>

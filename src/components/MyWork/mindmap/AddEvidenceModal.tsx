@@ -35,7 +35,7 @@ export const AddEvidenceModal: React.FC<AddEvidenceModalProps> = ({ open, onClos
       onClick={onClose}
     >
       <div
-        className="w-96 rounded-lg border border-c-border-subtle bg-c-surface-raised p-4 shadow-xl dark:border-c-border dark:bg-c-surface"
+        className="w-96 rounded-lg border border-c-border-subtle bg-c-surface-raised p-4 shadow-xl dark:border-c-border-subtle dark:bg-c-surface"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
@@ -61,7 +61,7 @@ export const AddEvidenceModal: React.FC<AddEvidenceModalProps> = ({ open, onClos
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
             placeholder={isPl ? 'Nazwa dowodu...' : 'Evidence title...'}
-            className="w-full rounded border border-c-border-subtle px-3 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border dark:bg-c-surface dark:text-c-text"
+            className="w-full rounded border border-c-border-subtle px-3 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border-subtle dark:bg-c-surface dark:text-c-text"
           />
         </div>
 
@@ -74,7 +74,7 @@ export const AddEvidenceModal: React.FC<AddEvidenceModalProps> = ({ open, onClos
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
             placeholder={isPl ? 'https://... lub opis' : 'https://... or description'}
-            className="w-full rounded border border-c-border-subtle px-3 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border dark:bg-c-surface dark:text-c-text"
+            className="w-full rounded border border-c-border-subtle px-3 py-1.5 text-sm outline-none focus:border-c-info dark:border-c-border-subtle dark:bg-c-surface dark:text-c-text"
           />
         </div>
 

@@ -201,7 +201,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
                                 ${
                                   isSelected
                                     ? `${colors.bg} ${colors.border} shadow-lg`
-                                    : 'bg-c-surface-raised border-c-border-subtle hover:border-c-border dark:hover:border-c-border-strong'
+                                    : 'bg-c-surface-raised border-c-border-subtle hover:border-c-border-subtle dark:hover:border-c-border-strong'
                                 }
                             `}
             >

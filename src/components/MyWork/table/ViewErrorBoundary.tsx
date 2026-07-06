@@ -64,7 +64,7 @@ export class ViewErrorBoundary extends React.Component<
           <button
             type="button"
             onClick={this.handleRetry}
-            className="rounded-xl border border-c-border bg-c-surface px-4 py-2 text-xs font-semibold text-c-text shadow-sm transition hover:bg-c-surface-raised"
+            className="rounded-xl border border-c-border-subtle bg-c-surface px-4 py-2 text-xs font-semibold text-c-text shadow-sm transition hover:bg-c-surface-raised"
           >
             {retryLabel}
           </button>

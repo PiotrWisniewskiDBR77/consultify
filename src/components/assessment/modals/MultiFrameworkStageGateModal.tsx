@@ -479,7 +479,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                                                 ${
                                                   selectedReviewers.includes(reviewer.id)
                                                     ? 'border-c-info bg-[color-mix(in_srgb,var(--c-info)_10%,transparent)]'
-                                                    : 'border-c-border hover:border-c-info'
+                                                    : 'border-c-border-subtle hover:border-c-info'
                                                 }
                                             `}
                     >
@@ -496,7 +496,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                               );
                             }
                           }}
-                          className="w-4 h-4 rounded border-c-border"
+                          className="w-4 h-4 rounded border-c-border-subtle"
                         />
                         <div>
                           <div className="font-medium text-c-text">
@@ -556,7 +556,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                   : 'Add any additional notes...'
               }
               rows={3}
-              className="w-full px-4 py-3 border border-c-border rounded-lg
+              className="w-full px-4 py-3 border border-c-border-subtle rounded-lg
                                 bg-c-surface-raised text-c-text
                                 focus:ring-2 focus:ring-c-focus focus:border-transparent"
               required={targetStatus === 'REJECTED'}

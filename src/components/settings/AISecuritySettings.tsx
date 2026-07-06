@@ -220,14 +220,14 @@ export function AISecuritySettings() {
                   className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
                     settings.enabled_features.includes(feature.id)
                       ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                      : 'border-c-border-subtle hover:border-c-border'
+                      : 'border-c-border-subtle hover:border-c-border-subtle'
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={settings.enabled_features.includes(feature.id)}
                     onChange={() => toggleFeature(feature.id)}
-                    className="mt-1 rounded border-c-border"
+                    className="mt-1 rounded border-c-border-subtle"
                   />
                   <div>
                     <p className="font-medium text-c-text">{feature.label}</p>
@@ -263,7 +263,7 @@ export function AISecuritySettings() {
                     type="checkbox"
                     checked={!settings.disabled_models.includes(model.id)}
                     onChange={() => toggleModel(model.id)}
-                    className="rounded border-c-border"
+                    className="rounded border-c-border-subtle"
                   />
                   <div className="flex-1">
                     <p className="font-medium text-c-text text-sm">
@@ -418,7 +418,7 @@ export function AISecuritySettings() {
                         allow_web_research: e.target.checked,
                       })
                     }
-                    className="rounded border-c-border"
+                    className="rounded border-c-border-subtle"
                   />
                   <span className="text-sm text-c-text-secondary">
                     Pozwól na wyszukiwanie w internecie
@@ -434,7 +434,7 @@ export function AISecuritySettings() {
                         allow_tool_calling: e.target.checked,
                       })
                     }
-                    className="rounded border-c-border"
+                    className="rounded border-c-border-subtle"
                   />
                   <span className="text-sm text-c-text-secondary">
                     Pozwól na wykonywanie akcji (MCP Tools)

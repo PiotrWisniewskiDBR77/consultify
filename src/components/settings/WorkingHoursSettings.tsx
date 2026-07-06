@@ -313,7 +313,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                 className={`flex-1 p-4 rounded-xl border-2 transition-all ${
                   sameEveryDay
                     ? 'border-[var(--c-info)] bg-c-surface-raised'
-                    : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-white/20'
+                    : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border-subtle dark:hover:border-white/20'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -321,7 +321,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                     className={`w-4 h-4 rounded-full border-2 ${
                       sameEveryDay
                         ? 'border-navy-900 bg-navy-900'
-                        : 'border-c-border'
+                        : 'border-c-border-subtle'
                     }`}
                   >
                     {sameEveryDay && <CheckCircle className="w-3 h-3 text-white" />}
@@ -342,7 +342,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                 className={`flex-1 p-4 rounded-xl border-2 transition-all ${
                   !sameEveryDay
                     ? 'border-[var(--c-info)] bg-c-surface-raised'
-                    : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border dark:hover:border-white/20'
+                    : 'border-c-border-subtle dark:border-navy-700 hover:border-c-border-subtle dark:hover:border-white/20'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -350,7 +350,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                     className={`w-4 h-4 rounded-full border-2 ${
                       !sameEveryDay
                         ? 'border-navy-900 bg-navy-900'
-                        : 'border-c-border'
+                        : 'border-c-border-subtle'
                     }`}
                   >
                     {!sameEveryDay && <CheckCircle className="w-3 h-3 text-white" />}

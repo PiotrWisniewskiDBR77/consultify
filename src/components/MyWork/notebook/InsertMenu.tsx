@@ -88,7 +88,7 @@ export const InsertMenu: React.FC<InsertMenuProps> = ({
     <div ref={ref} className={`relative ${className}`} data-insert-menu>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors text-sm font-medium"
+        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text transition-colors text-sm font-medium"
       >
         <Plus size={14} />
         <span>{pl ? 'Wstaw' : 'Insert'}</span>
@@ -96,7 +96,7 @@ export const InsertMenu: React.FC<InsertMenuProps> = ({
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 mt-1 z-50 w-56 rounded-xl border border-c-border bg-c-surface shadow-lg overflow-hidden">
+        <div className="absolute top-full left-0 mt-1 z-50 w-56 rounded-xl border border-c-border-subtle bg-c-surface shadow-lg overflow-hidden">
           <div className="p-3 space-y-2">
             <div className="text-[10px] font-semibold uppercase tracking-wide text-c-text-muted px-1">
               {pl ? 'Bloki' : 'Blocks'}

@@ -179,7 +179,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
   const renderComment = (comment: ContentComment, depth = 0) => (
     <div
       key={comment.id}
-      className={`${depth > 0 ? 'ml-8 border-l-2 border-c-border/50 pl-4' : ''}`}
+      className={`${depth > 0 ? 'ml-8 border-l-2 border-c-border-subtle/50 pl-4' : ''}`}
     >
       <div
         className={`p-4 rounded-lg ${comment.isResolved ? 'bg-c-surface-raised/30' : 'bg-c-surface-raised/50'} border border-slate-700/50`}
@@ -229,7 +229,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
             </button>
 
             {menuOpen === comment.id && (
-              <div className="absolute right-0 top-full mt-1 w-40 bg-c-surface-raised border border-c-border rounded-lg shadow-xl z-10 py-1">
+              <div className="absolute right-0 top-full mt-1 w-40 bg-c-surface-raised border border-c-border-subtle rounded-lg shadow-xl z-10 py-1">
                 <button
                   onClick={() => {
                     setEditingId(comment.id);
@@ -268,7 +268,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
             <textarea
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
-              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+              className="w-full px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               rows={3}
             />
             <div className="flex justify-end gap-2">
@@ -315,7 +315,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               placeholder="Write a reply..."
-              className="flex-1 px-3 py-2 bg-c-text text-c-bg border border-c-border rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+              className="flex-1 px-3 py-2 bg-c-text text-c-bg border border-c-border-subtle rounded-lg text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50"
               onKeyPress={(e) => e.key === 'Enter' && handleSubmitReply(comment.id)}
             />
             <button
@@ -371,7 +371,7 @@ export const PlaybookTemplateComments: React.FC<PlaybookTemplateCommentsProps> =
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Add a comment..."
             rows={3}
-            className="w-full px-3 py-2 bg-c-surface-raised/50 border border-c-border/50 rounded-lg text-c-text placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+            className="w-full px-3 py-2 bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-lg text-c-text placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/50"
           />
           <div className="flex justify-end mt-2">
             <button

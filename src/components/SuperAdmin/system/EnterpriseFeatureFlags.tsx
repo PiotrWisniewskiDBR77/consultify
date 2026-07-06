@@ -420,12 +420,12 @@ export const EnterpriseFeatureFlags: React.FC = () => {
       )}
 
       {loadError ? (
-        <div className="rounded-xl border border-c-border bg-c-surface p-6">
+        <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
           <DegradedState title="Feature flag overview unavailable" description={loadError} />
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="p-4 bg-c-surface rounded-xl border border-c-border">
+          <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
             <div className="text-sm text-c-text-secondary">Total Flags</div>
             <div className="text-2xl font-bold text-c-text">
               {flags.length}
@@ -471,14 +471,14 @@ export const EnterpriseFeatureFlags: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             disabled={!!loadError}
-            className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border rounded-lg text-c-text placeholder-c-text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            className="w-full pl-10 pr-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text placeholder-c-text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           />
         </div>
         <select
           value={filterEnvironment}
           onChange={(e) => setFilterEnvironment(e.target.value)}
           disabled={!!loadError}
-          className="px-4 py-2 bg-c-surface border border-c-border rounded-lg text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          className="px-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <option value="all">All Environments</option>
           {ENVIRONMENTS.map((env) => (
@@ -491,7 +491,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
           disabled={!!loadError}
-          className="px-4 py-2 bg-c-surface border border-c-border rounded-lg text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          className="px-4 py-2 bg-c-surface border border-c-border-subtle rounded-lg text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <option value="all">All Types</option>
           {Object.entries(FLAG_TYPE_CONFIG).map(([key, config]) => (
@@ -503,7 +503,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
         <button
           onClick={fetchFlags}
           disabled={loading}
-          className="p-2 bg-c-surface hover:bg-c-surface-raised border border-c-border rounded-lg"
+          className="p-2 bg-c-surface hover:bg-c-surface-raised border border-c-border-subtle rounded-lg"
         >
           <RefreshCw className="w-4 h-4 text-c-text-secondary" />
         </button>
@@ -511,7 +511,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
 
       {/* Test Context Panel */}
       {!loadError && (
-        <div className="p-4 bg-c-surface rounded-xl border border-c-border">
+        <div className="p-4 bg-c-surface rounded-xl border border-c-border-subtle">
           <div className="flex items-center gap-2 mb-3">
             <Eye className="w-4 h-4 text-c-info" />
             <span className="text-sm font-medium text-c-text">
@@ -527,7 +527,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                 type="text"
                 value={testContext.userId}
                 onChange={(e) => setTestContext({ ...testContext, userId: e.target.value })}
-                className="w-full px-2 py-1.5 bg-c-surface-raised border border-c-border rounded text-sm text-c-text"
+                className="w-full px-2 py-1.5 bg-c-surface-raised border border-c-border-subtle rounded text-sm text-c-text"
                 placeholder="user-123"
               />
             </div>
@@ -537,7 +537,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                 type="text"
                 value={testContext.email}
                 onChange={(e) => setTestContext({ ...testContext, email: e.target.value })}
-                className="w-full px-2 py-1.5 bg-c-surface-raised border border-c-border rounded text-sm text-c-text"
+                className="w-full px-2 py-1.5 bg-c-surface-raised border border-c-border-subtle rounded text-sm text-c-text"
                 placeholder="user@example.com"
               />
             </div>
@@ -549,7 +549,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                 type="text"
                 value={testContext.orgId}
                 onChange={(e) => setTestContext({ ...testContext, orgId: e.target.value })}
-                className="w-full px-2 py-1.5 bg-c-surface-raised border border-c-border rounded text-sm text-c-text"
+                className="w-full px-2 py-1.5 bg-c-surface-raised border border-c-border-subtle rounded text-sm text-c-text"
                 placeholder="org-abc"
               />
             </div>
@@ -559,7 +559,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                 type="text"
                 value={testContext.role}
                 onChange={(e) => setTestContext({ ...testContext, role: e.target.value })}
-                className="w-full px-2 py-1.5 bg-c-surface-raised border border-c-border rounded text-sm text-c-text"
+                className="w-full px-2 py-1.5 bg-c-surface-raised border border-c-border-subtle rounded text-sm text-c-text"
                 placeholder="admin"
               />
             </div>
@@ -570,7 +570,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
       {/* Flags List */}
       <div className="space-y-2">
         {loadError ? (
-          <div className="rounded-xl border border-c-border bg-c-surface p-6">
+          <div className="rounded-xl border border-c-border-subtle bg-c-surface p-6">
             <DegradedState title="Feature flags unavailable" description={loadError} />
           </div>
         ) : filteredFlags.length === 0 ? (
@@ -590,7 +590,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
             return (
               <div
                 key={flag.id}
-                className="bg-c-surface rounded-xl border border-c-border overflow-hidden hover:border-c-border-strong transition-colors"
+                className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden hover:border-c-border-strong transition-colors"
               >
                 <div
                   className="p-4 cursor-pointer"
@@ -703,7 +703,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                   <div className="px-4 pb-4 border-t border-c-border-subtle">
                     <div className="pt-4 space-y-4">
                       {/* Evaluation Reason */}
-                      <div className="p-3 bg-c-surface-raised rounded-lg border border-c-border">
+                      <div className="p-3 bg-c-surface-raised rounded-lg border border-c-border-subtle">
                         <div className="text-xs text-c-text-muted mb-1">
                           Evaluation Reason
                         </div>

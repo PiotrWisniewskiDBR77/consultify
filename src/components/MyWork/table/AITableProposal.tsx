@@ -133,8 +133,8 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
       }}
       className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
         checked
-          ? 'bg-c-surface border-c-border'
-          : 'border-c-border hover:border-c-accent'
+          ? 'bg-c-surface border-c-border-subtle'
+          : 'border-c-border-subtle hover:border-c-accent'
       }`}
     >
       {checked && <Check size={10} className="text-white" />}

@@ -75,7 +75,7 @@ const SortableItem: React.FC<{ id: string; initiative: FullInitiative; onClick: 
 
         {/* Avatar (Owner) */}
         <div className="shrink-0 mt-0.5">
-          <div className="w-8 h-8 rounded-full bg-c-surface-raised border border-c-border flex items-center justify-center overflow-hidden">
+          <div className="w-8 h-8 rounded-full bg-c-surface-raised border border-c-border-subtle flex items-center justify-center overflow-hidden">
             {initiative.ownerExecution?.avatarUrl ? (
               <img
                 src={initiative.ownerExecution.avatarUrl}

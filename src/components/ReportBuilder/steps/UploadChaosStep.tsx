@@ -225,7 +225,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
           ${
             isDragging
               ? 'border-c-accent bg-c-accent-soft scale-[1.01]'
-              : 'border-c-border bg-c-surface-raised hover:border-c-accent hover:bg-c-accent-soft'
+              : 'border-c-border-subtle bg-c-surface-raised hover:border-c-accent hover:bg-c-accent-soft'
           }
         `}
       >

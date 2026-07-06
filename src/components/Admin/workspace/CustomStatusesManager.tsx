@@ -254,7 +254,7 @@ export const CustomStatusesManager: React.FC<CustomStatusesManagerProps> = ({
                     className={cn(
                       'w-6 h-6 rounded-full border-2 transition-transform hover:scale-110',
                       status.color === color.value
-                        ? 'border-c-border dark:border-white scale-110'
+                        ? 'border-c-border-subtle dark:border-white scale-110'
                         : 'border-transparent'
                     )}
                     style={{ backgroundColor: color.value }}

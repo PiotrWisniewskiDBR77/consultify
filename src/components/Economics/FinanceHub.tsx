@@ -1549,7 +1549,7 @@ export const FinanceHub: React.FC = () => {
         </button>
         {showAnalyzeMenu && (
           <div
-            className="absolute right-0 mt-2 w-80 rounded-2xl border border-c-border bg-c-surface-raised backdrop-blur-lg shadow-xl p-1.5 z-20"
+            className="absolute right-0 mt-2 w-80 rounded-2xl border border-c-border-subtle bg-c-surface-raised backdrop-blur-lg shadow-xl p-1.5 z-20"
             role="menu"
           >
             <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
@@ -2462,7 +2462,7 @@ export const FinanceHub: React.FC = () => {
                 </div>
               </div>
               <button
-                className="h-9 px-4 rounded-full border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+                className="h-9 px-4 rounded-full border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors"
                 onClick={handleShowList}
               >
                 {t('common.backToList', 'Wróć do listy')}
@@ -2759,7 +2759,7 @@ export const FinanceHub: React.FC = () => {
                         },
                       })
                     }
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-c-border bg-c-surface px-3.5 py-2 text-sm font-medium text-c-text-secondary transition hover:border-crimson-300 hover:text-crimson-700 dark:hover:text-crimson-300"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-c-border-subtle bg-c-surface px-3.5 py-2 text-sm font-medium text-c-text-secondary transition hover:border-crimson-300 hover:text-crimson-700 dark:hover:text-crimson-300"
                   >
                     <Sparkles size={14} />
                     {t('finance.model.emptyAskTeresa', 'Ask Teresa to start')}

@@ -2490,7 +2490,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     key={p.id}
                     className={`group relative rounded-xl transition-all duration-200 ${
                       isActive
-                        ? 'bg-c-surface-raised border border-c-border shadow-sm'
+                        ? 'bg-c-surface-raised border border-c-border-subtle shadow-sm'
                         : 'hover:bg-c-surface-raised border border-transparent'
                     }`}
                   >
@@ -3049,7 +3049,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                                     type="button"
                                     onClick={() => void handleDownloadSourceFile()}
                                     disabled={isDownloadingSourceFile}
-                                    className="inline-flex items-center gap-1 rounded-md border border-c-border bg-c-surface px-2 py-0.5 text-[11px] font-medium text-c-text-secondary transition-colors hover:border-c-info hover:text-c-info disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface px-2 py-0.5 text-[11px] font-medium text-c-text-secondary transition-colors hover:border-c-info hover:text-c-info disabled:cursor-not-allowed disabled:opacity-60"
                                     title={
                                       isPolish
                                         ? 'Pobierz oryginalny plik źródłowy'
@@ -3091,7 +3091,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             : (activePage.verificationStatus as NotebookVerificationStatus) ===
                                 'disputed'
                               ? 'bg-amber-500/10 border-amber-300/40 text-amber-700 dark:text-amber-300'
-                              : 'bg-c-surface-raised border-c-border text-c-text-secondary'
+                              : 'bg-c-surface-raised border-c-border-subtle text-c-text-secondary'
                         }`}
                       >
                         <option value="unverified">
@@ -3116,7 +3116,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                           );
                         }}
                         title={isPolish ? 'Cykl recenzji' : 'Review cadence'}
-                        className="text-[11px] px-2.5 py-1 rounded-md border bg-c-surface-raised border-c-border text-c-text-secondary cursor-pointer"
+                        className="text-[11px] px-2.5 py-1 rounded-md border bg-c-surface-raised border-c-border-subtle text-c-text-secondary cursor-pointer"
                       >
                         <option value="weekly">{isPolish ? 'Co tydzień' : 'Weekly'}</option>
                         <option value="monthly">{isPolish ? 'Co miesiąc' : 'Monthly'}</option>
@@ -3165,7 +3165,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             )
                           );
                         }}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-c-border text-c-text-secondary hover:bg-c-surface-raised text-[11px] font-medium transition-colors"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised text-[11px] font-medium transition-colors"
                       >
                         <RefreshCw size={10} />
                         {isPolish ? 'Oznacz sprawdzone' : 'Mark reviewed'}
@@ -3457,7 +3457,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 {/* Code-block language picker */}
                 {editor && codeLangMenu && (
                   <div
-                    className="absolute z-50 max-h-64 w-44 overflow-y-auto rounded-xl border border-c-border bg-c-surface p-1 shadow-lg"
+                    className="absolute z-50 max-h-64 w-44 overflow-y-auto rounded-xl border border-c-border-subtle bg-c-surface p-1 shadow-lg"
                     style={{ top: codeLangMenu.top, left: codeLangMenu.left }}
                     onMouseDown={(e) => e.preventDefault()}
                   >
@@ -3592,7 +3592,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
       {outlineDraft && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/40 px-4">
-          <div className="w-full max-w-2xl rounded-2xl border border-c-border bg-c-surface p-5 shadow-2xl">
+          <div className="w-full max-w-2xl rounded-2xl border border-c-border-subtle bg-c-surface p-5 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-c-text">
@@ -3623,7 +3623,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   onChange={(e) =>
                     setOutlineDraft((prev) => (prev ? { ...prev, title: e.target.value } : prev))
                   }
-                  className="w-full rounded-xl border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text outline-none focus:border-c-accent"
+                  className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text outline-none focus:border-c-accent"
                 />
               </div>
 
@@ -3644,7 +3644,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                           : prev
                       )
                     }
-                    className="w-full rounded-xl border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text outline-none focus:border-c-accent"
+                    className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text outline-none focus:border-c-accent"
                   >
                     {['DRD', 'SIRI', 'ADMA', 'CMMI', 'LEAN'].map((type) => (
                       <option key={type} value={type}>
@@ -3665,7 +3665,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     setOutlineDraft((prev) => (prev ? { ...prev, outline: e.target.value } : prev))
                   }
                   rows={12}
-                  className="w-full rounded-xl border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text outline-none focus:border-c-accent"
+                  className="w-full rounded-xl border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text outline-none focus:border-c-accent"
                 />
               </div>
             </div>
@@ -3674,7 +3674,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               <button
                 type="button"
                 onClick={() => setOutlineDraft(null)}
-                className="rounded-xl border border-c-border px-3 py-2 text-sm font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
+                className="rounded-xl border border-c-border-subtle px-3 py-2 text-sm font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
               >
                 {isPolish ? 'Anuluj' : 'Cancel'}
               </button>

@@ -691,7 +691,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
                 type="checkbox"
                 checked={Boolean(intent.useMetrics)}
                 onChange={(e) => onIntentChange({ useMetrics: e.target.checked })}
-                className="rounded border-c-border"
+                className="rounded border-c-border-subtle"
               />
               {isPl ? 'Metryki liczbowe' : 'Use metrics'}
             </label>
@@ -700,7 +700,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
                 type="checkbox"
                 checked={Boolean(intent.includeReferences)}
                 onChange={(e) => onIntentChange({ includeReferences: e.target.checked })}
-                className="rounded border-c-border"
+                className="rounded border-c-border-subtle"
               />
               {isPl ? 'Standardy branżowe' : 'Industry references'}
             </label>

@@ -107,7 +107,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
         <select
           value={dateRange}
           onChange={(e) => setDateRange(e.target.value)}
-          className="px-3 py-1.5 bg-c-surface-raised border border-c-border rounded-lg text-c-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+          className="px-3 py-1.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-c-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
         >
           <option value="7d">Last 7 days</option>
           <option value="30d">Last 30 days</option>
@@ -119,7 +119,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
       {/* Key Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Total Runs */}
-        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <Play size={16} className="text-blue-400" />
             <span className="text-sm text-slate-600 dark:text-slate-500">Total Runs</span>
@@ -129,7 +129,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
         </div>
 
         {/* Success Rate */}
-        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             {stats.successRate && stats.successRate >= 70 ? (
               <TrendingUp size={16} className="text-emerald-400" />
@@ -155,7 +155,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
         </div>
 
         {/* Avg Duration */}
-        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <Clock size={16} className="text-amber-400" />
             <span className="text-sm text-slate-600 dark:text-slate-500">Avg. Duration</span>
@@ -169,7 +169,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
         </div>
 
         {/* Usage Count */}
-        <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+        <div className="bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <Users size={16} className="text-primary-400" />
             <span className="text-sm text-slate-600 dark:text-slate-500">Usage Count</span>
@@ -180,7 +180,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
       </div>
 
       {/* Run Status Breakdown */}
-      <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+      <div className="bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-xl p-4">
         <h4 className="font-medium text-c-text mb-4">Run Status Breakdown</h4>
 
         {totalRuns === 0 ? (
@@ -245,7 +245,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-c-surface-raised/50 border border-c-border/50 rounded-xl p-4">
+      <div className="bg-c-surface-raised/50 border border-c-border-subtle/50 rounded-xl p-4">
         <h4 className="font-medium text-c-text mb-4">Recent Activity</h4>
 
         {events.length === 0 ? (
@@ -257,7 +257,7 @@ export const PlaybookTemplateAnalytics: React.FC<PlaybookTemplateAnalyticsProps>
             {events.slice(0, 10).map((event) => (
               <div
                 key={event.id}
-                className="flex items-center justify-between py-2 border-b border-c-border/30 last:border-0"
+                className="flex items-center justify-between py-2 border-b border-c-border-subtle/30 last:border-0"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-c-surface flex items-center justify-center">

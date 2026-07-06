@@ -253,7 +253,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
             {/* Blank canvas */}
             <PrimaryStartButton
               onClick={() => handleSelect('blank_canvas')}
-              className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-4 text-center transition-all duration-200 hover:border-c-border hover:shadow-lg hover:-translate-y-0.5"
+              className="group flex flex-col items-center gap-2.5 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-4 text-center transition-all duration-200 hover:border-c-border-subtle hover:shadow-lg hover:-translate-y-0.5"
             >
               <div className="rounded-xl p-2.5 bg-c-surface text-c-text-muted transition-transform duration-200 group-hover:scale-110">
                 <Brain size={18} />
@@ -383,7 +383,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                       ${
                         active
                           ? `${c.bg} ${c.border} border-2 ring-2 ${c.ring} shadow-sm`
-                          : 'border border-c-border-subtle hover:border-c-border hover:bg-c-surface-raised'
+                          : 'border border-c-border-subtle hover:border-c-border-subtle hover:bg-c-surface-raised'
                       }
                     `}
                   >

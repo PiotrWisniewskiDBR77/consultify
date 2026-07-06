@@ -216,7 +216,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                     laneKey === uncategorizedKey ? undefined : { [groupByFieldId]: laneKey };
                   onAddRecord(defaultVal);
                 }}
-                className="w-full flex items-center justify-center gap-1 py-2 rounded-xl border border-dashed border-c-border text-[10px] text-c-text-muted hover:text-c-text-secondary hover:border-c-border-strong transition-colors"
+                className="w-full flex items-center justify-center gap-1 py-2 rounded-xl border border-dashed border-c-border-subtle text-[10px] text-c-text-muted hover:text-c-text-secondary hover:border-c-border-strong transition-colors"
               >
                 <Plus size={12} />
                 {isPl ? 'Dodaj' : 'Add'}

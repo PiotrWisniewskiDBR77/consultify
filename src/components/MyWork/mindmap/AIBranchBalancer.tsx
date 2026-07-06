@@ -76,7 +76,7 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
   return (
     <div className="absolute bottom-16 left-3 z-[88] w-[280px]">
       <div className="rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-info dark:border-c-info shadow-2xl overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle dark:border-c-border">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <Scale size={14} className="text-c-info shrink-0" />
           <span className="text-[11px] font-bold text-c-info dark:text-c-info flex-1">
             {isPl ? 'Mapa niezbalansowana' : 'Unbalanced Map'}
@@ -110,7 +110,7 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
 
           {/* Suggestions */}
           {emptyBranches.length > 0 && (
-            <div className="pt-1.5 border-t border-c-border-subtle dark:border-c-border">
+            <div className="pt-1.5 border-t border-c-border-subtle dark:border-c-border-subtle">
               <div className="text-[9px] text-c-text-secondary dark:text-c-text-muted mb-1">
                 {isPl ? 'Puste gałęzie:' : 'Empty branches:'}
               </div>
@@ -129,7 +129,7 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
           )}
 
           {weakBranches.length > 0 && (
-            <div className="pt-1.5 border-t border-c-border-subtle dark:border-c-border">
+            <div className="pt-1.5 border-t border-c-border-subtle dark:border-c-border-subtle">
               <div className="text-[9px] text-c-text-secondary dark:text-c-text-muted mb-1">
                 {isPl ? 'Słabe gałęzie (1 element):' : 'Weak branches (1 item):'}
               </div>

@@ -302,7 +302,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
               onChange={(v) => updateSetting('voiceEnabled', v)}
             />
 
-            <div className="pt-4 border-t border-c-border/50">
+            <div className="pt-4 border-t border-c-border-subtle/50">
               <h4 className="font-medium text-c-text mb-3">Audit Settings</h4>
               <div className="space-y-3">
                 <SettingsToggle

@@ -660,7 +660,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
     return (
       <div className="space-y-6">
         {/* Trigger rules section */}
-        <div className="bg-c-surface rounded-xl border border-c-border p-5">
+        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-c-text flex items-center gap-2">
               <Zap size={14} className="text-amber-400" />
@@ -728,13 +728,13 @@ export const ReportingAutomationWorkspace: React.FC = () => {
 
           {/* Add trigger form */}
           {showAddTrigger && (
-            <div className="mt-4 p-4 bg-c-surface-raised rounded-lg border border-c-border space-y-3">
+            <div className="mt-4 p-4 bg-c-surface-raised rounded-lg border border-c-border-subtle space-y-3">
               <div>
                 <label className="block text-xs text-c-text-secondary mb-1">{tp('triggerType')}</label>
                 <select
                   value={triggerFormType}
                   onChange={(e) => setTriggerFormType(e.target.value)}
-                  className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
+                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text"
                 >
                   {TRIGGER_TYPE_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -752,7 +752,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                     value={triggerFormDelayDays}
                     onChange={(e) => setTriggerFormDelayDays(Number(e.target.value))}
                     min={1}
-                    className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
+                    className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text"
                   />
                 </div>
               )}
@@ -763,7 +763,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                   <select
                     value={triggerFormSeverity}
                     onChange={(e) => setTriggerFormSeverity(e.target.value)}
-                    className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
+                    className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text"
                   >
                     <option value="high">High</option>
                     <option value="critical">Critical</option>
@@ -780,7 +780,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                     onChange={(e) => setTriggerFormBudgetPct(Number(e.target.value))}
                     min={50}
                     max={100}
-                    className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
+                    className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text"
                   />
                 </div>
               )}
@@ -792,7 +792,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                   value={triggerFormThrottleHours}
                   onChange={(e) => setTriggerFormThrottleHours(Number(e.target.value))}
                   min={1}
-                  className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
+                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text"
                 />
               </div>
 
@@ -839,7 +839,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
         {executions.map((exec) => (
           <div
             key={exec.id}
-            className="p-4 bg-c-surface rounded-xl border border-c-border flex items-start justify-between"
+            className="p-4 bg-c-surface rounded-xl border border-c-border-subtle flex items-start justify-between"
           >
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
@@ -895,8 +895,8 @@ export const ReportingAutomationWorkspace: React.FC = () => {
   function renderCreateModal() {
     return (
       <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-        <div className="bg-c-surface rounded-2xl border border-c-border w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-c-border">
+        <div className="bg-c-surface rounded-2xl border border-c-border-subtle w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
             <h3 className="text-lg font-semibold text-c-text">{tp('newSchedule')}</h3>
             <button
               onClick={() => {
@@ -917,7 +917,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
                 placeholder={tp('scheduleNamePlaceholder')}
-                className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder-slate-600"
+                className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text placeholder-slate-600"
               />
             </div>
 
@@ -927,7 +927,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
               <input
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
-                className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder-slate-600"
+                className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text placeholder-slate-600"
               />
             </div>
 
@@ -937,7 +937,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
               <select
                 value={formScheduleType}
                 onChange={(e) => setFormScheduleType(e.target.value)}
-                className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
+                className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text"
               >
                 {SCHEDULE_TYPE_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -953,7 +953,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
               <select
                 value={formDeliverableType}
                 onChange={(e) => setFormDeliverableType(e.target.value)}
-                className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
+                className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text"
               >
                 {DELIVERABLE_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -970,7 +970,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                 <select
                   value={formFrequency}
                   onChange={(e) => setFormFrequency(e.target.value)}
-                  className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
+                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text"
                 >
                   {FREQUENCY_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -989,7 +989,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                   value={formCron}
                   onChange={(e) => setFormCron(e.target.value)}
                   placeholder="0 9 * * 1"
-                  className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text font-mono placeholder-slate-600"
+                  className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text font-mono placeholder-slate-600"
                 />
               </div>
             )}
@@ -1000,7 +1000,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
               <input
                 value={formTimezone}
                 onChange={(e) => setFormTimezone(e.target.value)}
-                className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
+                className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text"
               />
             </div>
 
@@ -1010,7 +1010,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
               <select
                 value={formScopeType}
                 onChange={(e) => setFormScopeType(e.target.value)}
-                className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text"
+                className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text"
               >
                 {SCOPE_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -1027,7 +1027,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                 value={formRecipients}
                 onChange={(e) => setFormRecipients(e.target.value)}
                 placeholder={tp('recipientsPlaceholder')}
-                className="w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text placeholder-slate-600"
+                className="w-full rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text placeholder-slate-600"
               />
             </div>
 
@@ -1047,7 +1047,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
                           setFormDeliveryMethods((prev) => prev.filter((m) => m !== method));
                         }
                       }}
-                      className="rounded border-c-border"
+                      className="rounded border-c-border-subtle"
                     />
                     {tp(`delivery${method.charAt(0).toUpperCase() + method.slice(1)}`)}
                   </label>
@@ -1056,7 +1056,7 @@ export const ReportingAutomationWorkspace: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-c-border">
+          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-c-border-subtle">
             <button
               onClick={() => {
                 setShowCreateModal(false);

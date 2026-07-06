@@ -316,7 +316,7 @@ export const NotificationDropdown = () => {
       case 'MEDIUM':
         return 'bg-c-info/10 text-c-info border-c-info/30';
       default:
-        return 'bg-c-surface text-c-text-secondary border-c-border';
+        return 'bg-c-surface text-c-text-secondary border-c-border-subtle';
     }
   };
 
@@ -352,7 +352,7 @@ export const NotificationDropdown = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-[420px] bg-c-surface-raised rounded-xl shadow-xl border border-c-border overflow-hidden z-dropdown animate-in fade-in zoom-in-95 duration-100">
+        <div className="absolute right-0 top-full mt-2 w-[420px] bg-c-surface-raised rounded-xl shadow-xl border border-c-border-subtle overflow-hidden z-dropdown animate-in fade-in zoom-in-95 duration-100">
           {/* Header */}
           <div className="px-4 py-3 border-b border-c-border-subtle flex items-center justify-between bg-c-surface">
             <div className="flex items-center gap-2">
@@ -453,7 +453,7 @@ export const NotificationDropdown = () => {
                             {/* Icon with severity color dot */}
                             <div className="relative mt-0.5 shrink-0">
                               <div
-                                className={`w-9 h-9 rounded-full flex items-center justify-center ${!notification.isRead ? 'bg-c-surface-raised shadow-sm border border-c-border' : 'bg-c-surface'}`}
+                                className={`w-9 h-9 rounded-full flex items-center justify-center ${!notification.isRead ? 'bg-c-surface-raised shadow-sm border border-c-border-subtle' : 'bg-c-surface'}`}
                               >
                                 {getIcon(notification.type)}
                               </div>
@@ -491,7 +491,7 @@ export const NotificationDropdown = () => {
                           </div>
 
                           {/* Actions - Always visible for better UX */}
-                          <div className="absolute right-2 top-2 flex items-center gap-1 bg-c-surface-raised/90 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-c-border">
+                          <div className="absolute right-2 top-2 flex items-center gap-1 bg-c-surface-raised/90 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-c-border-subtle">
                             {/* Chat button */}
                             <button
                               onClick={(e) => handleOpenChat(notification, e)}
@@ -524,7 +524,7 @@ export const NotificationDropdown = () => {
                                       setShowSnoozeMenu(null);
                                     }}
                                   />
-                                  <div className="absolute right-0 top-full mt-1 z-dropdown py-1 bg-c-surface-raised rounded-lg shadow-lg border border-c-border min-w-[100px]">
+                                  <div className="absolute right-0 top-full mt-1 z-dropdown py-1 bg-c-surface-raised rounded-lg shadow-lg border border-c-border-subtle min-w-[100px]">
                                     {[
                                       {
                                         preset: '1h' as SnoozePreset,
@@ -589,7 +589,7 @@ export const NotificationDropdown = () => {
 
           {/* Footer with management actions */}
           {notifications.length > 0 && (
-            <div className="px-4 py-3 border-t border-c-border bg-c-surface flex items-center justify-between">
+            <div className="px-4 py-3 border-t border-c-border-subtle bg-c-surface flex items-center justify-between">
               <div className="text-xs text-c-text-secondary">
                 {t('notificationDropdown.countLabel', {
                   count: notifications.filter((n) => !isSnoozed(n.id)).length,

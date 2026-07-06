@@ -174,7 +174,7 @@ export function FormsIndex({
   if (editingForm) {
     return (
       <div className="flex h-full flex-col">
-        <div className="flex items-center gap-2 border-b border-c-border-subtle px-4 py-2 border-c-border">
+        <div className="flex items-center gap-2 border-b border-c-border-subtle px-4 py-2 border-c-border-subtle">
           <button
             onClick={() => {
               setEditingForm(null);
@@ -273,7 +273,7 @@ export function FormsIndex({
           return (
             <div
               key={form.id}
-              className="group relative rounded-2xl border border-c-border-subtle bg-c-surface p-5 transition-shadow hover:shadow-md border-c-border bg-c-surface-raised"
+              className="group relative rounded-2xl border border-c-border-subtle bg-c-surface p-5 transition-shadow hover:shadow-md border-c-border-subtle bg-c-surface-raised"
             >
               {/* Status badge */}
               <div className="mb-3 flex items-center justify-between">
@@ -335,7 +335,7 @@ export function FormsIndex({
                   </button>
 
                   {shareMenuId === form.id && (
-                    <div className="absolute left-0 top-full z-20 mt-1 w-48 rounded-xl border border-c-border-subtle bg-c-surface py-1 shadow-lg border-c-border bg-c-surface-raised">
+                    <div className="absolute left-0 top-full z-20 mt-1 w-48 rounded-xl border border-c-border-subtle bg-c-surface py-1 shadow-lg border-c-border-subtle bg-c-surface-raised">
                       {[
                         {
                           mode: 'public' as ShareMode,

@@ -210,7 +210,7 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
                     value={code[index] || ''}
                     onChange={(e) => handleTOTPInput(index, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(index, e)}
-                    className="w-10 h-12 text-center text-xl font-mono border-2 border-c-border rounded-lg focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus bg-c-surface text-c-text transition"
+                    className="w-10 h-12 text-center text-xl font-mono border-2 border-c-border-subtle rounded-lg focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus bg-c-surface text-c-text transition"
                     disabled={loading}
                   />
                 ))}
@@ -223,7 +223,7 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
                     type="checkbox"
                     checked={trustDevice}
                     onChange={(e) => setTrustDevice(e.target.checked)}
-                    className="w-4 h-4 text-c-accent border-c-border rounded focus:ring-c-focus"
+                    className="w-4 h-4 text-c-accent border-c-border-subtle rounded focus:ring-c-focus"
                   />
                   {t('mfa.challenge.trustDevice', 'Trust this device for 30 days')}
                 </label>
@@ -262,7 +262,7 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({
                   setError(null);
                 }}
                 placeholder="XXXX-XXXX"
-                className="w-full text-center text-lg font-mono px-4 py-3 border-2 border-c-border rounded-lg focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus bg-c-surface text-c-text"
+                className="w-full text-center text-lg font-mono px-4 py-3 border-2 border-c-border-subtle rounded-lg focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus bg-c-surface text-c-text"
                 autoFocus
                 disabled={loading}
               />

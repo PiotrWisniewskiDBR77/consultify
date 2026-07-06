@@ -235,7 +235,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
           type="button"
           onClick={() => void refreshCandidates()}
           disabled={searching || !tableId}
-          className="inline-flex items-center gap-1 rounded-md border border-c-border bg-c-surface-raised px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised disabled:opacity-50"
           data-testid="source-pack-refresh"
           aria-label={t('kimi.tabeleShell.sourcePack.refreshAriaLabel', 'Refresh candidate search')}
         >
@@ -256,7 +256,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('kimi.tabeleShell.sourcePack.searchPlaceholder', 'Search records by content')}
-            className="w-full rounded-md border border-c-border bg-c-surface py-1.5 pl-7 pr-2 text-xs text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-1 focus:ring-c-border"
+            className="w-full rounded-md border border-c-border-subtle bg-c-surface py-1.5 pl-7 pr-2 text-xs text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-1 focus:ring-c-border"
             data-testid="source-pack-search-input"
             aria-label={t('kimi.tabeleShell.sourcePack.searchAriaLabel', 'Search records')}
           />
@@ -276,7 +276,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
           <select
             value={recencyDays === null ? '' : String(recencyDays)}
             onChange={(e) => setRecencyDays(e.target.value === '' ? null : Number(e.target.value))}
-            className="rounded-md border border-c-border bg-c-surface px-1.5 py-0.5 text-[11px] text-c-text"
+            className="rounded-md border border-c-border-subtle bg-c-surface px-1.5 py-0.5 text-[11px] text-c-text"
             data-testid="source-pack-recency-select"
             aria-label={t('kimi.tabeleShell.sourcePack.recencyAriaLabel', 'Recency filter')}
           >
@@ -335,7 +335,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
             onChange={(e) => setPackName(e.target.value)}
             placeholder={t('kimi.tabeleShell.sourcePack.packNamePlaceholder', 'Pack name')}
             maxLength={200}
-            className="w-full rounded-md border border-c-border bg-c-surface px-2 py-1 text-xs text-c-text"
+            className="w-full rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text"
             data-testid="source-pack-name-input"
             aria-label={t('kimi.tabeleShell.sourcePack.packNameAriaLabel', 'Pack name')}
           />
@@ -345,7 +345,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
             placeholder={t('kimi.tabeleShell.sourcePack.descriptionPlaceholder', 'Optional description')}
             rows={2}
             maxLength={2000}
-            className="w-full resize-none rounded-md border border-c-border bg-c-surface px-2 py-1 text-xs text-c-text"
+            className="w-full resize-none rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text"
             data-testid="source-pack-description-input"
             aria-label={t('kimi.tabeleShell.sourcePack.descriptionAriaLabel', 'Pack description')}
           />
@@ -408,7 +408,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
                   <button
                     type="button"
                     onClick={() => onUseInAiEditor(p)}
-                    className="inline-flex items-center gap-1 rounded-md border border-c-border bg-c-surface-raised px-2 py-1 text-[11px] text-c-text hover:bg-c-surface-raised"
+                    className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-[11px] text-c-text hover:bg-c-surface-raised"
                     data-testid="source-pack-use-in-ai"
                     aria-label={t('kimi.tabeleShell.sourcePack.useInAiEditorAriaLabel', 'Use pack in AI Editor')}
                   >

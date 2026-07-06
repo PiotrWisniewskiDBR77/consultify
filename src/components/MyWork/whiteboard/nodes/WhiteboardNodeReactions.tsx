@@ -62,7 +62,7 @@ export const WhiteboardNodeReactions: React.FC<WhiteboardNodeReactionsProps> = (
           className={`flex items-center gap-0.5 rounded-full border px-1.5 h-5 text-[10px] font-semibold shadow-sm transition-colors ${
             s.reactedByMe
               ? 'bg-c-info/15 border-c-info text-c-text'
-              : 'bg-c-surface border-c-border text-c-text-muted hover:bg-c-surface-raised'
+              : 'bg-c-surface border-c-border-subtle text-c-text-muted hover:bg-c-surface-raised'
           }`}
           title={s.reactedByMe ? 'Remove your reaction' : 'Add your reaction'}
           onClick={(e) => {
@@ -84,7 +84,7 @@ export const WhiteboardNodeReactions: React.FC<WhiteboardNodeReactionsProps> = (
           {trayOpen ? (
             <div
               data-testid="wb-reaction-tray"
-              className="flex items-center gap-0.5 rounded-full border border-c-border bg-c-surface px-1 h-5 shadow-sm"
+              className="flex items-center gap-0.5 rounded-full border border-c-border-subtle bg-c-surface px-1 h-5 shadow-sm"
             >
               {WHITEBOARD_REACTION_EMOJIS.map((emoji) => (
                 <button
@@ -107,7 +107,7 @@ export const WhiteboardNodeReactions: React.FC<WhiteboardNodeReactionsProps> = (
             <button
               type="button"
               data-testid="wb-reaction-toggle"
-              className="flex items-center justify-center w-5 h-5 rounded-full border border-c-border bg-c-surface text-[10px] text-c-text-muted shadow-sm hover:bg-c-surface-raised transition-colors"
+              className="flex items-center justify-center w-5 h-5 rounded-full border border-c-border-subtle bg-c-surface text-[10px] text-c-text-muted shadow-sm hover:bg-c-surface-raised transition-colors"
               title="Add reaction"
               onClick={(e) => {
                 e.stopPropagation();

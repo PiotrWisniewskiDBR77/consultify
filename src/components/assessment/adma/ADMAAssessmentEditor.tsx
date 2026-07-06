@@ -141,7 +141,7 @@ const PillarTab: React.FC<{
       className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
         isActive
           ? `bg-${color}-100 dark:bg-${color}-900/30 border-2 border-${color}-500`
-          : 'bg-c-surface-raised border-2 border-transparent hover:border-c-border dark:hover:border-c-border'
+          : 'bg-c-surface-raised border-2 border-transparent hover:border-c-border-subtle dark:hover:border-c-border-subtle'
       }`}
     >
       <Icon
@@ -178,7 +178,7 @@ const DimensionCard: React.FC<{
       className={`w-full p-4 rounded-xl text-left transition-all ${
         isActive
           ? `bg-${color}-50 dark:bg-${color}-900/20 border-2 border-${color}-500`
-          : 'bg-c-surface dark:bg-c-bg border border-c-border-subtle hover:border-c-border dark:hover:border-c-border'
+          : 'bg-c-surface dark:bg-c-bg border border-c-border-subtle hover:border-c-border-subtle dark:hover:border-c-border-subtle'
       }`}
     >
       <div className="flex items-center justify-between mb-2">

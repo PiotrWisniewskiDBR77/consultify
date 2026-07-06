@@ -334,7 +334,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
               className={`flex items-center justify-center h-9 w-9 rounded-lg border transition duration-200 ${
                 showSearch
                   ? 'bg-c-accent-soft0 border-c-accent text-c-accent'
-                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border'
+                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border-subtle'
               }`}
               title="Search"
             >
@@ -347,7 +347,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
               className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition duration-200 ${
                 filter === 'all'
                   ? 'bg-c-accent-soft0 border-c-accent text-c-accent'
-                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border'
+                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border-subtle'
               }`}
             >
               <Blocks size={14} />
@@ -368,7 +368,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
               className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition duration-200 ${
                 filter === 'app'
                   ? 'bg-blue-500/15 border-blue-500 text-blue-300'
-                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border'
+                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border-subtle'
               }`}
             >
               <Package size={14} />
@@ -389,7 +389,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
               className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition duration-200 ${
                 filter === 'org'
                   ? 'bg-c-accent-soft0 border-c-accent text-c-accent'
-                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border'
+                  : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:text-c-text hover:border-c-border-subtle'
               }`}
             >
               <Building2 size={14} />
@@ -453,7 +453,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
             {/* Primary Action Button */}
             <button
               onClick={openCreate}
-              className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-c-accent text-c-text border border-c-border hover:brightness-110 shadow-lg transition duration-200"
+              className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-c-accent text-c-text border border-c-border-subtle hover:brightness-110 shadow-lg transition duration-200"
             >
               <Plus size={14} />
               <span>New Block</span>
@@ -520,10 +520,10 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                       onClick={() => handleSelectAll(!allSelected)}
                       className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
                         allSelected
-                          ? 'bg-c-surface border-c-border text-c-text'
+                          ? 'bg-c-surface border-c-border-subtle text-c-text'
                           : someSelected
                             ? 'bg-c-accent-soft0 border-c-accent text-c-text'
-                            : 'border-c-border hover:border-c-accent text-transparent hover:text-c-text-secondary'
+                            : 'border-c-border-subtle hover:border-c-accent text-transparent hover:text-c-text-secondary'
                       }`}
                     >
                       {allSelected ? (
@@ -607,8 +607,8 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                             }}
                             className={`w-5 h-5 rounded border flex items-center justify-center transition ${
                               selectedIds.has(block.id)
-                                ? 'bg-c-surface border-c-border text-c-text'
-                                : 'border-c-border hover:border-c-accent'
+                                ? 'bg-c-surface border-c-border-subtle text-c-text'
+                                : 'border-c-border-subtle hover:border-c-accent'
                             }`}
                           >
                             {selectedIds.has(block.id) && <CheckSquare size={12} />}

@@ -39,7 +39,7 @@ export const FrameNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) =
         minHeight={120}
       />
       <div
-        className={`relative p-3 rounded-2xl border-2 transition-all ${selected ? 'ring-2 ring-c-border-strong border-c-border-strong shadow-lg' : 'border-c-border'} shadow-xl dark:shadow-[0_0_20px_rgba(0,0,0,0.15)]`}
+        className={`relative p-3 rounded-2xl border-2 transition-all ${selected ? 'ring-2 ring-c-border-strong border-c-border-strong shadow-lg' : 'border-c-border-subtle'} shadow-xl dark:shadow-[0_0_20px_rgba(0,0,0,0.15)]`}
         style={{
           width: collapsed ? data?.width || 400 : '100%',
           height: collapsed ? 'auto' : '100%',

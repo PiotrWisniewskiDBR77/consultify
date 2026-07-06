@@ -547,7 +547,7 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
               checked={section.enabled}
               onChange={() => handleToggleEnabled(section)}
               disabled={section.required}
-              className="w-5 h-5 rounded border-c-border text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+              className="w-5 h-5 rounded border-c-border-subtle text-blue-600 focus:ring-blue-500 disabled:opacity-50"
             />
 
             {/* Section Info */}
