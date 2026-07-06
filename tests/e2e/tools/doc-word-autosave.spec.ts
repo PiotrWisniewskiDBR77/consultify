@@ -14,17 +14,33 @@
  * document phase renders DocumentTipTapEditor (data-testid=
  * "document-tiptap-editor").
  */
-import { expect, test } from '@playwright/test';
+import { expect, Page, test } from '@playwright/test';
 
-import { seedE2EAuthWithBootstrap } from '../smoke/runtime-gate-helpers';
+import { dismissTourModal, seedE2EAuthWithBootstrap } from '../smoke/runtime-gate-helpers';
+import { dismissOverlayIfPresent, suppressOnboarding } from '../smoke/work-canvas-helpers';
+
+/**
+ * The "Welcome to Consultify" first-run dialog ("Skip for now" / "Get
+ * started") is a DIFFERENT overlay than the one dismissTourModal() targets
+ * (which matches "Welcome to Consultinity"/"Skip tour") -- observed directly
+ * in this harness's E2E Admin account. suppressOnboarding() (work-canvas-
+ * helpers.ts) must run BEFORE page.goto (it registers a route + addInitScript);
+ * dismissOverlayIfPresent()/dismissTourModal() are the post-navigation fallback.
+ */
+async function dismissAllOnboarding(page: Page) {
+  await dismissTourModal(page);
+  await dismissOverlayIfPresent(page);
+}
 
 test.describe('Document Studio — autosave + comments [@module:document-studio]', () => {
   test.setTimeout(120000);
 
   test('manual edit in the TipTap editor survives a hard reload', async ({ page }) => {
     await seedE2EAuthWithBootstrap(page);
+    await suppressOnboarding(page);
 
     await page.goto('/document-studio', { waitUntil: 'domcontentloaded' });
+    await dismissAllOnboarding(page);
     await expect(page.locator('[data-testid="document-studio-view"]')).toBeVisible({
       timeout: 30000,
     });
@@ -67,6 +83,7 @@ test.describe('Document Studio — autosave + comments [@module:document-studio]
     await page.waitForTimeout(2500);
 
     await page.reload({ waitUntil: 'domcontentloaded' });
+    await dismissAllOnboarding(page);
     await expect(page.locator('[data-testid="document-studio-view"]')).toBeVisible({
       timeout: 30000,
     });
@@ -80,8 +97,10 @@ test.describe('Document Studio — autosave + comments [@module:document-studio]
 
   test('Comments tab is reachable and accepts a new comment', async ({ page }) => {
     await seedE2EAuthWithBootstrap(page);
+    await suppressOnboarding(page);
 
     await page.goto('/document-studio', { waitUntil: 'domcontentloaded' });
+    await dismissAllOnboarding(page);
     await expect(page.locator('[data-testid="document-studio-view"]')).toBeVisible({
       timeout: 30000,
     });
