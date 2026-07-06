@@ -55,6 +55,18 @@ export async function getTable(tableId: string): Promise<any> {
   return handleResponse(res, 'Failed to fetch table');
 }
 
+export async function updateTable(
+  tableId: string,
+  updates: { name?: string; description?: string }
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/tables/${tableId}`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify(updates),
+  });
+  return handleResponse(res, 'Failed to update table');
+}
+
 export async function createField(
   tableId: string,
   name: string,
