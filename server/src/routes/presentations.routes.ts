@@ -57,6 +57,7 @@ import {
   deckDocumentToUnifiedJson,
   normalizeDeckDocument,
 } from '../services/presentationDeckDocumentService.js';
+import { PptxPipelineService } from '../services/report/pptx/PptxPipelineService.js';
 import {
   evaluateRevertEligibility,
   type RevertEligibilityReason,
@@ -380,6 +381,71 @@ function enforceExportLimits(deck: any, cards: any[]): { ok: boolean; error?: st
     };
   }
   return { ok: true };
+}
+
+// P0 fix: on-disk PPTX is only rendered at deck-creation time. Autosave / agent-edit /
+// AI-accept endpoints only persist `deck_json` (see PUT /decks/:deckId/autosave), so the
+// file at `deck.export_path` silently drifts out of sync with the edited content. Before
+// serving the download we re-render from the current `deck_json` whenever the deck was
+// updated more recently than the exported file was written, then persist the refreshed
+// file + `exported_at` so subsequent downloads (and the bundle/ZIP export, which reuses
+// this same export_path) see the same up-to-date artifact.
+async function regeneratePptxIfStale(deck: any): Promise<any> {
+  try {
+    if (!deck?.export_path) return deck;
+    const exportPath = String(deck.export_path);
+    const deckUpdatedAt = deck.updated_at ? new Date(deck.updated_at).getTime() : 0;
+    if (!deckUpdatedAt || Number.isNaN(deckUpdatedAt)) return deck;
+
+    let fileMtimeMs = 0;
+    try {
+      fileMtimeMs = fs.statSync(exportPath).mtimeMs;
+    } catch {
+      // Missing file is handled by the existing fs.existsSync() check downstream.
+      return deck;
+    }
+
+    // Small tolerance to avoid re-render churn from clock/rounding skew between the
+    // DB timestamp and the filesystem mtime for a file we just wrote ourselves.
+    const STALE_TOLERANCE_MS = 2000;
+    if (deckUpdatedAt <= fileMtimeMs + STALE_TOLERANCE_MS) return deck;
+
+    const deckDocument = normalizeDeckDocument(deck);
+    if (!deckDocument || !Array.isArray(deckDocument.cards) || deckDocument.cards.length === 0) {
+      // Nothing renderable — leave the stale-but-existing file in place rather than
+      // failing the download outright.
+      return deck;
+    }
+
+    const unifiedJson = deckDocumentToUnifiedJson(deckDocument);
+    const pipeline = new PptxPipelineService();
+    const result = await pipeline.generateFromUnifiedJson(unifiedJson, {
+      template: (deckDocument.meta?.theme as any) || undefined,
+      language: (deckDocument.meta?.language as any) || undefined,
+      confidentiality: (deckDocument.meta?.confidentiality as any) || undefined,
+      skipValidation: true,
+    });
+
+    fs.writeFileSync(exportPath, result.buffer);
+    const exportedAtIso = new Date().toISOString();
+    await dbRun(
+      `UPDATE presentation_decks SET slide_count = ?, exported_at = ?, updated_at = updated_at WHERE id = ? AND organization_id = ?`,
+      [result.slideCount, exportedAtIso, deck.id, deck.organization_id]
+    );
+    logger.info('[Presentations] Re-rendered stale PPTX export before download', {
+      deckId: deck.id,
+      slideCount: result.slideCount,
+    });
+
+    return { ...deck, exported_at: exportedAtIso, slide_count: result.slideCount };
+  } catch (error) {
+    // Regeneration failure must never block the download of the last-known-good file.
+    logger.warn('[Presentations] PPTX re-render before download failed; serving existing file', {
+      deckId: deck?.id,
+      error: (error as any)?.message || error,
+    });
+    return deck;
+  }
 }
 
 function isSchemaMissingError(error: unknown): boolean {
@@ -1521,8 +1587,13 @@ router.get(
     if (!fs.existsSync(deck.export_path))
       return res.status(404).json({ success: false, error: 'File not found' });
 
-    const cards = getDeckCards(deck);
-    const limitCheck = enforceExportLimits(deck, cards);
+    // P0 fix: deck_json can have been edited (autosave / agent-edit) after the on-disk
+    // PPTX was last rendered. Re-render from the current deck_json when stale so the
+    // download reflects the latest edits instead of the file from creation time.
+    const freshDeck = await regeneratePptxIfStale(deck);
+
+    const cards = getDeckCards(freshDeck);
+    const limitCheck = enforceExportLimits(freshDeck, cards);
     if (!limitCheck.ok) {
       await recordCanonicalDeckExportTrace({
         organizationId: orgId,
