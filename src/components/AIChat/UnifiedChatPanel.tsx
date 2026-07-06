@@ -1707,14 +1707,27 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       const draftId = String(payload?.draftId || payload?.generationId || '').trim();
       if (!draftId) return;
 
-      // M06 Fala 2 · 2.3 — mind map: NOT a canvas draft. Mount it in the Ideas
-      // mind-map workspace (same handoff path as "save message as idea"), seeded
-      // with the topic so the describe-with-AI flow builds a real map.
-      // TODO (M06 Fala 2 · [REAL-AI] nightly): consume the backend-built skeleton
-      // graph (payload.graph) directly instead of re-deriving from seedText —
+      // M06 Fala 2 · 2.3 (+ Teresa "all 8 tools" rollout) — mind map / process
+      // flow / Ideas Table (M08) / whiteboard are NOT canvas drafts. Mount them
+      // in the Ideas workspace (same handoff path as "save message as idea"),
+      // seeded with the topic so the describe-with-AI flow builds a real map —
+      // only `preferredSystem` differs per tool, the mount contract is identical.
+      // TODO ([REAL-AI] nightly): consume the backend-built skeleton graph
+      // (payload.graph) directly instead of re-deriving from seedText —
       // requires MyWorkHub → IdeaMapWorkspace to forward a `seedGraph` prop.
-      if ((payload as any)?.kind === 'mindmap') {
-        const mmTitle = String(payload.title || t('chat.titles.idea', 'Mapa myśli')).slice(0, 120);
+      const CANVAS_TOOL_KINDS = new Set(['mindmap', 'process_flow', 'table', 'whiteboard']);
+      const payloadKind = (payload as any)?.kind;
+      if (CANVAS_TOOL_KINDS.has(payloadKind)) {
+        const preferredSystem = (payload as any)?.preferredSystem || payloadKind;
+        const fallbackTitle =
+          payloadKind === 'process_flow'
+            ? t('chat.titles.processFlow', 'Przepływ procesu')
+            : payloadKind === 'table'
+              ? t('chat.titles.ideasTable', 'Tabela pomysłów')
+              : payloadKind === 'whiteboard'
+                ? t('chat.titles.whiteboard', 'Tablica')
+                : t('chat.titles.idea', 'Mapa myśli');
+        const mmTitle = String(payload.title || fallbackTitle).slice(0, 120);
         const seedText = String((payload as any)?.seedText || mmTitle);
         const creationPayload: IdeaWorkspaceCreationPayload = {
           title: mmTitle,
@@ -1726,7 +1739,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         const seedIntent: IdeaWorkspaceSeedIntent = {
           startMode: 'describe_with_ai',
           seedText,
-          preferredSystem: 'mindmap',
+          preferredSystem,
           templateId: null,
           popularStartId: null,
           popularStartLabel: null,
@@ -1736,7 +1749,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         const newIdeaId = `new-idea-${Date.now()}`;
         try {
           trackFunnelEvent('my_idea_saved', {
-            source: 'chat_deliverable_mindmap',
+            source: `chat_deliverable_${payloadKind}`,
             ideaId: newIdeaId,
             handoff: true,
           });
@@ -1760,10 +1773,28 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           });
           setCurrentView?.(AppView.MY_WORK);
         } catch (err) {
-          console.warn('[UnifiedChatPanel] mindmap deliverable mount failed', err);
+          console.warn('[UnifiedChatPanel] canvas-tool deliverable mount failed', err);
           return;
         }
         toast.success(t('myWork.ideas.sentToWorkspaceToast', 'Opened in Ideas workspace'));
+        return;
+      }
+
+      // Teresa "all 8 tools" rollout — note: already a real notebook_pages row
+      // (created server-side by generateDeliverable), so we just navigate to
+      // the Notebook tab instead of mounting a canvas draft.
+      if (payloadKind === 'note') {
+        try {
+          const { setMyWorkIntent, setCurrentView } = useAppStore.getState() as any;
+          setMyWorkIntent?.({ tab: 'notebook' });
+          setCurrentView?.(AppView.MY_WORK);
+        } catch (err) {
+          console.warn('[UnifiedChatPanel] note deliverable navigation failed', err);
+          return;
+        }
+        toast.success(
+          t('myWork.notebook.savedFromChatToast', 'Saved from chat to Notebook')
+        );
         return;
       }
 

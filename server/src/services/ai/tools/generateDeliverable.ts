@@ -16,20 +16,32 @@
  * samą sekwencją co istniejący przechwytywacz intencji (Tryb B, już zamknięty).
  */
 
-import { hasPresentationCapability } from '../../presentationAccessPolicyService.js';
+import { featureFlags } from '../../../config/FeatureFlags.js';
+import type { DeliverableFormat } from '../../../types/deliverablesGeneration.js';
+import logger from '../../../utils/Logger.js';
 import {
   plan as planGeneration,
   start as startGeneration,
 } from '../../deliverables/deliverablesGenerationService.js';
-import type { DeliverableFormat } from '../../../types/deliverablesGeneration.js';
-import { featureFlags } from '../../../config/FeatureFlags.js';
-import logger from '../../../utils/Logger.js';
+import { createNote } from '../../notebookService.js';
+import { hasPresentationCapability } from '../../presentationAccessPolicyService.js';
 import {
-  buildMindmapSkeleton,
-  type MindmapSkeletonGraph,
-} from '../mindmapSkeleton.js';
+  buildIdeasTableSkeleton,
+  buildProcessFlowSkeleton,
+  buildWhiteboardSkeleton,
+  type CanvasSkeletonGraph,
+} from '../canvasToolSkeletons.js';
+import { buildMindmapSkeleton, type MindmapSkeletonGraph } from '../mindmapSkeleton.js';
 
-type DeliverableKind = 'document' | 'sheet' | 'presentation' | 'mindmap';
+type DeliverableKind =
+  | 'document'
+  | 'sheet'
+  | 'presentation'
+  | 'mindmap'
+  | 'process_flow'
+  | 'table'
+  | 'whiteboard'
+  | 'note';
 
 type GenerateDeliverableParams = {
   type: DeliverableKind;
@@ -45,17 +57,27 @@ type GenerateDeliverableParams = {
 export type DeliverableEmit = (payload: {
   draftId: string;
   generationId: string;
-  kind: 'doc' | 'sheet' | 'deck' | 'mindmap';
+  kind: 'doc' | 'sheet' | 'deck' | 'mindmap' | 'process_flow' | 'table' | 'whiteboard' | 'note';
   format: DeliverableFormat;
   title: string;
   /**
-   * Only present for `kind:'mindmap'` — the pre-built skeleton graph the FE
-   * seeds into the Ideas mind-map workspace. Absent for doc/sheet/deck (those
-   * hydrate their content from the DB-bound generation runtime via draftId).
+   * Only present for `kind:'mindmap'|'process_flow'|'table'|'whiteboard'` — the
+   * pre-built skeleton graph the FE seeds into the Ideas workspace mount for
+   * that tool. Absent for doc/sheet/deck (those hydrate their content from the
+   * DB-bound generation runtime via draftId) and for `note` (already a real
+   * DB row by the time this fires).
    */
-  graph?: MindmapSkeletonGraph;
-  /** Only present for `kind:'mindmap'` — the topic seed text for AI expansion. */
+  graph?: MindmapSkeletonGraph | CanvasSkeletonGraph;
+  /** Only present for canvas-tool kinds — the topic seed text for AI expansion. */
   seedText?: string;
+  /**
+   * Only present for canvas-tool kinds — which idea-workspace tool to open
+   * (`preferredSystem` on the seed intent). Mirrors `kind` 1:1 except mindmap
+   * keeps its historical bare `kind:'mindmap'` wiring.
+   */
+  preferredSystem?: 'mindmap' | 'process_flow' | 'table' | 'whiteboard';
+  /** Only present for `kind:'note'` — the real notebook_pages id. */
+  noteId?: string;
 }) => void;
 
 type GenerateDeliverableContext = {
@@ -72,7 +94,14 @@ const KIND_TO_FORMAT: Record<DeliverableKind, DeliverableFormat> = {
   sheet: 'sheet',
   presentation: 'deck',
   mindmap: 'mindmap',
+  process_flow: 'process_flow',
+  table: 'table',
+  whiteboard: 'whiteboard',
+  note: 'note',
 };
+
+/** Canvas-tool kinds that follow the mind-map skeleton→FE-mount wiring. */
+const CANVAS_TOOL_FORMATS = new Set<DeliverableFormat>(['process_flow', 'table', 'whiteboard']);
 
 function deriveTitle(rawTitle: string | undefined, intent: string, language: 'pl' | 'en'): string {
   const t = String(rawTitle || '').trim();
@@ -124,7 +153,7 @@ export async function generateDeliverable(
     return {
       ok: false,
       error: 'invalid_type',
-      message: `Nieznany typ artefaktu '${String(kind)}' — dozwolone: document, sheet, presentation, mindmap.`,
+      message: `Nieznany typ artefaktu '${String(kind)}' — dozwolone: document, sheet, presentation, mindmap, process_flow, table, whiteboard, note.`,
     };
   }
 
@@ -192,6 +221,159 @@ export async function generateDeliverable(
           ? `A mind map titled "${title}" was created and opened in the Ideas workspace on the right. You can expand any branch with AI.`
           : `Utworzyłem mapę myśli „${title}" i otworzyłem ją w module Pomysły po prawej. Każdą gałąź możesz rozwinąć z AI.`,
     };
+  }
+
+  // ── Teresa "all 8 tools" · process_flow / table (M08) / whiteboard ──────────
+  // Same non-DB-bound wiring as mindmap: self-gate on ENABLE_TERESA_CANVAS_TOOLS,
+  // build a real skeleton {nodes,edges} from the intent, emit it to the FE which
+  // mounts it on the idea-workspace "new idea" path (real my_ideas +
+  // my_idea_maps row, preferred_tool set to the format — survives reload).
+  if (CANVAS_TOOL_FORMATS.has(format)) {
+    if (!featureFlags.ENABLE_TERESA_CANVAS_TOOLS) {
+      return {
+        ok: false,
+        error: 'feature_disabled',
+        message:
+          language === 'en'
+            ? 'Canvas-tool generation is disabled in this environment — point the user to the Ideas module.'
+            : 'Generacja narzędzi canvasu jest wyłączona w tym środowisku — skieruj użytkownika do modułu Pomysły (Ideas).',
+      };
+    }
+
+    const isPolish = language === 'pl';
+    const preferredSystem = kind as 'process_flow' | 'table' | 'whiteboard';
+    const graph: CanvasSkeletonGraph =
+      preferredSystem === 'process_flow'
+        ? buildProcessFlowSkeleton(intent, params.title, isPolish)
+        : preferredSystem === 'table'
+          ? buildIdeasTableSkeleton(intent, params.title, isPolish)
+          : buildWhiteboardSkeleton(intent, params.title, isPolish);
+
+    // Client-generated id — the real idea/map rows are created on the FE mount
+    // path (setMyWorkIntent → IdeaMapWorkspace), which owns idea/map persistence
+    // (identical contract to the mindmap branch above).
+    const draftId = `chat-${preferredSystem}-${Date.now()}`;
+
+    try {
+      context.onDeliverable?.({
+        draftId,
+        generationId: draftId,
+        kind: preferredSystem,
+        format,
+        title,
+        graph,
+        seedText: intent || title,
+        preferredSystem,
+      });
+    } catch (emitErr) {
+      logger.warn(
+        `[generate_deliverable] ${preferredSystem} onDeliverable emit failed id=${draftId}: ${
+          emitErr instanceof Error ? emitErr.message : String(emitErr)
+        }`
+      );
+    }
+
+    logger.info(
+      `[generate_deliverable] ${preferredSystem} skeleton id=${draftId} nodes=${graph.nodes.length} title="${title.slice(0, 80)}"`
+    );
+
+    const kindLabelPl =
+      preferredSystem === 'process_flow'
+        ? 'przepływ procesu'
+        : preferredSystem === 'table'
+          ? 'tabelę pomysłów'
+          : 'tablicę';
+    const kindLabelEn =
+      preferredSystem === 'process_flow'
+        ? 'process flow'
+        : preferredSystem === 'table'
+          ? 'ideas table'
+          : 'whiteboard';
+
+    return {
+      ok: true,
+      kind: preferredSystem,
+      format,
+      title,
+      generationId: draftId,
+      draftId,
+      message:
+        language === 'en'
+          ? `A ${kindLabelEn} titled "${title}" was created and opened in the Ideas workspace on the right.`
+          : `Utworzyłem ${kindLabelPl} „${title}" i otworzyłem ją w module Pomysły po prawej.`,
+    };
+  }
+
+  // ── Teresa "all 8 tools" · note (real notebook_pages row) ───────────────────
+  // Unlike the canvas tools above, a note is NOT a skeleton the FE materializes
+  // later — notebookService.createNote writes the row synchronously (same path
+  // "save message as note" already uses), so onDeliverable carries the real id.
+  if (format === 'note') {
+    if (!featureFlags.ENABLE_TERESA_NOTE_CREATE) {
+      return {
+        ok: false,
+        error: 'feature_disabled',
+        message:
+          language === 'en'
+            ? 'Note generation is disabled in this environment — point the user to the Notebook module.'
+            : 'Generacja notatek jest wyłączona w tym środowisku — skieruj użytkownika do modułu Notatnik.',
+      };
+    }
+
+    try {
+      const created = await createNote({
+        organizationId: orgId,
+        userId,
+        title,
+        body: intent,
+        source: 'chat',
+      });
+
+      try {
+        context.onDeliverable?.({
+          draftId: created.id,
+          generationId: created.id,
+          kind: 'note',
+          format: 'note',
+          title: created.title,
+          noteId: created.id,
+        });
+      } catch (emitErr) {
+        logger.warn(
+          `[generate_deliverable] note onDeliverable emit failed id=${created.id}: ${
+            emitErr instanceof Error ? emitErr.message : String(emitErr)
+          }`
+        );
+      }
+
+      logger.info(
+        `[generate_deliverable] note created id=${created.id} title="${title.slice(0, 80)}"`
+      );
+
+      return {
+        ok: true,
+        kind: 'note',
+        format: 'note',
+        title: created.title,
+        generationId: created.id,
+        draftId: created.id,
+        message:
+          language === 'en'
+            ? `A note titled "${created.title}" was saved to the Notebook.`
+            : `Zapisałem notatkę „${created.title}" w Notatniku.`,
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error(`[generate_deliverable] note creation failed: ${message}`);
+      return {
+        ok: false,
+        error: 'generation_failed',
+        message:
+          language === 'en'
+            ? `I could not create the note. ${message}`
+            : `Nie udało się utworzyć notatki. ${message}`,
+      };
+    }
   }
 
   // Setup per format. doc/sheet biorą intent+conversation; deck wymaga pełnego

@@ -36,6 +36,8 @@ const FeatureFlagsSchema = z.object({
   ENABLE_DELIVERABLES_DOC_STREAMING: z.boolean().default(false),
   ENABLE_DELIVERABLES_PREMIUM: z.boolean().default(false),
   ENABLE_SHARED_IDEA_MAPS: z.boolean().default(false),
+  ENABLE_TERESA_CANVAS_TOOLS: z.boolean().default(false),
+  ENABLE_TERESA_NOTE_CREATE: z.boolean().default(false),
 });
 
 export type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
@@ -151,6 +153,20 @@ export function loadFeatureFlags(): FeatureFlags {
     // read/write and server-persisted WS graph_patch. OFF = full rollback to
     // today's per-user reads/writes (Harvard/wdrozenie-100/_M06_DP3_MULTIPLAYER_PLAN_2026-07-04.md).
     ENABLE_SHARED_IDEA_MAPS: process.env.ENABLE_SHARED_IDEA_MAPS === 'true',
+
+    // Teresa creates all idea-workspace canvas tools (M07 Process Flow · M08
+    // Ideas Table · Whiteboard) via generate_deliverable, following the exact
+    // ENABLE_TERESA_MINDMAP pattern: a real skeleton {nodes,edges} handed to
+    // the FE, which mounts it on the SAME "new idea" path as mind-map — a real
+    // my_ideas + my_idea_maps row (preferred_tool set) survives reload.
+    // Opt-in; when off the enum omits process_flow/table/whiteboard entirely.
+    ENABLE_TERESA_CANVAS_TOOLS: process.env.ENABLE_TERESA_CANVAS_TOOLS === 'true',
+
+    // Teresa creates a real notebook page (notebook_pages row) via
+    // generate_deliverable(type:'note'). Reuses the canonical
+    // notebookService.createNote path (same INSERT the "save as note" chat
+    // action already uses). Opt-in; when off the enum omits 'note'.
+    ENABLE_TERESA_NOTE_CREATE: process.env.ENABLE_TERESA_NOTE_CREATE === 'true',
   };
 
   // Validate configuration

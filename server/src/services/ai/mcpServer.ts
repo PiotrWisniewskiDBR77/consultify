@@ -16,11 +16,25 @@ import { aiLogger } from './logger.js';
  * Ideas mind-map mount. The handler ALSO self-gates on the flag, so an enum that
  * somehow includes mindmap while the flag is off would still be rejected with
  * `feature_disabled` — defense in depth.
+ *
+ * Teresa "all 8 tools" rollout — same pattern, two more opt-in flags:
+ *  - ENABLE_TERESA_CANVAS_TOOLS → adds 'process_flow' (M07) / 'table' (M08
+ *    Ideas Table) / 'whiteboard'. All three mount via the SAME idea-workspace
+ *    "new idea" path as mindmap (real my_ideas + my_idea_maps row).
+ *  - ENABLE_TERESA_NOTE_CREATE → adds 'note' (real notebook_pages row via
+ *    notebookService.createNote).
+ * Each handler ALSO self-gates on its flag (defense in depth, same as mindmap).
  */
-const DELIVERABLE_TYPES: [string, ...string[]] =
-  process.env.ENABLE_TERESA_MINDMAP === 'true'
-    ? ['document', 'sheet', 'presentation', 'mindmap']
-    : ['document', 'sheet', 'presentation'];
+const DELIVERABLE_TYPES: [string, ...string[]] = [
+  'document',
+  'sheet',
+  'presentation',
+  ...(process.env.ENABLE_TERESA_MINDMAP === 'true' ? ['mindmap'] : []),
+  ...(process.env.ENABLE_TERESA_CANVAS_TOOLS === 'true'
+    ? ['process_flow', 'table', 'whiteboard']
+    : []),
+  ...(process.env.ENABLE_TERESA_NOTE_CREATE === 'true' ? ['note'] : []),
+] as [string, ...string[]];
 
 export const TOOL_TYPE = {
   READ: 'READ',
@@ -124,17 +138,19 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
   generate_deliverable: {
     name: 'generate_deliverable',
     description:
-      'Create a deliverable artifact (document, spreadsheet, presentation, or mind map) from the user request and open it on the right. ' +
-      'Use this WHENEVER the user wants something written, drafted, generated, prepared, turned into a document/sheet/deck/mind map, or shown/saved in the canvas — including loose phrasings like "I want this in the canvas", "show it on the side", "put this together for me". ' +
+      'Create a deliverable artifact (document, spreadsheet, presentation, mind map, process flow, ideas table, whiteboard, or notebook page) from the user request and open it on the right. ' +
+      'Use this WHENEVER the user wants something written, drafted, generated, prepared, turned into a document/sheet/deck/mind map/process flow/table/whiteboard/note, or shown/saved in the canvas — including loose phrasings like "I want this in the canvas", "show it on the side", "put this together for me". ' +
       'For "zrób mapę myśli o X" / "make a mind map of X" use type="mindmap" (only available when mind-map generation is enabled; if the type is rejected, fall back to a document). ' +
-      'DO NOT use this when the user asks to create/start/draft an INITIATIVE (a PMO entity) — e.g. "stwórz/zrób/załóż inicjatywę", "create an initiative" — even when that initiative is about planning a plan, transformation, or strategy. Those go to generate_initiative, not here. This tool is only for a document/sheet/deck/mind map the user wants as output. ' +
+      'For "zrób diagram procesu / przepływ" use type="process_flow"; for "zrób tabelę pomysłów" use type="table"; for "zrób tablicę / whiteboard" use type="whiteboard" (all three only available when canvas-tools generation is enabled; fall back to a document/sheet if the type is rejected). ' +
+      'For "zapisz to jako notatkę" use type="note" (only available when note generation is enabled). ' +
+      'DO NOT use this when the user asks to create/start/draft an INITIATIVE (a PMO entity) — e.g. "stwórz/zrób/załóż inicjatywę", "create an initiative" — even when that initiative is about planning a plan, transformation, or strategy. Those go to generate_initiative, not here. This tool is only for a document/sheet/deck/mind map/process flow/table/whiteboard/note the user wants as output. ' +
       'After the tool returns, briefly confirm what was created in one sentence. Do NOT claim you created anything unless this tool returned ok:true.',
     type: TOOL_TYPE.READ,
     parameters: z.object({
       type: z
         .enum(DELIVERABLE_TYPES)
         .describe(
-          'The artifact kind: "document" for prose/report/memo/brief, "sheet" for a table/spreadsheet, "presentation" for slides/deck, "mindmap" for an idea/mind map (when enabled).'
+          'The artifact kind: "document" for prose/report/memo/brief, "sheet" for a table/spreadsheet, "presentation" for slides/deck, "mindmap" for an idea/mind map (when enabled), "process_flow" for a process/flow diagram (when enabled), "table" for an Ideas Table (when enabled), "whiteboard" for a sticky-note board (when enabled), "note" for a notebook page (when enabled).'
         ),
       intent: z
         .string()
