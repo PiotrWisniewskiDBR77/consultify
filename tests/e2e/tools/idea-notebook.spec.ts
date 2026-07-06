@@ -148,7 +148,6 @@ test.describe('M04 Notebook — create page, type, reload persists', () => {
     // Confirm what was actually persisted server-side (independent of the UI
     // reload) before asserting on the UI. This is what lets us tell a real
     // regression apart from the known MOCK_DB alias gap documented above.
-    const token = await getSeededToken(page);
     const verifyRes = await page.request.get(
       `${API_BASE_URL}/api/my-work/notebook/pages?notebookId=${encodeURIComponent(notebook.id)}`,
       { headers: { Authorization: `Bearer ${token}` } }
