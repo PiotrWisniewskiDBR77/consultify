@@ -1712,9 +1712,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // in the Ideas workspace (same handoff path as "save message as idea"),
       // seeded with the topic so the describe-with-AI flow builds a real map —
       // only `preferredSystem` differs per tool, the mount contract is identical.
-      // TODO ([REAL-AI] nightly): consume the backend-built skeleton graph
-      // (payload.graph) directly instead of re-deriving from seedText —
-      // requires MyWorkHub → IdeaMapWorkspace to forward a `seedGraph` prop.
       const CANVAS_TOOL_KINDS = new Set(['mindmap', 'process_flow', 'table', 'whiteboard']);
       const payloadKind = (payload as any)?.kind;
       if (CANVAS_TOOL_KINDS.has(payloadKind)) {
@@ -1736,8 +1733,23 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           sourceType: 'chat',
           sourceConversationId: activeConversationId,
         };
+        // Consume the backend-built skeleton graph directly when present
+        // (mindmapSkeleton.ts / canvasToolSkeletons.ts) instead of re-deriving
+        // one from `seedText` via a fresh AI kickoff — previously `payload.graph`
+        // was ignored here, so the workspace always re-kicked-off an AI call,
+        // wasting the already-built skeleton and risking a different result
+        // than what the chat message described. `IdeaMapWorkspace.hydrate()`
+        // syncs `seedGraph` as the new idea's initial map when set, and the
+        // AI-kickoff effect skips entirely when a graph was already provided.
+        const rawGraph = (payload as any)?.graph;
+        const seedGraph =
+          rawGraph && Array.isArray(rawGraph.nodes) && rawGraph.nodes.length > 0
+            ? { nodes: rawGraph.nodes, edges: Array.isArray(rawGraph.edges) ? rawGraph.edges : [] }
+            : null;
         const seedIntent: IdeaWorkspaceSeedIntent = {
-          startMode: 'describe_with_ai',
+          // Only fall back to the AI re-kickoff flow when the backend did NOT
+          // hand off a usable skeleton graph.
+          startMode: seedGraph ? 'blank_canvas' : 'describe_with_ai',
           seedText,
           preferredSystem,
           templateId: null,
@@ -1745,6 +1757,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           popularStartLabel: null,
           structuredBrief: null,
           source: 'chat_handoff',
+          seedGraph,
         };
         const newIdeaId = `new-idea-${Date.now()}`;
         try {

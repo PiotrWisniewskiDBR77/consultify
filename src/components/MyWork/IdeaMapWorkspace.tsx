@@ -1382,15 +1382,32 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         try {
           const res = await Api.getMyIdeaMap(nextId, { language: i18n.language });
           const map = res?.map || {};
-          const nodes = Array.isArray(map.nodes) ? map.nodes : [];
-          const edges = Array.isArray(map.edges) ? map.edges : [];
+          // Teresa chat handoff (generate_deliverable) may hand off a
+          // backend-built skeleton graph (mindmapSkeleton.ts /
+          // canvasToolSkeletons.ts) via seedIntent.seedGraph. When present,
+          // hydrate THAT graph as the new idea's initial map instead of the
+          // freshly-created (empty) one — this is what makes the skeleton the
+          // workspace actually opens with, instead of discarding it and
+          // re-deriving a map from scratch via the AI-kickoff effect below.
+          const seedGraph = seedIntent?.seedGraph;
+          const hasSeedGraph = Boolean(seedGraph?.nodes && seedGraph.nodes.length > 0);
+          const nodes = hasSeedGraph
+            ? (seedGraph!.nodes as any[])
+            : Array.isArray(map.nodes)
+              ? map.nodes
+              : [];
+          const edges = hasSeedGraph
+            ? (seedGraph!.edges as any[])
+            : Array.isArray(map.edges)
+              ? map.edges
+              : [];
           await Api.syncMyIdeaMap(nextId, {
             nodes,
             edges,
             baseVersion: Number(map.version || 1),
             preferredTool: preferredSeedSystem || undefined,
             extensions: buildStartupExtensions(seedIntent, creationPayload),
-            reason: 'manual',
+            reason: hasSeedGraph ? 'ai' : 'manual',
           });
         } catch {
           /* best-effort */
@@ -1816,6 +1833,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     if (!realId || !isNewInitial) return;
     if (!(seedIntent?.source === 'chat_handoff' || seedIntent?.startMode === 'describe_with_ai'))
       return;
+    // A backend-built skeleton graph (Teresa generate_deliverable) was already
+    // hydrated as this idea's initial map in `hydrate()` above — re-kicking off
+    // an AI chat prompt here would discard/duplicate that work and could
+    // produce a map inconsistent with what the chat message described. Skip
+    // the kickoff entirely; the workspace opens directly on the real skeleton.
+    if (seedIntent?.seedGraph?.nodes && seedIntent.seedGraph.nodes.length > 0) {
+      aiKickoffTriggeredRef.current = true;
+      return;
+    }
 
     aiKickoffTriggeredRef.current = true;
     const requestedSystem = preferredSeedSystem || activeTool;

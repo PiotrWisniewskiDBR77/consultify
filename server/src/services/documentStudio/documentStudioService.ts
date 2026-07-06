@@ -1972,6 +1972,17 @@ export async function approveEditProposal(params: {
   }
   const nextSchema = applyProposalToSchema(schema, proposal);
 
+  // P1 fix — approving a proposal mutates the in-memory schema returned to
+  // the caller, but without this write-through the mutation never reached
+  // the durable overlay: a page reload (or any other read through
+  // `getDocumentArtifact`) would resolve the pre-approval schema (overlay
+  // miss falls back to the stale wave5 row, or an older overlay entry from
+  // a prior rollback/content-block insert) and the approved edit vanished.
+  // Same write-through used by `insertDocumentContentBlock` /
+  // `rollbackDocumentToVersion` — keeps the three mutators on one durable
+  // path instead of introducing a second persistence mechanism.
+  persistSchemaOverlayWriteThrough(params.artifactId, params.organizationId, nextSchema);
+
   // Slice E16.diff.proposal — compute the structural diff between
   // the schema before and after the proposal applied. The result
   // surfaces in the `proposal_executed` audit row so an approver
