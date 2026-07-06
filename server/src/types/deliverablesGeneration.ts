@@ -22,8 +22,23 @@
  * frontu, który montuje mapę w Ideas (workspace M06). Dlatego `mindmap` jest w tym
  * typie tylko jako etykieta formatu deliverable — nie jest obsługiwany przez
  * plan()/start()/status() serwisu generacji (tam pozostają deck/doc/sheet).
+ *
+ * `process_flow` / `table` / `whiteboard` (Teresa "all 8 tools" rollout,
+ * ff_teresaCanvasTools) follow the exact same non-DB-bound pattern as
+ * `mindmap` — a skeleton graph emitted to the FE idea-workspace mount, not
+ * plan()/start(). `note` (ff_teresaNoteCreate) is the odd one out: it DOES
+ * write a real row immediately (notebook_pages via notebookService.createNote)
+ * but likewise never touches plan()/start().
  */
-export type DeliverableFormat = 'deck' | 'doc' | 'sheet' | 'mindmap';
+export type DeliverableFormat =
+  | 'deck'
+  | 'doc'
+  | 'sheet'
+  | 'mindmap'
+  | 'process_flow'
+  | 'table'
+  | 'whiteboard'
+  | 'note';
 
 /**
  * Stan generacji — podzbiór cyklu życia artefaktu z V8.1 §7, rozszerzony o checkpoint
