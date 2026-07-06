@@ -179,8 +179,8 @@ export const ProblemPlatformSection: React.FC = () => {
                 </div>
               ))}
 
-              <div className="rounded-xl border border-c-accent bg-c-accent-soft px-4 py-3">
-                <p className="text-sm font-semibold text-c-accent">
+              <div className="rounded-xl border border-blue-500/25 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/[0.06] px-4 py-3">
+                <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">
                   {t(
                     'landing.problemPlatform.pattern.summary',
                     'Access. Quality. Trust. That is the shift.'
