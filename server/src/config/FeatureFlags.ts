@@ -35,9 +35,9 @@ const FeatureFlagsSchema = z.object({
   ENABLE_TERESA_MINDMAP: z.boolean().default(false),
   ENABLE_DELIVERABLES_DOC_STREAMING: z.boolean().default(false),
   ENABLE_DELIVERABLES_PREMIUM: z.boolean().default(false),
-  ENABLE_SHARED_IDEA_MAPS: z.boolean().default(false),
-  ENABLE_TERESA_CANVAS_TOOLS: z.boolean().default(false),
-  ENABLE_TERESA_NOTE_CREATE: z.boolean().default(false),
+  ENABLE_SHARED_IDEA_MAPS: z.boolean().default(true),
+  ENABLE_TERESA_CANVAS_TOOLS: z.boolean().default(true),
+  ENABLE_TERESA_NOTE_CREATE: z.boolean().default(true),
 });
 
 export type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
@@ -150,23 +150,31 @@ export function loadFeatureFlags(): FeatureFlags {
 
     // DP-3 (M06/M07/M09 Ideas): shared/canonical idea maps — one my_idea_maps
     // row per idea_id instead of one per user_id, with membership-gated
-    // read/write and server-persisted WS graph_patch. OFF = full rollback to
-    // today's per-user reads/writes (Harvard/wdrozenie-100/_M06_DP3_MULTIPLAYER_PLAN_2026-07-04.md).
-    ENABLE_SHARED_IDEA_MAPS: process.env.ENABLE_SHARED_IDEA_MAPS === 'true',
+    // read/write and server-persisted WS graph_patch. Default ON (2026-07-06,
+    // collab-enable-flags): the read/write paths already fall back safely to
+    // legacy per-user behavior when the `is_canonical` column is absent
+    // (selectCanonicalMapRow / sharedIdeaMapsActive guards). Set
+    // ENABLE_SHARED_IDEA_MAPS=false to force the old per-user rollback path
+    // (Harvard/wdrozenie-100/_M06_DP3_MULTIPLAYER_PLAN_2026-07-04.md).
+    ENABLE_SHARED_IDEA_MAPS: process.env.ENABLE_SHARED_IDEA_MAPS !== 'false',
 
     // Teresa creates all idea-workspace canvas tools (M07 Process Flow · M08
     // Ideas Table · Whiteboard) via generate_deliverable, following the exact
     // ENABLE_TERESA_MINDMAP pattern: a real skeleton {nodes,edges} handed to
     // the FE, which mounts it on the SAME "new idea" path as mind-map — a real
     // my_ideas + my_idea_maps row (preferred_tool set) survives reload.
-    // Opt-in; when off the enum omits process_flow/table/whiteboard entirely.
-    ENABLE_TERESA_CANVAS_TOOLS: process.env.ENABLE_TERESA_CANVAS_TOOLS === 'true',
+    // Default ON (2026-07-06, collab-enable-flags); set to 'false' to omit
+    // process_flow/table/whiteboard from the enum. Mirror this default in
+    // server/src/services/ai/mcpServer.ts (raw process.env read, same flag).
+    ENABLE_TERESA_CANVAS_TOOLS: process.env.ENABLE_TERESA_CANVAS_TOOLS !== 'false',
 
     // Teresa creates a real notebook page (notebook_pages row) via
     // generate_deliverable(type:'note'). Reuses the canonical
     // notebookService.createNote path (same INSERT the "save as note" chat
-    // action already uses). Opt-in; when off the enum omits 'note'.
-    ENABLE_TERESA_NOTE_CREATE: process.env.ENABLE_TERESA_NOTE_CREATE === 'true',
+    // action already uses). Default ON (2026-07-06, collab-enable-flags); set
+    // to 'false' to omit 'note'. Mirror this default in
+    // server/src/services/ai/mcpServer.ts (raw process.env read, same flag).
+    ENABLE_TERESA_NOTE_CREATE: process.env.ENABLE_TERESA_NOTE_CREATE !== 'false',
   };
 
   // Validate configuration

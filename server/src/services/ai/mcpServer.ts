@@ -17,23 +17,27 @@ import { aiLogger } from './logger.js';
  * somehow includes mindmap while the flag is off would still be rejected with
  * `feature_disabled` — defense in depth.
  *
- * Teresa "all 8 tools" rollout — same pattern, two more opt-in flags:
+ * Teresa "all 8 tools" rollout — same pattern, two more flags (both default
+ * ON as of 2026-07-06, collab-enable-flags — set to 'false' to opt back out):
  *  - ENABLE_TERESA_CANVAS_TOOLS → adds 'process_flow' (M07) / 'table' (M08
  *    Ideas Table) / 'whiteboard'. All three mount via the SAME idea-workspace
  *    "new idea" path as mindmap (real my_ideas + my_idea_maps row).
  *  - ENABLE_TERESA_NOTE_CREATE → adds 'note' (real notebook_pages row via
  *    notebookService.createNote).
  * Each handler ALSO self-gates on its flag (defense in depth, same as mindmap).
+ * NOTE: this file reads process.env directly (not the shared featureFlags
+ * config) — keep the default (`!== 'false'` vs `=== 'true'`) in sync with
+ * server/src/config/FeatureFlags.ts for these two flags.
  */
 const DELIVERABLE_TYPES: [string, ...string[]] = [
   'document',
   'sheet',
   'presentation',
   ...(process.env.ENABLE_TERESA_MINDMAP === 'true' ? ['mindmap'] : []),
-  ...(process.env.ENABLE_TERESA_CANVAS_TOOLS === 'true'
+  ...(process.env.ENABLE_TERESA_CANVAS_TOOLS !== 'false'
     ? ['process_flow', 'table', 'whiteboard']
     : []),
-  ...(process.env.ENABLE_TERESA_NOTE_CREATE === 'true' ? ['note'] : []),
+  ...(process.env.ENABLE_TERESA_NOTE_CREATE !== 'false' ? ['note'] : []),
 ] as [string, ...string[]];
 
 export const TOOL_TYPE = {
