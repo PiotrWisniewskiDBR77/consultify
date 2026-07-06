@@ -51,7 +51,7 @@ jobs:
 
       - name: Upload M06 artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-m06-nightly-${{ github.run_number }}
           path: |
@@ -114,7 +114,7 @@ jobs:
 
       - name: Upload Playwright artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-e2e-tier1-${{ github.run_number }}
           path: |
@@ -173,7 +173,7 @@ jobs:
 
       - name: Upload nightly report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nightly-e2e-report-${{ github.run_number }}
           path: e2e-results.xml

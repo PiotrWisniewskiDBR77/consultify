@@ -91,7 +91,7 @@ jobs:
       
       - name: Upload ZAP Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: zap-report
           path: |
@@ -103,7 +103,7 @@ jobs:
       
       - name: Upload SARIF Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: zap-sarif-report
           path: report_sarif.json
@@ -141,7 +141,7 @@ jobs:
       
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: owasp-test-results
           path: |
