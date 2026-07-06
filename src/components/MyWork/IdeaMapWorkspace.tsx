@@ -2966,7 +2966,20 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               locked={canvasLocked}
               refreshToken={mapRefreshToken}
               onSelectionChange={handleSelectionChange}
-              onGraphChange={replaceRuntimeGraph}
+              // NO onGraphChange here (unlike Table/Whiteboard): those tools own
+              // persistence via the legacy per-tool useIdeaMapSync fallback, so
+              // mirroring their local state into the shared runtime via
+              // replaceGraph() is a harmless side-channel. Process Flow instead
+              // persists THROUGH the shared runtime itself (externalRuntime.
+              // captureGraph = graphRuntime.captureToolGraph below). Wiring
+              // onGraphChange=replaceRuntimeGraph here raced captureToolGraph's
+              // own setGraph on every node-add: replaceGraph's effect (declared
+              // earlier in IdeaProcessFlowTool, runs first) synced the runtime's
+              // `prev` graph to already match the new nodes BEFORE captureToolGraph's
+              // dedup check ran, so that check saw prev === merged and skipped
+              // queueSync — the new node was applied to local ReactFlow state and
+              // to graphRuntime.graph, but NEVER queued to POST /map/sync. Toolbar
+              // "add shape" clicks were silently dropped on reload. (P0 fix)
               onNodeDetail={handleOpenNodeDetail}
               focusMode={toolFocusMode}
               focusObjectId={focusObjectId}
