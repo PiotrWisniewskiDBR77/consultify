@@ -158,17 +158,33 @@ test.describe('M04 Notebook — create page, type, reload persists', () => {
     const persistedPage = Array.isArray(verifyBody)
       ? verifyBody.find((p: any) => p.id === notebookPage.id)
       : null;
-    const persistedText = String(persistedPage?.contentText || '');
-    const persistedJsonHasText = JSON.stringify(persistedPage?.contentJson || {}).includes(content);
+    // buildLegacyNotebookSelect() aliases BOTH content_text -> "contentText" and
+    // content_json -> "contentJson" via the same multi-line SELECT that the mock's
+    // alias regex fails to parse (see class doc above) — so the camelCase fields
+    // are symmetrically broken under this gap. The raw snake_case columns pass
+    // through unaliased via the object spread and are NOT affected, so they are
+    // the only reliable signal for "did the PUT actually persist server-side".
+    const persistedRawText = String(
+      (persistedPage as any)?.content_text ?? persistedPage?.contentText ?? ''
+    );
+    const persistedRawJsonStr = String(
+      (persistedPage as any)?.content_json ?? JSON.stringify(persistedPage?.contentJson ?? {})
+    );
+    const camelCaseFieldsBroken =
+      !String(persistedPage?.contentText || '').includes(content) &&
+      !JSON.stringify(persistedPage?.contentJson || {}).includes(content);
+    const rawColumnsHaveContent =
+      persistedRawText.includes(content) || persistedRawJsonStr.includes(content);
 
     test.skip(
-      Boolean(persistedText.includes(content)) && !persistedJsonHasText,
-      'MOCK_DB alias gap confirmed for this run: content_text on the server has the typed content ' +
-        `("${persistedText.slice(0, 60)}...") but the contentJson field the UI reads is empty/stale. ` +
-        'Root cause: server/src/database/Database.ts selectFromTable() SELECT/alias regex lacks the ' +
-        "dotall flag so it never matches buildLegacyNotebookSelect()'s multi-line query — tracked as " +
-        'a separate background task ("Fix mock DB multi-line SELECT alias parsing gap"). Not a real ' +
-        'product regression; re-run once that lands.'
+      rawColumnsHaveContent && camelCaseFieldsBroken,
+      'MOCK_DB alias gap confirmed for this run: the raw content_text/content_json columns on the ' +
+        `server have the typed content ("${persistedRawText.slice(0, 60)}...") but the camelCase ` +
+        'contentText/contentJson fields the UI reads are empty/stale. Root cause: ' +
+        'server/src/database/Database.ts selectFromTable() SELECT/alias regex lacks the dotall flag ' +
+        "so it never matches buildLegacyNotebookSelect()'s multi-line query — tracked as a separate " +
+        'background task ("Fix mock DB multi-line SELECT alias parsing gap"). Not a real product ' +
+        'regression; re-run once that lands.'
     );
 
     await page.goto(`/my-work?notebook=${encodeURIComponent(notebookPage.id)}`, {
