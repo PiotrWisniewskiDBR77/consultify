@@ -32,6 +32,70 @@ const W = {
   meceQuality: 0.15,
 };
 
+// Common PL/EN stopwords >3 chars that leak through the length filter and
+// pollute keyword-overlap relevance (they appear in almost any response).
+const STOPWORDS = new Set([
+  // Polish
+  'oraz',
+  'albo',
+  'jako',
+  'żeby',
+  'aby',
+  'czyli',
+  'jest',
+  'jestem',
+  'jaki',
+  'jaka',
+  'jakie',
+  'który',
+  'która',
+  'które',
+  'żeby',
+  'dla',
+  'przez',
+  'oraz',
+  'więc',
+  'tego',
+  'tych',
+  'taki',
+  'taka',
+  'takie',
+  'mnie',
+  'ciebie',
+  'proszę',
+  'zrób',
+  'zrobić',
+  'stwórz',
+  'przygotuj',
+  'napisz',
+  // English
+  'that',
+  'this',
+  'these',
+  'those',
+  'with',
+  'from',
+  'have',
+  'about',
+  'your',
+  'please',
+  'make',
+  'create',
+  'write',
+  'give',
+  'want',
+  'would',
+  'could',
+  'should',
+  'what',
+  'which',
+  'when',
+  'where',
+  'them',
+  'they',
+  'into',
+]);
+
 const HALLUC = [
   'as everyone knows',
   'it is well known',
@@ -281,20 +345,47 @@ Respond ONLY with valid JSON:
   // ==========================================
 
   private scoreRelevance(q: string, resp: string, flags: string[]): number {
+    // Extract meaningful content words from the question, dropping stopwords
+    // (PL + EN). Short function words (<=3 chars) are also dropped.
     const words = q
       .toLowerCase()
-      .replace(/[^\w\s]/g, '')
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
       .split(/\s+/)
-      .filter((w) => w.length > 3);
+      .filter((w) => w.length > 3 && !STOPWORDS.has(w));
+
+    // If the question carries no content keywords (greetings, "zrób to",
+    // ultra-short imperatives), keyword-overlap is meaningless — do NOT punish.
     if (!words.length) return 0.7;
+
     const rl = resp.toLowerCase();
-    const ratio = words.filter((w) => rl.includes(w)).length / words.length;
+
+    // Inflection-tolerant match: Polish/English words change endings, so an
+    // exact substring `includes` misses paraphrases ("prezentację" vs
+    // "prezentacja"). Match on a stemmed prefix instead.
+    const matched = words.filter((w) => {
+      if (rl.includes(w)) return true;
+      const stem = w.slice(0, Math.max(4, w.length - 2)); // drop up to 2 trailing chars
+      return stem.length >= 4 && rl.includes(stem);
+    }).length;
+    const ratio = matched / words.length;
+
+    // Genuinely truncated answer to a substantial question — real low signal.
     if (q.length > 100 && resp.length < 50) {
       flags.push('response_too_short');
       return Math.min(ratio, 0.3);
     }
-    const s = Math.min(1, ratio * 1.2);
-    if (s < 0.3) flags.push('low_relevance');
+
+    // Bag-of-words overlap is a WEAK proxy: a correct answer routinely
+    // paraphrases the prompt and scores low overlap. Blend the overlap signal
+    // with a substance floor so that a non-empty, sizeable response can never
+    // collapse to relevance=0 purely because it reworded the question. A hard
+    // 0 was the root cause of misleadingly low `overall`.
+    const overlapScore = Math.min(1, ratio * 1.2);
+    const hasSubstance = resp.trim().length >= 80;
+    const floor = hasSubstance ? 0.5 : 0.25;
+    const s = Math.max(floor, overlapScore);
+
+    if (overlapScore < 0.15 && !hasSubstance) flags.push('low_relevance');
     return s;
   }
 
