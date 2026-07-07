@@ -142,6 +142,112 @@ export async function seedApprovedTemplate(
   return { templateId: template.templateId };
 }
 
+/**
+ * Fetch the current server-side schema for an artifact via the backend API
+ * (the same GET the FE uses to hydrate/resume). Used by API-level specs
+ * (autosave optimistic-lock, approve-persist) that assert on the DURABLE
+ * server state after a mutation + re-read — the whole point of the
+ * persistence fixes (34144d52ce autosave, f6dd2ccc59 approve-persist) is
+ * that the change survives a fresh read, so these specs re-GET instead of
+ * trusting the mutation's own echoed response.
+ */
+export async function fetchArtifactSchema(
+  request: APIRequestContext,
+  token: string,
+  artifactId: string
+): Promise<any> {
+  const res = await request.get(`${DOC_STUDIO_BASE}/${encodeURIComponent(artifactId)}`, {
+    headers: authHeaders(token),
+    timeout: 40000,
+  });
+  if (!res.ok()) {
+    throw new Error(`fetchArtifactSchema: GET failed ${res.status()} ${await res.text()}`);
+  }
+  const body = (await res.json()) as { schema: any };
+  return body.schema;
+}
+
+/**
+ * Create a deterministic section-scope AI edit proposal via the backend
+ * (useLlm omitted → no LLM, fully deterministic). On APPROVAL the service
+ * applies each block via `applyInstructionToBlock` → `applyInstruction`,
+ * which appends the marker `[Edited with instruction: <instruction>]` to the
+ * block text (NOT the proposal's preview marker `[Section-scope edit applied
+ * at approval: …]`, which is only the diff-preview string). `expectedMarker`
+ * is therefore the APPLIED marker — what the persisted schema must contain
+ * after approve + re-read, so the approve-persist spec asserts on the durable
+ * server state, exercising the f6dd2ccc59 write-through fix.
+ */
+export async function seedSectionProposal(
+  request: APIRequestContext,
+  token: string,
+  artifactId: string,
+  sectionId: string,
+  instruction: string
+): Promise<{ proposalId: string; expectedMarker: string }> {
+  const res = await request.post(
+    `${DOC_STUDIO_BASE}/${encodeURIComponent(artifactId)}/editor/proposals/section`,
+    {
+      headers: authHeaders(token),
+      data: { sectionId, instruction },
+      timeout: 40000,
+    }
+  );
+  if (!res.ok()) {
+    throw new Error(`seedSectionProposal: POST failed ${res.status()} ${await res.text()}`);
+  }
+  const body = (await res.json()) as { proposal: { proposalId: string } };
+  return {
+    proposalId: body.proposal.proposalId,
+    expectedMarker: `[Edited with instruction: ${instruction.trim()}]`,
+  };
+}
+
+/**
+ * Approve a proposal via the backend. Returns the approve endpoint's echoed
+ * result ({ proposal, schema }) — specs should NOT trust this echo for the
+ * persistence assertion; re-GET via fetchArtifactSchema instead.
+ */
+export async function approveProposal(
+  request: APIRequestContext,
+  token: string,
+  artifactId: string,
+  proposalId: string
+): Promise<{ proposal: any; schema: any }> {
+  const res = await request.post(
+    `${DOC_STUDIO_BASE}/${encodeURIComponent(artifactId)}/editor/proposals/${encodeURIComponent(
+      proposalId
+    )}/approve`,
+    { headers: authHeaders(token), timeout: 40000 }
+  );
+  if (!res.ok()) {
+    throw new Error(`approveProposal: POST failed ${res.status()} ${await res.text()}`);
+  }
+  return (await res.json()) as { proposal: any; schema: any };
+}
+
+/**
+ * Flatten every block's editable text across all sections into one string —
+ * lets a spec assert "the applied edit marker is present SOMEWHERE in the
+ * document" without depending on which section/block index the deterministic
+ * fixture happened to land the target in.
+ */
+export function collectSchemaText(schema: any): string {
+  const sections = Array.isArray(schema?.sections) ? schema.sections : [];
+  const parts: string[] = [];
+  for (const section of sections) {
+    const blocks = Array.isArray(section?.blocks) ? section.blocks : [];
+    for (const block of blocks) {
+      const content = block?.content;
+      if (content && typeof content === 'object') {
+        if (typeof content.text === 'string') parts.push(content.text);
+        else if (Array.isArray(content.items)) parts.push(content.items.map(String).join('\n'));
+      }
+    }
+  }
+  return parts.join('\n\n');
+}
+
 /** Navigate straight to an existing artifact and wait for the document shell. */
 export async function openArtifact(page: Page, artifactId: string): Promise<void> {
   await page.goto(`/document-studio/${encodeURIComponent(artifactId)}`, {
