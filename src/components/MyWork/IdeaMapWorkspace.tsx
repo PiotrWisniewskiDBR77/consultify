@@ -2745,6 +2745,124 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     [melsCanvasEnabled, isPolish]
   );
 
+  // ── Shared IdeaWorkspaceTools props (single source) ─────────────────────
+  // The workspace inspector (5 sections: Problem · Status · Inspector · Convert
+  // · Health) is rendered in exactly one place per path: the legacy sliding
+  // drawer (`renderWorkspaceSiblings`) OR — under the EditorShell flag — the
+  // shell right-rail panel (`renderMelsCanvasRightRailPanel`). Both consume this
+  // one prop bundle so their content never drifts. Declared after every handler
+  // it references (all defined above), so it is TDZ-safe.
+  const ideaWorkspaceToolsSharedProps = useMemo(
+    () => ({
+      ideaId: realId,
+      title,
+      seedText,
+      stage,
+      branch,
+      area,
+      priority,
+      isDraft,
+      isAccepted,
+      saving,
+      draftSavedLabel,
+      activeTool,
+      selection,
+      onTitleChange: (v: string) => {
+        setTitle(v);
+        setDirty(true);
+      },
+      onSeedTextChange: (v: string) => {
+        setSeedText(v);
+        setDirty(true);
+      },
+      onBranchChange: (v: string) => {
+        setBranch(v);
+        setDirty(true);
+      },
+      onAreaChange: (v: string) => {
+        setArea(v);
+        setDirty(true);
+      },
+      onPriorityChange: (v: number) => {
+        setPriority(v);
+        setDirty(true);
+      },
+      onSave: handleSave,
+      onAcceptChallenge: handleAcceptChallenge,
+      onStageChange: handleStageChange,
+      onConvert: handleConvert,
+      onOpenChat: openChat,
+      graphNodes,
+      graphEdges,
+      evidenceCount: graphNodes.filter((n: any) => n?.data?.evidenceLinks?.length > 0).length,
+      onAISummarize: () => handleQuickAction('mm_ai_summarize'),
+      onAIExpand: () => handleQuickAction('mm_ai_expand'),
+      onLayoutChange: (mode: string) => {
+        window.dispatchEvent(
+          new CustomEvent('idea-mindmap-node-quick-action', {
+            detail: { action: 'set_layout_mode', layoutMode: mode },
+          })
+        );
+      },
+      onThemeChange: (theme: string) => {
+        window.dispatchEvent(
+          new CustomEvent('idea-mindmap-node-quick-action', {
+            detail: { action: 'set_map_theme', theme },
+          })
+        );
+      },
+      onStyleChange: (patch: Record<string, any>) => {
+        window.dispatchEvent(
+          new CustomEvent('idea-mindmap-node-quick-action', {
+            detail: { action: 'apply_style', ...patch },
+          })
+        );
+      },
+      onFitView: () => {
+        window.dispatchEvent(
+          new CustomEvent('idea-mindmap-node-quick-action', {
+            detail: { action: 'pane_fit_view' },
+          })
+        );
+      },
+      onAutoLayout: () => {
+        window.dispatchEvent(
+          new CustomEvent('idea-mindmap-node-quick-action', {
+            detail: { action: 'pane_auto_layout' },
+          })
+        );
+      },
+      whiteboardSession,
+      whiteboardOutcomes,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      realId, title, seedText, stage, branch, area, priority, isDraft, isAccepted,
+      saving, draftSavedLabel, activeTool, selection, graphNodes, graphEdges,
+      handleSave, handleAcceptChallenge, handleStageChange, handleConvert, openChat,
+      handleQuickAction, whiteboardSession, whiteboardOutcomes,
+      setTitle, setSeedText, setBranch, setArea, setPriority, setDirty,
+    ]
+  );
+
+  // EditorShell right-rail panel body. All five inspector icons (problem ·
+  // status · inspector · convert · health) address the five sections that
+  // already live inside <IdeaWorkspaceTools>, so every id renders that same
+  // inspector (its sections are the in-panel navigation). Rendered `embedded`
+  // so it drops its own drawer chrome and fills the shell's rail column. The
+  // matching legacy drawer is suppressed below when the flag is ON (no dupes).
+  const renderMelsCanvasRightRailPanel = useCallback(
+    (_activeToolId: string | null): React.ReactNode => (
+      <IdeaWorkspaceTools
+        {...ideaWorkspaceToolsSharedProps}
+        open
+        embedded
+        onClose={() => handlePanelChange(null)}
+      />
+    ),
+    [ideaWorkspaceToolsSharedProps, handlePanelChange]
+  );
+
   if (loading) {
     return (
       <div className="h-full w-full bg-[var(--c-surface)] p-6">
@@ -2779,7 +2897,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             moduleLabel={t('mindmap.ideas')}
             topBarChips={melsCanvasChips}
             rightRailTools={melsCanvasRightRailTools}
-            renderRightRailPanel={() => null}
+            renderRightRailPanel={renderMelsCanvasRightRailPanel}
             canvas={
               <>
                 {canvasToolsNode}
@@ -3238,91 +3356,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   function renderWorkspaceSiblings(): React.ReactNode {
     return (
       <>
-      {/* Tools panel sidebar */}
-      <IdeaWorkspaceTools
-        open={toolsPanelOpen}
-        onClose={() => handlePanelChange(null)}
-        ideaId={realId}
-        title={title}
-        seedText={seedText}
-        stage={stage}
-        branch={branch}
-        area={area}
-        priority={priority}
-        isDraft={isDraft}
-        isAccepted={isAccepted}
-        saving={saving}
-        draftSavedLabel={draftSavedLabel}
-        activeTool={activeTool}
-        selection={selection}
-        onTitleChange={(v) => {
-          setTitle(v);
-          setDirty(true);
-        }}
-        onSeedTextChange={(v) => {
-          setSeedText(v);
-          setDirty(true);
-        }}
-        onBranchChange={(v) => {
-          setBranch(v);
-          setDirty(true);
-        }}
-        onAreaChange={(v) => {
-          setArea(v);
-          setDirty(true);
-        }}
-        onPriorityChange={(v) => {
-          setPriority(v);
-          setDirty(true);
-        }}
-        onSave={handleSave}
-        onAcceptChallenge={handleAcceptChallenge}
-        onStageChange={handleStageChange}
-        onConvert={handleConvert}
-        onOpenChat={openChat}
-        graphNodes={graphNodes}
-        graphEdges={graphEdges}
-        evidenceCount={graphNodes.filter((n: any) => n?.data?.evidenceLinks?.length > 0).length}
-        onAISummarize={() => handleQuickAction('mm_ai_summarize')}
-        onAIExpand={() => handleQuickAction('mm_ai_expand')}
-        onLayoutChange={(mode) => {
-          window.dispatchEvent(
-            new CustomEvent('idea-mindmap-node-quick-action', {
-              detail: { action: 'set_layout_mode', layoutMode: mode },
-            })
-          );
-        }}
-        onThemeChange={(theme) => {
-          window.dispatchEvent(
-            new CustomEvent('idea-mindmap-node-quick-action', {
-              detail: { action: 'set_map_theme', theme },
-            })
-          );
-        }}
-        onStyleChange={(patch) => {
-          window.dispatchEvent(
-            new CustomEvent('idea-mindmap-node-quick-action', {
-              detail: { action: 'apply_style', ...patch },
-            })
-          );
-        }}
-        onFitView={() => {
-          window.dispatchEvent(
-            new CustomEvent('idea-mindmap-node-quick-action', {
-              detail: { action: 'pane_fit_view' },
-            })
-          );
-        }}
-        onAutoLayout={() => {
-          window.dispatchEvent(
-            new CustomEvent('idea-mindmap-node-quick-action', {
-              detail: { action: 'pane_auto_layout' },
-            })
-          );
-        }}
-        whiteboardSession={whiteboardSession}
-        whiteboardOutcomes={whiteboardOutcomes}
-      />
+      {/* Tools panel sidebar — legacy sliding drawer. Under the EditorShell
+          flag this same inspector is rendered `embedded` in the shell right
+          rail (renderMelsCanvasRightRailPanel), so we suppress this drawer to
+          avoid a duplicate panel. Both paths consume ideaWorkspaceToolsSharedProps. */}
+      {!melsCanvasEnabled && (
+        <IdeaWorkspaceTools
+          {...ideaWorkspaceToolsSharedProps}
+          open={toolsPanelOpen}
+          onClose={() => handlePanelChange(null)}
+        />
+      )}
 
       <IdeaContextPanel
         open={contextPanelOpen}

@@ -67,6 +67,15 @@ interface ToolsPanelShellProps {
   onClose: () => void;
   children: React.ReactNode;
   className?: string;
+  /**
+   * EditorShell Wave W (W-1): when true the panel is embedded inside the
+   * EditorShell right-rail column, which already owns the fixed width, the
+   * left border and the collapse control. In that mode we drop our own
+   * `w-80 border-l` framing and the redundant header close button so we
+   * don't render "a panel inside a panel". Additive — default false keeps
+   * the legacy sliding-drawer chrome byte-for-byte identical.
+   */
+  embedded?: boolean;
 }
 
 export const ToolsPanelShell: React.FC<ToolsPanelShellProps> = ({
@@ -77,9 +86,14 @@ export const ToolsPanelShell: React.FC<ToolsPanelShellProps> = ({
   onClose,
   children,
   className,
+  embedded = false,
 }) => (
   <div
-    className={`w-80 shrink-0 border-l border-white/[0.06] bg-gradient-to-b from-white via-white to-slate-50/30 dark:from-navy-950 dark:via-navy-950 dark:to-navy-900/20 flex flex-col backdrop-blur-sm ${className || ''}`}
+    className={
+      embedded
+        ? `w-full h-full min-h-0 bg-gradient-to-b from-white via-white to-slate-50/30 dark:from-navy-950 dark:via-navy-950 dark:to-navy-900/20 flex flex-col backdrop-blur-sm ${className || ''}`
+        : `w-80 shrink-0 border-l border-white/[0.06] bg-gradient-to-b from-white via-white to-slate-50/30 dark:from-navy-950 dark:via-navy-950 dark:to-navy-900/20 flex flex-col backdrop-blur-sm ${className || ''}`
+    }
   >
     <div className="relative px-4 py-3 border-b border-slate-200/40 dark:border-white/[0.04] shrink-0">
       <div className="absolute inset-0 bg-gradient-to-r from-slate-500/[0.03] via-slate-400/[0.01] to-transparent pointer-events-none" />
@@ -101,12 +115,16 @@ export const ToolsPanelShell: React.FC<ToolsPanelShellProps> = ({
         </div>
         <div className="flex items-center gap-1">
           {actions}
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-600 dark:hover:text-slate-300 transition-all"
-          >
-            <X size={14} />
-          </button>
+          {/* In embedded (EditorShell right-rail) mode the shell owns the
+              collapse control, so the panel's own close button is redundant. */}
+          {!embedded && (
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-600 dark:hover:text-slate-300 transition-all"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
       </div>
     </div>

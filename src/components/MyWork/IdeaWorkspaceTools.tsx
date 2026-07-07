@@ -63,6 +63,12 @@ type ConvertTarget = IdeaConvertTarget;
 interface IdeaWorkspaceToolsProps {
   open: boolean;
   onClose: () => void;
+  /**
+   * EditorShell Wave W (W-1): render inside the shell right-rail column
+   * (drops the panel's own fixed-width / bordered drawer chrome + close
+   * button). Additive — default false = legacy sliding drawer unchanged.
+   */
+  embedded?: boolean;
 
   ideaId: string;
   title: string;
@@ -164,6 +170,7 @@ const PRIORITY_COLORS: Record<number, string> = {
 export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   open,
   onClose,
+  embedded = false,
   ideaId,
   title,
   seedText,
@@ -294,12 +301,16 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
     items: convertActions.filter((a) => a.group === g),
   })).filter((g) => g.items.length > 0);
 
-  if (!open) return null;
+  // Legacy sliding-drawer path is gated by `open`. In embedded (EditorShell
+  // right-rail) mode the shell only mounts the panel when its icon is active,
+  // so visibility is the shell's responsibility — don't self-hide here.
+  if (!embedded && !open) return null;
 
   return (
     <ToolsPanelShell
       title={title || (isPl ? 'Bez tytułu' : 'Untitled')}
       subtitle={toolLabel}
+      embedded={embedded}
       icon={
         <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-sm shadow-amber-500/20">
           <Lightbulb size={13} className="text-white" />
