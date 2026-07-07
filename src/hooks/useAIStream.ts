@@ -308,7 +308,18 @@ type StreamOptions = {
   onDeliverable?: (payload: {
     draftId: string;
     generationId: string;
-    kind: 'doc' | 'sheet' | 'deck' | 'mindmap' | 'process_flow' | 'table' | 'whiteboard' | 'note';
+    kind:
+      | 'doc'
+      | 'sheet'
+      | 'deck'
+      | 'mindmap'
+      | 'process_flow'
+      | 'table'
+      | 'whiteboard'
+      | 'note'
+      | 'task'
+      | 'decision'
+      | 'initiative';
     format?: string;
     title?: string;
     /**
@@ -864,12 +875,31 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           // fell through into the generic doc-canvas mount path instead of the
           // Ideas-workspace handoff. Pass the backend `kind` straight through;
           // it is already whitelisted server-side by KIND_TO_FORMAT.
-          const kind: 'doc' | 'sheet' | 'deck' | 'mindmap' | 'process_flow' | 'table' | 'whiteboard' | 'note' =
+          // Teresa routing-N (naprawa-rN-routing): task / decision / initiative are
+          // real N-OBJECTS (a tasks/decisions/initiatives row already persisted
+          // server-side), not canvas drafts. Pass them straight through so
+          // UnifiedChatPanel navigates to the right My Work / Initiatives module
+          // instead of downgrading them to a 'doc' canvas mount.
+          const kind:
+            | 'doc'
+            | 'sheet'
+            | 'deck'
+            | 'mindmap'
+            | 'process_flow'
+            | 'table'
+            | 'whiteboard'
+            | 'note'
+            | 'task'
+            | 'decision'
+            | 'initiative' =
             kindRaw === 'mindmap' ||
             kindRaw === 'process_flow' ||
             kindRaw === 'table' ||
             kindRaw === 'whiteboard' ||
-            kindRaw === 'note'
+            kindRaw === 'note' ||
+            kindRaw === 'task' ||
+            kindRaw === 'decision' ||
+            kindRaw === 'initiative'
               ? kindRaw
               : kindRaw === 'sheet'
                 ? 'sheet'

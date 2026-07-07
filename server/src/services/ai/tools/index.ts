@@ -5,6 +5,8 @@
 import logger from '../../../utils/Logger.js';
 import { mcpServer } from '../mcpServer.js';
 import { calculateRoiDraft } from './calculateRoiDraft.js';
+import { createDecision } from './createDecision.js';
+import { createTask } from './createTask.js';
 import { generateDeliverable } from './generateDeliverable.js';
 import { generateInitiative } from './generateInitiative.js';
 import { getInitiative } from './getInitiativeCard.js';
@@ -35,6 +37,11 @@ export function registerAllTools(): void {
   mcpServer.registerHandler('generate_deliverable', generateDeliverable as any);
   // M13 Depth · C2 — Teresa creates a DRAFT initiative (reversible, no approval).
   mcpServer.registerHandler('generate_initiative', generateInitiative as any);
+  // Teresa routing-N — "stwórz zadanie/decyzję" → real Task/Decision OBJECT (not
+  // a doc). Handlers self-gate on ENABLE_TERESA_RECORD_CREATE and emit a
+  // deliverable event so the FE opens My Work → Tasks / Decisions.
+  mcpServer.registerHandler('create_task', createTask as any);
+  mcpServer.registerHandler('create_decision', createDecision as any);
 
   logger.info('[MCP] Registered tools:', Array.from(mcpServer.tools.keys()).join(', '));
 }

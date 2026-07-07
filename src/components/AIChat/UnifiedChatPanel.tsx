@@ -1811,6 +1811,48 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         return;
       }
 
+      // Teresa routing-N (naprawa-rN-routing) — task / decision are real N-objects
+      // (a `tasks` / `decisions` row already persisted server-side by
+      // create_task / create_decision), NOT canvas drafts. Navigate to the
+      // matching My Work tab (same handoff shape as the note branch above).
+      if (payloadKind === 'task' || payloadKind === 'decision') {
+        try {
+          const { setMyWorkIntent, setCurrentView } = useAppStore.getState() as any;
+          setMyWorkIntent?.({ tab: payloadKind === 'task' ? 'tasks' : 'decisions' });
+          setCurrentView?.(AppView.MY_WORK);
+        } catch (err) {
+          console.warn('[UnifiedChatPanel] task/decision deliverable navigation failed', err);
+          return;
+        }
+        toast.success(
+          payloadKind === 'task'
+            ? t('myWork.tasks.createdFromChatToast', 'Task created from chat')
+            : t('myWork.decisions.createdFromChatToast', 'Decision created from chat')
+        );
+        return;
+      }
+
+      // Teresa routing-N — initiative: a real DRAFT initiative row (generate_
+      // initiative) is already persisted; deep-link into the Initiatives module
+      // to open it. Falls back to the module list when no id is present.
+      if (payloadKind === 'initiative') {
+        try {
+          const initiativeId = String(
+            (payload as any)?.initiativeId || payload?.draftId || payload?.generationId || ''
+          ).trim();
+          navigateToRoute(
+            initiativeId
+              ? `/initiatives?open=${encodeURIComponent(initiativeId)}&mode=doc`
+              : '/initiatives'
+          );
+        } catch (err) {
+          console.warn('[UnifiedChatPanel] initiative deliverable navigation failed', err);
+          return;
+        }
+        toast.success(t('myWork.initiatives.createdFromChatToast', 'Initiative created from chat'));
+        return;
+      }
+
       const kind = payload.kind === 'sheet' ? 'sheet' : payload.kind === 'deck' ? 'deck' : 'doc';
       const title =
         payload.title || (kind === 'sheet' ? 'Arkusz' : kind === 'deck' ? 'Prezentacja' : 'Dokument');

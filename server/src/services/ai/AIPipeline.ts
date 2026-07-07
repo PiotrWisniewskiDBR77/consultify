@@ -7,6 +7,7 @@
  */
 
 import { buildPersonaPrompt } from '../../ai/persona.js';
+import { featureFlags } from '../../config/FeatureFlags.js';
 import type {
   AIArtifact,
   AICapability,
@@ -351,7 +352,21 @@ export class AIPipeline {
             // tool to call. The route's deliverableTools.context already carries
             // organizationId/userId/language, which is exactly what generate_initiative
             // needs; callStream runs every passed tool with that same context.
-            const CHAT_CREATION_TOOLS = new Set(['generate_deliverable', 'generate_initiative']);
+            // Teresa routing-N (naprawa-rN-routing): also expose create_task /
+            // create_decision so "stwórz zadanie/decyzję" creates a REAL N-object
+            // (a tasks/decisions row) instead of the model falling back to
+            // generate_deliverable(type:'document'). Gated on ENABLE_TERESA_
+            // RECORD_CREATE (handlers ALSO self-gate — defense in depth). The
+            // route's deliverableTools.context already carries organizationId/
+            // userId/language/onDeliverable, which is exactly what both handlers
+            // need; callStream runs every passed tool with that same context.
+            const CHAT_CREATION_TOOLS = new Set([
+              'generate_deliverable',
+              'generate_initiative',
+              ...(featureFlags.ENABLE_TERESA_RECORD_CREATE
+                ? ['create_task', 'create_decision']
+                : []),
+            ]);
             const defs = mcp
               .getToolDefinitions()
               .filter((d: { name: string }) => CHAT_CREATION_TOOLS.has(d.name));
