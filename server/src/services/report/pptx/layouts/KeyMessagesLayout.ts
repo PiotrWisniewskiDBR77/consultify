@@ -12,6 +12,7 @@ import { SlideTitle } from '../atomics/SlideTitle.js';
 import type {
   DesignTokens,
   KeyMessagesContent,
+  LayoutContext,
   LayoutResult,
   UnifiedReportMeta,
   UnifiedSlide,
@@ -20,7 +21,8 @@ import type {
 export function KeyMessagesLayout(
   slide: UnifiedSlide,
   meta: UnifiedReportMeta,
-  tokens: DesignTokens
+  tokens: DesignTokens,
+  ctx?: LayoutContext
 ): LayoutResult {
   const c = slide.content as KeyMessagesContent;
   const elements = [];
@@ -62,22 +64,45 @@ export function KeyMessagesLayout(
   elements.push(PageNumber({}, tokens));
 
   const g = tokens.grid;
-  const count = Math.min(c.messages.length, 4);
-  // Cards fill the full content region (anti-sparseness): full height, even gutters.
-  const cardW = (g.contentW - tokens.spacing.gutter * (count - 1)) / count;
-  const cardY = g.contentY;
-  const cardH = g.contentH;
-  // Vertically center the icon→title→description block inside the tall card so
-  // content breathes instead of clinging to the top, leaving an empty bottom.
-  const iconH = 0.5;
-  const titleH = 0.5;
-  const descH = Math.min(cardH - (iconH + titleH) - 0.5, 1.8);
-  const blockH = iconH + 0.1 + titleH + 0.1 + descH;
-  const blockTop = cardY + Math.max(0.2, (cardH - blockH) / 2);
+  const total = Math.min(c.messages.length, 4);
 
-  for (let i = 0; i < count; i++) {
+  // P13 — ekran = eksport parity. The on-screen editor resolves key-messages to
+  // one of several topologies; honour the column count it implies so the export
+  // matches the shape shown:
+  //   three_col → 3 columns · split → 2 columns · stacked → vertical rows ·
+  //   otherwise the intent default (up to 4 across).
+  // `stacked` renders the messages as full-width horizontal rows (one per row)
+  // instead of side-by-side cards.
+  const isStacked = ctx?.topology === 'stacked';
+  const cols = isStacked
+    ? 1
+    : ctx?.topology === 'three_col'
+      ? Math.min(total, 3)
+      : ctx?.topology === 'split'
+        ? Math.min(total, 2)
+        : total;
+  const rows = Math.max(1, Math.ceil(total / cols));
+
+  const gutter = tokens.spacing.gutter;
+  const cardW = (g.contentW - gutter * (cols - 1)) / cols;
+  const cardH = (g.contentH - gutter * (rows - 1)) / rows;
+
+  for (let i = 0; i < total; i++) {
     const msg = c.messages[i];
-    const cardX = g.contentX + i * (cardW + tokens.spacing.gutter);
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const cardX = g.contentX + col * (cardW + gutter);
+    const cardY = g.contentY + row * (cardH + gutter);
+
+    // Stacked rows are short and wide → lay the icon/title/description on a
+    // horizontal baseline; column cards keep the centred vertical block.
+    const iconH = 0.5;
+    const titleH = 0.5;
+    const descH = isStacked
+      ? Math.min(cardH - 0.3, 1.2)
+      : Math.min(cardH - (iconH + titleH) - 0.5, 1.8);
+    const blockH = isStacked ? cardH : iconH + 0.1 + titleH + 0.1 + descH;
+    const blockTop = cardY + Math.max(0.1, (cardH - blockH) / 2);
 
     // Card background
     elements.push({
@@ -95,7 +120,52 @@ export function KeyMessagesLayout(
       },
     });
 
-    // Icon
+    if (isStacked) {
+      // Horizontal row: icon on the left, title + description stacked to the right.
+      const iconW = 0.6;
+      elements.push(
+        Icon(
+          {
+            icon: msg.icon || ICONS.diamond,
+            position: { x: cardX + 0.1, y: cardY, w: iconW, h: cardH },
+            color: tokens.colors.primary,
+            fontSize: 24,
+          },
+          tokens
+        )
+      );
+      const textX = cardX + iconW + 0.2;
+      const textW = cardW - iconW - 0.4;
+      elements.push(
+        BodyText(
+          {
+            text: msg.title,
+            position: { x: textX, y: cardY + 0.12, w: textW, h: titleH },
+            bold: true,
+            fontSize: 14,
+            align: 'left',
+            valign: 'middle',
+          },
+          tokens
+        )
+      );
+      elements.push(
+        BodyText(
+          {
+            text: msg.description,
+            position: { x: textX, y: cardY + 0.12 + titleH, w: textW, h: descH },
+            fontSize: 11,
+            color: tokens.colors.textSecondary,
+            align: 'left',
+            valign: 'top',
+          },
+          tokens
+        )
+      );
+      continue;
+    }
+
+    // Column card: centred icon → title → description block.
     elements.push(
       Icon(
         {
@@ -107,8 +177,6 @@ export function KeyMessagesLayout(
         tokens
       )
     );
-
-    // Title
     elements.push(
       BodyText(
         {
@@ -121,8 +189,6 @@ export function KeyMessagesLayout(
         tokens
       )
     );
-
-    // Description
     elements.push(
       BodyText(
         {

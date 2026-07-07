@@ -9,18 +9,64 @@ import { HeaderBar } from '../atomics/HeaderBar.js';
 import { PageNumber } from '../atomics/PageNumber.js';
 import { SlideTitle } from '../atomics/SlideTitle.js';
 import { KpiStrip } from '../composites/KpiStrip.js';
+import { KpiTile } from '../composites/KpiTile.js';
 import type {
   DesignTokens,
+  ElementPosition,
+  KpiData,
+  LayoutContext,
   LayoutResult,
   PerformanceOverviewContent,
+  RenderedElement,
   UnifiedReportMeta,
   UnifiedSlide,
 } from '../types.js';
 
+/**
+ * P13 — ekran = eksport parity. When the on-screen editor resolves this slide
+ * to the `kpi_grid_4` template (topology `kpi_grid`), the KPIs are shown as a
+ * 2×N tile grid that fills the region, NOT a single horizontal strip. Arrange
+ * the SAME KPI tiles in a 2-column grid so the export matches that shape.
+ * Every other resolved template keeps today's horizontal `KpiStrip`.
+ */
+function kpiGrid(
+  kpis: KpiData[],
+  region: ElementPosition,
+  tokens: DesignTokens
+): RenderedElement[] {
+  const count = Math.min(kpis.length, 6);
+  const cols = count <= 1 ? 1 : 2;
+  const rows = Math.ceil(count / cols);
+  const gutter = tokens.spacing.gutter;
+  const tileW = (region.w - gutter * (cols - 1)) / cols;
+  const tileH = (region.h - gutter * (rows - 1)) / rows;
+  const elements: RenderedElement[] = [];
+  for (let i = 0; i < count; i++) {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    elements.push(
+      ...KpiTile(
+        {
+          kpi: kpis[i],
+          position: {
+            x: region.x + col * (tileW + gutter),
+            y: region.y + row * (tileH + gutter),
+            w: tileW,
+            h: tileH,
+          },
+        },
+        tokens
+      )
+    );
+  }
+  return elements;
+}
+
 export function KpiDashboardLayout(
   slide: UnifiedSlide,
   meta: UnifiedReportMeta,
-  tokens: DesignTokens
+  tokens: DesignTokens,
+  ctx?: LayoutContext
 ): LayoutResult {
   const c = slide.content as PerformanceOverviewContent;
   const elements = [];
@@ -68,13 +114,13 @@ export function KpiDashboardLayout(
   const kpiH = regionH - contextH - contextGap;
   const kpiY = regionY;
 
-  const kpiElements = KpiStrip(
-    {
-      kpis: c.kpis.slice(0, 6),
-      position: { x: g.contentX, y: kpiY, w: g.contentW, h: kpiH },
-    },
-    tokens
-  );
+  const kpiRegion = { x: g.contentX, y: kpiY, w: g.contentW, h: kpiH };
+  // P13 — honour the on-screen topology: `kpi_grid` → 2-col tile grid; every
+  // other resolved template keeps the horizontal strip.
+  const kpiElements =
+    ctx?.topology === 'kpi_grid'
+      ? kpiGrid(c.kpis.slice(0, 6), kpiRegion, tokens)
+      : KpiStrip({ kpis: c.kpis.slice(0, 6), position: kpiRegion }, tokens);
   elements.push(...kpiElements);
 
   // Context text — zakotwiczony pod kafelkami, wypełnia dolny pas.
