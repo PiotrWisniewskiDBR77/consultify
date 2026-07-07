@@ -41,6 +41,7 @@ import { DeckAuditLogModal } from './DeckAuditLogModal';
 import { DeckBuilderBottomBar } from './DeckBuilderBottomBar';
 import type { DeckBuilderTopBarChipsState } from './DeckBuilderMelsChips';
 import { DeckBuilderMelsView } from './DeckBuilderMelsView';
+import { DeckCommentsPanel, type DeckSlideRef } from './DeckCommentsPanel';
 import { DeckBuilderTopBar } from './DeckBuilderTopBar';
 import { DeckPresenceStack } from './DeckPresenceStack';
 import { DeckGovernanceCardModal } from './DeckGovernanceCardModal';
@@ -374,6 +375,10 @@ export const DeckBuilder: React.FC = () => {
   });
   const [governanceModalOpen, setGovernanceModalOpen] = useState(false);
   const [governanceVerdict, setGovernanceVerdict] = useState<GovernanceVerdict | null>(null);
+  // Right-rail active tool — controlled so the top-bar Comments chip can toggle
+  // the comments panel (the rest of the rail stays user-driven).
+  const [activeRailTool, setActiveRailTool] = useState<string | null>(null);
+  const [openCommentCount, setOpenCommentCount] = useState(0);
   const [runtimeEvents, setRuntimeEvents] = useState<{
     events: PresentationRuntimeEvent[];
     degraded: boolean;
@@ -1067,6 +1072,8 @@ export const DeckBuilder: React.FC = () => {
             onGovernance: () => setGovernanceModalOpen(true),
             onAnalytics: () => setAnalyticsOpen((v) => !v),
             onAudit: () => setAuditLogOpen(true),
+            onToggleComments: () =>
+              setActiveRailTool((prev) => (prev === 'comments' ? null : 'comments')),
             onShare: () => setShareModalOpen(true),
             onToggleAgent: () => setTeresaOpen((v) => !v),
             onRun: () => setPresentMode('fullscreen'),
@@ -1077,8 +1084,12 @@ export const DeckBuilder: React.FC = () => {
               governanceVerdict: governanceVerdict ?? null,
               agentOpen: teresaOpen,
               runEnabled: deck.cards.length > 0,
+              commentsOpen: activeRailTool === 'comments',
+              openCommentCount,
             } satisfies DeckBuilderTopBarChipsState
           }
+          activeRightRailToolId={activeRailTool}
+          onActiveRightRailToolChange={setActiveRailTool}
           rightRailState={{
             agentActivityCount: runtimeEvents.events.length,
             activityTone: runtimeEvents.degraded
@@ -1086,6 +1097,7 @@ export const DeckBuilder: React.FC = () => {
               : runtimeEvents.events.length > 0
                 ? 'info'
                 : null,
+            openCommentCount,
           }}
           rightRailPanels={{
             blocks: (
@@ -1095,6 +1107,20 @@ export const DeckBuilder: React.FC = () => {
                 onGenerateAiImage={handleGenerateAiImage}
                 isGeneratingAiImage={generatingAiImage}
                 onUpload={() => setMediaLibraryOpen(true)}
+              />
+            ),
+            comments: (
+              <DeckCommentsPanel
+                deckId={deckId || deck?.deck_id || ''}
+                slides={deck.cards.map(
+                  (c, idx): DeckSlideRef => ({ id: c.card_id, title: c.title || '', index: idx })
+                )}
+                activeSlideId={activeCard?.card_id ?? null}
+                onJumpToSlide={(slideId) => {
+                  const idx = deck.cards.findIndex((c) => c.card_id === slideId);
+                  if (idx >= 0) setActiveCardIndex(idx);
+                }}
+                onCountsChanged={(counts) => setOpenCommentCount(counts.totalOpen)}
               />
             ),
             activity: (

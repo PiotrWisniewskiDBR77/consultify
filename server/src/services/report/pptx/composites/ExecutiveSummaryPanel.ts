@@ -9,12 +9,26 @@ import type { DesignTokens, ElementPosition, KpiData, RenderedElement } from '..
 import { KpiStrip } from './KpiStrip.js';
 import { distributeY } from './verticalRhythm.js';
 
+/**
+ * Panel geometry variant — mirrors the on-screen `LayoutEngine` template the
+ * FE renders for this slide, so the PPTX export reproduces the SAME shape
+ * (P13 ekran = eksport parity). Defaults to `'stacked'` = today's behaviour.
+ *   - `'stacked'`    → exec_full: one column, headline → KPIs → findings → reco.
+ *   - `'top_kpi'`    → exec_top_kpi: KPI strip pinned full-width at the TOP,
+ *                       findings/reco fill the region below.
+ *   - `'split'`      → exec_left_bullets: findings on the LEFT column, KPIs +
+ *                       recommendation on the RIGHT column.
+ */
+export type ExecutiveSummaryPanelVariant = 'stacked' | 'top_kpi' | 'split';
+
 export interface ExecutiveSummaryPanelProps {
   headline: string;
   kpis?: KpiData[];
   keyFindings: string[];
   recommendation?: string;
   position: ElementPosition;
+  /** On-screen layout variant to mirror. Omit → 'stacked' (back-compat). */
+  variant?: ExecutiveSummaryPanelVariant;
 }
 
 export function ExecutiveSummaryPanel(
@@ -22,6 +36,9 @@ export function ExecutiveSummaryPanel(
   tokens: DesignTokens
 ): RenderedElement[] {
   const { position: p } = props;
+  const variant = props.variant ?? 'stacked';
+  if (variant === 'split') return execSummarySplit(props, tokens);
+  if (variant === 'top_kpi') return execSummaryTopKpi(props, tokens);
   const elements: RenderedElement[] = [];
 
   // W7 anti-sparseness: rozłóż bloki przez distributeY('fill') przez cały region
@@ -137,5 +154,158 @@ export function ExecutiveSummaryPanel(
     );
   }
 
+  return elements;
+}
+
+// ── Recommendation callout (shared by the variant renderers) ──────────────────
+function recoCallout(text: string, pos: ElementPosition, tokens: DesignTokens): RenderedElement[] {
+  return [
+    {
+      kind: 'shape',
+      apply(slide) {
+        slide.addShape('roundRect', {
+          x: pos.x,
+          y: pos.y,
+          w: pos.w,
+          h: pos.h,
+          fill: { color: tokens.colors.accent },
+          rectRadius: 0.05,
+        });
+      },
+    },
+    BodyText(
+      {
+        text,
+        position: { x: pos.x + 0.15, y: pos.y, w: pos.w - 0.3, h: pos.h },
+        bold: true,
+        color: tokens.colors.textInverse,
+        valign: 'middle',
+      },
+      tokens
+    ),
+  ];
+}
+
+function headlineElement(text: string, pos: ElementPosition, tokens: DesignTokens): RenderedElement {
+  return BodyText(
+    {
+      text,
+      position: pos,
+      bold: true,
+      fontSize: tokens.fontSizes.heading,
+      color: tokens.colors.primary,
+    },
+    tokens
+  );
+}
+
+/**
+ * `exec_top_kpi` — KPI strip pinned full-width at the TOP (below the headline),
+ * findings fill the middle, recommendation sits low. Mirrors the FE
+ * `"kpi" "content"` grid.
+ */
+function execSummaryTopKpi(
+  props: ExecutiveSummaryPanelProps,
+  tokens: DesignTokens
+): RenderedElement[] {
+  const { position: p } = props;
+  const elements: RenderedElement[] = [];
+  const hasKpis = !!(props.kpis && props.kpis.length > 0);
+  const hasReco = !!props.recommendation;
+
+  const headlineH = 0.7;
+  const kpiH = hasKpis ? 1.0 : 0;
+  const recoH = hasReco ? 0.55 : 0;
+  const gap = 0.18;
+
+  let y = p.y;
+  elements.push(headlineElement(props.headline, { x: p.x, y, w: p.w, h: headlineH }, tokens));
+  y += headlineH + gap;
+
+  if (hasKpis) {
+    elements.push(
+      ...KpiStrip(
+        { kpis: props.kpis!.slice(0, 4), position: { x: p.x, y, w: p.w, h: kpiH } },
+        tokens
+      )
+    );
+    y += kpiH + gap;
+  }
+
+  const findingsBottom = p.y + p.h - (hasReco ? recoH + gap : 0);
+  const findingsH = Math.max(1.0, findingsBottom - y);
+  elements.push(
+    Bullet(
+      { items: props.keyFindings.slice(0, 6), position: { x: p.x, y, w: p.w, h: findingsH } },
+      tokens
+    )
+  );
+
+  if (hasReco) {
+    elements.push(
+      ...recoCallout(
+        props.recommendation as string,
+        { x: p.x, y: p.y + p.h - recoH, w: p.w, h: recoH },
+        tokens
+      )
+    );
+  }
+  return elements;
+}
+
+/**
+ * `exec_left_bullets` — split: key findings in the LEFT column, KPIs +
+ * recommendation stacked in the RIGHT column. Mirrors the FE `"left right"`
+ * grid (findings/prose left, data right).
+ */
+function execSummarySplit(
+  props: ExecutiveSummaryPanelProps,
+  tokens: DesignTokens
+): RenderedElement[] {
+  const { position: p } = props;
+  const elements: RenderedElement[] = [];
+  const hasKpis = !!(props.kpis && props.kpis.length > 0);
+  const hasReco = !!props.recommendation;
+
+  const headlineH = 0.7;
+  const gap = 0.18;
+  const colGap = 0.35;
+  const leftW = p.w * 0.56;
+  const rightX = p.x + leftW + colGap;
+  const rightW = p.w - leftW - colGap;
+
+  // Headline spans full width.
+  elements.push(headlineElement(props.headline, { x: p.x, y: p.y, w: p.w, h: headlineH }, tokens));
+  const bodyY = p.y + headlineH + gap;
+  const bodyH = p.y + p.h - bodyY;
+
+  // LEFT: key findings fill the column.
+  elements.push(
+    Bullet(
+      { items: props.keyFindings.slice(0, 6), position: { x: p.x, y: bodyY, w: leftW, h: bodyH } },
+      tokens
+    )
+  );
+
+  // RIGHT: KPIs on top, recommendation at the bottom.
+  const recoH = hasReco ? 0.6 : 0;
+  if (hasKpis) {
+    const kpiH = Math.max(1.0, bodyH - (hasReco ? recoH + gap : 0));
+    elements.push(
+      ...KpiStrip(
+        { kpis: props.kpis!.slice(0, 4), position: { x: rightX, y: bodyY, w: rightW, h: kpiH } },
+        tokens
+      )
+    );
+  }
+  if (hasReco) {
+    elements.push(
+      ...recoCallout(
+        props.recommendation as string,
+        { x: rightX, y: p.y + p.h - recoH, w: rightW, h: recoH },
+        tokens
+      )
+    );
+  }
   return elements;
 }

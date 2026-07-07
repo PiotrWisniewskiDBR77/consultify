@@ -70,6 +70,16 @@ import {
   revokeCollaborator,
   upsertCollaborator,
 } from '../services/presentationDeckCollaboratorService.js';
+import {
+  createDeckComment,
+  DeckCommentError,
+  deleteDeckComment,
+  ensureDeckCommentsHydrated,
+  getDeckCommentCounts,
+  listDeckCommentThreads,
+  replyToDeckComment,
+  setDeckCommentResolved,
+} from '../services/deckCommentsService.js';
 import { buildParityReportForDeck } from '../services/presentationExportParityService.js';
 import type { DeckSetup } from '../services/presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
@@ -2126,6 +2136,201 @@ router.delete(
       metadata: { organizationId: orgId, title: deck.title },
     });
     res.json({ success: true, data: { revoked: result.status === 'ok', degraded: result.status !== 'ok' } });
+  })
+);
+
+// ============================================================
+// DECK COMMENTS (reviewer threads — full stack, wzór Word Epic E6)
+// ============================================================
+//
+// Deck previously had NO comment system. These endpoints port the proven
+// Document Studio comment lifecycle to the deck domain: deck- or slide-anchored
+// threads, flat 2-level replies, thread-wide resolve/reopen, author-only
+// soft-delete. All org-scoped; the deck existence check binds the thread to a
+// tenant-owned deck. Read requires `presentation_view`; writes require
+// `presentation_view` too (any viewer can leave review comments — mirrors how
+// the collaborators list is gated), with author-only delete enforced in-code.
+
+function mapDeckCommentError(res: Response, err: unknown): boolean {
+  if (err instanceof DeckCommentError) {
+    const status =
+      err.code === 'invalid_input'
+        ? 400
+        : err.code === 'unknown_comment'
+          ? 404
+          : err.code === 'forbidden'
+            ? 403
+            : 409;
+    res.status(status).json({ success: false, error: err.message, code: err.code });
+    return true;
+  }
+  return false;
+}
+
+async function ensureDeckOwnedByOrg(deckId: string, orgId: string): Promise<boolean> {
+  const deck = (await dbGet(
+    `SELECT id FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+    [deckId, orgId]
+  )) as any;
+  return Boolean(deck);
+}
+
+// List comment threads (+ counts) for a deck. Optional ?slideId= / ?resolved=.
+router.get(
+  '/decks/:id/comments',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_view')) return;
+    const orgId = getOrgId(req);
+    const deckId = String(req.params.id);
+    if (!(await ensureDeckOwnedByOrg(deckId, orgId))) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
+    await ensureDeckCommentsHydrated(orgId);
+    const slideId =
+      typeof req.query.slideId === 'string' && req.query.slideId.trim()
+        ? String(req.query.slideId).trim()
+        : undefined;
+    const resolvedParam =
+      typeof req.query.resolved === 'string'
+        ? req.query.resolved === 'true'
+          ? true
+          : req.query.resolved === 'false'
+            ? false
+            : undefined
+        : undefined;
+    const threads = listDeckCommentThreads(deckId, orgId, {
+      ...(slideId ? { slideId } : {}),
+      ...(typeof resolvedParam === 'boolean' ? { resolved: resolvedParam } : {}),
+    });
+    const counts = getDeckCommentCounts(deckId, orgId);
+    res.json({ success: true, data: { threads, counts } });
+  })
+);
+
+// Create a comment. Root (no parentCommentId) or reply. Optional slideId anchor.
+router.post(
+  '/decks/:id/comments',
+  requireAudit,
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_view')) return;
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const deckId = String(req.params.id);
+    if (!(await ensureDeckOwnedByOrg(deckId, orgId))) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
+    await ensureDeckCommentsHydrated(orgId);
+    const body = req.body || {};
+    const text = typeof body.body === 'string' ? body.body : '';
+    try {
+      const parentCommentId =
+        typeof body.parentCommentId === 'string' && body.parentCommentId.trim()
+          ? String(body.parentCommentId).trim()
+          : undefined;
+      const comment = parentCommentId
+        ? replyToDeckComment({
+            organizationId: orgId,
+            deckId,
+            author: userId,
+            parentCommentId,
+            body: text,
+          })
+        : createDeckComment({
+            organizationId: orgId,
+            deckId,
+            author: userId,
+            body: text,
+            slideId: typeof body.slideId === 'string' ? body.slideId : null,
+          });
+      await (req as any).emitAuditEvent?.({
+        actorType: 'USER',
+        action: parentCommentId ? 'deck_comment_reply' : 'deck_comment_add',
+        resourceType: 'presentation_deck',
+        resourceId: deckId,
+        after: { commentId: comment.id, slideId: comment.slideId },
+        metadata: { organizationId: orgId },
+      });
+      res.status(201).json({ success: true, data: { comment } });
+    } catch (err) {
+      if (mapDeckCommentError(res, err)) return;
+      throw err;
+    }
+  })
+);
+
+// Resolve / reopen a thread (body: { resolved: boolean }). Thread-wide.
+router.patch(
+  '/decks/:id/comments/:commentId',
+  requireAudit,
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_view')) return;
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const deckId = String(req.params.id);
+    const commentId = String(req.params.commentId);
+    if (!(await ensureDeckOwnedByOrg(deckId, orgId))) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
+    await ensureDeckCommentsHydrated(orgId);
+    const resolved = Boolean((req.body || {}).resolved);
+    try {
+      const comment = setDeckCommentResolved({
+        organizationId: orgId,
+        deckId,
+        userId,
+        commentId,
+        resolved,
+      });
+      await (req as any).emitAuditEvent?.({
+        actorType: 'USER',
+        action: resolved ? 'deck_comment_resolve' : 'deck_comment_reopen',
+        resourceType: 'presentation_deck',
+        resourceId: deckId,
+        after: { commentId, resolved },
+        metadata: { organizationId: orgId },
+      });
+      res.json({ success: true, data: { comment } });
+    } catch (err) {
+      if (mapDeckCommentError(res, err)) return;
+      throw err;
+    }
+  })
+);
+
+// Author-only soft-delete a comment.
+router.delete(
+  '/decks/:id/comments/:commentId',
+  requireAudit,
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_view')) return;
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const deckId = String(req.params.id);
+    const commentId = String(req.params.commentId);
+    if (!(await ensureDeckOwnedByOrg(deckId, orgId))) {
+      return res.status(404).json({ success: false, error: 'Deck not found' });
+    }
+    await ensureDeckCommentsHydrated(orgId);
+    try {
+      const comment = deleteDeckComment({
+        organizationId: orgId,
+        deckId,
+        userId,
+        commentId,
+      });
+      await (req as any).emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'deck_comment_delete',
+        resourceType: 'presentation_deck',
+        resourceId: deckId,
+        after: { commentId },
+        metadata: { organizationId: orgId },
+      });
+      res.json({ success: true, data: { comment } });
+    } catch (err) {
+      if (mapDeckCommentError(res, err)) return;
+      throw err;
+    }
   })
 );
 

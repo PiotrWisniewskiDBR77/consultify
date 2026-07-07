@@ -51,6 +51,15 @@ export interface ExecutiveModuleShellProps {
   rightRailTools: RightRailToolDescriptor[];
   /** Caller-supplied renderer for active tool — returns panel content. */
   renderRightRailPanel?: (activeToolId: string | null) => React.ReactNode;
+  /**
+   * Optional CONTROLLED active right-rail tool. When provided the shell
+   * renders this tool instead of its internal state, and reports user
+   * selections via `onActiveRightRailToolChange`. ADDITIVE + backward
+   * compatible: callers that omit both keep the shell's own internal
+   * uncontrolled state (today's behaviour for every existing adopter).
+   */
+  activeRightRailToolId?: string | null;
+  onActiveRightRailToolChange?: (toolId: string | null) => void;
 
   /** Center canvas. */
   canvas: React.ReactNode;
@@ -131,6 +140,8 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   leftRailContent,
   rightRailTools,
   renderRightRailPanel,
+  activeRightRailToolId,
+  onActiveRightRailToolChange,
   canvas,
   centerMode = 'chrome',
   floatingLeftRail,
@@ -159,7 +170,17 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
     ephemeral: !persistRailState,
   });
 
-  const [activeToolId, setActiveToolId] = useState<string | null>(null);
+  const [internalActiveToolId, setInternalActiveToolId] = useState<string | null>(null);
+  // Controlled when `activeRightRailToolId` is supplied (undefined = uncontrolled).
+  const isRailControlled = activeRightRailToolId !== undefined;
+  const activeToolId = isRailControlled ? activeRightRailToolId! : internalActiveToolId;
+  const setActiveToolId = useCallback(
+    (next: string | null) => {
+      if (!isRailControlled) setInternalActiveToolId(next);
+      onActiveRightRailToolChange?.(next);
+    },
+    [isRailControlled, onActiveRightRailToolChange]
+  );
   const [helpOpen, setHelpOpen] = useState(false);
 
   const builtInModalEnabled = helpModalTitle !== null;
