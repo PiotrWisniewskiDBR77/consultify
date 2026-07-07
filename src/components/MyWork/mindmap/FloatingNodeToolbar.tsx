@@ -176,7 +176,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
   return (
     <div
       ref={ref}
-      className="floating-node-toolbar absolute z-[80] pointer-events-auto"
+      className="floating-node-toolbar absolute z-dropdown pointer-events-auto"
       style={{
         left: position.x,
         top: position.y - 48,
@@ -301,7 +301,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             <CircleDot size={13} />
           </button>
           {openDropdown === 'semanticType' && (
-            <div className="absolute top-full left-0 mt-1 z-[100]">
+            <div className="absolute top-full left-0 mt-1 z-dropdown">
               <SemanticTypeDropdown
                 isPl={!!isPl}
                 current={style.semanticType}
@@ -323,7 +323,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             <Tags size={13} />
           </button>
           {openDropdown === 'semantic' && (
-            <div className="absolute top-full left-0 mt-1 z-[100]">
+            <div className="absolute top-full left-0 mt-1 z-dropdown">
               <SemanticControlsPopover
                 isPl={!!isPl}
                 disabled={disabled}
@@ -349,7 +349,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             <Waypoints size={13} />
           </button>
           {openDropdown === 'branchTheme' && (
-            <div className="absolute top-full left-0 mt-1 z-[100]">
+            <div className="absolute top-full left-0 mt-1 z-dropdown">
               <BranchThemeDropdown
                 isPl={!!isPl}
                 current={style.branchTheme}
@@ -384,7 +384,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             />
           </button>
           {openDropdown === 'color' && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-[100]">
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-dropdown">
               <ColorPickerPopover
                 isPl={!!isPl}
                 currentColor={style.color}
@@ -408,7 +408,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             {style.fontSize || 14}
           </button>
           {openDropdown === 'fontSize' && (
-            <div className="absolute top-full left-0 mt-1 z-[100]">
+            <div className="absolute top-full left-0 mt-1 z-dropdown">
               <FontSizeDropdown
                 current={style.fontSize || 14}
                 onSelect={(size) => onUpdate({ fontSize: size })}
@@ -442,7 +442,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             <Paperclip size={13} />
           </button>
           {openDropdown === 'artifacts' && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-[100]">
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-dropdown">
               <ArtifactLinksPopover
                 isPl={!!isPl}
                 disabled={disabled}
@@ -478,7 +478,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             <CheckSquare size={13} />
           </button>
           {openDropdown === 'task' && (
-            <div className="absolute top-full left-0 mt-1 z-[100]">
+            <div className="absolute top-full left-0 mt-1 z-dropdown">
               <QuickTaskPopover
                 isPl={!!isPl}
                 nodeId={nodeId}
@@ -504,7 +504,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
               <GitPullRequest size={13} />
             </button>
             {openDropdown === 'convertBranch' && (
-              <div className="absolute top-full right-0 mt-1 z-[100] min-w-[180px] py-1.5 px-1 rounded-hig-xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border-subtle shadow-hig-xl animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute top-full right-0 mt-1 z-dropdown min-w-[180px] py-1.5 px-1 rounded-hig-xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border-subtle shadow-hig-xl animate-in fade-in zoom-in-95 duration-100">
                 <div className="px-3 pt-1 pb-1 text-[9px] font-semibold uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
                   {isPl ? 'Konwertuj gałąź na...' : 'Convert branch to...'}
                 </div>
@@ -579,7 +579,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             <StickyNote size={13} />
           </button>
           {openDropdown === 'quickNotes' && (
-            <div className="absolute top-full left-0 mt-1 z-[100]">
+            <div className="absolute top-full left-0 mt-1 z-dropdown">
               <QuickNotesPopover
                 isPl={!!isPl}
                 nodeId={nodeId}
@@ -604,7 +604,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             <Hash size={13} />
           </button>
           {openDropdown === 'quickTags' && (
-            <div className="absolute top-full left-0 mt-1 z-[100]">
+            <div className="absolute top-full left-0 mt-1 z-dropdown">
               <QuickTagsPopover
                 isPl={!!isPl}
                 nodeId={nodeId}
@@ -629,7 +629,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             <Link2 size={13} />
           </button>
           {openDropdown === 'quickLink' && (
-            <div className="absolute top-full left-0 mt-1 z-[100]">
+            <div className="absolute top-full left-0 mt-1 z-dropdown">
               <QuickLinkPopover
                 isPl={!!isPl}
                 nodeId={nodeId}
@@ -656,7 +656,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             <Sparkles size={13} />
           </button>
           {openDropdown === 'ai' && (
-            <div className="absolute top-full right-0 mt-1 z-[100]">
+            <div className="absolute top-full right-0 mt-1 z-dropdown">
               <FloatingAIPopover
                 isPl={!!isPl}
                 nodeId={nodeId}

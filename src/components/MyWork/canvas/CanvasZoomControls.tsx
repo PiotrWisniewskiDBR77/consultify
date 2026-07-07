@@ -90,7 +90,7 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
   const zoomPercent = `${Math.round(getZoom() * 100)}%`;
 
   return (
-    <div className="absolute bottom-3 right-3 z-[92] pointer-events-auto">
+    <div className="absolute bottom-3 right-3 z-dropdown pointer-events-auto">
       <div
         className={`flex items-center gap-0.5 px-1.5 py-1 bg-white/90 dark:bg-navy-950/90 backdrop-blur-md dark:backdrop-blur-xl rounded-2xl border border-slate-200/40 dark:border-white/[0.06] shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.35)] ${className}`}
       >
