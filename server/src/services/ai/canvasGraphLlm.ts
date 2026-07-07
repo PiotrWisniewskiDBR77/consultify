@@ -112,6 +112,41 @@ export function isFragmentLabel(label: string, seedText = ''): boolean {
   return false;
 }
 
+/**
+ * Relaxed anti-fragment gate for mind-map SUB-NODES (children). The top-level
+ * anti-fragment rules are too strict for legitimate goal/risk sub-nodes: the
+ * DBR77 prompt asks for "cel+ryzyko" per pillar, and the model naturally writes
+ * them as "cel: wzrost ARR" / "ryzyko: konkurencja" — a lowercase start and a
+ * "cel"/"ryzyko" lead word that the pillar gate treats as a fragment, silently
+ * dropping every sub-node (the live "flat star" bug). Here we ONLY reject a child
+ * that is genuinely useless: empty, or an echoed instruction verb, or a verbatim
+ * multi-word lift of the prompt. Lowercase starts and cel:/ryzyko:/goal:/risk:
+ * leads are ACCEPTED.
+ */
+export function isFragmentChild(label: string, seedText = ''): boolean {
+  const l = clamp(label);
+  if (l.length < 2) return true;
+  // Echoed request wording ("Zrób diagram…") is never a real sub-node.
+  if (INSTRUCTION_TOKENS.test(l)) return true;
+  // A raw ≥3-word verbatim lift of the prompt is a lifted clause, not a concept.
+  if (seedText) {
+    const seedNorm = seedText.replace(/\s+/g, ' ').toLowerCase();
+    const labelNorm = l.toLowerCase();
+    const wordCount = labelNorm.split(' ').filter(Boolean).length;
+    if (wordCount >= 4 && labelNorm.length >= 20 && seedNorm.includes(labelNorm)) return true;
+  }
+  return false;
+}
+
+/** Title-case a cel/ryzyko/goal/risk sub-node lead so it reads cleanly. */
+function tidyChildLabel(label: string): string {
+  const l = clamp(label);
+  return l.replace(
+    /^(cel|ryzyko|goal|risk|objective|threat)([:：])/i,
+    (_m, word: string, sep: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() + sep
+  );
+}
+
 /** Count of labels in `labels` that pass the anti-fragment gate. */
 function acceptedRatio(labels: string[], seedText: string): number {
   if (labels.length === 0) return 0;
@@ -120,20 +155,88 @@ function acceptedRatio(labels: string[], seedText: string): number {
 }
 
 // ── Zod schemas for LLM structured output ────────────────────────────────────
-const MindmapLlmSchema = z.object({
-  center: z.string().describe('Concise central thesis (3-6 words). NOT the full request.'),
-  branches: z
-    .array(
-      z.object({
-        label: z.string().describe('Short semantic pillar label (2-5 words).'),
-        children: z
-          .array(z.string().describe('Short sub-node label (goal or risk, 2-6 words).'))
-          .optional()
-          .default([]),
-      })
-    )
-    .min(1),
-});
+/**
+ * A mind-map child (sub-node). Claude is INCONSISTENT about the shape here — for a
+ * field described as "goal or risk sub-node" it emits EITHER a plain string
+ * ("Cel: runda A") OR an object ({label:'runda A', kind:'goal'} / {text:...} /
+ * {name:...}). The rigid `z.string()` used to REJECT the object form, which failed
+ * `MindmapLlmSchema.parse` for the WHOLE result ⇒ generateMindmapGraph returned
+ * null ⇒ skeleton fallback (the live DBR77 bug: "cel+ryzyko" sub-nodes requested,
+ * model returned objects, map fell back to the garbage skeleton). Coerce any of
+ * the common shapes down to a single string label so parse never fails on them.
+ */
+const MindmapChildSchema = z.preprocess((raw) => {
+  if (raw == null) return '';
+  if (typeof raw === 'string') return raw;
+  if (typeof raw === 'object') {
+    const o = raw as Record<string, unknown>;
+    const base = o.label ?? o.text ?? o.name ?? o.title ?? o.value ?? '';
+    // Preserve a goal/risk KIND prefix when the model split it into its own field
+    // (e.g. {kind:'risk', label:'konkurencja'} → "Ryzyko: konkurencja") so the
+    // sub-node still reads as the cel/ryzyko the prompt asked for.
+    const kind = String(o.kind ?? o.type ?? o.category ?? '').toLowerCase();
+    const label = String(base);
+    if (label && kind && !/[:：]/.test(label)) {
+      if (/goal|cel|objective/.test(kind)) return `Cel: ${label}`;
+      if (/risk|ryzyk|threat|zagro/.test(kind)) return `Ryzyko: ${label}`;
+    }
+    return label;
+  }
+  return String(raw);
+}, z.string());
+
+const MindmapBranchSchema = z.preprocess(
+  // Normalize BEFORE the object schema strips unknown keys: fold the alternate
+  // children-array keys (subnodes/nodes/items) and the explicit goal/risk keyed
+  // shape ({goal, risk}) into a single `children` string[] so a stray key name
+  // never silently drops the sub-nodes (live "flat star" bug).
+  (raw) => {
+    if (!raw || typeof raw !== 'object') return raw;
+    const b = { ...(raw as Record<string, unknown>) };
+    let children: unknown[] = Array.isArray(b.children) ? [...(b.children as unknown[])] : [];
+    if (children.length === 0) {
+      for (const key of ['subnodes', 'subNodes', 'sub_nodes', 'nodes', 'items', 'points']) {
+        const alt = b[key];
+        if (Array.isArray(alt) && alt.length) {
+          children = [...alt];
+          break;
+        }
+      }
+    }
+    const norm = children.map((c) => MindmapChildSchema.parse(c));
+    const goal = b.goal ?? b.cel;
+    const risk = b.risk ?? b.ryzyko;
+    if (goal && !norm.some((c) => /^cel[:：]/i.test(String(c)))) norm.push(`Cel: ${String(goal)}`);
+    if (risk && !norm.some((c) => /^ryzyko[:：]/i.test(String(c)))) norm.push(`Ryzyko: ${String(risk)}`);
+    b.children = norm;
+    return b;
+  },
+  z.object({
+    label: z.string().describe('Short semantic pillar label (2-5 words).'),
+    children: z
+      .array(MindmapChildSchema.describe('Sub-node label (goal or risk, 2-6 words).'))
+      .optional()
+      .default([]),
+  })
+);
+
+const MindmapLlmSchema = z.preprocess(
+  // Accept alternate top-level keys for the center thesis and the pillar array so
+  // a "thesis"/"title" center or a "pillars"/"nodes" array does not fail parse.
+  (raw) => {
+    if (!raw || typeof raw !== 'object') return raw;
+    const o = { ...(raw as Record<string, unknown>) };
+    if (o.center == null) o.center = o.thesis ?? o.title ?? o.topic ?? o.root ?? o.central ?? '';
+    if (!Array.isArray(o.branches)) {
+      o.branches = o.pillars ?? o.nodes ?? o.themes ?? o.children ?? o.branches;
+    }
+    return o;
+  },
+  z.object({
+    center: z.string().describe('Concise central thesis (3-6 words). NOT the full request.'),
+    branches: z.array(MindmapBranchSchema).min(1),
+  })
+);
 
 const ProcessFlowLlmSchema = z.object({
   steps: z
@@ -224,7 +327,8 @@ export interface LlmGraph {
 async function callStructured<T>(
   schema: z.ZodSchema<T>,
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  temperature = 0.4
 ): Promise<T | null> {
   const llm = await getLLM();
   if (!llm) return null;
@@ -236,7 +340,7 @@ async function callStructured<T>(
       systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],
       maxTokens: 2048,
-      temperature: 0.4,
+      temperature,
       cache: false,
       timeoutMs: LLM_TIMEOUT_MS,
     });
@@ -253,21 +357,23 @@ async function callStructured<T>(
 
 // ── MIND MAP ─────────────────────────────────────────────────────────────────
 const MINDMAP_SYSTEM_PL = `Jesteś ekspertem tworzącym mapy myśli w standardzie doradczym (McKinsey/BCG).
-Z prośby użytkownika zbuduj HIERARCHICZNĄ mapę myśli:
+Z prośby użytkownika zbuduj HIERARCHICZNĄ, 2-poziomową mapę myśli:
 - "center": ZWIĘZŁA teza (3-6 słów), NIE cała treść prośby, NIE instrukcja.
-- "branches": filary tematu. Liczba filarów = liczba wskazana lub sensowna (3-6).
-- każdy filar może mieć "children": pod-węzły (np. cel + ryzyko), jeśli o to proszono.
-ZASADY: etykiety KRÓTKIE, semantyczne, zaczynają się WIELKĄ literą, są rzeczownikowe/nominalne.
-ZAKAZ: kopiowania fragmentów zdań, etykiet zaczynających się od "z ", "aż ", "każdy ", "oraz ".
+- "branches": filary tematu. Liczba filarów = liczba wskazana lub sensowna (3-6). Użyj DOKŁADNIE tych filarów, które wymieniono w prośbie.
+- każdy filar MA "children": tablicę KRÓTKICH ŁAŃCUCHÓW (nie obiektów!). Gdy prośba prosi o cel+ryzyko, wpisz np. "Cel: wzrost ARR" i "Ryzyko: konkurencja" (z prefiksem "Cel:"/"Ryzyko:" i wielką literą).
+FORMAT: children to LISTA STRINGÓW, np. "children": ["Cel: ...", "Ryzyko: ..."]. NIE zwracaj obiektów {label,...} ani osobnych pól goal/risk.
+ZASADY: etykiety KRÓTKIE, semantyczne, rzeczownikowe. Filary WIELKĄ literą.
+ZAKAZ: kopiowania fragmentów zdań, filarów zaczynających się od "z ", "aż ", "każdy ", "oraz ".
 Odpowiedz w języku prośby.`;
 
 const MINDMAP_SYSTEM_EN = `You are an expert building consulting-grade mind maps (McKinsey/BCG).
-From the user's request build a HIERARCHICAL mind map:
+From the user's request build a HIERARCHICAL, 2-level mind map:
 - "center": a CONCISE thesis (3-6 words), NOT the whole request, NOT the instruction.
-- "branches": the pillars. Number of pillars = as requested or sensible (3-6).
-- each pillar may carry "children": sub-nodes (e.g. goal + risk) when asked.
-RULES: labels SHORT, semantic, Capitalized, noun-phrase-like.
-FORBIDDEN: copying sentence fragments, labels starting with "with ", "and ", "each ".
+- "branches": the pillars. Number of pillars = as requested or sensible (3-6). Use EXACTLY the pillars named in the request.
+- each pillar HAS "children": an array of SHORT STRINGS (not objects!). When goal+risk is asked for, write e.g. "Goal: grow ARR" and "Risk: competition" (a "Goal:"/"Risk:" prefix, Capitalized).
+FORMAT: children is a LIST OF STRINGS, e.g. "children": ["Goal: ...", "Risk: ..."]. Do NOT return {label,...} objects or separate goal/risk fields.
+RULES: labels SHORT, semantic, noun-phrase-like. Pillars Capitalized.
+FORBIDDEN: copying sentence fragments, pillars starting with "with ", "and ", "each ".
 Answer in the language of the request.`;
 
 export async function generateMindmapGraph(
@@ -315,8 +421,11 @@ export async function generateMindmapGraph(
     edges.push({ id: `e-center-${pillarId}`, source: 'center', target: pillarId });
 
     (branch.children || []).forEach((childRaw, j) => {
-      const cLabel = clamp(childRaw);
-      if (!cLabel || isFragmentLabel(cLabel, seedText)) return;
+      // Sub-nodes use the RELAXED gate (isFragmentChild): the strict pillar gate
+      // wrongly rejected legitimate "cel: …"/"ryzyko: …" sub-nodes (lowercase +
+      // lead word), which flattened the map to a bare star. Tidy the lead word.
+      const cLabel = tidyChildLabel(childRaw);
+      if (!cLabel || isFragmentChild(cLabel, seedText)) return;
       const childId = `branch-${i + 1}-${j + 1}`;
       const cAngle = angle + (j - 0.5) * 0.4;
       nodes.push({
@@ -537,12 +646,22 @@ export async function generateWhiteboardGraph(
 const TABLE_SYSTEM_PL = `Jesteś ekspertem porządkującym dane w tabelę. Z prośby zbuduj wiersze:
 - "rows": realne wiersze wg tematu prośby. "label" = główna wartość wiersza.
   Uzupełnij "status" i "priority" sensownie. "notes" opcjonalnie (1 linia).
-ZAKAZ: fragmentów prośby jako etykiet wierszy. Odpowiedz w języku prośby.`;
+KRYTYCZNE — WIERNOŚĆ WEJŚCIU: wiersze MUSZĄ być KONKRETNYMI encjami wskazanymi w prośbie.
+Gdy prośba wymienia portfel/pozycje/inicjatywy (np. "INI-0..5", "Kapitał, Talent, Produkt, Delivery, Popyt, DACH")
+— KAŻDY z tych elementów to jeden wiersz, z DOKŁADNIE tą nazwą. Zachowaj identyfikatory i nazwy z prośby.
+ZAKAZ: fragmentów prośby jako etykiet wierszy ORAZ zmyślania generycznych, podręcznikowych wierszy
+(np. "Modernizacja CRM", "Automatyzacja HR"), których w prośbie NIE MA. Zero halucynacji.
+Odpowiedz w języku prośby.`;
 
 const TABLE_SYSTEM_EN = `You are a data-structuring expert. From the request build table rows:
 - "rows": real rows per the request topic. "label" = the primary row value.
   Fill "status" and "priority" sensibly. "notes" optional (1 line).
-FORBIDDEN: request fragments as row labels. Answer in the language of the request.`;
+CRITICAL — FAITHFULNESS TO INPUT: rows MUST be the CONCRETE entities named in the request.
+When the request names a portfolio/items/initiatives (e.g. "INI-0..5", "Capital, Talent, Product, Delivery, Demand, DACH")
+— EACH one is a row, with EXACTLY that name. Preserve the identifiers and names from the request.
+FORBIDDEN: request fragments as row labels AND inventing generic, textbook rows
+(e.g. "CRM Modernization", "HR Automation") that are NOT in the request. Zero hallucination.
+Answer in the language of the request.`;
 
 export async function generateTableGraph(
   intent: string,
@@ -551,10 +670,20 @@ export async function generateTableGraph(
 ): Promise<LlmGraph | null> {
   const seedText = String(intent || title || '').trim();
   if (!seedText) return null;
+  // Fidelity-augmented user message (same shape as generateNoteContent): re-state
+  // the topic + a hard reminder to use the request's OWN entities/rows, not generic
+  // textbook rows. Without this the model drifted into "Modernizacja CRM" filler.
+  const tableUserPrompt = `${title ? `${isPolish ? 'Temat' : 'Topic'}: ${title}\n\n` : ''}${seedText}\n\n${
+    isPolish
+      ? '(Zbuduj wiersze WYŁĄCZNIE z encji wymienionych powyżej — te same nazwy/identyfikatory, zero wierszy generycznych spoza wejścia.)'
+      : '(Build rows ONLY from the entities named above — the same names/identifiers, no generic rows outside the input.)'
+  }`;
   const parsed = await callStructured(
     TableLlmSchema,
     isPolish ? TABLE_SYSTEM_PL : TABLE_SYSTEM_EN,
-    seedText
+    tableUserPrompt,
+    // Lower temperature ⇒ less drift into invented generic rows (mirror the note).
+    0.2
   );
   if (!parsed) return null;
 

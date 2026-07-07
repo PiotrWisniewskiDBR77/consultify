@@ -135,6 +135,78 @@ describe('generateMindmapGraph', () => {
     const graph = await generateMindmapGraph('temat', undefined, true);
     expect(graph).toBeNull();
   });
+
+  // ── naprawa-c3: the DBR77 "6 pillars × (cel+ryzyko)" prompt was falling back to
+  // the skeleton. Root cause = (a) schema rejected the child SHAPES Claude emits
+  // (objects / alt keys / goal-risk fields) → whole parse null; (b) the strict
+  // pillar anti-fragment gate dropped legitimate lowercase "cel:"/"ryzyko:" sub-
+  // nodes → flat star. These lock the fixes.
+  const DBR77 =
+    'Stwórz mapę myśli DBR77: centrum 3x revenue, 6 filarów (Kapitał, Talent, Produkt+Moat, Delivery, Popyt, DACH), 2-3 pod-węzły (cel+ryzyko) każdy';
+
+  it('keeps lowercase "cel:"/"ryzyko:" sub-nodes (no flat star)', async () => {
+    mockObject({
+      center: '3x revenue w 30-36 miesięcy',
+      branches: [
+        { label: 'Kapitał', children: ['cel: runda A na skalowanie', 'ryzyko: rozwodnienie'] },
+        { label: 'Talent', children: ['cel: 20 seniorów AI/ML', 'ryzyko: rotacja'] },
+        { label: 'DACH', children: ['cel: 5 klientów', 'ryzyko: regulacje'] },
+      ],
+    });
+    const graph = await generateMindmapGraph(DBR77, undefined, true);
+    expect(graph).toBeTruthy();
+    const subs = graph!.nodes.filter((n) => n.parentId);
+    expect(subs.length).toBe(6); // all cel/ryzyko preserved, NOT dropped
+    // Lead word tidied to Capitalized.
+    expect(subs.every((s) => /^(Cel|Ryzyko):/.test(s.data.label))).toBe(true);
+  });
+
+  it('accepts child OBJECTS {label,kind} (schema no longer parse-fails → skeleton)', async () => {
+    mockObject({
+      center: 'Wzrost 3x',
+      branches: [
+        {
+          label: 'Kapitał',
+          children: [
+            { label: 'runda A', kind: 'goal' },
+            { label: 'rozwodnienie', kind: 'risk' },
+          ],
+        },
+      ],
+    });
+    const graph = await generateMindmapGraph(DBR77, undefined, true);
+    expect(graph).toBeTruthy();
+    const subs = graph!.nodes.filter((n) => n.parentId).map((n) => n.data.label);
+    expect(subs).toContain('Cel: runda A');
+    expect(subs).toContain('Ryzyko: rozwodnienie');
+  });
+
+  it('folds alternate keys (subnodes / goal+risk) into children', async () => {
+    mockObject({
+      center: 'Wzrost 3x',
+      branches: [
+        { label: 'Kapitał', subnodes: ['Cel: runda A', 'Ryzyko: rozwodnienie'] },
+        { label: 'Talent', goal: 'seniorzy AI', risk: 'rotacja' },
+      ],
+    });
+    const graph = await generateMindmapGraph(DBR77, undefined, true);
+    expect(graph).toBeTruthy();
+    const subs = graph!.nodes.filter((n) => n.parentId).map((n) => n.data.label);
+    expect(subs).toContain('Cel: runda A');
+    expect(subs).toContain('Cel: seniorzy AI');
+    expect(subs).toContain('Ryzyko: rotacja');
+  });
+
+  it('accepts an alternate center key ("thesis") + "pillars" array', async () => {
+    mockObject({
+      thesis: 'Wzrost 3x',
+      pillars: [{ label: 'Kapitał', children: ['Cel: runda A'] }],
+    });
+    const graph = await generateMindmapGraph(DBR77, undefined, true);
+    expect(graph).toBeTruthy();
+    expect(graph!.nodes.find((n) => n.type === 'center')?.data.label).toBe('Wzrost 3x');
+    expect(graph!.nodes.filter((n) => n.parentId).length).toBe(1);
+  });
 });
 
 // ── PROCESS FLOW ─────────────────────────────────────────────────────────────
@@ -266,6 +338,32 @@ describe('generateTableGraph', () => {
   it('returns null on LLM failure', async () => {
     callMock.mockRejectedValueOnce(new Error('down'));
     expect(await generateTableGraph('x', undefined, true)).toBeNull();
+  });
+
+  // ── naprawa-c3 (DEFEKT #2): table must reflect the prompt's OWN entities. This
+  // verifies the fidelity plumbing carries the real INI-0..5 portfolio rows
+  // through (and the anti-fragment gate does not drop identifier-prefixed rows).
+  it('preserves the prompt portfolio entities as rows (INI-0..5 DBR77)', async () => {
+    mockObject({
+      rows: [
+        { label: 'INI-0 Kapitał', status: 'in_progress', priority: 'High' },
+        { label: 'INI-1 Talent', status: 'todo', priority: 'High' },
+        { label: 'INI-2 Produkt+Moat', status: 'todo', priority: 'Critical' },
+        { label: 'INI-3 Delivery', status: 'todo', priority: 'Medium' },
+        { label: 'INI-4 Popyt', status: 'todo', priority: 'High' },
+        { label: 'INI-5 DACH', status: 'todo', priority: 'Medium' },
+      ],
+    });
+    const graph = await generateTableGraph(
+      'Tabela portfela DBR77: INI-0 Kapitał, INI-1 Talent, INI-2 Produkt+Moat, INI-3 Delivery, INI-4 Popyt, INI-5 DACH',
+      'Portfel DBR77',
+      true
+    );
+    expect(graph).toBeTruthy();
+    const labels = graph!.nodes.map((n) => n.data.label);
+    for (const id of ['INI-0', 'INI-1', 'INI-2', 'INI-3', 'INI-4', 'INI-5']) {
+      expect(labels.some((l) => l.includes(id))).toBe(true);
+    }
   });
 });
 
