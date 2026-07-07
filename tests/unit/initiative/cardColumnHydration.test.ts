@@ -333,6 +333,97 @@ describe('buildTypedColumnUpdates — FIX 1b (ROI/budget z narracji)', () => {
   });
 });
 
+// ── FIX R5 — próbki 1:1 z ŻYWEGO demo (2026-07-07) ────────────────────────────
+// financialImpact skopiowany dosłownie z GET /api/initiatives/{INI-1,INI-2} na
+// demo.consultify.ai. Chroni przed regresją dwóch defektów zmierzonych na żywo:
+//   (a) expected_roi = NULL mimo „ROI 2.5-3.5x" (zakres z myślnikiem gubiony),
+//   (b) estimated_budget = 40 (śmieć z „redukcję kosztów o 40%").
+describe('buildTypedColumnUpdates — FIX R5 (próbki z żywego demo 2026-07-07)', () => {
+  // INI-2 (DACH) — GET /api/initiatives/cb9fc880-047b-4576-a4c8-2e97593e14f6
+  const INI2_FINANCIAL = {
+    revenueImpact:
+      'Dodatkowy przychód 2.1-4.2M PLN rocznie od roku 3 (szacunek; zakładając zdobycie 0.5-1% udziału w niemieckim segmencie Industry 4.0 wartym €3.2B, przy średniej wartości kontraktu 150-300K PLN/rok dla firm Mittelstand). Stanowi to 62-124% wzrost względem obecnego przychodu 3.4M PLN.',
+    costSavings:
+      'Oszczędności operacyjne 200-350K PLN rocznie od roku 2 (szacunek; zakładając redukcję kosztów akwizycji klienta o 40% dzięki efektowi skali i referencjom, plus optymalizację kosztów wsparcia przez lokalizację). Równowartość ~6-10% obecnych kosztów operacyjnych organizacji.',
+    benefitsRealization:
+      'Faza 1 (miesiące 1-12): koszty inwestycyjne 800K-1.2M PLN bez zwrotu. Faza 2 (rok 2): pierwsze kontrakty pilotażowe 300-500K PLN przychodu. Faza 3 (lata 3-5): pełna materializacja - ROI 2.5-3.5x przy założeniu utrzymania 15-25 klientów niemieckich średniej wielkości. Próg rentowności w miesiącu 18-24.',
+  };
+
+  // INI-1 — GET /api/initiatives/836e4f12-2f55-4580-9caa-5318797d9948
+  const INI1_FINANCIAL = {
+    revenueImpact:
+      '~2.1M PLN rocznie od Q3 2027 (szacunek; zakładając 10 klientów × 17.5K PLN ARR średnio), co stanowi ~62% wzrost przychodów względem bazy FY2025 3.4M PLN. Potencjał skalowania do 5-7M PLN w roku 2028 przy 30+ klientach.',
+    costSavings:
+      '~180K PLN rocznie od Q4 2027 z redukcji kosztów delivery (szacunek; zakładając eliminację 60% custom development per klient dzięki self-serve SaaS vs obecny bespoke model). Dodatkowe oszczędności ~120K PLN z optymalizacji support przy skalowaniu.',
+    benefitsRealization:
+      'Przychody: pierwsze płatności Q3 2027 (3 miesiące po GA), pełny ARR od Q4 2027. Oszczędności delivery: stopniowo od Q2 2027 wraz z migracją klientów na SaaS. Break-even produktu: Q1 2028. Pełna rentowność inicjatywy: Q2 2028 z accumulated revenue ~3.2M PLN vs szacowane nakłady development+marketing ~1.8M PLN.',
+  };
+
+  it('INI-2: expected_roi wyłuskuje ZAKRES "ROI 2.5-3.5x" (regresja: myślnik gubił match)', () => {
+    const ups = buildTypedColumnUpdates(
+      { financialImpact: JSON.stringify(INI2_FINANCIAL) },
+      ALL_COLS,
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.expected_roi).toBe('ROI 2.5-3.5x');
+  });
+
+  it('INI-2: estimated_budget = "koszty inwestycyjne 800K-1.2M PLN" → 800000 (NIE śmieciowe 40 z "o 40%")', () => {
+    const ups = buildTypedColumnUpdates(
+      { financialImpact: JSON.stringify(INI2_FINANCIAL) },
+      ALL_COLS,
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.estimated_budget).toBe('800000');
+    expect(byCol.estimated_budget).not.toBe('40');
+  });
+
+  it('INI-1: expected_roi z break-even/rentowności "Q1 2028" gdy brak jawnego ROI/krotności', () => {
+    const ups = buildTypedColumnUpdates(
+      { financialImpact: JSON.stringify(INI1_FINANCIAL) },
+      ALL_COLS,
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.expected_roi).toBe('rentowność Q1 2028');
+  });
+
+  it('INI-1: estimated_budget bierze "nakłady … ~1.8M PLN" (priorytet nad "kosztów delivery … 2.1M")', () => {
+    const ups = buildTypedColumnUpdates(
+      { financialImpact: JSON.stringify(INI1_FINANCIAL) },
+      ALL_COLS,
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.estimated_budget).toBe('1800000');
+  });
+
+  it('ANTY-TEST śmieć: gole "o 40%" przy słowie "koszt" → estimated_budget PUSTY (nie 40)', () => {
+    const ups = buildTypedColumnUpdates(
+      {
+        financialImpact: JSON.stringify({
+          costSavings: 'Redukcja kosztów akwizycji klienta o 40% dzięki efektowi skali.',
+          benefitsRealization: 'Korzyści jakościowe, marża wzrasta o 15%.',
+        }),
+      },
+      ALL_COLS,
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.estimated_budget).toBeUndefined();
+  });
+
+  it('ANTY-TEST: gola liczba bez markera "40 jednostek" nie jest budżetem', () => {
+    const ups = buildTypedColumnUpdates(
+      {
+        financialImpact: JSON.stringify({
+          revenueImpact: 'Koszt operacyjny wynosi 40 jednostek miesięcznie.',
+        }),
+      },
+      ALL_COLS,
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.estimated_budget).toBeUndefined();
+  });
+});
+
 describe('toUpdateSql', () => {
   it('produces a SET clause + ordered params', () => {
     const { setClause, params } = toUpdateSql([

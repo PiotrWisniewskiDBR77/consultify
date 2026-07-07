@@ -67,6 +67,30 @@ function stripLeadingHeaderGlitch(v: string): string {
       .replace(/^[:.\-–—]+\s*/, '') // wiodący ": " / "- " / "– "
       .trim();
   } while (s !== prev);
+
+  // FIX (naprawa-r5Extract) — glitch NIEROZ z POCZĄTKU: na żywych decyzjach
+  // (demo 2026-07-07) parser bloku „**Nagłówek** treść" zjadał OTWIERAJĄCE „**",
+  // ale ZAMYKAJĄCE zostawało przyklejone do pierwszej frazy:
+  //   „Strategia hybrydowa "Partner + Selective Build"** — …"
+  //   „…selective direct sales**\n\nRozpocząć…"
+  // Gdy liczba „**" jest NIEPARZYSTA, ocalał osierocony marker → usuń PIERWSZY
+  // (to zamknięcie nagłówka, który już zdjęliśmy z przodu). Zbalansowane „**bold**"
+  // (parzyste) zostaje NIETKNIĘTE.
+  if (((s.match(/\*\*/g) || []).length) % 2 === 1) {
+    s = s.replace(/\*\*/, '');
+  }
+
+  // TRAILING glitch: osierocone „**"/„*"/wiszący „:" na KOŃCU wartości. (Cudzysłów
+  // NIE jest tu ruszany — bywa legalnym domknięciem frazy, jak „Build".)
+  do {
+    prev = s;
+    s = s
+      .replace(/\s*\*\*\s*$/, '') // wiszące „**"
+      .replace(/\s*\*\s*$/, '') // wiszące „*"
+      .replace(/[\s:]+$/, '') // wiszący „:" / białe znaki
+      .trim();
+  } while (s !== prev);
+
   return s;
 }
 

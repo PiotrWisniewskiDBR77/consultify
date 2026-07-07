@@ -50,6 +50,24 @@ describe('stripLeadingHeaderGlitch (defekt #1)', () => {
       'Wdrożyć **Azure** natychmiast.',
     );
   });
+
+  // FIX R5 — glitch z KOŃCA / osierocony „**" (próbki 1:1 z żywego demo 2026-07-07).
+  it('usuwa osierocony "**" po frazie nagłówka (dec1: Selective Build"** — …)', () => {
+    expect(
+      stripLeadingHeaderGlitch(
+        'Strategia hybrydowa "Partner + Selective Build"** — partnerstwo OEM z dostawcą platformy.',
+      ),
+    ).toBe('Strategia hybrydowa "Partner + Selective Build" — partnerstwo OEM z dostawcą platformy.');
+  });
+  it('usuwa osierocony "**" przed łamaniem linii (dec2: direct sales**\\n\\nRozpocząć…)', () => {
+    expect(
+      stripLeadingHeaderGlitch('model hybrydowy partner/reseller + selective direct sales**\n\nRozpocząć od partnerstwa.'),
+    ).toBe('model hybrydowy partner/reseller + selective direct sales\n\nRozpocząć od partnerstwa.');
+  });
+  it('usuwa wiszące "**" / ":" z końca wartości', () => {
+    expect(stripLeadingHeaderGlitch('Wdrożyć teraz**')).toBe('Wdrożyć teraz');
+    expect(stripLeadingHeaderGlitch('Rekomendacja: zrób X:')).toBe('Rekomendacja: zrób X');
+  });
 });
 
 // ── consequences + recommendation + rationale (prose) ────────────────────────
