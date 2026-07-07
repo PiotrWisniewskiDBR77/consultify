@@ -10,15 +10,16 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
+import { flagOn } from '../utils/pgFlags.js';
 import { llmService } from './ai/llmService.js';
 import {
-  validateInsightCard,
   buildRepairBriefFromVerdict,
   type FormulaVerdict,
+  validateInsightCard,
 } from './cardContentFormulaValidator.js';
 import { canonicalizeContextDocumentStatus } from './organizationContext/ContextDocumentService.js';
 import organizationContextService from './organizationContext/OrganizationContextService.js';
-import { flagOn } from '../utils/pgFlags.js';
+import { P10_CONFIDENCE_LEVELS, P10_NO_OVERCLAIM_RULES } from './v8/interviewInsightCanon.js';
 
 // ==========================================
 // TYPES
@@ -402,7 +403,46 @@ export interface Insight {
 // PROMPT TEMPLATES
 // ==========================================
 
-const PROMPT_TEMPLATES: Record<InsightPromptType, string> = {
+/**
+ * BCG §0 doctrine + P10 finding contract — shared preamble injected into the
+ * live structured-output prompt (and appended to each markdown template body).
+ *
+ * Source of truth for the doctrine: `_ARTEFAKTY_TRESC_KART_BCG_2026-07-06.md`
+ * §0 (BCG hard rules) + §4 (Insight, rule P10). The P10 vocabulary itself is
+ * pulled from the canon (`interviewInsightCanon.ts`) so this stays consistent
+ * with `P10_CONFIDENCE_LEVELS` / `P10_NO_OVERCLAIM_RULES` rather than duplicating
+ * a hand-written copy that could drift.
+ *
+ * This shapes the CONTENT of the analysis; it does NOT change the output FORMAT
+ * (the JSON structured contract below is untouched).
+ */
+const BCG_P10_PROMPT_DOCTRINE = `BCG-GRADE DOCTRINE (hard rules — a deliverable that breaks these is a FAIL):
+1. Answer-first / Pyramid Principle — lead every finding with the conclusion, then the evidence.
+2. MECE — themes, issues and opportunities are mutually exclusive and collectively exhaustive; no overlap.
+3. Quantify with an explicit assumption — every number carries a source OR an "estimate: [assumption]" tag; never bare numbers.
+4. Grounded — use ONLY the interview material and provided context; never invent facts about the company.
+5. Zero filler — no "in today's fast-moving world", no ornament; every sentence carries information.
+6. Falsifiability — phrase theses testably ("If X, then Y, because Z"), not wishfully.
+7. Honest about uncertainty — when the material is thin, single-perspective or contradictory, say so in limits.
+8. Client's language — business specifics over gratuitous jargon.
+
+P10 FINDING CONTRACT (every finding — theme / issue / opportunity / signal):
+- Each finding MUST carry: a confidence_level (one of: ${P10_CONFIDENCE_LEVELS.join(' | ')}), limits[] (what would break it), and evidence_refs[] (answer_ids).
+- "high" confidence requires triangulation: 3+ evidence pointers from different sources/segments with no contradictions. Otherwise cap at "medium" or lower.
+- No overclaim: ${P10_NO_OVERCLAIM_RULES.join(' ')}
+- Prefer "A correlates with B in this context" over "A causes B" unless confidence is high with explicit evidence.`;
+
+/** BCG §4 structural emphasis per Insight readout section (content, not format). */
+const INSIGHT_SECTION_BCG_GUIDANCE = `SECTION-LEVEL EMPHASIS (BCG §4 — Insight):
+- Executive Summary: 1 C-level page, BLUF. 3-5 findings, each one answer-first sentence + its implication. No methodology.
+- Consulting Readout: full Pyramid readout — situation → key signals → stable vs. fragile → open questions → recommended directions.
+- Themes: cross-session patterns (not single utterances); each has confidence, evidence_refs, limits, and a divergence_note when perspectives differ.
+- Issues & Risks: pain point + severity + root cause + impact; triangulated — no quote/evidence, no entry.
+- Opportunity Spaces: opportunity + impact + "quick win vs. strategic" + feasibility condition.
+- Between the Lines (implicit assumptions, silences, power dynamics, consensus/divergence): analytic depth on what was NOT said; usually low confidence → label as hypotheses.
+- Evidence Map: map every finding → concrete answer_ids; this is the credibility floor — keep it HIGH confidence.`;
+
+const PROMPT_TEMPLATES_BASE: Record<InsightPromptType, string> = {
   summary: `Analyze the following interview responses and provide a comprehensive summary.
 
 Structure your response as follows:
@@ -595,6 +635,27 @@ Interview Data:
 
 Provide the analysis in a clear, professional consulting format using markdown. Label all inferred signals as hypotheses, not facts.`,
 };
+
+/**
+ * PROMPT_TEMPLATES — each base template enriched with the shared BCG §0 doctrine
+ * + P10 finding contract. The FIRST LINE of every template is preserved verbatim
+ * (it is used elsewhere as the analysis `focusHint`), and the JSON structured
+ * output contract is untouched — this only enriches the content instructions the
+ * model is asked to satisfy. The doctrine is inserted right before the
+ * `Interview Data:` marker so it applies to the analysis but not the data block.
+ */
+const PROMPT_TEMPLATES: Record<InsightPromptType, string> = Object.fromEntries(
+  (Object.keys(PROMPT_TEMPLATES_BASE) as InsightPromptType[]).map((type) => {
+    const base = PROMPT_TEMPLATES_BASE[type];
+    const doctrine = `\n\n${BCG_P10_PROMPT_DOCTRINE}\n\n${INSIGHT_SECTION_BCG_GUIDANCE}\n`;
+    // Insert before the "Interview Data:" marker when present; otherwise append.
+    const marker = 'Interview Data:';
+    const enriched = base.includes(marker)
+      ? base.replace(marker, `${doctrine.trim()}\n\n${marker}`)
+      : `${base}${doctrine}`;
+    return [type, enriched];
+  })
+) as Record<InsightPromptType, string>;
 
 const DEFAULT_ANALYSIS_MODE: InsightAnalysisMode = 'general_consulting_synthesis';
 const DEFAULT_CONTEXT_MODE: InsightContextMode = 'selected_interview_material_only';
@@ -1863,6 +1924,10 @@ CROSS-SESSION ANALYSIS (${sessionCount} respondents):
     })();
 
     let prompt = `You are analyzing interview data. Your analysis focus: ${focusHint}
+
+${BCG_P10_PROMPT_DOCTRINE}
+
+${INSIGHT_SECTION_BCG_GUIDANCE}
 
 Insight Scope:
 ${scopeBlock}
