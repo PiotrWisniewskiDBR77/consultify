@@ -268,7 +268,7 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200/60 dark:border-navy-700/60">
-          <Presentation size={16} className="text-primary-500" />
+          <Presentation size={16} className="text-c-info" />
           <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
             {isPl ? 'Eksport do prezentacji' : 'Export to Presentation'}
           </span>
@@ -296,7 +296,7 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
                   type="checkbox"
                   checked={slide.enabled}
                   onChange={() => toggleSlide(slide.type)}
-                  className="w-4 h-4 rounded border-slate-300 text-primary-500 focus:ring-primary-500"
+                  className="w-4 h-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
                 />
                 <span className="text-slate-500">{slide.icon}</span>
                 <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
@@ -335,7 +335,7 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
             <button
               onClick={handleExport}
               disabled={exporting || slides.filter((s) => s.enabled).length === 0}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-primary-500/10 to-crimson-500/10 text-primary-600 dark:text-primary-400 hover:from-primary-500/20 hover:to-crimson-500/20 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-c-info/10 text-c-info hover:bg-c-info/20 transition-colors disabled:opacity-50"
             >
               {exporting ? (
                 <Loader2 size={12} className="animate-spin" />

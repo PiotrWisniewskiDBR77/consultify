@@ -142,7 +142,7 @@ export const IdeaCanvasToolSelector: React.FC<IdeaCanvasToolSelectorProps> = ({
                 isDisabled
                   ? 'opacity-40 cursor-not-allowed'
                   : isActive
-                    ? 'bg-white dark:bg-navy-700 text-primary-600 dark:text-primary-400 shadow-sm scale-105'
+                    ? 'bg-white dark:bg-navy-700 text-c-info shadow-sm scale-105'
                     : 'hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700/50 hover:scale-105 active:scale-95'
               }
             `}

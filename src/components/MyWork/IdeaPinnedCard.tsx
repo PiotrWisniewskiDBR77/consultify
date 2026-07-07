@@ -244,7 +244,7 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
               className={`text-[10px] font-bold transition-colors ${
                 advanceBlocked
                   ? 'text-slate-600 dark:text-slate-400 cursor-not-allowed'
-                  : 'text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300'
+                  : 'text-c-info hover:text-c-info/80'
               }`}
             >
               {isPl
@@ -262,7 +262,7 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
           {onEdit && (
             <button
               onClick={onEdit}
-              className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+              className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 hover:text-c-info transition-colors"
             >
               {isPl ? 'Edytuj kartę' : 'Edit card'}
             </button>
@@ -270,7 +270,7 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
           {onAISummarize && (
             <button
               onClick={onAISummarize}
-              className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary-500 dark:text-primary-400 hover:text-primary-600 dark:hover:text-primary-300 transition-colors"
+              className="inline-flex items-center gap-1 text-[10px] font-semibold text-c-info hover:text-c-info/80 transition-colors"
             >
               <Sparkles size={10} />
               {isPl ? 'AI podsumowanie' : 'AI summarize'}

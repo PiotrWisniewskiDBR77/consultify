@@ -28,18 +28,18 @@ export const SummaryCardNode: React.FC<NodeProps> = ({ data, selected }) => {
     <div
       className={`relative w-[220px] p-3 rounded-2xl border-2 transition-all ${
         selected
-          ? 'border-primary-400 ring-2 ring-primary-400/30 shadow-lg'
-          : 'border-primary-200 dark:border-primary-800/40 shadow-md'
-      } bg-gradient-to-br from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20`}
+          ? 'border-c-info ring-2 ring-c-info/30 shadow-lg'
+          : 'border-c-info/20 shadow-md'
+      } bg-gradient-to-br from-c-info/5 to-c-info/5 dark:from-c-info/10 dark:to-c-info/10`}
     >
-      <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-primary-400 !-top-1" />
+      <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-c-info !-top-1" />
 
       {/* Header */}
       <div className="flex items-center gap-1.5 mb-2">
-        <div className="w-5 h-5 rounded-lg bg-primary-500/20 flex items-center justify-center">
-          <FileText size={10} className="text-primary-600 dark:text-primary-400" />
+        <div className="w-5 h-5 rounded-lg bg-c-info/20 flex items-center justify-center">
+          <FileText size={10} className="text-c-info" />
         </div>
-        <div className="text-[10px] font-bold text-primary-700 dark:text-primary-300 uppercase tracking-wider flex-1 truncate">
+        <div className="text-[10px] font-bold text-c-info uppercase tracking-wider flex-1 truncate">
           {title}
         </div>
       </div>
@@ -72,7 +72,7 @@ export const SummaryCardNode: React.FC<NodeProps> = ({ data, selected }) => {
           {themes.slice(0, 4).map((theme, i) => (
             <span
               key={i}
-              className="inline-block px-1.5 py-0.5 rounded-full text-[8px] font-semibold bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400"
+              className="inline-block px-1.5 py-0.5 rounded-full text-[8px] font-semibold bg-c-info/15 text-c-info"
             >
               {theme}
             </span>
@@ -86,7 +86,7 @@ export const SummaryCardNode: React.FC<NodeProps> = ({ data, selected }) => {
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!w-2 !h-2 !bg-primary-400 !-bottom-1"
+        className="!w-2 !h-2 !bg-c-info !-bottom-1"
       />
     </div>
   );

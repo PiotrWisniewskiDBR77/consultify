@@ -38,7 +38,7 @@ export const OBJECT_FAMILY_ICONS: Record<ObjectFamily, string> = {
 
 export const OBJECT_FAMILY_COLORS: Record<ObjectFamily, string> = {
   mindmap: 'text-amber-500',
-  whiteboard: 'text-primary-500',
+  whiteboard: 'text-violet-500',
   process_flow: 'text-sky-500',
   table: 'text-emerald-500',
   knowledge: 'text-indigo-500',

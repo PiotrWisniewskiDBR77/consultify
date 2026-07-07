@@ -6825,6 +6825,10 @@ export const Api = {
     prompt: string;
     researchContext?: string;
     language?: string;
+    // P-2: when generated as the real .xlsx for an existing artifact run,
+    // pass the run id so the backend adopts the single canonical Outputs card
+    // instead of creating a duplicate (split-brain fix for the excele lane).
+    artifactRunId?: string;
   }): Promise<any> => {
     const res = await fetch(`${API_URL}/workbook/generate`, {
       method: 'POST',

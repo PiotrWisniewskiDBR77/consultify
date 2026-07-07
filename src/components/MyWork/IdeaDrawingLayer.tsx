@@ -304,7 +304,7 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
                 title={c}
                 className={`w-4 h-4 rounded-full border transition-all ${
                   color === c
-                    ? 'ring-2 ring-primary-500 ring-offset-1 scale-110'
+                    ? 'ring-2 ring-c-info ring-offset-1 scale-110'
                     : 'border-slate-300 dark:border-navy-600'
                 }`}
                 style={{ backgroundColor: c }}
@@ -399,7 +399,7 @@ const ToolBtn: React.FC<{
     aria-pressed={active}
     className={`p-1.5 rounded-lg transition-all ${
       active
-        ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+        ? 'bg-c-info/10 text-c-info'
         : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
     }`}
     title={label}

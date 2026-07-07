@@ -238,7 +238,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
                     max={100}
                     value={w.weight}
                     onChange={(e) => handleWeightChange(w.colKey, Number(e.target.value))}
-                    className="flex-1 accent-primary-500 h-1.5"
+                    className="flex-1 accent-c-info h-1.5"
                   />
                   <span className="text-[10px] font-bold text-c-text-secondary w-8 text-right">
                     {w.weight}%

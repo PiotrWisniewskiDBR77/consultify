@@ -321,7 +321,7 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
 
       {!isOnNode && (
         <div className="px-3 py-1.5 border-b border-slate-200/30 dark:border-white/[0.04]">
-          <div className="text-[10px] font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1">
+          <div className="text-[10px] font-bold text-c-info flex items-center gap-1">
             <Sparkles size={10} />
             {isPl ? 'Akcje AI' : 'AI Actions'}
           </div>
@@ -337,12 +337,12 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
             type="button"
             onClick={() => handleAction(item)}
             disabled={!isAccepted || !!loadingId}
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors disabled:opacity-40"
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-c-info/10 transition-colors disabled:opacity-40"
           >
             {isLoading ? (
-              <Loader2 size={14} className="animate-spin text-primary-500 shrink-0" />
+              <Loader2 size={14} className="animate-spin text-c-info shrink-0" />
             ) : (
-              <Icon size={14} className="text-primary-500 shrink-0" />
+              <Icon size={14} className="text-c-info shrink-0" />
             )}
             <span>{isPl ? item.labelPl : item.labelEn}</span>
           </button>

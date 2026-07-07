@@ -133,7 +133,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
             setExpanded(true);
             handleAddScene();
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm rounded-xl border border-slate-200/60 dark:border-navy-700/60 shadow-sm text-[10px] font-semibold text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm rounded-xl border border-slate-200/60 dark:border-navy-700/60 shadow-sm text-[10px] font-semibold text-slate-600 dark:text-slate-400 hover:text-c-info transition-colors"
         >
           <Bookmark size={12} />
           {isPl ? 'Zapisz widok' : 'Save view'}
@@ -149,7 +149,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
         <div className="bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm rounded-xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg overflow-hidden">
           <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200/40 dark:border-navy-700/40">
             <div className="flex items-center gap-1.5">
-              <Bookmark size={12} className="text-primary-500" />
+              <Bookmark size={12} className="text-c-info" />
               <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
                 {isPl ? 'Widoki' : 'Scenes'}
               </span>
@@ -159,7 +159,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
               {scenes.length >= 2 && (
                 <button
                   onClick={startPresentation}
-                  className="p-1 rounded-lg text-primary-500 hover:bg-primary-500/10 transition-colors"
+                  className="p-1 rounded-lg text-c-info hover:bg-c-info/10 transition-colors"
                   title={isPl ? 'Prezentacja' : 'Present'}
                 >
                   <Play size={12} />
@@ -169,7 +169,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                 onClick={handleAddScene}
                 aria-label={isPl ? 'Dodaj widok' : 'Add scene'}
                 title={isPl ? 'Dodaj widok' : 'Add scene'}
-                className="p-1 rounded-lg text-slate-600 hover:text-primary-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                className="p-1 rounded-lg text-slate-600 hover:text-c-info hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
               >
                 <Plus size={12} />
               </button>
@@ -202,7 +202,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                       if (e.key === 'Enter') handleRenameScene(scene.id);
                       if (e.key === 'Escape') setEditingId(null);
                     }}
-                    className="flex-1 text-[10px] bg-transparent border-b border-primary-400 outline-none text-slate-700 dark:text-slate-300"
+                    className="flex-1 text-[10px] bg-transparent border-b border-c-info outline-none text-slate-700 dark:text-slate-300"
                     onClick={(e) => e.stopPropagation()}
                   />
                 ) : (
@@ -241,7 +241,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                     }}
                     aria-label={isPl ? 'Zmień nazwę' : 'Rename'}
                     title={isPl ? 'Zmień nazwę' : 'Rename'}
-                    className="p-0.5 text-slate-600 hover:text-primary-500"
+                    className="p-0.5 text-slate-600 hover:text-c-info"
                   >
                     <Edit3 size={10} />
                   </button>

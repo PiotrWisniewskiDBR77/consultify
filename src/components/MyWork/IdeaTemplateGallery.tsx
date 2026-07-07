@@ -2097,7 +2097,7 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
               onClick={() => setScopeFilter(scope)}
               className={`rounded-full px-2.5 py-1 text-[10px] font-semibold transition-colors ${
                 scopeFilter === scope
-                  ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                  ? 'bg-c-info/10 text-c-info'
                   : 'bg-slate-100 text-slate-500 dark:bg-navy-800 dark:text-slate-300'
               }`}
             >
@@ -2112,7 +2112,7 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
                 onClick={() => setCategoryFilter(category)}
                 className={`rounded-full px-2.5 py-1 text-[10px] font-semibold transition-colors ${
                   categoryFilter === category
-                    ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                    ? 'bg-c-info/10 text-c-info'
                     : 'bg-slate-100 text-slate-500 dark:bg-navy-800 dark:text-slate-300'
                 }`}
               >
@@ -2136,10 +2136,10 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
                 return (
                   <div
                     key={template.id}
-                    className="group text-left p-4 rounded-xl border border-slate-200/60 dark:border-navy-700/60 hover:border-primary-400/40 hover:bg-primary-500/[0.02] dark:hover:bg-primary-500/[0.03] transition-all duration-200"
+                    className="group text-left p-4 rounded-xl border border-slate-200/60 dark:border-navy-700/60 hover:border-c-info/40 hover:bg-c-info/[0.02] transition-all duration-200"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-500/10 to-primary-500/10 flex items-center justify-center text-primary-600 dark:text-primary-400 shrink-0">
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-c-info/10 to-c-info/10 flex items-center justify-center text-c-info shrink-0">
                         <Icon size={18} />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -2166,7 +2166,7 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
                           <button
                             onClick={() => handleApply(template)}
                             disabled={!!applying}
-                            className="inline-flex items-center gap-1 text-[9px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors disabled:opacity-50"
+                            className="inline-flex items-center gap-1 text-[9px] font-semibold text-c-info hover:text-c-info/80 transition-colors disabled:opacity-50"
                           >
                             {applying === template.id && !aiFilling
                               ? isPl
@@ -2181,7 +2181,7 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
                             <button
                               onClick={() => handleApply(template, true)}
                               disabled={!!applying}
-                              className="inline-flex items-center gap-1 text-[9px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors disabled:opacity-50"
+                              className="inline-flex items-center gap-1 text-[9px] font-semibold text-c-info hover:text-c-info/80 transition-colors disabled:opacity-50"
                             >
                               {aiFilling === template.id ? (
                                 <Loader2 size={10} className="animate-spin" />

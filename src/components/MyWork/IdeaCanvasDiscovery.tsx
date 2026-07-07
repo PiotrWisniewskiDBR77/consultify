@@ -251,7 +251,7 @@ export const IdeaCanvasDiscovery: React.FC<IdeaCanvasDiscoveryProps> = ({
               title={isPolish ? item.labelPl : item.labelEn}
               className={`group flex h-11 w-11 items-center justify-center rounded-2xl border backdrop-blur-md shadow-lg transition-all ${
                 isActive
-                  ? 'border-primary-400/50 bg-white text-primary-600 dark:border-primary-500/40 dark:bg-navy-900 dark:text-primary-400'
+                  ? 'border-c-info/50 bg-white text-c-info dark:bg-navy-900'
                   : 'border-slate-200/60 bg-white/92 text-slate-500 hover:text-slate-800 dark:border-navy-700/60 dark:bg-navy-900/88 dark:text-slate-400 dark:hover:text-slate-100'
               }`}
             >
@@ -265,7 +265,7 @@ export const IdeaCanvasDiscovery: React.FC<IdeaCanvasDiscoveryProps> = ({
         <div className="absolute left-[4.5rem] top-8 bottom-8 z-[56] w-[320px] overflow-hidden rounded-3xl border border-slate-200/60 bg-white/96 shadow-2xl backdrop-blur-xl dark:border-navy-700/60 dark:bg-navy-900/95">
           <div className="flex items-start justify-between gap-3 border-b border-slate-200/60 px-4 py-4 dark:border-navy-700/60">
             <div className="min-w-0">
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary-500 dark:text-primary-400">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-c-info">
                 Canvas OS
               </div>
               <div className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -321,10 +321,10 @@ export const IdeaCanvasDiscovery: React.FC<IdeaCanvasDiscoveryProps> = ({
                       key={action.id}
                       type="button"
                       onClick={() => handleAction(action)}
-                      className="w-full rounded-2xl border border-slate-200/70 bg-white px-3 py-3 text-left transition-all hover:border-primary-400/40 hover:bg-primary-500/[0.03] dark:border-navy-700/70 dark:bg-navy-950/60 dark:hover:border-primary-500/30 dark:hover:bg-primary-500/[0.05]"
+                      className="w-full rounded-2xl border border-slate-200/70 bg-white px-3 py-3 text-left transition-all hover:border-c-info/40 hover:bg-c-info/[0.03] dark:border-navy-700/70 dark:bg-navy-950/60"
                     >
                       <div className="flex items-start gap-3">
-                        <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-500/10 text-primary-600 dark:text-primary-400">
+                        <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-2xl bg-c-info/10 text-c-info">
                           <Icon size={18} />
                         </div>
                         <div className="min-w-0 flex-1">

@@ -162,7 +162,7 @@ const CATEGORY_CONFIG: Record<
     icon: GitBranch,
     labelPl: 'Sugestie gałęzi',
     labelEn: 'Branch suggestions',
-    color: 'text-primary-600 dark:text-primary-400',
+    color: 'text-c-info',
   },
   row_suggestions: {
     icon: Target,
@@ -411,8 +411,8 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
       title={isPl ? 'Sugestie AI' : 'AI Suggestions'}
       subtitle={isPl ? 'Kontekst firmy + AI' : 'Company context + AI'}
       icon={
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-500/20 to-crimson-500/15 flex items-center justify-center">
-          <MessageSquareWarning size={14} className="text-primary-600 dark:text-primary-400" />
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-c-info/20 to-c-info/15 flex items-center justify-center">
+          <MessageSquareWarning size={14} className="text-c-info" />
         </div>
       }
       onClose={onClose}
@@ -454,7 +454,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
       <div className="px-3 py-2 flex-1 overflow-auto">
         {loading ? (
           <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 px-1 py-8 justify-center">
-            <Loader2 size={14} className="animate-spin text-primary-400" />
+            <Loader2 size={14} className="animate-spin text-c-info" />
             {isPl
               ? 'Generuję sugestie z kontekstu firmy…'
               : 'Generating suggestions from company context…'}
@@ -533,7 +533,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
                             {onInsertToWorkspace && (
                               <button
                                 onClick={() => handleInsert(sug)}
-                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold text-c-info bg-c-info/10 hover:bg-c-info/20 transition-colors"
                               >
                                 <Download size={9} />
                                 {isPl ? 'Wstaw' : 'Insert'}
@@ -574,12 +574,12 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
             onChange={(e) => setNlInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleNlSubmit()}
             placeholder={isPl ? 'Zapytaj AI o ten pomysł…' : 'Ask AI about this idea…'}
-            className="flex-1 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/30"
+            className="flex-1 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-c-focus"
           />
           <button
             onClick={handleNlSubmit}
             disabled={!nlInput.trim() || nlLoading}
-            className="p-2 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors disabled:opacity-40"
+            className="p-2 rounded-xl bg-c-info/10 text-c-info hover:bg-c-info/20 transition-colors disabled:opacity-40"
           >
             {nlLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
           </button>
@@ -618,9 +618,9 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
                     );
                   }}
                   disabled={!isAccepted}
-                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-primary-500/5 transition-colors disabled:opacity-40"
+                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-c-info/5 transition-colors disabled:opacity-40"
                 >
-                  <Icon size={12} className="text-primary-500 shrink-0" />
+                  <Icon size={12} className="text-c-info shrink-0" />
                   {isPl ? gen.labelPl : gen.labelEn}
                 </button>
               );

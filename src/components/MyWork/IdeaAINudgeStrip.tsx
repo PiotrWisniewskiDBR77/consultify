@@ -194,10 +194,10 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
         return (
           <div
             key={nudge.id}
-            className="flex items-center gap-2 bg-white/95 dark:bg-navy-800/95 backdrop-blur-sm border border-primary-200 dark:border-primary-800/40 rounded-2xl shadow-lg px-4 py-2.5 animate-in slide-in-from-bottom-4 duration-300"
+            className="flex items-center gap-2 bg-white/95 dark:bg-navy-800/95 backdrop-blur-sm border border-c-info/20 rounded-2xl shadow-lg px-4 py-2.5 animate-in slide-in-from-bottom-4 duration-300"
           >
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-500/20 to-crimson-500/15 flex items-center justify-center shrink-0">
-              <Icon size={14} className="text-primary-600 dark:text-primary-400" />
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-c-info/20 to-c-info/15 flex items-center justify-center shrink-0">
+              <Icon size={14} className="text-c-info" />
             </div>
             <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200 max-w-[300px] leading-relaxed">
               {isPl ? nudge.textPl : nudge.textEn}
@@ -205,7 +205,7 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
             <button
               type="button"
               onClick={() => handleAction(nudge)}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors shrink-0"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold text-c-info bg-c-info/10 hover:bg-c-info/20 transition-colors shrink-0"
             >
               <ArrowRight size={10} />
               {isPl ? 'Działaj' : 'Go'}
@@ -222,7 +222,7 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
         );
       })}
       {loading && (
-        <div className="flex items-center gap-1 text-[10px] text-primary-400">
+        <div className="flex items-center gap-1 text-[10px] text-c-info">
           <Loader2 size={10} className="animate-spin" />
         </div>
       )}

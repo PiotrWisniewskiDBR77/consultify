@@ -4,20 +4,20 @@
   opacity: 0.5;
 }
 
-/* Selection box — primary accent, not purple neon */
+/* Selection box — focus accent (blue), not brand crimson */
 .dark .react-flow__selection {
-  border-color: rgba(var(--color-primary-500), 0.5) !important;
-  background: rgba(var(--color-primary-500), 0.06) !important;
+  border-color: rgba(var(--c-focus-rgb), 0.5) !important;
+  background: rgba(var(--c-focus-rgb), 0.06) !important;
 }
 
 /* Handle styling */
 .dark .react-flow__handle:hover {
-  box-shadow: 0 0 6px rgba(var(--color-primary-500), 0.4);
+  box-shadow: 0 0 6px rgba(var(--c-focus-rgb), 0.4);
 }
 
-/* Connection line — subtle primary */
+/* Connection line — subtle focus accent */
 .dark .react-flow__connection-path {
-  stroke: rgba(var(--color-primary-500), 0.6) !important;
+  stroke: rgba(var(--c-focus-rgb), 0.6) !important;
 }
 
 /* Edge stroke in dark mode — toned down, no drop-shadow blur */

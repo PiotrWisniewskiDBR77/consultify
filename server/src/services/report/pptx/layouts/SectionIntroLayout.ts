@@ -7,6 +7,7 @@ import { PageNumber } from '../atomics/PageNumber.js';
 import { SectionIntroBlock } from '../composites/SectionIntroBlock.js';
 import type {
   DesignTokens,
+  LayoutContext,
   LayoutResult,
   SectionIntroContent,
   UnifiedReportMeta,
@@ -16,7 +17,8 @@ import type {
 export function SectionIntroLayout(
   slide: UnifiedSlide,
   _meta: UnifiedReportMeta,
-  tokens: DesignTokens
+  tokens: DesignTokens,
+  ctx?: LayoutContext
 ): LayoutResult {
   const c = slide.content as SectionIntroContent;
   const elements = [];
@@ -47,12 +49,17 @@ export function SectionIntroLayout(
 
   // Divider slides have no header/footer chrome — centre the block over the full
   // slide height (minus a small page-number margin) so it reads as deliberate.
+  // P13 — ekran = eksport parity. `divider_numbered` (topology `split`) renders
+  // the number in a left band with the title/description to the right; the
+  // default `divider_centered` keeps the centred stack.
+  const variant = ctx?.topology === 'split' ? 'numbered' : 'centered';
   const blockElements = SectionIntroBlock(
     {
       sectionTitle: c.section_title,
       sectionNumber: c.section_number,
       description: c.description,
       position: { x: 0.5, y: 0.6, w: 9, h: tokens.grid.slideH - 1.2 },
+      variant,
     },
     tokens
   );

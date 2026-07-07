@@ -608,11 +608,11 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                     if (e.key === 'Enter') commitTitle();
                     if (e.key === 'Escape') setEditingTitle(false);
                   }}
-                  className="w-full text-base font-bold text-slate-900 dark:text-white bg-transparent border-b-2 border-primary-500 outline-none pb-0.5"
+                  className="w-full text-base font-bold text-slate-900 dark:text-white bg-transparent border-b-2 border-c-info outline-none pb-0.5"
                 />
               ) : (
                 <h2
-                  className="text-base font-bold text-slate-900 dark:text-white cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 transition-colors line-clamp-2"
+                  className="text-base font-bold text-slate-900 dark:text-white cursor-pointer hover:text-c-info transition-colors line-clamp-2"
                   onClick={() => !locked && setEditingTitle(true)}
                 >
                   {nodeData.label || (isPl ? 'Bez tytułu' : 'Untitled')}
@@ -644,7 +644,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
             {onDrillDown && (
               <button
                 onClick={() => onDrillDown(nodeId)}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-c-info bg-c-info/10 hover:bg-c-info/20 transition-colors"
               >
                 <GitBranch size={12} />
                 {isPl ? 'Rozwiń sub-mapę' : 'Drill down'}
@@ -653,7 +653,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
             <button
               onClick={handleAIExpand}
               disabled={aiLoading}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors disabled:opacity-40"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-c-info bg-c-info/10 hover:bg-c-info/20 transition-colors disabled:opacity-40"
             >
               {aiLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
               {isPl ? 'AI Rozbuduj' : 'AI Expand'}
@@ -703,7 +703,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
               value={priority}
               onChange={(e) => handlePriorityChange(Number(e.target.value))}
               disabled={locked}
-              className="w-full h-1.5 rounded-full appearance-none bg-slate-200 dark:bg-navy-700 accent-primary-500"
+              className="w-full h-1.5 rounded-full appearance-none bg-slate-200 dark:bg-navy-700 accent-c-info"
             />
             <div className="flex justify-between text-[9px] text-slate-600 mt-0.5">
               <span>{isPl ? 'Niski' : 'Low'}</span>
@@ -771,7 +771,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
               >
                 {descValue ? (
                   <div
-                    className="prose prose-xs dark:prose-invert max-w-none [&_strong]:font-bold [&_em]:italic [&_code]:bg-slate-200 [&_code]:dark:bg-navy-700 [&_code]:px-1 [&_code]:rounded [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-primary-500 [&_blockquote]:border-l-2 [&_blockquote]:border-slate-300 [&_blockquote]:pl-3 [&_blockquote]:italic"
+                    className="prose prose-xs dark:prose-invert max-w-none [&_strong]:font-bold [&_em]:italic [&_code]:bg-slate-200 [&_code]:dark:bg-navy-700 [&_code]:px-1 [&_code]:rounded [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-c-info [&_blockquote]:border-l-2 [&_blockquote]:border-slate-300 [&_blockquote]:pl-3 [&_blockquote]:italic"
                     dangerouslySetInnerHTML={{ __html: simpleMarkdown(descValue) }}
                   />
                 ) : (
@@ -851,7 +851,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 onNodeDataChange(nodeId, { semanticType: e.target.value || undefined })
               }
               disabled={locked}
-              className="w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary-400 transition-colors"
+              className="w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-c-info transition-colors"
             >
               <option value="">{isPl ? '— Brak —' : '— None —'}</option>
               {[
@@ -909,7 +909,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                     placeholder={isPl ? 'Nowy tag...' : 'New tag...'}
                     className="w-20 text-[10px] bg-transparent border-b border-dashed border-slate-300 dark:border-navy-600 outline-none text-slate-600 dark:text-slate-400 placeholder:text-slate-400"
                   />
-                  <button onClick={handleAddTag} className="text-slate-600 hover:text-primary-500">
+                  <button onClick={handleAddTag} className="text-slate-600 hover:text-c-info">
                     <Plus size={12} />
                   </button>
                 </div>
@@ -926,7 +926,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
             accent
           >
             {aiLoading ? (
-              <div className="flex items-center gap-2 py-4 justify-center text-primary-500">
+              <div className="flex items-center gap-2 py-4 justify-center text-c-info">
                 <Loader2 size={14} className="animate-spin" />
                 <span className="text-[11px]">
                   {isPl ? 'Analizuję kontekst...' : 'Analyzing context...'}
@@ -935,7 +935,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
             ) : aiContext ? (
               <div className="space-y-3">
                 {aiContext.summary && (
-                  <div className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed bg-primary-50/50 dark:bg-primary-900/10 rounded-lg p-2.5">
+                  <div className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed bg-c-info/5 rounded-lg p-2.5">
                     {aiContext.summary}
                   </div>
                 )}
@@ -994,7 +994,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 )}
                 <button
                   onClick={fetchAIContext}
-                  className="text-[10px] text-primary-500 hover:text-primary-600 font-medium"
+                  className="text-[10px] text-c-info hover:text-c-info font-medium"
                 >
                   {isPl ? '↻ Odśwież kontekst' : '↻ Refresh context'}
                 </button>
@@ -1039,7 +1039,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                     href={att.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-slate-600 hover:text-primary-500 shrink-0"
+                    className="text-slate-600 hover:text-c-info shrink-0"
                   >
                     <ExternalLink size={12} />
                   </a>
@@ -1066,7 +1066,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                   />
                   <button
                     onClick={handleAddAttachment}
-                    className="p-1.5 rounded-lg text-slate-600 hover:text-primary-500 hover:bg-slate-100 dark:hover:bg-navy-800"
+                    className="p-1.5 rounded-lg text-slate-600 hover:text-c-info hover:bg-slate-100 dark:hover:bg-navy-800"
                   >
                     <Plus size={14} />
                   </button>
@@ -1103,7 +1103,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                       })
                     );
                   }}
-                  className="w-full flex items-center justify-center gap-1.5 h-8 rounded-lg text-xs font-medium text-primary-600 dark:text-primary-400 bg-primary-500/5 hover:bg-primary-500/10 transition-colors mb-1.5"
+                  className="w-full flex items-center justify-center gap-1.5 h-8 rounded-lg text-xs font-medium text-c-info bg-c-info/5 hover:bg-c-info/10 transition-colors mb-1.5"
                 >
                   <Plus size={12} />
                   {isPl ? 'Dołącz artefakt' : 'Attach artifact'}
@@ -1272,8 +1272,8 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
               {(nodeData.comments || []).map((cmt) => (
                 <div key={cmt.id} className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800">
                   <div className="flex items-center gap-1.5 mb-1">
-                    <div className="w-5 h-5 rounded-full bg-primary-500/20 flex items-center justify-center">
-                      <span className="text-[8px] font-bold text-primary-600">
+                    <div className="w-5 h-5 rounded-full bg-c-info/20 flex items-center justify-center">
+                      <span className="text-[8px] font-bold text-c-info">
                         {(cmt.userName || '?')[0].toUpperCase()}
                       </span>
                     </div>
@@ -1361,7 +1361,7 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 <button
                   onClick={handleAddComment}
                   disabled={!newComment.trim() || commentSubmitting}
-                  className="p-2 rounded-lg text-primary-500 hover:bg-primary-500/10 transition-colors disabled:opacity-30"
+                  className="p-2 rounded-lg text-c-info hover:bg-c-info/10 transition-colors disabled:opacity-30"
                 >
                   <ArrowRight size={14} />
                 </button>
@@ -1413,11 +1413,11 @@ const SectionToggle: React.FC<{
       type="button"
       onClick={onToggle}
       className={`w-full flex items-center gap-2 py-1.5 text-left group ${
-        accent ? 'text-primary-600 dark:text-primary-400' : 'text-slate-600 dark:text-slate-400'
+        accent ? 'text-c-info' : 'text-slate-600 dark:text-slate-400'
       }`}
     >
       {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-      <Icon size={12} className={accent ? 'text-primary-500' : 'text-slate-600'} />
+      <Icon size={12} className={accent ? 'text-c-info' : 'text-slate-600'} />
       <span className="text-[10px] font-bold uppercase tracking-wider flex-1">{title}</span>
       {count != null && count > 0 && (
         <span className="text-[9px] font-semibold bg-slate-100 dark:bg-navy-800 text-slate-500 px-1.5 py-0.5 rounded-full">
