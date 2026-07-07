@@ -130,6 +130,7 @@ import {
 import { AIConnections } from './shared/AIConnections';
 import { buildAskAIMessage } from './shared/askAiHelper';
 import { PostDecisionFollowUp } from './shared/PostDecisionFollowUp';
+import { ReadEditToggle } from './shared/ReadEditToggle';
 import { RelatedContext } from './shared/RelatedContext';
 
 // ── Decision accordion section IDs ──────────────────────────────────────────
@@ -856,6 +857,11 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const setCardState = useCallback((key: DecisionCardKey, next: NModeCardStatus) => {
     setCardStates((prev) => (prev[key] === next ? prev : { ...prev, [key]: next }));
   }, []);
+  // ── Read/Edit toggle (Menu 1, klasa S) ─────────────────────────────────────
+  // "Do pokazania klientowi": read = wszystkie karty/pola read-only, brak pasków
+  // akcji (hideActions). ORuje się do isDecisionStageLocked (patrz niżej), więc
+  // przewleka się przez WSZYSTKIE istniejące bramki edycji jednym stanem.
+  const [readMode, setReadMode] = useState(false);
   // Human edit on a card demotes an AI-draft/done card to `edited` (badge switch).
   const markCardEdited = useCallback((key: DecisionCardKey) => {
     setCardStates((prev) =>
@@ -3213,7 +3219,10 @@ Use userId only from this list:
   // Show action buttons for any status that requires action (not just 'pending')
   const isPending = status === 'pending' || status === 'escalated' || status === 'deferred';
   const WORKFLOW_LOCKS_ENABLED = false; // temporary: full edit mode during model/design phase
-  const isDecisionStageLocked = WORKFLOW_LOCKS_ENABLED && isPending;
+  // readMode (toggle "do pokazania klientowi") ORuje się do bramki edycji, więc
+  // wszystkie readOnly/hideActions/disabled już wpięte w isDecisionStageLocked
+  // automatycznie respektują tryb Read bez zmiany każdego call-site.
+  const isDecisionStageLocked = readMode || (WORKFLOW_LOCKS_ENABLED && isPending);
   const workflowMeta = WORKFLOW_STATUS_CONFIG[workflowStatus] || WORKFLOW_STATUS_CONFIG.proposed;
   const workflowActions = (() => {
     switch (workflowStatus) {
@@ -4505,6 +4514,10 @@ Use userId only from this list:
                ═══════════════════════════════════════════════════════════════════ */}
           {presentationMode === 'n' && (
             <div className="col-span-full space-y-4">
+              {/* ── Menu 1 (klasa S): Read/Edit toggle "do pokazania klientowi" ── */}
+              <div className="flex items-center justify-end">
+                <ReadEditToggle readMode={readMode} onChange={setReadMode} />
+              </div>
               {/* ── PropertiesStrip — shared NModePropertiesStrip ─────────── */}
               <NModePropertiesStrip
                 fields={[
@@ -4614,6 +4627,8 @@ Use userId only from this list:
               )}
 
               {/* ── Inline ActionBar (kept for now, will migrate to NModeActionBar) */}
+              {/* Read mode ("do pokazania klientowi"): ukryj cały pasek akcji stanu. */}
+              {!readMode && (
               <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
                 {decisionId && (
                   <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -4774,6 +4789,7 @@ Use userId only from this list:
                   </div>
                 )}
               </div>
+              )}
 
               {/* ── 2-Pane: LeftNav + Canvas — shared NModeLeftNav ───────── */}
               <div className="flex gap-0 min-h-[60vh]">
