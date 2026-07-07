@@ -14,6 +14,10 @@ import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { createP23Error } from '../services/v8/exceleCanon.js';
+import {
+  ensureWorkbookSchema,
+  generateAndPersistWorkbook,
+} from '../services/workbook/workbookArtifactService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -40,44 +44,6 @@ function pruneCache() {
   );
   while (workbookCache.size > MAX_CACHE) {
     workbookCache.delete(entries.shift()![0]);
-  }
-}
-
-// Ensure storage table exists
-async function ensureWorkbookSchema() {
-  try {
-    await queryHelpers.queryRun(`
-      CREATE TABLE IF NOT EXISTS generated_workbooks (
-        id TEXT PRIMARY KEY,
-        organization_id TEXT NOT NULL,
-        title TEXT NOT NULL,
-        description TEXT,
-        prompt TEXT,
-        schema_json TEXT,
-        sheet_count INTEGER DEFAULT 1,
-        file_name TEXT,
-        file_size INTEGER,
-        validation_errors TEXT,
-        quality_score REAL,
-        pipeline_log TEXT,
-        created_by TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    await queryHelpers.queryRun(
-      `ALTER TABLE generated_workbooks ADD COLUMN IF NOT EXISTS action_contract_json TEXT DEFAULT '{}'`
-    );
-    await queryHelpers.queryRun(
-      `ALTER TABLE generated_workbooks ADD COLUMN IF NOT EXISTS source_pack_json TEXT DEFAULT '{}'`
-    );
-    await queryHelpers.queryRun(
-      `ALTER TABLE generated_workbooks ADD COLUMN IF NOT EXISTS evidence_refs_json TEXT DEFAULT '[]'`
-    );
-    await queryHelpers.queryRun(
-      `CREATE INDEX IF NOT EXISTS idx_workbooks_org ON generated_workbooks(organization_id)`
-    );
-  } catch {
-    /* table may already exist */
   }
 }
 
@@ -111,21 +77,21 @@ router.post(
       return;
     }
 
-    await ensureWorkbookSchema();
-
-    const { default: WorkbookGeneratorService } =
-      await import('../services/workbook/WorkbookGeneratorService.js');
-
-    const result = await WorkbookGeneratorService.generate({
+    // Generate + persist the workbook row via the shared helper so this route
+    // and the V8 materialize path stay byte-for-byte consistent.
+    const result = await generateAndPersistWorkbook({
       prompt: prompt.trim(),
       userId: user.id,
       organizationId: user.organizationId,
       projectId: projectId || null,
       researchContext,
       language: language || req.headers['accept-language']?.split(',')[0],
+      actionContract,
+      sourcePack,
+      evidenceRefs,
     });
 
-    // Cache the buffer for download
+    // Cache the buffer for immediate download (route-scoped, best-effort).
     workbookCache.set(result.id, {
       buffer: result.buffer,
       fileName: result.fileName,
@@ -133,37 +99,6 @@ router.post(
       createdAt: result.generatedAt,
     });
     pruneCache();
-
-    // Persist metadata
-    try {
-      await queryHelpers.queryRun(
-        `INSERT INTO generated_workbooks (id, organization_id, title, description, prompt, schema_json, sheet_count, file_name, file_size, validation_errors, quality_score, pipeline_log, action_contract_json, source_pack_json, evidence_refs_json, created_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          result.id,
-          user.organizationId,
-          result.schema.title,
-          result.schema.description || null,
-          prompt.trim(),
-          JSON.stringify(result.schema),
-          result.schema.sheets.length,
-          result.fileName,
-          result.buffer.length,
-          result.validationErrors.length > 0 ? JSON.stringify(result.validationErrors) : null,
-          result.qualityScore,
-          JSON.stringify(result.pipelineLog),
-          JSON.stringify(
-            actionContract && typeof actionContract === 'object' ? actionContract : {}
-          ),
-          JSON.stringify(sourcePack && typeof sourcePack === 'object' ? sourcePack : {}),
-          JSON.stringify(Array.isArray(evidenceRefs) ? evidenceRefs : []),
-          user.id,
-          result.generatedAt,
-        ]
-      );
-    } catch (err) {
-      logger.warn('[WorkbookRoutes] Failed to persist workbook metadata:', err);
-    }
 
     // Register in V8 artifact registry (P19 Outputs Library integration)
     let artifactId: string | null = null;
@@ -399,13 +334,14 @@ router.get(
       file_name: string;
       file_size: number;
       quality_score: number | null;
+      pipeline_log?: string | null;
       action_contract_json?: string | null;
       source_pack_json?: string | null;
       evidence_refs_json?: string | null;
       created_by: string;
       created_at: string;
     }>(
-      `SELECT id, title, description, schema_json, sheet_count, file_name, file_size, quality_score, action_contract_json, source_pack_json, evidence_refs_json, created_by, created_at
+      `SELECT id, title, description, schema_json, sheet_count, file_name, file_size, quality_score, pipeline_log, action_contract_json, source_pack_json, evidence_refs_json, created_by, created_at
      FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
       [id, user.organizationId]
     );
@@ -425,6 +361,7 @@ router.get(
       file_name: row.file_name,
       file_size: row.file_size,
       quality_score: row.quality_score,
+      pipeline_log: row.pipeline_log ? JSON.parse(row.pipeline_log) : [],
       actionContract: row.action_contract_json ? JSON.parse(row.action_contract_json) : {},
       sourcePack: row.source_pack_json ? JSON.parse(row.source_pack_json) : {},
       evidenceRefs: row.evidence_refs_json ? JSON.parse(row.evidence_refs_json) : [],
