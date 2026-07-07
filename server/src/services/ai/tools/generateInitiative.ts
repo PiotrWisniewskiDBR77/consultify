@@ -179,24 +179,69 @@ export async function hydrateTypedColumns(
     }
 
     const updates = buildTypedColumnUpdates(cards, new Set(TARGETS), existingRow);
+    // Columns actually written this call (bulk happy-path = all of `updates`;
+    // per-column fallback = only the ones that individually succeeded). Used
+    // below by the completeness gate so a column skipped on fallback is NOT
+    // reported as filled.
+    const actuallyHydrated: string[] = [];
     if (updates.length > 0) {
       const { setClause, params } = toUpdateSql(updates);
-      await queryHelpers.queryRun(
-        `UPDATE initiatives SET ${setClause} WHERE id = ? AND organization_id = ?`,
-        [...params, initiativeId, organizationId],
-      );
-      logger.info(
-        `[teresa] hydrated ${updates.length} typed column(s) for initiative ${initiativeId}: ${updates
-          .map((u) => u.column)
-          .join(', ')}`,
-      );
+      try {
+        // Happy path: one bulk UPDATE for all columns.
+        await queryHelpers.queryRun(
+          `UPDATE initiatives SET ${setClause} WHERE id = ? AND organization_id = ?`,
+          [...params, initiativeId, organizationId],
+        );
+        actuallyHydrated.push(...updates.map((u) => u.column));
+        logger.info(
+          `[teresa] hydrated ${updates.length} typed column(s) for initiative ${initiativeId}: ${updates
+            .map((u) => u.column)
+            .join(', ')}`,
+        );
+      } catch (bulkErr: any) {
+        // DEFENSE IN DEPTH: the bulk UPDATE failed — most likely one column's
+        // extracted value doesn't fit its DB type (e.g. a qualitative ROI
+        // string into a numeric column; see migration 903 for the concrete
+        // case that motivated this). Without a fallback, ONE bad column loses
+        // every other good column too (0/7 empty skeleton). Retry each column
+        // as its own UPDATE so good columns still land and only the offending
+        // one is skipped.
+        logger.error(
+          `[teresa] bulk typed-column UPDATE failed for initiative ${initiativeId}, falling back to ` +
+            `per-column writes. Root cause: ${bulkErr?.message || bulkErr}`,
+        );
+        const skipped: string[] = [];
+        for (const u of updates) {
+          try {
+            await queryHelpers.queryRun(
+              `UPDATE initiatives SET ${u.column} = ? WHERE id = ? AND organization_id = ?`,
+              [u.value, initiativeId, organizationId],
+            );
+            actuallyHydrated.push(u.column);
+          } catch (colErr: any) {
+            skipped.push(u.column);
+            logger.warn(
+              `[teresa] per-column hydration skipped '${u.column}' for initiative ${initiativeId}: ${
+                colErr?.message || colErr
+              }`,
+            );
+          }
+        }
+        if (actuallyHydrated.length > 0) {
+          logger.info(
+            `[teresa] per-column fallback hydrated ${actuallyHydrated.length}/${updates.length} column(s) for ` +
+              `initiative ${initiativeId}: ${actuallyHydrated.join(', ')}${
+                skipped.length ? `; skipped: ${skipped.join(', ')}` : ''
+              }`,
+          );
+        }
+      }
     }
 
     // COMPLETENESS GATE (bramka): after hydration, verify the KEY typed columns are
     // actually populated. If they remain empty AFTER we had cards to map, this is
     // the exact "pusty szkielet" defect — surface it LOUD so it is never invisible.
-    const filledNow = new Set<string>();
-    for (const u of updates) filledNow.add(u.column);
+    const filledNow = new Set<string>(actuallyHydrated);
     for (const col of TARGETS) {
       if (!isColEmpty(existingRow[col])) filledNow.add(col);
     }
