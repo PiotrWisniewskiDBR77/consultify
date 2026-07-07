@@ -32,6 +32,12 @@ interface TaskContext {
   status?: string | null;
   initiativeName?: string | null;
   initiativeContext?: string | null;
+  /**
+   * Właściciel/przypisany zadania (twórca lub assignee), gdy znany z kontekstu.
+   * Podany modelowi, by NIE emitował placeholdera „[DO UZUPEŁNIENIA – wskazać osobę]"
+   * dla właściciela — zadanie ma realnego assignee (patrz taskExecutor: assignee_id=userId).
+   */
+  ownerName?: string | null;
 }
 
 interface GenerateOptions {
@@ -67,7 +73,8 @@ Reguły twarde (FAIL jeśli złamane):
 6. Falsyfikowalność — kryteria akceptacji testowalne („zrobione, gdy X mierzalnie osiągnięte").
 7. Uczciwość niepewności — gdy brak danych, powiedz to wprost + co trzeba zbadać.
 8. Język: PISZ PO POLSKU.
-Anty-wzorce = FAIL: ogólniki bez liczb, listy 1-elementowe tam gdzie wymagane ≥3, „TBD" bez planu, przepisanie tytułu jako treści.`;
+9. ZAKAZ PLACEHOLDERÓW-PÓL: NIGDY nie emituj wypełniaczy udających pole do ręcznego uzupełnienia — np. „WŁAŚCICIEL DANYCH: [DO UZUPEŁNIENIA – wskazać osobę]", „[DO UZUPEŁNIENIA]", „[imię i nazwisko]", „[wpisz…]". Jeśli w kontekście jest właściciel/przypisany (assignee/twórca) — użyj go. Jeśli NIE znasz osoby — POMIŃ sekcję właściciela całkowicie (nie twórz pustego pola). Rolę można wskazać rzeczownikowo („właściciel: lider utrzymania ruchu"), ale bez nawiasowego placeholdera.
+Anty-wzorce = FAIL: ogólniki bez liczb, listy 1-elementowe tam gdzie wymagane ≥3, „TBD" bez planu, przepisanie tytułu jako treści, placeholder w nawiasach udający pole do uzupełnienia.`;
 
 export const TASK_DOCTRINE_SYSTEM_PROMPT_EN = `You are a BCG-grade consultant writing the content of a Task card in an advisory system.
 Hard rules (FAIL if broken):
@@ -79,7 +86,8 @@ Hard rules (FAIL if broken):
 6. Falsifiable — acceptance criteria must be testable ("done when X is measurably achieved").
 7. Honest about uncertainty — when data is missing, say so + what must be investigated.
 8. Language: WRITE IN ENGLISH.
-Anti-patterns = FAIL: vague statements without numbers, 1-item lists where ≥3 required, "TBD" without a plan, restating the title as content.`;
+9. NO FIELD-PLACEHOLDERS: NEVER emit fill-in placeholders posing as a field — e.g. "DATA OWNER: [TO BE FILLED – name a person]", "[TO BE FILLED]", "[full name]", "[enter…]". If context has an owner/assignee (assignee/creator) — use it. If you do NOT know the person — OMIT the owner section entirely (do not create an empty field). A role noun is fine ("owner: maintenance lead") but never a bracketed placeholder.
+Anti-patterns = FAIL: vague statements without numbers, 1-item lists where ≥3 required, "TBD" without a plan, restating the title as content, a bracketed placeholder posing as a fill-in field.`;
 
 // ── Instrukcje per karta (§3 BCG) — USER prompt ──────────────────────────────
 
@@ -155,6 +163,13 @@ function buildUserPrompt(
   if (ctx.expectedOutcome) contextLines.push(`- Oczekiwany efekt (istniejący): ${ctx.expectedOutcome}`);
   if (ctx.taskType) contextLines.push(`- Typ zadania: ${ctx.taskType}`);
   if (ctx.priority) contextLines.push(`- Priorytet: ${ctx.priority}`);
+  if (ctx.ownerName) {
+    contextLines.push(
+      isPolish
+        ? `- Właściciel/przypisany (użyj tej osoby zamiast placeholdera): ${ctx.ownerName}`
+        : `- Owner/assignee (use this person, not a placeholder): ${ctx.ownerName}`
+    );
+  }
   if (ctx.initiativeName) contextLines.push(`- Inicjatywa nadrzędna: ${ctx.initiativeName}`);
   if (ctx.initiativeContext) contextLines.push(`- Kontekst inicjatywy: ${ctx.initiativeContext}`);
 

@@ -88,6 +88,98 @@ export function sanitizeDueDate(
 }
 
 /**
+ * BUG (sędzia BCG #2): the prompt "audyt … do końca miesiąca" produced
+ * dueDate = +7 days from creation instead of the actual end of month, because
+ * `create_task`'s schema had no way to convey a RELATIVE deadline — the model
+ * either dropped it or emitted a bare offset. We parse the relative deadline
+ * straight from the ORIGINAL task text (title + description + the user prompt),
+ * so an explicit human term ("koniec miesiąca", "koniec tygodnia", "za 3 dni",
+ * "do 2026-08-15") wins over the priority default.
+ *
+ * Returns an ISO string at LOCAL end-of-day (23:59:59) for the resolved date, or
+ * undefined when no relative term is found (caller then falls back to the model
+ * date / priority offset via sanitizeDueDate). Pure + timezone-local; `now` is
+ * injectable for tests. Only FUTURE results are returned (a "koniec tygodnia"
+ * already past today rolls to the next matching boundary where sensible).
+ */
+export function parseRelativeDueDate(
+  text: string | undefined,
+  now: Date = new Date(),
+): string | undefined {
+  const raw = String(text || '').toLowerCase();
+  if (!raw) return undefined;
+
+  // Normalise Polish diacritics so "końca"/"konca" and "tygodni"/"tygodniu" match.
+  const t = raw
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '') // strip combining diacritics (ą→a, ę→e, ó→o…)
+    .replace(/ł/g, 'l'); // ł → l (not decomposed by NFD)
+
+  // 1. Explicit ISO/near-ISO date in the text: "do 2026-08-15" / "termin 2026-08-15".
+  const isoMatch = t.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (isoMatch) {
+    const y = Number(isoMatch[1]);
+    const mo = Number(isoMatch[2]) - 1;
+    const day = Number(isoMatch[3]);
+    const d = new Date(y, mo, day, 23, 59, 59, 0);
+    if (!Number.isNaN(d.getTime()) && d.getTime() > now.getTime()) {
+      return d.toISOString();
+    }
+  }
+
+  // 2. "koniec / do końca miesiąca" → last calendar day of the current month.
+  //    (EN: "end of the month".)
+  if (/(koniec|do konca|na koniec).{0,12}(miesiac|miesiaca|mies\b)/.test(t) || /end of (the )?month/.test(t)) {
+    // Day 0 of next month = last day of current month.
+    const eom = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 0);
+    return eom.toISOString();
+  }
+
+  // 3. "koniec / do końca tygodnia" → this week's Friday (EN: "end of the week").
+  if (/(koniec|do konca|na koniec).{0,12}(tydzien|tygodnia|tygodniu|tyg\b)/.test(t) || /end of (the )?week/.test(t)) {
+    const dow = now.getDay(); // 0=Sun..6=Sat
+    // Friday = 5. Days until Friday (0 if already Friday). If Sat/Sun, roll to next Friday.
+    let add = (5 - dow + 7) % 7;
+    if (dow === 6 || dow === 0) add = (5 - dow + 7) % 7; // Sat→6, Sun→5
+    const friday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + add, 23, 59, 59, 0);
+    return friday.toISOString();
+  }
+
+  // 4. "za X dni" / "za X tygodni" / "in X days|weeks".
+  const rel = t.match(/(?:za|in)\s+(\d{1,3})\s*(dni|dzien|dzien\b|tydzien|tygodni|tyg\b|day|days|week|weeks)/);
+  if (rel) {
+    const n = Number(rel[1]);
+    const unit = rel[2];
+    const isWeek = /tydzien|tygodni|tyg|week/.test(unit);
+    const days = isWeek ? n * 7 : n;
+    if (n > 0) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + days, 23, 59, 59, 0);
+      return d.toISOString();
+    }
+  }
+
+  // 5. "jutro" / "tomorrow"; "pojutrze".
+  if (/\bpojutrze\b/.test(t)) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2, 23, 59, 59, 0);
+    return d.toISOString();
+  }
+  if (/\bjutro\b/.test(t) || /\btomorrow\b/.test(t)) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 23, 59, 59, 0);
+    return d.toISOString();
+  }
+
+  // 6. "koniec kwartału" → last day of the current calendar quarter.
+  if (/(koniec|do konca|na koniec).{0,12}(kwartal|kwartalu)/.test(t) || /end of (the )?quarter/.test(t)) {
+    const q = Math.floor(now.getMonth() / 3);
+    const lastMonthOfQuarter = q * 3 + 2; // 0-based: Q1→2 (Mar), Q2→5 (Jun)…
+    const eoq = new Date(now.getFullYear(), lastMonthOfQuarter + 1, 0, 23, 59, 59, 0);
+    return eoq.toISOString();
+  }
+
+  return undefined;
+}
+
+/**
  * BUG B fix (Teresa obiekty-N): after a task row is created, fill its STRUCTURAL
  * fields (why · expectedOutcome · acceptanceCriteria) via the existing
  * TASK_SECTION_PROMPTS generator — instead of leaving everything flat in
@@ -98,7 +190,7 @@ export function sanitizeDueDate(
  */
 async function fillTaskStructuralFields(
   taskId: string,
-  input: { title: string; description?: string; priority?: string },
+  input: { title: string; description?: string; priority?: string; ownerName?: string },
   language: 'pl' | 'en',
 ): Promise<void> {
   try {
@@ -111,6 +203,9 @@ async function fillTaskStructuralFields(
       title: input.title,
       description: input.description || null,
       priority: input.priority || null,
+      // Owner is the creator/assignee (taskExecutor sets assignee_id=userId). Passing
+      // it here stops the model emitting "[DO UZUPEŁNIENIA – wskazać osobę]".
+      ownerName: input.ownerName || null,
     };
 
     // strategy → { description, why, expectedOutcome }; execution → { checklist }.
@@ -194,6 +289,34 @@ async function fillTaskStructuralFields(
   }
 }
 
+/**
+ * Best-effort display name of the task creator (assignee), so the structural-fill
+ * prompt can name the owner instead of leaving a "[DO UZUPEŁNIENIA]" placeholder.
+ * Fail-soft: any error → undefined (the doctrine rule then makes the model omit the
+ * owner field rather than fake one).
+ */
+async function resolveOwnerName(userId: string): Promise<string | undefined> {
+  if (!userId) return undefined;
+  try {
+    const queryHelpers = await import('../../../utils/queryHelpers.js');
+    const row = await queryHelpers.queryOne<{
+      first_name?: string;
+      last_name?: string;
+      email?: string;
+    }>('SELECT first_name, last_name, email FROM users WHERE id = ?', [userId]);
+    if (!row) return undefined;
+    const full = `${String(row.first_name || '').trim()} ${String(row.last_name || '').trim()}`.trim();
+    return full || (row.email ? String(row.email).trim() : undefined) || undefined;
+  } catch (err) {
+    logger.warn(
+      `[create_task] owner-name lookup failed userId=${userId}: ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
+    return undefined;
+  }
+}
+
 export async function createTask(
   params: CreateTaskParams,
   context: CreateTaskContext = {}
@@ -242,7 +365,22 @@ export async function createTask(
     : 'medium';
 
   try {
-    const dueDate = sanitizeDueDate(params?.due_date || undefined, priority);
+    // Priority order for the deadline:
+    //   1. An EXPLICIT relative term in the task text ("do końca miesiąca",
+    //      "za 3 dni", "do 2026-08-15") — the human's stated intent wins.
+    //   2. Otherwise the model-supplied due_date (future-guarded).
+    //   3. Otherwise a priority-derived default offset.
+    // (2)+(3) are handled by sanitizeDueDate; (1) overrides both.
+    const sourceText = `${title} ${String(params?.description || '')}`.trim();
+    const relativeDue = parseRelativeDueDate(sourceText);
+    const dueDate = relativeDue ?? sanitizeDueDate(params?.due_date || undefined, priority);
+    if (relativeDue) {
+      logger.info(
+        `[create_task] relative deadline parsed from text → ${relativeDue} (overrides model due_date="${
+          params?.due_date || ''
+        }")`,
+      );
+    }
 
     const { default: TaskExecutor } = await import('../../../ai/actionExecutors/taskExecutor.js');
     const result = await TaskExecutor.execute(
@@ -274,11 +412,14 @@ export async function createTask(
     // row already exists, the AI-fill only enriches it. Fail-soft (logs its own
     // errors). Skipped when we somehow got no id back.
     if (taskId) {
-      void fillTaskStructuralFields(
-        taskId,
-        { title, description: params?.description || undefined, priority },
-        language,
-      );
+      void (async () => {
+        const ownerName = await resolveOwnerName(userId);
+        await fillTaskStructuralFields(
+          taskId,
+          { title, description: params?.description || undefined, priority, ownerName },
+          language,
+        );
+      })();
     }
 
     try {
