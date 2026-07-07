@@ -40,6 +40,7 @@ import {
   Scale,
   Search,
   Share2,
+  ShieldCheck,
   Sparkles,
   Tag,
   Target,
@@ -259,16 +260,18 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 
   // ── Wzorzec N: stan kart AI-draft per sekcja (§3.2) + flaga „AI-generated". ──
   // Klucze = id sekcji AI-zapisywalnych; mapowanie na backend section keys niżej.
-  type AICardKey = 'description-scope' | 'checklist' | 'dependencies';
+  type AICardKey = 'description-scope' | 'checklist' | 'dependencies' | 'evidence';
   const [cardState, setCardState] = useState<Record<AICardKey, NModeCardStatus>>({
     'description-scope': 'edited',
     checklist: 'edited',
     dependencies: 'edited',
+    evidence: 'edited',
   });
   const [cardAI, setCardAI] = useState<Record<AICardKey, boolean>>({
     'description-scope': false,
     checklist: false,
     dependencies: false,
+    evidence: false,
   });
   const setCard = useCallback((key: AICardKey, next: NModeCardStatus) => {
     setCardState((prev) => ({ ...prev, [key]: next }));
@@ -278,6 +281,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     'description-scope': 'strategy',
     checklist: 'execution',
     dependencies: 'dependencies',
+    evidence: 'evidence',
   };
 
   // T009: Suggested ideas (private) while editing task
@@ -2008,6 +2012,12 @@ Return ONLY the final comment text.`;
         component: null,
       },
       {
+        id: 'evidence',
+        icon: ShieldCheck,
+        label: { en: 'Evidence', pl: 'Dowody' },
+        component: null,
+      },
+      {
         id: 'governance',
         icon: Users,
         label: { en: 'RACI & Escalation', pl: 'RACI i eskalacja' },
@@ -2209,6 +2219,25 @@ Return ONLY the final comment text.`;
             completed: false,
           }))
         );
+      }
+    } else if (key === 'evidence') {
+      // Backend zwraca {"evidence": ["dowód 1", ...]} — dodajemy jako pozycje
+      // wymaganych dowodów (typ DOCUMENT), NIE nadpisując istniejących ręcznych.
+      const raw: any[] = Array.isArray(content)
+        ? content
+        : Array.isArray(content?.evidence)
+          ? content.evidence
+          : [];
+      const items = raw
+        .map((it: any) => (typeof it === 'string' ? it : it?.text || it?.title || ''))
+        .filter((t: string) => t.trim().length > 0)
+        .map((t: string) => ({
+          id: Math.random().toString(36).slice(2, 11),
+          type: 'DOCUMENT' as EvidenceType,
+          title: t,
+        }));
+      if (items.length) {
+        setEvidenceItems((prev) => [...prev, ...items]);
       }
     }
     // 'dependencies' → treść informacyjna; ten widok trzyma zależności jako
@@ -3020,6 +3049,64 @@ Return ONLY the final comment text.`;
           );
           break;
 
+        // ── Evidence & Acceptance (AI-zapisywalna karta, sectionKey=evidence) ──
+        case 'evidence':
+          component = (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  {isPolish ? 'Dowody i akceptacja' : 'Evidence & Acceptance'}
+                </h2>
+              </div>
+              <EvidenceSection
+                evidenceRequired={evidenceRequired}
+                evidenceItems={evidenceItems}
+                requiresAcceptance={requiresAcceptance}
+                acceptanceType={acceptanceType}
+                acceptorId={acceptorId}
+                signedOff={signedOff}
+                signedOffAt={signedOffAt}
+                signedOffBy={signedOffBy}
+                availableUsers={users.map((u) => ({
+                  id: u.id,
+                  name: `${u.firstName} ${u.lastName}`,
+                }))}
+                onEvidenceRequiredChange={setEvidenceRequired}
+                onAddEvidence={(item) =>
+                  setEvidenceItems([
+                    ...evidenceItems,
+                    { ...item, id: Math.random().toString(36).substr(2, 9) },
+                  ])
+                }
+                onRemoveEvidence={(id) =>
+                  setEvidenceItems(evidenceItems.filter((e) => e.id !== id))
+                }
+                onVerifyEvidence={(id) =>
+                  setEvidenceItems(
+                    evidenceItems.map((e) =>
+                      e.id === id
+                        ? { ...e, verified: true, verifiedAt: new Date().toISOString() }
+                        : e
+                    )
+                  )
+                }
+                onAcceptanceChange={(requires, type, acceptor) => {
+                  setRequiresAcceptance(requires);
+                  setAcceptanceType(type);
+                  setAcceptorId(acceptor);
+                }}
+                onSignOff={() => {
+                  setSignedOff(true);
+                  setSignedOffAt(new Date().toISOString());
+                  setSignedOffBy('Current User');
+                  toast.success(isPolish ? 'Zadanie podpisane' : 'Task signed off');
+                }}
+                expanded
+              />
+            </div>
+          );
+          break;
+
         // ── 6. Governance & Evidence ───────────────────────────────────
         case 'governance':
           component = (
@@ -3488,6 +3575,7 @@ Return ONLY the final comment text.`;
         'description-scope': { key: 'description-scope', name: { en: 'Strategy', pl: 'Strategia' } },
         checklist: { key: 'checklist', name: { en: 'Execution', pl: 'Wykonanie' } },
         dependencies: { key: 'dependencies', name: { en: 'Dependencies', pl: 'Zależności' } },
+        evidence: { key: 'evidence', name: { en: 'Evidence', pl: 'Dowody' } },
       };
       const cardMeta = AI_CARD_META[section.id];
       if (cardMeta) {
