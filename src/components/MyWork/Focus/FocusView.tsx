@@ -834,8 +834,8 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
               {(aiSuggestions.length > 0 || aiLoading) && (
                 <div>
                   <div className="flex items-center gap-1.5 mb-2">
-                    <Sparkles size={12} className="text-primary-500" />
-                    <span className="text-[11px] font-semibold text-primary-600 dark:text-primary-400 uppercase tracking-wider">
+                    <Sparkles size={12} className="text-c-info" />
+                    <span className="text-[11px] font-semibold text-c-info dark:text-c-info uppercase tracking-wider">
                       {t('myWork.focus.delegate.aiSuggestions', 'AI Suggestions')}
                     </span>
                   </div>
@@ -856,7 +856,7 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                               : 'border-c-border-subtle bg-c-surface hover:border-c-border'
                           }`}
                         >
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-brand flex items-center justify-center shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-c-info to-c-info flex items-center justify-center shrink-0">
                             <span className="text-xs font-medium text-white">
                               {(sug.name || '?').charAt(0).toUpperCase()}
                             </span>
@@ -916,7 +916,7 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                               className="w-8 h-8 rounded-full"
                             />
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-primary-600 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-c-info to-c-info flex items-center justify-center">
                               <span className="text-xs font-medium text-white">
                                 {user.name.charAt(0).toUpperCase()}
                               </span>

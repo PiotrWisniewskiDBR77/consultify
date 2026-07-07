@@ -118,7 +118,7 @@ const SOURCE_CONFIG: Record<
   ai: {
     label: { en: 'AI', pl: 'AI' },
     icon: Sparkles,
-    color: 'text-primary-500 dark:text-primary-400',
+    color: 'text-c-info dark:text-c-info',
   },
 };
 
@@ -1295,7 +1295,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
               <button
                 onClick={() => void applyAIProposal()}
                 disabled={isAIProposing}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-info/50 text-c-info dark:text-c-info hover:bg-c-info/10 transition-colors disabled:opacity-50"
               >
                 {isAIProposing ? <Loader2 size={13} className="animate-spin" /> : null}
                 {t('initiatives.decisionsSection.apply')}
@@ -1388,7 +1388,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                           {decision.title || t('initiatives.decisionsSection.untitled')}
                         </span>
                         {isGate && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary-500/20 text-primary-400 font-semibold flex-shrink-0">
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-c-info/20 text-c-info font-semibold flex-shrink-0">
                             GATE
                           </span>
                         )}

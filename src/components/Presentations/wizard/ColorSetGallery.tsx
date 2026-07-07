@@ -28,7 +28,7 @@ export const ColorSetGallery: React.FC<ColorSetGalleryProps> = ({
             onClick={() => onChange('brand_kit')}
             className={`relative p-2 rounded-lg border-2 text-center transition-all ${
               value === 'brand_kit'
-                ? 'border-primary-500 shadow-md shadow-primary-500/10'
+                ? 'border-c-info shadow-md shadow-c-info/10'
                 : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
             }`}
           >
@@ -59,7 +59,7 @@ export const ColorSetGallery: React.FC<ColorSetGalleryProps> = ({
               onClick={() => onChange(set.id)}
               className={`relative p-2 rounded-lg border-2 text-center transition-all ${
                 selected
-                  ? 'border-primary-500 shadow-md shadow-primary-500/10'
+                  ? 'border-c-info shadow-md shadow-c-info/10'
                   : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
               }`}
             >

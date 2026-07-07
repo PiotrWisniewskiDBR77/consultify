@@ -84,8 +84,8 @@ const TASK_STATUS_CONFIG: Record<
     label: { en: 'Review', pl: 'Przegląd' },
     color: 'bg-sky-500',
     dotColor: 'bg-navy-900',
-    bgColor: 'bg-primary-100 dark:bg-primary-500/20',
-    textColor: 'text-primary-600 dark:text-primary-400',
+    bgColor: 'bg-c-info/10 dark:bg-c-info/20',
+    textColor: 'text-c-info dark:text-c-info',
   },
   blocked: {
     label: { en: 'Blocked', pl: 'Zablokowane' },
@@ -127,7 +127,7 @@ const SOURCE_CONFIG: Record<
   ai: {
     label: { en: 'AI', pl: 'AI' },
     icon: Sparkles,
-    color: 'text-primary-500 dark:text-primary-400',
+    color: 'text-c-info dark:text-c-info',
   },
 };
 
@@ -1234,7 +1234,7 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
               </button>
               <button
                 onClick={() => void applyAIProposal()}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-c-info/50 text-c-info dark:text-c-info hover:bg-c-info/10 transition-colors"
               >
                 {t('initiatives.tasksMilestonesSection.apply')}
               </button>

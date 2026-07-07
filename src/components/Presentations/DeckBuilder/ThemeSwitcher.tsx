@@ -128,7 +128,7 @@ const ThemeCard: React.FC<{
     onClick={onSelect}
     className={`relative p-2 rounded-lg border-2 text-left transition-all w-full ${
       isSelected
-        ? 'border-primary-500 shadow-md shadow-primary-500/10'
+        ? 'border-c-info shadow-md shadow-c-info/10'
         : 'border-slate-200 dark:border-navy-700 hover:border-slate-300'
     }`}
   >

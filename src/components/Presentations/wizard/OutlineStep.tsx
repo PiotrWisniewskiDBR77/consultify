@@ -256,7 +256,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
             </div>
 
             {/* Card number */}
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary-500/10 text-primary-500 text-xs font-bold flex-shrink-0">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-c-info/10 text-c-info text-xs font-bold flex-shrink-0">
               {index + 1}
             </div>
 
@@ -267,7 +267,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
                 <input
                   value={item.title}
                   onChange={(e) => updateSlide(index, { title: e.target.value })}
-                  className="font-medium text-slate-900 dark:text-white bg-transparent border-none outline-none focus:ring-1 focus:ring-primary-500/20 text-sm flex-1 min-w-[120px]"
+                  className="font-medium text-slate-900 dark:text-white bg-transparent border-none outline-none focus:ring-1 focus:ring-c-focus text-sm flex-1 min-w-[120px]"
                 />
 
                 {/* Intent badge (dropdown) */}
@@ -304,7 +304,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
                   'presentations.outline.contentHintPlaceholder',
                   'Content hint: describe what this slide should contain...'
                 )}
-                className="text-xs text-slate-500 dark:text-slate-400 mt-1 bg-transparent border-none outline-none focus:ring-1 focus:ring-primary-500/20 w-full"
+                className="text-xs text-slate-500 dark:text-slate-400 mt-1 bg-transparent border-none outline-none focus:ring-1 focus:ring-c-focus w-full"
               />
 
               <input
@@ -314,7 +314,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
                   'presentations.outline.keyMessagePlaceholder',
                   'Key message for this slide...'
                 )}
-                className="text-xs text-slate-600 dark:text-slate-300 mt-1 bg-transparent border-none outline-none focus:ring-1 focus:ring-primary-500/20 w-full"
+                className="text-xs text-slate-600 dark:text-slate-300 mt-1 bg-transparent border-none outline-none focus:ring-1 focus:ring-c-focus w-full"
               />
 
               {/* Source references */}
@@ -385,10 +385,10 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
 
       {/* AI Suggestions Strip */}
       {aiSuggestions.length > 0 && (
-        <div className="bg-primary-50 dark:bg-primary-500/5 border border-primary-200 dark:border-primary-500/20 rounded-xl p-4">
+        <div className="bg-c-info/10 dark:bg-c-info/5 border border-c-info dark:border-c-info/20 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Lightbulb size={14} className="text-primary-500" />
-            <p className="text-sm font-medium text-primary-700 dark:text-primary-300">
+            <Lightbulb size={14} className="text-c-info" />
+            <p className="text-sm font-medium text-c-info dark:text-c-info">
               {t('presentations.outline.aiRecommends', 'AI recommends adding:')}
             </p>
           </div>
@@ -397,7 +397,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
               <button
                 key={suggestion.intent}
                 onClick={() => addSlide(suggestion.intent)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-primary-200 dark:border-primary-500/30 text-sm text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-c-info dark:border-c-info/30 text-sm text-c-info dark:text-c-info hover:bg-c-info/10 dark:hover:bg-c-info/10 transition-colors"
               >
                 <Plus size={12} />
                 <span className="capitalize">{suggestion.intent.replace(/_/g, ' ')}</span>

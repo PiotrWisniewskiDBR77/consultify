@@ -5065,7 +5065,7 @@ export const InterviewHub: React.FC = () => {
                     e.stopPropagation();
                     handleGenerateInsight(session, 'summary');
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-2.5 py-1 text-[11px] font-medium text-primary-800 hover:bg-primary-100 dark:border-primary-500/30 dark:bg-primary-500/15 dark:text-primary-300 dark:hover:bg-primary-500/25 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-c-info bg-c-info/10 px-2.5 py-1 text-[11px] font-medium text-c-info hover:bg-c-info/10 dark:border-c-info/30 dark:bg-c-info/15 dark:text-c-info dark:hover:bg-c-info/25 transition-colors"
                 >
                   <Lightbulb size={12} />
                   {isPolish ? 'AI insight' : 'AI insight'}
@@ -6009,7 +6009,7 @@ export const InterviewHub: React.FC = () => {
                       {statusLabel}
                     </span>
                     {template.isDefault && (
-                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400">
+                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-c-info/10 text-c-info dark:text-c-info">
                         Default
                       </span>
                     )}
@@ -9230,7 +9230,7 @@ Return ONLY the answer text (no markdown fences).`;
                             checked ? prev.filter((item) => item !== tag) : [...prev, tag]
                           )
                         }
-                        className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-c-focus"
+                        className="h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
                       />
                       <span>{getTemplateAreaTagLabel(tag, isPolish)}</span>
                     </label>
@@ -9925,9 +9925,9 @@ Return ONLY the answer text (no markdown fences).`;
                   (w) => w.verdict === 'needs_improvement' || w.verdict === 'insufficient'
                 );
                 return (
-                  <div className="rounded-lg border border-primary-200/70 dark:border-primary-400/20 bg-primary-50/60 dark:bg-primary-500/[0.08] p-3 mb-4">
+                  <div className="rounded-lg border border-c-info/70 dark:border-c-info/20 bg-c-info/60 dark:bg-c-info/[0.08] p-3 mb-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300 flex items-center gap-1.5">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-c-info dark:text-c-info flex items-center gap-1.5">
                         <Gauge size={14} />
                         {isPolish ? 'Ocena AI' : 'AI assessment'}
                       </span>
@@ -10019,7 +10019,7 @@ Return ONLY the answer text (no markdown fences).`;
           <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl w-full max-w-md mx-4">
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h2 className="text-lg font-semibold text-c-text flex items-center gap-2">
-                <CalendarClock size={18} className="text-primary-500" />
+                <CalendarClock size={18} className="text-c-info" />
                 {isPolish ? 'Zmień termin' : 'Change due date'}
               </h2>
               <button
@@ -10088,7 +10088,7 @@ Return ONLY the answer text (no markdown fences).`;
           <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
               <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <BarChart3 size={20} className="text-primary-400" />
+                <BarChart3 size={20} className="text-c-info" />
                 {isPolish ? 'Analityka wywiadów' : 'Interview Analytics'}
               </h2>
               <button

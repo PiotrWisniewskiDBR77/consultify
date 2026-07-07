@@ -38,7 +38,7 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
             handleGenerateAI('financialAnalysis');
           }}
           disabled={isGeneratingAI === 'financialAnalysis'}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 text-xs font-medium transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-c-info/50 text-c-info dark:text-c-info hover:bg-c-info/10 text-xs font-medium transition-colors disabled:opacity-50"
         >
           {isGeneratingAI === 'financialAnalysis' ? (
             <Loader2 size={14} className="animate-spin" />
@@ -99,11 +99,11 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
               {initiative.npv ? `$${initiative.npv.toLocaleString()}` : '-'}
             </div>
           </div>
-          <div className="p-3 rounded-xl bg-primary-50/50 dark:bg-primary-500/5 border border-primary-200/40 dark:border-primary-500/20 text-center">
-            <div className="text-xs font-medium text-primary-600 dark:text-primary-400 uppercase mb-1">
+          <div className="p-3 rounded-xl bg-c-info/50 dark:bg-c-info/5 border border-c-info/40 dark:border-c-info/20 text-center">
+            <div className="text-xs font-medium text-c-info dark:text-c-info uppercase mb-1">
               {t('initiatives.financialAnalysisSection.payback')}
             </div>
-            <div className="text-xl font-bold text-primary-600 dark:text-primary-400">
+            <div className="text-xl font-bold text-c-info dark:text-c-info">
               {initiative.paybackMonths ? `${initiative.paybackMonths}m` : '-'}
             </div>
           </div>

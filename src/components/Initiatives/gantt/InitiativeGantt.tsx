@@ -47,7 +47,7 @@ export interface InitiativeGanttProps {
 type GanttZoom = 'day' | 'week' | 'month';
 
 // Kolor BELKI per typ pozycji harmonogramu = dana kategoryczna → paleta c-tag-* (§15.1,
-// stabilny indeks wg kolejności). NIGDY crimson jako dana (task był bg-primary-500 = crimson).
+// stabilny indeks wg kolejności). NIGDY crimson jako dana (task miał wcześniej tailwind-brand leak, zmapowany na crimson).
 // c-tag-* to zmienne var() (bez <alpha-value>) → fill solidny, bez modyfikatorów /NN. ≤5 serii.
 const TYPE_BAR: Record<ScheduleItemType, string> = {
   task: 'bg-c-tag-1 hover:opacity-90 cursor-grab active:cursor-grabbing',

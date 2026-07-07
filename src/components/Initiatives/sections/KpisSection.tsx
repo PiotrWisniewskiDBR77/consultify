@@ -962,7 +962,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
               <button
                 onClick={() => void applyAIProposal()}
                 disabled={isAIApplying}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-info/50 text-c-info dark:text-c-info hover:bg-c-info/10 transition-colors disabled:opacity-50"
               >
                 {isAIApplying ? (
                   <Loader2 size={13} className="animate-spin" />
@@ -1010,7 +1010,7 @@ export const KpisSection: React.FC<InitiativeSectionProps> = ({ expanded, onTogg
                   e.stopPropagation();
                   setShowAdd(true);
                 }}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-primary-500 hover:border-primary-400/50 text-xs font-medium transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-300/60 dark:border-navy-600 text-slate-500 hover:text-c-info hover:border-c-info/50 text-xs font-medium transition-colors"
               >
                 <Plus size={14} />
                 <span>{t('initiatives.kpisSection.new')}</span>

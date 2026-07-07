@@ -52,9 +52,19 @@ export function mapArtifactKindToDraftKind(kind: DuplicableArtifactKind): Canvas
   return kind === 'sheet' ? 'table' : 'document';
 }
 
-/** Localized copy-title suffix, e.g. "(kopia)" / "(copy)". */
-export function duplicateTitleSuffix(): string {
-  return i18n.t('reports.copySuffix');
+/**
+ * Localized copy-title suffix, e.g. "(kopia)" / "(copy)".
+ *
+ * Mirrors the `reports.copySuffix` locale key (public/locales/{pl,en}/translation.json).
+ * Resolved directly from `isPolish` via `i18n.t(..., { lng })` with an inline
+ * `defaultValue` fallback, so this pure helper stays correct even when the i18next
+ * HTTP backend hasn't loaded resources yet (e.g. unit tests without a live instance).
+ */
+export function duplicateTitleSuffix(isPolish: boolean): string {
+  return i18n.t('reports.copySuffix', {
+    lng: isPolish ? 'pl' : 'en',
+    defaultValue: isPolish ? '(kopia)' : '(copy)',
+  });
 }
 
 function authToken(): string {
@@ -103,9 +113,9 @@ export function buildDuplicateDraftBody(params: {
   isPolish: boolean;
   sourceTitle?: string;
 }): Record<string, unknown> {
-  const { input, contentMd } = params;
+  const { input, contentMd, isPolish } = params;
   const baseTitle = String(params.sourceTitle || input.title || '').trim() || 'Untitled';
-  const title = `${baseTitle} ${duplicateTitleSuffix()}`.trim();
+  const title = `${baseTitle} ${duplicateTitleSuffix(isPolish)}`.trim();
   return {
     kind: mapArtifactKindToDraftKind(input.kind),
     title,

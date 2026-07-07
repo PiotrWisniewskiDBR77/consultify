@@ -490,7 +490,7 @@ export const TIMELINE_MODE_META: Record<
   TRACKING: {
     label: 'Tracking',
     labelPl: 'Śledzenie',
-    color: 'text-primary-500 bg-primary-500/10',
+    color: 'text-c-info bg-c-info/10',
     icon: 'Activity',
   },
   COMPLETED: {
@@ -705,7 +705,7 @@ export const RAID_TYPE_CONFIG = {
   dependency: {
     label: 'Dependency',
     labelPl: 'Zależność',
-    color: 'bg-primary-500/20 text-primary-400',
+    color: 'bg-c-info/20 text-c-info',
   },
 };
 

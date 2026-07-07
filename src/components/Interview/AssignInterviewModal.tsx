@@ -500,7 +500,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                       : 'Additional instructions for assignees...'
                   }
                   rows={3}
-                  className="w-full px-3 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-xl text-slate-900 dark:text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/40 focus:outline-none resize-none transition-colors"
+                  className="w-full px-3 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-xl text-slate-900 dark:text-white placeholder-slate-500 focus:border-c-focus focus:ring-1 focus:ring-c-focus focus:outline-none resize-none transition-colors"
                 />
               </div>
 

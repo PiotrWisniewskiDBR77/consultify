@@ -1869,7 +1869,7 @@ ${sourceText || '(none)'}`;
                   className={`w-full h-9 px-3 rounded-md bg-white dark:bg-navy-950 border text-slate-900 dark:text-white placeholder-slate-400 focus:ring-1 transition-all ${
                     errors.name
                       ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/50'
-                      : 'border-slate-300 dark:border-navy-700 focus:border-primary-500 focus:ring-primary-500/50'
+                      : 'border-slate-300 dark:border-navy-700 focus:border-c-focus focus:ring-c-focus'
                   }`}
                 />
                 {errors.name && <p className="text-xs text-danger-400 mt-1">{errors.name}</p>}
@@ -1892,13 +1892,13 @@ ${sourceText || '(none)'}`;
                       : 'Describe the survey goal, business context, expected answer precision, and what AI should optimize in the questions...'
                   }
                   rows={6}
-                  className="w-full px-3 py-2 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all resize-none"
+                  className="w-full px-3 py-2 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all resize-none"
                 />
               </div>
 
               {isApplicationTemplate ? (
-                <div className="mb-3 rounded-lg border border-primary-500/20 bg-primary-500/8 px-3 py-2.5">
-                  <p className="text-[11px] leading-relaxed text-primary-700 dark:text-primary-200 mb-2">
+                <div className="mb-3 rounded-lg border border-c-info/20 bg-c-info/8 px-3 py-2.5">
+                  <p className="text-[11px] leading-relaxed text-c-info dark:text-c-info mb-2">
                     {isPolish
                       ? 'To jest szablon systemowy (tylko do odczytu). Sklonuj go, aby edytować własną kopię.'
                       : 'This is a system template (read-only). Clone it to edit your own copy.'}
@@ -1907,7 +1907,7 @@ ${sourceText || '(none)'}`;
                     type="button"
                     onClick={handleCloneTemplate}
                     disabled={isCloning}
-                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-xs font-semibold bg-navy-900 text-white hover:bg-primary-600 transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-xs font-semibold bg-navy-900 text-white hover:bg-c-info transition-colors disabled:opacity-50"
                   >
                     {isCloning ? (
                       <Loader2 size={13} className="animate-spin" />
@@ -1967,7 +1967,7 @@ ${sourceText || '(none)'}`;
                   type="button"
                   onClick={() => setIsAnswerTypeMenuOpen((prev) => !prev)}
                   disabled={isApplicationTemplate}
-                  className="w-full h-10 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all flex items-center justify-between gap-3"
+                  className="w-full h-10 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all flex items-center justify-between gap-3"
                 >
                   <span className="truncate text-left text-sm">{allowedAnswerTypesLabel}</span>
                   <ChevronDown
@@ -1989,7 +1989,7 @@ ${sourceText || '(none)'}`;
                             checked={checked}
                             onChange={() => toggleAllowedAnswerType(type.id)}
                             disabled={isApplicationTemplate}
-                            className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                            className="h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
                           />
                           <span>{isPolish ? type.labelPl : type.labelEn}</span>
                         </label>
@@ -2007,7 +2007,7 @@ ${sourceText || '(none)'}`;
                   type="button"
                   onClick={() => setIsAreaTagsMenuOpen((prev) => !prev)}
                   disabled={isApplicationTemplate}
-                  className="w-full h-10 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all flex items-center justify-between gap-3"
+                  className="w-full h-10 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all flex items-center justify-between gap-3"
                 >
                   <span className="truncate text-left text-sm">{areaTagsLabel}</span>
                   <ChevronDown
@@ -2029,7 +2029,7 @@ ${sourceText || '(none)'}`;
                             checked={checked}
                             onChange={() => toggleAreaTag(tag)}
                             disabled={isApplicationTemplate}
-                            className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                            className="h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
                           />
                           <span>{getTemplateAreaTagLabel(tag, isPolish)}</span>
                         </label>
@@ -2053,7 +2053,7 @@ ${sourceText || '(none)'}`;
                       setTargetQuestionCount(Math.max(1, Number(e.target.value) || 1))
                     }
                     disabled={isApplicationTemplate}
-                    className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+                    className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all"
                   />
                 </div>
                 <div>
@@ -2069,7 +2069,7 @@ ${sourceText || '(none)'}`;
                       setQuestionCountTolerance(Math.max(0, Number(e.target.value) || 0))
                     }
                     disabled={isApplicationTemplate}
-                    className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+                    className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all"
                   />
                 </div>
               </div>
@@ -2091,7 +2091,7 @@ ${sourceText || '(none)'}`;
                       }))
                     }
                     disabled={isApplicationTemplate}
-                    className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+                    className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all"
                   />
                 </div>
 
@@ -2121,7 +2121,7 @@ ${sourceText || '(none)'}`;
                 type="button"
                 onClick={handleGenerateWithAI}
                 disabled={isAiGenerating || isApplicationTemplate}
-                className="w-full inline-flex items-center justify-center gap-2 h-10 px-4 rounded-full text-sm font-semibold border border-primary-500/40 dark:border-primary-500/30 bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                className="w-full inline-flex items-center justify-center gap-2 h-10 px-4 rounded-full text-sm font-semibold border border-c-info/40 dark:border-c-info/30 bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 transition-colors disabled:opacity-50 disabled:pointer-events-none"
               >
                 {isAiGenerating ? (
                   <Loader2 size={15} className="animate-spin" />
@@ -2243,12 +2243,12 @@ ${sourceText || '(none)'}`;
                             <div className="flex items-center gap-2 pt-2 pb-1 first:pt-0">
                               <Layers
                                 size={13}
-                                className="shrink-0 text-primary-500 dark:text-primary-300"
+                                className="shrink-0 text-c-info dark:text-c-info"
                               />
-                              <span className="text-[11px] font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-300">
+                              <span className="text-[11px] font-semibold uppercase tracking-wide text-c-info dark:text-c-info">
                                 {question.sectionTitle}
                               </span>
-                              <span className="h-px flex-1 bg-primary-500/20" />
+                              <span className="h-px flex-1 bg-c-info/20" />
                             </div>
                           ) : null}
                           <SortableQuestionCard
@@ -2330,7 +2330,7 @@ ${sourceText || '(none)'}`;
                                   [String(item.questionId)]: event.target.checked,
                                 }))
                               }
-                              className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                              className="mt-1 h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
                             />
                             <div className="min-w-0 flex-1 space-y-2">
                               <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -2387,7 +2387,7 @@ ${sourceText || '(none)'}`;
                                 [index]: event.target.checked,
                               }))
                             }
-                            className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                            className="mt-1 h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
                           />
                           <div className="min-w-0 flex-1 space-y-1.5">
                             <p className="text-sm font-medium text-slate-900 dark:text-white">
@@ -2435,7 +2435,7 @@ ${sourceText || '(none)'}`;
                                   [String(item.questionId)]: event.target.checked,
                                 }))
                               }
-                              className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                              className="mt-1 h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
                             />
                             <div className="min-w-0 flex-1 space-y-1.5">
                               <p className="text-sm font-medium text-slate-900 dark:text-white">
@@ -2458,7 +2458,7 @@ ${sourceText || '(none)'}`;
                       type="checkbox"
                       checked={applySuggestedOrder}
                       onChange={(event) => setApplySuggestedOrder(event.target.checked)}
-                      className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus"
                     />
                     <div className="space-y-1">
                       <div className="text-sm font-medium text-slate-900 dark:text-white">
@@ -2492,7 +2492,7 @@ ${sourceText || '(none)'}`;
                   <button
                     type="button"
                     onClick={applyAIProposal}
-                    className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-primary-500/40 dark:border-primary-500/30 bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 transition-colors"
+                    className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-c-info/40 dark:border-c-info/30 bg-navy-900 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 hover:bg-navy-800 transition-colors"
                   >
                     <Sparkles size={14} />
                     {isPolish ? 'Zastosuj sugestie AI' : 'Apply AI suggestions'}
@@ -2510,7 +2510,7 @@ ${sourceText || '(none)'}`;
               <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
                 <div>
                   <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-                    <Eye size={15} className="text-primary-500 dark:text-primary-300" />
+                    <Eye size={15} className="text-c-info dark:text-c-info" />
                     {isPolish ? 'Podgląd respondenta' : 'Respondent preview'}
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -2545,10 +2545,10 @@ ${sourceText || '(none)'}`;
                   <React.Fragment key={question.id}>
                     {question.sectionTitle ? (
                       <div className="flex items-center gap-2 pt-3 pb-1 first:pt-0">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-300">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-c-info dark:text-c-info">
                           {question.sectionTitle}
                         </span>
-                        <span className="h-px flex-1 bg-primary-500/20" />
+                        <span className="h-px flex-1 bg-c-info/20" />
                       </div>
                     ) : null}
                     <RespondentQuestionPreview
@@ -2792,7 +2792,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   const [showSectionInput, setShowSectionInput] = useState(false);
   const questionTextRef = useRef<HTMLTextAreaElement | null>(null);
   const fieldClassName =
-    'w-full h-10 px-3 rounded-lg bg-white dark:bg-navy-900 border border-slate-300 dark:border-navy-600 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all';
+    'w-full h-10 px-3 rounded-lg bg-white dark:bg-navy-900 border border-slate-300 dark:border-navy-600 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-c-focus focus:ring-1 focus:ring-c-focus transition-all';
 
   const handleAddOption = () => {
     if (!newOption.trim()) return;
@@ -2938,7 +2938,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               className={`w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border text-slate-900 dark:text-white placeholder-slate-500 focus:ring-1 transition-all resize-none ${
                 error
                   ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/50'
-                  : 'border-slate-300 dark:border-navy-600 focus:border-primary-500 focus:ring-primary-500/50'
+                  : 'border-slate-300 dark:border-navy-600 focus:border-c-focus focus:ring-c-focus'
               }`}
             />
           </div>
@@ -3062,7 +3062,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                   <button
                     onClick={handleAddOption}
                     disabled={readOnly}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-c-info/20 text-c-info hover:bg-c-info/30 transition-colors disabled:opacity-40 disabled:pointer-events-none"
                   >
                     <Plus size={14} />
                   </button>
@@ -3108,7 +3108,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 onChange={(e) => onUpdate({ guidance: e.target.value })}
                 disabled={readOnly}
                 rows={2}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-c-focus"
                 placeholder={
                   isPolish
                     ? 'Statyczna instrukcja widoczna przy pytaniu w formularzu odpowiedzi...'
@@ -3125,7 +3125,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 onChange={(e) => onUpdate({ exampleAnswer: e.target.value })}
                 disabled={readOnly}
                 rows={2}
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-c-focus"
                 placeholder={
                   isPolish
                     ? 'np. „W 2023 OEE wyniosło 72%, głównie przez przestoje linii 3."'
@@ -3145,7 +3145,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               onChange={(e) => onUpdate({ description: e.target.value })}
               disabled={readOnly}
               rows={2}
-              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-c-focus"
               placeholder={
                 isPolish
                   ? 'Dodatkowy kontekst wyświetlany pod pytaniem...'
@@ -3164,7 +3164,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               value={question.evidencePrompt || ''}
               onChange={(e) => onUpdate({ evidencePrompt: e.target.value })}
               disabled={readOnly}
-              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-c-focus"
               placeholder={
                 isPolish
                   ? 'np. Załącz raport lub link do dokumentacji'
@@ -3233,7 +3233,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     disabled={readOnly}
                     className={`inline-flex h-9 shrink-0 items-center gap-2 rounded-full px-3 text-sm transition-all ${
                       item.value
-                        ? 'bg-primary-500/12 border border-primary-500/25 text-primary-700 dark:text-primary-300'
+                        ? 'bg-c-info/12 border border-c-info/25 text-c-info dark:text-c-info'
                         : 'bg-slate-100/80 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.06] text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06]'
                     } disabled:opacity-50 disabled:pointer-events-none`}
                   >
@@ -3285,7 +3285,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                   type="button"
                   onClick={() => setShowSectionInput(true)}
                   disabled={readOnly}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-600 dark:text-primary-300 hover:text-primary-700 dark:hover:text-primary-200 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-c-info dark:text-c-info hover:text-c-info dark:hover:text-c-info transition-colors disabled:opacity-40 disabled:pointer-events-none"
                 >
                   <Plus size={12} />
                   {isPolish

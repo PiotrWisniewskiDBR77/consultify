@@ -69,8 +69,8 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
     <CollapsibleSection
       id="control"
       title={t('initiatives.controlSection.control')}
-      icon={<Layers size={18} className="text-primary-500 dark:text-primary-400" />}
-      iconBg="bg-gradient-to-br from-primary-500/10 to-crimson-500/10 dark:from-primary-500/20 dark:to-crimson-500/20"
+      icon={<Layers size={18} className="text-c-info dark:text-c-info" />}
+      iconBg="bg-gradient-to-br from-c-info/10 to-c-info/10 dark:from-c-info/20 dark:to-c-info/20"
       expanded={expanded}
       onToggle={onToggle}
     >
@@ -83,7 +83,7 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
             </span>
             <a
               href={moduleConfig.route}
-              className="text-[10px] text-primary-500 hover:text-primary-600 font-medium"
+              className="text-[10px] text-c-info hover:text-c-info font-medium"
             >
               {t('initiatives.controlSection.goTo')}
             </a>
@@ -132,7 +132,7 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
           </label>
           <button
             onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
-            className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors"
+            className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 hover:border-c-info dark:hover:border-c-info/50 transition-colors"
           >
             <div className="flex items-center gap-2">
               <Flag size={14} className={priorityConfig.color} />
@@ -157,7 +157,7 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
                       setPriority(key as any);
                       setShowPriorityDropdown(false);
                     }}
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 ${key === priority ? 'bg-primary-50 dark:bg-primary-500/10' : ''}`}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-navy-700 ${key === priority ? 'bg-c-info/10 dark:bg-c-info/10' : ''}`}
                   >
                     <Flag size={14} className={config.color} />
                     <span className="text-slate-700 dark:text-slate-300">
@@ -178,7 +178,7 @@ export const ControlSection: React.FC<InitiativeSectionProps> = ({
                 key={a.targetStatus}
                 onClick={() => handleStatusAction(a)}
                 disabled={isMutating}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white text-sm font-semibold shadow-lg shadow-primary-500/30 disabled:opacity-50 transition-all"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-c-info to-c-info hover:from-c-info hover:to-c-info text-white text-sm font-semibold shadow-lg shadow-c-info/30 disabled:opacity-50 transition-all"
               >
                 <span>{a.label}</span>
                 <ArrowRight size={16} />

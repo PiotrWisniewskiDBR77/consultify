@@ -570,7 +570,7 @@ const STATUS_CONFIG: Record<
   published: {
     label: { en: 'Published', pl: 'Opublikowane' },
     color: 'bg-sky-500',
-    textColor: 'text-primary-500',
+    textColor: 'text-c-info',
   },
   failed: {
     label: { en: 'Failed', pl: 'Błąd' },
@@ -4388,7 +4388,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         ].map((label) => (
                           <span
                             key={label}
-                            className="px-2 py-0.5 rounded-full bg-primary-500/10 text-primary-600 dark:text-primary-400 text-[10px] font-medium"
+                            className="px-2 py-0.5 rounded-full bg-c-info/10 text-c-info dark:text-c-info text-[10px] font-medium"
                           >
                             {label}
                           </span>
@@ -5006,7 +5006,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   <div key={ref} className="inline-flex flex-col">
                                     <button
                                       onClick={() => toggleEvidenceRef(ref)}
-                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary-500/10 text-primary-600 dark:text-primary-400 text-[10px] font-medium hover:bg-primary-500/20 transition-colors"
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-c-info/10 text-c-info dark:text-c-info text-[10px] font-medium hover:bg-c-info/20 transition-colors"
                                     >
                                       <Zap size={10} />
                                       {evidence?.question_text
@@ -5276,7 +5276,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   <div key={ref} className="inline-flex flex-col">
                                     <button
                                       onClick={() => toggleEvidenceRef(ref)}
-                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary-500/10 text-primary-600 dark:text-primary-400 text-[10px] font-medium hover:bg-primary-500/20 transition-colors"
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-c-info/10 text-c-info dark:text-c-info text-[10px] font-medium hover:bg-c-info/20 transition-colors"
                                     >
                                       <Zap size={10} />
                                       {evidence?.question_text
@@ -5524,7 +5524,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   <div key={ref} className="inline-flex flex-col">
                                     <button
                                       onClick={() => toggleEvidenceRef(ref)}
-                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary-500/10 text-primary-600 dark:text-primary-400 text-[10px] font-medium hover:bg-primary-500/20 transition-colors"
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-c-info/10 text-c-info dark:text-c-info text-[10px] font-medium hover:bg-c-info/20 transition-colors"
                                     >
                                       <Zap size={10} />
                                       {evidence?.question_text
@@ -5613,7 +5613,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         icon: <Target size={10} />,
                       },
                       contradiction: {
-                        bg: 'bg-primary-500/10 text-primary-600 dark:text-primary-400',
+                        bg: 'bg-c-info/10 text-c-info dark:text-c-info',
                         label: 'Contradiction',
                         labelPl: 'Sprzeczność',
                         icon: <AlertCircle size={10} />,
@@ -5811,7 +5811,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               case 'promoted':
                 return {
                   label: isPolish ? 'Promowany' : 'Promoted',
-                  className: 'bg-primary-500/10 text-primary-700 dark:text-primary-300',
+                  className: 'bg-c-info/10 text-c-info dark:text-c-info',
                 };
               default:
                 return {
@@ -5912,7 +5912,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             </div>
                           </div>
                           {linkedFinding && (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary-500/10 text-primary-700 dark:text-primary-300 text-[10px] font-medium">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-c-info/10 text-c-info dark:text-c-info text-[10px] font-medium">
                               <Target size={10} />
                               {isPolish ? 'Powiązany finding' : 'Linked finding'}
                             </span>
@@ -6082,7 +6082,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   handleCandidateAction(candidate, 'promote_to_finding')
                                 }
                                 disabled={isBusy || candidate.triage_status !== 'ready_for_review'}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/20 text-xs font-medium disabled:opacity-50"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-c-info/10 text-c-info dark:text-c-info hover:bg-c-info/20 text-xs font-medium disabled:opacity-50"
                               >
                                 {isBusy ? (
                                   <Loader2 size={12} className="animate-spin" />
@@ -6855,7 +6855,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         {[lens.role, lens.department].filter(Boolean).join(' · ') ||
                           (isPolish ? 'Perspektywa' : 'Perspective')}
                       </div>
-                      <blockquote className="mt-2 border-l-2 border-primary-400 pl-3 text-sm italic text-slate-700 dark:text-slate-300">
+                      <blockquote className="mt-2 border-l-2 border-c-info pl-3 text-sm italic text-slate-700 dark:text-slate-300">
                         {lens.localSummary ||
                           (isPolish
                             ? 'Brak lokalnego podsumowania dla tej osoby.'

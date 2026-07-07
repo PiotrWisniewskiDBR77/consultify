@@ -543,7 +543,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-gradient-to-br from-brand to-primary-600 text-white rounded-xl shadow-lg shadow-brand/25">
+          <div className="p-2.5 bg-gradient-to-br from-c-info to-c-info text-white rounded-xl shadow-lg shadow-brand/25">
             <Target size={22} />
           </div>
           <div>
@@ -579,7 +579,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
           <button
             onClick={handleAISuggestion}
             disabled={aiSuggesting || tasks.length >= MAX_FOCUS_TASKS}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-primary-600 to-crimson-600 hover:from-primary-500 hover:to-crimson-500 text-white text-sm font-medium shadow-lg shadow-primary-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-c-info to-c-info hover:from-c-info hover:to-c-info text-white text-sm font-medium shadow-lg shadow-c-info/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {aiSuggesting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
             <span className="hidden sm:inline">{t('myWork.focus.aiSuggest', 'AI Suggest')}</span>
@@ -667,7 +667,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
               <button
                 onClick={handleAISuggestion}
                 disabled={aiSuggesting}
-                className="inline-flex items-center gap-2 p-4 py-2.5 rounded-xl bg-gradient-to-r from-primary-600 to-crimson-600 hover:from-primary-500 hover:to-crimson-500 text-white font-medium shadow-lg shadow-primary-500/25 transition-all disabled:opacity-50"
+                className="inline-flex items-center gap-2 p-4 py-2.5 rounded-xl bg-gradient-to-r from-c-info to-c-info hover:from-c-info hover:to-c-info text-white font-medium shadow-lg shadow-c-info/25 transition-all disabled:opacity-50"
               >
                 {aiSuggesting ? (
                   <Loader2 size={18} className="animate-spin" />
@@ -694,7 +694,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
             className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4"
           >
             <h4 className="text-sm font-bold text-c-text mb-4 flex items-center gap-2">
-              <Sparkles size={16} className="text-primary-500" />
+              <Sparkles size={16} className="text-c-info" />
               {t('myWork.focus.tips.title', 'Tips for productive focus')}
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -727,7 +727,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
             className="bg-c-info/10 border border-c-info/20 rounded-xl p-4"
           >
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
+              <Sparkles size={16} className="text-c-info dark:text-c-info" />
               <h3 className="font-semibold text-c-text">
                 {t('myWork.focus.aiSuggestions', 'AI Suggestions')}
               </h3>

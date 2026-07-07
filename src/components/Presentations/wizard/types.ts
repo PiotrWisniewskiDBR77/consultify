@@ -606,7 +606,7 @@ export interface SourceTypeInfo {
 export const SOURCE_TYPES: SourceTypeInfo[] = [
   { type: 'initiative', icon: 'Target', color: 'text-blue-500' },
   { type: 'note', icon: 'BookOpen', color: 'text-emerald-500' },
-  { type: 'report', icon: 'FileText', color: 'text-primary-500' },
+  { type: 'report', icon: 'FileText', color: 'text-c-info' },
   { type: 'financial_analysis', icon: 'TrendingUp', color: 'text-amber-500' },
   { type: 'tool_session', icon: 'Zap', color: 'text-blue-500' },
   { type: 'workspace', icon: 'Layout', color: 'text-indigo-500' },

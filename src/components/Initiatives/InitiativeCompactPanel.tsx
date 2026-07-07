@@ -158,8 +158,8 @@ const RAID_TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string 
   ISSUE: { icon: AlertTriangle, color: 'text-amber-500' },
   assumption: { icon: Target, color: 'text-blue-500' },
   ASSUMPTION: { icon: Target, color: 'text-blue-500' },
-  dependency: { icon: ChevronRight, color: 'text-primary-500' },
-  DEPENDENCY: { icon: ChevronRight, color: 'text-primary-500' },
+  dependency: { icon: ChevronRight, color: 'text-c-info' },
+  DEPENDENCY: { icon: ChevronRight, color: 'text-c-info' },
 };
 
 const COMPACT_TABS: { id: CompactTab; labelKey: string; icon: React.ElementType }[] = [
@@ -530,7 +530,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
               <button
                 key={action.targetStatus}
                 onClick={() => handleStatusAction(action)}
-                className="ml-auto flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-primary-500/10 text-primary-500 hover:bg-primary-500/20 transition-colors"
+                className="ml-auto flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-c-info/10 text-c-info hover:bg-c-info/20 transition-colors"
               >
                 <ArrowRight size={10} />
                 {action.label}
@@ -541,7 +541,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
 
       {/* Next Step CTA — "what is the next step for this initiative" */}
       {nextStepInfo && initiative && (
-        <div className="flex-shrink-0 px-4 py-2.5 border-b border-slate-200 dark:border-navy-800 bg-primary-50/50 dark:bg-primary-900/10">
+        <div className="flex-shrink-0 px-4 py-2.5 border-b border-slate-200 dark:border-navy-800 bg-c-info/50 dark:bg-c-info/10">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {t('initiatives.compact.nextStep', 'Next step')}
@@ -556,7 +556,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <ArrowRight size={14} className="text-primary-500 flex-shrink-0" />
+            <ArrowRight size={14} className="text-c-info flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                 {nextStepInfo.label}
@@ -650,7 +650,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
             value={(initiative as any)?.ownerBusiness ? '✓' : '—'}
             color={
               (initiative as any)?.ownerBusiness
-                ? 'text-primary-500'
+                ? 'text-c-info'
                 : 'text-slate-500 dark:text-slate-400'
             }
           />
@@ -743,7 +743,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
           <div className="flex items-center justify-center h-32">
-            <Loader2 size={20} className="animate-spin text-primary-500" />
+            <Loader2 size={20} className="animate-spin text-c-info" />
           </div>
         ) : (
           <>
@@ -1006,7 +1006,7 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
       {/* Milestones */}
       {milestones.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold text-primary-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+          <p className="text-[10px] font-semibold text-c-info uppercase tracking-wider mb-1.5 flex items-center gap-1">
             <Flag size={10} /> {t('initiatives.compact.milestones')}
           </p>
           {milestones.map((ms) => (
@@ -1014,7 +1014,7 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
               key={ms.id}
               className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors"
             >
-              <Flag size={11} className="text-primary-500 flex-shrink-0" />
+              <Flag size={11} className="text-c-info flex-shrink-0" />
               <span className="text-xs text-slate-700 dark:text-slate-300 flex-1 truncate">
                 {ms.title}
               </span>
@@ -1338,7 +1338,7 @@ const FinanceTab: React.FC<{
             labelKey: 'initiatives.compact.impact',
             value: init.impact || init.strategicImpact || '—',
             icon: Target,
-            color: 'text-primary-500',
+            color: 'text-c-info',
           },
         ].map((item) => (
           <div
@@ -1401,7 +1401,7 @@ const OutputsTab: React.FC<{
   if (loading) {
     return (
       <div className="flex items-center justify-center h-32">
-        <Loader2 size={18} className="animate-spin text-primary-500" />
+        <Loader2 size={18} className="animate-spin text-c-info" />
       </div>
     );
   }

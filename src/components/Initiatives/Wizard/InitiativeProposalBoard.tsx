@@ -146,7 +146,7 @@ export const InitiativeProposalBoard: React.FC<InitiativeProposalBoardProps> = (
       {/* Proposals column */}
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="mb-3 flex items-center gap-2">
-          <Sparkles size={16} className="text-primary-500" />
+          <Sparkles size={16} className="text-c-info" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
             {tr('Tablica propozycji', 'Proposal board')}
           </h3>
@@ -218,7 +218,7 @@ export const InitiativeProposalBoard: React.FC<InitiativeProposalBoardProps> = (
                       <button
                         type="button"
                         onClick={() => onAcceptChange?.(p)}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-primary-500/40 px-3 py-1.5 text-xs font-semibold text-primary-700 transition-colors hover:bg-primary-50 dark:text-primary-300 dark:hover:bg-primary-500/10"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-c-info/40 px-3 py-1.5 text-xs font-semibold text-c-info transition-colors hover:bg-c-info/10 dark:text-c-info dark:hover:bg-c-info/10"
                       >
                         {changeAction
                           ? isPolish

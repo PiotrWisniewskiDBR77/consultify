@@ -277,7 +277,7 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <BookOpen size={16} className="text-primary-500" />
+          <BookOpen size={16} className="text-c-info" />
           <h3 className="text-sm font-semibold text-navy-900 dark:text-white">
             {t('competency.requirements.title', 'Competency Requirements')}
           </h3>
@@ -288,7 +288,7 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
         {!isReadOnly && (
           <button
             onClick={() => setShowAdd(true)}
-            className="text-xs flex items-center gap-1 text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium"
+            className="text-xs flex items-center gap-1 text-c-info hover:text-c-info dark:text-c-info font-medium"
           >
             <Plus size={14} />
             {t('competency.requirements.add', 'Add Requirement')}

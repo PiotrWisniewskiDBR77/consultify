@@ -653,12 +653,12 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
                 </div>
               </div>
 
-              <div className="rounded-xl border border-primary-200/60 dark:border-primary-500/20 bg-primary-50/40 dark:bg-primary-500/5 px-4 py-3 text-xs text-slate-700 dark:text-slate-200">
+              <div className="rounded-xl border border-c-info/60 dark:border-c-info/20 bg-c-info/40 dark:bg-c-info/5 px-4 py-3 text-xs text-slate-700 dark:text-slate-200">
                 <div className="flex items-center gap-2">
                   {isAIProposing ? (
-                    <Loader2 size={14} className="animate-spin text-primary-500" />
+                    <Loader2 size={14} className="animate-spin text-c-info" />
                   ) : (
-                    <Sparkles size={14} className="text-primary-500" />
+                    <Sparkles size={14} className="text-c-info" />
                   )}
                   <span>{t('initiatives.dependenciesSection.applyApiNote')}</span>
                 </div>
@@ -676,7 +676,7 @@ export const DependenciesSection: React.FC<InitiativeSectionProps> = ({ readonly
               <button
                 onClick={() => void applyAIProposal()}
                 disabled={isApplying}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-c-info/50 text-c-info dark:text-c-info hover:bg-c-info/10 transition-colors disabled:opacity-50"
               >
                 {isApplying ? <Loader2 size={13} className="animate-spin" /> : null}
                 <span>{t('initiatives.dependenciesSection.apply')}</span>

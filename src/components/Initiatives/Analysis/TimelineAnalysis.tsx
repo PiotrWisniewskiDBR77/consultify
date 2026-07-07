@@ -523,11 +523,11 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
             </p>
           </div>
         ) : (
-          <div className="rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden">
-            <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
+          <div className="rounded-xl border border-c-info dark:border-c-info/50 bg-c-info/5 dark:bg-c-info/10 overflow-hidden">
+            <div className="px-4 py-3 bg-c-info/10 dark:bg-c-info/20 border-b border-c-info dark:border-c-info/50 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
-                <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
+                <Sparkles size={16} className="text-c-info dark:text-c-info" />
+                <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
                   AI Auto-Schedule proposals
                 </h3>
               </div>
@@ -548,25 +548,25 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                 )}
                 <button
                   onClick={closeWorkspacePanels}
-                  className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30"
+                  className="p-1 rounded text-c-info hover:bg-c-info/30 dark:hover:bg-c-info/30"
                 >
                   <X size={14} />
                 </button>
               </div>
             </div>
-            <div className="divide-y divide-primary-200/50 dark:divide-primary-900/30">
+            <div className="divide-y divide-c-info/20 dark:divide-c-info/15">
               {scheduleProposals.map((p, idx) => (
                 <div
                   key={`${p.initiativeId}-${idx}`}
                   className="flex items-center gap-3 px-4 py-3 text-sm"
                 >
-                  <Clock size={14} className="text-primary-400 shrink-0" />
+                  <Clock size={14} className="text-c-info shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium text-slate-900 dark:text-white truncate">
                         {p.initiativeName}
                       </span>
-                      <span className="text-xs text-primary-500 dark:text-primary-400">
+                      <span className="text-xs text-c-info dark:text-c-info">
                         {new Date(p.suggestedStart).toLocaleDateString()} {'->'}{' '}
                         {new Date(p.suggestedEnd).toLocaleDateString()}
                       </span>
@@ -622,14 +622,14 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
               <div className="flex items-center gap-2 mb-1">
                 <button
                   onClick={() => onOpenInitiative(c.initiativeA)}
-                  className="font-medium text-slate-900 dark:text-white hover:text-primary-600 transition-colors truncate max-w-[160px]"
+                  className="font-medium text-slate-900 dark:text-white hover:text-c-info transition-colors truncate max-w-[160px]"
                 >
                   {c.nameA}
                 </button>
                 <span className="text-xs text-danger-500">↔</span>
                 <button
                   onClick={() => onOpenInitiative(c.initiativeB)}
-                  className="font-medium text-slate-900 dark:text-white hover:text-primary-600 transition-colors truncate max-w-[160px]"
+                  className="font-medium text-slate-900 dark:text-white hover:text-c-info transition-colors truncate max-w-[160px]"
                 >
                   {c.nameB}
                 </button>
@@ -707,7 +707,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                 <AlertTriangle size={14} className="text-danger-500" />
                 <button
                   onClick={() => onOpenInitiative(d.delayedId)}
-                  className="font-medium text-sm text-slate-900 dark:text-white hover:text-primary-600 transition-colors"
+                  className="font-medium text-sm text-slate-900 dark:text-white hover:text-c-info transition-colors"
                 >
                   {d.delayedName}
                 </button>
@@ -718,7 +718,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                     <ArrowRight size={10} className="text-amber-400" />
                     <button
                       onClick={() => onOpenInitiative(a.id)}
-                      className="text-slate-700 dark:text-slate-300 hover:text-primary-600 transition-colors"
+                      className="text-slate-700 dark:text-slate-300 hover:text-c-info transition-colors"
                     >
                       {a.name}
                     </button>
@@ -940,7 +940,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
           <button
             onClick={() => setStatusFilter('all')}
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium
-              bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+              bg-c-info/10 text-c-info dark:text-c-info hover:bg-c-info/20 transition-colors"
           >
             {statusFilter.replace('-', ' ')}
             <X size={10} />
@@ -950,14 +950,14 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
 
       {/* AI Auto-Schedule proposals */}
       {!onRegisterWorkspacePanel && scheduleProposals !== null && (
-        <div className="rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden">
-          <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
+        <div className="rounded-xl border border-c-info dark:border-c-info/50 bg-c-info/5 dark:bg-c-info/10 overflow-hidden">
+          <div className="px-4 py-3 bg-c-info/10 dark:bg-c-info/20 border-b border-c-info dark:border-c-info/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
-              <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
+              <Sparkles size={16} className="text-c-info dark:text-c-info" />
+              <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
                 AI Auto-Schedule proposals
               </h3>
-              <span className="text-xs text-primary-500">({scheduleProposals.length})</span>
+              <span className="text-xs text-c-info">({scheduleProposals.length})</span>
             </div>
             <div className="flex items-center gap-2">
               {scheduleProposals.length > 1 && onQuickUpdate && (
@@ -977,7 +977,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
               )}
               <button
                 onClick={() => setScheduleProposals(null)}
-                className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30"
+                className="p-1 rounded text-c-info hover:bg-c-info/30 dark:hover:bg-c-info/30"
               >
                 <X size={14} />
               </button>
@@ -991,19 +991,19 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-primary-200/50 dark:divide-primary-900/30">
+            <div className="divide-y divide-c-info/20 dark:divide-c-info/15">
               {scheduleProposals.map((p, idx) => (
                 <div
                   key={`${p.initiativeId}-${idx}`}
                   className="flex items-center gap-3 px-4 py-3 text-sm"
                 >
-                  <Clock size={14} className="text-primary-400 shrink-0" />
+                  <Clock size={14} className="text-c-info shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium text-slate-900 dark:text-white truncate">
                         {p.initiativeName}
                       </span>
-                      <span className="text-xs text-primary-500 dark:text-primary-400">
+                      <span className="text-xs text-c-info dark:text-c-info">
                         {new Date(p.suggestedStart).toLocaleDateString()} →{' '}
                         {new Date(p.suggestedEnd).toLocaleDateString()}
                         <span className="ml-1 text-slate-600">({p.durationDays}d)</span>
@@ -1080,14 +1080,14 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                 <div className="flex items-center gap-2 mb-1">
                   <button
                     onClick={() => onOpenInitiative(c.initiativeA)}
-                    className="font-medium text-slate-900 dark:text-white hover:text-primary-600 transition-colors truncate max-w-[180px]"
+                    className="font-medium text-slate-900 dark:text-white hover:text-c-info transition-colors truncate max-w-[180px]"
                   >
                     {c.nameA}
                   </button>
                   <span className="text-xs text-danger-500">↔</span>
                   <button
                     onClick={() => onOpenInitiative(c.initiativeB)}
-                    className="font-medium text-slate-900 dark:text-white hover:text-primary-600 transition-colors truncate max-w-[180px]"
+                    className="font-medium text-slate-900 dark:text-white hover:text-c-info transition-colors truncate max-w-[180px]"
                   >
                     {c.nameB}
                   </button>
@@ -1139,7 +1139,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                           ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                           : tip.type === 'parallelize'
                             ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
-                            : 'bg-primary-500/15 text-primary-600 dark:text-primary-400'
+                            : 'bg-c-info/15 text-c-info dark:text-c-info'
                       }`}
                     >
                       {tip.type}
@@ -1178,7 +1178,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                   <AlertTriangle size={14} className="text-danger-500" />
                   <button
                     onClick={() => onOpenInitiative(d.delayedId)}
-                    className="font-medium text-sm text-slate-900 dark:text-white hover:text-primary-600 transition-colors"
+                    className="font-medium text-sm text-slate-900 dark:text-white hover:text-c-info transition-colors"
                   >
                     {d.delayedName}
                   </button>
@@ -1190,7 +1190,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                       <ArrowRight size={10} className="text-amber-400" />
                       <button
                         onClick={() => onOpenInitiative(a.id)}
-                        className="text-slate-700 dark:text-slate-300 hover:text-primary-600 transition-colors"
+                        className="text-slate-700 dark:text-slate-300 hover:text-c-info transition-colors"
                       >
                         {a.name}
                       </button>
@@ -1316,7 +1316,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                           {onQuickUpdate && (
                             <button
                               onClick={() => startEditing(bar)}
-                              className="p-1 rounded text-slate-600 hover:text-primary-500 hover:bg-primary-500/10 transition-colors"
+                              className="p-1 rounded text-slate-600 hover:text-c-info hover:bg-c-info/10 transition-colors"
                             >
                               <Calendar size={14} />
                             </button>

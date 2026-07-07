@@ -22,7 +22,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: 
 const COLOR_CLASSES: Record<string, string> = {
   emerald: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
   blue: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30',
-  purple: 'bg-primary-500/15 text-primary-700 dark:text-primary-400 border-primary-500/30',
+  purple: 'bg-c-info/15 text-c-info dark:text-c-info border-c-info/30',
   amber: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30',
 };
 

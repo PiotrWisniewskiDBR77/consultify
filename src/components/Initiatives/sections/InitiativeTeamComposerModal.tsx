@@ -222,10 +222,10 @@ function toneClasses(tone: RoleDef['tone']) {
       };
     case 'violet':
       return {
-        icon: 'text-primary-600 dark:text-primary-400',
-        chip: 'bg-primary-50 dark:bg-primary-500/10 border-primary-200 dark:border-primary-500/30',
+        icon: 'text-c-info dark:text-c-info',
+        chip: 'bg-c-info/10 dark:bg-c-info/10 border-c-info dark:border-c-info/30',
         active:
-          'border-primary-300 dark:border-primary-500/50 bg-primary-50/80 dark:bg-primary-500/10',
+          'border-c-info dark:border-c-info/50 bg-c-info/80 dark:bg-c-info/10',
       };
     case 'emerald':
       return {
@@ -547,7 +547,7 @@ export function InitiativeTeamComposerModal(props: {
                             onClick={() => setActive({ kind: 'user', id: u.id })}
                             className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl border transition-colors text-left ${
                               isActive
-                                ? 'border-primary-300/70 dark:border-primary-500/40 bg-primary-50/70 dark:bg-primary-500/10'
+                                ? 'border-c-info/70 dark:border-c-info/40 bg-c-info/70 dark:bg-c-info/10'
                                 : 'border-slate-200/70 dark:border-navy-700/60 hover:bg-slate-50/60 dark:hover:bg-navy-800/40'
                             }`}
                           >
@@ -645,7 +645,7 @@ export function InitiativeTeamComposerModal(props: {
                     <button
                       type="button"
                       onClick={() => setShowInvite((v) => !v)}
-                      className="text-xs font-semibold text-primary-600 dark:text-primary-300 hover:text-primary-700 dark:hover:text-primary-200"
+                      className="text-xs font-semibold text-c-info dark:text-c-info hover:text-c-info dark:hover:text-c-info"
                     >
                       {showInvite ? (isPl ? 'Zwiń' : 'Hide') : isPl ? 'Dodaj' : 'Add'}
                     </button>

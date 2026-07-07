@@ -85,9 +85,9 @@ const DIM_ORDER: Record<DimColor, number> = { red: 0, amber: 1, green: 2 };
 const SortIcon: React.FC<{ col: SortCol; cur: SortCol; dir: SortDir }> = ({ col, cur, dir }) => {
   if (col !== cur) return <ArrowUpDown size={11} className="text-slate-600 dark:text-slate-400" />;
   return dir === 'asc' ? (
-    <ArrowUp size={11} className="text-primary-500" />
+    <ArrowUp size={11} className="text-c-info" />
   ) : (
-    <ArrowDown size={11} className="text-primary-500" />
+    <ArrowDown size={11} className="text-c-info" />
   );
 };
 
@@ -375,20 +375,20 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
 
   const aiOptimizerPanel =
     aiOptProposals !== null ? (
-      <div className="m-4 rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden">
-        <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
+      <div className="m-4 rounded-xl border border-c-info dark:border-c-info/50 bg-c-info/5 dark:bg-c-info/10 overflow-hidden">
+        <div className="px-4 py-3 bg-c-info/10 dark:bg-c-info/20 border-b border-c-info dark:border-c-info/50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
-            <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
+            <Sparkles size={16} className="text-c-info dark:text-c-info" />
+            <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
               {t('initiatives.analysis.feasibility.aiProposals', 'AI optimization proposals')}
             </h3>
-            <span className="text-xs text-primary-500 dark:text-primary-400">
+            <span className="text-xs text-c-info dark:text-c-info">
               ({aiOptProposals.length})
             </span>
           </div>
           <button
             onClick={closeWorkspacePanels}
-            className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30"
+            className="p-1 rounded text-c-info hover:bg-c-info/30 dark:hover:bg-c-info/30"
           >
             <X size={14} />
           </button>
@@ -404,7 +404,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-primary-200/50 dark:divide-primary-900/30">
+          <div className="divide-y divide-c-info/20 dark:divide-c-info/15">
             {aiOptProposals.map((p, idx) => (
               <div
                 key={`${p.initiativeId}-${p.dimension}-${idx}`}
@@ -440,7 +440,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                 ) : (
                   <button
                     onClick={() => onOpenInitiative(p.initiativeId)}
-                    className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                    className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-c-info/10 text-c-info dark:text-c-info hover:bg-c-info/20 transition-colors"
                   >
                     <ExternalLink size={12} />
                     {t('initiatives.analysis.previewInitiative', 'Preview')}
@@ -521,17 +521,17 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
   ) : null;
 
   const explainerPanel = explainedInitiative ? (
-    <div className="m-4 rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden">
-      <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
+    <div className="m-4 rounded-xl border border-c-info dark:border-c-info/50 bg-c-info/5 dark:bg-c-info/10 overflow-hidden">
+      <div className="px-4 py-3 bg-c-info/10 dark:bg-c-info/20 border-b border-c-info dark:border-c-info/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <HelpCircle size={16} className="text-primary-600 dark:text-primary-400" />
-          <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
+          <HelpCircle size={16} className="text-c-info dark:text-c-info" />
+          <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
             AI Score Explainer
           </h3>
         </div>
         <button
           onClick={closeWorkspacePanels}
-          className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30"
+          className="p-1 rounded text-c-info hover:bg-c-info/30 dark:hover:bg-c-info/30"
         >
           <X size={14} />
         </button>
@@ -545,14 +545,14 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
             Score {explainedInitiative.overallScore}%
           </p>
         </div>
-        <div className="rounded-lg bg-white/70 dark:bg-navy-950/60 border border-primary-200/50 dark:border-primary-900/40 px-3 py-3">
+        <div className="rounded-lg bg-white/70 dark:bg-navy-950/60 border border-c-info/50 dark:border-c-info/40 px-3 py-3">
           <p className="text-sm text-slate-700 dark:text-slate-300">
             {getExplanation(explainedInitiative)}
           </p>
         </div>
         <button
           onClick={() => onOpenInitiative(explainedInitiative.initiativeId)}
-          className="inline-flex items-center gap-1 px-3 py-2 text-xs font-medium rounded-lg bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+          className="inline-flex items-center gap-1 px-3 py-2 text-xs font-medium rounded-lg bg-c-info/10 text-c-info dark:text-c-info hover:bg-c-info/20 transition-colors"
         >
           <ExternalLink size={12} />
           {t('initiatives.analysis.previewInitiative', 'Preview')}
@@ -683,7 +683,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
           <button
             onClick={() => setDimFilter(null)}
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium
-              bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+              bg-c-info/10 text-c-info dark:text-c-info hover:bg-c-info/20 transition-colors"
           >
             <span className={`w-2 h-2 rounded-full ${DIM_BG[dimFilter.color]}`} />
             {DIM_LABELS[dimFilter.dim]}
@@ -707,7 +707,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
               <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
                 <button
                   onClick={() => handleSort('initiative')}
-                  className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                  className="inline-flex items-center gap-1 hover:text-c-info dark:hover:text-c-info transition-colors"
                 >
                   {t('initiatives.analysis.feasibility.initiative', 'Initiative')}
                   <SortIcon col="initiative" cur={sortCol} dir={sortDir} />
@@ -720,7 +720,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                 >
                   <button
                     onClick={() => handleSort(col)}
-                    className="inline-flex items-center gap-1 mx-auto hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                    className="inline-flex items-center gap-1 mx-auto hover:text-c-info dark:hover:text-c-info transition-colors"
                   >
                     {t(
                       `initiatives.analysis.feasibility.${col}`,
@@ -733,7 +733,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
               <th className="text-right px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300 w-20">
                 <button
                   onClick={() => handleSort('score')}
-                  className="inline-flex items-center gap-1 ml-auto hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                  className="inline-flex items-center gap-1 ml-auto hover:text-c-info dark:hover:text-c-info transition-colors"
                 >
                   {t('initiatives.analysis.feasibility.score', 'Score')}
                   <SortIcon col="score" cur={sortCol} dir={sortDir} />
@@ -804,8 +804,8 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                         }}
                         className={`p-1 rounded transition-colors ${
                           isExplaining
-                            ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10'
-                            : 'text-slate-600 hover:text-primary-500 hover:bg-primary-500/10'
+                            ? 'text-c-info dark:text-c-info bg-c-info/10'
+                            : 'text-slate-600 hover:text-c-info hover:bg-c-info/10'
                         }`}
                         title="AI Score Explainer"
                       >
@@ -818,9 +818,9 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                   {isExplaining && !isExpanded && !onRegisterWorkspacePanel && (
                     <tr>
                       <td colSpan={8} className="px-0 py-0">
-                        <div className="px-12 py-2.5 bg-primary-500/5 dark:bg-primary-500/10 border-b border-primary-200/50 dark:border-primary-900/30">
+                        <div className="px-12 py-2.5 bg-c-info/5 dark:bg-c-info/10 border-b border-c-info/50 dark:border-c-info/30">
                           <div className="flex items-start gap-2">
-                            <Sparkles size={12} className="text-primary-500 mt-0.5 shrink-0" />
+                            <Sparkles size={12} className="text-c-info mt-0.5 shrink-0" />
                             <p className="text-xs text-slate-700 dark:text-slate-300">
                               {getExplanation(f)}
                             </p>
@@ -837,9 +837,9 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                         <div className="bg-slate-50/50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700 px-8 py-4">
                           {/* Explainer inside expanded row */}
                           {!onRegisterWorkspacePanel && (
-                            <div className="mb-3 px-1 py-2 rounded-lg bg-primary-500/5 dark:bg-primary-500/10">
+                            <div className="mb-3 px-1 py-2 rounded-lg bg-c-info/5 dark:bg-c-info/10">
                               <div className="flex items-start gap-2 px-2">
-                                <Sparkles size={12} className="text-primary-500 mt-0.5 shrink-0" />
+                                <Sparkles size={12} className="text-c-info mt-0.5 shrink-0" />
                                 <p className="text-xs text-slate-700 dark:text-slate-300">
                                   {getExplanation(f)}
                                 </p>
@@ -931,7 +931,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                                       e.stopPropagation();
                                       onOpenInitiative(f.initiativeId);
                                     }}
-                                    className="inline-flex items-center gap-1 px-3 py-2 text-xs font-medium rounded-lg bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                                    className="inline-flex items-center gap-1 px-3 py-2 text-xs font-medium rounded-lg bg-c-info/10 text-c-info dark:text-c-info hover:bg-c-info/20 transition-colors"
                                   >
                                     <ExternalLink size={12} />
                                     {t('initiatives.analysis.previewInitiative', 'Preview')}
@@ -950,7 +950,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                                   e.stopPropagation();
                                   onOpenInitiative(f.initiativeId);
                                 }}
-                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-c-info/10 text-c-info dark:text-c-info hover:bg-c-info/20 transition-colors"
                               >
                                 <ExternalLink size={12} />
                                 {t('initiatives.analysis.previewInitiative', 'Preview')}

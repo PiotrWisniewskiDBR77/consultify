@@ -55,7 +55,7 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
       id="pilot"
       title="Pilot"
       icon={<Sparkle size={18} className="text-indigo-500 dark:text-indigo-400" />}
-      iconBg="bg-gradient-to-br from-crimson-500/10 to-primary-500/10 dark:from-crimson-500/20 dark:to-primary-500/20"
+      iconBg="bg-gradient-to-br from-c-info/10 to-c-info/10 dark:from-c-info/20 dark:to-c-info/20"
       expanded={expanded}
       onToggle={onToggle}
       badge={
@@ -82,7 +82,7 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
             }
           }}
           disabled={isGeneratingAI === 'pilot'}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 text-xs font-medium transition-all disabled:opacity-50"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-c-info/10 dark:bg-c-info/20 text-c-info dark:text-c-info hover:bg-c-info/20 text-xs font-medium transition-all disabled:opacity-50"
         >
           {isGeneratingAI === 'pilot' ? (
             <Loader2 size={14} className="animate-spin" />

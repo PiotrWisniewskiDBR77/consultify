@@ -335,8 +335,8 @@ const TimelineBar: React.FC<{
   const phaseColors = [
     'bg-blue-500/30 dark:bg-blue-500/20',
     'bg-blue-500/30 dark:bg-blue-500/20',
-    'bg-primary-500/30 dark:bg-primary-500/20',
-    'bg-primary-500/30 dark:bg-primary-500/20',
+    'bg-c-info/30 dark:bg-c-info/20',
+    'bg-c-info/30 dark:bg-c-info/20',
   ];
 
   return (
@@ -394,7 +394,7 @@ const TimelineBar: React.FC<{
                   ? 'bg-emerald-500 border-emerald-500'
                   : isMissed
                     ? 'bg-danger-500 border-danger-500'
-                    : 'bg-white dark:bg-navy-800 border-primary-500'
+                    : 'bg-white dark:bg-navy-800 border-c-info'
               }`}
             />
             <div className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
@@ -1905,7 +1905,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
             )}
           <button
             onClick={() => plannerRef.current?.openAddPanel()}
-            className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-primary-500 transition-colors"
+            className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-c-info transition-colors"
           >
             <Plus size={12} />
             {t('initiatives.timelineSection.addItem')}
@@ -2064,7 +2064,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                     className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50/50 dark:bg-navy-800/40 border border-slate-200/40 dark:border-navy-700/40"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-2 h-2 rounded-full bg-primary-500/60" />
+                      <div className="w-2 h-2 rounded-full bg-c-info/60" />
                       <span className="text-xs text-slate-700 dark:text-slate-300">{ms.name}</span>
                     </div>
                     <span className="text-[10px] text-slate-600">
