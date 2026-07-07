@@ -22,8 +22,16 @@
  */
 
 import { ADMA_DIMENSIONS, ADMA_PILLARS } from '@/services/admaStructure';
+import DRD_STRUCTURE from '@/services/drdStructure';
 import { SIRI_DIMENSIONS } from '@/services/siriStructure';
-import type { ADMAAssessmentData, ADMAPillarId, SIRIAssessmentData } from '@/types';
+import type {
+  ADMAAssessmentData,
+  ADMAPillarId,
+  DRDAssessmentData,
+  DRDAxisId,
+  DRDAxisScore,
+  SIRIAssessmentData,
+} from '@/types';
 
 /** SIRI building-block ids (kept local: not re-exported from @/types index). */
 type SIRIBuildingBlockId = 'PROCESS' | 'TECHNOLOGY' | 'ORGANIZATION';
@@ -205,6 +213,84 @@ export function buildADMAAssessmentData(
       source: 'manual',
     },
   };
+}
+
+/**
+ * Reconstruct `DRDAssessmentData` from a report's flat axisData.
+ *
+ * DRD backend convention (see server/src/routes/assessment-reports.routes.ts →
+ * computeAxisDataFromAssessment): NUMERIC axis keys "1".."7", each a
+ * `{actual,target}` cell already averaged over that axis' assessed areas.
+ * Per-area raw cells, when present, arrive as `area_<id>` (e.g. `area_1A`).
+ *
+ * MIXED SCALES: DRD axes have different maxLevel (5, 6 or 7 — from DRD_STRUCTURE).
+ * We keep the raw level AND a scale-independent 0–100% projection
+ * (normalized = level / levelCount × 100) so the 7-arm radar can plot
+ * heterogeneous axes on one grid. overallNormalized averages the normalized
+ * currents across ASSESSED axes only (current > 0), matching the DRD report
+ * template's normalization rule.
+ *
+ * FAIL-SOFT: missing axes → all-zero score; never throws.
+ */
+export function buildDRDAssessmentData(
+  axisData: ReportAxisData | null | undefined,
+  assessmentDate?: string
+): DRDAssessmentData {
+  const data = axisData || {};
+
+  const axes = {} as DRDAssessmentData['axes'];
+  const normalizedCurrents: number[] = [];
+  const normalizedTargets: number[] = [];
+
+  for (const axis of DRD_STRUCTURE) {
+    const axisId = axis.id as DRDAxisId;
+    const levelCount = axis.levelCount || 5;
+
+    // Backend writes numeric keys; tolerate a stray named key too.
+    const { current, target } = cell(data, String(axis.id));
+
+    // Per-area cells (optional) — `area_<id>` shape, tolerant of bare numbers.
+    const areas: DRDAxisScore['areas'] = {};
+    for (const area of axis.areas) {
+      const areaKey = `area_${area.id}`;
+      if (data[areaKey] !== undefined) {
+        const c = cell(data, areaKey);
+        areas[area.id] = { current: round1(c.current), target: round1(c.target) };
+      }
+    }
+
+    const normalizedCurrent = levelCount > 0 ? Math.round((current / levelCount) * 100) : 0;
+    const normalizedTarget = levelCount > 0 ? Math.round((target / levelCount) * 100) : 0;
+
+    axes[axisId] = {
+      current: round1(current),
+      target: round1(target),
+      gap: round1(Math.max(0, target - current)),
+      levelCount,
+      normalizedCurrent,
+      normalizedTarget,
+      areas,
+    };
+
+    if (current > 0) normalizedCurrents.push(normalizedCurrent);
+    if (current > 0 || target > 0) normalizedTargets.push(normalizedTarget);
+  }
+
+  return {
+    axes,
+    overallNormalized: Math.round(avg(normalizedCurrents)),
+    targetNormalized: Math.round(avg(normalizedTargets)),
+    metadata: {
+      assessmentDate: assessmentDate || new Date().toISOString().slice(0, 10),
+      version: '1.0',
+      source: 'manual',
+    },
+  };
+}
+
+/** True when the reconstructed DRD data carries at least one assessed axis. */
+export function drdDataHasContent(data: DRDAssessmentData): boolean {
+  return Object.values(data.axes || {}).some((a) => (a?.current ?? 0) > 0 || (a?.target ?? 0) > 0);
 }
 
 /** True when the reconstructed data carries at least one assessed dimension. */
