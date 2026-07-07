@@ -1290,7 +1290,7 @@ router.put(
 
     const id = String(req.params.id || '').trim();
     const existing = await queryHelpers.queryOne<any>(
-      `SELECT id, owner_user_id, organization_id, project_id, visibility
+      `SELECT id, owner_user_id, organization_id, project_id, visibility, updated_at
        FROM notebook_pages
        WHERE id = ? LIMIT 1`,
       [id]
@@ -1304,6 +1304,30 @@ router.put(
     }
     if (String(existing.owner_user_id || '') !== String(userId)) {
       return res.status(403).json({ error: 'Owner-only', code: 'NOTEBOOK_PAGE_OWNER_ONLY' });
+    }
+
+    // Optimistic concurrency: if the client tells us which version it based its
+    // edit on (expectedUpdatedAt), reject silent last-write-wins when the row
+    // has moved on since. Happy-path autosave omits the field → unchanged.
+    if (req.body?.expectedUpdatedAt !== undefined && req.body?.expectedUpdatedAt !== null) {
+      const expected = new Date(String(req.body.expectedUpdatedAt)).getTime();
+      const current = existing.updated_at ? new Date(String(existing.updated_at)).getTime() : NaN;
+      // Only enforce when both timestamps are parseable; a mismatch means the
+      // page was edited elsewhere between the client's read and this write.
+      if (Number.isFinite(expected) && Number.isFinite(current) && expected !== current) {
+        const fresh = await queryHelpers.queryOne<any>(
+          `SELECT
+            ${buildNotebookSelectFields(notebookCols, '')}
+           FROM notebook_pages WHERE id = ? LIMIT 1`,
+          [id]
+        );
+        return res.status(409).json({
+          error: 'Page was modified elsewhere',
+          code: 'NOTEBOOK_PAGE_CONFLICT',
+          data: fresh ? formatNotebookRow(fresh) : null,
+          meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
+        });
+      }
     }
 
     const setParts: string[] = [];

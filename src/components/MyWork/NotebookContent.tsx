@@ -762,12 +762,20 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   } = useAppStore();
   const currentUserId = String(currentUser?.id || '');
   const [pages, setPages] = useState<NotebookPage[]>([]);
+  // Live mirror of `pages` for use inside stable callbacks (e.g. autosave) that
+  // must read the latest optimistic-lock version without re-subscribing.
+  const pagesRef = useRef<NotebookPage[]>([]);
   const [pagesLoading, setPagesLoading] = useState(true);
   const [pagesError, setPagesError] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
   const activePage = useMemo(() => pages.find((p) => p.id === activeId) || null, [pages, activeId]);
   const attemptedOpenPageRef = useRef<string | null>(null);
+
+  // Keep the ref in sync so autosave can read the freshest updatedAt token.
+  useEffect(() => {
+    pagesRef.current = pages;
+  }, [pages]);
 
   // Allow external navigation to a specific note (e.g. from origin badges / backlinks)
   useEffect(() => {
@@ -1298,8 +1306,15 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         const newMaturity = computeMaturity(nextDraft);
         const persistedDraft: NotebookPage = { ...nextDraft, maturity: newMaturity };
 
+        // Optimistic-lock token: the updatedAt this draft was based on. We read
+        // it from the last-known server state for this page so the backend can
+        // detect if the row moved on elsewhere and reject last-write-wins.
+        const knownUpdatedAt =
+          pagesRef.current.find((p) => p.id === persistedDraft.id)?.updatedAt ??
+          persistedDraft.updatedAt;
+
         try {
-          await Api.updateNotebookPage(persistedDraft.id, {
+          const saved = await Api.updateNotebookPage(persistedDraft.id, {
             title: persistedDraft.title,
             projectId: persistedDraft.projectId,
             visibility: persistedDraft.visibility,
@@ -1307,6 +1322,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             contentJson: persistedDraft.contentJson,
             contentText: persistedDraft.contentText,
             maturity: newMaturity,
+            ...(knownUpdatedAt && { expectedUpdatedAt: knownUpdatedAt }),
             ...(persistedDraft.icon !== undefined && { icon: persistedDraft.icon }),
             ...(persistedDraft.verificationStatus !== undefined && {
               verificationStatus: persistedDraft.verificationStatus,
@@ -1322,6 +1338,15 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             }),
           });
 
+          // Advance the local optimistic-lock token to the server's new value so
+          // the next autosave carries the correct expected version.
+          const savedUpdatedAt = (saved as NotebookPage | undefined)?.updatedAt;
+          if (savedUpdatedAt) {
+            setPages((prev) =>
+              prev.map((p) => (p.id === persistedDraft.id ? { ...p, updatedAt: savedUpdatedAt } : p))
+            );
+          }
+
           const textLen = (persistedDraft.contentText || '').length;
           if (textLen > 200 && persistedDraft.id) {
             if (summaryTimer.current) window.clearTimeout(summaryTimer.current);
@@ -1334,15 +1359,38 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             }, 3000);
           }
         } catch (e) {
-          // eslint-disable-next-line no-console
-          console.error('Failed to save notebook page', e);
-          toast.error(t('myWork.errors.updateFailed', 'Failed to update'));
+          const err = e as { status?: number; code?: string; data?: NotebookPage | null };
+          if (err?.status === 409 || err?.code === 'NOTEBOOK_PAGE_CONFLICT') {
+            // Someone else (another tab/device/session) saved this page after we
+            // loaded it. Do NOT silently overwrite their work. Sync our local
+            // optimistic-lock token to the server's latest so the user can
+            // reload/merge, and surface a non-destructive toast. Their unsaved
+            // edits remain in the editor until they choose to reload.
+            const serverPage = err?.data ?? null;
+            if (serverPage?.updatedAt) {
+              setPages((prev) =>
+                prev.map((p) =>
+                  p.id === persistedDraft.id ? { ...p, updatedAt: serverPage.updatedAt } : p
+                )
+              );
+            }
+            toast.error(
+              isPolish
+                ? 'Ta strona została zmieniona w innym miejscu. Odśwież, aby scalić — Twoje zmiany nie zostały nadpisane.'
+                : 'This page was changed elsewhere. Reload to merge — your edits were not overwritten.',
+              { duration: 8000 }
+            );
+          } else {
+            // eslint-disable-next-line no-console
+            console.error('Failed to save notebook page', e);
+            toast.error(t('myWork.errors.updateFailed', 'Failed to update'));
+          }
         } finally {
           isSavingRef.current = false;
         }
       }
     },
-    [generateSummary, t]
+    [generateSummary, t, isPolish]
   );
 
   const flushPendingSave = useCallback(async () => {
