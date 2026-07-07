@@ -2620,7 +2620,7 @@ Return ONLY the final comment text.`;
                 {!readMode && (
                   <button
                     onClick={addChecklistItem}
-                    className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+                    className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-c-focus transition-colors"
                   >
                     <Plus size={13} />
                     {isPolish ? 'Dodaj element' : 'Add item'}
@@ -2792,7 +2792,7 @@ Return ONLY the final comment text.`;
                 {!readMode && (
                   <button
                     onClick={addIdea}
-                    className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+                    className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-c-focus transition-colors"
                   >
                     <Plus size={13} />
                     {isPolish ? 'Dodaj pomysł' : 'Add idea'}
