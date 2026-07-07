@@ -65,4 +65,49 @@ describe('buildMindmapSkeleton', () => {
     const branches = g.nodes.filter((n) => n.type === 'branch').map((n) => n.data.label.toLowerCase());
     expect(branches).not.toContain('sprint');
   });
+
+  // ── naprawa-c4 (DEFEKT #1 · Layer 3): the deterministic fallback must NOT emit
+  // instruction/structure GARBAGE. On the long DBR77 prompt the old splitter
+  // produced "centrum teza", "6 filarów (Kapitał", "DACH)", "każdy z celami",
+  // "ryzykami", "Do pracy jako mapa myśli". The clean fallback keeps ONLY the real
+  // pillars (from the parenthetical enumeration) — better 6 clean than 8 with junk.
+  describe('c4: clean skeleton fallback (no instruction junk)', () => {
+    const DBR77 =
+      'Stwórz mapę myśli DBR77: centrum teza, 6 filarów (Kapitał, Talent, Produkt i Moat, Delivery, Popyt, DACH), każdy z 2-3 pod-węzłami (cel + ryzyko). Do pracy jako mapa myśli.';
+
+    it('extracts the 6 clean pillars from the parenthetical list (Moat preserved)', () => {
+      const g = buildMindmapSkeleton(DBR77);
+      const branches = g.nodes.filter((n) => n.type === 'branch').map((n) => n.data.label);
+      expect(branches).toEqual(['Kapitał', 'Talent', 'Produkt i Moat', 'Delivery', 'Popyt', 'DACH']);
+    });
+
+    it('drops instruction/structure fragments as branches', () => {
+      const g = buildMindmapSkeleton(DBR77);
+      const branches = g.nodes.filter((n) => n.type === 'branch').map((n) => n.data.label);
+      for (const junk of [
+        'centrum teza',
+        '6 filarów (Kapitał',
+        'DACH)',
+        'każdy z celami',
+        'ryzykami',
+        'Do pracy jako mapa myśli',
+        'cel',
+        'ryzyko',
+      ]) {
+        expect(branches).not.toContain(junk);
+      }
+      // No branch carries a leaked instruction/structure keyword.
+      for (const b of branches) {
+        expect(b).not.toMatch(/filar|pod-?w[eę]z|centrum|ryzyk|\bcel\b|każd|jako map/i);
+      }
+    });
+
+    it('still keeps a single lowercase topic word in a colon-list (not over-filtered)', () => {
+      const g = buildMindmapSkeleton(
+        'zrób mapę myśli o transformacji cyfrowej: ludzie, procesy, technologia'
+      );
+      const branches = g.nodes.filter((n) => n.type === 'branch').map((n) => n.data.label);
+      expect(branches).toEqual(expect.arrayContaining(['ludzie', 'procesy', 'technologia']));
+    });
+  });
 });
