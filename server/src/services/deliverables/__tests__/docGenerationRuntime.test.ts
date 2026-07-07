@@ -363,7 +363,7 @@ describe('startDoc — tor streaming zunifikowany z Document Studio (C3)', () =>
 });
 
 describe('startDoc — bramka anty-placeholder (D-L2-3)', () => {
-  it('stub w wyrenderowanym markdownie ⇒ stan error, draft nienaruszony', async () => {
+  it('stub w wyrenderowanym markdownie ⇒ stan error, treść = uczciwy komunikat (nie szkielet)', async () => {
     renderMarkdownMock.mockReturnValue(
       `# Raport\n\n## Synteza\n\n${SECTION_STUB_PREFIX} — "Synteza". Add sources or use AI generation to fill it.`
     );
@@ -371,9 +371,15 @@ describe('startDoc — bramka anty-placeholder (D-L2-3)', () => {
     await startDoc({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER });
     await flushBackgroundWork();
 
-    // P2-3: treść draftu nietknięta; jedyny zapis to oznaczenie tytułu jako nieudanej generacji.
+    // naprawa-r2Narr · Problem 2: przy porażce NIE zostawiamy szkieletu z
+    // placeholderami-purpose udającymi treść — nadpisujemy draft UCZCIWYM stanem
+    // błędu (+ tytuł oznaczony jako nieudana generacja).
     const contentPatches = updateDraftMock.mock.calls.filter((c) => 'content' in c[0].patch);
-    expect(contentPatches).toHaveLength(0);
+    expect(contentPatches.length).toBeGreaterThan(0);
+    const failureContent = String(contentPatches.at(-1)![0].patch.content || '');
+    expect(failureContent.toLowerCase()).toContain('nie powiodła się');
+    expect(failureContent).not.toContain('Substantive section');
+    expect(failureContent).not.toContain('Teresa pisze treść');
     expect(updateDraftMock).toHaveBeenCalledWith(
       expect.objectContaining({
         patch: expect.objectContaining({ title: expect.stringContaining('generacja nieudana') }),
@@ -472,7 +478,7 @@ describe('planSheet + startSheet (L3)', () => {
     expect(status.artifact?.unitCount).toBe(2);
   });
 
-  it('startSheet: odpowiedź bez tabeli ⇒ error, draft nienaruszony', async () => {
+  it('startSheet: odpowiedź bez tabeli ⇒ error, treść = uczciwy komunikat błędu', async () => {
     getDraftMock.mockResolvedValue(sheetDraftRow());
     generateChatResponseMock.mockResolvedValue({ content: 'Przepraszam, nie mogę.' });
 
@@ -481,9 +487,12 @@ describe('planSheet + startSheet (L3)', () => {
     await flushBackgroundWork();
     await flushBackgroundWork();
 
-    // P2-3: bez zapisu treści; tytuł oznaczony jako nieudana generacja.
+    // naprawa-r2Narr · Problem 2: przy porażce nadpisujemy treść uczciwym stanem
+    // błędu (nie zostawiamy szkieletu udającego treść) + tytuł oznaczony.
     const contentPatches = updateDraftMock.mock.calls.filter((c) => 'content' in c[0].patch);
-    expect(contentPatches).toHaveLength(0);
+    expect(contentPatches.length).toBeGreaterThan(0);
+    const failureContent = String(contentPatches.at(-1)![0].patch.content || '');
+    expect(failureContent.toLowerCase()).toContain('nie powiodła się');
     const status = await statusDoc({ generationId: 'draft-1', organizationId: ORG });
     expect(status.state).toBe('error');
   });

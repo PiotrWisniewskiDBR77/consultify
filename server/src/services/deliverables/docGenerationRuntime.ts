@@ -46,6 +46,16 @@ const LOG_PREFIX = '[DeliverablesGen:doc]';
 
 /** Marker szkieletu — obecny w treści draftu dopóki generacja nie skończy. */
 const GENERATION_PENDING_MARKER = 'po zakończeniu generacji';
+/** EN równoważnik markera szkieletu (naprawa-r2Narr — skeleton lokalizowany). */
+const GENERATION_PENDING_MARKER_EN = 'sections fill in once generation completes';
+
+/** Czy treść draftu to wciąż SZKIELET (PL lub EN)? Używane w fallbacku statusu. */
+function isSkeletonContent(content: string): boolean {
+  return (
+    content.includes(GENERATION_PENDING_MARKER) ||
+    content.includes(GENERATION_PENDING_MARKER_EN)
+  );
+}
 
 /**
  * N-6: twarda dyrektywa języka treści. Sam dobór polskiego/angielskiego
@@ -364,14 +374,65 @@ function parseSetup(setup: Record<string, unknown>): DocGenerationSetup {
   };
 }
 
-/** P2-3 (audyt): nieudana generacja nie zostawia anonimowej sieroty na liście draftów. */
-function markDraftFailedBestEffort(organizationId: string, draftId: string, title: string): void {
+/**
+ * P2-3 (audyt): nieudana generacja nie zostawia anonimowej sieroty na liście draftów.
+ *
+ * naprawa-r2Narr · Problem 2 — DODATKOWO nadpisujemy TREŚĆ draftu uczciwym stanem
+ * błędu. Wcześniej po cichej porażce fill'a w draftcie zostawał SZKIELET: nagłówki
+ * + `*Substantive section "X" relevant to the document goal.*` (purpose sekcji jako
+ * kursywa) + stopka „Teresa pisze treść…". Użytkownik po 45 s widział placeholdery
+ * UDAJĄCE treść (bug sędziego BCG). Teraz zamiast szkieletu draft niesie jawny
+ * komunikat błędu + krótki powód — nigdy wydmuszka podszywająca się pod treść.
+ */
+function failureContentMarkdown(
+  title: string,
+  reason: string | undefined,
+  language: 'pl' | 'en'
+): string {
+  const safeReason = String(reason || '').trim().slice(0, 300);
+  if (language === 'en') {
+    return [
+      `# ${title}`,
+      '',
+      '> **Generation failed.** The document was not filled with content.',
+      '',
+      safeReason ? `Reason: ${safeReason}` : 'The AI content engine was unavailable.',
+      '',
+      'Please try generating again. If it keeps failing, contact support.',
+    ].join('\n');
+  }
+  return [
+    `# ${title}`,
+    '',
+    '> **Generacja nie powiodła się.** Dokument nie został wypełniony treścią.',
+    '',
+    safeReason ? `Powód: ${safeReason}` : 'Silnik treści AI był niedostępny.',
+    '',
+    'Spróbuj wygenerować ponownie. Jeśli błąd się powtarza — zgłoś do wsparcia.',
+  ].join('\n');
+}
+
+function markDraftFailedBestEffort(
+  organizationId: string,
+  draftId: string,
+  title: string,
+  opts?: { reason?: string; language?: 'pl' | 'en' }
+): void {
   const suffix = ' — generacja nieudana';
-  if (title.endsWith(suffix)) return;
+  const newTitle = title.endsWith(suffix)
+    ? title
+    : `${title.slice(0, 200 - suffix.length)}${suffix}`;
+  // Nadpisz TREŚĆ uczciwym stanem błędu (usuwa szkielet z placeholderami-purpose),
+  // a przy okazji oznacz tytuł sieroty. Best-effort — stan `error` w runtime i tak
+  // niesie komunikat dla poll'a statusu.
+  const cleanTitle = title.endsWith(suffix) ? title.slice(0, -suffix.length) : title;
   void updateDraft({
     organizationId,
     draftId,
-    patch: { title: `${title.slice(0, 200 - suffix.length)}${suffix}` },
+    patch: {
+      title: newTitle,
+      content: failureContentMarkdown(cleanTitle, opts?.reason, opts?.language ?? 'pl'),
+    },
   }).catch(() => {
     /* best-effort — stan error i tak niesie komunikat */
   });
@@ -574,12 +635,30 @@ function applyPlanToOutline(outline: DocumentOutline, plan: GenerationPlanItem[]
   return { ...outline, sections: sections.length > 0 ? sections : outline.sections };
 }
 
-function outlineSkeletonMarkdown(title: string, outline: DocumentOutline): string {
+function outlineSkeletonMarkdown(
+  title: string,
+  outline: DocumentOutline,
+  language: 'pl' | 'en' = 'pl'
+): string {
+  // naprawa-r2Narr · Problem 2 — the skeleton previously rendered each section's
+  // outline `purpose` as `*…*` body. For un-hinted sections that is literally
+  // `*Substantive section "X" relevant to the document goal.*` — a scaffolding
+  // hint that READS like real prose. If the fill was slow or failed, the user saw
+  // it as content. The skeleton now emits a NEUTRAL, explicitly-pending line per
+  // section (never the raw purpose), so nothing masquerades as finished content.
+  const pending =
+    language === 'en'
+      ? '_Writing this section…_'
+      : '_Trwa pisanie tej sekcji…_';
+  const footer =
+    language === 'en'
+      ? '> Teresa is writing — sections fill in once generation completes.'
+      : '> Teresa pisze treść — sekcje wypełnią się po zakończeniu generacji.';
   const lines = [`# ${title}`, ''];
   for (const section of outline.sections) {
-    lines.push(`## ${section.title}`, '', `*${section.purpose}*`, '');
+    lines.push(`## ${section.title}`, '', pending, '');
   }
-  lines.push('', '> Teresa pisze treść — sekcje wypełnią się po zakończeniu generacji.');
+  lines.push('', footer);
   return lines.join('\n');
 }
 
@@ -957,7 +1036,10 @@ export async function startSheet(params: {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       setDocRuntime(draft.id, { state: 'error', error: message, warnings: [] });
-      markDraftFailedBestEffort(params.organizationId, draft.id, draft.title);
+      markDraftFailedBestEffort(params.organizationId, draft.id, draft.title, {
+        reason: message,
+        language: stored.language === 'en' ? 'en' : 'pl',
+      });
       void trackDeliverableEvent({
         organizationId: params.organizationId,
         userId: params.userId,
@@ -1162,7 +1244,7 @@ export async function planDoc(params: {
       conversationId: parsed.conversationId!,
       kind: 'document',
       title,
-      content: outlineSkeletonMarkdown(title, localizedOutline),
+      content: outlineSkeletonMarkdown(title, localizedOutline, planLang),
       sources: parsed.sourceRefs?.length ? parsed.sourceRefs : auto.refs,
       provenance: {
         deliverablesGeneration: {
@@ -1551,7 +1633,10 @@ export async function startDoc(params: {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       setDocRuntime(draft.id, { state: 'error', error: message, warnings: [] });
-      markDraftFailedBestEffort(params.organizationId, draft.id, draft.title);
+      markDraftFailedBestEffort(params.organizationId, draft.id, draft.title, {
+        reason: message,
+        language: stored.intake.language === 'en' ? 'en' : 'pl',
+      });
       void trackDeliverableEvent({
         organizationId: params.organizationId,
         userId: params.userId,
@@ -1585,7 +1670,7 @@ export async function statusDoc(params: {
   // Po restarcie serwera mapa jest pusta — wnioskujemy z draftu: wypełniona
   // treść bez markera szkieletu ⇒ draft gotowy; inaczej plan_ready.
   const content = typeof draft.content === 'string' ? draft.content : '';
-  const fallbackState: DocRuntimeEntry['state'] = content.includes(GENERATION_PENDING_MARKER)
+  const fallbackState: DocRuntimeEntry['state'] = isSkeletonContent(content)
     ? 'plan_ready'
     : 'draft';
   const state = runtime?.state || fallbackState;

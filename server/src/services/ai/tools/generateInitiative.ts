@@ -307,6 +307,9 @@ export async function generateInitiative(
 
     const result = {
       ok: true,
+      // naprawa-r2Narr · Problem 1 — expose the REAL kind so the confirmation the
+      // user reads is derived from it (single source of truth == deliverable event).
+      kind: 'initiative' as const,
       id,
       title,
       sourceType,
