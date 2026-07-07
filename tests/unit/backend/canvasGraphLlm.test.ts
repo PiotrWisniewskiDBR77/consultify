@@ -192,26 +192,52 @@ describe('generateProcessFlowGraph', () => {
 
 // ── WHITEBOARD ───────────────────────────────────────────────────────────────
 describe('generateWhiteboardGraph', () => {
-  it('builds stickyNote nodes (not "sticky") + labeled edges between blocks', async () => {
+  it('groups stickies under frameNode containers + relation-labeled edges (data.label filled)', async () => {
     mockObject({
-      blocks: ['Cel projektu', 'Ryzyka', 'Zasoby', 'Kamienie milowe'],
-      links: [
-        { from: 0, to: 1 },
-        { from: 0, to: 2 },
+      groups: [
+        { title: 'Propozycja wartości', blocks: ['PdM AI', 'OEE AI'] },
+        { title: 'Segmenty', blocks: ['Producenci OEM', 'Integratorzy'] },
       ],
+      links: [{ from: 'PdM AI', to: 'Producenci OEM', relation: 'dla' }],
     });
-    const graph = await generateWhiteboardGraph('tablica projektu', 'Projekt', true);
+    const graph = await generateWhiteboardGraph('tablica wartości', 'VPC', true);
     expect(graph).toBeTruthy();
-    // Correct RF node type is 'stickyNote' (registry key) — NOT 'sticky'.
-    expect(graph!.nodes.every((n) => n.type === 'stickyNote')).toBe(true);
-    expect(graph!.nodes.length).toBe(4);
-    // Edges are non-zero and typed 'labeled'.
-    expect(graph!.edges.length).toBe(2);
-    expect(graph!.edges.every((e) => e.type === 'labeled')).toBe(true);
+
+    // Container grouping: two frameNode containers + four child stickies.
+    const frames = graph!.nodes.filter((n) => n.type === 'frameNode');
+    const stickies = graph!.nodes.filter((n) => n.type === 'stickyNote');
+    expect(frames.length).toBe(2);
+    expect(stickies.length).toBe(4);
+    // Every sticky is parented to a frame (grouped, not loose atoms).
+    expect(stickies.every((s) => typeof s.parentId === 'string' && s.parentId!.length > 0)).toBe(
+      true
+    );
+
+    // Relation edge carries a NON-EMPTY label in BOTH top-level + data.label
+    // (FE LabeledEdge reads data.label — the empty-label visual bug we fixed).
+    expect(graph!.edges.length).toBe(1);
+    const e = graph!.edges[0]!;
+    expect(e.type).toBe('labeled');
+    expect(e.label).toBe('dla');
+    expect((e.data as { label?: string })?.label).toBe('dla');
   });
 
-  it('rejects (null) when a majority of blocks are fragments', async () => {
-    mockObject({ blocks: ['z celami', 'ryzykami', 'Zasoby'], links: [] });
+  it('drops an edge that would carry an empty relation label (no empty labeled box)', async () => {
+    mockObject({
+      groups: [{ title: 'Grupa', blocks: ['Alfa', 'Beta'] }],
+      // relation is whitespace-only ⇒ must NOT emit a 'labeled' edge with empty label.
+      links: [{ from: 'Alfa', to: 'Beta', relation: '   ' }],
+    });
+    const graph = await generateWhiteboardGraph('x', undefined, true);
+    expect(graph).toBeTruthy();
+    // A plain (non-'labeled') edge or no edge — never an empty-labeled one.
+    for (const e of graph!.edges) {
+      expect(e.type).not.toBe('labeled');
+    }
+  });
+
+  it('rejects (null) when a majority of block labels are fragments', async () => {
+    mockObject({ groups: [{ title: 'G', blocks: ['z celami', 'ryzykami', 'Zasoby'] }], links: [] });
     expect(await generateWhiteboardGraph('x', undefined, true)).toBeNull();
   });
 });

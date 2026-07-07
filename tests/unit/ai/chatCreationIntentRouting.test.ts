@@ -102,6 +102,38 @@ describe('PROBLEM #2 — "wniosek/insight" routuje na DOKUMENT, nie na inicjatyw
   });
 });
 
+describe('c2MindTable — "tabela/portfel" routes to a TABLE deliverable (not an inline artifact block)', () => {
+  it('classifies explicit table-creation phrasings as table', () => {
+    expect(
+      classifyChatCreationIntent('Stwórz tabelę portfela inicjatyw z kolumnami nazwa, status, ROI')
+    ).toBe('table');
+    expect(classifyChatCreationIntent('zrób tabelę pomysłów na kampanię')).toBe('table');
+    expect(classifyChatCreationIntent('make a table of the top 5 risks')).toBe('table');
+    expect(classifyChatCreationIntent('stwórz portfel inicjatyw transformacji')).toBe('table');
+    expect(INTENT_TO_TOOL.table).toBe('generate_deliverable');
+  });
+
+  it('table intent DROPS the object creators (forces generate_deliverable, no object fallback)', () => {
+    const drop = INTENT_DROP_TOOLS.table;
+    expect(drop).toContain('generate_initiative');
+    expect(drop).toContain('create_task');
+    expect(drop).toContain('create_decision');
+    expect(drop).not.toContain('generate_deliverable');
+  });
+
+  it('a "raport" with an incidental table mention still wins as document (order precedence)', () => {
+    // 'document' noun ("raport") sits before the table root in OBJECT_NOUNS, and
+    // position-first tie-break keeps the nearer noun — a report is not a table.
+    expect(classifyChatCreationIntent('stwórz raport z tabelą wyników')).toBe('document');
+  });
+
+  it('does NOT hijack an initiative/task request that merely mentions a table later', () => {
+    expect(
+      classifyChatCreationIntent('stwórz inicjatywę i dołącz do niej tabelę metryk')
+    ).toBe('initiative');
+  });
+});
+
 describe('BUG2 — generate_deliverable emits scorerContent (artifact scope for the scorer)', () => {
   it('doc deliverable emits scorerContent carrying the intent, not just the confirmation', async () => {
     // Isolate the module graph so our flag/service mocks apply.
