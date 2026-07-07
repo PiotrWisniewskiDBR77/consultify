@@ -994,6 +994,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [exportSelectedIds, setExportSelectedIds] = useState<Set<string>>(new Set());
   const [exportRunning, setExportRunning] = useState(false);
 
+  // Tryb Read/Edit (§ menu 5A · „do pokazania klientowi"). Read = pasek akcji
+  // kart (Regeneruj/Edytuj/Zaakceptuj) znika (przekazane jako `readOnly` do
+  // InsightSectionCardHeader). Insight = raport AZ read-only w treści; jedyne
+  // edytowalne afordancje to per-section action bar + edycja tytułu. Default =
+  // Edit (readMode=false), żeby nie zmieniać dotychczasowego zachowania.
+  const [readMode, setReadMode] = useState(false);
+
   // Phase A3 — fullscreen Present mode (read-only deck over canonical sections)
   const [presentOpen, setPresentOpen] = useState(false);
   // Phase A4 — Fork in-flight guard
@@ -2257,6 +2264,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         <InsightSectionCardHeader
           state={state}
           isPolish={!!isPolish}
+          readOnly={readMode}
           onRegenerate={handleRegenerate}
           regenerating={isRegenerating}
           onEdit={handleOpenChat}
@@ -2269,6 +2277,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       insight?.status,
       isRegenerating,
       isPolish,
+      readMode,
       handleRegenerate,
       handleOpenChat,
       handleToggleSectionComplete,
@@ -8339,6 +8348,39 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               <div className="flex-1 min-w-0" />
 
               {/* ── RIGHT ZONE: AI + modes ─────────────────────────────────── */}
+              {/* Tryb Read/Edit (§5A) — pstryczek „do pokazania klientowi".
+                  Read = pasek akcji kart znika. Neutralny; aktywny = c-focus. */}
+              <div className="inline-flex items-center gap-0.5 rounded-lg bg-c-surface-raised/60 p-0.5 mr-1">
+                <button
+                  type="button"
+                  onClick={() => setReadMode(false)}
+                  aria-pressed={!readMode}
+                  title={isPolish ? 'Tryb edycji' : 'Edit mode'}
+                  className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                    !readMode
+                      ? 'bg-c-surface text-c-focus shadow-sm'
+                      : 'text-c-text-secondary hover:text-c-text'
+                  }`}
+                >
+                  <Pencil size={13} />
+                  <span>{isPolish ? 'Edycja' : 'Edit'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReadMode(true)}
+                  aria-pressed={readMode}
+                  title={isPolish ? 'Tryb do pokazania klientowi' : 'Read / client view'}
+                  className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                    readMode
+                      ? 'bg-c-surface text-c-focus shadow-sm'
+                      : 'text-c-text-secondary hover:text-c-text'
+                  }`}
+                >
+                  <Eye size={13} />
+                  <span>{isPolish ? 'Podgląd' : 'Read'}</span>
+                </button>
+              </div>
+
               {/* Slot 6 — Fork · Slot 7 — Present */}
               <ToolbarIconButton
                 icon={<GitFork size={14} />}

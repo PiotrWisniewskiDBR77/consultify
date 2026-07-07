@@ -45,6 +45,8 @@ import {
   MessageSquare,
   Monitor,
   MoreVertical,
+  Eye,
+  Pencil,
   NotebookPen,
   Package,
   Plus,
@@ -635,6 +637,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [showNewMenu, setShowNewMenu] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showToolbarKebab, setShowToolbarKebab] = useState(false);
+
+  // Tryb Read/Edit (§ menu 5A · „do pokazania klientowi"). Read = czysty widok:
+  // pasek akcji kart (Regeneruj/Edytuj/Zaakceptuj) znika, pola sekcji stają się
+  // read-only, akcje destrukcyjne (Archiwizuj/Usuń) i puste-stany „wypełnij" nie
+  // pojawiają się. Zaimplementowane przez zwinięcie tego stanu w `canEditCards`
+  // niżej (jedno źródło prawdy → propaguje do wszystkich afordancji edycji).
+  // Default = Edit (readMode=false), żeby nie zmienić istniejącego zachowania.
+  const [readMode, setReadMode] = useState(false);
 
   // F5 — "Make material": one-click deck/report/table via the M17 pipeline.
   // POST /api/initiatives/:id/materialize { format } → binary blob download.
@@ -1316,7 +1326,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const canEditPriority = !!topBarCaps?.canEditPriority;
   const canEditOwner = !!topBarCaps?.canEditOwner;
   const canEditTargetDate = !!topBarCaps?.canEditTargetDate;
-  const canEditCards = !!gateReadiness?.capabilities?.cards?.canEditCards;
+  // Tryb Read (readMode=true) globalnie wyłącza edycję kart/sekcji — jedno źródło
+  // prawdy dla WSZYSTKICH afordancji edycji (readOnly pól, hideActions pasków,
+  // onEdit/onAccept, empty-state „wypełnij", Archiwizuj/Usuń). Uprawnienie serwera
+  // dalej obowiązuje (AND), więc read-mode nigdy nie „odblokuje" edycji.
+  const canEditCards =
+    !!gateReadiness?.capabilities?.cards?.canEditCards && !readMode;
   const canUseAi = !!gateReadiness?.capabilities?.ctaBar?.canUseAi;
   // Document-interior lifecycle affordances (Archive / Delete). Visible only to
   // users with write access; server re-enforces (archive: lifecycle, delete:
@@ -10420,6 +10435,40 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
                         {/* ── Spacer ─────────────────────────────────────────── */}
                         <div className="flex-1 min-w-[8px]" />
+
+                        {/* Tryb Read/Edit (§5A) — pstryczek „do pokazania klientowi".
+                            Read = pasek akcji kart znika + pola read-only. Neutralny;
+                            aktywny stan = c-focus (nie crimson). */}
+                        <div className="inline-flex items-center gap-0.5 rounded-lg bg-c-surface-raised/60 p-0.5 mr-1">
+                          <button
+                            type="button"
+                            onClick={() => setReadMode(false)}
+                            aria-pressed={!readMode}
+                            title={t('initiatives.editModeTooltip', 'Tryb edycji')}
+                            className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                              !readMode
+                                ? 'bg-c-surface text-c-focus shadow-sm'
+                                : 'text-c-text-secondary hover:text-c-text'
+                            }`}
+                          >
+                            <Pencil size={13} />
+                            <span>{t('initiatives.editMode', 'Edycja')}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setReadMode(true)}
+                            aria-pressed={readMode}
+                            title={t('initiatives.readModeTooltip', 'Tryb do pokazania klientowi')}
+                            className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                              readMode
+                                ? 'bg-c-surface text-c-focus shadow-sm'
+                                : 'text-c-text-secondary hover:text-c-text'
+                            }`}
+                          >
+                            <Eye size={13} />
+                            <span>{t('initiatives.readMode', 'Podgląd')}</span>
+                          </button>
+                        </div>
 
                         {/* Slot 6/7 — Fork · Present */}
                         <ToolbarIconButton
