@@ -149,6 +149,8 @@ const DECISION_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   APPROVED: { bg: 'bg-emerald-500/10', text: 'text-emerald-500' },
   REJECTED: { bg: 'bg-danger-500/10', text: 'text-danger-500' },
   DEFERRED: { bg: 'bg-slate-500/10', text: 'text-slate-500' },
+  // Neutral — NOT crimson/primary-*; matches DecisionsSection CANCELLED styling.
+  CANCELLED: { bg: 'bg-slate-500/10', text: 'text-c-text-muted' },
 };
 
 const RAID_TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string }> = {
@@ -277,7 +279,11 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
         const arr = Array.isArray(decisionsRes.value)
           ? decisionsRes.value
           : decisionsRes.value?.decisions || [];
-        setDecisions(arr);
+        // Hide soft-deleted decisions (DELETE /api/decisions/:id sets status='cancelled').
+        // No archive view here — cancelled just drops out of the active list.
+        setDecisions(
+          arr.filter((d: DecisionItem) => String(d.status || '').toUpperCase() !== 'CANCELLED')
+        );
       }
 
       if (raidRes.status === 'fulfilled') {

@@ -166,7 +166,10 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
       const response = await Api.get(
         `/decisions?relatedObjectId=${initiative.id}&relatedObjectType=initiative`
       );
-      setDecisions(Array.isArray(response) ? response : response?.decisions || []);
+      const raw = Array.isArray(response) ? response : response?.decisions || [];
+      // Hide soft-deleted decisions (DELETE /api/decisions/:id sets status='cancelled').
+      // No archive view here — cancelled just drops out of the active list.
+      setDecisions(raw.filter((d: Decision) => String(d.status || '').toUpperCase() !== 'CANCELLED'));
     } catch (error: any) {
       console.error('[InitiativeSidePanel] Failed to fetch decisions:', error);
       setDecisions([]);

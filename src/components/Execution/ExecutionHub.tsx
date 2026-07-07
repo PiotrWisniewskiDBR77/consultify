@@ -3396,8 +3396,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const more: ExecutionDecision[] = [];
 
     const getDue = (d: any): string | undefined => d?.dueDate || d?.deadline || d?.createdAt;
+    // CANCELLED = soft-deleted via DELETE /api/decisions/:id; must not linger in
+    // the active due7/due14/due30 buckets as if it were still awaiting action.
     const isDoneStatus = (s: string) =>
-      ['APPROVED', 'REJECTED', 'DEFERRED', 'DONE', 'CLOSED', 'RESOLVED'].includes(s);
+      ['APPROVED', 'REJECTED', 'DEFERRED', 'DONE', 'CLOSED', 'RESOLVED', 'CANCELLED'].includes(s);
 
     for (const d of executionScopedDecisions) {
       const status = String(d.status || '').toUpperCase();

@@ -70,6 +70,14 @@ const DECISION_STATUS_CONFIG: Record<
     bgColor: 'bg-slate-100 dark:bg-slate-500/20',
     textColor: 'text-slate-600 dark:text-slate-400',
   },
+  // Soft-deleted via DELETE /api/decisions/:id (backend sets status='cancelled').
+  // Neutral styling only — NOT crimson/primary-* (see CLAUDE.md primary=crimson trap).
+  CANCELLED: {
+    label: { en: 'Cancelled', pl: 'Anulowana' },
+    dotColor: 'bg-slate-300 dark:bg-slate-600',
+    bgColor: 'bg-slate-100 dark:bg-slate-500/10',
+    textColor: 'text-c-text-muted dark:text-slate-500',
+  },
 };
 
 // ==========================================
@@ -133,6 +141,7 @@ function normalizeStatus(s: string): string {
   if (upper === 'REJECTED') return 'REJECTED';
   if (upper === 'ESCALATED') return 'ESCALATED';
   if (upper === 'DEFERRED') return 'DEFERRED';
+  if (upper === 'CANCELLED' || upper === 'CANCELED') return 'CANCELLED';
   return upper;
 }
 
@@ -308,9 +317,19 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
   const initiativeId = initiative?.id;
   const aiNoSuggestionsTimerRef = useRef<number | null>(null);
 
+  // Active decisions = everything except soft-deleted (status='cancelled' from
+  // DELETE /api/decisions/:id). Cancelled decisions must not reappear as if
+  // pending — there is no separate archive view for this section today, so we
+  // simply hide them from the active list (conservative: not deleted from state,
+  // just excluded from render).
+  const activeDecisions = useMemo(
+    () => decisions.filter((d) => normalizeStatus(String(d.status || '')) !== 'CANCELLED'),
+    [decisions]
+  );
+
   // Sort: gate decisions + pending first, then by due date (unless AI order override is applied)
   const sortedDecisions = useMemo(() => {
-    const list = [...decisions];
+    const list = [...activeDecisions];
     const order = decisionOrderOverride;
     if (order && order.length > 0) {
       const rank = new Map(order.map((id, idx) => [id, idx]));
@@ -340,11 +359,11 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
       const bd = b.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
       return ad - bd;
     });
-  }, [decisions, decisionOrderOverride]);
+  }, [activeDecisions, decisionOrderOverride]);
 
   const approvedCount = useMemo(
-    () => decisions.filter((d) => normalizeStatus(d.status) === 'APPROVED').length,
-    [decisions]
+    () => activeDecisions.filter((d) => normalizeStatus(d.status) === 'APPROVED').length,
+    [activeDecisions]
   );
 
   // Gate-blocking decisions: PENDING Go/No-Go decisions are the gate-blocking
@@ -1016,9 +1035,9 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
           <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
             {t('initiatives.decisionsSection.decisions')}
           </h2>
-          {decisions.length > 0 && (
+          {activeDecisions.length > 0 && (
             <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
-              {decisions.length}
+              {activeDecisions.length}
             </span>
           )}
           {isAIProposing && (
@@ -1028,7 +1047,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
             </span>
           )}
         </div>
-        {!readonly && decisions.length > 0 && (
+        {!readonly && activeDecisions.length > 0 && (
           <button
             onClick={handleStartCreate}
             className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
@@ -1658,9 +1677,9 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
       )}
 
       {/* Footer summary */}
-      {decisions.length > 0 && (
+      {activeDecisions.length > 0 && (
         <div className="pt-2 border-t border-slate-200/70 dark:border-navy-700/50 text-xs text-slate-500 dark:text-slate-400">
-          {approvedCount}/{decisions.length} {t('initiatives.decisionsSection.approved')}
+          {approvedCount}/{activeDecisions.length} {t('initiatives.decisionsSection.approved')}
         </div>
       )}
     </motion.div>

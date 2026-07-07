@@ -56,7 +56,7 @@ interface GateDecision {
   id: string;
   type: string;
   title: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | string;
   dueDate?: string;
   ownerName?: string;
 }
@@ -254,7 +254,12 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
       const response = await Api.get(
         `/decisions?relatedObjectId=${initiative.id}&relatedObjectType=initiative`
       );
-      setDecisions(Array.isArray(response) ? response : response?.decisions || []);
+      const raw = Array.isArray(response) ? response : response?.decisions || [];
+      // Hide soft-deleted decisions (DELETE /api/decisions/:id sets status='cancelled').
+      // No archive view here — cancelled just drops out of the active list.
+      setDecisions(
+        raw.filter((d: GateDecision) => String(d.status || '').toUpperCase() !== 'CANCELLED')
+      );
     } catch {
       setDecisions([]);
     }
