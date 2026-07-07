@@ -11,12 +11,13 @@
  * once and reference it by URL instead. Old base64 nodes keep rendering
  * unchanged (ImageNode reads `data.imageUrl || data.src`) — no migration.
  *
- * Storage: local disk under uploads/whiteboard/<orgId>/, served by the
- * existing `/uploads` express.static mount (server/src/index.ts). This
- * mirrors the avatar (users.routes.ts) and branding (branding.routes.ts)
- * upload patterns already used in this codebase — no new cloud dependency.
+ * Storage: routed through the provider-agnostic storage seam
+ * (services/storage). Default provider is local disk, keyed
+ * `whiteboard/<orgId>/<uuid>.<ext>` under the `uploads/` tree and served by the
+ * existing `/uploads` express.static mount (server/src/index.ts) — identical to
+ * the previous behavior. Flipping STORAGE_PROVIDER=s3 moves these images to
+ * durable S3/R2 storage with no change here (fixes the Railway redeploy-wipe).
  */
-import fs from 'fs';
 import multer from 'multer';
 import path from 'path';
 import { Router } from 'express';
@@ -25,6 +26,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { sanitizeOrgIdForUploadPath } from '../../middleware/fileUpload.middleware.js';
+import { getStorage } from '../../services/storage/index.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../utils/Logger.js';
 import { requireUser } from './_helpers.js';
@@ -62,25 +64,14 @@ export const whiteboardImageFileFilter: (
   }
 };
 
-const WHITEBOARD_UPLOAD_ROOT = path.join(process.cwd(), 'uploads', 'whiteboard');
+/** Storage-seam key prefix for whiteboard images: `whiteboard/<orgId>/<file>`. */
+const WHITEBOARD_KEY_PREFIX = 'whiteboard';
 
+// memoryStorage so the raw bytes are available to hand to the storage seam
+// (getStorage().putObject). The seam picks local disk (default) or S3/R2 by
+// STORAGE_PROVIDER, so uploads survive Railway redeploys once S3/R2 is enabled.
 const whiteboardImageUpload = multer({
-  storage: multer.diskStorage({
-    destination: (req, _file, cb) => {
-      const orgId = sanitizeOrgIdForUploadPath(String((req as AuthRequest).user?.organizationId || 'unknown'));
-      const uploadDir = path.join(WHITEBOARD_UPLOAD_ROOT, orgId);
-      try {
-        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-        cb(null, uploadDir);
-      } catch (err) {
-        cb(err as Error, WHITEBOARD_UPLOAD_ROOT);
-      }
-    },
-    filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname || '').toLowerCase() || '.png';
-      cb(null, `${uuidv4()}${ext}`);
-    },
-  }),
+  storage: multer.memoryStorage(),
   limits: { fileSize: MAX_WHITEBOARD_IMAGE_BYTES, files: 1 },
   fileFilter: whiteboardImageFileFilter as any,
 });
@@ -128,10 +119,20 @@ router.post(
     }
 
     const orgId = sanitizeOrgIdForUploadPath(String(identity.orgId));
-    // `filename` is set by our diskStorage config; fall back to a fresh id if
-    // a different storage engine didn't populate it.
-    const filename = req.file.filename || `${uuidv4()}${path.extname(req.file.originalname || '') || '.png'}`;
-    const url = `/uploads/whiteboard/${orgId}/${filename}`;
+    const ext = path.extname(req.file.originalname || '').toLowerCase() || '.png';
+    const filename = `${uuidv4()}${ext}`;
+    const key = `${WHITEBOARD_KEY_PREFIX}/${orgId}/${filename}`;
+
+    // memoryStorage guarantees req.file.buffer; guard for alternate engines.
+    if (!req.file.buffer) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const storage = getStorage();
+    await storage.putObject({ key, body: req.file.buffer, contentType: req.file.mimetype });
+    // For local: `/uploads/whiteboard/<orgId>/<file>` (unchanged). For S3/R2: a
+    // signed or public URL. Existing base64 nodes are unaffected.
+    const url = await storage.getUrl(key);
 
     logger.info(`[whiteboard-uploads] Image uploaded for org ${orgId}: ${filename}`);
 

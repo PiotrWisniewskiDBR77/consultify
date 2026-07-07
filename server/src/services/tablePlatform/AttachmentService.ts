@@ -1,22 +1,32 @@
 /**
  * Table Platform Attachment Service
- * Real file upload/download/delete with local filesystem storage.
- * Storage layout is S3-compatible for future migration.
+ * Real file upload/download/delete routed through the provider-agnostic
+ * storage seam ({@link getStorage} in services/storage). Default provider is
+ * local disk (behavior-preserving); flipping STORAGE_PROVIDER=s3 moves these
+ * uploads to durable S3/R2 storage with no code change here.
  */
 
 import crypto from 'crypto';
-import { createReadStream, existsSync } from 'fs';
-import fs from 'fs/promises';
 import path from 'path';
 import { Readable } from 'stream';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../../database/Database.js';
+import { getStorage } from '../../services/storage/index.js';
 import logger from '../../utils/Logger.js';
 import auditService from './AuditService.js';
 import { NotFoundError, ValidationError } from './ErrorHandling.js';
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads', 'attachments');
+/**
+ * Seam key prefix. Historic `storage_key` values in `tp_attachments` are of the
+ * form `<year>/<month>/<uuid>-name` and were resolved against
+ * `uploads/attachments`. The storage seam is rooted at `uploads/`, so we map a
+ * DB storage_key to its seam key by prepending `attachments/`. Existing rows
+ * keep resolving unchanged (same on-disk path); DB values are untouched.
+ */
+const ATTACHMENT_KEY_PREFIX = 'attachments';
+const toStorageKey = (dbKey: string): string => `${ATTACHMENT_KEY_PREFIX}/${dbKey}`;
+
 const MAX_FILE_SIZE = parseInt(process.env.MAX_UPLOAD_SIZE_MB || '50', 10) * 1024 * 1024;
 const MAX_ATTACHMENT_SIZE = 50 * 1024 * 1024; // 50MB per file
 const MAX_RECORD_ATTACHMENTS_SIZE = 200 * 1024 * 1024; // 200MB per record
@@ -91,21 +101,11 @@ function generateStorageKey(originalname: string): string {
   return `${year}/${month}/${uniqueId}-${safeName}`;
 }
 
-let uploadDirReady = false;
-
+// Directory pre-creation is now the storage adapter's responsibility
+// (LocalDiskAdapter.putObject mkdirs recursively per key; S3/R2 has no dirs).
+// Kept as a no-op so the public init() contract is preserved.
 async function ensureUploadDir(): Promise<void> {
-  if (uploadDirReady) return;
-  try {
-    await fs.mkdir(UPLOAD_DIR, { recursive: true });
-    uploadDirReady = true;
-    logger.info('[AttachmentService] Upload directory ready', { path: UPLOAD_DIR });
-  } catch (err) {
-    logger.error('[AttachmentService] Failed to create upload directory', {
-      path: UPLOAD_DIR,
-      error: (err as Error).message,
-    });
-    throw err;
-  }
+  return;
 }
 
 const attachmentService = {
@@ -210,21 +210,29 @@ const attachmentService = {
    * Generate thumbnails for image attachments.
    * Uses sharp if available; otherwise stores placeholder paths for frontend fallback.
    */
-  async generateThumbnail(attachmentId: string, filePath: string, mimeType: string): Promise<void> {
+  async generateThumbnail(attachmentId: string, sourceBuffer: Buffer, storageKey: string, mimeType: string): Promise<void> {
     if (!IMAGE_MIME_TYPES.has(mimeType)) return;
 
     const db = getDatabase();
-    const ext = path.extname(filePath);
-    const base = filePath.slice(0, -ext.length);
-    const smallPath = `${base}_thumb_sm${ext}`;
-    const largePath = `${base}_thumb_lg${ext}`;
+    const ext = path.extname(storageKey);
+    const base = storageKey.slice(0, -ext.length);
+    const smallKey = `${base}_thumb_sm${ext}`;
+    const largeKey = `${base}_thumb_lg${ext}`;
 
+    const storage = getStorage();
+    let smallPath = smallKey;
+    let largePath = largeKey;
     try {
       const sharp = (await import('sharp')).default;
-      const buffer = await fs.readFile(filePath);
 
-      await (sharp(buffer).resize(100, 100, { fit: 'inside' }) as any).toFile(smallPath);
-      await (sharp(buffer).resize(400, 400, { fit: 'inside' }) as any).toFile(largePath);
+      const smallBuf = await (sharp(sourceBuffer).resize(100, 100, { fit: 'inside' }) as any).toBuffer();
+      const largeBuf = await (sharp(sourceBuffer).resize(400, 400, { fit: 'inside' }) as any).toBuffer();
+
+      await storage.putObject({ key: toStorageKey(smallKey), body: smallBuf, contentType: mimeType });
+      await storage.putObject({ key: toStorageKey(largeKey), body: largeBuf, contentType: mimeType });
+      // Persist resolvable URLs (works for both local and signed-S3 providers).
+      smallPath = await storage.getUrl(toStorageKey(smallKey));
+      largePath = await storage.getUrl(toStorageKey(largeKey));
 
       logger.info('[AttachmentService] Thumbnails generated', { attachmentId });
     } catch {
@@ -257,15 +265,18 @@ const attachmentService = {
     await this.validateAttachmentSize(recordId, file.size);
 
     const db = getDatabase();
+    const storage = getStorage();
     const id = uuidv4();
     const storageKey = generateStorageKey(file.originalname);
-    const fullPath = path.join(UPLOAD_DIR, storageKey);
 
     try {
-      await fs.mkdir(path.dirname(fullPath), { recursive: true });
-      await fs.writeFile(fullPath, file.buffer);
+      await storage.putObject({
+        key: toStorageKey(storageKey),
+        body: file.buffer,
+        contentType: file.mimetype,
+      });
     } catch (err) {
-      logger.error('[AttachmentService] Failed to write file to disk', {
+      logger.error('[AttachmentService] Failed to write file to storage', {
         storageKey,
         error: (err as Error).message,
       });
@@ -293,7 +304,7 @@ const attachmentService = {
       const row = (await db.query('SELECT * FROM tp_attachments WHERE id = $1', [id])).rows[0];
       await auditService.logEvent('create', 'attachment', id, userId, undefined, row, undefined);
 
-      this.generateThumbnail(id, fullPath, file.mimetype).catch((err) => {
+      this.generateThumbnail(id, file.buffer, storageKey, file.mimetype).catch((err) => {
         logger.warn('[AttachmentService] Thumbnail generation failed', {
           attachmentId: id,
           error: (err as Error).message,
@@ -306,7 +317,7 @@ const attachmentService = {
       } as AttachmentMeta;
     } catch (err) {
       try {
-        await fs.unlink(fullPath);
+        await storage.delete(toStorageKey(storageKey));
       } catch {
         /* best effort cleanup */
       }
@@ -328,17 +339,20 @@ const attachmentService = {
       throw new NotFoundError('attachment', attachmentId);
     }
 
-    const fullPath = path.join(UPLOAD_DIR, attachment.storage_key);
-    if (!existsSync(fullPath)) {
-      logger.error('[AttachmentService] File missing from disk', {
+    const storage = getStorage();
+    let obj;
+    try {
+      obj = await storage.getObject(toStorageKey(attachment.storage_key));
+    } catch (err) {
+      logger.error('[AttachmentService] File missing from storage', {
         storageKey: attachment.storage_key,
+        error: (err as Error).message,
       });
       throw new NotFoundError('attachment file', attachmentId);
     }
 
-    const stream = createReadStream(fullPath);
     return {
-      stream,
+      stream: obj.stream,
       filename: attachment.file_name,
       mimetype: attachment.mime_type,
       size: Number(attachment.size_bytes),
@@ -354,16 +368,13 @@ const attachmentService = {
       .rows[0] as { storage_key: string; record_id: string; field_id: string } | undefined;
     if (!before) return false;
 
-    const fullPath = path.join(UPLOAD_DIR, before.storage_key);
     try {
-      await fs.unlink(fullPath);
+      await getStorage().delete(toStorageKey(before.storage_key));
     } catch (err) {
-      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
-        logger.warn('[AttachmentService] Could not delete file from disk', {
-          storageKey: before.storage_key,
-          error: (err as Error).message,
-        });
-      }
+      logger.warn('[AttachmentService] Could not delete file from storage', {
+        storageKey: before.storage_key,
+        error: (err as Error).message,
+      });
     }
 
     await db.query('DELETE FROM tp_attachments WHERE id = $1', [attachmentId]);
