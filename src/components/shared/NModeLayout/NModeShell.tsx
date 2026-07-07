@@ -51,6 +51,10 @@ interface NModeShellExtraProps extends NModeShellProps {
   propertiesMaxColumns?: number;
   /** Show loading state */
   loading?: boolean;
+  /** SPEC-A prawy panel artefaktu (dokowany, na całą wysokość) — zwykle
+   *  `<ArtifactRightPanel sections={…} />`. Gdy pominięty, powłoka renderuje się
+   *  bez zmian (wstecznie zgodne). Ukryty <lg (mobile), by nie ściskać centrum. */
+  rightPanel?: React.ReactNode;
 }
 
 /** Sticky toolbar host — import this when building a custom toolbar container outside NModeShell */
@@ -77,6 +81,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   buildArtifactCode,
   propertiesMaxColumns,
   loading = false,
+  rightPanel,
   children,
 }) => {
   if (loading) {
@@ -88,7 +93,9 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   }
 
   return (
-    <div className="h-full min-h-0 overflow-y-auto bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
+    <div className="h-full min-h-0 flex">
+      {/* ── Kolumna centrum (własny scroll; gdy brak rightPanel = pełna szerokość, identycznie jak dawniej) ── */}
+      <div className="flex-1 min-w-0 h-full min-h-0 overflow-y-auto bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
       {/* ── Segment 1: Header + PropertiesStrip (scrolls away) ────────────────── */}
       <div className="px-6 pt-4 pb-0">
         <div className="max-w-6xl mx-auto">
@@ -154,6 +161,11 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
           {children}
         </div>
       </div>
+      </div>
+      {/* ── Prawy panel dokowany (SPEC-A) — pełna wysokość, border-l własne; ukryty <lg by nie ściskać centrum ── */}
+      {rightPanel ? (
+        <div className="hidden lg:block shrink-0 h-full min-h-0">{rightPanel}</div>
+      ) : null}
     </div>
   );
 };

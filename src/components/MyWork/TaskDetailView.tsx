@@ -55,6 +55,10 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Callout } from '@/components/shared/NModeBlocks';
+import {
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
 import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
@@ -3551,10 +3555,205 @@ Return ONLY the final comment text.`;
   // ═══════════════════════════════════════════════════════════════════════════
 
   if (presentationMode === 'n') {
+    // ── Dokowany prawy panel artefaktu (SPEC-A) — 5 sekcji z REALNYCH danych ──
+    // Kanon: Akcje · Właściwości · Powiązania · Komentarze · Historia/AI.
+    // Tylko odczyt istniejących stanów/handlerów; treść tokenami c-* .
+    const ownerFullName = (() => {
+      const u = users.find((usr) => usr.id === ownerId);
+      return u ? `${u.firstName} ${u.lastName}`.trim() : '';
+    })();
+    const statusLabel = (STATUS_CONFIG[status] || STATUS_CONFIG.todo).label[isPolish ? 'pl' : 'en'];
+    const priorityLabel = (PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.medium).label[
+      isPolish ? 'pl' : 'en'
+    ];
+    const dash = '—';
+    const fmtDate = (v?: string) => {
+      if (!v) return dash;
+      const d = new Date(v);
+      return Number.isNaN(d.getTime())
+        ? v
+        : d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          });
+    };
+    const fmtDateTime = (v?: string) => {
+      if (!v) return dash;
+      const d = new Date(v);
+      return Number.isNaN(d.getTime())
+        ? v
+        : d.toLocaleString(isPolish ? 'pl-PL' : 'en-US', {
+            day: '2-digit',
+            month: 'short',
+            hour: '2-digit',
+            minute: '2-digit',
+          });
+    };
+
+    const panelRowClass =
+      'flex items-baseline justify-between gap-3 py-1.5 border-b border-c-border-subtle last:border-b-0';
+    const panelKeyClass = 'text-xs text-c-text-muted shrink-0';
+    const panelValClass = 'text-xs font-medium text-c-text text-right min-w-0 truncate';
+
+    const rightPanelSections: ArtifactRightPanelSection[] = [
+      {
+        id: 'actions',
+        label: isPolish ? 'Akcje' : 'Actions',
+        icon: Sparkles,
+        defaultOpen: true,
+        children: (
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => handleSave()}
+              disabled={saving}
+              className="col-span-2 inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
+            >
+              <Save size={14} className="text-c-text-muted" />
+              {isPolish ? 'Zapisz' : 'Save'}
+            </button>
+            <button
+              type="button"
+              onClick={handleOpenChat}
+              className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+            >
+              <MessageSquare size={14} className="text-c-text-muted" />
+              {isPolish ? 'Asystent' : 'Assistant'}
+            </button>
+            <button
+              type="button"
+              onClick={() => generateAIComment()}
+              disabled={isGeneratingAIComment}
+              className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
+            >
+              <Sparkles size={14} className="text-c-text-muted" />
+              {isPolish ? 'Uzupełnij AI' : 'AI assist'}
+            </button>
+          </div>
+        ),
+      },
+      {
+        id: 'properties',
+        label: isPolish ? 'Właściwości' : 'Properties',
+        icon: Flag,
+        defaultOpen: true,
+        children: (
+          <div className="flex flex-col">
+            <div className={panelRowClass}>
+              <span className={panelKeyClass}>{isPolish ? 'Status' : 'Status'}</span>
+              <span className={panelValClass}>{statusLabel}</span>
+            </div>
+            <div className={panelRowClass}>
+              <span className={panelKeyClass}>{isPolish ? 'Priorytet' : 'Priority'}</span>
+              <span className={panelValClass}>{priorityLabel}</span>
+            </div>
+            <div className={panelRowClass}>
+              <span className={panelKeyClass}>{isPolish ? 'Termin' : 'Due date'}</span>
+              <span className={panelValClass}>{fmtDate(dueDate)}</span>
+            </div>
+            <div className={panelRowClass}>
+              <span className={panelKeyClass}>{isPolish ? 'Właściciel' : 'Owner'}</span>
+              <span className={panelValClass}>{ownerFullName || dash}</span>
+            </div>
+            <div className={panelRowClass}>
+              <span className={panelKeyClass}>{isPolish ? 'Inicjatywa' : 'Initiative'}</span>
+              <span className={panelValClass}>{initiativeName || dash}</span>
+            </div>
+          </div>
+        ),
+      },
+      {
+        id: 'relations',
+        label: isPolish ? 'Powiązania' : 'Relations',
+        icon: Link2,
+        defaultOpen: true,
+        isEmpty: !initiativeName && attachments.length === 0,
+        emptyLabel: isPolish ? 'Brak powiązań' : 'No relations',
+        children: (
+          <div className="flex flex-col gap-2">
+            {initiativeName ? (
+              <div className="flex items-center gap-2">
+                <span className={panelKeyClass}>{isPolish ? 'Inicjatywa' : 'Initiative'}</span>
+                <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle truncate">
+                  <Target size={12} className="text-c-text-muted shrink-0" />
+                  <span className="truncate">{initiativeName}</span>
+                </span>
+              </div>
+            ) : null}
+            {attachments.length > 0 ? (
+              <div className="flex items-center justify-between gap-3">
+                <span className={panelKeyClass}>{isPolish ? 'Załączniki' : 'Attachments'}</span>
+                <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[11px] font-semibold tabular-nums text-c-text-muted bg-c-surface-raised">
+                  {attachments.length}
+                </span>
+              </div>
+            ) : null}
+          </div>
+        ),
+      },
+      {
+        id: 'comments',
+        label: isPolish ? 'Komentarze' : 'Comments',
+        icon: MessageSquare,
+        defaultOpen: false,
+        badge: comments.length,
+        isEmpty: comments.length === 0,
+        emptyLabel: isPolish ? 'Brak komentarzy' : 'No comments',
+        children: (
+          <ul className="flex flex-col gap-3">
+            {comments.slice(0, 6).map((c) => (
+              <li key={c.id} className="flex flex-col gap-0.5">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-xs font-semibold text-c-text truncate">
+                    {c.authorName || (isPolish ? 'Użytkownik' : 'User')}
+                  </span>
+                  <span className="text-[11px] text-c-text-muted shrink-0 tabular-nums">
+                    {fmtDateTime(c.createdAt)}
+                  </span>
+                </div>
+                <p className="text-xs text-c-text-muted line-clamp-3">{c.content}</p>
+              </li>
+            ))}
+          </ul>
+        ),
+      },
+      {
+        id: 'history',
+        label: isPolish ? 'Historia / AI' : 'History / AI',
+        icon: History,
+        defaultOpen: false,
+        badge: activityLog.length,
+        isEmpty: activityLog.length === 0,
+        emptyLabel: isPolish ? 'Brak historii' : 'No history',
+        children: (
+          <ul className="flex flex-col gap-2.5">
+            {activityLog.slice(0, 8).map((entry) => (
+              <li key={entry.id} className="flex flex-col gap-0.5">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-xs text-c-text truncate">{entry.description}</span>
+                  <span className="text-[11px] text-c-text-muted shrink-0 tabular-nums">
+                    {fmtDateTime(entry.timestamp)}
+                  </span>
+                </div>
+                {entry.oldValue || entry.newValue ? (
+                  <span className="text-[11px] text-c-text-muted truncate">
+                    {entry.oldValue ?? dash} → {entry.newValue ?? dash}
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ),
+      },
+    ];
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
         <div className="p-6">
-          <div className="max-w-6xl mx-auto space-y-0">
+          <div className="max-w-[1500px] mx-auto lg:flex lg:gap-6 lg:items-start space-y-0">
+            {/* ── Lewa kolumna: header + treść (dokowany panel po prawej) ── */}
+            <div className="lg:flex-1 lg:min-w-0 space-y-0">
             {/* ── Header ──────────────────────────────────────── */}
             <NModeHeader
               title={title}
@@ -4099,6 +4298,17 @@ Return ONLY the final comment text.`;
                   motionDuration={motionDuration}
                 />
               </div>
+            </div>
+            {/* ── /Lewa kolumna ── */}
+            </div>
+
+            {/* ── Dokowany prawy panel artefaktu (lg+; ukryty na <lg) ── */}
+            <div className="hidden lg:block shrink-0 sticky top-6 self-start">
+              <ArtifactRightPanel
+                sections={rightPanelSections}
+                className="rounded-2xl border border-c-border-subtle max-h-[calc(100vh-3rem)]"
+                ariaLabel={isPolish ? 'Szczegóły zadania' : 'Task details'}
+              />
             </div>
           </div>
         </div>
