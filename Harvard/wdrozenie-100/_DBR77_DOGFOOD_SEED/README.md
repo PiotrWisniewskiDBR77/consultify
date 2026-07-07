@@ -1,6 +1,6 @@
 # DBR77 Dogfood Seed — Tools + Assessment (noc 07-08)
 
-Zestaw wejść do ŻYWEGO dogfoodingu 6 frameworków Tools + DRD dla projektu **DBR77 Industrial Intelligence Scale-Up**. Autor: sesja główna (na bazie `_PROJEKT_DBR77_SCALEUP_2026_PLAN_v2.md`, po panelu v1→v2). Te pliki = „odpowiedzi sesji" do wklejenia/wysłania do żywej apki rano (Piotr/nadzorca), NIE zapisane do bazy tej nocy.
+Zestaw wejść do ŻYWEGO dogfoodingu 6 frameworków Tools + DRD dla projektu **DBR77 Industrial Intelligence Scale-Up**. Autor: sesja główna (na bazie planu strategii `../_PROJEKT_DBR77_SCALEUP_2026_PLAN_v2.md` — w katalogu nadrzędnym `Harvard/wdrozenie-100/`, NIE w tym drzewie; samodzielną kotwicą jest sekcja „Baza faktów" niżej). Po panelu v1→v2 + pre-walidacji panelu sceptyków (patrz `_PANEL_PREWALIDACJA.md`, `00_EXECUTIVE_SUMMARY.md`). Te pliki = „odpowiedzi sesji" do wklejenia/wysłania do żywej apki rano (Piotr/nadzorca), NIE zapisane do bazy tej nocy.
 
 ## Baza faktów (spójna, jedna wartość/metryka — anty-pułapka cross-record)
 - FY2025: **revenue 3.4M PLN**, **EBITDA 640K PLN**.

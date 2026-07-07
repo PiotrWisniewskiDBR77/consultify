@@ -8,7 +8,7 @@
 
 ## ANSWER-FIRST (dla panelu, 3 zdania)
 
-DBR77 ma **6 kluczowych zdolności** do scale-upu; średni gap dojrzałości wynosi **1.9 pkt** (skala 1–5), a najgłębsze luki są w **sprzedaży DACH/Mittelstand (gap 3)** i **modelach diagnostyki / moat (gap 2)** — dokładnie tam, gdzie leży domknięcie +6.6M PLN.
+DBR77 ma **6 kluczowych zdolności** do scale-upu; średni gap dojrzałości wynosi **2.0 pkt** (suma 12/6, skala 1–5), a najgłębsze luki są w **sprzedaży DACH/Mittelstand (gap 3)** i **modelach diagnostyki / moat (gap 2)** — dokładnie tam, gdzie leży domknięcie +6.6M PLN.
 Twardy bottleneck rynku (**<50 senior AI/ML rocznie w PL**) wymusza żelazną dyscyplinę: **senior tylko na 2 role rdzeniowe** (Head of Product/Moat + Delivery Lead), reszta = **junior + szkolenie na własnych playbookach + partnerzy** — inaczej talent zabije tempo.
 Dlatego rekomendacja to **hybryda build/buy/partner**: budujemy trwały rdzeń IP (modele + playbooki + dane = moat), kupujemy 2 senior kompetencje deficytowe, partnerujemy tam gdzie zakup jest za drogi lub za wolny (DACH GTM, część capacity delivery).
 
@@ -90,7 +90,7 @@ Podział MECE wzdłuż łańcucha wartości scale-upu: **Kapitał → Ludzie →
 | Z4 | Customer Success / Retencja | 2 | 4 | 2 | BUILD | nie | 3 — INI-3 (ARR) |
 | Z3 | Sprzedaż DACH / Mittelstand | 1 | 4 | 3 | BUY (poza limitem AI) + PARTNER | GTM, nie AI | 5 — INI-4→INI-5 |
 
-**Suma gapów: 10 pkt · Średni gap: 1.7 · Najgłębszy: Z3 (DACH, 3) · Najpilniejszy: Z6 (kapitał, bramka).**
+**Suma gapów: 12 pkt · Średni gap: 2.0 · Najgłębszy: Z3 (DACH, 3) · Najpilniejszy: Z6 (kapitał, bramka).**
 
 ---
 
