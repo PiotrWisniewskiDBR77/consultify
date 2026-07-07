@@ -207,6 +207,72 @@ describe('generateMindmapGraph', () => {
     expect(graph!.nodes.find((n) => n.type === 'center')?.data.label).toBe('Wzrost 3x');
     expect(graph!.nodes.filter((n) => n.parentId).length).toBe(1);
   });
+
+  // ── naprawa-c4 (DEFEKT #1): the LONG DBR77 prompt was STILL falling to skeleton
+  // intermittently. Diagnosed remaining null paths: (a) center returned as an
+  // OBJECT ({label|text:…}); (b) pillars returned as BARE STRINGS. Both failed the
+  // rigid schema → whole parse null. Plus: no retry on transient failure.
+  it('c4: coerces a center returned as an OBJECT ({label}) instead of null→skeleton', async () => {
+    mockObject({
+      center: { label: 'DBR77: 3x wzrost' },
+      branches: [
+        { label: 'Kapitał', children: ['Cel: runda A'] },
+        { label: 'Talent', children: ['Cel: 40 inżynierów'] },
+      ],
+    });
+    const graph = await generateMindmapGraph(DBR77, undefined, true);
+    expect(graph).toBeTruthy();
+    expect(graph!.nodes.find((n) => n.type === 'center')?.data.label).toBe('DBR77: 3x wzrost');
+  });
+
+  it('c4: coerces pillars returned as BARE STRINGS instead of null→skeleton', async () => {
+    mockObject({
+      center: 'DBR77: 3x wzrost',
+      branches: ['Kapitał', 'Talent', 'Produkt i Moat', 'Delivery', 'Popyt', 'DACH'],
+    });
+    const graph = await generateMindmapGraph(DBR77, undefined, true);
+    expect(graph).toBeTruthy();
+    const pillars = graph!.nodes.filter((n) => n.id.match(/^branch-\d+$/)).map((n) => n.data.label);
+    expect(pillars).toEqual(['Kapitał', 'Talent', 'Produkt i Moat', 'Delivery', 'Popyt', 'DACH']);
+  });
+
+  it('c4: RETRIES once on a transient throw, then succeeds (no skeleton fallback)', async () => {
+    callMock.mockRejectedValueOnce(new Error('transient timeout'));
+    callMock.mockResolvedValueOnce({
+      object: {
+        center: 'DBR77: 3x wzrost',
+        branches: [
+          { label: 'Kapitał', children: ['Cel: runda A'] },
+          { label: 'Talent', children: ['Cel: 40 inż'] },
+        ],
+      },
+    });
+    const graph = await generateMindmapGraph(DBR77, undefined, true);
+    expect(graph).toBeTruthy();
+    expect(callMock).toHaveBeenCalledTimes(2);
+    expect(graph!.nodes.find((n) => n.type === 'center')?.data.label).toBe('DBR77: 3x wzrost');
+  });
+
+  it('c4: RETRIES once on a soft null (empty object), then succeeds', async () => {
+    callMock.mockResolvedValueOnce({ object: undefined });
+    callMock.mockResolvedValueOnce({
+      object: {
+        center: 'Wzrost 3x',
+        branches: [{ label: 'Kapitał', children: ['Cel: runda A'] }],
+      },
+    });
+    const graph = await generateMindmapGraph(DBR77, undefined, true);
+    expect(graph).toBeTruthy();
+    expect(callMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('c4: gives up after the retry ALSO fails (→ null so skeleton takes over)', async () => {
+    callMock.mockRejectedValueOnce(new Error('down'));
+    callMock.mockRejectedValueOnce(new Error('still down'));
+    const graph = await generateMindmapGraph(DBR77, undefined, true);
+    expect(graph).toBeNull();
+    expect(callMock).toHaveBeenCalledTimes(2);
+  });
 });
 
 // ── PROCESS FLOW ─────────────────────────────────────────────────────────────
@@ -287,11 +353,21 @@ describe('generateWhiteboardGraph', () => {
 
     // Relation edge carries a NON-EMPTY label in BOTH top-level + data.label
     // (FE LabeledEdge reads data.label — the empty-label visual bug we fixed).
-    expect(graph!.edges.length).toBe(1);
-    const e = graph!.edges[0]!;
-    expect(e.type).toBe('labeled');
+    const labeled = graph!.edges.filter((e) => e.type === 'labeled');
+    expect(labeled.length).toBe(1);
+    const e = labeled[0]!;
     expect(e.label).toBe('dla');
     expect((e.data as { label?: string })?.label).toBe('dla');
+
+    // naprawa-c4 (DEFEKT #3): connectivity guarantee — NO sticky floats alone.
+    // The model linked only 1 of 4 stickies; the fill pass wires the other 3 so
+    // every sticky has ≥1 edge (the judge flagged "blocks hang with no links").
+    const degree = new Map<string, number>();
+    for (const ed of graph!.edges) {
+      degree.set(ed.source, (degree.get(ed.source) || 0) + 1);
+      degree.set(ed.target, (degree.get(ed.target) || 0) + 1);
+    }
+    for (const s of stickies) expect(degree.get(s.id) || 0).toBeGreaterThan(0);
   });
 
   it('drops an edge that would carry an empty relation label (no empty labeled box)', async () => {
@@ -311,6 +387,31 @@ describe('generateWhiteboardGraph', () => {
   it('rejects (null) when a majority of block labels are fragments', async () => {
     mockObject({ groups: [{ title: 'G', blocks: ['z celami', 'ryzykami', 'Zasoby'] }], links: [] });
     expect(await generateWhiteboardGraph('x', undefined, true)).toBeNull();
+  });
+
+  // ── naprawa-c4 (DEFEKT #3): whiteboard density — no sticky may float alone.
+  it('c4: wires EVERY sticky (no orphans) even when the model supplies zero links', async () => {
+    mockObject({
+      groups: [
+        { title: 'Propozycja wartości', blocks: ['PdM AI', 'OEE AI'] },
+        { title: 'Segmenty klientów', blocks: ['Mittelstand', 'Fabryki'] },
+        { title: 'Kanały', blocks: ['Sprzedaż bezpośrednia'] },
+        { title: 'Przychody', blocks: ['Subskrypcja SaaS'] },
+      ],
+      links: [], // model gave NO links → fill pass must connect all 6 stickies
+    });
+    const graph = await generateWhiteboardGraph('BMC dla DBR77', 'BMC', true);
+    expect(graph).toBeTruthy();
+    const stickies = graph!.nodes.filter((n) => n.type === 'stickyNote');
+    expect(stickies.length).toBe(6);
+    const degree = new Map<string, number>();
+    for (const e of graph!.edges) {
+      degree.set(e.source, (degree.get(e.source) || 0) + 1);
+      degree.set(e.target, (degree.get(e.target) || 0) + 1);
+    }
+    for (const s of stickies) expect(degree.get(s.id) || 0).toBeGreaterThan(0);
+    // Frames stay exactly as the model named them — no invented 5th cluster.
+    expect(graph!.nodes.filter((n) => n.type === 'frameNode').length).toBe(4);
   });
 });
 
@@ -384,5 +485,39 @@ describe('generateNoteContent', () => {
   it('returns null on LLM failure', async () => {
     callMock.mockRejectedValueOnce(new Error('down'));
     expect(await generateNoteContent('x', undefined, true)).toBeNull();
+  });
+
+  // ── naprawa-c4 (DEFEKT #2): the note must use the input's OWN named pillars as
+  // headings (verbatim), not MBA paraphrases ("Popyt"→"Rynek i ekspansja"). We
+  // assert the plumbing: (a) the strengthened system prompt forbids paraphrase
+  // and mandates verbatim headings; (b) the user message carries the named
+  // pillars + numbers + the fidelity reminder; (c) temperature is low (fidelity).
+  it('c4: sends verbatim-heading fidelity instructions + named entities to the model', async () => {
+    mockText(
+      '## Kapitał\n- runda A\n\n## Popyt\n- Mittelstand\n\n## DACH\n- ekspansja'
+    );
+    const seed =
+      'Notatka DBR77: 3x revenue w 30-36 miesięcy. Filary: Kapitał, Talent, Produkt i Moat, Delivery, Popyt, DACH. Rynek: Mittelstand, Industrial Intelligence.';
+    const content = await generateNoteContent(seed, 'DBR77', true);
+    expect(content).toContain('## Popyt');
+    expect(content).toContain('## DACH');
+
+    const args = callMock.mock.calls[0]![0] as {
+      systemPrompt: string;
+      messages: { content: string }[];
+      temperature: number;
+    };
+    // System prompt mandates verbatim pillar headings and forbids name paraphrase.
+    expect(args.systemPrompt).toMatch(/DOKŁADNE NAZWY|SŁOWO W SŁOWO/);
+    expect(args.systemPrompt).toMatch(/Moat/);
+    expect(args.systemPrompt).toMatch(/Rynek i ekspansja/); // the forbidden paraphrase, named as a ban
+    // User message carries the real named entities + numbers verbatim.
+    const userMsg = args.messages[0]!.content;
+    expect(userMsg).toContain('Popyt');
+    expect(userMsg).toContain('DACH');
+    expect(userMsg).toContain('Mittelstand');
+    expect(userMsg).toContain('30-36');
+    // Low temperature for fidelity.
+    expect(args.temperature).toBeLessThanOrEqual(0.2);
   });
 });
