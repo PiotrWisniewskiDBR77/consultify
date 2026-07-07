@@ -261,6 +261,51 @@ function isEmptyCol(existingRow: Record<string, unknown>, col: string): boolean 
   return s === '' || s === '[]' || s === '{}';
 }
 
+/**
+ * FIX (naprawa-r6bExtract, defekt #1) — wykrywa ŚMIECIOWĄ wartość budżetu utrwaloną
+ * PRZED tym fixem. Żywy dowód (demo 2026-07-07): INI-2 ma estimated_budget=40, śmieć
+ * z „redukcję kosztów akwizycji o 40%" (gołe „40" bez markera pieniężnego), mimo że
+ * karta financialImpact niesie „koszty wejścia ~400k PLN". Hydracja non-destrukcyjna
+ * NIE nadpisze tego (40 ≠ puste). Dlatego dla estimated_budget dopuszczamy nadpisanie,
+ * gdy istniejąca wartość jest ŚMIECIOWA.
+ *
+ * ŚMIEĆ = wartość, która nie może być realnym budżetem projektu: nie-liczba, albo
+ * liczba bez skali (< 1000). Realny budżet inicjatywy to co najmniej tysiące (patrz
+ * próg ≥1000 w firstMoneyAmount). Zachowawczo: „400000", „1500000" itd. → NIE śmieć.
+ */
+function isGarbageBudget(v: unknown): boolean {
+  if (v === null || v === undefined) return true; // puste = też „do wypełnienia"
+  const s = String(v).trim();
+  if (s === '' || s === '[]' || s === '{}') return true;
+  const n = Number(s.replace(/\s/g, '').replace(',', '.'));
+  // Nie-liczbowa treść w kolumnie liczbowej → śmieć (np. „40%", „low").
+  if (!Number.isFinite(n)) return true;
+  // Liczba bez skali (< 1000) nie jest realnym budżetem inicjatywy → śmieć.
+  return n < 1000;
+}
+
+/**
+ * FIX (naprawa-r6bExtract, defekt #1) — wykrywa ŚMIECIOWĄ wartość ROI utrwaloną PRZED
+ * fixem. expected_roi jest KOLUMNĄ TEKSTOWĄ i realny wskaźnik zwrotu ZAWSZE niesie
+ * marker: procent („285%"), krotność („3,2x"), payback/rentowność/miesiące/rok, albo
+ * słowo ROI. Sama gola liczba (np. „40" z „o 40%") jest śmieciem — nie mówi nic o
+ * zwrocie. ŚMIEĆ = brak jakiegokolwiek markera zwrotu (albo pusto).
+ */
+function isGarbageRoi(v: unknown): boolean {
+  if (v === null || v === undefined) return true;
+  const s = String(v).trim();
+  if (s === '' || s === '[]' || s === '{}') return true;
+  // Realny ROI musi nieść marker zwrotu: %, krotność x, roi, payback, rentowność,
+  // break-even, jednostka czasu (mies./month/lat/rok/year).
+  const hasSignal =
+    /%/.test(s) ||
+    /\d\s*x\b/i.test(s) ||
+    /\broi\b/i.test(s) ||
+    /payback|rentowno[śs][ćc]|break-?even|zwrot/i.test(s) ||
+    /\b(mies|month|m-?cy|lat|rok|year)\b/i.test(s);
+  return !hasSignal;
+}
+
 // ── główny mapper ────────────────────────────────────────────────────────────
 
 /**
@@ -283,7 +328,22 @@ export function buildTypedColumnUpdates(
   const push = (column: string, value: string | undefined) => {
     if (value === undefined || value === '') return;
     if (!existingCols.has(column)) return;
-    if (!isEmptyCol(existingRow, column)) return;
+    if (!isEmptyCol(existingRow, column)) {
+      // FIX (naprawa-r6bExtract, defekt #1): non-destrukcyjność jest domyślnie
+      // WŁĄCZONA (nie klobrujemy ręcznych edycji), z JEDNYM wyjątkiem — kolumny,
+      // do których PRZED tym fixem trafiał ŚMIEĆ z gołych liczb (estimated_budget=40,
+      // expected_roi=„40"). Dla nich nadpisujemy TYLKO gdy istniejąca wartość jest
+      // śmieciowa, a NOWA ekstrakcja NIE jest (lepsza). Realne (sensowne) wartości
+      // pozostają nietknięte.
+      const isGarbageOverride =
+        (column === 'estimated_budget' &&
+          isGarbageBudget(existingRow[column]) &&
+          !isGarbageBudget(value)) ||
+        (column === 'expected_roi' &&
+          isGarbageRoi(existingRow[column]) &&
+          !isGarbageRoi(value));
+      if (!isGarbageOverride) return;
+    }
     // dedup: pierwszy wygrywa
     if (out.some((u) => u.column === column)) return;
     out.push({ column, value });
@@ -416,3 +476,7 @@ export function toUpdateSql(updates: TypedColumnUpdate[]): { setClause: string; 
     params: updates.map((u) => u.value),
   };
 }
+
+// Czyste detektory śmieciowych wartości — wyeksportowane do testów jednostkowych
+// (naprawa-r6bExtract, defekt #1). Bez DB/sieci — deterministyczne.
+export const __test__ = { isGarbageBudget, isGarbageRoi };

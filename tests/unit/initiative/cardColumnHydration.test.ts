@@ -21,6 +21,7 @@ vi.mock('../../../server/src/utils/queryHelpers.js', () => ({
 import {
   buildTypedColumnUpdates,
   toUpdateSql,
+  __test__ as hydrationTest,
 } from '../../../server/src/services/initiative/cardColumnHydration.js';
 import { hydrateTypedColumns } from '../../../server/src/services/ai/tools/generateInitiative.js';
 
@@ -420,6 +421,105 @@ describe('buildTypedColumnUpdates — FIX R5 (próbki z żywego demo 2026-07-07)
       ALL_COLS,
     );
     const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.estimated_budget).toBeUndefined();
+  });
+});
+
+// ── FIX r6bExtract (defekt #1) — nadpisanie ŚMIECIOWEGO budżetu/ROI ───────────
+
+describe('isGarbageBudget / isGarbageRoi (defekt #1)', () => {
+  const { isGarbageBudget, isGarbageRoi } = hydrationTest;
+
+  it('isGarbageBudget: "40" / 40 / <1000 / null / nie-liczba → śmieć', () => {
+    expect(isGarbageBudget(40)).toBe(true);
+    expect(isGarbageBudget('40')).toBe(true);
+    expect(isGarbageBudget(999)).toBe(true);
+    expect(isGarbageBudget(null)).toBe(true);
+    expect(isGarbageBudget('')).toBe(true);
+    expect(isGarbageBudget('low')).toBe(true);
+    expect(isGarbageBudget('400k PLN')).toBe(true); // string z jednostką w kolumnie liczbowej
+  });
+
+  it('isGarbageBudget: realny budżet ≥1000 → NIE śmieć', () => {
+    expect(isGarbageBudget('400000')).toBe(false);
+    expect(isGarbageBudget('1500000')).toBe(false);
+    expect(isGarbageBudget(1000)).toBe(false);
+    expect(isGarbageBudget('1800000')).toBe(false);
+  });
+
+  it('isGarbageRoi: gola liczba / null / brak markera → śmieć', () => {
+    expect(isGarbageRoi('40')).toBe(true);
+    expect(isGarbageRoi(null)).toBe(true);
+    expect(isGarbageRoi('')).toBe(true);
+    expect(isGarbageRoi('40 sztuk')).toBe(true);
+  });
+
+  it('isGarbageRoi: realny wskaźnik (%, x, payback, rentowność) → NIE śmieć', () => {
+    expect(isGarbageRoi('285%')).toBe(false);
+    expect(isGarbageRoi('ROI 3,2x')).toBe(false);
+    expect(isGarbageRoi('payback 14 mies.')).toBe(false);
+    expect(isGarbageRoi('rentowność Q1 2028')).toBe(false);
+    expect(isGarbageRoi('ROI 2.5-3.5x')).toBe(false);
+  });
+});
+
+describe('buildTypedColumnUpdates — nadpisanie śmieciowego budżetu/ROI (defekt #1)', () => {
+  // Karta 1:1 z żywego INI-2 (demo 2026-07-07): niesie „koszty wejścia ~400k PLN".
+  const INI2_CARD = {
+    revenueImpact: '€500k ARR do Q4 2027 (1.6M PLN przy kursie 3.2), wzrost ~47%.',
+    costSavings:
+      'Szacowane koszty wejścia: ~400k PLN (lokalizacja, compliance BDSG/ISO, hiring). Redukcja cost-per-acquisition o ~30%.',
+    benefitsRealization: 'ROI break-even w Q3 2027, pełna rentowność inicjatywy od Q1 2028.',
+  };
+
+  it('NADPISUJE estimated_budget=40 (śmieć) wartością „~400k PLN" z narracji', () => {
+    const ups = buildTypedColumnUpdates(
+      { financialImpact: JSON.stringify(INI2_CARD) },
+      ALL_COLS,
+      { estimated_budget: 40, expected_roi: null }, // żywy stan INI-2
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.estimated_budget).toBe('400000'); // ~400k PLN wygrywa nad śmieciowym 40
+    expect(byCol.estimated_budget).not.toBe('40');
+  });
+
+  it('NIE nadpisuje sensownego istniejącego budżetu (nie klobruje realnych danych)', () => {
+    const ups = buildTypedColumnUpdates(
+      { financialImpact: JSON.stringify(INI2_CARD) },
+      ALL_COLS,
+      { estimated_budget: 500000, expected_roi: 'ROI 200%' },
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.estimated_budget).toBeUndefined(); // 500000 sensowne → zachowane
+    expect(byCol.expected_roi).toBeUndefined(); // „ROI 200%" sensowne → zachowane
+  });
+
+  it('nadpisuje śmieciowe expected_roi="40" realnym wskaźnikiem z narracji', () => {
+    const ups = buildTypedColumnUpdates(
+      {
+        financialImpact: JSON.stringify({
+          benefitsRealization: 'Oczekiwane ROI 285% w horyzoncie 24 mies.',
+        }),
+      },
+      ALL_COLS,
+      { expected_roi: '40' }, // śmieć
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.expected_roi).toBe('ROI 285%');
+  });
+
+  it('NIE nadpisuje gdy nowa ekstrakcja też byłaby śmieciem (brak lepszej wartości)', () => {
+    const ups = buildTypedColumnUpdates(
+      {
+        financialImpact: JSON.stringify({
+          costSavings: 'Redukcja kosztów o 40% dzięki skali.', // brak realnej kwoty
+        }),
+      },
+      ALL_COLS,
+      { estimated_budget: 40 },
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    // narracja nie daje realnej kwoty → nie ma czym nadpisać → 40 zostaje (brak update)
     expect(byCol.estimated_budget).toBeUndefined();
   });
 });

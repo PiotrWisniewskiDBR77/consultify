@@ -20,6 +20,7 @@ const {
   splitRecommendationAndRationale,
   extractAlternatives,
   extractRisks,
+  extractAssumptions,
   matchArtifactBlock,
   looseJsonField,
 } = __test__;
@@ -117,6 +118,75 @@ describe('splitRecommendationAndRationale (defekt #2 dedup)', () => {
     expect(r.recommendation).toBe('Wybrać dostawcę A.');
     expect(r.rationale).toContain('najniższy koszt');
     expect(r.recommendation).not.toBe(r.rationale);
+  });
+});
+
+// ── FIX r6bExtract (defekt #3) — rationale NIE ucięty na starcie ──────────────
+
+describe('splitRecommendationAndRationale — pełne otwarcie rationale (defekt #3)', () => {
+  it('marker + PROZA po nim ("Uzasadnienie wyboru tej opcji…") → zachowuje początek', () => {
+    const body =
+      'Wdrożyć strategię hybrydową Partner + Build.\n' +
+      'Uzasadnienie wyboru tej opcji nad alternatywami: (1) skraca time-to-GA o 40-60%, (2) kontrola IP.';
+    const r = splitRecommendationAndRationale(body);
+    expect(r.recommendation).toBe('Wdrożyć strategię hybrydową Partner + Build.');
+    // KLUCZ: rationale zaczyna się od PEŁNEGO „Uzasadnienie wyboru…", nie od „wyboru…"/„tej…".
+    expect(r.rationale.startsWith('Uzasadnienie wyboru tej opcji')).toBe(true);
+    expect(r.rationale).toContain('40-60%');
+  });
+
+  it('marker + CZYSTY separator ("Uzasadnienie: <treść>") → zdejmuje marker (bez regresji)', () => {
+    const body = 'Wybór dostawcy A.\nUzasadnienie: najniższy TCO i szybki payback w porównaniu do B.';
+    const r = splitRecommendationAndRationale(body);
+    expect(r.recommendation).toBe('Wybór dostawcy A.');
+    expect(r.rationale).toBe('najniższy TCO i szybki payback w porównaniu do B.');
+  });
+
+  it('bold + dwukropek ("**Uzasadnienie:** X") nadal czysto zdejmowany', () => {
+    const body = 'Wdrożyć Azure.\n\n**Uzasadnienie:** najniższy TCO oraz gotowe kompetencje zespołu.';
+    const r = splitRecommendationAndRationale(body);
+    expect(r.rationale).toBe('najniższy TCO oraz gotowe kompetencje zespołu.');
+  });
+});
+
+// ── FIX r6bExtract (defekt #2) — assumptions bez boilerplate-atrapy ───────────
+
+describe('extractAssumptions (defekt #2 — realne założenia, nie atrapa)', () => {
+  it('wyłuskuje REALNE założenia z żywej narracji (liczby/markery), nie boilerplate', () => {
+    // 1:1 z żywej decyzji 2cfe3e3f (demo 2026-07-07).
+    const narr =
+      'Strategia hybrydowa "Partner + Selective Build".\n' +
+      'Uzasadnienie: (1) skraca time-to-GA o 40-60% vs pure build (szacunek: eliminacja 12-18 miesięcy), ' +
+      '(2) zachowuje kontrolę IP.\n' +
+      '**Horyzont:** Decyzja partnera do 14 dni, podpisanie umowy do 45 dni.';
+    const a = extractAssumptions(narr, 'pl');
+    expect(a.length).toBeGreaterThan(0);
+    // ŻADNE założenie nie jest generycznym placeholderem-atrapą:
+    expect(a.some((x: any) => /niezweryfikowana na danych na żywo/i.test(x.assumption))).toBe(false);
+    // Realna, skwantyfikowana teza jest obecna:
+    expect(a.some((x: any) => /40-60%/.test(x.assumption))).toBe(true);
+    // Każde założenie ma confidence + whatWouldChangeIt (falsyfikowalność §5):
+    for (const x of a) {
+      expect(['low', 'medium', 'high']).toContain(x.confidence);
+      expect(x.whatWouldChangeIt.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('narracja bez liczb i bez markera → PUSTA tablica (lepiej puste niż atrapa)', () => {
+    expect(extractAssumptions('Wdrożyć Azure teraz. To dobra opcja dla zespołu.', 'pl')).toEqual([]);
+    expect(extractAssumptions('', 'pl')).toEqual([]);
+  });
+
+  it('szacunek/estimate/~ → confidence=medium; twarda liczba → high', () => {
+    const soft = extractAssumptions('Zwrot ~20% w 6 miesięcy wg szacunku.', 'pl');
+    expect(soft[0].confidence).toBe('medium');
+    const hard = extractAssumptions('Kontrakt wart 500k PLN rocznie od 10 klientów.', 'pl');
+    expect(hard[0].confidence).toBe('high');
+  });
+
+  it('EN: "Assuming …" wyłuskane', () => {
+    const a = extractAssumptions('Adopt option B. Assuming 20% adoption and a 6 month payback.', 'en');
+    expect(a.some((x: any) => /assuming 20%/i.test(x.assumption))).toBe(true);
   });
 });
 
