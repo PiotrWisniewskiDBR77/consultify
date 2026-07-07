@@ -162,7 +162,7 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
     // Honest empty state: a completed run found no gaps — say so once, no retry loop.
     if (!checked || allHandled || emptyDismissed) return null;
     return (
-      <div className="absolute bottom-16 right-3 z-[88] w-[320px] max-w-[90vw]">
+      <div className="absolute bottom-16 right-3 z-dropdown w-[320px] max-w-[90vw]">
         <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-white/90 dark:bg-navy-900/90 backdrop-blur-xl border border-amber-400/30 dark:border-amber-500/20 shadow-2xl">
           <Eye size={14} className="text-amber-500 shrink-0" />
           <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 flex-1">
@@ -187,7 +187,7 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
   };
 
   return (
-    <div className="absolute bottom-16 right-3 z-[88] w-[320px] max-w-[90vw]">
+    <div className="absolute bottom-16 right-3 z-dropdown w-[320px] max-w-[90vw]">
       <div className="rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-warning dark:border-c-warning shadow-2xl overflow-hidden">
         {/* Header */}
         <button

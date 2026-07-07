@@ -77,6 +77,10 @@ import { Api } from '../../services/api';
 import { CloudFilePicker } from '../AIChat/CloudFilePicker';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
+import {
+  NModeCardState,
+  type NModeCardStatus,
+} from '../shared/NModeLayout/NModeCardState';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
 import { NModePropertiesStrip } from '../shared/NModeLayout/NModePropertiesStrip';
@@ -126,6 +130,7 @@ import {
 import { AIConnections } from './shared/AIConnections';
 import { buildAskAIMessage } from './shared/askAiHelper';
 import { PostDecisionFollowUp } from './shared/PostDecisionFollowUp';
+import { ReadEditToggle } from './shared/ReadEditToggle';
 import { RelatedContext } from './shared/RelatedContext';
 
 // ── Decision accordion section IDs ──────────────────────────────────────────
@@ -684,6 +689,69 @@ const DEMO_ESCALATION: EscalationRule = {
 };
 // ── END DEMO DATA ─────────────────────────────────────────────────────────────
 
+// ── Decision section AI helpers (wzorzec N: POST /decisions/:id/generate-section) ──
+// The endpoint (DecisionController.generateSection → decisionService.generateSection)
+// returns { sectionKey, content, isJson, parsedContent, model, tokensUsed }. When no
+// LLM provider is configured the service degrades honestly: model === 'placeholder'
+// and content is a bracketed "[…]" notice. We treat that as a soft failure so the
+// card lands on `error` (retry available) instead of persisting a placeholder draft.
+const isDecisionSectionPlaceholder = (res: any): boolean =>
+  String(res?.model || '') === 'placeholder' ||
+  /^\s*\[.*\]\s*$/.test(String(res?.content || ''));
+
+const extractDecisionSectionContent = (res: any): string => {
+  if (isDecisionSectionPlaceholder(res)) {
+    throw new Error('AI provider unavailable (placeholder response)');
+  }
+  const content = String(res?.content || '').trim();
+  if (!content) {
+    throw new Error('Empty AI section content');
+  }
+  return content;
+};
+
+const extractDecisionSectionJson = (res: any): any => {
+  if (isDecisionSectionPlaceholder(res)) {
+    throw new Error('AI provider unavailable (placeholder response)');
+  }
+  if (res?.parsedContent && typeof res.parsedContent === 'object') {
+    return res.parsedContent;
+  }
+  // Fallback: parse the raw content (fenced or bare JSON) if the server did not.
+  const raw = String(res?.content || '');
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  const candidate = fenced ? fenced[1] : raw;
+  return JSON.parse(candidate);
+};
+
+const normalizeRiskLevel = (v: any): 'low' | 'medium' | 'high' | 'critical' => {
+  const s = String(v || '').toLowerCase();
+  return s === 'critical' || s === 'high' || s === 'medium' || s === 'low'
+    ? (s as 'low' | 'medium' | 'high' | 'critical')
+    : 'medium';
+};
+
+const normalizeRiskCategory = (
+  v: any
+): 'technical' | 'business' | 'operational' | 'financial' | 'legal' | 'other' => {
+  const s = String(v || '').toLowerCase();
+  // Backend enum: scope|schedule|cost|quality|business|operational.
+  // FE enum: technical|business|operational|financial|legal|other.
+  const map: Record<string, 'technical' | 'business' | 'operational' | 'financial' | 'legal' | 'other'> = {
+    scope: 'operational',
+    schedule: 'operational',
+    cost: 'financial',
+    quality: 'technical',
+    business: 'business',
+    operational: 'operational',
+    technical: 'technical',
+    financial: 'financial',
+    legal: 'legal',
+    other: 'other',
+  };
+  return map[s] || 'other';
+};
+
 export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   decisionId,
   onClose,
@@ -773,6 +841,33 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const [isGeneratingAlternatives, setIsGeneratingAlternatives] = useState(false);
   const [isGeneratingAIComment, setIsGeneratingAIComment] = useState(false);
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+
+  // ── N-card state per content section (wzorzec N §3.2) ──────────────────────
+  // Tracks the AI-draft / edited / done lifecycle for the 4 main content cards
+  // (Description · Alternatives · Risk/Impact · Consequences of Inaction). Empty
+  // by default; a successful AI generation flips the card to `ai-draft`, a manual
+  // edit → `edited`, and the Accept action → `done`.
+  type DecisionCardKey = 'description' | 'alternatives' | 'risk' | 'consequences';
+  const [cardStates, setCardStates] = useState<Record<DecisionCardKey, NModeCardStatus>>({
+    description: 'empty',
+    alternatives: 'empty',
+    risk: 'empty',
+    consequences: 'empty',
+  });
+  const setCardState = useCallback((key: DecisionCardKey, next: NModeCardStatus) => {
+    setCardStates((prev) => (prev[key] === next ? prev : { ...prev, [key]: next }));
+  }, []);
+  // ── Read/Edit toggle (Menu 1, klasa S) ─────────────────────────────────────
+  // "Do pokazania klientowi": read = wszystkie karty/pola read-only, brak pasków
+  // akcji (hideActions). ORuje się do isDecisionStageLocked (patrz niżej), więc
+  // przewleka się przez WSZYSTKIE istniejące bramki edycji jednym stanem.
+  const [readMode, setReadMode] = useState(false);
+  // Human edit on a card demotes an AI-draft/done card to `edited` (badge switch).
+  const markCardEdited = useCallback((key: DecisionCardKey) => {
+    setCardStates((prev) =>
+      prev[key] === 'ai-draft' || prev[key] === 'done' ? { ...prev, [key]: 'edited' } : prev
+    );
+  }, []);
 
   // Escalation & Reminders
   const [reminders, setReminders] = useState<ReminderRuleWithDelivery[]>([]);
@@ -1233,6 +1328,34 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     if (!isLocalHydrated || hasPublishBaseline) return;
     setLastPublishedSnapshot(draftSnapshot);
   }, [isLocalHydrated, hasPublishBaseline, draftSnapshot]);
+
+  // Seed N-card states from hydrated content: a card that already carries content
+  // starts as `edited` (human-owned) so its badge + action bar are visible; empty
+  // cards stay `empty` → placeholder with the "Generate with AI" path. Only seeds
+  // cards still in `empty`, so a live AI-draft is never clobbered by rehydration.
+  useEffect(() => {
+    if (!isLocalHydrated) return;
+    const seed: Partial<Record<DecisionCardKey, boolean>> = {
+      description: (description || '').trim().length > 0,
+      alternatives: alternatives.length > 0,
+      risk: risks.length > 0,
+      consequences:
+        !!consequenceScenarios ||
+        (rationale || '').trim().length > 0,
+    };
+    setCardStates((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      (Object.keys(seed) as DecisionCardKey[]).forEach((k) => {
+        if (prev[k] === 'empty' && seed[k]) {
+          next[k] = 'edited';
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLocalHydrated, description, alternatives, risks, consequenceScenarios, rationale]);
 
   useEffect(() => {
     if (presentationMode !== 'n') return;
@@ -2246,52 +2369,32 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     }
 
     setIsGeneratingAlternatives(true);
+    setCardState('alternatives', 'generating');
     try {
-      // Simulated AI generation - replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const res = await Api.post(`/decisions/${decisionId}/generate-section`, {
+        sectionKey: 'alternatives',
+        language: isPolish ? 'pl' : 'en',
+      });
+      const parsed = extractDecisionSectionJson(res);
+      const rawAlternatives = Array.isArray(parsed?.alternatives) ? parsed.alternatives : [];
+      if (rawAlternatives.length === 0) {
+        throw new Error('No alternatives returned by AI');
+      }
 
-      const generatedAlternatives: Alternative[] = [
-        {
-          id: Math.random().toString(36).substr(2, 9),
-          title: t('decisions.detail.altGen.option1Title', 'Option 1: Conservative approach'),
-          description: t('decisions.detail.altGen.option1Desc', 'Minimal changes, low risk, gradual implementation'),
-          pros: [
-            t('decisions.detail.altGen.lowRisk', 'Low risk'),
-            t('decisions.detail.altGen.easyImplementation', 'Easy implementation'),
-          ],
-          cons: [t('decisions.detail.altGen.slowerResults', 'Slower results')],
-          isRecommended: false,
-        },
-        {
-          id: Math.random().toString(36).substr(2, 9),
-          title: t('decisions.detail.altGen.option2Title', 'Option 2: Aggressive approach'),
-          description: t('decisions.detail.altGen.option2Desc', 'Fast implementation, higher risk, faster results'),
-          pros: [
-            t('decisions.detail.altGen.fastResults', 'Fast results'),
-            t('decisions.detail.altGen.competitiveAdvantage', 'Competitive advantage'),
-          ],
-          cons: [
-            t('decisions.detail.altGen.higherRisk', 'Higher risk'),
-            t('decisions.detail.altGen.higherCosts', 'Higher costs'),
-          ],
-          isRecommended: false,
-        },
-        {
-          id: Math.random().toString(36).substr(2, 9),
-          title: t('decisions.detail.altGen.option3Title', 'Option 3: Hybrid approach'),
-          description: t('decisions.detail.altGen.option3Desc', 'Balance between speed and safety'),
-          pros: [
-            t('decisions.detail.altGen.balancedRisk', 'Balanced risk'),
-            t('decisions.detail.altGen.flexibility', 'Flexibility'),
-          ],
-          cons: [t('decisions.detail.altGen.moreCoordination', 'Requires more coordination')],
-          isRecommended: true,
-        },
-      ];
+      const generatedAlternatives: Alternative[] = rawAlternatives.map((a: any) => ({
+        id: Math.random().toString(36).substr(2, 9),
+        title: String(a?.title || '').trim(),
+        description: String(a?.description || a?.estimatedCostTime || '').trim(),
+        pros: Array.isArray(a?.pros) ? a.pros.map((p: any) => String(p)) : [],
+        cons: Array.isArray(a?.cons) ? a.cons.map((c: any) => String(c)) : [],
+        isRecommended: false,
+      }));
 
       setAlternatives(withProsConsFallback([...alternatives, ...generatedAlternatives]));
+      setCardState('alternatives', 'ai-draft');
       toast.success(t('decisions.detail.toast.alternativesGenerated', 'Alternatives generated'));
     } catch (error) {
+      setCardState('alternatives', 'error');
       toast.error(t('decisions.detail.toast.generationFailed', 'Generation failed'));
     } finally {
       setIsGeneratingAlternatives(false);
@@ -2306,18 +2409,19 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       return;
     }
     setIsGeneratingDescription(true);
+    setCardState('description', 'generating');
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const res = await Api.post(`/decisions/${decisionId}/generate-section`, {
+        sectionKey: 'description',
+        language: isPolish ? 'pl' : 'en',
+      });
+      const content = extractDecisionSectionContent(res);
 
-      const generatedDescription = t(
-        'decisions.detail.decisionContextTemplate',
-        '## Decision Context\n\nThis decision concerns selecting the optimal solution for {{title}}.\n\n### Background\nThe analysis has identified the following key factors:\n- Business and technical requirements\n- Budget and timeline constraints\n- Impact on existing processes\n\n### Scope\nThe decision covers:\n1. Vendor/technology selection\n2. Implementation timeline definition\n3. Resource allocation\n\n### Expected Outcomes\n- Process efficiency improvement\n- Operational cost reduction\n- Increased competitiveness',
-        { title: title || t('decisions.detail.theCurrentIssue', 'the current issue') }
-      );
-
-      setDescription(generatedDescription);
+      setDescription(content);
+      setCardState('description', 'ai-draft');
       toast.success(t('decisions.detail.toast.descriptionGenerated', 'Description generated by AI'));
     } catch {
+      setCardState('description', 'error');
       toast.error(t('decisions.detail.toast.descriptionGenerationError', 'Error generating description'));
     } finally {
       setIsGeneratingDescription(false);
@@ -3034,28 +3138,30 @@ Use userId only from this list:
     }
   };
 
-  const generateConsequencesOfInactionAI = () => {
+  const generateConsequencesOfInactionAI = async () => {
     if (isDecisionStageLocked) {
       toast.error(
         t('decisions.detail.toast.aiGenAvailableOnlyBeforeDecision', 'AI generation is available only before decision stage')
       );
       return;
     }
-    const generated = t(
-      'decisions.detail.toast.consequencesGenerated',
-      `If "{{title}}" is not made in time, likely consequences are:
-- growing operational uncertainty and delivery delays,
-- increased cost (time, resources, rework risk),
-- escalation risk and loss of business momentum.
+    setCardState('consequences', 'generating');
+    try {
+      const res = await Api.post(`/decisions/${decisionId}/generate-section`, {
+        sectionKey: 'consequencesOfInaction',
+        language: isPolish ? 'pl' : 'en',
+      });
+      const content = extractDecisionSectionContent(res);
 
-Recommendation: assign a decider, deadline, and minimum decision scope to approve.`,
-      { title: title || t('decisions.detail.ai.consequencesTitleFallbackDecision', 'this decision') }
-    );
-
-    setRationale(generated);
-    toast.success(
-      t('decisions.detail.toast.consequencesGenerated', 'Consequences of inaction generated')
-    );
+      setRationale(content);
+      setCardState('consequences', 'ai-draft');
+      toast.success(
+        t('decisions.detail.toast.consequencesGenerated', 'Consequences of inaction generated')
+      );
+    } catch {
+      setCardState('consequences', 'error');
+      toast.error(t('decisions.detail.toast.generationFailed', 'Generation failed'));
+    }
   };
 
   const generateRisksAI = async () => {
@@ -3071,43 +3177,33 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
     }
 
     setIsGeneratingRisks(true);
+    setCardState('risk', 'generating');
     try {
-      // Simulated AI generation - replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const res = await Api.post(`/decisions/${decisionId}/generate-section`, {
+        sectionKey: 'risk',
+        language: isPolish ? 'pl' : 'en',
+      });
+      const parsed = extractDecisionSectionJson(res);
+      const rawRisks = Array.isArray(parsed?.risks) ? parsed.risks : [];
+      if (rawRisks.length === 0) {
+        throw new Error('No risks returned by AI');
+      }
 
-      const generatedRisks: RiskItem[] = [
-        {
-          id: Math.random().toString(36).substr(2, 9),
-          title: t('decisions.detail.riskGen.budgetRisk', 'Budget risk'),
-          probability: 'medium',
-          impact: 'high',
-          category: 'financial',
-          mitigation: t('decisions.detail.riskGen.budgetMitigation', 'Regular budget reviews, 15% buffer'),
-          contingency: t('decisions.detail.riskGen.budgetContingency', 'Scope reduction or timeline extension'),
-        },
-        {
-          id: Math.random().toString(36).substr(2, 9),
-          title: t('decisions.detail.riskGen.technicalRisk', 'Technical risk'),
-          probability: 'low',
-          impact: 'high',
-          category: 'technical',
-          mitigation: t('decisions.detail.riskGen.technicalMitigation', 'POC before full implementation'),
-          contingency: t('decisions.detail.riskGen.technicalContingency', 'Alternative technical solution'),
-        },
-        {
-          id: Math.random().toString(36).substr(2, 9),
-          title: t('decisions.detail.riskGen.resourceRisk', 'Resource risk'),
-          probability: 'medium',
-          impact: 'medium',
-          category: 'operational',
-          mitigation: t('decisions.detail.riskGen.resourceMitigation', 'Team cross-training, documentation'),
-          contingency: t('decisions.detail.riskGen.resourceContingency', 'External consultants'),
-        },
-      ];
+      const generatedRisks: RiskItem[] = rawRisks.map((r: any) => ({
+        id: Math.random().toString(36).substr(2, 9),
+        title: String(r?.title || '').trim(),
+        probability: normalizeRiskLevel(r?.probability),
+        impact: normalizeRiskLevel(r?.impact),
+        category: normalizeRiskCategory(r?.category),
+        mitigation: String(r?.mitigation || '').trim(),
+        contingency: String(r?.contingency || '').trim(),
+      }));
 
       setRisks([...risks, ...generatedRisks]);
+      setCardState('risk', 'ai-draft');
       toast.success(t('decisions.detail.toast.riskAnalysisGenerated', 'Risk analysis generated'));
     } catch (error) {
+      setCardState('risk', 'error');
       toast.error(t('decisions.detail.toast.generationFailed', 'Generation failed'));
     } finally {
       setIsGeneratingRisks(false);
@@ -3123,7 +3219,10 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
   // Show action buttons for any status that requires action (not just 'pending')
   const isPending = status === 'pending' || status === 'escalated' || status === 'deferred';
   const WORKFLOW_LOCKS_ENABLED = false; // temporary: full edit mode during model/design phase
-  const isDecisionStageLocked = WORKFLOW_LOCKS_ENABLED && isPending;
+  // readMode (toggle "do pokazania klientowi") ORuje się do bramki edycji, więc
+  // wszystkie readOnly/hideActions/disabled już wpięte w isDecisionStageLocked
+  // automatycznie respektują tryb Read bez zmiany każdego call-site.
+  const isDecisionStageLocked = readMode || (WORKFLOW_LOCKS_ENABLED && isPending);
   const workflowMeta = WORKFLOW_STATUS_CONFIG[workflowStatus] || WORKFLOW_STATUS_CONFIG.proposed;
   const workflowActions = (() => {
     switch (workflowStatus) {
@@ -3485,6 +3584,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
         throw new Error('Incomplete AI scenario response');
       }
       setConsequenceScenarios(next);
+      setCardState('consequences', 'ai-draft');
       if (!silent) {
         toast.success(
           t('decisions.detail.toast.consequenceScenariosUpdated', 'Consequence scenarios updated by AI')
@@ -3493,6 +3593,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
     } catch {
       const fallback = buildFallbackConsequenceScenarios();
       setConsequenceScenarios(fallback);
+      setCardState('consequences', 'ai-draft');
       if (!silent) {
         toast(
           t('decisions.detail.toast.consequenceScenariosFallback', 'Fallback scenarios applied. AI temporarily unavailable.'),
@@ -4413,6 +4514,10 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                ═══════════════════════════════════════════════════════════════════ */}
           {presentationMode === 'n' && (
             <div className="col-span-full space-y-4">
+              {/* ── Menu 1 (klasa S): Read/Edit toggle "do pokazania klientowi" ── */}
+              <div className="flex items-center justify-end">
+                <ReadEditToggle readMode={readMode} onChange={setReadMode} />
+              </div>
               {/* ── PropertiesStrip — shared NModePropertiesStrip ─────────── */}
               <NModePropertiesStrip
                 fields={[
@@ -4522,6 +4627,8 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
               )}
 
               {/* ── Inline ActionBar (kept for now, will migrate to NModeActionBar) */}
+              {/* Read mode ("do pokazania klientowi"): ukryj cały pasek akcji stanu. */}
+              {!readMode && (
               <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
                 {decisionId && (
                   <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -4682,6 +4789,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                   </div>
                 )}
               </div>
+              )}
 
               {/* ── 2-Pane: LeftNav + Canvas — shared NModeLeftNav ───────── */}
               <div className="flex gap-0 min-h-[60vh]">
@@ -4703,15 +4811,27 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                     >
                       {/* ── Section: Context & Problem ───────────────── */}
                       {activeNotionSection === 'context-problem' && (
+                        <NModeCardState
+                          state={isGeneratingDescription ? 'generating' : cardStates.description}
+                          sectionName={{ en: 'Decision Scope', pl: 'Zakres decyzji' }}
+                          aiGenerated={
+                            cardStates.description === 'ai-draft' ||
+                            cardStates.description === 'edited'
+                          }
+                          hideActions={isDecisionStageLocked}
+                          onRegenerate={generateDescriptionAI}
+                          onEdit={() => setCardState('description', 'edited')}
+                          onAccept={() => setCardState('description', 'done')}
+                          onGenerate={generateDescriptionAI}
+                          onFillManually={() => setCardState('description', 'edited')}
+                          onRetry={generateDescriptionAI}
+                        >
                         <div className="space-y-6">
-                          <div className="flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                              {t('decisions.detail.scope.title', 'Decision Scope')}
-                            </h2>
+                          <div className="hidden">
                             <button
                               onClick={generateDescriptionAI}
                               disabled={isDecisionStageLocked || isGeneratingDescription}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-teal-600 dark:text-teal-400 hover:bg-teal-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               {isGeneratingDescription ? (
                                 <Loader2 size={13} className="animate-spin" />
@@ -4771,9 +4891,11 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                             <div className="relative">
                               <textarea
                                 value={description}
-                                onChange={(e) =>
-                                  !isDecisionStageLocked && setDescription(e.target.value)
-                                }
+                                onChange={(e) => {
+                                  if (isDecisionStageLocked) return;
+                                  setDescription(e.target.value);
+                                  markCardEdited('description');
+                                }}
                                 readOnly={isDecisionStageLocked}
                                 rows={isDescriptionExpanded ? 10 : 6}
                                 className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors"
@@ -4857,17 +4979,38 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                             )}
                           </div>
                         </div>
+                        </NModeCardState>
                       )}
 
                       {/* ── Section: Options & Trade-offs (InlineTable) ─ */}
                       {activeNotionSection === 'options-tradeoffs' && (
+                        <NModeCardState
+                          state={
+                            isGeneratingAlternatives
+                              ? 'generating'
+                              : alternatives.length === 0 && cardStates.alternatives === 'empty'
+                                ? 'empty'
+                                : cardStates.alternatives === 'empty'
+                                  ? 'edited'
+                                  : cardStates.alternatives
+                          }
+                          sectionName={{ en: 'Options & Trade-offs', pl: 'Opcje i trade-offy' }}
+                          aiGenerated={
+                            cardStates.alternatives === 'ai-draft' ||
+                            cardStates.alternatives === 'edited'
+                          }
+                          hideActions={isDecisionStageLocked}
+                          onRegenerate={generateAlternativesAI}
+                          onEdit={() => setCardState('alternatives', 'edited')}
+                          onAccept={() => setCardState('alternatives', 'done')}
+                          onGenerate={generateAlternativesAI}
+                          onFillManually={() => {
+                            setCardState('alternatives', 'edited');
+                            addAlternative();
+                          }}
+                          onRetry={generateAlternativesAI}
+                        >
                         <div className="space-y-5">
-                          <div className="flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                              {t('decisions.detail.options.title', 'Options & Trade-offs')}
-                            </h2>
-                          </div>
-
                           {alternatives.length === 0 ? (
                             /* EmptyStateInline */
                             <div className="py-10 text-center">
@@ -5092,15 +5235,41 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
 
                           <button
                             onClick={addAlternative}
-                            className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors"
+                            className="text-xs font-medium text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-teal-500 transition-colors"
                           >
                             + {t('decisions.detail.options.addOption', 'Add option')}
                           </button>
                         </div>
+                        </NModeCardState>
                       )}
 
                       {/* ── Section: Risk & Impact (shared RiskCanvas) ────── */}
                       {activeNotionSection === 'risk-impact' && (
+                        <NModeCardState
+                          state={
+                            isGeneratingRisks
+                              ? 'generating'
+                              : risks.length === 0 && cardStates.risk === 'empty'
+                                ? 'empty'
+                                : cardStates.risk === 'empty'
+                                  ? 'edited'
+                                  : cardStates.risk
+                          }
+                          sectionName={{ en: 'Risk & Impact', pl: 'Ryzyko i wpływ' }}
+                          aiGenerated={
+                            cardStates.risk === 'ai-draft' || cardStates.risk === 'edited'
+                          }
+                          hideActions={isDecisionStageLocked}
+                          onRegenerate={generateRisksAI}
+                          onEdit={() => setCardState('risk', 'edited')}
+                          onAccept={() => setCardState('risk', 'done')}
+                          onGenerate={generateRisksAI}
+                          onFillManually={() => {
+                            setCardState('risk', 'edited');
+                            addRisk();
+                          }}
+                          onRetry={generateRisksAI}
+                        >
                         <RiskCanvas
                           risks={risks}
                           onAddRisk={addRisk}
@@ -5113,15 +5282,35 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                           artifactContext={{ title, status, priority, type: 'decision' }}
                           fieldKeyPrefix="n"
                         />
+                        </NModeCardState>
                       )}
 
                       {/* ── Section: Consequences (dedicated menu block) ── */}
                       {activeNotionSection === 'consequences' && (
+                        <NModeCardState
+                          state={
+                            isGeneratingConsequenceScenarios
+                              ? 'generating'
+                              : cardStates.consequences
+                          }
+                          sectionName={{
+                            en: 'Consequences of Inaction',
+                            pl: 'Konsekwencje bezczynności',
+                          }}
+                          aiGenerated={
+                            cardStates.consequences === 'ai-draft' ||
+                            cardStates.consequences === 'edited'
+                          }
+                          hideActions={isDecisionStageLocked}
+                          onRegenerate={() => generateConsequenceScenariosAI()}
+                          onEdit={() => setCardState('consequences', 'edited')}
+                          onAccept={() => setCardState('consequences', 'done')}
+                          onGenerate={() => generateConsequenceScenariosAI()}
+                          onFillManually={() => setCardState('consequences', 'edited')}
+                          onRetry={() => generateConsequenceScenariosAI()}
+                        >
                         <div className="space-y-6">
-                          <div className="flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-                              {t('decisions.detail.consequencesSection.title', 'Consequences of Inaction')}
-                            </h2>
+                          <div className="flex items-center justify-end">
                             <AIFieldEnhancer
                               fieldKey="n-rationale-scenarios"
                               sectionLabel="Consequences of Inaction"
@@ -5227,9 +5416,11 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                             </div>
                             <textarea
                               value={rationale}
-                              onChange={(e) =>
-                                !isDecisionStageLocked && setRationale(e.target.value)
-                              }
+                              onChange={(e) => {
+                                if (isDecisionStageLocked) return;
+                                setRationale(e.target.value);
+                                markCardEdited('consequences');
+                              }}
                               readOnly={isDecisionStageLocked}
                               rows={5}
                               className="w-full min-h-[120px] px-0 py-1 bg-transparent text-sm text-slate-700 dark:text-slate-300 focus:outline-none placeholder-amber-400/50 dark:placeholder-amber-600/40 resize-y leading-relaxed"
@@ -5239,6 +5430,7 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
                             />
                           </div>
                         </div>
+                        </NModeCardState>
                       )}
 
                       {/* ── Section: Governance & Escalation (flat) ───── */}

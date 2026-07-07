@@ -4965,7 +4965,7 @@ function MindMapInner({
 
   const containerClassName =
     variant === 'overlay'
-      ? 'fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950'
+      ? 'fixed inset-0 z-modal bg-slate-50 dark:bg-navy-950'
       : `relative w-full h-full bg-slate-50 dark:bg-navy-950 isolate z-0 ${className || ''}`;
 
   // M06 Fala 3.2: behind `mindmapMultiToolbar`, a >1 selection shows a shared
@@ -5305,7 +5305,7 @@ function MindMapInner({
 
       {/* Breadcrumb for drill-down — positioned below the unified header */}
       {drillPath.length > 0 && (
-        <div className="absolute top-[110px] left-3 z-[91]">
+        <div className="absolute top-[110px] left-3 z-dropdown">
           <SubMapBreadcrumb
             path={drillPath}
             onNavigate={handleBreadcrumbNavigate}
@@ -5315,7 +5315,7 @@ function MindMapInner({
       )}
 
       {/* Top-left minimal label: title + save status */}
-      <div className="absolute top-3 left-3 z-[90] max-w-[320px]">
+      <div className="absolute top-3 left-3 z-dropdown max-w-[320px]">
         <div className="flex items-center gap-2 rounded-xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-lg border border-slate-200/40 dark:border-white/[0.04] shadow-lg px-3 py-1.5">
           {showClose && (
             <button
@@ -5354,7 +5354,7 @@ function MindMapInner({
 
       {/* Large map warning */}
       {nodes.length >= 500 && (
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[60] px-4 py-2 rounded-xl bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-xs font-medium shadow-lg">
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-sticky px-4 py-2 rounded-xl bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-xs font-medium shadow-lg">
           {t('mindmap.mapReached500NodeLimitAdding')}
         </div>
       )}
@@ -6289,7 +6289,7 @@ function MindMapInner({
 
       {/* GAP-3: Structure Picker Popover */}
       {showStructurePicker && (
-        <div className="fixed inset-0 z-[90]" onClick={() => setShowStructurePicker(false)}>
+        <div className="fixed inset-0 z-overlay" onClick={() => setShowStructurePicker(false)}>
           <div
             className="absolute top-16 left-1/2 -translate-x-1/2"
             onClick={(e) => e.stopPropagation()}
@@ -6342,7 +6342,7 @@ function MindMapInner({
       {/* Export format menu */}
       {exportMenuOpen && (
         <div
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/20"
+          className="fixed inset-0 z-context-menu flex items-center justify-center bg-black/20"
           onClick={() => setExportMenuOpen(false)}
         >
           <div
@@ -6477,7 +6477,7 @@ function MindMapInner({
       {debugEnabled && (
         <div
           data-mm-debug-overlay="true"
-          className="absolute bottom-2 left-2 z-[200] w-[560px] max-w-[calc(100vw-1rem)] rounded-2xl bg-black/95 text-[10px] font-mono text-green-200 pointer-events-auto backdrop-blur-sm border border-green-500/30 shadow-2xl shadow-black/40 select-text"
+          className="absolute bottom-2 left-2 z-context-menu w-[560px] max-w-[calc(100vw-1rem)] rounded-2xl bg-black/95 text-[10px] font-mono text-green-200 pointer-events-auto backdrop-blur-sm border border-green-500/30 shadow-2xl shadow-black/40 select-text"
         >
           <div className="sticky top-0 z-10 border-b border-green-500/20 bg-black/95 px-3 py-2">
             <div className="flex items-center justify-between gap-3">

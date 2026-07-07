@@ -13,6 +13,9 @@ import {
   type DecisionPlaybook,
   validateRequiredFields,
 } from '../services/decisionPlaybookService.js';
+import decisionService, {
+  type DecisionSectionKey,
+} from '../services/decisionService.js';
 import { recordHandoff as recordStageHandoff } from '../services/initiative/stageHandoffService.js';
 import {
   type DecisionWorkflowStatus,
@@ -1758,6 +1761,72 @@ export class DecisionController {
         workflowStatus: targetWorkflow,
         createdTaskIds,
       });
+    }
+  );
+
+  /**
+   * POST /api/decisions/:id/generate-section
+   * Generate BCG-grade AI draft for ONE decision card (wzorzec N).
+   * Proposer-only: returns the draft; does NOT persist. The client shows it as
+   * `ai-draft` for the human to review/edit/accept.
+   * Body: { sectionKey: 'description'|'alternatives'|'risk'|'consequencesOfInaction',
+   *         language?: 'pl'|'en', context?: string }
+   */
+  static generateSection = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id } = req.params;
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const VALID_SECTIONS: DecisionSectionKey[] = [
+        'description',
+        'alternatives',
+        'risk',
+        'consequencesOfInaction',
+      ];
+      const sectionKey = (req.body?.sectionKey || '') as DecisionSectionKey;
+      if (!VALID_SECTIONS.includes(sectionKey)) {
+        res.status(400).json({
+          error: 'Invalid sectionKey',
+          allowed: VALID_SECTIONS,
+        });
+        return;
+      }
+
+      // Org-scoped ownership check before generating.
+      const decision = await queryHelpers.queryOne<{ organization_id: string }>(
+        'SELECT organization_id FROM decisions WHERE id = ?',
+        [id]
+      );
+      if (!decision || decision.organization_id !== orgId) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+
+      const language = req.body?.language === 'en' ? 'en' : 'pl';
+      const context =
+        typeof req.body?.context === 'string' ? req.body.context : undefined;
+
+      try {
+        const result = await decisionService.generateSection(id, sectionKey, {
+          language,
+          context,
+        });
+        res.json(result);
+      } catch (err: any) {
+        logger.error(
+          '[DecisionController] generateSection failed:',
+          err?.message || err
+        );
+        res.status(503).json({
+          error: 'AI decision section generation failed',
+          code: 'FEATURE_UNAVAILABLE',
+          message: err?.message || String(err),
+        });
+      }
     }
   );
 }

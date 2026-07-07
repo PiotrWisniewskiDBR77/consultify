@@ -77,7 +77,7 @@ const ToolIcon: React.FC<{
   const baseClasses =
     'relative w-10 h-10 flex items-center justify-center rounded-lg transition-colors';
   const stateClasses = active
-    ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-300'
+    ? 'bg-c-focus/10 text-c-focus-solid'
     : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 hover:text-slate-700 dark:hover:text-slate-200';
 
   return (

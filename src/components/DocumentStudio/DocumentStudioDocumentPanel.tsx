@@ -16,6 +16,7 @@ import {
   History,
   Loader2,
   MessageSquare,
+  MoreHorizontal,
   RotateCcw,
   Share2,
   ShieldCheck,
@@ -223,7 +224,7 @@ function renderSectionPreview(section: DocumentSection, idx: number): React.Reac
             if (block.type === 'callout') {
               const value = block.content as { variant?: string; text?: string };
               return (
-                <div className="rounded-md border border-primary-500/30 bg-primary-500/5 px-3 py-2 italic">
+                <div className="rounded-md border border-c-border-subtle bg-c-surface-raised px-3 py-2 italic">
                   {value.text}
                 </div>
               );
@@ -1899,7 +1900,17 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     [exporting, handleExport, policy?.canOverrideQa, qaBlock, t]
   );
 
-  const rightRailTools = useMemo<RightRailToolDescriptor[]>(
+  // Right-rail tool inventory (13 total). Kanon powłoki: ≤5 "primary"
+  // icons visible by default in the icon strip; the rest fold behind a
+  // single `more` overflow entry (mirrors the `⋯` pattern already used
+  // for TopBar chip overflow — see ExecutiveModuleShell/TopBar.tsx).
+  // Nothing is removed: all 13 tools remain reachable, just regrouped
+  // by visibility tier. Primary 5 chosen for write/structure/export
+  // frequency: Sources, Properties, Quality QA, Teresa (AI co-writing),
+  // Comments. The remaining 8 (Activity, Schema diff, Audience
+  // variants, Share links, Approvals, Manifest gate, Content library,
+  // AI Editor hint) are secondary/advanced and move to overflow.
+  const primaryRightRailTools = useMemo<RightRailToolDescriptor[]>(
     () => [
       {
         id: 'sources',
@@ -1914,6 +1925,28 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         icon: Table2,
       },
       {
+        id: 'qa',
+        label: t('documentStudio.panel.toolQa', 'Quality QA'),
+        icon: ShieldCheck,
+        dotTone: qaBlock ? 'danger' : null,
+      },
+      {
+        id: 'teresa',
+        label: 'Teresa',
+        icon: Bot,
+      },
+      {
+        id: 'comments',
+        label: t('documentStudio.panel.toolComments', 'Comments'),
+        icon: MessageSquare,
+      },
+    ],
+    [assumptionCount, qaBlock, sourceCount, t]
+  );
+
+  const overflowRightRailTools = useMemo<RightRailToolDescriptor[]>(
+    () => [
+      {
         id: 'activity',
         label: t('documentStudio.panel.toolActivity', 'Activity'),
         icon: History,
@@ -1927,11 +1960,6 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         id: 'variants',
         label: t('documentStudio.panel.toolVariants', 'Audience variants'),
         icon: Users,
-      },
-      {
-        id: 'comments',
-        label: t('documentStudio.panel.toolComments', 'Comments'),
-        icon: MessageSquare,
       },
       {
         id: 'share',
@@ -1954,26 +1982,119 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         icon: FileText,
       },
       {
-        id: 'qa',
-        label: t('documentStudio.panel.toolQa', 'Quality QA'),
-        icon: ShieldCheck,
-        dotTone: qaBlock ? 'danger' : null,
-      },
-      {
-        id: 'teresa',
-        label: 'Teresa',
-        icon: Bot,
-      },
-      {
         id: 'editor',
         label: t('documentStudio.panel.toolAiEditor', 'AI Editor'),
         icon: Sparkles,
       },
     ],
-    [assumptionCount, qaBlock, sourceCount, t]
+    [t]
   );
 
+  // Selected overflow tool id (drives the panel once the user picks a
+  // row from the `more` menu). `ExecutiveModuleShell` owns the rail's
+  // `activeToolId` internally and does not expose it, so this stays
+  // deliberately sticky across `more` re-opens (last pick shown again)
+  // rather than reaching into shell internals to auto-reset it. The
+  // explicit "back to menu" affordance (`renderOverflowToolPanel`)
+  // always lets the user return to the full list.
+  const [overflowSelection, setOverflowSelection] = useState<string | null>(null);
+
+  const rightRailTools = useMemo<RightRailToolDescriptor[]>(
+    () => [
+      ...primaryRightRailTools,
+      {
+        id: 'more',
+        label: t('documentStudio.panel.toolMore', 'More tools'),
+        icon: MoreHorizontal,
+      },
+    ],
+    [primaryRightRailTools, t]
+  );
+
+  // `more` overflow menu — full-width rows listing the 8 secondary
+  // tools, mirroring the `⋯` idiom in ExecutiveModuleShell/TopBar.tsx.
+  // Picking a row sets `overflowSelection`, which routes the panel to
+  // that tool's real content (rendered below via `effectiveToolId`).
+  const renderOverflowMenu = (): React.ReactNode => (
+    <div className="flex h-full flex-col overflow-y-auto p-2" data-testid="document-studio-rail-overflow-menu">
+      {overflowRightRailTools.map((tool) => (
+        <button
+          key={tool.id}
+          type="button"
+          onClick={() => setOverflowSelection(tool.id)}
+          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-c-text-secondary transition-colors hover:bg-c-surface-raised"
+          data-testid={`document-studio-rail-overflow-item-${tool.id}`}
+        >
+          <tool.icon size={14} aria-hidden="true" className="flex-shrink-0" />
+          <span className="flex-1 truncate">{tool.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+
+  // Overflow tool panels (8 secondary tools, reached via `more` →
+  // menu row). Each is wrapped with a "back to menu" affordance so the
+  // user can return to the overflow list without leaving the rail.
+  const renderOverflowToolPanel = (overflowToolId: string): React.ReactNode => {
+    const backButton = (
+      <button
+        type="button"
+        onClick={() => setOverflowSelection(null)}
+        className="flex items-center gap-1 px-3 pt-2 text-xs text-c-text-secondary hover:text-c-text"
+        data-testid="document-studio-rail-overflow-back"
+      >
+        <ChevronDown size={12} className="rotate-90" aria-hidden="true" />
+        {t('documentStudio.panel.toolMoreBack', 'More tools')}
+      </button>
+    );
+
+    let content: React.ReactNode = null;
+    if (overflowToolId === 'activity') {
+      content = <ActivityPanel artifactId={artifactId} />;
+    } else if (overflowToolId === 'diff') {
+      content = <SchemaDiffPanel artifactId={artifactId} />;
+    } else if (overflowToolId === 'share') {
+      content = <ShareLinksPanel artifactId={artifactId} />;
+    } else if (overflowToolId === 'variants') {
+      content = <AudienceVariantsPanel artifactId={artifactId} />;
+    } else if (overflowToolId === 'approvals') {
+      content = <ApprovalsPanel artifactId={artifactId} />;
+    } else if (overflowToolId === 'manifest') {
+      content = <ManifestGatePanel />;
+    } else if (overflowToolId === 'library') {
+      content = (
+        <ContentLibraryPanel
+          artifactId={artifactId}
+          schema={schema}
+          onSchemaUpdated={onSchemaUpdated}
+        />
+      );
+    } else if (overflowToolId === 'editor') {
+      content = (
+        <div className="h-full overflow-y-auto p-3">
+          <p className="text-xs text-c-text-secondary">
+            Zaznacz tekst w dokumencie, aby poprawić go z pomocą Teresy.
+          </p>
+        </div>
+      );
+    }
+
+    if (!content) return null;
+
+    return (
+      <div className="flex h-full flex-col">
+        {backButton}
+        <div className="min-h-0 flex-1">{content}</div>
+      </div>
+    );
+  };
+
   const renderRightRailPanel = (activeToolId: string | null): React.ReactNode => {
+    if (activeToolId === 'more') {
+      return overflowSelection
+        ? renderOverflowToolPanel(overflowSelection)
+        : renderOverflowMenu();
+    }
     if (activeToolId === 'sources') {
       return (
         <SourceListPanel
@@ -1992,35 +2113,8 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         />
       );
     }
-    if (activeToolId === 'activity') {
-      return <ActivityPanel artifactId={artifactId} />;
-    }
-    if (activeToolId === 'diff') {
-      return <SchemaDiffPanel artifactId={artifactId} />;
-    }
     if (activeToolId === 'comments') {
       return <DocumentCommentsPanel artifactId={artifactId} sections={schema.sections} />;
-    }
-    if (activeToolId === 'share') {
-      return <ShareLinksPanel artifactId={artifactId} />;
-    }
-    if (activeToolId === 'variants') {
-      return <AudienceVariantsPanel artifactId={artifactId} />;
-    }
-    if (activeToolId === 'approvals') {
-      return <ApprovalsPanel artifactId={artifactId} />;
-    }
-    if (activeToolId === 'manifest') {
-      return <ManifestGatePanel />;
-    }
-    if (activeToolId === 'library') {
-      return (
-        <ContentLibraryPanel
-          artifactId={artifactId}
-          schema={schema}
-          onSchemaUpdated={onSchemaUpdated}
-        />
-      );
     }
     if (activeToolId === 'teresa') {
       return (
@@ -2035,15 +2129,6 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       return (
         <div className="h-full overflow-y-auto p-3">
           <DocumentStudioQaPanel artifactId={artifactId} />
-        </div>
-      );
-    }
-    if (activeToolId === 'editor') {
-      return (
-        <div className="h-full overflow-y-auto p-3">
-          <p className="text-xs text-c-text-secondary">
-            Zaznacz tekst w dokumencie, aby poprawić go z pomocą Teresy.
-          </p>
         </div>
       );
     }

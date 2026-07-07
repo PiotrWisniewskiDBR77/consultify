@@ -374,7 +374,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
         </button>
 
         {isActive && slot.popover && (
-          <div className="absolute left-[calc(100%+8px)] top-0 z-[100]">
+          <div className="absolute left-[calc(100%+8px)] top-0 z-dropdown">
             {slot.popover === 'templates' && (
               <TemplatesPopover
                 isPl={!!isPl}
@@ -428,7 +428,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   const toolbarNode = (
     <div
       ref={toolbarRef}
-      className={`fixed top-1/2 -translate-y-1/2 z-[9999] pointer-events-auto flex flex-col items-center gap-0.5 rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border-subtle shadow-hig-xl px-1 py-1.5 canvas-left-toolbar-enter${
+      className={`fixed top-1/2 -translate-y-1/2 z-context-menu pointer-events-auto flex flex-col items-center gap-0.5 rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border-subtle shadow-hig-xl px-1 py-1.5 canvas-left-toolbar-enter${
         railLeftPx == null ? ' left-3' : ''
       }`}
       style={railLeftPx == null ? undefined : { left: `${railLeftPx}px` }}

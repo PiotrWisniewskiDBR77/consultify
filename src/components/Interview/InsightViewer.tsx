@@ -11,6 +11,7 @@ import {
   BarChart3,
   BookOpen,
   Brain,
+  Check,
   CheckCircle2,
   CheckSquare,
   ChevronDown,
@@ -36,6 +37,7 @@ import {
   MessageSquare,
   Monitor,
   Network,
+  Pencil,
   Plus,
   Quote,
   Radio,
@@ -58,8 +60,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { TEXT_L1 } from '@/styles/typography';
-
 import { InitiativeGeneratorModal } from '@/components/Initiatives/Wizard/InitiativeGeneratorModal';
 import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode';
 import type { DeckCard } from '@/components/Presentations/wizard/types';
@@ -69,17 +69,24 @@ import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
 import {
   EvidenceBadge,
+  NModeCardBadge,
+  type NModeCardStatus,
   NModeSectionWrapper,
   ToolbarIconButton,
 } from '@/components/shared/NModeLayout';
 import type { AIConsultantAction } from '@/components/shared/NModeLayout/AIConsultantPanel';
 import { AIConsultantPanel } from '@/components/shared/NModeLayout/AIConsultantPanel';
+import { ReadEditToggle } from '@/components/MyWork/shared/ReadEditToggle';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
+import { AddCardMenu } from '@/components/shared/NModeLayout/NModeCardManager';
+import {
+  useCardLayout,
+  type CardLayout,
+} from '@/components/shared/NModeLayout/useCardLayout';
 import {
   ToolbarAISolidButton,
   ToolbarAISplitButton,
   ToolbarGhostButton,
-  ToolbarSubtleButton,
 } from '@/components/shared/NModeLayout/NModeToolbar';
 import { SectionErrorBoundary } from '@/components/shared/NModeLayout/SectionErrorBoundary';
 import type {
@@ -119,6 +126,7 @@ import {
 } from '@/services/api/v8/interview';
 import { exportReportToPDF } from '@/services/pdf/pdfExport';
 import { useAppStore } from '@/store/useAppStore';
+import { TEXT_L1 } from '@/styles/typography';
 import { type ArtifactType, buildArtifactCode } from '@/utils/artifactLinks';
 import { getHandoffLandingPath } from '@/utils/initiativeLinks';
 
@@ -141,6 +149,54 @@ type InsightPromptType =
   | 'between_the_lines';
 
 type InsightStatus = 'generating' | 'completed' | 'failed' | 'draft' | 'in_review' | 'published';
+
+/**
+ * Mapowanie stanu artefaktu Insight (`InsightStatus`, whole-artifact) na model
+ * stanu karty wzorca N (`NModeCardStatus`). Wzorzec N §3.2.
+ *
+ *   generating → generating   (AI pisze — skeleton „Teresa pisze…")
+ *   failed     → error        (generacja padła)
+ *   draft      → ai-draft      (AI napisało, człowiek jeszcze nie zaakceptował)
+ *   in_review  → edited        (człowiek recenzuje/dotknął treści)
+ *   published  → done          (zatwierdzone)
+ *   completed  → ai-draft      (domyślnie: treść z AI, czeka na akceptację)
+ *
+ * Per-sekcja nakładamy jeszcze:
+ *   - `regenerating` (globalny) → generating (ta karta jest właśnie odświeżana)
+ *   - sekcja bez treści (`hasContent === false`) → empty
+ */
+const insightStatusToCardBaseState = (status: InsightStatus | undefined): NModeCardStatus => {
+  switch (status) {
+    case 'generating':
+      return 'generating';
+    case 'failed':
+      return 'error';
+    case 'draft':
+      return 'ai-draft';
+    case 'in_review':
+      return 'edited';
+    case 'published':
+      return 'done';
+    case 'completed':
+    default:
+      return 'ai-draft';
+  }
+};
+
+/**
+ * Rozwiązuje stan pojedynczej karty-sekcji Insightu: łączy stan whole-artifact
+ * z sygnałami per-sekcja (odświeżanie tej karty, obecność treści).
+ */
+const resolveInsightSectionCardState = (
+  status: InsightStatus | undefined,
+  opts: { hasContent: boolean; regenerating?: boolean }
+): NModeCardStatus => {
+  if (opts.regenerating) return 'generating';
+  if (status === 'generating') return 'generating';
+  if (status === 'failed') return 'error';
+  if (!opts.hasContent) return 'empty';
+  return insightStatusToCardBaseState(status);
+};
 
 type P10ConfidenceLevel = 'high' | 'medium' | 'low' | 'insufficient' | 'contradicted';
 
@@ -516,7 +572,11 @@ const STATUS_CONFIG: Record<
     color: 'bg-sky-500',
     textColor: 'text-primary-500',
   },
-  failed: { label: { en: 'Failed', pl: 'Błąd' }, color: 'bg-danger-500', textColor: 'text-danger-500' },
+  failed: {
+    label: { en: 'Failed', pl: 'Błąd' },
+    color: 'bg-danger-500',
+    textColor: 'text-danger-500',
+  },
 };
 
 // Colored-pill visual map for the Properties Strip STATUS field (parity with
@@ -725,6 +785,106 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   },
 ];
 
+// ── AI-draft affordance na kartach Insightu (wzorzec N §3.3) ────────────────
+//
+// Insight renderuje własne nagłówki sekcji (bespoke, przez NModeSectionWrapper),
+// więc NIE możemy wpiąć całego `NModeCardState` (który dostarcza własny nagłówek).
+// Zamiast tego dokładamy cienki pasek stanu karty POD nagłówkiem sekcji:
+//   [badge stanu: AI-draft / Edytowane / Gotowe / Błąd]  ···  [✨Regeneruj ✎Edytuj ✓Zaakceptuj]
+// Badge = `NModeCardBadge` (c-info/c-success/c-danger — NIGDY crimson); akcent AI
+// (✨/regeneracja) = teal jak reszta kitu; fokus = c-focus. Wszystko theme-aware
+// przez tokeny c-*. Pasek akcji jest ukryty w trybie Read/Present (readOnly).
+interface InsightSectionCardHeaderProps {
+  state: NModeCardStatus;
+  isPolish: boolean;
+  readOnly?: boolean;
+  /** ✨ Regeneruj — odśwież tę sekcję z AI. */
+  onRegenerate?: () => void;
+  regenerating?: boolean;
+  /** ✎ Edytuj — otwórz edycję (dla Insightu: czat z kontekstem sekcji). */
+  onEdit?: () => void;
+  /** ✓ Zaakceptuj — oznacz sekcję jako zatwierdzoną (toggle completion). */
+  onAccept?: () => void;
+}
+
+const InsightSectionCardHeader: React.FC<InsightSectionCardHeaderProps> = ({
+  state,
+  isPolish,
+  readOnly = false,
+  onRegenerate,
+  regenerating = false,
+  onEdit,
+  onAccept,
+}) => {
+  // Pusta karta nie ma stanu do pokazania (empty badge = null) i nie ma treści
+  // do regeneracji/akceptacji — pasek nic by nie wnosił.
+  if (state === 'empty') return null;
+
+  const isDone = state === 'done';
+  const actionBase =
+    'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
+
+  return (
+    <div className="-mt-2 mb-2 flex items-center gap-2 flex-wrap">
+      <NModeCardBadge status={state} isPolish={isPolish} />
+      {!readOnly && (state === 'ai-draft' || state === 'edited' || state === 'done') && (
+        <div className="flex items-center gap-1 ml-auto">
+          {onRegenerate && (
+            <button
+              type="button"
+              onClick={onRegenerate}
+              disabled={regenerating}
+              title={isPolish ? 'Napisz sekcję od nowa z AI' : 'Regenerate this section with AI'}
+              className={`${actionBase} text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/25`}
+            >
+              {regenerating ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <RefreshCw size={12} />
+              )}
+              {isPolish ? 'Regeneruj' : 'Regenerate'}
+            </button>
+          )}
+          {onEdit && (
+            <button
+              type="button"
+              onClick={onEdit}
+              title={isPolish ? 'Edytuj tę sekcję' : 'Edit this section'}
+              className={`${actionBase} text-c-text-secondary hover:bg-c-surface-raised`}
+            >
+              <Pencil size={12} />
+              {isPolish ? 'Edytuj' : 'Edit'}
+            </button>
+          )}
+          {onAccept && (
+            <button
+              type="button"
+              onClick={onAccept}
+              title={
+                isDone
+                  ? isPolish
+                    ? 'Cofnij akceptację'
+                    : 'Un-accept'
+                  : isPolish
+                    ? 'Zaakceptuj tę sekcję'
+                    : 'Accept this section'
+              }
+              className={`${actionBase} ${
+                isDone
+                  ? 'text-c-success'
+                  : 'text-c-text-secondary hover:bg-c-success/10 hover:text-c-success'
+              }`}
+            >
+              {isDone ? <CheckCircle2 size={12} /> : <Check size={12} />}
+              {isPolish ? 'Zaakceptuj' : 'Accept'}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 // Phase E — id of the hidden, print-only container captured by the Report (PDF)
@@ -812,6 +972,51 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     [nModeOrderStorageKey]
   );
 
+  // ── Card-management primitive (wzorzec N §3.5) ────────────────────────────
+  // Referencyjne wpięcie `useCardLayout`: model { id, visible, order }[] dla kart
+  // Insightu. Persystencja = localStorage (callback `onLayoutChange`), analogicznie
+  // do `nModeSectionOrder`. Layout jest SSOT dla dodawania/usuwania/ukrywania kart;
+  // istniejące `hiddenSectionIds` + `nModeSectionOrder` są z niego synchronizowane
+  // niżej (minimalny blast-radius — reszta maszynerii bez zmian).
+  const cardLayoutStorageKey = `insight:nmode:card-layout:v1:${insight?.id ?? 'new'}`;
+  const initialCardLayout = useMemo<CardLayout | null>(() => {
+    try {
+      const raw = localStorage.getItem(cardLayoutStorageKey);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return null;
+      const cleaned = parsed.filter(
+        (c: unknown): c is { id: string; visible: boolean; order: number } =>
+          !!c &&
+          typeof (c as { id?: unknown }).id === 'string' &&
+          typeof (c as { visible?: unknown }).visible === 'boolean' &&
+          typeof (c as { order?: unknown }).order === 'number'
+      );
+      return cleaned.length > 0 ? cleaned : null;
+    } catch {
+      return null;
+    }
+    // Hydrate once per insight id; layout state is owned by the hook afterwards.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardLayoutStorageKey]);
+
+  const persistCardLayout = useCallback(
+    (next: CardLayout) => {
+      try {
+        localStorage.setItem(cardLayoutStorageKey, JSON.stringify(next));
+      } catch {
+        // Ignore storage errors; card management still works for this session.
+      }
+    },
+    [cardLayoutStorageKey]
+  );
+
+  const cardLayout = useCardLayout({
+    artifactType: 'insight',
+    initialLayout: initialCardLayout,
+    onLayoutChange: persistCardLayout,
+  });
+
   // Editable fields
   const [title, setTitle] = useState('');
 
@@ -839,6 +1044,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [exportSelectedIds, setExportSelectedIds] = useState<Set<string>>(new Set());
   const [exportRunning, setExportRunning] = useState(false);
 
+  // Tryb Read/Edit (§ menu 5A · „do pokazania klientowi"). Read = pasek akcji
+  // kart (Regeneruj/Edytuj/Zaakceptuj) znika (przekazane jako `readOnly` do
+  // InsightSectionCardHeader). Insight = raport AZ read-only w treści; jedyne
+  // edytowalne afordancje to per-section action bar + edycja tytułu. Default =
+  // Edit (readMode=false), żeby nie zmieniać dotychczasowego zachowania.
+  const [readMode, setReadMode] = useState(false);
+
   // Phase A3 — fullscreen Present mode (read-only deck over canonical sections)
   const [presentOpen, setPresentOpen] = useState(false);
   // Phase A4 — Fork in-flight guard
@@ -855,6 +1067,24 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // Maps section id → hidden. Sections absent from the map are visible.
   // Local UI state only — drops hidden sections from the nav/canvas; no backend.
   const [hiddenSectionIds, setHiddenSectionIds] = useState<Set<string>>(new Set());
+
+  // Sync the card-layout SSOT → existing hide/order machinery. Cards that are in
+  // the layout but not `visible` (hidden OR removed from the visible set) drop out
+  // of the nav/canvas; the visible order drives `nModeSectionOrder`. This lets the
+  // new `useCardLayout` primitive + `+ Nowa karta` menu drive the same downstream
+  // filtering the ad-hoc Sections dropdown already used, without a deep refactor.
+  const cardLayoutVisibleIds = cardLayout.visibleOrderedIds;
+  const cardLayoutAllIds = useMemo(
+    () => cardLayout.layout.map((c) => c.id),
+    [cardLayout.layout]
+  );
+  useEffect(() => {
+    const hidden = new Set(
+      cardLayoutAllIds.filter((id) => !cardLayoutVisibleIds.includes(id))
+    );
+    setHiddenSectionIds(hidden);
+    setNModeSectionOrder(cardLayoutVisibleIds.length > 0 ? cardLayoutVisibleIds : null);
+  }, [cardLayoutVisibleIds, cardLayoutAllIds]);
 
   // #26b — "Submit for Information" (no review/approval gate; just notifies)
   const [submittingForInfo, setSubmittingForInfo] = useState(false);
@@ -2078,6 +2308,50 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }
   };
 
+  // Pasek stanu karty AI-draft dla sekcji Insightu (wzorzec N §3.3). Wpina badge
+  // stanu (AI-draft/Edytowane/Gotowe/Błąd) + akcje ✨Regeneruj · ✎Edytuj ·
+  // ✓Zaakceptuj pod nagłówkiem sekcji. Stan liczony ze statusu artefaktu +
+  // sygnałów per-sekcja (odświeżanie, obecność treści, ręczna akceptacja).
+  //   • Edytuj → czat z kontekstem (Insight nie ma inline-edit sekcji)
+  //   • Zaakceptuj → toggle completion (już persystowany per sekcja)
+  //   • Regeneruj → whole-artifact regenerate (jedyny dostępny backend)
+  // UWAGA: MUSI być zadeklarowany PO sectionCompletions/handleRegenerate/
+  // handleToggleSectionComplete — tablica deps czytana w renderze (TDZ fix).
+  const renderSectionCardHeader = useCallback(
+    (sectionId: string, hasContent: boolean) => {
+      const accepted = !!sectionCompletions[sectionId];
+      const baseState = resolveInsightSectionCardState(insight?.status, {
+        hasContent,
+        regenerating: isRegenerating,
+      });
+      // Ręczna akceptacja sekcji ma pierwszeństwo nad stanem whole-artifact
+      // (człowiek zatwierdził tę konkretną kartę → „Gotowe").
+      const state: NModeCardStatus =
+        accepted && (baseState === 'ai-draft' || baseState === 'edited') ? 'done' : baseState;
+      return (
+        <InsightSectionCardHeader
+          state={state}
+          isPolish={!!isPolish}
+          readOnly={readMode}
+          onRegenerate={handleRegenerate}
+          regenerating={isRegenerating}
+          onEdit={handleOpenChat}
+          onAccept={() => handleToggleSectionComplete(sectionId)}
+        />
+      );
+    },
+    [
+      sectionCompletions,
+      insight?.status,
+      isRegenerating,
+      isPolish,
+      readMode,
+      handleRegenerate,
+      handleOpenChat,
+      handleToggleSectionComplete,
+    ]
+  );
+
   // ── Phase A4 — Fork ────────────────────────────────────────────────────────
   // Creates an independent copy of this insight (new id) and opens it. Reuses
   // the same `moduleHub.openDocuments.interview` mechanism the source-session
@@ -3096,7 +3370,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             },
             weak: {
               label: isPolish ? 'Słaby materiał decyzyjny' : 'Weak decision material',
-              className: 'border-danger-500/20 bg-danger-500/[0.08] text-danger-700 dark:text-danger-200',
+              className:
+                'border-danger-500/20 bg-danger-500/[0.08] text-danger-700 dark:text-danger-200',
             },
           }[truthReviewSummary.posture];
 
@@ -3126,9 +3401,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
                 <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
-                  <div className={TEXT_L1}>
-                    {isPolish ? 'Co można twierdzić' : 'Safe claims'}
-                  </div>
+                  <div className={TEXT_L1}>{isPolish ? 'Co można twierdzić' : 'Safe claims'}</div>
                   <div className="mt-3 space-y-2">
                     {truthReviewSummary.safeClaims.length > 0 ? (
                       truthReviewSummary.safeClaims.map((finding) => (
@@ -3197,9 +3470,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
                 <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
                   <div className="flex items-center justify-between gap-3">
-                    <div className={TEXT_L1}>
-                      {isPolish ? 'Sprzeczności' : 'Contradictions'}
-                    </div>
+                    <div className={TEXT_L1}>{isPolish ? 'Sprzeczności' : 'Contradictions'}</div>
                     <button
                       type="button"
                       onClick={() => setActiveNSection('signals')}
@@ -3242,6 +3513,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         case 'executive-summary':
           component = (
             <div className="space-y-4">
+              {renderSectionCardHeader('executive-summary', !!executiveSummary)}
               <Callout
                 variant="purple"
                 title={
@@ -3296,8 +3568,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
         case 'consulting-readout': {
           const contradictionSignals = v6Signals.filter((s) => s.type === 'contradiction');
+          const readoutHasContent =
+            contradictionSignals.length > 0 ||
+            issuesReadout.length > 0 ||
+            opportunityReadout.length > 0 ||
+            !!executiveSummary;
           component = (
             <div className="space-y-5">
+              {renderSectionCardHeader('consulting-readout', readoutHasContent)}
               {contradictionSignals.length > 0 && (
                 <Callout
                   variant="critical"
@@ -3590,6 +3868,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   : 'BLOCKED_P1: readiness blockers';
           component = (
             <div className="space-y-5">
+              {renderSectionCardHeader('report-pack', worksheets.length > 0)}
               <Callout
                 variant={reportPack?.degraded ? 'warning' : 'info'}
                 title={isPolish ? 'Pakiet raportu' : 'Report Pack'}
@@ -4527,6 +4806,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         case 'themes':
           component = (
             <div className="space-y-4">
+              {renderSectionCardHeader('themes', v6Themes.length > 0)}
               {v6MissingData.length > 0 && (
                 <Callout
                   variant="warning"
@@ -4797,6 +5077,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         case 'issues-risks':
           component = (
             <div className="space-y-4">
+              {renderSectionCardHeader('issues-risks', v6Issues.length > 0)}
               {v6Issues.some((i) => i.severity === 'high') &&
                 !v6Issues
                   .filter((i) => i.severity === 'high')
@@ -5054,6 +5335,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         case 'opportunities':
           component = (
             <div className="space-y-4">
+              {renderSectionCardHeader('opportunities', v6Opportunities.length > 0)}
               {v6Opportunities.length === 0 ? (
                 <EmptyStateInline
                   icon={TrendingUp}
@@ -5382,6 +5664,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             v6EvidenceMap.length === 0 || entriesWithNoPointers.length === 0;
           component = (
             <div className="space-y-4">
+              {renderSectionCardHeader('evidence-map', v6EvidenceMap.length > 0)}
               {!evidenceSatisfied && <EvidenceBadge />}
               <Callout variant="purple" title={isPolish ? 'Mapa dowodów' : 'Evidence Map'} compact>
                 {isPolish
@@ -6308,6 +6591,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 },
               }}
             >
+              {renderSectionCardHeader('consensus-divergence', hasMatrix)}
               <Callout
                 variant="info"
                 title={isPolish ? 'Czytaj zgodę i rozbieżności' : 'Read agreement and divergence'}
@@ -6452,9 +6736,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               )}
               {assumptionNarrative.length > 0 && (
                 <div className="space-y-2">
-                  <div className={TEXT_L1}>
-                    {isPolish ? 'Z narracji AI' : 'From AI narrative'}
-                  </div>
+                  <div className={TEXT_L1}>{isPolish ? 'Z narracji AI' : 'From AI narrative'}</div>
                   <ul className="list-disc list-inside space-y-1">
                     {assumptionNarrative.slice(0, 6).map((line, i) => (
                       <li key={i} className="text-sm text-slate-700 dark:text-slate-300">
@@ -6833,9 +7115,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     className={`rounded-2xl border bg-white/40 dark:bg-navy-900/20 px-3 py-3 space-y-2 ${col.tone}`}
                   >
                     <div className="flex items-center justify-between">
-                      <div className={TEXT_L1}>
-                        {col.title}
-                      </div>
+                      <div className={TEXT_L1}>{col.title}</div>
                       <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                         {col.items.length}
                       </span>
@@ -6964,10 +7244,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           cta: dRegenCta,
         }}
         quoteRequirementLevel="EACH_ITEM"
-        quotesSatisfied={
-          v6Themes.length > 0 && v6Themes.every((t) => t.evidence_refs.length > 0)
-        }
+        quotesSatisfied={v6Themes.length > 0 && v6Themes.every((t) => t.evidence_refs.length > 0)}
       >
+        {renderSectionCardHeader('key-findings', v6Themes.length > 0)}
         <ol className="space-y-2 list-decimal list-inside">
           {v6Themes.slice(0, 6).map((t, i) => (
             <li key={i} className={dCard}>
@@ -6993,6 +7272,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           cta: dRegenCta,
         }}
       >
+        {renderSectionCardHeader('recommendations', v6Opportunities.length + v6Issues.length > 0)}
         <ul className="space-y-2">
           {v6Opportunities.map((o, i) => (
             <li key={`o${i}`} className={dCard}>
@@ -7854,7 +8134,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         sections={visibleNModeSections}
         activeSection={activeNSection}
         onSectionChange={setActiveNSection}
-        onSectionReorder={handleNModeSectionReorder}
+        onSectionReorder={(ids) => {
+          // Left-nav drag → cardLayout is SSOT. Keep the legacy order key in
+          // sync for back-compat; the layout persist owns the real order.
+          cardLayout.reorderByIds(ids);
+          handleNModeSectionReorder(ids);
+        }}
         presentationMode={presentationMode}
         onPresentationModeChange={setPresentationMode}
         buildArtifactCode={(type, id) => buildArtifactCode(type as ArtifactType, id)}
@@ -7869,11 +8154,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               ? activeSectionMeta.label.pl
               : activeSectionMeta.label.en
             : '';
-          // No current insight section is an additive user list (all are
-          // AI-generated analysis sections), so "New" has no per-section add
-          // handler to bind to — it stays disabled with an explanatory tooltip
-          // rather than inventing a backend (canon: disabled + tooltip allowed).
-          const canAddInSection = false;
           return (
             <div className="flex items-center gap-1 min-h-[36px] flex-wrap">
               {/* ── LEFT ZONE: content work ───────────────────────────────── */}
@@ -7923,12 +8203,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 key={s.id}
                                 type="button"
                                 onClick={() =>
-                                  setHiddenSectionIds((prev) => {
-                                    const next = new Set(prev);
-                                    if (next.has(s.id)) next.delete(s.id);
-                                    else next.add(s.id);
-                                    return next;
-                                  })
+                                  // SSOT = cardLayout; hidden state syncs down via effect.
+                                  hidden ? cardLayout.showCard(s.id) : cardLayout.hideCard(s.id)
                                 }
                                 className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800"
                               >
@@ -7967,7 +8243,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     <button
                       type="button"
                       onClick={() => {
-                        setHiddenSectionIds(new Set());
+                        cardLayout.resetToDefault();
                         setSectionsMenuOpen(false);
                       }}
                       className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800"
@@ -7979,20 +8255,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 )}
               </div>
 
-              {/* Slot 2 — New : contextual add in the active section */}
-              <ToolbarSubtleButton
-                icon={<Plus size={14} />}
-                disabled={!canAddInSection}
-                title={
-                  canAddInSection
-                    ? undefined
-                    : isPolish
-                      ? 'Ta sekcja nie obsługuje ręcznego dodawania'
-                      : 'This section has no manual add action'
-                }
-              >
-                {isPolish ? 'Nowy' : 'New'}
-              </ToolbarSubtleButton>
+              {/* Slot 2 — + Nowa karta ▾ : catalog of cards not yet on the
+                  artifact (wzorzec N §3.5). Klik → cardLayout.addCard →
+                  karta wraca do nav/canvas. Read = ukryte (podgląd czysty). */}
+              {!readMode && <AddCardMenu layout={cardLayout} isPolish={isPolish} />}
 
               {/* Slot 3 — Export ▾ : canon destinations only */}
               <div className="relative" ref={exportMenuRef}>
@@ -8117,32 +8383,47 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               )}
 
               {/* Slot 5 — section-level AI (teal-subtle split). Wired to the same
-                  per-section AI handler used by each section's `aiAction`. */}
-              <ToolbarAISplitButton
-                icon={<Sparkles size={14} />}
-                disabled={isRegenerating}
-                onClick={handleRegenerate}
-                title={
-                  isPolish
-                    ? `AI dla sekcji: ${activeSectionLabel}`
-                    : `AI for section: ${activeSectionLabel}`
-                }
-              >
-                {isRegenerating && <Loader2 size={13} className="animate-spin" />}
-                {isPolish ? 'AI sekcji' : 'AI section'}
-              </ToolbarAISplitButton>
+                  per-section AI handler used by each section's `aiAction`.
+                  Read = ukryte: Podgląd „do pokazania klientowi" bez afordancji
+                  generowania/regeneracji AI. */}
+              {!readMode && (
+                <ToolbarAISplitButton
+                  icon={<Sparkles size={14} />}
+                  disabled={isRegenerating}
+                  onClick={handleRegenerate}
+                  title={
+                    isPolish
+                      ? `AI dla sekcji: ${activeSectionLabel}`
+                      : `AI for section: ${activeSectionLabel}`
+                  }
+                >
+                  {isRegenerating && <Loader2 size={13} className="animate-spin" />}
+                  {isPolish ? 'AI sekcji' : 'AI section'}
+                </ToolbarAISplitButton>
+              )}
 
               {/* ── spacer ─────────────────────────────────────────────────── */}
               <div className="flex-1 min-w-0" />
 
               {/* ── RIGHT ZONE: AI + modes ─────────────────────────────────── */}
-              {/* Slot 6 — Fork · Slot 7 — Present */}
-              <ToolbarIconButton
-                icon={<GitFork size={14} />}
-                tooltip={isPolish ? 'Forkuj' : 'Fork'}
-                disabled={isForking}
-                onClick={handleFork}
-              />
+              {/* Tryb Read/Edit (§5A) — wspólny komponent „do pokazania
+                  klientowi" (ujednolicony z Task/Decision). Read = pasek akcji
+                  kart znika + afordancje AI/edycji gasną. Aktywny = c-focus. */}
+              <div className="mr-1">
+                <ReadEditToggle readMode={readMode} onChange={setReadMode} />
+              </div>
+
+              {/* Slot 6 — Fork · Slot 7 — Present.
+                  Read = Fork ukryte (tworzy edytowalną kopię = afordancja edycji);
+                  Prezentuj zostaje (pokazanie klientowi jest częścią trybu Read). */}
+              {!readMode && (
+                <ToolbarIconButton
+                  icon={<GitFork size={14} />}
+                  tooltip={isPolish ? 'Forkuj' : 'Fork'}
+                  disabled={isForking}
+                  onClick={handleFork}
+                />
+              )}
               <ToolbarIconButton
                 icon={<Monitor size={14} />}
                 tooltip={isPolish ? 'Prezentuj' : 'Present'}
@@ -8151,20 +8432,25 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               {/* Slot 9 — artifact-level AI Consultant (solid teal). Now TOGGLES
                   the right-side AIConsultantPanel (POZIOM 3) instead of opening a
-                  one-shot dropdown. Stays teal/solid. */}
-              <div className="h-4 w-px bg-slate-200 dark:bg-navy-700 mx-1 shrink-0" />
-              <ToolbarAISolidButton
-                icon={<Sparkles size={14} />}
-                onClick={() => {
-                  setAiPanelOpen((v) => !v);
-                  setExportMenuOpen(false);
-                  setSectionsMenuOpen(false);
-                  setAiMenuOpen(false);
-                }}
-                title={isPolish ? 'AI Konsultant' : 'AI Consultant'}
-              >
-                {isPolish ? 'AI Konsultant' : 'AI Consultant'}
-              </ToolbarAISolidButton>
+                  one-shot dropdown. Stays teal/solid.
+                  Read = ukryte: Podgląd „do pokazania klientowi" bez afordancji AI. */}
+              {!readMode && (
+                <>
+                  <div className="h-4 w-px bg-slate-200 dark:bg-navy-700 mx-1 shrink-0" />
+                  <ToolbarAISolidButton
+                    icon={<Sparkles size={14} />}
+                    onClick={() => {
+                      setAiPanelOpen((v) => !v);
+                      setExportMenuOpen(false);
+                      setSectionsMenuOpen(false);
+                      setAiMenuOpen(false);
+                    }}
+                    title={isPolish ? 'AI Konsultant' : 'AI Consultant'}
+                  >
+                    {isPolish ? 'AI Konsultant' : 'AI Consultant'}
+                  </ToolbarAISolidButton>
+                </>
+              )}
             </div>
           );
         }}

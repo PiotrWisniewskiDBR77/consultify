@@ -592,7 +592,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
   // Fullscreen overlay (portal-like modal over existing content)
   const fullscreenOverlay =
     isFullscreen && report ? (
-      <div className="fixed inset-0 z-[9999] bg-slate-50 dark:bg-navy-950 flex">
+      <div className="fixed inset-0 z-modal bg-slate-50 dark:bg-navy-950 flex">
         {/* Chat sidebar - left */}
         {showChat && (
           <div className="w-96 shadow-sm flex flex-col bg-white dark:bg-navy-900 flex-shrink-0">

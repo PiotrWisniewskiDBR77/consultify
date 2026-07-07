@@ -131,7 +131,7 @@ export const SmartGuidesOverlay: React.FC<SmartGuidesOverlayProps> = ({
   if (guides.length === 0) return null;
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-[70] overflow-hidden" aria-hidden>
+    <div className="pointer-events-none absolute inset-0 z-dropdown overflow-hidden" aria-hidden>
       {guides.map((g, i) =>
         g.orientation === 'v' ? (
           <div

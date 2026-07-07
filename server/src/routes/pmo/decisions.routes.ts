@@ -135,4 +135,13 @@ router.get('/:id/created-tasks', DecisionController.getCreatedTasks);
  */
 router.patch('/:id/workflow', verifyAdmin, DecisionController.transitionWorkflow);
 
+/**
+ * POST /api/decisions/:id/generate-section
+ * Wzorzec N — generate a BCG-grade AI draft for ONE decision card. Proposer-only
+ * (does not persist); the client renders the draft as `ai-draft` for review.
+ * Body: { sectionKey: 'description'|'alternatives'|'risk'|'consequencesOfInaction',
+ *         language?: 'pl'|'en', context?: string }
+ */
+router.post('/:id/generate-section', DecisionController.generateSection);
+
 export default router;
