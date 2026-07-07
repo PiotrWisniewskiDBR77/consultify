@@ -351,13 +351,18 @@ describe('generateWhiteboardGraph', () => {
       true
     );
 
-    // Relation edge carries a NON-EMPTY label in BOTH top-level + data.label
-    // (FE LabeledEdge reads data.label — the empty-label visual bug we fixed).
+    // The model's relation edge carries its "dla" label in BOTH top-level +
+    // data.label (FE LabeledEdge reads data.label — the empty-label bug we fixed).
     const labeled = graph!.edges.filter((e) => e.type === 'labeled');
-    expect(labeled.length).toBe(1);
-    const e = labeled[0]!;
-    expect(e.label).toBe('dla');
-    expect((e.data as { label?: string })?.label).toBe('dla');
+    const modelEdge = labeled.find((e) => e.label === 'dla')!;
+    expect(modelEdge).toBeTruthy();
+    expect((modelEdge.data as { label?: string })?.label).toBe('dla');
+    // c6 (DEFEKT #2): EVERY edge is labeled (model + fill) — zero bare fillers.
+    for (const e of graph!.edges) {
+      expect(e.type).toBe('labeled');
+      expect(String(e.label || '').trim().length).toBeGreaterThan(0);
+      expect((e.data as { label?: string })?.label).toBe(e.label);
+    }
 
     // naprawa-c4 (DEFEKT #3): connectivity guarantee — NO sticky floats alone.
     // The model linked only 1 of 4 stickies; the fill pass wires the other 3 so
@@ -370,18 +375,31 @@ describe('generateWhiteboardGraph', () => {
     for (const s of stickies) expect(degree.get(s.id) || 0).toBeGreaterThan(0);
   });
 
-  it('drops an edge that would carry an empty relation label (no empty labeled box)', async () => {
+  it('c6 (DEFEKT #2): ZERO unlabeled edges — every edge carries a relation label', async () => {
     mockObject({
       groups: [{ title: 'Grupa', blocks: ['Alfa', 'Beta'] }],
-      // relation is whitespace-only ⇒ must NOT emit a 'labeled' edge with empty label.
+      // relation is whitespace-only ⇒ the model link is DROPPED (not emitted as a
+      // bare type:'default' filler). The connectivity net then re-links the now-
+      // orphaned Alfa/Beta WITH a semantic label — so there are no unlabeled edges.
       links: [{ from: 'Alfa', to: 'Beta', relation: '   ' }],
     });
     const graph = await generateWhiteboardGraph('x', undefined, true);
     expect(graph).toBeTruthy();
-    // A plain (non-'labeled') edge or no edge — never an empty-labeled one.
+    // No edge may be a bare filler: every edge is 'labeled' with a non-empty label.
     for (const e of graph!.edges) {
-      expect(e.type).not.toBe('labeled');
+      expect(e.type).toBe('labeled');
+      expect(typeof e.label).toBe('string');
+      expect(String(e.label).trim().length).toBeGreaterThan(0);
+      expect((e.data as { label?: string })?.label).toBe(e.label);
     }
+    // The two stickies must still be connected (no orphan), via the labeled net.
+    const stickies = graph!.nodes.filter((n) => n.type === 'stickyNote');
+    const degree = new Map<string, number>();
+    for (const e of graph!.edges) {
+      degree.set(e.source, (degree.get(e.source) || 0) + 1);
+      degree.set(e.target, (degree.get(e.target) || 0) + 1);
+    }
+    for (const s of stickies) expect(degree.get(s.id) || 0).toBeGreaterThan(0);
   });
 
   it('rejects (null) when a majority of block labels are fragments', async () => {
@@ -412,6 +430,13 @@ describe('generateWhiteboardGraph', () => {
     for (const s of stickies) expect(degree.get(s.id) || 0).toBeGreaterThan(0);
     // Frames stay exactly as the model named them — no invented 5th cluster.
     expect(graph!.nodes.filter((n) => n.type === 'frameNode').length).toBe(4);
+    // c6 (DEFEKT #2): the fill pass emits SEMANTIC labels, not bare fillers —
+    // every safety edge is 'labeled' with a non-empty relation.
+    expect(graph!.edges.length).toBeGreaterThan(0);
+    for (const e of graph!.edges) {
+      expect(e.type).toBe('labeled');
+      expect(String(e.label || '').trim().length).toBeGreaterThan(0);
+    }
   });
 });
 
@@ -465,6 +490,92 @@ describe('generateTableGraph', () => {
     for (const id of ['INI-0', 'INI-1', 'INI-2', 'INI-3', 'INI-4', 'INI-5']) {
       expect(labels.some((l) => l.includes(id))).toBe(true);
     }
+  });
+
+  // ── naprawa-c6 (DEFEKT #1): custom columns from the prompt (ROI/Budżet/Ryzyko)
+  // must reach BOTH extensions.table.columns (defs) AND node.data[key] (filled
+  // cells the FE reads via row.data?.[col.key]) — not lost, not stuffed in notes.
+  it('c6: emits custom columns (ROI/Budżet PLN/Ryzyko) as column defs + filled cells', async () => {
+    mockObject({
+      columns: [
+        { key: 'ROI', type: 'number' },
+        { key: 'Budżet PLN', type: 'currency' },
+        { key: 'Ryzyko', type: 'select' },
+      ],
+      rows: [
+        {
+          label: 'INI-0 Kapitał',
+          status: 'in_progress',
+          priority: 'High',
+          cells: { ROI: '2.8x', 'Budżet PLN': '1.8M PLN', Ryzyko: 'Średnie' },
+        },
+        {
+          label: 'INI-1 Talent',
+          status: 'todo',
+          priority: 'Critical',
+          cells: { ROI: '3.5x', 'Budżet PLN': '900k PLN', Ryzyko: 'Wysokie' },
+        },
+      ],
+    });
+    const graph = await generateTableGraph(
+      'Tabela portfela: kolumny [Inicjatywa, Priorytet, ROI, Budżet PLN, Ryzyko, Status]. Wiersze: INI-0 Kapitał, INI-1 Talent',
+      'Portfel',
+      true
+    );
+    expect(graph).toBeTruthy();
+
+    // (1) Column DEFINITIONS ride on extensions.table.columns (what the FE persists).
+    const cols = graph!.extensions?.table?.columns || [];
+    const colKeys = cols.map((c) => c.key);
+    expect(colKeys).toContain('ROI');
+    expect(colKeys).toContain('Budżet PLN');
+    expect(colKeys).toContain('Ryzyko');
+    // Built-ins are NOT duplicated as custom columns.
+    for (const k of colKeys) {
+      expect(['label', 'status', 'priority', 'type', 'notes']).not.toContain(k.toLowerCase());
+    }
+    // The select column gets an options set + colours (renders as chips).
+    const risk = cols.find((c) => c.key === 'Ryzyko')!;
+    expect(risk.type).toBe('select');
+    expect(risk.options).toEqual(expect.arrayContaining(['Średnie', 'Wysokie']));
+    expect(Object.keys(risk.optionColors || {}).length).toBeGreaterThan(0);
+
+    // (2) Cell VALUES are on node.data[key] (read via row.data?.[col.key]), filled
+    // per row — NOT dumped into notes, NOT lost.
+    const row0 = graph!.nodes.find((n) => n.data.label.includes('INI-0'))!;
+    expect(row0.data['ROI']).toBe('2.8x');
+    expect(row0.data['Budżet PLN']).toBe('1.8M PLN');
+    expect(row0.data['Ryzyko']).toBe('Średnie');
+    const row1 = graph!.nodes.find((n) => n.data.label.includes('INI-1'))!;
+    expect(row1.data['ROI']).toBe('3.5x');
+    expect(row1.data['Ryzyko']).toBe('Wysokie');
+
+    // (3) Status is differentiated across rows (not all 'todo').
+    const statuses = new Set(graph!.nodes.map((n) => n.data.status));
+    expect(statuses.size).toBeGreaterThan(1);
+  });
+
+  // Case-insensitive cell matching: the model may drift column-key case in cells.
+  it('c6: matches cell values case-insensitively to the declared column key', async () => {
+    mockObject({
+      columns: [{ key: 'ROI', type: 'number' }],
+      rows: [{ label: 'Alfa', status: 'done', priority: 'Low', cells: { roi: '4x' } }],
+    });
+    const graph = await generateTableGraph('ROI per pozycja: Alfa', 'ROI', true);
+    expect(graph).toBeTruthy();
+    const row = graph!.nodes[0]!;
+    expect(row.data['ROI']).toBe('4x');
+  });
+
+  // No custom columns requested ⇒ no extensions block (back-compat with plain tables).
+  it('c6: omits extensions when the prompt names no extra columns', async () => {
+    mockObject({
+      columns: [],
+      rows: [{ label: 'Zadanie A', status: 'todo', priority: 'Medium' }],
+    });
+    const graph = await generateTableGraph('lista zadań', 'Zadania', true);
+    expect(graph).toBeTruthy();
+    expect(graph!.extensions).toBeUndefined();
   });
 });
 

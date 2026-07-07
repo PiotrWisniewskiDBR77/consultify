@@ -1744,7 +1744,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         const rawGraph = (payload as any)?.graph;
         const seedGraph =
           rawGraph && Array.isArray(rawGraph.nodes) && rawGraph.nodes.length > 0
-            ? { nodes: rawGraph.nodes, edges: Array.isArray(rawGraph.edges) ? rawGraph.edges : [] }
+            ? {
+                nodes: rawGraph.nodes,
+                edges: Array.isArray(rawGraph.edges) ? rawGraph.edges : [],
+                // Forward backend-built canvas extensions (e.g. Ideas-Table custom
+                // columns ROI/Budżet/Ryzyko) so they persist + render — previously
+                // dropped here, leaving the table with only status/priority.
+                ...(rawGraph.extensions && typeof rawGraph.extensions === 'object'
+                  ? { extensions: rawGraph.extensions }
+                  : {}),
+              }
             : null;
         const seedIntent: IdeaWorkspaceSeedIntent = {
           // Only fall back to the AI re-kickoff flow when the backend did NOT
