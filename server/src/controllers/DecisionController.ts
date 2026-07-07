@@ -1918,6 +1918,114 @@ export class DecisionController {
       }
     }
   );
+
+  /**
+   * Delete (soft) a decision
+   *
+   * DELETE /api/decisions/:id
+   * Body (optional): { reason?: string }
+   *
+   * Policy: reversible archive — sets status = 'cancelled' (a recognized status
+   * already excluded by any status='pending'/'approved' filter downstream)
+   * rather than a hard DELETE. Allowed for the requester (created_by), the
+   * decision owner, or admins. Any prior status may be cancelled (unlike the
+   * legacy `cancelDecision` service method, which refuses on
+   * approved/rejected/cancelled — cleanup needs to work regardless of
+   * terminal state).
+   */
+  static deleteDecision = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id } = req.params;
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const reason =
+        typeof (req.body as any)?.reason === 'string'
+          ? String((req.body as any).reason).trim().slice(0, 500)
+          : undefined;
+
+      const decision = await queryHelpers.queryOne<{
+        id: string;
+        title?: string | null;
+        status?: string | null;
+        decision_maker_id?: string | null;
+        created_by?: string | null;
+        organization_id?: string | null;
+      }>(
+        `SELECT id, title, status, decision_maker_id, created_by, organization_id
+         FROM decisions
+         WHERE id = ? AND organization_id = ?
+         LIMIT 1`,
+        [id, orgId]
+      );
+
+      if (!decision) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+
+      const normalizedRole = normalizeAdminLikeRole(req.user?.role);
+      const isAdmin = normalizedRole === 'ADMIN' || normalizedRole === 'SUPERADMIN';
+      const isRequester = String(decision.created_by || '') === String(userId);
+      const isOwner = String(decision.decision_maker_id || '') === String(userId);
+      if (!isAdmin && !isRequester && !isOwner) {
+        res.status(403).json({ error: 'Only requester, owner, or admin can delete' });
+        return;
+      }
+
+      const previousStatus = normalizeStatus(decision.status);
+      if (previousStatus === 'cancelled') {
+        res.json({ success: true, id, message: 'Decision already cancelled' });
+        return;
+      }
+
+      await queryHelpers.queryRun(
+        `UPDATE decisions SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
+
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO decision_history (id, decision_id, action, old_status, new_status, changed_by, details)
+           VALUES (?, ?, 'cancelled', ?, 'cancelled', ?, ?)`,
+          [
+            uuidv4(),
+            id,
+            previousStatus,
+            userId,
+            JSON.stringify({ reason: reason || 'Deleted via API' }),
+          ]
+        );
+      } catch (e: any) {
+        logger.warn(
+          '[DecisionController.deleteDecision] history insert failed (continuing):',
+          e?.message || e
+        );
+      }
+
+      auditEventsService
+        .log({
+          actorId: userId,
+          actorType: 'USER',
+          action: 'DECISION_DELETE',
+          resourceType: 'decision',
+          resourceId: id,
+          organizationId: orgId,
+          metadata: { reason, previousStatus },
+        })
+        .catch((err: any) =>
+          logger.error('[DecisionController.deleteDecision] Audit log failed:', err)
+        );
+
+      logger.info(`[DecisionController] Decision ${id} soft-deleted (cancelled) by ${userId}`);
+
+      res.json({ success: true, id, message: 'Decision cancelled' });
+    }
+  );
 }
 
 export default DecisionController;
