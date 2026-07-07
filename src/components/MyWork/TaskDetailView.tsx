@@ -3591,10 +3591,12 @@ Return ONLY the final comment text.`;
           });
     };
 
-    const panelRowClass =
-      'flex items-baseline justify-between gap-3 py-1.5 border-b border-c-border-subtle last:border-b-0';
     const panelKeyClass = 'text-xs text-c-text-muted shrink-0';
-    const panelValClass = 'text-xs font-medium text-c-text text-right min-w-0 truncate';
+    // Klasy komórek tabeli Właściwości (kanon panelu: tylko c-*, neutralnie)
+    const tdKey = 'px-3 py-2 text-c-text-muted border-b border-c-border-subtle';
+    const tdVal = 'px-3 py-2 text-right text-c-text border-b border-c-border-subtle';
+    const tdValLast = 'px-3 py-2 text-right text-c-text';
+    const pill = 'inline-flex items-center h-5 px-2 rounded-md text-xs bg-c-surface-raised text-c-text';
 
     const rightPanelSections: ArtifactRightPanelSection[] = [
       {
@@ -3639,27 +3641,45 @@ Return ONLY the final comment text.`;
         icon: Flag,
         defaultOpen: true,
         children: (
-          <div className="flex flex-col">
-            <div className={panelRowClass}>
-              <span className={panelKeyClass}>{isPolish ? 'Status' : 'Status'}</span>
-              <span className={panelValClass}>{statusLabel}</span>
-            </div>
-            <div className={panelRowClass}>
-              <span className={panelKeyClass}>{isPolish ? 'Priorytet' : 'Priority'}</span>
-              <span className={panelValClass}>{priorityLabel}</span>
-            </div>
-            <div className={panelRowClass}>
-              <span className={panelKeyClass}>{isPolish ? 'Termin' : 'Due date'}</span>
-              <span className={panelValClass}>{fmtDate(dueDate)}</span>
-            </div>
-            <div className={panelRowClass}>
-              <span className={panelKeyClass}>{isPolish ? 'Właściciel' : 'Owner'}</span>
-              <span className={panelValClass}>{ownerFullName || dash}</span>
-            </div>
-            <div className={panelRowClass}>
-              <span className={panelKeyClass}>{isPolish ? 'Inicjatywa' : 'Initiative'}</span>
-              <span className={panelValClass}>{initiativeName || dash}</span>
-            </div>
+          <div className="rounded-lg border border-c-border-subtle overflow-hidden">
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="bg-c-surface-raised">
+                  <th className="text-left font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
+                    {isPolish ? 'Właściwość' : 'Property'}
+                  </th>
+                  <th className="text-right font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
+                    {isPolish ? 'Wartość' : 'Value'}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className={tdKey}>{isPolish ? 'Status' : 'Status'}</td>
+                  <td className={tdVal}>
+                    <span className={pill}>{statusLabel}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td className={tdKey}>{isPolish ? 'Priorytet' : 'Priority'}</td>
+                  <td className={tdVal}>
+                    <span className={pill}>{priorityLabel}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td className={tdKey}>{isPolish ? 'Termin' : 'Due date'}</td>
+                  <td className={`${tdVal} tabular-nums`}>{fmtDate(dueDate)}</td>
+                </tr>
+                <tr>
+                  <td className={tdKey}>{isPolish ? 'Właściciel' : 'Owner'}</td>
+                  <td className={tdVal}>{ownerFullName || dash}</td>
+                </tr>
+                <tr>
+                  <td className="px-3 py-2 text-c-text-muted">{isPolish ? 'Inicjatywa' : 'Initiative'}</td>
+                  <td className={tdValLast}>{initiativeName || dash}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         ),
       },
