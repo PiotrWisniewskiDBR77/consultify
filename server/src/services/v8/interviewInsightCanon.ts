@@ -88,7 +88,7 @@ export const P10_CONFIDENCE_SEMANTICS: Record<
   high: {
     meaning: 'Well-supported within defined context; still has boundaries',
     minimumEvidence:
-      '3+ pointers from different sources/segments OR clear triangulation + no contradictions',
+      '2+ pointers from different sources/segments OR clear triangulation + no contradictions',
     uiRule:
       'May show "High confidence" badge; must still expose limits; default next action can be "execute"',
     overclaim_guard: 'No overclaim beyond scope (e.g. no market generalization from org-only data)',

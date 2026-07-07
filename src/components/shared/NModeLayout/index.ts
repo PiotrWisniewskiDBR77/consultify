@@ -37,6 +37,33 @@ export { NModeLeftNav } from './NModeLeftNav';
 export { NModePropertiesStrip } from './NModePropertiesStrip';
 export { EvidenceBadge, NModeSectionWrapper } from './NModeSectionWrapper';
 export type { QuoteRequirementLevel } from './NModeSectionWrapper';
+export { NModeCardState, NModeCardBadge } from './NModeCardState';
+export type { NModeCardStatus, NModeCardStateProps } from './NModeCardState';
+// ── Card management (wzorzec N §3.5) ────────────────────────────────────────
+export { useCardLayout } from './useCardLayout';
+export type {
+  CardLayout,
+  CardLayoutItem,
+  UseCardLayoutOptions,
+  UseCardLayoutResult,
+} from './useCardLayout';
+export {
+  NModeCardManager,
+  AddCardMenu,
+  SectionsManagerMenu,
+} from './NModeCardManager';
+export type {
+  NModeCardManagerProps,
+  AddCardMenuProps,
+  SectionsManagerMenuProps,
+} from './NModeCardManager';
+export { DEFAULT_CARD_SETS, getCardSpec } from './cardSets';
+export type {
+  NModeArtifactType,
+  CardCatalogEntry,
+  CardSet,
+  ArtifactCardSpec,
+} from './cardSets';
 export { NModeShell, NMODE_TOOLBAR_SHELL_CLASS } from './NModeShell';
 export {
   NModeToolbar,

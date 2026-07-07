@@ -28,6 +28,7 @@ import type { WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip'
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api, getMapVersionFromPayload } from '@/services/api';
+import { isMelsCanvasEnabled } from '@/utils/melsCanvasFlag';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
@@ -92,6 +93,11 @@ import { IdeaVotingMode } from './IdeaVotingMode';
 import { IdeaWhiteboardTool } from './IdeaWhiteboardTool';
 import { getIdeaWorkspaceToolLabel, IdeaWorkspaceToolbar } from './IdeaWorkspaceToolbar';
 import { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
+import { IdeaCanvasMelsView } from './IdeaCanvasMelsView';
+import {
+  buildIdeaCanvasRightRailTools,
+  buildIdeaCanvasTopBarChips,
+} from './ideaCanvasMelsChips';
 import { AIGovernanceBadge, AIGovernancePanel } from './mindmap/AIGovernancePanel';
 import { CanvasLeftToolbar } from './mindmap/CanvasLeftToolbar';
 import { stabilizeMindmapInteractionMode } from './mindmap/mindmapInteractionGrammar';
@@ -2668,10 +2674,253 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const workspaceHeaderOffsetClass =
     drillDownStack.length > 0 || focusMode !== 'full' ? 'top-20' : 'top-14';
 
+  // ── EditorShell Wave W-1 (flag-gated, default OFF) ──────────────────────
+  // When `isMelsCanvasEnabled()` is true, the four canvases render inside the
+  // EditorShell (`IdeaCanvasMelsView`, `centerMode='canvas'`) instead of the
+  // floating canvas-chrome. Chip descriptors are memoised here (after all
+  // handlers/hooks — TDZ-safe). Flag OFF → nothing below is consumed and the
+  // legacy render is byte-for-byte unchanged.
+  const melsCanvasEnabled = isMelsCanvasEnabled();
+  const melsCanvasChips = useMemo(
+    () =>
+      melsCanvasEnabled
+        ? buildIdeaCanvasTopBarChips({
+            tool: activeTool,
+            state: { hasContent: mapHasNodes },
+            handlers: {
+              onAddPrimary: () =>
+                handleQuickAction(activeTool === 'mindmap' ? 'mm_add_child' : 'add_node'),
+              onAutoLayout: () =>
+                window.dispatchEvent(
+                  new CustomEvent('idea-mindmap-node-quick-action', {
+                    detail: { action: 'pane_auto_layout' },
+                  })
+                ),
+              onConvert: () => handlePanelChange('tools'),
+              onDiscuss: handleDiscussWithTeresa,
+              onAIExpand: () => handleQuickAction('mm_ai_expand'),
+              onOpenTemplateGallery: () => setTemplateGalleryOpen(true),
+              onExport: () => setExportMenuOpen(true),
+              onSearch: () => setSearchOpen(true),
+              onShowHelp: () => setShortcutsHelpOpen(true),
+            },
+            labels: isPolish
+              ? {
+                  addNode: 'Dodaj węzeł',
+                  addShape: 'Dodaj kształt',
+                  addRow: 'Dodaj wiersz',
+                  addSticky: 'Dodaj karteczkę',
+                  autoLayout: 'Auto-układ',
+                  convert: 'Utwórz z mapy',
+                  discuss: 'Omów z Teresą',
+                  aiExpand: 'AI rozwiń',
+                  templates: 'Szablony',
+                  export: 'Eksport',
+                  search: 'Szukaj',
+                  help: 'Skróty',
+                }
+              : undefined,
+          })
+        : [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [melsCanvasEnabled, activeTool, mapHasNodes, isPolish, handleQuickAction, handlePanelChange, handleDiscussWithTeresa]
+  );
+  const melsCanvasRightRailTools = useMemo(
+    () =>
+      melsCanvasEnabled
+        ? buildIdeaCanvasRightRailTools(
+            isPolish
+              ? {
+                  labels: {
+                    problem: 'Problem',
+                    status: 'Status',
+                    inspector: 'Inspektor',
+                    convert: 'Konwersja',
+                    health: 'Kondycja',
+                  },
+                }
+              : undefined
+          )
+        : [],
+    [melsCanvasEnabled, isPolish]
+  );
+
+  // ── Shared IdeaWorkspaceTools props (single source) ─────────────────────
+  // The workspace inspector (5 sections: Problem · Status · Inspector · Convert
+  // · Health) is rendered in exactly one place per path: the legacy sliding
+  // drawer (`renderWorkspaceSiblings`) OR — under the EditorShell flag — the
+  // shell right-rail panel (`renderMelsCanvasRightRailPanel`). Both consume this
+  // one prop bundle so their content never drifts. Declared after every handler
+  // it references (all defined above), so it is TDZ-safe.
+  const ideaWorkspaceToolsSharedProps = useMemo(
+    () => ({
+      ideaId: realId,
+      title,
+      seedText,
+      stage,
+      branch,
+      area,
+      priority,
+      isDraft,
+      isAccepted,
+      saving,
+      draftSavedLabel,
+      activeTool,
+      selection,
+      onTitleChange: (v: string) => {
+        setTitle(v);
+        setDirty(true);
+      },
+      onSeedTextChange: (v: string) => {
+        setSeedText(v);
+        setDirty(true);
+      },
+      onBranchChange: (v: string) => {
+        setBranch(v);
+        setDirty(true);
+      },
+      onAreaChange: (v: string) => {
+        setArea(v);
+        setDirty(true);
+      },
+      onPriorityChange: (v: number) => {
+        setPriority(v);
+        setDirty(true);
+      },
+      onSave: handleSave,
+      onAcceptChallenge: handleAcceptChallenge,
+      onStageChange: handleStageChange,
+      onConvert: handleConvert,
+      onOpenChat: openChat,
+      graphNodes,
+      graphEdges,
+      evidenceCount: graphNodes.filter((n: any) => n?.data?.evidenceLinks?.length > 0).length,
+      onAISummarize: () => handleQuickAction('mm_ai_summarize'),
+      onAIExpand: () => handleQuickAction('mm_ai_expand'),
+      onLayoutChange: (mode: string) => {
+        window.dispatchEvent(
+          new CustomEvent('idea-mindmap-node-quick-action', {
+            detail: { action: 'set_layout_mode', layoutMode: mode },
+          })
+        );
+      },
+      onThemeChange: (theme: string) => {
+        window.dispatchEvent(
+          new CustomEvent('idea-mindmap-node-quick-action', {
+            detail: { action: 'set_map_theme', theme },
+          })
+        );
+      },
+      onStyleChange: (patch: Record<string, any>) => {
+        window.dispatchEvent(
+          new CustomEvent('idea-mindmap-node-quick-action', {
+            detail: { action: 'apply_style', ...patch },
+          })
+        );
+      },
+      onFitView: () => {
+        window.dispatchEvent(
+          new CustomEvent('idea-mindmap-node-quick-action', {
+            detail: { action: 'pane_fit_view' },
+          })
+        );
+      },
+      onAutoLayout: () => {
+        window.dispatchEvent(
+          new CustomEvent('idea-mindmap-node-quick-action', {
+            detail: { action: 'pane_auto_layout' },
+          })
+        );
+      },
+      whiteboardSession,
+      whiteboardOutcomes,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      realId, title, seedText, stage, branch, area, priority, isDraft, isAccepted,
+      saving, draftSavedLabel, activeTool, selection, graphNodes, graphEdges,
+      handleSave, handleAcceptChallenge, handleStageChange, handleConvert, openChat,
+      handleQuickAction, whiteboardSession, whiteboardOutcomes,
+      setTitle, setSeedText, setBranch, setArea, setPriority, setDirty,
+    ]
+  );
+
+  // EditorShell right-rail panel body. All five inspector icons (problem ·
+  // status · inspector · convert · health) address the five sections that
+  // already live inside <IdeaWorkspaceTools>, so every id renders that same
+  // inspector (its sections are the in-panel navigation). Rendered `embedded`
+  // so it drops its own drawer chrome and fills the shell's rail column. The
+  // matching legacy drawer is suppressed below when the flag is ON (no dupes).
+  const renderMelsCanvasRightRailPanel = useCallback(
+    (_activeToolId: string | null): React.ReactNode => (
+      <IdeaWorkspaceTools
+        {...ideaWorkspaceToolsSharedProps}
+        open
+        embedded
+        onClose={() => handlePanelChange(null)}
+      />
+    ),
+    [ideaWorkspaceToolsSharedProps, handlePanelChange]
+  );
+
   if (loading) {
     return (
       <div className="h-full w-full bg-[var(--c-surface)] p-6">
         <LoadingState template="panel" />
+      </div>
+    );
+  }
+
+  // Shared subtrees — identical in the legacy floating-chrome path and the
+  // EditorShell path, so neither drifts. `renderCanvasToolsNode` /
+  // `renderFloatingLeftRail` / `renderWorkspaceSiblings` are hoisted function
+  // declarations defined at the end of the component.
+  const canvasToolsNode = renderCanvasToolsNode();
+  const floatingLeftRailNode = renderFloatingLeftRail();
+  const workspaceSiblingsNode = renderWorkspaceSiblings();
+
+  if (melsCanvasEnabled) {
+    return (
+      <div
+        ref={workspaceRootRef}
+        className="w-full h-full flex flex-col overflow-hidden bg-c-surface-raised dark:bg-c-surface"
+        style={{ touchAction: 'none' }}
+        role="region"
+        aria-label={t('mindmap.ideaMapWorkspace')}
+        data-local-command-palette="idea-map"
+      >
+        <div ref={canvasContainerRef} className="flex-1 min-w-0 min-h-0 relative">
+          <IdeaCanvasMelsView
+            title={title || safeTitleFromSeed(seedText, isPolish) || t('mindmap.untitled')}
+            onBack={() => navigate('/my-work')}
+            backLabel={t('mindmap.ideas')}
+            moduleLabel={t('mindmap.ideas')}
+            topBarChips={melsCanvasChips}
+            rightRailTools={melsCanvasRightRailTools}
+            renderRightRailPanel={renderMelsCanvasRightRailPanel}
+            canvas={
+              <>
+                {canvasToolsNode}
+                {/* Four-tool switcher stays floating over the canvas; the
+                    per-tool actions (search / help / discuss) now live in the
+                    shell command-row, so they're omitted here to avoid dupes. */}
+                <IdeaWorkspaceToolbar
+                  activeTool={activeTool}
+                  onToolChange={setActiveTool}
+                  familyCounts={familyCounts}
+                />
+              </>
+            }
+            floatingLeftRail={floatingLeftRailNode}
+            siblings={workspaceSiblingsNode}
+            onRunPrimary={() => handleQuickAction('mm_add_child')}
+            onOpenCommandPalette={cmdPalette.open}
+            onOpenShortcutHelp={() => {
+              setShortcutsHelpOpen(true);
+              return false;
+            }}
+          />
+        </div>
       </div>
     );
   }
@@ -2695,7 +2944,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       >
         {/* Breadcrumb for drill-down navigation */}
         {drillDownStack.length > 0 && (
-          <div className="absolute top-2 left-4 z-[60] flex items-center gap-1 bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm rounded-xl px-3 py-1.5 border border-c-border-subtle dark:border-c-border-subtle shadow-sm">
+          <div className="absolute top-2 left-4 z-sticky flex items-center gap-1 bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm rounded-xl px-3 py-1.5 border border-c-border-subtle dark:border-c-border-subtle shadow-sm">
             <button
               onClick={() => handleDrillUp(0)}
               className="text-[10px] font-semibold text-c-text-secondary dark:text-c-text-muted hover:underline"
@@ -2722,7 +2971,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
         {/* V5-IDEA-15: Focus mode indicator */}
         {focusMode !== 'full' && (
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[58] flex items-center gap-2 bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm rounded-xl px-3 py-1.5 border border-c-border-subtle dark:border-c-border-subtle shadow-sm">
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-sticky flex items-center gap-2 bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm rounded-xl px-3 py-1.5 border border-c-border-subtle dark:border-c-border-subtle shadow-sm">
             <span className="text-[10px] font-bold uppercase tracking-wide text-c-text-secondary dark:text-c-text">
               {focusMode === 'system'
                 ? t('mindmap.focusedOnTool', { activeToolLabel })
@@ -2738,7 +2987,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         )}
 
         <div
-          className={`absolute ${workspaceHeaderOffsetClass} left-20 z-[57] max-w-[28rem] rounded-2xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 shadow-sm backdrop-blur-sm dark:border-c-border-subtle dark:bg-c-surface`}
+          className={`absolute ${workspaceHeaderOffsetClass} left-20 z-sticky max-w-[28rem] rounded-2xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 shadow-sm backdrop-blur-sm dark:border-c-border-subtle dark:bg-c-surface`}
         >
           <div className="flex flex-wrap items-center gap-1.5">
             {/* A4: breadcrumb — Ideas › {idea title} › {tool} */}
@@ -2853,6 +3102,54 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         />
 
         {/* Canvas tools — each wrapped in error boundary for resilience */}
+        {canvasToolsNode}
+
+        {/* UI overlays rendered AFTER canvas tools so they appear on top */}
+        {floatingLeftRailNode}
+
+        {/* MM-12: AI Governance badge — opens governance panel */}
+        <div className="absolute left-[4.5rem] top-4 z-sticky">
+          <AIGovernanceBadge
+            mapExtensions={mapExtensions}
+            onClick={() => setGovernancePanelOpen(true)}
+          />
+        </div>
+
+        <IdeaWorkspaceToolbar
+          activeTool={activeTool}
+          onToolChange={setActiveTool}
+          familyCounts={familyCounts}
+          onSearch={() => setSearchOpen(true)}
+          onShowHelp={() => setShortcutsHelpOpen(true)}
+          onDiscuss={handleDiscussWithTeresa}
+          discussDisabled={!mapHasNodes}
+        />
+
+        {proposalBatch && (
+          <div className="absolute bottom-4 left-4 right-4 z-dropdown max-w-lg mx-auto">
+            <IdeaProposalReview
+              batch={proposalBatch}
+              onAccept={handleAcceptProposal}
+              onReject={handleRejectProposal}
+              onAcceptAll={handleAcceptAllProposals}
+              onRejectAll={handleRejectAllProposals}
+              onDismiss={() => setProposalBatch(null)}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Tools panel sidebar + inspectors + all modals/drawers/popovers */}
+      {workspaceSiblingsNode}
+    </div>
+  );
+
+  // ── Hoisted shared subtrees (function declarations — hoisted, so callable
+  // above their definition; identical output in the legacy and EditorShell
+  // paths). They close over the component's state/handlers directly. ────────
+  function renderCanvasToolsNode(): React.ReactNode {
+    return (
+      <>
         {activeTool === 'mindmap' && (
           <CanvasToolErrorBoundary
             key={`eb-mindmap-${realId}`}
@@ -3029,144 +3326,47 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             />
           </CanvasToolErrorBoundary>
         )}
+      </>
+    );
+  }
 
-        {/* UI overlays rendered AFTER canvas tools so they appear on top */}
-        <CanvasLeftToolbar
-          activeTool={activeTool}
-          interactionMode={mindMapInteractionMode}
-          selection={selection}
-          isAccepted={isAccepted}
-          ideaId={realId}
-          canvasContainerRef={canvasContainerRef}
-          canUndo={mmCanUndo}
-          canRedo={mmCanRedo}
-          heuristicAiEnabled={heuristicAiOverlaysEnabled}
-          onAction={(action) => handleQuickAction(action)}
-          onOpenChat={() => {
-            setChatKickoffMessage('');
-            if (isChatCollapsed) toggleChatCollapse();
-          }}
-          onApplyTemplate={handleApplyTemplate}
-          onOpenTemplateGallery={() => setTemplateGalleryOpen(true)}
-        />
-
-        {/* MM-12: AI Governance badge — opens governance panel */}
-        <div className="absolute left-[4.5rem] top-4 z-[56]">
-          <AIGovernanceBadge
-            mapExtensions={mapExtensions}
-            onClick={() => setGovernancePanelOpen(true)}
-          />
-        </div>
-
-        <IdeaWorkspaceToolbar
-          activeTool={activeTool}
-          onToolChange={setActiveTool}
-          familyCounts={familyCounts}
-          onSearch={() => setSearchOpen(true)}
-          onShowHelp={() => setShortcutsHelpOpen(true)}
-          onDiscuss={handleDiscussWithTeresa}
-          discussDisabled={!mapHasNodes}
-        />
-
-        {proposalBatch && (
-          <div className="absolute bottom-4 left-4 right-4 z-[90] max-w-lg mx-auto">
-            <IdeaProposalReview
-              batch={proposalBatch}
-              onAccept={handleAcceptProposal}
-              onReject={handleRejectProposal}
-              onAcceptAll={handleAcceptAllProposals}
-              onRejectAll={handleRejectAllProposals}
-              onDismiss={() => setProposalBatch(null)}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Tools panel sidebar */}
-      <IdeaWorkspaceTools
-        open={toolsPanelOpen}
-        onClose={() => handlePanelChange(null)}
-        ideaId={realId}
-        title={title}
-        seedText={seedText}
-        stage={stage}
-        branch={branch}
-        area={area}
-        priority={priority}
-        isDraft={isDraft}
-        isAccepted={isAccepted}
-        saving={saving}
-        draftSavedLabel={draftSavedLabel}
+  function renderFloatingLeftRail(): React.ReactNode {
+    return (
+      <CanvasLeftToolbar
         activeTool={activeTool}
+        interactionMode={mindMapInteractionMode}
         selection={selection}
-        onTitleChange={(v) => {
-          setTitle(v);
-          setDirty(true);
+        isAccepted={isAccepted}
+        ideaId={realId}
+        canvasContainerRef={canvasContainerRef}
+        canUndo={mmCanUndo}
+        canRedo={mmCanRedo}
+        heuristicAiEnabled={heuristicAiOverlaysEnabled}
+        onAction={(action) => handleQuickAction(action)}
+        onOpenChat={() => {
+          setChatKickoffMessage('');
+          if (isChatCollapsed) toggleChatCollapse();
         }}
-        onSeedTextChange={(v) => {
-          setSeedText(v);
-          setDirty(true);
-        }}
-        onBranchChange={(v) => {
-          setBranch(v);
-          setDirty(true);
-        }}
-        onAreaChange={(v) => {
-          setArea(v);
-          setDirty(true);
-        }}
-        onPriorityChange={(v) => {
-          setPriority(v);
-          setDirty(true);
-        }}
-        onSave={handleSave}
-        onAcceptChallenge={handleAcceptChallenge}
-        onStageChange={handleStageChange}
-        onConvert={handleConvert}
-        onOpenChat={openChat}
-        graphNodes={graphNodes}
-        graphEdges={graphEdges}
-        evidenceCount={graphNodes.filter((n: any) => n?.data?.evidenceLinks?.length > 0).length}
-        onAISummarize={() => handleQuickAction('mm_ai_summarize')}
-        onAIExpand={() => handleQuickAction('mm_ai_expand')}
-        onLayoutChange={(mode) => {
-          window.dispatchEvent(
-            new CustomEvent('idea-mindmap-node-quick-action', {
-              detail: { action: 'set_layout_mode', layoutMode: mode },
-            })
-          );
-        }}
-        onThemeChange={(theme) => {
-          window.dispatchEvent(
-            new CustomEvent('idea-mindmap-node-quick-action', {
-              detail: { action: 'set_map_theme', theme },
-            })
-          );
-        }}
-        onStyleChange={(patch) => {
-          window.dispatchEvent(
-            new CustomEvent('idea-mindmap-node-quick-action', {
-              detail: { action: 'apply_style', ...patch },
-            })
-          );
-        }}
-        onFitView={() => {
-          window.dispatchEvent(
-            new CustomEvent('idea-mindmap-node-quick-action', {
-              detail: { action: 'pane_fit_view' },
-            })
-          );
-        }}
-        onAutoLayout={() => {
-          window.dispatchEvent(
-            new CustomEvent('idea-mindmap-node-quick-action', {
-              detail: { action: 'pane_auto_layout' },
-            })
-          );
-        }}
-        whiteboardSession={whiteboardSession}
-        whiteboardOutcomes={whiteboardOutcomes}
+        onApplyTemplate={handleApplyTemplate}
+        onOpenTemplateGallery={() => setTemplateGalleryOpen(true)}
       />
+    );
+  }
+
+  function renderWorkspaceSiblings(): React.ReactNode {
+    return (
+      <>
+      {/* Tools panel sidebar — legacy sliding drawer. Under the EditorShell
+          flag this same inspector is rendered `embedded` in the shell right
+          rail (renderMelsCanvasRightRailPanel), so we suppress this drawer to
+          avoid a duplicate panel. Both paths consume ideaWorkspaceToolsSharedProps. */}
+      {!melsCanvasEnabled && (
+        <IdeaWorkspaceTools
+          {...ideaWorkspaceToolsSharedProps}
+          open={toolsPanelOpen}
+          onClose={() => handlePanelChange(null)}
+        />
+      )}
 
       <IdeaContextPanel
         open={contextPanelOpen}
@@ -3397,8 +3597,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         onClose={() => setShortcutsHelpOpen(false)}
         shortcuts={helpShortcuts}
       />
-    </div>
-  );
+      </>
+    );
+  }
 };
 
 export default IdeaMapWorkspace;

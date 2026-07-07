@@ -68,23 +68,36 @@ const Chip: React.FC<{ descriptor: TopBarChipDescriptor; menuItem?: boolean }> =
     tooltip,
     testId,
     id,
+    danger,
   } = descriptor;
 
-  // Overflow menu item — full-width row in the `⋯` dropdown, label always shown.
+  // Overflow menu item — full-width row in the `⋯` dropdown, label always
+  // shown. Adopts the Notebook overflow pattern: danger is the ONLY red
+  // (destructive) tone; all other rows stay monochrome-chrome.
   if (menuItem) {
+    const menuStateClasses = danger
+      ? 'text-c-danger hover:bg-c-danger/10'
+      : 'text-c-text-secondary hover:bg-c-surface-raised';
     return (
       <button
         type="button"
+        role="menuitem"
         onClick={disabled ? undefined : onClick}
         disabled={disabled}
-        className="flex w-full items-center gap-2 px-3 py-2 rounded-md text-sm text-left text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className={`flex w-full items-center gap-2.5 px-3 py-2 rounded-md text-sm text-left disabled:opacity-40 disabled:cursor-not-allowed transition-colors ${menuStateClasses}`}
         title={tooltip ?? label}
         aria-label={label}
         aria-pressed={kind === 'toggle' ? Boolean(active) : undefined}
         data-testid={testId ?? `mels-chip-${id}`}
         data-mels-chip={id}
       >
-        {Icon ? <Icon size={14} aria-hidden="true" className="flex-shrink-0" /> : null}
+        {Icon ? (
+          <Icon
+            size={14}
+            aria-hidden="true"
+            className={`flex-shrink-0 ${danger ? '' : 'text-c-text-muted'}`}
+          />
+        ) : null}
         <span className="flex-1 truncate">{label}</span>
         {dotTone ? (
           <span
@@ -105,8 +118,10 @@ const Chip: React.FC<{ descriptor: TopBarChipDescriptor; menuItem?: boolean }> =
     stateClasses =
       'bg-c-text text-c-bg hover:bg-c-text-secondary disabled:opacity-50 disabled:cursor-not-allowed';
   } else if (active) {
+    // Active/toggle state — neutral blue focus accent (NEVER crimson;
+    // `primary-*` in tailwind = crimson #85182F, reserved for destructive semantics).
     stateClasses =
-      'text-primary-600 dark:text-primary-300 bg-primary-50 dark:bg-primary-500/10 hover:bg-primary-100 dark:hover:bg-primary-500/15';
+      'text-c-focus-solid bg-c-focus/10 hover:bg-c-focus/15';
   } else {
     // Secondary tier — ghost button, lower visual weight.
     stateClasses =
@@ -138,9 +153,43 @@ const Chip: React.FC<{ descriptor: TopBarChipDescriptor; menuItem?: boolean }> =
 };
 
 /**
+ * Group overflow chips into semantic sections (Notebook overflow pattern).
+ * Chips are bucketed by `overflowSection` (order of first appearance),
+ * with the unlabelled (undefined) section kept first so the default
+ * leading actions stay on top. Order within each section is preserved.
+ */
+interface OverflowSection {
+  key: string;
+  heading?: string;
+  chips: TopBarChipDescriptor[];
+}
+
+function groupOverflowSections(chips: TopBarChipDescriptor[]): OverflowSection[] {
+  const sections: OverflowSection[] = [];
+  const byKey = new Map<string, OverflowSection>();
+  chips.forEach((chip) => {
+    const heading = chip.overflowSection;
+    const key = heading ?? '__default__';
+    let section = byKey.get(key);
+    if (!section) {
+      section = { key, heading, chips: [] };
+      byKey.set(key, section);
+      sections.push(section);
+    }
+    section.chips.push(chip);
+  });
+  return sections;
+}
+
+/**
  * Overflow `⋯` menu — folds rare/advanced chips behind a single button
  * per editor-shell-canon § 2 STREFA GÓRNA. Portaled visually via a
  * `z-dropdown`-tokened panel (canon § 3 z-index scale).
+ *
+ * Layout follows the Notebook overflow pattern (`NotebookHamburgerMenu`):
+ * chips are grouped into semantic sections by `overflowSection`, each
+ * section separated by a divider and (when named) an uppercase heading;
+ * the sole destructive `danger` chip renders in red.
  */
 const OverflowMenu: React.FC<{ chips: TopBarChipDescriptor[] }> = ({ chips }) => {
   const [open, setOpen] = useState(false);
@@ -164,6 +213,8 @@ const OverflowMenu: React.FC<{ chips: TopBarChipDescriptor[] }> = ({ chips }) =>
 
   if (chips.length === 0) return null;
 
+  const sections = groupOverflowSections(chips);
+
   return (
     <div className="relative flex-shrink-0" ref={ref}>
       <button
@@ -185,8 +236,20 @@ const OverflowMenu: React.FC<{ chips: TopBarChipDescriptor[] }> = ({ chips }) =>
           data-testid="mels-topbar-overflow-menu"
           onClick={() => setOpen(false)}
         >
-          {chips.map((chip) => (
-            <Chip key={chip.id} descriptor={chip} menuItem />
+          {sections.map((section, sIdx) => (
+            <React.Fragment key={section.key}>
+              {sIdx > 0 ? (
+                <div className="my-1 border-t border-c-border-subtle" aria-hidden="true" />
+              ) : null}
+              {section.heading ? (
+                <div className="px-3 pb-0.5 pt-1 text-[10px] font-semibold uppercase tracking-wide text-c-text-muted">
+                  {section.heading}
+                </div>
+              ) : null}
+              {section.chips.map((chip) => (
+                <Chip key={chip.id} descriptor={chip} menuItem />
+              ))}
+            </React.Fragment>
           ))}
         </div>
       ) : null}
@@ -266,7 +329,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                 setEditing(false);
               }
             }}
-            className="bg-transparent border-b border-primary-500 text-slate-900 dark:text-white text-sm font-medium outline-none min-w-[200px]"
+            className="bg-transparent border-b border-c-focus-solid text-slate-900 dark:text-white text-sm font-medium outline-none min-w-[200px]"
             data-testid="mels-topbar-title-input"
           />
         ) : (
@@ -274,7 +337,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             type="button"
             onClick={() => onTitleChange && setEditing(true)}
             className={`text-slate-900 dark:text-white font-medium truncate ${
-              onTitleChange ? 'hover:text-primary-600 dark:hover:text-primary-400' : ''
+              onTitleChange ? 'hover:text-c-focus-solid' : ''
             }`}
             data-testid="mels-topbar-title"
             disabled={!onTitleChange}

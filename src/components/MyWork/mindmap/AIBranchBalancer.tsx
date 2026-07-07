@@ -74,7 +74,7 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
   if (!isUnbalanced || dismissed || locked) return null;
 
   return (
-    <div className="absolute bottom-16 left-3 z-[88] w-[280px]">
+    <div className="absolute bottom-16 left-3 z-dropdown w-[280px]">
       <div className="rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-info dark:border-c-info shadow-2xl overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
           <Scale size={14} className="text-c-info shrink-0" />

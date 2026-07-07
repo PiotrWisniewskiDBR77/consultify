@@ -100,6 +100,13 @@ router.get('/rollups', TaskController.getTaskHierarchyRollups);
  */
 router.get('/workflow-config', TaskController.getWorkflowConfig);
 
+/**
+ * POST /api/tasks/:id/sections/:sectionKey/generate
+ * Wzorzec N — AI generacja treści karty-sekcji Task (strategy|execution|evidence|dependencies).
+ * ⚠ Prompty w kodzie (taskSectionGenerationService) — weryfikacja Piotra przed live.
+ */
+router.post('/:id/sections/:sectionKey/generate', TaskController.generateSection);
+
 // ==========================================
 // V4-TASK-02: CUSTOM FIELD SCHEMA CRUD
 // (before /:id to avoid Express matching "custom-fields" as an id)

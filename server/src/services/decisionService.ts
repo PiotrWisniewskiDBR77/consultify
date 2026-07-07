@@ -66,6 +66,137 @@ export interface MakeDecisionInput {
 }
 
 // ==========================================
+// AI SECTION GENERATION (wzorzec N — karty Decyzji)
+// ==========================================
+//
+// Decision cards have NO `decision_section_types` table (unlike Initiative's
+// `initiative_section_types.ai_prompt_template`). Per _WZORZEC_N §12 / P0.2 the
+// prompts live as CODE CONSTANTS here — the BCG per-card instructions from
+// `_ARTEFAKTY_TRESC_KART_BCG_2026-07-06.md §2`, wrapped by the BCG doctrine (§0)
+// in the system prompt. AI proposes → human reviews/edits/accepts in the UI;
+// nothing here auto-mutates or transitions the decision.
+
+/** Section keys aligned with the DecisionDetailView N-cards (camelCase). */
+export type DecisionSectionKey =
+  | 'description'
+  | 'alternatives'
+  | 'risk'
+  | 'consequencesOfInaction';
+
+/** BCG doctrine (§0) — one system prompt for every Decision card. */
+const DECISION_DOCTRINE_SYSTEM_PROMPT_PL = `Jesteś partnerem konsultingowym poziomu BCG, przygotowującym JEDNĄ kartę (sekcję) decyzji dla kadry zarządzającej.
+REGUŁY BEZWZGLĘDNE (złamanie = FAIL):
+1. ANSWER-FIRST (piramida Minto): pierwsze zdanie niesie konkluzję/tezę, nie rozgrzewkę.
+2. MECE: listy wzajemnie wykluczające się i wyczerpujące; brak nakładania i luk.
+3. KWANTYFIKACJA Z JAWNYM ZAŁOŻENIEM: każda liczba ma źródło LUB oznaczenie „szacunek: [założenie]". Nigdy gołe liczby.
+4. UGRUNTOWANIE: opieraj się TYLKO na dostarczonym kontekście decyzji. NIE zmyślaj faktów o firmie.
+5. ZERO FILLERA: bez ozdobników, każde zdanie niesie informację.
+6. FALSYFIKOWALNOŚĆ: tezy testowalne („Jeśli X, to Y, bo Z"), nie życzeniowe.
+7. UCZCIWA NIEPEWNOŚĆ: gdy brak danych — powiedz wprost + co trzeba zbadać.
+8. JĘZYK: cała proza po POLSKU (wyjątek: akronimy/metodyki: RACI, RAID, KPI, MECE, ROI, CAPEX, OPEX).
+Anty-wzorce = FAIL: ogólniki bez liczb, listy 1-elementowe tam gdzie wymagane ≥2, „TBD" bez planu uzupełnienia, przepisanie tytułu jako treści.
+Gdy proszą o JSON — zwróć WYŁĄCZNIE poprawny JSON (bez markdown, bez komentarza). Gdy o prozę — answer-first.`;
+
+const DECISION_DOCTRINE_SYSTEM_PROMPT_EN = `You are a BCG-grade consulting partner drafting ONE card (section) of an executive decision.
+ABSOLUTE RULES (breaking any = FAIL):
+1. ANSWER-FIRST (Minto pyramid): the first sentence carries the conclusion, not a preamble.
+2. MECE: lists mutually exclusive and collectively exhaustive; no overlaps, no gaps.
+3. QUANTIFICATION WITH EXPLICIT ASSUMPTIONS: every number has a source OR is marked "estimate: [assumption]". Never bare numbers.
+4. GROUNDING: rely ONLY on the supplied decision context. Do NOT fabricate facts about the company.
+5. ZERO FILLER: no ornament; every sentence carries information.
+6. FALSIFIABILITY: testable claims ("If X, then Y, because Z"), not wishful.
+7. HONEST UNCERTAINTY: when data is missing, say so + what must be investigated.
+Anti-patterns = FAIL: generic claims without numbers, single-item lists where ≥2 are required, "TBD" without a plan, restating the title as content.
+When JSON is requested — return ONLY valid JSON (no markdown, no commentary). When prose — answer-first.`;
+
+/**
+ * Per-card USER prompt instructions (BCG §2). `{{title}}`, `{{description}}`,
+ * `{{context}}`, `{{alternatives}}`, `{{risks}}`, `{{language}}` are interpolated
+ * from the decision record. Prose sections return prose; structured sections
+ * request JSON with the exact shape the UI already consumes.
+ */
+const DECISION_SECTION_PROMPTS: Record<
+  DecisionSectionKey,
+  { returnsJson: boolean; template: string }
+> = {
+  // Description/Context — problem decyzyjny 1 zdanie + tło + „dlaczego TERAZ".
+  description: {
+    returnsJson: false,
+    template: `Napisz kartę „Opis / Kontekst" tej decyzji (proza, {{language}}).
+Struktura (answer-first): (1) problem decyzyjny w JEDNYM zdaniu — co dokładnie jest rozstrzygane; (2) tło 2–3 zdania (fakty z kontekstu, bez zmyślania); (3) dlaczego TERAZ — koszt zwłoki (skwantyfikowany z założeniem, jeśli brak danych → „do ustalenia: [co]").
+Tytuł decyzji: {{title}}
+Dotychczasowy opis: {{description}}
+Dodatkowy kontekst: {{context}}`,
+  },
+  // Alternatives — ≥2 realne opcje + „nie robić nic", każda pros/cons MECE + koszt/czas.
+  alternatives: {
+    returnsJson: true,
+    template: `Zaproponuj realne opcje decyzyjne. Zwróć WYŁĄCZNIE poprawny JSON:
+{"alternatives":[{"title":"...","description":"...","pros":["...","..."],"cons":["...","..."],"estimatedCostTime":"..."}]}
+Wymogi: ≥2 realne opcje PLUS zawsze opcja „Nie robić nic" z jej konsekwencją. pros[] i cons[] MECE, ≥2 pozycje każda, konkretne (nie ogólniki). estimatedCostTime = rząd wielkości + jednostka + założenie (np. „~150k PLN, 3 mies., zakł. 2 FTE").
+Tytuł decyzji: {{title}}
+Opis/kontekst: {{description}} {{context}}
+Język treści: {{language}}`,
+  },
+  // Risk/Impact — wpływ na scope/schedule/cost/quality (low/med/high) + uzasadnienie.
+  risk: {
+    returnsJson: true,
+    template: `Oceń ryzyko i wpływ tej decyzji. Zwróć WYŁĄCZNIE poprawny JSON:
+{"risks":[{"title":"...","probability":"low|medium|high","impact":"low|medium|high","category":"scope|schedule|cost|quality|business|operational","mitigation":"...","contingency":"..."}]}
+Wymogi: ≥2 ryzyka. mitigation (prewencja) ≠ contingency (plan B). Każde ryzyko z konkretnym, krótkim uzasadnieniem w title/mitigation. Pokryj wpływ na scope/schedule/cost/quality tam gdzie istotny.
+Tytuł decyzji: {{title}}
+Opis/kontekst: {{description}} {{context}}
+Rozważane opcje: {{alternatives}}
+Język treści: {{language}}`,
+  },
+  // Consequences of Inaction — najważniejsza karta: co jeśli NIE zdecydujemy + REKOMENDACJA + horyzont.
+  consequencesOfInaction: {
+    returnsJson: false,
+    template: `Napisz kartę „Konsekwencje bezczynności + Rekomendacja" (proza, {{language}}). To NAJWAŻNIEJSZA karta — tu konsultant mówi co zrobić.
+Struktura (answer-first): (1) co się stanie, jeśli decyzja NIE zostanie podjęta — konkretne konsekwencje w horyzoncie 7/30/90 dni (skwantyfikowane z założeniem); (2) JEDNA rekomendacja, jednoznaczna i uzasadniona (dlaczego ta opcja, nie inne); (3) horyzont realizacji rekomendacji.
+Tytuł decyzji: {{title}}
+Opis/kontekst: {{description}} {{context}}
+Opcje: {{alternatives}}
+Ryzyka: {{risks}}`,
+  },
+};
+
+let _decisionLlmInstance: any = null;
+async function getDecisionLLM(): Promise<any> {
+  if (_decisionLlmInstance) return _decisionLlmInstance;
+  try {
+    const mod = await import('./ai/llmService.js');
+    _decisionLlmInstance = (mod as any).llmService || (mod as any).default;
+    return _decisionLlmInstance;
+  } catch {
+    logger.warn('[DecisionService] LLM Service not available');
+    return null;
+  }
+}
+
+function interpolateDecisionTemplate(
+  template: string,
+  vars: Record<string, string>
+): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_m, key) => {
+    const v = vars[key];
+    if (v === undefined || v === null || v === '') return '[nie podano]';
+    return String(v);
+  });
+}
+
+export interface GenerateDecisionSectionResult {
+  sectionKey: DecisionSectionKey;
+  /** Raw model text (prose sections) or the JSON string (structured sections). */
+  content: string;
+  isJson: boolean;
+  /** Parsed JSON for structured sections (undefined for prose / parse failure). */
+  parsedContent?: any;
+  model: string;
+  tokensUsed: number;
+}
+
+// ==========================================
 // SERVICE IMPLEMENTATION
 // ==========================================
 
@@ -557,6 +688,113 @@ class DecisionService {
     }
   }
 
+  /**
+   * Generate BCG-grade draft content for ONE decision card (wzorzec N).
+   *
+   * Grounds the prompt in the live decision record (title/description/context/
+   * options/risks) and calls the PREMIUM LLM tier with the BCG doctrine system
+   * prompt. Returns the draft to the caller — the UI shows it as `ai-draft` for
+   * the human to review/edit/accept. This method NEVER writes to the DB; it is a
+   * pure proposer (AI proposes → human accepts), matching the Decision N-card
+   * lifecycle and the Initiative generation pattern.
+   *
+   * @param decisionId  target decision (org-scoped check done by the controller)
+   * @param sectionKey  one of DECISION_SECTION_PROMPTS keys
+   * @param opts.language 'pl' | 'en' (defaults to 'pl')
+   * @param opts.context extra free-text context (Additional context field)
+   */
+  async generateSection(
+    decisionId: string,
+    sectionKey: DecisionSectionKey,
+    opts?: { language?: 'pl' | 'en'; context?: string }
+  ): Promise<GenerateDecisionSectionResult> {
+    const spec = DECISION_SECTION_PROMPTS[sectionKey];
+    if (!spec) {
+      throw new Error(`Unknown decision section "${sectionKey}"`);
+    }
+
+    const decision = await this.getDecision(decisionId);
+    if (!decision) {
+      throw new Error(`Decision "${decisionId}" not found`);
+    }
+
+    const language = opts?.language === 'en' ? 'en' : 'pl';
+    const optionsSummary = Array.isArray(decision.options)
+      ? decision.options
+          .map((o) => `${o.label}${o.description ? ` — ${o.description}` : ''}`)
+          .join('; ')
+      : '';
+
+    const userPrompt = interpolateDecisionTemplate(spec.template, {
+      title: decision.title || '',
+      description: decision.description || '',
+      context: opts?.context || decision.criteria || '',
+      alternatives: optionsSummary,
+      risks: decision.decisionRationale || '',
+      language: language === 'pl' ? 'Polish' : 'English',
+    });
+
+    const systemPrompt =
+      language === 'pl'
+        ? DECISION_DOCTRINE_SYSTEM_PROMPT_PL
+        : DECISION_DOCTRINE_SYSTEM_PROMPT_EN;
+
+    const llm = await getDecisionLLM();
+    if (!llm) {
+      // Honest degraded path — no LLM provider configured.
+      const msg =
+        language === 'pl'
+          ? '[Sekcja wymaga skonfigurowanego dostawcy AI. Spróbuj ponownie później.]'
+          : '[This section requires a configured AI provider. Please try again later.]';
+      return {
+        sectionKey,
+        content: msg,
+        isJson: false,
+        parsedContent: undefined,
+        model: 'placeholder',
+        tokensUsed: 0,
+      };
+    }
+
+    const result = await llm.call({
+      type: 'text',
+      modelConfig: { id: 'premium' },
+      systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+      maxTokens: 3072,
+      temperature: 0.4,
+      cache: true,
+      cacheTtl: 3600,
+      timeoutMs: 150000,
+    });
+
+    const content = String(result?.content || '');
+    const usage = (result?.usage || {}) as Record<string, number>;
+    const tokensUsed =
+      usage.totalTokens || usage.completionTokens || Math.floor(content.length / 4);
+    const model = String(result?.model || result?.modelId || 'llm-premium');
+
+    let parsedContent: any = undefined;
+    if (spec.returnsJson) {
+      try {
+        const jsonMatch =
+          content.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || [null, content];
+        parsedContent = JSON.parse(jsonMatch[1] || content);
+      } catch {
+        parsedContent = undefined;
+      }
+    }
+
+    return {
+      sectionKey,
+      content,
+      isJson: spec.returnsJson,
+      parsedContent,
+      model,
+      tokensUsed,
+    };
+  }
+
   private async unblockRelatedItems(decision: Decision): Promise<void> {
     // TODO: Update task/initiative status to unblocked
     if (decision.taskId) {
@@ -594,4 +832,9 @@ export const cancelDecision = (id: string, by: string, reason?: string) =>
 export const getProjectDecisions = (projectId: string, orgId: string) =>
   decisionService.getProjectDecisions(projectId, orgId);
 export const getDecisionHistory = (id: string) => decisionService.getDecisionHistory(id);
+export const generateDecisionSection = (
+  decisionId: string,
+  sectionKey: DecisionSectionKey,
+  opts?: { language?: 'pl' | 'en'; context?: string }
+) => decisionService.generateSection(decisionId, sectionKey, opts);
 export const processExpiredDecisions = () => decisionService.processExpiredDecisions();

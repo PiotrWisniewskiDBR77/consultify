@@ -212,6 +212,38 @@ export class TaskService {
   }
 
   /**
+   * Wzorzec N — AI generacja treści jednej karty-sekcji Task.
+   *
+   * Prompty są STAŁE w kodzie (`taskSectionGenerationService.TASK_SECTION_PROMPTS`),
+   * bo NIE MA tabeli `task_section_types` z `ai_prompt_template`. Doktryna BCG §0
+   * w system-promptcie, instrukcja karty §3 w user-promptcie.
+   *
+   * ⚠ Prompty zmieniają output klienta → wymagają weryfikacji Piotra przed live.
+   *
+   * @param taskId     — id zadania (do pobrania kontekstu)
+   * @param sectionKey — strategy | execution | evidence | dependencies
+   */
+  async generateSection(
+    taskId: string,
+    sectionKey: 'strategy' | 'execution' | 'evidence' | 'dependencies',
+    options: { language?: string } = {}
+  ): Promise<unknown> {
+    const task = await this.getTask(taskId);
+    const { generateTaskSection } = await import('./taskSectionGenerationService.js');
+    return generateTaskSection(
+      sectionKey,
+      {
+        title: task.title,
+        description: task.description || null,
+        taskType: (task as unknown as { taskType?: string }).taskType || null,
+        priority: task.priority || null,
+        status: task.status || null,
+      },
+      { language: options.language }
+    );
+  }
+
+  /**
    * Get task statistics for a project
    */
   async getTaskStats(projectId: string): Promise<TaskStats> {

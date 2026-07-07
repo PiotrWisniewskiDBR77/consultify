@@ -126,7 +126,7 @@ export const RailResizeHandle: React.FC<RailResizeHandleProps> = ({
       onPointerUp={stopDrag}
       onPointerCancel={stopDrag}
       onKeyDown={onKeyDown}
-      className={`${positionClass} group hover:bg-primary-300/40 dark:hover:bg-primary-500/30 active:bg-primary-400/60 transition-colors focus-visible:outline-none focus-visible:bg-primary-400/60 z-10`}
+      className={`${positionClass} group hover:bg-c-focus/40 active:bg-c-focus/60 transition-colors focus-visible:outline-none focus-visible:bg-c-focus/60 z-10`}
       data-testid={testId ?? `mels-rail-resize-${side}`}
       data-mels-resize={side}
     >

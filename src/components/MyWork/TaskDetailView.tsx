@@ -40,6 +40,7 @@ import {
   Scale,
   Search,
   Share2,
+  ShieldCheck,
   Sparkles,
   Tag,
   Target,
@@ -75,6 +76,10 @@ import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 import { NModeCanvas } from '../shared/NModeLayout/NModeCanvas';
 // ── N-Mode Layout (shared) ──────────────────────────────────────────────────
+import {
+  NModeCardState,
+  type NModeCardStatus,
+} from '../shared/NModeLayout/NModeCardState';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
 import { NModePropertiesStrip } from '../shared/NModeLayout/NModePropertiesStrip';
@@ -127,6 +132,7 @@ import { AIConnections } from './shared/AIConnections';
 import { buildAskAIMessage } from './shared/askAiHelper';
 // ── Presentation Mode Switcher ───────────────────────────────────────────────
 import { PresentationModeSwitcher } from './shared/PresentationModeSwitcher';
+import { ReadEditToggle } from './shared/ReadEditToggle';
 import { RelatedContext } from './shared/RelatedContext';
 
 interface TaskDetailViewProps {
@@ -256,6 +262,32 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   // Tags
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
+
+  // ── Wzorzec N: stan kart AI-draft per sekcja (§3.2) + flaga „AI-generated". ──
+  // Klucze = id sekcji AI-zapisywalnych; mapowanie na backend section keys niżej.
+  type AICardKey = 'description-scope' | 'checklist' | 'dependencies' | 'evidence';
+  const [cardState, setCardState] = useState<Record<AICardKey, NModeCardStatus>>({
+    'description-scope': 'edited',
+    checklist: 'edited',
+    dependencies: 'edited',
+    evidence: 'edited',
+  });
+  const [cardAI, setCardAI] = useState<Record<AICardKey, boolean>>({
+    'description-scope': false,
+    checklist: false,
+    dependencies: false,
+    evidence: false,
+  });
+  const setCard = useCallback((key: AICardKey, next: NModeCardStatus) => {
+    setCardState((prev) => ({ ...prev, [key]: next }));
+  }, []);
+  // Backend key per sekcja (taskSectionGenerationService).
+  const CARD_BACKEND_KEY: Record<AICardKey, string> = {
+    'description-scope': 'strategy',
+    checklist: 'execution',
+    dependencies: 'dependencies',
+    evidence: 'evidence',
+  };
 
   // T009: Suggested ideas (private) while editing task
   const [suggestedIdeas, setSuggestedIdeas] = useState<
@@ -577,6 +609,10 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const reducedMotion = useReducedMotion();
   const motionDuration = reducedMotion ? 0 : 0.22;
   const [activeNSection, setActiveNSection] = useState('description-scope');
+  // ── Read/Edit toggle (Menu 1, klasa S) ─────────────────────────────────────
+  // "Do pokazania klientowi": read = karty read-only (hideActions), główne pola
+  // wyłączone, pasek akcji stanu (Reassign/Delay/Mark complete) ukryty.
+  const [readMode, setReadMode] = useState(false);
 
   useEffect(() => {
     if (presentationMode === 'c') {
@@ -1985,6 +2021,12 @@ Return ONLY the final comment text.`;
         component: null,
       },
       {
+        id: 'evidence',
+        icon: ShieldCheck,
+        label: { en: 'Evidence', pl: 'Dowody' },
+        component: null,
+      },
+      {
         id: 'governance',
         icon: Users,
         label: { en: 'RACI & Escalation', pl: 'RACI i eskalacja' },
@@ -2154,6 +2196,91 @@ Return ONLY the final comment text.`;
     );
   };
 
+  // ── Wzorzec N: aplikacja wygenerowanej treści karty na pola ──────────────
+  const applyGeneratedCard = useCallback((key: AICardKey, content: any) => {
+    if (!content) return;
+    if (key === 'description-scope') {
+      // Strategy → description (+ scal why/expectedOutcome jako blok, bo ten widok
+      // nie ma dedykowanych pól why/outcome; nie gubimy treści).
+      if (typeof content === 'string') {
+        setDescription(content);
+      } else if (typeof content === 'object') {
+        const parts: string[] = [];
+        if (content.description) parts.push(String(content.description));
+        if (content.why) parts.push(`${isPolish ? 'Po co' : 'Why'}: ${content.why}`);
+        if (content.expectedOutcome)
+          parts.push(`${isPolish ? 'Oczekiwany efekt' : 'Expected outcome'}: ${content.expectedOutcome}`);
+        if (parts.length) setDescription(parts.join('\n\n'));
+      }
+    } else if (key === 'checklist') {
+      const items: any[] = Array.isArray(content)
+        ? content
+        : Array.isArray(content?.checklist)
+          ? content.checklist
+          : Array.isArray(content?.acceptanceCriteria)
+            ? content.acceptanceCriteria
+            : [];
+      if (items.length) {
+        setChecklist(
+          items.map((it: any) => ({
+            id: Math.random().toString(36).slice(2, 11),
+            text: typeof it === 'string' ? it : it.text || it.title || '',
+            completed: false,
+          }))
+        );
+      }
+    } else if (key === 'evidence') {
+      // Backend zwraca {"evidence": ["dowód 1", ...]} — dodajemy jako pozycje
+      // wymaganych dowodów (typ DOCUMENT), NIE nadpisując istniejących ręcznych.
+      const raw: any[] = Array.isArray(content)
+        ? content
+        : Array.isArray(content?.evidence)
+          ? content.evidence
+          : [];
+      const items = raw
+        .map((it: any) => (typeof it === 'string' ? it : it?.text || it?.title || ''))
+        .filter((t: string) => t.trim().length > 0)
+        .map((t: string) => ({
+          id: Math.random().toString(36).slice(2, 11),
+          type: 'DOCUMENT' as EvidenceType,
+          title: t,
+        }));
+      if (items.length) {
+        setEvidenceItems((prev) => [...prev, ...items]);
+      }
+    }
+    // 'dependencies' → treść informacyjna; ten widok trzyma zależności jako
+    // powiązane zadania (DependenciesSection), więc AI-draft pokazujemy jako
+    // sugestie w opisie sekcji bez nadpisywania realnych powiązań.
+  }, [isPolish]);
+
+  // ── Wzorzec N: generacja karty przez AI (onRegenerate / onGenerate) ──────
+  const generateCard = useCallback(
+    async (key: AICardKey) => {
+      if (!taskId) {
+        toast.error(
+          isPolish ? 'Zapisz zadanie przed generacją AI' : 'Save the task before generating with AI'
+        );
+        return;
+      }
+      setCard(key, 'generating');
+      try {
+        const backendKey = CARD_BACKEND_KEY[key];
+        const result: any = await Api.post(`/tasks/${taskId}/sections/${backendKey}/generate`, {
+          language: isPolish ? 'pl' : 'en',
+        });
+        applyGeneratedCard(key, result?.content);
+        setCardAI((p) => ({ ...p, [key]: true }));
+        setCard(key, 'ai-draft');
+      } catch (err) {
+        console.error('[TaskDetailView] section generation failed', err);
+        setCard(key, 'error');
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [taskId, isPolish, applyGeneratedCard, setCard]
+  );
+
   // ── Build N-mode sections with components ────────────────────────────────
   const nModeSectionsWithContent: NModeSection[] = useMemo(() => {
     return taskNSections.map((section) => {
@@ -2229,19 +2356,22 @@ Return ONLY the final comment text.`;
                     <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       {isPolish ? 'Opis zadania' : 'Task description'}
                     </label>
-                    <AIFieldEnhancer
-                      fieldKey="task-description"
-                      sectionLabel={isPolish ? 'Opis zadania' : 'Task Description'}
-                      currentValue={description}
-                      onApply={setDescription}
-                      artifactContext={{ title, status, priority, type: 'task' }}
-                    />
+                    {!readMode && (
+                      <AIFieldEnhancer
+                        fieldKey="task-description"
+                        sectionLabel={isPolish ? 'Opis zadania' : 'Task Description'}
+                        currentValue={description}
+                        onApply={setDescription}
+                        artifactContext={{ title, status, priority, type: 'task' }}
+                      />
+                    )}
                   </div>
                   <textarea
                     value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    onChange={(e) => !readMode && setDescription(e.target.value)}
+                    readOnly={readMode}
                     rows={10}
-                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[200px]"
+                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus transition-colors min-h-[200px]"
                     placeholder={
                       isPolish
                         ? 'Opisz zadanie szczegółowo — co należy zrobić, dlaczego jest to ważne, jakie są ograniczenia...'
@@ -2250,7 +2380,8 @@ Return ONLY the final comment text.`;
                   />
                 </div>
 
-                {/* 2.1) Relevant ideas (T009) */}
+                {/* 2.1) Relevant ideas (T009) — hidden in Read (do pokazania klientowi) */}
+                {!readMode && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
@@ -2343,8 +2474,10 @@ Return ONLY the final comment text.`;
                     </div>
                   )}
                 </div>
+                )}
 
-                {/* 2.2) Relevant notes (T011) */}
+                {/* 2.2) Relevant notes (T011) — hidden in Read (do pokazania klientowi) */}
+                {!readMode && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
@@ -2440,6 +2573,7 @@ Return ONLY the final comment text.`;
                     </div>
                   )}
                 </div>
+                )}
 
                 {/* 3) Expected Outcome */}
                 <div className="space-y-2">
@@ -2447,19 +2581,22 @@ Return ONLY the final comment text.`;
                     <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       {isPolish ? 'Oczekiwany rezultat' : 'Expected outcome'}
                     </label>
-                    <AIFieldEnhancer
-                      fieldKey="task-expected-outcome"
-                      sectionLabel={isPolish ? 'Oczekiwany rezultat' : 'Expected Outcome'}
-                      currentValue={expectedOutcome}
-                      onApply={setExpectedOutcome}
-                      artifactContext={{ title, status, priority, type: 'task' }}
-                    />
+                    {!readMode && (
+                      <AIFieldEnhancer
+                        fieldKey="task-expected-outcome"
+                        sectionLabel={isPolish ? 'Oczekiwany rezultat' : 'Expected Outcome'}
+                        currentValue={expectedOutcome}
+                        onApply={setExpectedOutcome}
+                        artifactContext={{ title, status, priority, type: 'task' }}
+                      />
+                    )}
                   </div>
                   <textarea
                     value={expectedOutcome}
-                    onChange={(e) => setExpectedOutcome(e.target.value)}
+                    onChange={(e) => !readMode && setExpectedOutcome(e.target.value)}
+                    readOnly={readMode}
                     rows={8}
-                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[160px]"
+                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus transition-colors min-h-[160px]"
                     placeholder={
                       isPolish
                         ? 'Zdefiniuj mierzalny rezultat — co oznacza sukces, jakie kryteria akceptacji...'
@@ -2484,13 +2621,15 @@ Return ONLY the final comment text.`;
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
                   {isPolish ? 'Lista kontrolna' : 'Checklist'}
                 </h2>
-                <button
-                  onClick={addChecklistItem}
-                  className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
-                >
-                  <Plus size={13} />
-                  {isPolish ? 'Dodaj element' : 'Add item'}
-                </button>
+                {!readMode && (
+                  <button
+                    onClick={addChecklistItem}
+                    className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-c-focus transition-colors"
+                  >
+                    <Plus size={13} />
+                    {isPolish ? 'Dodaj element' : 'Add item'}
+                  </button>
+                )}
               </div>
 
               {/* Progress counter */}
@@ -2530,7 +2669,10 @@ Return ONLY the final comment text.`;
                       >
                         {/* Checkbox */}
                         <button
-                          onClick={() => updateChecklistItem(item.id, { completed: !done })}
+                          onClick={() =>
+                            !readMode && updateChecklistItem(item.id, { completed: !done })
+                          }
+                          disabled={readMode}
                           className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition duration-200 ${
                             done
                               ? 'bg-emerald-500 border-emerald-500 text-white'
@@ -2563,7 +2705,10 @@ Return ONLY the final comment text.`;
                         <input
                           type="text"
                           value={item.text}
-                          onChange={(e) => updateChecklistItem(item.id, { text: e.target.value })}
+                          onChange={(e) =>
+                            !readMode && updateChecklistItem(item.id, { text: e.target.value })
+                          }
+                          readOnly={readMode}
                           placeholder={isPolish ? 'Wprowadź element...' : 'Enter item...'}
                           className={`flex-1 bg-transparent text-sm leading-snug focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 transition-colors ${
                             done
@@ -2573,12 +2718,14 @@ Return ONLY the final comment text.`;
                         />
 
                         {/* Delete */}
-                        <button
-                          onClick={() => removeChecklistItem(item.id)}
-                          className="mt-0.5 opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-danger-50 dark:hover:bg-danger-500/20 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition"
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                        {!readMode && (
+                          <button
+                            onClick={() => removeChecklistItem(item.id)}
+                            className="mt-0.5 opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-danger-50 dark:hover:bg-danger-500/20 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
                       </div>
                     );
                   })}
@@ -2586,7 +2733,7 @@ Return ONLY the final comment text.`;
               )}
 
               {/* Quick-add row at the bottom */}
-              {totalCount > 0 && (
+              {totalCount > 0 && !readMode && (
                 <button
                   onClick={addChecklistItem}
                   className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-emerald-500 dark:hover:text-emerald-400 py-1.5 px-3 rounded-lg hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-colors"
@@ -2646,13 +2793,15 @@ Return ONLY the final comment text.`;
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
                   {isPolish ? 'Pomysły realizacji' : 'Implementation Ideas'}
                 </h2>
-                <button
-                  onClick={addIdea}
-                  className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
-                >
-                  <Plus size={13} />
-                  {isPolish ? 'Dodaj pomysł' : 'Add idea'}
-                </button>
+                {!readMode && (
+                  <button
+                    onClick={addIdea}
+                    className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-c-focus transition-colors"
+                  >
+                    <Plus size={13} />
+                    {isPolish ? 'Dodaj pomysł' : 'Add idea'}
+                  </button>
+                )}
               </div>
 
               {/* Ideas list */}
@@ -2697,6 +2846,7 @@ Return ONLY the final comment text.`;
                               <div className="flex items-center gap-1.5 pt-1">
                                 <button
                                   onClick={() =>
+                                    !readMode &&
                                     setImplementationIdeas(
                                       implementationIdeas.map((i) =>
                                         i.id === idea.id
@@ -2705,7 +2855,8 @@ Return ONLY the final comment text.`;
                                       )
                                     )
                                   }
-                                  className={`p-1 rounded-md transition-colors ${
+                                  disabled={readMode}
+                                  className={`p-1 rounded-md transition-colors disabled:cursor-default ${
                                     idea.votedByMe
                                       ? 'text-emerald-500 dark:text-emerald-400 bg-emerald-500/10'
                                       : 'text-slate-500 dark:text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-emerald-500/10'
@@ -2719,6 +2870,7 @@ Return ONLY the final comment text.`;
                                 </span>
                                 <button
                                   onClick={() =>
+                                    !readMode &&
                                     setImplementationIdeas(
                                       implementationIdeas.map((i) =>
                                         i.id === idea.id
@@ -2731,7 +2883,8 @@ Return ONLY the final comment text.`;
                                       )
                                     )
                                   }
-                                  className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-danger-500 dark:hover:text-danger-400 hover:bg-danger-500/10 transition-colors"
+                                  disabled={readMode}
+                                  className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-danger-500 dark:hover:text-danger-400 hover:bg-danger-500/10 transition-colors disabled:cursor-default"
                                   title={isPolish ? 'Głosuj przeciw' : 'Vote down'}
                                 >
                                   <ThumbsDown size={14} />
@@ -2781,12 +2934,14 @@ Return ONLY the final comment text.`;
                                   type="text"
                                   value={idea.title}
                                   onChange={(e) =>
+                                    !readMode &&
                                     setImplementationIdeas(
                                       implementationIdeas.map((i) =>
                                         i.id === idea.id ? { ...i, title: e.target.value } : i
                                       )
                                     )
                                   }
+                                  readOnly={readMode}
                                   className="w-full text-sm font-medium bg-transparent text-slate-800 dark:text-slate-200 focus:outline-none"
                                   placeholder={isPolish ? 'Nazwa podejścia...' : 'Approach name...'}
                                 />
@@ -2795,12 +2950,14 @@ Return ONLY the final comment text.`;
                                 <textarea
                                   value={idea.description}
                                   onChange={(e) =>
+                                    !readMode &&
                                     setImplementationIdeas(
                                       implementationIdeas.map((i) =>
                                         i.id === idea.id ? { ...i, description: e.target.value } : i
                                       )
                                     )
                                   }
+                                  readOnly={readMode}
                                   rows={3}
                                   className="w-full mt-1 px-0 py-1 bg-transparent text-xs leading-relaxed text-slate-600 dark:text-slate-400 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y min-h-[48px]"
                                   placeholder={
@@ -2812,6 +2969,7 @@ Return ONLY the final comment text.`;
                               </div>
 
                               {/* Actions */}
+                              {!readMode && (
                               <div className="flex items-center gap-1 shrink-0">
                                 <select
                                   value={idea.status}
@@ -2868,6 +3026,7 @@ Return ONLY the final comment text.`;
                                   artifactContext={{ title, status, priority, type: 'task' }}
                                 />
                               </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -2904,6 +3063,7 @@ Return ONLY the final comment text.`;
               onRemoveRisk={removeRisk}
               onAIGenerate={generateRisksAI}
               isGeneratingAI={isGeneratingRisks}
+              locked={readMode}
               artifactType="task"
               artifactContext={{ title, status, priority, type: 'task' }}
               fieldKeyPrefix="t"
@@ -2925,7 +3085,67 @@ Return ONLY the final comment text.`;
                     status: item.status,
                     priority: item.priority,
                   }))}
+                readOnly={readMode}
                 showSampleDataWhenEmpty
+              />
+            </div>
+          );
+          break;
+
+        // ── Evidence & Acceptance (AI-zapisywalna karta, sectionKey=evidence) ──
+        case 'evidence':
+          component = (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  {isPolish ? 'Dowody i akceptacja' : 'Evidence & Acceptance'}
+                </h2>
+              </div>
+              <EvidenceSection
+                evidenceRequired={evidenceRequired}
+                evidenceItems={evidenceItems}
+                requiresAcceptance={requiresAcceptance}
+                acceptanceType={acceptanceType}
+                acceptorId={acceptorId}
+                signedOff={signedOff}
+                signedOffAt={signedOffAt}
+                signedOffBy={signedOffBy}
+                readOnly={readMode}
+                availableUsers={users.map((u) => ({
+                  id: u.id,
+                  name: `${u.firstName} ${u.lastName}`,
+                }))}
+                onEvidenceRequiredChange={setEvidenceRequired}
+                onAddEvidence={(item) =>
+                  setEvidenceItems([
+                    ...evidenceItems,
+                    { ...item, id: Math.random().toString(36).substr(2, 9) },
+                  ])
+                }
+                onRemoveEvidence={(id) =>
+                  setEvidenceItems(evidenceItems.filter((e) => e.id !== id))
+                }
+                onVerifyEvidence={(id) =>
+                  setEvidenceItems(
+                    evidenceItems.map((e) =>
+                      e.id === id
+                        ? { ...e, verified: true, verifiedAt: new Date().toISOString() }
+                        : e
+                    )
+                  )
+                }
+                onAcceptanceChange={(requires, type, acceptor) => {
+                  setRequiresAcceptance(requires);
+                  setAcceptanceType(type);
+                  setAcceptorId(acceptor);
+                }}
+                onSignOff={() => {
+                  setSignedOff(true);
+                  setSignedOffAt(new Date().toISOString());
+                  setSignedOffBy('Current User');
+                  toast.success(isPolish ? 'Zadanie podpisane' : 'Task signed off');
+                }}
+                expanded
               />
             </div>
           );
@@ -2947,6 +3167,7 @@ Return ONLY the final comment text.`;
                         ? 'RACI (macierz odpowiedzialności)'
                         : 'RACI (responsibility matrix)'}
                     </h3>
+                    {!readMode && (
                     <button
                       onClick={() => {
                         const fallbackUser = users[0];
@@ -2973,6 +3194,7 @@ Return ONLY the final comment text.`;
                     >
                       + {isPolish ? 'Dodaj osobę' : 'Add person'}
                     </button>
+                    )}
                   </div>
                   <div className="overflow-auto flex-1">
                     <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full text-sm">
@@ -3022,6 +3244,7 @@ Return ONLY the final comment text.`;
                                 </div>
                               </td>
                               <td className="py-2 text-right">
+                                {!readMode && (
                                 <div className="inline-flex items-center gap-1">
                                   <button
                                     onClick={() => {
@@ -3045,6 +3268,7 @@ Return ONLY the final comment text.`;
                                     <Trash2 size={13} />
                                   </button>
                                 </div>
+                                )}
                               </td>
                             </tr>
                           ))
@@ -3060,6 +3284,7 @@ Return ONLY the final comment text.`;
                     <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
                       {isPolish ? 'Przypomnienia' : 'Reminders'}
                     </h3>
+                    {!readMode && (
                     <button
                       onClick={() => {
                         setEditingReminderId('__new__');
@@ -3079,6 +3304,7 @@ Return ONLY the final comment text.`;
                     >
                       + {isPolish ? 'Dodaj reminder' : 'Add reminder'}
                     </button>
+                    )}
                   </div>
                   <div className="overflow-auto flex-1">
                     <table className="w-full text-sm">
@@ -3144,6 +3370,7 @@ Return ONLY the final comment text.`;
                                 </div>
                               </td>
                               <td className="py-2 text-right">
+                                {!readMode && (
                                 <div className="inline-flex items-center gap-1">
                                   <button
                                     onClick={() => {
@@ -3167,6 +3394,7 @@ Return ONLY the final comment text.`;
                                     <Trash2 size={13} />
                                   </button>
                                 </div>
+                                )}
                               </td>
                             </tr>
                           ))
@@ -3182,6 +3410,7 @@ Return ONLY the final comment text.`;
                     <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
                       {isPolish ? 'Eskalacja i zasady' : 'Escalation and rules'}
                     </h3>
+                    {!readMode && (
                     <button
                       onClick={() => {
                         setEscalationDraft(
@@ -3206,6 +3435,7 @@ Return ONLY the final comment text.`;
                     >
                       + {isPolish ? 'Dodaj eskalację' : 'Add escalation'}
                     </button>
+                    )}
                   </div>
                   <div className="overflow-auto flex-1">
                     <table className="w-full text-sm">
@@ -3287,6 +3517,7 @@ Return ONLY the final comment text.`;
                                 </div>
                               </td>
                               <td className="py-2 text-right">
+                                {!readMode && (
                                 <div className="inline-flex items-center gap-1">
                                   <button
                                     onClick={() => {
@@ -3310,6 +3541,7 @@ Return ONLY the final comment text.`;
                                     <Trash2 size={13} />
                                   </button>
                                 </div>
+                                )}
                               </td>
                             </tr>
                           ))
@@ -3328,7 +3560,7 @@ Return ONLY the final comment text.`;
           component = (
             <CommentsCanvas
               comments={nModeComments}
-              locked={isDone}
+              locked={isDone || readMode}
               onDeleteComment={handleDeleteComment}
               dateFilter={nCommentDateFilter}
               onDateFilterChange={setNCommentDateFilter}
@@ -3355,7 +3587,7 @@ Return ONLY the final comment text.`;
           component = (
             <AttachmentsLinksCanvas
               attachments={attachments}
-              readOnly={isDone}
+              readOnly={isDone || readMode}
               onUploadAttachments={handleUploadAttachments}
               onDeleteAttachment={handleDeleteAttachment}
               onEditAttachment={(id, patch) => {
@@ -3390,11 +3622,48 @@ Return ONLY the final comment text.`;
           break;
       }
 
+      // ── Wzorzec N: opakuj sekcje AI-zapisywalne w NModeCardState ──────────
+      // (badge AI-draft + pasek ✨Regeneruj · ✎Edytuj · ✓Zaakceptuj). Pozostałe
+      // sekcje (governance/comments/attachments/activity-log) zostają bez zmian.
+      const AI_CARD_META: Partial<
+        Record<string, { key: AICardKey; name: { en: string; pl: string } }>
+      > = {
+        'description-scope': { key: 'description-scope', name: { en: 'Strategy', pl: 'Strategia' } },
+        checklist: { key: 'checklist', name: { en: 'Execution', pl: 'Wykonanie' } },
+        dependencies: { key: 'dependencies', name: { en: 'Dependencies', pl: 'Zależności' } },
+        evidence: { key: 'evidence', name: { en: 'Evidence', pl: 'Dowody' } },
+      };
+      const cardMeta = AI_CARD_META[section.id];
+      if (cardMeta) {
+        const cKey = cardMeta.key;
+        component = (
+          <NModeCardState
+            state={cardState[cKey]}
+            sectionName={cardMeta.name}
+            aiGenerated={cardAI[cKey]}
+            isPolish={isPolish}
+            hideActions={readMode}
+            onRegenerate={() => generateCard(cKey)}
+            onGenerate={() => generateCard(cKey)}
+            onFillManually={() => setCard(cKey, 'edited')}
+            onEdit={() => setCard(cKey, 'edited')}
+            onAccept={() => setCard(cKey, 'done')}
+            onRetry={() => generateCard(cKey)}
+          >
+            {component}
+          </NModeCardState>
+        );
+      }
+
       return { ...section, component };
     });
   }, [
     taskNSections,
     isPolish,
+    cardState,
+    cardAI,
+    generateCard,
+    setCard,
     description,
     expectedOutcome,
     initiativeName,
@@ -3445,6 +3714,7 @@ Return ONLY the final comment text.`;
     showCreateDecision,
     showDecisionSearch,
     blockedReason,
+    readMode,
   ]);
 
   // ── Dirty tracking + autosave (SaaS online persistence) ───────────────────
@@ -3778,6 +4048,7 @@ Return ONLY the final comment text.`;
             <NModeHeader
               title={title}
               onTitleChange={setTitle}
+              titleReadOnly={readMode}
               titlePlaceholder={{ en: 'Task title...', pl: 'Tytuł zadania...' }}
               artifactId={taskId || undefined}
               artifactType="task"
@@ -3801,6 +4072,10 @@ Return ONLY the final comment text.`;
 
             {/* ── N-Mode Content ──────────────────────────────── */}
             <div className="col-span-full space-y-4 mt-4">
+              {/* ── Menu 1 (klasa S): Read/Edit toggle "do pokazania klientowi" ── */}
+              <div className="flex items-center justify-end">
+                <ReadEditToggle readMode={readMode} onChange={setReadMode} />
+              </div>
               {/* Deadline Alert */}
               {dueDate && dueDateAlertBorderClass && (
                 <div className="mb-3 px-4 py-2 rounded-xl bg-danger-500/5 dark:bg-danger-500/10 border border-danger-200/60 dark:border-danger-500/30 text-sm text-danger-600 dark:text-danger-400 flex items-center gap-2">
@@ -3996,6 +4271,8 @@ Return ONLY the final comment text.`;
               )}
 
               {/* ── Task Action Bar ──────────────────────────────── */}
+              {/* Read mode ("do pokazania klientowi"): ukryj cały pasek akcji stanu. */}
+              {!readMode && (
               <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
                 <div className="flex items-center gap-2">
                   {/* Start / Resume — shown when todo or blocked */}
@@ -4303,6 +4580,7 @@ Return ONLY the final comment text.`;
                   )}
                 </div>
               </div>
+              )}
 
               {/* 2-Pane: LeftNav + Canvas */}
               <div className="flex gap-0 min-h-[60vh]">

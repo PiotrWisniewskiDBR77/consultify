@@ -3509,6 +3509,95 @@ export class TaskController {
       });
     }
   );
+
+  /**
+   * POST /api/tasks/:id/sections/:sectionKey/generate
+   * Wzorzec N — AI generacja treści jednej karty-sekcji Task.
+   *
+   * Prompty = STAŁE w kodzie (taskSectionGenerationService.TASK_SECTION_PROMPTS),
+   * bo NIE MA tabeli task_section_types z ai_prompt_template. Doktryna BCG §0 w
+   * system-promptcie, instrukcja karty §3 w user-promptcie.
+   *
+   * ⚠ Prompty zmieniają output klienta → weryfikacja Piotra przed live.
+   */
+  static generateSection = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const { id, sectionKey } = req.params;
+      const allowed = ['strategy', 'execution', 'evidence', 'dependencies'];
+      if (!allowed.includes(String(sectionKey))) {
+        res.status(400).json({ error: 'Unsupported section', sectionKey });
+        return;
+      }
+
+      // Language: body override → Accept-Language → en
+      const bodyLang = String((req.body && (req.body as any).language) || '').toLowerCase();
+      const acceptLang = req.headers['accept-language'] || 'en';
+      const headerLang = String(acceptLang).split(',')[0].split('-')[0].toLowerCase();
+      const language = bodyLang === 'pl' || bodyLang === 'en' ? bodyLang : headerLang || 'en';
+
+      const task = await DbPromise.get<TaskRow>(
+        `SELECT t.*, i.name as initiative_name, i.description as initiative_description
+         FROM tasks t
+         LEFT JOIN initiatives i ON i.id = t.initiative_id
+         WHERE t.id = ? AND t.organization_id = ?`,
+        [id, orgId]
+      );
+      if (!task) {
+        res.status(404).json({ error: 'Task not found' });
+        return;
+      }
+
+      try {
+        const { generateTaskSection } = await import(
+          '../services/taskSectionGenerationService.js'
+        );
+        const result = await generateTaskSection(
+          sectionKey as any,
+          {
+            title: getMultilingualText((task as any).title, language),
+            description: getMultilingualText((task as any).description, language),
+            why: (task as any).why || null,
+            expectedOutcome: (task as any).expected_outcome || null,
+            taskType: (task as any).task_type || null,
+            priority: (task as any).priority || null,
+            status: (task as any).status || null,
+            initiativeName: getMultilingualText((task as any).initiative_name, language),
+            initiativeContext: getMultilingualText(
+              (task as any).initiative_description,
+              language
+            ),
+          },
+          { language }
+        );
+
+        res.json({
+          sectionKey,
+          content: result.parsedContent ?? result.content,
+          raw: result.content,
+          isJson: result.isJson,
+          model: result.model,
+          tokensUsed: result.tokensUsed,
+          // Advisory-only (BCG §0 heuristics) — UI may show a soft warning; never blocks.
+          qualityFlags: (result as { qualityFlags?: unknown }).qualityFlags,
+        });
+      } catch (err: any) {
+        const message = String(err?.message || 'AI generation failed');
+        logger.warn('[TaskController] generateSection failed', {
+          taskId: id,
+          sectionKey,
+          error: message,
+        });
+        // Uczciwy błąd — front mapuje na stan karty 'error' + retry.
+        res.status(502).json({ error: 'AI_GENERATION_FAILED', message });
+      }
+    }
+  );
 }
 
 export default TaskController;
