@@ -86,7 +86,7 @@ jobs:
         run: mkdir -p test-results && npx tsx scripts/testing/test-impact-analysis.ts --base ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || 'HEAD~1' }} | tee test-results/test-impact.txt
       - name: Upload test impact summary
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-impact
           path: test-results/test-impact.txt
@@ -142,7 +142,7 @@ jobs:
         run: npx tsx scripts/testing/flaky-test-tracker.ts --report
       - name: Upload quality artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: quality-scorecard-and-flaky-report
           path: |
@@ -318,7 +318,7 @@ jobs:
 
       - name: Upload test results
         if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: unit-test-results-${{ matrix.shard }}
           path: junit-unit-${{ matrix.shard }}.xml
@@ -402,7 +402,7 @@ jobs:
 
       - name: Upload test results
         if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: component-test-results
           path: |
@@ -486,7 +486,7 @@ jobs:
 
       - name: Upload test results
         if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: performance-test-results
           path: junit-performance.xml
@@ -567,7 +567,7 @@ jobs:
 
       - name: Upload test results
         if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: colocated-test-results
           path: |
@@ -638,7 +638,7 @@ jobs:
 
       - name: Upload test results
         if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: integration-test-results-${{ matrix.shard }}
           path: junit-integration-${{ matrix.shard }}.xml
@@ -710,7 +710,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: security-test-results
           path: junit-security.xml
@@ -769,7 +769,7 @@ jobs:
 
       - name: Upload Playwright report
         if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: |
@@ -779,7 +779,7 @@ jobs:
 
       - name: Upload screenshots on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-screenshots
           path: test-results/
@@ -841,7 +841,7 @@ jobs:
 
       - name: Upload M06 gate artifacts
         if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-m06-gate-report
           path: |
@@ -944,7 +944,7 @@ jobs:
 
       - name: Upload readiness smoke artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: readiness-smoke-artifacts
           path: |
@@ -1012,7 +1012,7 @@ jobs:
 
       - name: Upload L4 smoke artifacts
         if: ${{ always() && steps.precheck.outputs.run_l4 == 'true' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: l4-smoke-artifacts
           path: |
@@ -1058,7 +1058,7 @@ jobs:
 
       - name: Upload Runtime Smoke report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-runtime-smoke-report
           path: |
@@ -1150,7 +1150,7 @@ jobs:
 
       - name: Upload critical coverage report
         if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: critical-coverage-report
           path: coverage/
@@ -1158,7 +1158,7 @@ jobs:
 
       - name: Upload critical JUnit report
         if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: critical-junit-report
           path: junit-critical.xml
@@ -1209,7 +1209,7 @@ jobs:
 
       - name: Upload patch coverage report
         if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: patch-coverage-report
           path: coverage/
@@ -1243,7 +1243,7 @@ jobs:
         run: npm run test:coverage
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: coverage/
@@ -1542,7 +1542,7 @@ jobs:
 
       - name: Upload flaky report artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: flaky-report
           path: test-results/flaky-report
@@ -1555,7 +1555,7 @@ jobs:
 
       - name: Upload flaky trend
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: flaky-trend
           path: test-results/flaky-trend
@@ -1568,7 +1568,7 @@ jobs:
 
       - name: Upload high-risk scan
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: high-risk-scan
           path: test-results/high-risk-scan
