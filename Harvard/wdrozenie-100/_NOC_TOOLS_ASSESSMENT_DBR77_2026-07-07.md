@@ -30,8 +30,16 @@ Pierwszy audyt (ze starej gałęzi roboczej) raportował „21/22 frameworków p
 5. **Capability Mapper** — luka talentowa (build/buy/partner), gap current→target (sprzedaż DACH, data science, delivery ops).
 6. **Ambition Decomposer** — rozkład „10M PLN / 30-36 mies." na 4-7 mierzalnych wątków per filar (krok przed Portfolio Priority).
 
-## 4. CO ROBIĘ TEJ NOCY (bezpiecznie, na gałęzi)
-- [W TOKU] **DRD output build** — buildDRDAssessmentData + drdConclusion.ts + DRDAssessmentMap.tsx (radar 7-osiowy) + wpięcie w Hub + DRDReportTemplate. Wzór: SIRI. Walidacja esbuild per plik.
-- [PLAN] **Seed dataset DBR77** (pliki JSON, nie baza): realistyczne odpowiedzi dla 6 frameworków + zestaw odpowiedzi DRD dla DBR77 — inputy do żywego dogfoodingu rano.
-- [PLAN] **Panel 4 sceptyków BCG** na tym zestawie — pre-walidacja jakości (znaleźć słabe tezy zanim trafią do produktu), wynik /100 jak przy v1→v2.
-- [RANO — wymaga Ciebie] Żywy dogfood (zapis do bazy demo) + promocja na demo — TYLKO nadzorca. Ja zostawiam gotowe inputy + kod.
+## 4. WYNIKI NOCY (zrobione, na gałęzi `feat/tools-assessment-dbr77`, 10 commitów)
+- ✅ **DRD output build** (6 commitów, esbuild 8/8): typ `DRDAssessmentData` + `buildDRDAssessmentData` (adapter) + `drdConclusion.ts` (model konkluzji) + `DRDReportTemplate` (sekcja werdyktu+gap cards — RAPORT DRD MA TERAZ KONKLUZJĘ, główna luka zamknięta) + `DRDAssessmentMap.tsx` (radar 7-osiowy, zbudowany, esbuild-clean).
+  - ⚠️ **Radar NIE wpięty** (świadomie): blok `if(framework==='DRD')` w Hub zawsze robi return → frameworkMap nieosiągalny; radar wymaga adaptera z żywego store DRD (kształt per-oś) + Twojej decyzji o miejscu (dashboard/raport/zakładka). Martwy render usunięty (commit fix). Report-conclusion JEST osiągalny i zasilony.
+  - ⛔ **Do zrobienia rano (Ty):** pełny `tsc` (esbuild nie sprawdza typów) + odbiór WZROKIEM (radar dark+light, sekcja konkluzji w raporcie DRD) — Twój gate wizualny.
+- ✅ **Seed DBR77** (`_DBR77_DOGFOOD_SEED/`): 6 frameworków (Porter/Ansoff/Portfolio/ValueChain/Capability/Ambition) + profil DRD (7 osi) + `00_EXECUTIVE_SUMMARY` (reconciled) + `README`. Liczby spójne (anti-cross-record). To INPUTY do żywego dogfoodingu.
+- ✅ **Panel 4 sceptyków BCG** (`_PANEL_PREWALIDACJA.md`): completeness 58 / rigor 58 / presentation 71 / strategic 74 = **śr. 65/100**. Triangulacja złapała 3 krytyczne (de-dup przychodu ARR↔delivery + DE↔DACH; DACH +1.3M fikcja harmonogramowa→cel 8.7-10M; marża 45% hipoteza) + szybkie (gap→2.0, retencja NRR, nakład 5M). Fixy atomowe zaaplikowane; reszta = warstwa 2 w exec summary.
+
+## 5. RANO — WYMAGA CIEBIE (nadzorca)
+1. **Odbiór DRD**: `tsc` + zrzuty (raport z konkluzją, ewent. placement radaru).
+2. **Decyzje Tools** (patrz §1 luki): 11 szkieletów — dokończyć czy schować z pickera? Teresa `create_tool_session` — budować? (realna luka AI-native).
+3. **Żywy dogfood**: wysłać seed 01-07 do żywej apki (`/discovery-tools` + `/assessment` DRD) → wygenerować realne artefakty → panel na WYGENEROWANEJ treści (nie na seedzie) = prawdziwy test generatora.
+4. **Feature Adversarial Review**: panel potwierdził wartość 3. raz — findingi #1/#2/#4 to killer-demo. Rozważyć priorytet.
+5. **Promocja na demo** — TYLKO Ty. Ja: zero push, zero deploy, zero zapisu do bazy demo.
