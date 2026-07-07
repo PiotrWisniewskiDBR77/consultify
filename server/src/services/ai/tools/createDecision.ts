@@ -32,6 +32,133 @@ type CreateDecisionContext = {
   onDeliverable?: (payload: Record<string, unknown>) => void;
 };
 
+/**
+ * BUG B fix (Teresa obiekty-N): after a decision row is created, generate the
+ * STRUCTURAL BCG cards (§2) — alternatives (≥2 MECE options + "do nothing"),
+ * risk/impact, consequences-of-inaction + recommendation — via the existing
+ * `decisionService.generateSection` prompts, instead of leaving only a rewritten
+ * `description`.
+ *
+ * The `decisions` table has NO durable columns for alternatives/risks/
+ * consequences (verified: schema has only description/options/criteria/
+ * decision_rationale). So we persist DURABLY where the schema allows:
+ *   - decision_rationale ← "Consequences of inaction + Recommendation" (this is
+ *     literally where "the consultant says what to do" — a real, surfaced column)
+ *   - ai_generated_sections (lazy-ALTER'd JSON sink, parity with initiatives) ←
+ *     the FULL structured cards {alternatives[], risks[], consequencesOfInaction}
+ *     so nothing is lost and a future FE read can hydrate them.
+ *
+ * ADDITIVE + FAIL-SOFT: any error is logged and never affects the created row.
+ */
+async function fillDecisionStructuralFields(
+  decisionId: string,
+  orgId: string,
+  language: 'pl' | 'en',
+): Promise<void> {
+  try {
+    const [{ default: decisionService }, queryHelpers] = await Promise.all([
+      import('../../decisionService.js'),
+      import('../../../utils/queryHelpers.js'),
+    ]);
+
+    // Generate the three structural cards. Each is independently fail-soft so one
+    // failing does not lose the others. (description card is skipped — the create
+    // already set a description.)
+    const [altRes, riskRes, consRes] = await Promise.allSettled([
+      decisionService.generateSection(decisionId, 'alternatives', { language }),
+      decisionService.generateSection(decisionId, 'risk', { language }),
+      decisionService.generateSection(decisionId, 'consequencesOfInaction', { language }),
+    ]);
+
+    const sink: Record<string, unknown> = {};
+    let anything = false;
+
+    if (altRes.status === 'fulfilled') {
+      const alternatives = (altRes.value.parsedContent as any)?.alternatives;
+      if (Array.isArray(alternatives) && alternatives.length) {
+        sink.alternatives = alternatives;
+        anything = true;
+      }
+    } else {
+      logger.error(
+        `[create_decision] alternatives fill failed id=${decisionId}: ${
+          altRes.reason instanceof Error ? altRes.reason.message : String(altRes.reason)
+        }`,
+      );
+    }
+
+    if (riskRes.status === 'fulfilled') {
+      const risks = (riskRes.value.parsedContent as any)?.risks;
+      if (Array.isArray(risks) && risks.length) {
+        sink.risks = risks;
+        anything = true;
+      }
+    } else {
+      logger.error(
+        `[create_decision] risk fill failed id=${decisionId}: ${
+          riskRes.reason instanceof Error ? riskRes.reason.message : String(riskRes.reason)
+        }`,
+      );
+    }
+
+    let recommendation = '';
+    if (consRes.status === 'fulfilled') {
+      recommendation = String(consRes.value.content || '').trim();
+      if (recommendation) {
+        sink.consequencesOfInaction = recommendation;
+        anything = true;
+      }
+    } else {
+      logger.error(
+        `[create_decision] consequences fill failed id=${decisionId}: ${
+          consRes.reason instanceof Error ? consRes.reason.message : String(consRes.reason)
+        }`,
+      );
+    }
+
+    if (!anything) {
+      logger.warn(`[create_decision] structural fill produced NO content id=${decisionId}`);
+      return;
+    }
+
+    // (1) Durable, SURFACED column: decision_rationale ← recommendation (only if empty).
+    if (recommendation) {
+      await queryHelpers.queryRun(
+        `UPDATE decisions SET decision_rationale = ?
+         WHERE id = ? AND organization_id = ? AND (decision_rationale IS NULL OR decision_rationale = '')`,
+        [recommendation, decisionId, orgId],
+      );
+    }
+
+    // (2) Durable JSON sink for the full structured cards (lazy-ALTER, parity with
+    // initiatives.ai_generated_sections). Best-effort; ADD COLUMN is idempotent.
+    try {
+      await queryHelpers.queryRun(`ALTER TABLE decisions ADD COLUMN ai_generated_sections TEXT`);
+    } catch (err: any) {
+      const m = String(err?.message || err).toLowerCase();
+      if (!m.includes('already exists') && !m.includes('duplicate column')) {
+        logger.warn(
+          `[create_decision] ai_generated_sections ALTER skipped id=${decisionId}: ${m.slice(0, 120)}`,
+        );
+      }
+    }
+    await queryHelpers.queryRun(
+      `UPDATE decisions SET ai_generated_sections = ? WHERE id = ? AND organization_id = ?`,
+      [JSON.stringify(sink), decisionId, orgId],
+    );
+
+    logger.info(
+      `[create_decision] structural fields filled id=${decisionId} (${Object.keys(sink).join(', ')})`,
+    );
+  } catch (err) {
+    logger.error(
+      `[create_decision] structural fill FAILED id=${decisionId}: ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
+  }
+}
+
 export async function createDecision(
   params: CreateDecisionParams,
   context: CreateDecisionContext = {}
@@ -102,6 +229,12 @@ export async function createDecision(
       `INSERT INTO decisions (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
       insertParams
     );
+
+    // BUG B: fill structural cards (alternatives/risk/consequences+recommendation)
+    // in the BACKGROUND — fire-and-forget so the chat stream returns immediately;
+    // the decision row already exists and the AI-fill only enriches it. Fail-soft
+    // (logs its own errors).
+    void fillDecisionStructuralFields(id, orgId, language);
 
     try {
       context.onDeliverable?.({

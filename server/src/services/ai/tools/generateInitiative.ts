@@ -260,14 +260,23 @@ export async function generateInitiative(
         });
         const cards = fill?.cards ?? {};
         await persistCards(id, orgId, cards);
-        logger.info(
-          `[teresa] generate_initiative background full-fill done for ${id} (${
-            Object.keys(cards).length
-          } cards)`,
-        );
+        const n = Object.keys(cards).length;
+        if (n === 0) {
+          // LOUD: an empty fill is the "cicho pada" bug — surface it at ERROR so
+          // it is never invisible again. The brain already logged per-card errors.
+          logger.error(
+            `[teresa] generate_initiative background full-fill produced ZERO cards for ${id} ` +
+              `— all core sections came back empty (see [GeneratorBrain] errors above).`,
+          );
+        } else {
+          logger.info(
+            `[teresa] generate_initiative background full-fill done for ${id} (${n} cards)`,
+          );
+        }
       } catch (fillErr: any) {
-        logger.warn(
-          '[teresa] generate_initiative background full-fill failed (ignored):',
+        // LOUD: a thrown full-fill is a real defect, not routine noise → ERROR.
+        logger.error(
+          '[teresa] generate_initiative background full-fill FAILED:',
           fillErr?.message || fillErr,
         );
       }
