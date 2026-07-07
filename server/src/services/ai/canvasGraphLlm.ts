@@ -159,16 +159,31 @@ const ProcessFlowLlmSchema = z.object({
 });
 
 const WhiteboardLlmSchema = z.object({
-  blocks: z.array(z.string().describe('Short sticky-note label (2-6 words).')).min(2),
+  groups: z
+    .array(
+      z.object({
+        title: z.string().describe('Group/cluster title (2-4 words), e.g. "Propozycja wartości".'),
+        blocks: z
+          .array(z.string().describe('Short sticky-note label (2-6 words).'))
+          .min(1)
+          .describe('Sticky notes that belong under this group.'),
+      })
+    )
+    .min(1)
+    .describe('Thematic clusters of sticky notes. Group RELATED atoms under one title.'),
   links: z
     .array(
       z.object({
-        from: z.number().int().describe('0-based index into blocks[].'),
-        to: z.number().int().describe('0-based index into blocks[].'),
+        from: z.string().describe('Source sticky-note label (verbatim from a group).'),
+        to: z.string().describe('Target sticky-note label (verbatim from a group).'),
+        relation: z
+          .string()
+          .describe('Short relation label for the arrow, e.g. "wspiera", "wynika z", "dla".'),
       })
     )
     .optional()
-    .default([]),
+    .default([])
+    .describe('Meaningful relations between blocks. Each MUST carry a non-empty relation label.'),
 });
 
 const TableLlmSchema = z.object({
@@ -191,6 +206,7 @@ export interface LlmGraphNode {
   data: { label: string; [k: string]: unknown };
   position?: { x: number; y: number };
   parentId?: string;
+  style?: Record<string, unknown>;
 }
 export interface LlmGraphEdge {
   id: string;
@@ -198,6 +214,7 @@ export interface LlmGraphEdge {
   target: string;
   type?: string;
   label?: string;
+  data?: { label?: string; [k: string]: unknown };
 }
 export interface LlmGraph {
   nodes: LlmGraphNode[];
@@ -269,7 +286,9 @@ export async function generateMindmapGraph(
 
   const centerLabel = clamp(parsed.center);
   const pillarLabels = parsed.branches.map((b) => clamp(b.label)).filter(Boolean);
-  const allChildLabels = parsed.branches.flatMap((b) => (b.children || []).map(clamp)).filter(Boolean);
+  const allChildLabels = parsed.branches
+    .flatMap((b) => (b.children || []).map((c) => clamp(c)))
+    .filter(Boolean);
 
   // Anti-fragment gate: reject the whole LLM result if the center or a majority
   // of branch labels are fragments (fall back to skeleton).
@@ -324,16 +343,18 @@ export async function generateMindmapGraph(
 const FLOW_SYSTEM_PL = `Jesteś ekspertem modelowania procesów. Z prośby zbuduj DIAGRAM PROCESU:
 - "steps": kroki procesu. Etykiety CZASOWNIKOWE (np. "Zweryfikuj dane"). NIE fragmenty prośby.
 - pierwszy krok shape="start", ostatni shape="end".
-- gdzie w prośbie jest DECYZJA/pytanie ("OK?", "czy...") użyj shape="decision" i sformułuj jako pytanie.
-- "edges": połączenia po indeksach. Na gałęziach decyzji ustaw label "tak"/"nie". Dozwolone pętle zwrotne.
-ZAKAZ: kopiowania zdań prośby jako kroków. Odpowiedz w języku prośby.`;
+- shape="decision" TYLKO gdy prośba WPROST zawiera decyzję/pytanie/warunek ("czy...", "jeśli...", "OK?", "gdy nie..."). Sformułuj wtedy jako pytanie.
+- "edges": połączenia po indeksach. Na gałęziach decyzji ustaw label "tak"/"nie". Pętle zwrotne TYLKO gdy prośba je opisuje.
+KRYTYCZNE — WIERNOŚĆ WEJŚCIU: odwzoruj DOKŁADNIE kroki z prośby. NIE dodawaj kroków, decyzji ani pętli, których w prośbie NIE ma. Jeśli prośba to prosta lista kroków bez warunków — zrób LINIOWY przepływ start→…→end, ZERO zmyślonych diamentów decyzji.
+ZAKAZ: kopiowania zdań prośby jako kroków, wymyślania bramek decyzyjnych. Odpowiedz w języku prośby.`;
 
 const FLOW_SYSTEM_EN = `You are a process-modeling expert. From the request build a PROCESS DIAGRAM:
 - "steps": process steps. Verb-first labels (e.g. "Verify data"). NOT prompt fragments.
 - first step shape="start", last shape="end".
-- where the request implies a DECISION/question ("OK?", "if...") use shape="decision", phrase as a question.
-- "edges": connections by index. On decision branches set label "yes"/"no". Loop-backs allowed.
-FORBIDDEN: copying request sentences as steps. Answer in the language of the request.`;
+- shape="decision" ONLY when the request EXPLICITLY states a decision/question/condition ("if...", "OK?", "when not..."). Phrase it as a question then.
+- "edges": connections by index. On decision branches set label "yes"/"no". Loop-backs ONLY when the request describes them.
+CRITICAL — FAITHFULNESS TO INPUT: mirror EXACTLY the steps stated in the request. Do NOT add steps, decisions or loops that are NOT in the request. If the request is a plain list of steps with no conditions — build a LINEAR flow start→…→end with ZERO invented decision diamonds.
+FORBIDDEN: copying request sentences as steps, inventing decision gates. Answer in the language of the request.`;
 
 export async function generateProcessFlowGraph(
   intent: string,
@@ -395,17 +416,19 @@ export async function generateProcessFlowGraph(
 }
 
 // ── WHITEBOARD ───────────────────────────────────────────────────────────────
-const WB_SYSTEM_PL = `Jesteś ekspertem facylitacji na tablicy. Z prośby zbuduj TABLICĘ:
-- "blocks": karteczki (sticky). Każda = ODRĘBNY element/pomysł. Etykiety KRÓTKIE, semantyczne.
-  NIE tytuł tablicy, NIE instrukcja jako karteczka.
-- "links": połączenia po indeksach między POWIĄZANYMI blokami (jeśli prośba mówi o relacjach — NIE zero).
-ZAKAZ: kopiowania fragmentów prośby. Odpowiedz w języku prośby.`;
+const WB_SYSTEM_PL = `Jesteś ekspertem facylitacji na tablicy (np. Business Model / Value Proposition Canvas). Z prośby zbuduj TABLICĘ:
+- "groups": KLASTRY tematyczne. Każdy klaster = tytuł (np. "Propozycja wartości") + karteczki należące do tego tematu.
+  GRUPUJ powiązane atomy pod jednym tytułem (np. "PdM AI" i "OEE AI" razem pod "Propozycja wartości") — NIE rozrzucaj luźnych, niepogrupowanych karteczek.
+  Etykiety karteczek KRÓTKIE, semantyczne. NIE tytuł tablicy jako karteczka, NIE instrukcja jako karteczka.
+- "links": relacje MIĘDZY karteczkami (po etykietach). KAŻDA relacja MUSI mieć niepustą etykietę "relation" (np. "wspiera", "wynika z", "dla"). Twórz tylko sensowne relacje.
+ZAKAZ: kopiowania fragmentów prośby, pustych etykiet relacji. Odpowiedz w języku prośby.`;
 
-const WB_SYSTEM_EN = `You are a whiteboard facilitation expert. From the request build a BOARD:
-- "blocks": sticky notes. Each = a DISTINCT element/idea. SHORT semantic labels.
-  NOT the board title, NOT an instruction as a sticky.
-- "links": index connections between RELATED blocks (when the request implies relations — not zero).
-FORBIDDEN: copying request fragments. Answer in the language of the request.`;
+const WB_SYSTEM_EN = `You are a whiteboard facilitation expert (e.g. Business Model / Value Proposition Canvas). From the request build a BOARD:
+- "groups": thematic CLUSTERS. Each cluster = a title (e.g. "Value Proposition") + the sticky notes belonging to that theme.
+  GROUP related atoms under one title (e.g. "PdM AI" and "OEE AI" together under "Value Proposition") — do NOT scatter loose, ungrouped stickies.
+  Sticky labels SHORT, semantic. NOT the board title as a sticky, NOT an instruction as a sticky.
+- "links": relations BETWEEN stickies (by label). EACH relation MUST carry a non-empty "relation" label (e.g. "supports", "derives from", "for"). Only create meaningful relations.
+FORBIDDEN: copying request fragments, empty relation labels. Answer in the language of the request.`;
 
 export async function generateWhiteboardGraph(
   intent: string,
@@ -421,35 +444,91 @@ export async function generateWhiteboardGraph(
   );
   if (!parsed) return null;
 
-  const blockLabels = parsed.blocks.map(clamp).filter(Boolean);
-  if (blockLabels.length < 1) return null;
-  if (acceptedRatio(blockLabels, seedText) < 0.6) return null;
+  // Anti-fragment gate on ALL sticky labels across every group.
+  const allBlockLabels = parsed.groups
+    .flatMap((g) => (g.blocks || []).map((b) => clamp(b)))
+    .filter(Boolean);
+  if (allBlockLabels.length < 1) return null;
+  if (acceptedRatio(allBlockLabels, seedText) < 0.6) return null;
+
+  // Layout constants for the frame containers + their child stickies.
+  const FRAME_W = 360;
+  const FRAME_PAD_X = 20;
+  const FRAME_HEADER_Y = 56;
+  const STICKY_H = 72;
+  const STICKY_GAP = 16;
+  const FRAME_GAP_X = 60;
 
   const nodes: LlmGraphNode[] = [];
-  parsed.blocks.forEach((raw, i) => {
-    const label = clamp(raw);
-    if (!label || isFragmentLabel(label, seedText)) return;
-    const angle = (2 * Math.PI * i) / Math.max(1, parsed.blocks.length);
+  // Map a sticky LABEL (normalized) → its emitted node id, for label-based links.
+  const labelToId = new Map<string, string>();
+  let frameX = 0;
+
+  parsed.groups.forEach((group, gi) => {
+    const groupTitle = clamp(group.title, 40);
+    const children = (group.blocks || [])
+      .map((b) => clamp(b))
+      .filter((l) => l && !isFragmentLabel(l, seedText));
+    if (children.length === 0) return;
+
+    const frameId = `frame-${gi + 1}`;
+    const frameH = FRAME_HEADER_Y + children.length * (STICKY_H + STICKY_GAP) + STICKY_GAP;
+    // Frame container node (grouping the related atoms).
     nodes.push({
-      id: `sticky-${i + 1}`,
-      // FE whiteboard nodeTypes registry key is 'stickyNote' (NOT 'sticky').
-      type: 'stickyNote',
-      data: { label },
-      position: { x: Math.round(Math.cos(angle) * 260), y: Math.round(Math.sin(angle) * 260) },
+      id: frameId,
+      type: 'frameNode',
+      data: { label: groupTitle || `Grupa ${gi + 1}`, width: FRAME_W, height: frameH, collapsed: false },
+      position: { x: frameX, y: 0 },
+      // A concrete style box so the FE resizer/fill wrapper works on first mount.
+      style: { width: FRAME_W, height: frameH },
+    });
+
+    children.forEach((label, ci) => {
+      const stickyId = `sticky-${gi + 1}-${ci + 1}`;
+      nodes.push({
+        id: stickyId,
+        // FE whiteboard nodeTypes registry key is 'stickyNote' (NOT 'sticky').
+        type: 'stickyNote',
+        data: { label },
+        // Child position is RELATIVE to the parent frame (RF parentNode contract).
+        parentId: frameId,
+        position: {
+          x: FRAME_PAD_X,
+          y: FRAME_HEADER_Y + ci * (STICKY_H + STICKY_GAP),
+        },
+      });
+      const key = label.toLowerCase();
+      if (!labelToId.has(key)) labelToId.set(key, stickyId);
+    });
+
+    frameX += FRAME_W + FRAME_GAP_X;
+  });
+
+  if (nodes.filter((n) => n.type === 'stickyNote').length < 1) return null;
+
+  // Resolve links by sticky LABEL (schema now uses labels, not indices). Each edge
+  // carries its relation in data.label — the FE LabeledEdge reads data.label, so a
+  // top-level-only label rendered EMPTY (the live visual bug we are fixing).
+  const seen = new Set<string>();
+  const edges: LlmGraphEdge[] = [];
+  (parsed.links || []).forEach((l, i) => {
+    const from = labelToId.get(clamp(l.from).toLowerCase());
+    const to = labelToId.get(clamp(l.to).toLowerCase());
+    if (!from || !to || from === to) return;
+    const dedupe = `${from}->${to}`;
+    if (seen.has(dedupe)) return;
+    seen.add(dedupe);
+    const relation = clamp(l.relation, 24);
+    edges.push({
+      id: `wbedge-${i}`,
+      source: from,
+      target: to,
+      // Empty relation ⇒ plain edge (no 'labeled' type) so nothing renders an empty box.
+      ...(relation
+        ? { type: 'labeled', label: relation, data: { label: relation } }
+        : { type: 'default' }),
     });
   });
-  if (nodes.length < 1) return null;
-
-  const idAt = (idx: number) => nodes[idx]?.id;
-  const validIdx = (n: number) => Number.isInteger(n) && n >= 0 && n < nodes.length;
-  const edges: LlmGraphEdge[] = (parsed.links || [])
-    .filter((l) => validIdx(l.from) && validIdx(l.to) && l.from !== l.to)
-    .map((l, i) => ({
-      id: `wbedge-${l.from}-${l.to}-${i}`,
-      source: idAt(l.from)!,
-      target: idAt(l.to)!,
-      type: 'labeled',
-    }));
 
   return { nodes, edges };
 }
@@ -507,12 +586,20 @@ export async function generateTableGraph(
 
 // ── NOTE (prose content) ─────────────────────────────────────────────────────
 const NOTE_SYSTEM_PL = `Jesteś doradcą piszącym zwięzłą, wartościową notatkę w Markdown.
-Napisz notatkę na temat prośby: krótka teza na wstępie, potem 2-4 sekcje z nagłówkami (##)
-i punktami. Rzeczowo, konkretnie, bez lania wody. Zwróć TYLKO treść Markdown (bez tytułu H1).`;
+Napisz notatkę na temat prośby: krótka teza na wstępie, potem 2-4 sekcje z nagłówkami (##) i punktami.
+KRYTYCZNE — WIERNOŚĆ WEJŚCIU: użyj DOKŁADNIE tych filarów, wątków, nazw i LICZB, które podał użytkownik.
+Jeśli wejście wymienia konkretne filary (np. "Kapitał, Talent, Produkt i Moat, Delivery, Popyt, DACH") i cel liczbowy
+(np. "3x revenue w 30-36 miesięcy) — notatka MUSI być zbudowana wokół TYCH filarów i TEJ liczby.
+ZAKAZ: wymyślania generycznych, podręcznikowych filarów (np. "Infrastruktura techniczna", "Zespół") których w prośbie NIE MA. Zero halucynacji.
+Rzeczowo, konkretnie, bez lania wody. Zwróć TYLKO treść Markdown (bez tytułu H1).`;
 
 const NOTE_SYSTEM_EN = `You are an advisor writing a concise, valuable note in Markdown.
-Write a note on the request topic: a short thesis up front, then 2-4 sections with (##) headings
-and bullets. Substantive and specific, no filler. Return ONLY the Markdown body (no H1 title).`;
+Write a note on the request topic: a short thesis up front, then 2-4 sections with (##) headings and bullets.
+CRITICAL — FAITHFULNESS TO INPUT: use EXACTLY the pillars, threads, names and NUMBERS the user provided.
+If the input names specific pillars (e.g. "Capital, Talent, Product & Moat, Delivery, Demand, DACH") and a numeric goal
+(e.g. "3x revenue in 30-36 months") — the note MUST be built around THOSE pillars and THAT number.
+FORBIDDEN: inventing generic, textbook pillars (e.g. "Technical Infrastructure", "Team") that are NOT in the request. Zero hallucination.
+Substantive and specific, no filler. Return ONLY the Markdown body (no H1 title).`;
 
 /**
  * Generate real prose (Markdown) for a note body. Returns null on failure so the
@@ -535,11 +622,16 @@ export async function generateNoteContent(
       messages: [
         {
           role: 'user',
-          content: `${title ? `Temat/Topic: ${title}\n\n` : ''}${seedText}`,
+          content: `${title ? `Temat/Topic: ${title}\n\n` : ''}${seedText}\n\n${
+            isPolish
+              ? '(Napisz notatkę WYŁĄCZNIE o powyższym — te same filary/wątki/liczby, bez treści generycznej spoza wejścia.)'
+              : '(Write the note ONLY about the above — the same pillars/threads/numbers, no generic content outside the input.)'
+          }`,
         },
       ],
       maxTokens: 2048,
-      temperature: 0.5,
+      // Lower temperature ⇒ less drift into generic textbook filler.
+      temperature: 0.3,
       cache: false,
       timeoutMs: LLM_TIMEOUT_MS,
     });

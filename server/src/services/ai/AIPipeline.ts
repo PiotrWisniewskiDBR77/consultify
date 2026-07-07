@@ -313,7 +313,7 @@ export class AIPipeline {
 
       // Check if streaming is requested
       if ((request as any).stream) {
-        const systemPromptStr = prompt.find((m) => m.role === 'system')?.content || '';
+        let systemPromptStr = prompt.find((m) => m.role === 'system')?.content || '';
         const nonSystemMsgs = prompt
           .filter((m) => m.role !== 'system')
           .map((m) => ({
@@ -404,6 +404,25 @@ export class AIPipeline {
                       ...dropSet,
                     ].join(', ')}] (${before}→${defs.length} tools)`
                   );
+
+                  // c2MindTable — 'table' intent needs MORE than a tool-drop: the
+                  // global persona instructs the model to answer a "zrób tabelę …"
+                  // request with an INLINE ```artifact:table``` markdown block
+                  // (a static table, NOT a real Ideas Table). Dropping distractor
+                  // tools does not beat that default, so we inject a per-turn
+                  // directive (system prompt is NOT the global persona.ts — this is
+                  // additive, one turn only) that forces the tool call.
+                  if (intent === 'table') {
+                    systemPromptStr +=
+                      '\n\n[NADPISANIE NA TĘ TURĘ] Użytkownik prosi o UTWORZENIE TABELI. ' +
+                      'MUSISZ wywołać narzędzie generate_deliverable z type="table" (realna Tabela Pomysłów), ' +
+                      'aby otworzyła się po prawej. NIE odpowiadaj tabelą Markdown w treści ani blokiem ' +
+                      '```artifact:table``` — to nie tworzy prawdziwej tabeli. Najpierw wywołaj narzędzie, ' +
+                      'potem krótko potwierdź. / [OVERRIDE THIS TURN] The user asks to CREATE A TABLE. You MUST ' +
+                      'call the generate_deliverable tool with type="table" so a real Ideas Table opens; do NOT ' +
+                      'reply with an inline Markdown table or an ```artifact:table``` block.';
+                    logger.info('[AIPipeline] routing-N table intent → injected force-tool directive');
+                  }
                 }
               }
             } catch (classifyErr: any) {

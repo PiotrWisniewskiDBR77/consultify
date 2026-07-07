@@ -19,7 +19,13 @@
  * create-verb+noun pair and fall through to normal model routing.
  */
 
-export type ChatCreationIntent = 'initiative' | 'task' | 'decision' | 'document' | null;
+export type ChatCreationIntent =
+  | 'initiative'
+  | 'task'
+  | 'decision'
+  | 'document'
+  | 'table'
+  | null;
 
 /**
  * Create verbs (PL + EN). PL forms cover imperative + common inflections.
@@ -90,6 +96,16 @@ const OBJECT_NOUNS: Array<{ intent: Exclude<ChatCreationIntent, null>; roots: st
   { intent: 'initiative', roots: ['inicjatyw', 'initiative'] },
   { intent: 'task', roots: ['zadani', 'task', 'to-do', 'todo', 'action item'] },
   { intent: 'decision', roots: ['decyzj', 'decision'] },
+  // TABLE (Ideas Table deliverable): "stwórz/zrób tabelę …", "make a table of …",
+  // "portfel inicjatyw", "lista … z kolumnami". Persona.ts steers "tabela" toward an
+  // INLINE ```artifact:table``` block (a static markdown table, NOT a real Ideas
+  // Table), so a bare description drop never fires generate_deliverable. This
+  // deterministic intent forces the tool for an explicit table-creation request.
+  // Placed AFTER 'document' so "raport" wins over an incidental "tabela" mention.
+  {
+    intent: 'table',
+    roots: ['tabel', 'table', 'portfel', 'portfolio'],
+  },
 ];
 
 /** Normalize: lowercase + collapse whitespace. Keeps PL diacritics. */
@@ -172,6 +188,8 @@ export const INTENT_TO_TOOL: Record<Exclude<ChatCreationIntent, null>, string> =
   decision: 'create_decision',
   // "wniosek/insight/raport/analiza" → DOKUMENT (deliverable), NIE inicjatywa.
   document: 'generate_deliverable',
+  // "tabela/portfel/lista" → Ideas Table (deliverable, type=table).
+  table: 'generate_deliverable',
 };
 
 /**
@@ -184,6 +202,9 @@ export const INTENT_DROP_TOOLS: Record<Exclude<ChatCreationIntent, null>, string
   task: ['generate_deliverable'],
   decision: ['generate_deliverable'],
   document: ['generate_initiative', 'create_task', 'create_decision'],
+  // Force generate_deliverable(type=table): drop the object creators so the model
+  // can only reach for the deliverable tool (or plain text).
+  table: ['generate_initiative', 'create_task', 'create_decision'],
 };
 
 export default { classifyChatCreationIntent, INTENT_TO_TOOL, INTENT_DROP_TOOLS };
