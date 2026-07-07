@@ -129,6 +129,7 @@ import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { HubWorkAreaLoadError, HubWorkAreaLoading } from '../shared/ModuleHub';
 import {
   NModeCanvas,
+  NModeCardState,
   NModeCBoard,
   NModeHeader,
   NModeLeftNav,
@@ -253,6 +254,39 @@ const toKpiNumber = (value?: string | null): number => {
  * (server/src/services/initiativeGenerationService.ts → REVIEW_PASS_THRESHOLD).
  */
 const REVIEW_PASS_THRESHOLD = 90;
+
+// Wzorzec N (§1 BCG) — sekcje-karty generowane przez AI, którym doklejamy
+// afordancję AI-draft (badge stanu + pasek Regeneruj·Edytuj·Zaakceptuj przez
+// NModeCardState). Ograniczone do sekcji z REALNYM generatorem AI w runSectionAi
+// (nie no-op). Overview + Problem + Scope + Kill Criteria są scalone w
+// initiative-definition / target-state-scope w tym widoku (13 kart §1 BCG →
+// zestaw poniżej). Mapowanie ids = ids z initiativeNSections.
+// Sekcje, których section-AI dispatch spada na handleGenerateAI (no-op toast,
+// nic nie zapisuje) — dla nich NIE pokazujemy „Regeneruj". Zsynchronizowane z
+// realnymi case'ami w runSectionAi. (Hoisted na moduł: statyczne + używane w
+// memo sekcji przed deklaracją komponentowego SECTION_AI_NOOP.)
+const SECTION_AI_NOOP_IDS: ReadonlySet<string> = new Set([
+  'raci',
+  'change-log',
+  'workstream-owners',
+  'suggested-changes',
+]);
+
+const BCG_AI_SECTION_IDS: ReadonlySet<string> = new Set([
+  'initiative-definition', // Overview + Problem Definition (scope card)
+  'target-state-scope', // Target State & Success + Scope & Kill Criteria
+  'tasks', // Tasks & Milestones
+  'decisions', // Decisions
+  'risk-raid', // RAID Log
+  'gates', // Gates (readiness)
+  'financial-analysis', // Financial Analysis
+  'financial-impact', // Financial Impact
+  'kpi', // KPIs & Benefits
+  'resources', // Resources
+  'timeline', // Timeline (plan)
+  'dependencies', // Dependencies
+  'team', // Team / RACI people
+]);
 
 interface ExpandableNarrativeFieldProps {
   value: string;
@@ -575,6 +609,27 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // Canon Toolbar (Layer 3) — user-toggled section visibility for the left nav.
   // Drops section ids from the nav until restored ("Restore defaults").
   const [hiddenSectionIds, setHiddenSectionIds] = useState<Set<string>>(new Set());
+  // Wzorzec N (§3) — per-section AI-draft state map. Sekcje generowane AI dostają
+  // badge stanu (AI-draft/Edytowane/Gotowe) + pasek Regeneruj·Edytuj·Zaakceptuj.
+  // Stan trzymany LOKALNIE (brak persystencji regenerateCount w backendzie sekcji);
+  // 'ai-draft' po regeneracji AI, 'edited' po ręcznej zmianie, 'done' po akceptacji.
+  // Domyślnie brak wpisu = sekcja z istniejącą treścią, bez interruptu (traktowana done).
+  const [sectionAiState, setSectionAiState] = useState<
+    Record<string, 'ai-draft' | 'edited' | 'done'>
+  >({});
+  const setSectionState = useCallback(
+    (sectionId: string, next: 'ai-draft' | 'edited' | 'done') => {
+      setSectionAiState((prev) =>
+        prev[sectionId] === next ? prev : { ...prev, [sectionId]: next }
+      );
+    },
+    []
+  );
+  // Ref to the per-section AI dispatcher (runSectionAi), so the section-content
+  // memo can trigger regeneration WITHOUT taking runSectionAi (declared later) as
+  // a dependency — avoids use-before-declaration + keeps the memo stable.
+  const runSectionAiRef = useRef<(sectionId: string) => void | Promise<void>>(() => {});
+
   // Canon Toolbar dropdown open-state (Sections / New / Export / kebab).
   const [showSectionsMenu, setShowSectionsMenu] = useState(false);
   const [showNewMenu, setShowNewMenu] = useState(false);
@@ -1242,6 +1297,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const destructiveStatusActions = useMemo(
     () => statusActions.filter((a) => a.variant === 'danger'),
     [statusActions]
+  );
+  // Wzorzec N — Menu 1 (tożsamość) niesie DOKŁADNIE JEDEN primary = przejście
+  // stanu lifecycle (Submit for Review → Approve for Execution → Schedule …),
+  // zależny od nextGate. To pierwsza forward-transition (primary, potem secondary).
+  // Reszta akcji (Sekcje/Eksport/Make material/AI/Nowy) mieszka w Menu 3.
+  const primaryLifecycleAction = useMemo(
+    () => stripStatusActions.find((a) => a.variant === 'primary') || stripStatusActions[0] || null,
+    [stripStatusActions]
   );
   const contextActions = useMemo(() => {
     return gateReadiness?.capabilities?.ctaBar?.contextCreateActions || [];
@@ -8658,6 +8721,52 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       // Don't show the empty state on a section the user marked complete.
       const showEmpty = !!emptyCfg && emptyCfg.isEmpty && !completed && canEditCards;
 
+      // Wzorzec N (§3) — dla sekcji-kart generowanych AI doklejamy afordancję
+      // AI-draft (badge stanu + pasek Regeneruj·Edytuj·Zaakceptuj) NAD istniejącą
+      // treścią. Nie podmieniamy body sekcji (empty/generating obsługuje już
+      // NModeSectionWrapper wyżej). Wrap TYLKO gdy sekcja jest AI-tknięta
+      // (ai-draft/edited) — sekcje nietknięte zostają wizualnie bez zmian (bez
+      // dublowania nagłówka i bez mylącego badge „Gotowe" na wszystkim).
+      const isBcgAiCard = BCG_AI_SECTION_IDS.has(section.id);
+      const cardState = sectionAiState[section.id];
+      const sectionAiDispatchable = !SECTION_AI_NOOP_IDS.has(section.id);
+      const showAiCard =
+        component != null &&
+        isBcgAiCard &&
+        !showEmpty &&
+        (cardState === 'ai-draft' || cardState === 'edited');
+
+      let contentNode: React.ReactNode = component;
+      if (showAiCard) {
+        contentNode = (
+          <NModeCardState
+            state={cardState as 'ai-draft' | 'edited'}
+            sectionName={section.label}
+            aiGenerated={cardState === 'ai-draft'}
+            isPolish={isPolish}
+            hideActions={!canEditCards}
+            onRegenerate={
+              canUseAi && sectionAiDispatchable
+                ? () => void runSectionAiRef.current(section.id)
+                : undefined
+            }
+            onEdit={
+              canEditCards
+                ? () => {
+                    setActiveNSection(section.id);
+                    setSectionState(section.id, 'edited');
+                  }
+                : undefined
+            }
+            onAccept={
+              canEditCards ? () => setSectionState(section.id, 'done') : undefined
+            }
+          >
+            {component}
+          </NModeCardState>
+        );
+      }
+
       const wrappedComponent =
         component != null ? (
           <NModeSectionWrapper
@@ -8665,7 +8774,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             isEmpty={showEmpty}
             emptyState={emptyCfg?.emptyState}
           >
-            {component}
+            {contentNode}
           </NModeSectionWrapper>
         ) : (
           component
@@ -8674,6 +8783,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       return { ...section, completed, component: wrappedComponent };
     });
   }, [
+    // Wzorzec N — per-section AI-draft affordance (NModeCardState) deps.
+    sectionAiState,
+    setSectionState,
+    canUseAi,
+    canEditCards,
+    setActiveNSection,
     initiativeNSections,
     initiative,
     sectionCompletions,
@@ -9319,26 +9434,25 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // for these instead. Keep this in sync with the real-AI cases in
   // runActiveSectionAi's switch (tasks/decisions/timeline/dependencies/team/kpi/
   // gates/risk-raid/resources/initiative-definition/target-state-scope/comments).
-  const SECTION_AI_NOOP = useMemo(
-    () =>
-      new Set<string>([
-        // financial-analysis / financial-impact → handleGenerateFinancial (real).
-        // hypothesis / okr / lessons-learned → K4 real handlers above (removed from no-op).
-        'raci',
-        'change-log',
-        'workstream-owners',
-        'suggested-changes',
-      ]),
-    []
-  );
-  const activeSectionAiUnavailable = SECTION_AI_NOOP.has(activeNSection);
+  // financial-analysis / financial-impact → handleGenerateFinancial (real).
+  // hypothesis / okr / lessons-learned → K4 real handlers above (removed from no-op).
+  // (SSOT = module-level SECTION_AI_NOOP_IDS, reused by the section-content memo.)
+  const activeSectionAiUnavailable = SECTION_AI_NOOP_IDS.has(activeNSection);
 
-  const runActiveSectionAi = useCallback(async () => {
-    if (!canUseAi) {
-      toast.error(t('initiatives.aiIsUnavailableBecauseYouHave2'));
-      return;
-    }
-    switch (activeNSection) {
+  // Per-section AI dispatcher, parameterised by section id (used both by the
+  // toolbar "AI: section" button for the active section AND by each BCG section
+  // card's ✨Regeneruj action). On dispatch we mark the section 'ai-draft' so the
+  // NModeCardState badge/action-bar reflects that AI just (re)wrote the card.
+  const runSectionAi = useCallback(
+    async (sectionId: string) => {
+      if (!canUseAi) {
+        toast.error(t('initiatives.aiIsUnavailableBecauseYouHave2'));
+        return;
+      }
+      // Optimistically flag AI-draft; the section's own request/handler owns the
+      // actual write. Card state is advisory (human still reviews & accepts).
+      setSectionState(sectionId, 'ai-draft');
+      switch (sectionId) {
       case 'tasks':
         requestTasksAi('analyze');
         return;
@@ -9379,7 +9493,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         return;
       case 'financial-analysis':
       case 'financial-impact':
-        await handleGenerateFinancial(activeNSection);
+        await handleGenerateFinancial(sectionId);
         return;
       // K4 — AI-fill for sections previously no-op
       case 'hypothesis': {
@@ -9435,30 +9549,46 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         return;
       }
       default:
-        await handleGenerateAI(activeNSection);
-    }
-  }, [
-    canUseAi,
-    isPolish,
-    activeNSection,
-    handleGenerateFinancial,
-    handleGenerateAI,
-    okrItems,
-    persistInitiativeField,
-    setHypothesisDraft,
-    setLessonsDraft,
-    requestTasksAi,
-    requestDecisionsAi,
-    requestCommentsAi,
-    requestResourcesAi,
-    requestTimelineAi,
-    requestDependenciesAi,
-    requestKpisAi,
-    requestTeamAi,
-    requestTargetStateAi,
-    requestGatesAi,
-    requestRaidAi,
-  ]);
+        await handleGenerateAI(sectionId);
+      }
+    },
+    [
+      canUseAi,
+      isPolish,
+      handleGenerateFinancial,
+      handleGenerateAI,
+      handleGenerateScopeCard,
+      okrItems,
+      persistInitiativeField,
+      setHypothesisDraft,
+      setLessonsDraft,
+      setSectionState,
+      requestTasksAi,
+      requestDecisionsAi,
+      requestCommentsAi,
+      requestResourcesAi,
+      requestTimelineAi,
+      requestDependenciesAi,
+      requestKpisAi,
+      requestTeamAi,
+      requestTargetStateAi,
+      requestGatesAi,
+      requestRaidAi,
+    ]
+  );
+
+  // Keep the ref (consumed by the BCG section-card ✨Regeneruj action) pointed at
+  // the latest runSectionAi. Lets the section-content memo trigger regeneration
+  // without depending on runSectionAi (declared after that memo).
+  useEffect(() => {
+    runSectionAiRef.current = runSectionAi;
+  }, [runSectionAi]);
+
+  // Thin wrapper: the toolbar "AI: section" button targets the active section.
+  const runActiveSectionAi = useCallback(
+    () => runSectionAi(activeNSection),
+    [runSectionAi, activeNSection]
+  );
 
   // Slot 9 — canonical AI Consultant (POZIOM 3 / ARTEFAKT) wiring.
   // contextText = whole-initiative plain-text summary (title + every section
@@ -9848,6 +9978,31 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
               />
 
+              {/* ── Menu 1 (tożsamość) — JEDEN primary = przejście stanu lifecycle.
+                  Zależny od nextGate (Submit for Review → Approve for Execution →
+                  Schedule …). Neutralny/niebieski (c-focus), NIGDY crimson.
+                  Reszta akcji (Sekcje/Eksport/Make material/AI/Nowy) → Menu 3. */}
+              {primaryLifecycleAction && (
+                <div className="mt-3 flex justify-end">
+                  <button
+                    type="button"
+                    disabled={isMutating}
+                    onClick={() => void handleStatusAction(primaryLifecycleAction)}
+                    title={isPolish ? primaryLifecycleAction.labelPl : primaryLifecycleAction.label}
+                    className="inline-flex items-center gap-2 rounded-xl border border-c-focus/30 bg-c-focus/10 px-4 py-2 text-sm font-semibold text-c-focus transition-colors hover:bg-c-focus/15 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    {isMutating ? (
+                      <Loader2 size={15} className="animate-spin" />
+                    ) : (
+                      <ArrowRight size={15} />
+                    )}
+                    <span>
+                      {isPolish ? primaryLifecycleAction.labelPl : primaryLifecycleAction.label}
+                    </span>
+                  </button>
+                </div>
+              )}
+
               <div className="col-span-full space-y-4 mt-4">
                 <NModePropertiesStrip fields={nModePropertyFields} maxColumns={6} />
 
@@ -9914,6 +10069,50 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     }
                     return (
                       <div className="flex items-center gap-1 flex-wrap min-h-[36px]">
+                        {/* ── Menu 3 · nawigacja wewn. jako pill (skrót do rail) ──
+                            Scope · Plan · Timeline · Finance · Gates → skacze do
+                            reprezentatywnej sekcji grupy. Neutralne, aktywny = c-focus. */}
+                        {(() => {
+                          const navPills: { id: string; label: { en: string; pl: string } }[] = [
+                            { id: 'initiative-definition', label: { en: 'Scope', pl: 'Zakres' } },
+                            { id: 'tasks', label: { en: 'Plan', pl: 'Plan' } },
+                            { id: 'timeline', label: { en: 'Timeline', pl: 'Harmonogram' } },
+                            {
+                              id: 'financial-analysis',
+                              label: { en: 'Finance', pl: 'Finanse' },
+                            },
+                            { id: 'gates', label: { en: 'Gates', pl: 'Bramy' } },
+                          ];
+                          const availableIds = new Set(
+                            orderedNModeSectionsWithContent.map((s) => s.id)
+                          );
+                          const visiblePills = navPills.filter((p) => availableIds.has(p.id));
+                          if (visiblePills.length === 0) return null;
+                          return (
+                            <>
+                              <div className="inline-flex items-center gap-0.5 rounded-lg bg-c-surface-raised/60 p-0.5">
+                                {visiblePills.map((pill) => {
+                                  const active = activeNSection === pill.id;
+                                  return (
+                                    <button
+                                      key={pill.id}
+                                      type="button"
+                                      onClick={() => setActiveNSection(pill.id)}
+                                      className={`rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                                        active
+                                          ? 'bg-c-surface text-c-focus shadow-sm'
+                                          : 'text-c-text-secondary hover:text-c-text'
+                                      }`}
+                                    >
+                                      {isPolish ? pill.label.pl : pill.label.en}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              <div className="h-4 w-px bg-c-surface-raised mx-1 shrink-0" />
+                            </>
+                          );
+                        })()}
                         {/* ── Left zone: Sections · New · Export ─────────────── */}
                         <div className="relative">
                           <ToolbarGhostButton
