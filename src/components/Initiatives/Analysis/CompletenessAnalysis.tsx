@@ -96,9 +96,9 @@ interface CompletenessAnalysisProps {
 const SortIcon: React.FC<{ col: SortCol; cur: SortCol; dir: SortDir }> = ({ col, cur, dir }) => {
   if (col !== cur) return <ArrowUpDown size={11} className="text-slate-600 dark:text-slate-400" />;
   return dir === 'asc' ? (
-    <ArrowUp size={11} className="text-primary-500" />
+    <ArrowUp size={11} className="text-c-info" />
   ) : (
-    <ArrowDown size={11} className="text-primary-500" />
+    <ArrowDown size={11} className="text-c-info" />
   );
 };
 
@@ -389,23 +389,23 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
 
   const autoFillPanel =
     autoFillSuggestions !== null ? (
-      <div className="m-4 rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden">
-        <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
+      <div className="m-4 rounded-xl border border-c-info dark:border-c-info/50 bg-c-info/5 dark:bg-c-info/10 overflow-hidden">
+        <div className="px-4 py-3 bg-c-info/10 dark:bg-c-info/20 border-b border-c-info dark:border-c-info/50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
-            <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
+            <Sparkles size={16} className="text-c-info dark:text-c-info" />
+            <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
               AI Auto-Fill suggestions
             </h3>
-            <span className="text-xs text-primary-500">({autoFillSuggestions.length})</span>
+            <span className="text-xs text-c-info">({autoFillSuggestions.length})</span>
           </div>
           <button
             onClick={closeWorkspacePanels}
-            className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30"
+            className="p-1 rounded text-c-info hover:bg-c-info/30 dark:hover:bg-c-info/30"
           >
             <X size={14} />
           </button>
         </div>
-        <div className="divide-y divide-primary-200/50 dark:divide-primary-900/30">
+        <div className="divide-y divide-c-info/20 dark:divide-c-info/15">
           {autoFillSuggestions.length === 0 ? (
             <div className="px-4 py-6 text-center text-sm text-slate-600 dark:text-slate-400">
               All fillable fields are already populated
@@ -421,7 +421,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                     <span className="font-medium text-slate-900 dark:text-white truncate max-w-[200px]">
                       {s.initiativeName}
                     </span>
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-primary-200/50 dark:bg-primary-800/50 text-primary-600 dark:text-primary-400">
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-c-info/50 dark:bg-c-info/50 text-c-info dark:text-c-info">
                       {s.field}
                     </span>
                     <span className="text-xs text-slate-500">→ {s.suggestedValue}</span>
@@ -444,7 +444,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                 ) : (
                   <button
                     onClick={() => onOpenInitiative(s.initiativeId)}
-                    className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                    className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-c-info/10 text-c-info dark:text-c-info hover:bg-c-info/20 transition-colors"
                   >
                     <ExternalLink size={12} />
                     Open
@@ -535,7 +535,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
             />
             <button
               onClick={() => onOpenInitiative(item.initiativeId)}
-              className="font-medium text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate max-w-[200px]"
+              className="font-medium text-slate-900 dark:text-white hover:text-c-info dark:hover:text-c-info transition-colors truncate max-w-[200px]"
             >
               {item.initiativeName}
             </button>
@@ -700,18 +700,18 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
 
       {/* AI Auto-Fill panel */}
       {!onRegisterWorkspacePanel && autoFillSuggestions !== null && (
-        <div className="rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden">
-          <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
+        <div className="rounded-xl border border-c-info dark:border-c-info/50 bg-c-info/5 dark:bg-c-info/10 overflow-hidden">
+          <div className="px-4 py-3 bg-c-info/10 dark:bg-c-info/20 border-b border-c-info dark:border-c-info/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
-              <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
+              <Sparkles size={16} className="text-c-info dark:text-c-info" />
+              <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
                 AI Auto-Fill suggestions
               </h3>
-              <span className="text-xs text-primary-500">({autoFillSuggestions.length})</span>
+              <span className="text-xs text-c-info">({autoFillSuggestions.length})</span>
             </div>
             <button
               onClick={() => setAutoFillSuggestions(null)}
-              className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30"
+              className="p-1 rounded text-c-info hover:bg-c-info/30 dark:hover:bg-c-info/30"
             >
               <X size={14} />
             </button>
@@ -724,7 +724,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-primary-200/50 dark:divide-primary-900/30">
+            <div className="divide-y divide-c-info/20 dark:divide-c-info/15">
               {autoFillSuggestions.map((s, idx) => (
                 <div
                   key={`${s.initiativeId}-${s.field}-${idx}`}
@@ -735,7 +735,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                       <span className="font-medium text-slate-900 dark:text-white truncate max-w-[200px]">
                         {s.initiativeName}
                       </span>
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-primary-200/50 dark:bg-primary-800/50 text-primary-600 dark:text-primary-400">
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-c-info/50 dark:bg-c-info/50 text-c-info dark:text-c-info">
                         {s.field}
                       </span>
                       <span className="text-xs text-slate-500">→ {s.suggestedValue}</span>
@@ -760,7 +760,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                     <button
                       onClick={() => onOpenInitiative(s.initiativeId)}
                       className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium
-                        bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                        bg-c-info/10 text-c-info dark:text-c-info hover:bg-c-info/20 transition-colors"
                     >
                       <ExternalLink size={12} />
                       Preview
@@ -859,7 +859,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                 />
                 <button
                   onClick={() => onOpenInitiative(item.initiativeId)}
-                  className="font-medium text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate max-w-[200px]"
+                  className="font-medium text-slate-900 dark:text-white hover:text-c-info dark:hover:text-c-info transition-colors truncate max-w-[200px]"
                 >
                   {item.initiativeName}
                 </button>
@@ -904,7 +904,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                 <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
                   <button
                     onClick={() => handleSort('initiative')}
-                    className="inline-flex items-center gap-1 hover:text-primary-600"
+                    className="inline-flex items-center gap-1 hover:text-c-info"
                   >
                     Initiative <SortIcon col="initiative" cur={sortCol} dir={sortDir} />
                   </button>
@@ -912,7 +912,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                 <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
                   <button
                     onClick={() => handleSort('level')}
-                    className="inline-flex items-center gap-1 hover:text-primary-600"
+                    className="inline-flex items-center gap-1 hover:text-c-info"
                   >
                     Level <SortIcon col="level" cur={sortCol} dir={sortDir} />
                   </button>
@@ -920,7 +920,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                 <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
                   <button
                     onClick={() => handleSort('status')}
-                    className="inline-flex items-center gap-1 hover:text-primary-600"
+                    className="inline-flex items-center gap-1 hover:text-c-info"
                   >
                     Status <SortIcon col="status" cur={sortCol} dir={sortDir} />
                   </button>
@@ -928,7 +928,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                 <th className="text-right px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
                   <button
                     onClick={() => handleSort('completeness')}
-                    className="inline-flex items-center gap-1 ml-auto hover:text-primary-600"
+                    className="inline-flex items-center gap-1 ml-auto hover:text-c-info"
                   >
                     Completeness <SortIcon col="completeness" cur={sortCol} dir={sortDir} />
                   </button>
@@ -936,7 +936,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                 <th className="text-right px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
                   <button
                     onClick={() => handleSort('missingCritical')}
-                    className="inline-flex items-center gap-1 ml-auto hover:text-primary-600"
+                    className="inline-flex items-center gap-1 ml-auto hover:text-c-info"
                   >
                     Missing critical <SortIcon col="missingCritical" cur={sortCol} dir={sortDir} />
                   </button>
@@ -944,7 +944,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                 <th className="text-right px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
                   <button
                     onClick={() => handleSort('missingTotal')}
-                    className="inline-flex items-center gap-1 ml-auto hover:text-primary-600"
+                    className="inline-flex items-center gap-1 ml-auto hover:text-c-info"
                   >
                     Missing total <SortIcon col="missingTotal" cur={sortCol} dir={sortDir} />
                   </button>
@@ -1009,7 +1009,7 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                             onOpenInitiative(row.initiativeId);
                           }}
                           className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium
-                            bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                            bg-c-info/10 text-c-info dark:text-c-info hover:bg-c-info/20 transition-colors"
                         >
                           <ExternalLink size={12} />
                           Preview

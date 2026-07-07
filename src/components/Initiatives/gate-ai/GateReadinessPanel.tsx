@@ -142,7 +142,7 @@ export const GateReadinessPanel: React.FC<GateReadinessPanelProps> = ({ readines
                 key={idx}
                 className="flex items-start gap-2 text-[12px] text-slate-700 dark:text-slate-200"
               >
-                <Lightbulb size={13} className="shrink-0 mt-0.5 text-primary-500" />
+                <Lightbulb size={13} className="shrink-0 mt-0.5 text-c-info" />
                 <span>{fix}</span>
               </li>
             ))}

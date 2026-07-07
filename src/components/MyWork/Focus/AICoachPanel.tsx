@@ -53,11 +53,11 @@ export const AICoachPanel: React.FC = () => {
   if (!result && !loading) return null;
 
   return (
-    <div className="mx-4 mb-3 rounded-xl border border-primary-200/50 dark:border-primary-800/30 bg-gradient-to-r from-primary-50/60 to-indigo-50/60 dark:from-primary-950/15 dark:to-indigo-950/10 overflow-hidden">
+    <div className="mx-4 mb-3 rounded-xl border border-c-info/50 dark:border-c-info/30 bg-gradient-to-r from-c-info/60 to-indigo-50/60 dark:from-c-info/15 dark:to-indigo-950/10 overflow-hidden">
       <div className="flex items-center justify-between px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <Brain size={16} className="text-primary-500" />
-          <span className="text-sm font-semibold text-primary-800 dark:text-primary-200">
+          <Brain size={16} className="text-c-info" />
+          <span className="text-sm font-semibold text-c-info dark:text-c-info">
             {isPolish ? 'AI Coach' : 'AI Coach'}
           </span>
         </div>
@@ -65,18 +65,18 @@ export const AICoachPanel: React.FC = () => {
           <button
             onClick={fetchAdvice}
             disabled={loading}
-            className="p-1 rounded hover:bg-primary-500/10"
+            className="p-1 rounded hover:bg-c-info/10"
           >
-            <RefreshCw size={12} className={`text-primary-500 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw size={12} className={`text-c-info ${loading ? 'animate-spin' : ''}`} />
           </button>
           <button
             onClick={() => setExpanded(!expanded)}
-            className="p-1 rounded hover:bg-primary-500/10"
+            className="p-1 rounded hover:bg-c-info/10"
           >
             {expanded ? (
-              <ChevronUp size={14} className="text-primary-500" />
+              <ChevronUp size={14} className="text-c-info" />
             ) : (
-              <ChevronDown size={14} className="text-primary-500" />
+              <ChevronDown size={14} className="text-c-info" />
             )}
           </button>
         </div>
@@ -84,13 +84,13 @@ export const AICoachPanel: React.FC = () => {
       {expanded && (
         <div className="px-4 pb-3 space-y-2">
           {loading ? (
-            <div className="flex items-center gap-2 text-xs text-primary-500">
+            <div className="flex items-center gap-2 text-xs text-c-info">
               <Loader2 size={12} className="animate-spin" />{' '}
               {isPolish ? 'Analizuję...' : 'Analyzing...'}
             </div>
           ) : result ? (
             <>
-              <p className="text-xs font-medium text-primary-700 dark:text-primary-300">
+              <p className="text-xs font-medium text-c-info dark:text-c-info">
                 {result.summary}
               </p>
               {result.overcommitWarning && (

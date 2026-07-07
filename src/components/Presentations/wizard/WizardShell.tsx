@@ -28,7 +28,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({ step, onClose, childre
       <div className="border-b border-slate-200 dark:border-navy-700 px-6 py-4">
         <div className="flex items-center justify-between max-w-5xl mx-auto">
           <div className="flex items-center gap-3">
-            <Sparkles className="w-6 h-6 text-primary-500" />
+            <Sparkles className="w-6 h-6 text-c-info" />
             <h1 className="text-xl font-bold text-slate-900 dark:text-white">
               {t('presentations.wizard.title', 'Presentation Generator')}
             </h1>

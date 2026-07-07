@@ -69,7 +69,7 @@ export const SuggestedChangesPanel: React.FC<SuggestedChangesPanelProps> = ({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="mb-3 flex items-center gap-2">
-        <GitBranch size={16} className="text-primary-500" />
+        <GitBranch size={16} className="text-c-info" />
         <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
           {tr('Sugerowane zmiany', 'Suggested changes')}
         </h3>

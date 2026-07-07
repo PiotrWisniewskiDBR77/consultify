@@ -37,7 +37,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 type ViewMode = 'month' | 'week';
 
 const TYPE_DOT: Record<ScheduleItemType, string> = {
-  task: 'bg-primary-500',
+  task: 'bg-c-info',
   milestone: 'bg-amber-500',
   phase: 'bg-emerald-500',
 };
@@ -305,7 +305,7 @@ export const InitiativeCalendar: React.FC<InitiativeCalendarProps> = ({
               <div
                 className={`text-[11px] mb-1 text-right pr-0.5 ${
                   dIso === todayIso
-                    ? 'font-bold text-primary-600 dark:text-primary-400'
+                    ? 'font-bold text-c-info dark:text-c-info'
                     : 'text-slate-400 dark:text-slate-500'
                 }`}
               >

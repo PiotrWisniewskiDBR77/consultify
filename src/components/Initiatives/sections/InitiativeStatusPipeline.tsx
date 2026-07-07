@@ -199,7 +199,7 @@ export const InitiativeStatusPipeline: React.FC = () => {
                 <span
                   className={`mt-1.5 text-[10px] text-center leading-tight ${
                     isCurrent
-                      ? 'font-semibold text-primary-700 dark:text-primary-300'
+                      ? 'font-semibold text-c-info dark:text-c-info'
                       : isUpcoming
                         ? 'text-slate-500 dark:text-slate-500'
                         : 'text-slate-600 dark:text-slate-400'
@@ -241,7 +241,7 @@ export const InitiativeStatusPipeline: React.FC = () => {
       {nextGateConfig && (
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 rounded-xl bg-slate-50/60 dark:bg-navy-800/40 border border-slate-200/60 dark:border-navy-700/60">
           <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 dark:text-slate-200">
-            <Flag size={12} className="text-primary-500" />
+            <Flag size={12} className="text-c-info" />
             {t('initiatives.initiativeStatusPipeline.nextGate')}:{' '}
             {isPolish ? nextGateConfig.namePl : nextGateConfig.name}
           </span>

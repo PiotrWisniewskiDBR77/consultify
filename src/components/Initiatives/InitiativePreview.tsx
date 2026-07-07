@@ -127,7 +127,7 @@ export const InitiativePreview: React.FC<InitiativePreviewProps> = ({
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={onOpen}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-primary-500/15 text-primary-600 dark:text-primary-400 hover:bg-primary-500/25 transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-c-info/15 text-c-info dark:text-c-info hover:bg-c-info/25 transition-colors"
           >
             <ExternalLink size={14} />
             {t('preview.open', 'Open')}

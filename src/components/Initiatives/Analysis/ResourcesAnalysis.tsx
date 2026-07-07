@@ -77,9 +77,9 @@ const SortIcon: React.FC<{ column: SortColumn; currentCol: SortColumn; currentDi
   if (column !== currentCol)
     return <ArrowUpDown size={12} className="text-slate-600 dark:text-slate-400" />;
   return currentDir === 'asc' ? (
-    <ArrowUp size={12} className="text-primary-500" />
+    <ArrowUp size={12} className="text-c-info" />
   ) : (
-    <ArrowDown size={12} className="text-primary-500" />
+    <ArrowDown size={12} className="text-c-info" />
   );
 };
 
@@ -97,7 +97,7 @@ const SortableHeader: React.FC<{
   >
     <button
       onClick={() => onSort(column)}
-      className={`inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400 transition-colors ${
+      className={`inline-flex items-center gap-1 hover:text-c-info dark:hover:text-c-info transition-colors ${
         align === 'center' ? 'mx-auto' : ''
       }`}
     >
@@ -675,7 +675,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleSort('role')}
-                    className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                    className="inline-flex items-center gap-1 hover:text-c-info dark:hover:text-c-info transition-colors"
                   >
                     {t('initiatives.analysis.resources.role', 'Role')}
                     <SortIcon column="role" currentCol={sortCol} currentDir={sortDir} />
@@ -684,7 +684,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                     onClick={() => setShowRoleDropdown((v) => !v)}
                     className={`p-0.5 rounded hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors ${
                       roleFilter !== 'all'
-                        ? 'text-primary-600 dark:text-primary-400'
+                        ? 'text-c-info dark:text-c-info'
                         : 'text-slate-600 dark:text-slate-500'
                     }`}
                   >
@@ -708,7 +708,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                         }}
                         className={`w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors ${
                           roleFilter === 'all'
-                            ? 'font-semibold text-primary-600 dark:text-primary-400'
+                            ? 'font-semibold text-c-info dark:text-c-info'
                             : 'text-slate-700 dark:text-slate-300'
                         }`}
                       >

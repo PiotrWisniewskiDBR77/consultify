@@ -52,7 +52,7 @@ interface DeckTemplateGalleryProps {
 const DECK_TYPE_COLORS: Record<string, string> = {
   steering_committee: 'from-blue-500 to-indigo-500',
   program_update: 'from-emerald-500 to-blue-500',
-  valuation_pack: 'from-primary-500 to-crimson-500',
+  valuation_pack: 'from-violet-500 to-violet-600',
   tool_workshop: 'from-amber-500 to-amber-500',
   assessment_summary: 'from-blue-500 to-blue-500',
 };
@@ -149,7 +149,7 @@ export const DeckTemplateGallery: React.FC<DeckTemplateGalleryProps> = ({ onSele
       {orgTemplates.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
-            <Layout className="w-5 h-5 text-primary-500" />
+            <Layout className="w-5 h-5 text-c-info" />
             {t('presentations.templates.orgTemplates', 'Organization Templates')}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -218,7 +218,7 @@ const TemplateCard: React.FC<{
         {/* Outline preview */}
         <button
           onClick={onToggle}
-          className="flex items-center gap-1.5 mt-3 text-sm text-primary-500 hover:text-primary-400"
+          className="flex items-center gap-1.5 mt-3 text-sm text-c-info hover:text-c-info"
         >
           {isExpanded ? (
             <ChevronRight size={14} className="rotate-90" />
@@ -230,7 +230,7 @@ const TemplateCard: React.FC<{
         </button>
 
         {isExpanded && (
-          <div className="mt-2 space-y-1 pl-2 border-l-2 border-primary-500/20">
+          <div className="mt-2 space-y-1 pl-2 border-l-2 border-c-info/20">
             {template.outline_json.map((slide, i) => (
               <div key={i} className="flex items-center gap-2 text-sm">
                 <span className="text-xs text-slate-600 w-4">{i + 1}</span>

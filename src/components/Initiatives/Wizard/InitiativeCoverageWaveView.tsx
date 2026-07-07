@@ -115,7 +115,7 @@ export const InitiativeCoverageWaveView: React.FC<InitiativeCoverageWaveViewProp
       {/* ── 1) Coverage (MECE) ─────────────────────────────────────────── */}
       <section>
         <div className="mb-2 flex items-center gap-2">
-          <ShieldCheck size={16} className="text-primary-500" />
+          <ShieldCheck size={16} className="text-c-info" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
             {tr('Pokrycie (MECE)', 'Coverage (MECE)')}
           </h3>
@@ -172,7 +172,7 @@ export const InitiativeCoverageWaveView: React.FC<InitiativeCoverageWaveViewProp
       {/* ── 2) Waves ───────────────────────────────────────────────────── */}
       <section className="flex min-h-0 flex-1 flex-col">
         <div className="mb-2 flex items-center gap-2">
-          <Layers size={16} className="text-primary-500" />
+          <Layers size={16} className="text-c-info" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
             {tr('Fale', 'Waves')}
           </h3>

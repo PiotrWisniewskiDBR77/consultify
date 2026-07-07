@@ -98,8 +98,8 @@ const STATUS_META: Record<
   },
   SCHEDULED: {
     label: 'Scheduled',
-    color: 'text-primary-400',
-    bgColor: 'bg-primary-500/20',
+    color: 'text-c-info',
+    bgColor: 'bg-c-info/20',
     icon: <Calendar size={14} />,
   },
   EXECUTING: {
@@ -242,7 +242,7 @@ const TruncatedListSection: React.FC<{
       {hasMore && (
         <button
           onClick={() => setExpanded(!expanded)}
-          className="mt-3 text-xs text-primary-400 hover:text-primary-300 transition-colors"
+          className="mt-3 text-xs text-c-info hover:text-c-info transition-colors"
         >
           {expanded ? `Show less` : `Show ${items.length - maxVisible} more…`}
         </button>
@@ -679,7 +679,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
               <div>
                 <div className="flex items-center gap-3 mb-1">
                   {initiative.axis && (
-                    <span className="px-2 py-0.5 text-xs font-medium rounded bg-primary-500/20 text-primary-400 capitalize">
+                    <span className="px-2 py-0.5 text-xs font-medium rounded bg-c-info/20 text-c-info capitalize">
                       {initiative.axis}
                     </span>
                   )}
@@ -805,7 +805,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                     </div>
                     <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-primary-500 to-primary-400 rounded-full transition-all"
+                        className="h-full bg-gradient-to-r from-c-info to-c-info rounded-full transition-all"
                         style={{ width: `${completionPercent}%` }}
                       />
                     </div>
@@ -879,7 +879,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                               ? `/interview?assessmentId=${initiative.sourceId}`
                               : '#'
                         }
-                        className="inline-flex items-center gap-1 text-primary-600 dark:text-primary-400 hover:underline ml-1"
+                        className="inline-flex items-center gap-1 text-c-info dark:text-c-info hover:underline ml-1"
                       >
                         <ExternalLink size={10} />
                         {i18n.language === 'pl' ? 'View source' : 'View source'}
@@ -1018,7 +1018,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
               tasks.map((task) => (
                 <div
                   key={task.id}
-                  className="flex items-center gap-4 p-4 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-primary-500/30 transition-colors"
+                  className="flex items-center gap-4 p-4 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-c-info/30 transition-colors"
                 >
                   <div
                     className={`w-3 h-3 rounded-full ${
@@ -1154,7 +1154,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
             </div>
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 rounded-lg bg-primary-500/20 text-primary-400">
+                <div className="p-2 rounded-lg bg-c-info/20 text-c-info">
                   <DollarSign size={20} />
                 </div>
                 <div>
@@ -1208,7 +1208,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
             </div>
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-400">
+                <div className="w-10 h-10 rounded-full bg-c-info/20 flex items-center justify-center text-c-info">
                   <User size={20} />
                 </div>
                 <div>

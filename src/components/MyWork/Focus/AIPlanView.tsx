@@ -23,7 +23,7 @@ interface AIPlanViewProps {
 }
 
 const BLOCK_COLORS: Record<string, string> = {
-  deep: 'border-l-primary-500 bg-primary-50/50 dark:bg-primary-950/20',
+  deep: 'border-l-violet-500 bg-violet-50/50 dark:bg-violet-950/20',
   review: 'border-l-amber-500 bg-amber-50/50 dark:bg-amber-950/20',
   collab: 'border-l-blue-500 bg-blue-50/50 dark:bg-blue-950/20',
   admin: 'border-l-slate-400 bg-slate-50/50 dark:bg-slate-950/20',
@@ -58,7 +58,7 @@ export const AIPlanView: React.FC<AIPlanViewProps> = ({ onClose, embedded = fals
       {!embedded ? (
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-primary-500" />
+            <Sparkles size={16} className="text-c-info" />
             <span className="text-sm font-semibold">
               {isPolish ? 'Plan dnia AI' : 'AI Day Plan'}
             </span>

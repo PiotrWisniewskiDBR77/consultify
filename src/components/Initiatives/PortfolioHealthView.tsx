@@ -105,7 +105,7 @@ function ShareBar({ label, count, total }: { label: React.ReactNode; count: numb
     <div className="flex items-center gap-3 py-1">
       <div className="w-36 shrink-0 truncate text-xs text-slate-600 dark:text-slate-300">{label}</div>
       <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-        <div className="absolute inset-y-0 left-0 rounded-full bg-primary-500" style={{ width: `${pct}%` }} />
+        <div className="absolute inset-y-0 left-0 rounded-full bg-c-info" style={{ width: `${pct}%` }} />
       </div>
       <div className="w-16 shrink-0 text-right text-xs tabular-nums text-slate-500 dark:text-slate-400">
         {count} · {pct}%
@@ -173,7 +173,7 @@ export function PortfolioHealthView({ endpoint, health: injected }: PortfolioHea
     <div className="flex h-full flex-col gap-4 overflow-auto p-4" data-testid="portfolio-health-view">
       {/* Header + stats ------------------------------------------------ */}
       <header className="flex flex-wrap items-center gap-2">
-        <MapIcon className="h-5 w-5 text-primary-500" />
+        <MapIcon className="h-5 w-5 text-c-info" />
         <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
           {t('initiatives.portfolioHealth.title', 'Portfolio health')}
         </h2>
@@ -192,7 +192,7 @@ export function PortfolioHealthView({ endpoint, health: injected }: PortfolioHea
       {/* MECE coverage -------------------------------------------------------- */}
       <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
         <header className="mb-3 flex items-center gap-2">
-          <Layers className="h-4 w-4 text-primary-500" />
+          <Layers className="h-4 w-4 text-c-info" />
           <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
             {t('initiatives.portfolioHealth.coverageTitle', 'Coverage map (MECE)')}
           </h3>
@@ -247,7 +247,7 @@ export function PortfolioHealthView({ endpoint, health: injected }: PortfolioHea
       {/* Effort x impact balance (3x3 heatmap) -------------------------------- */}
       <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
         <header className="mb-3 flex items-center gap-2">
-          <Grid3x3 className="h-4 w-4 text-primary-500" />
+          <Grid3x3 className="h-4 w-4 text-c-info" />
           <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
             {t('initiatives.portfolioHealth.balanceTitle', 'Effort × impact balance')}
           </h3>
@@ -276,7 +276,7 @@ export function PortfolioHealthView({ endpoint, health: injected }: PortfolioHea
                       backgroundColor:
                         count === 0
                           ? undefined
-                          : `color-mix(in srgb, var(--color-primary-500, #3b82f6) ${Math.round(
+                          : `color-mix(in srgb, var(--c-info) ${Math.round(
                               15 + intensity * 70
                             )}%, transparent)`,
                     }}
@@ -317,7 +317,7 @@ export function PortfolioHealthView({ endpoint, health: injected }: PortfolioHea
 
         <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
           <header className="mb-3 flex items-center gap-2">
-            <CopyX className="h-4 w-4 text-primary-500" />
+            <CopyX className="h-4 w-4 text-c-info" />
             <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
               {t('initiatives.portfolioHealth.duplicatesTitle', 'Duplicate clusters')}
             </h3>

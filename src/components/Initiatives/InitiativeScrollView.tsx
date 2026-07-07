@@ -280,7 +280,7 @@ export const InitiativeScrollView: React.FC<InitiativeScrollViewProps> = ({
           </div>
           <div className="p-2.5 rounded-xl bg-white/60 dark:bg-navy-900/40 border border-slate-200 dark:border-navy-700/60">
             <div className="flex items-center gap-1.5 mb-1">
-              <Users size={12} className="text-primary-500" />
+              <Users size={12} className="text-c-info" />
               <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">
                 {t('initiatives.initiativeScrollView.team')}
               </span>

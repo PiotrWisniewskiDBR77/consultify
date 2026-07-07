@@ -154,7 +154,7 @@ const StyledCheck: React.FC<{
 const InfoHint: React.FC<{ text: string }> = ({ text }) => (
   <span
     title={text}
-    className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full text-slate-400 transition-colors hover:text-primary-500"
+    className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full text-slate-400 transition-colors hover:text-c-info"
     aria-label={text}
   >
     <Info size={13} />
@@ -1292,7 +1292,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       bg: 'bg-slate-100 dark:bg-navy-800/80',
       border: 'border-slate-200 dark:border-white/[0.08]',
       text: 'text-slate-600 dark:text-slate-300',
-      ring: 'ring-primary-500/30',
+      ring: 'ring-c-focus',
     };
     return colors[variant];
   };
@@ -1767,7 +1767,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         key={type.id}
         className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 transition ${
           isSelected
-            ? 'border-primary-500/60 bg-primary-50 dark:border-primary-500/40 dark:bg-primary-500/15'
+            ? 'border-c-info/60 bg-c-info/10 dark:border-c-info/40 dark:bg-c-info/15'
             : 'border-slate-200 bg-white hover:border-slate-300 dark:border-navy-700/60 dark:bg-navy-800/40 dark:hover:border-white/[0.16]'
         }`}
       >
@@ -1840,7 +1840,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               {isPolish ? 'Typ wyniku' : 'Output type'} *
             </label>
-            <span className="text-xs text-primary-500">
+            <span className="text-xs text-c-info">
               {isPolish ? `Wybrano: ${selectedTypes.length}` : `Selected: ${selectedTypes.length}`}
             </span>
           </div>
@@ -1885,7 +1885,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           <button
             type="button"
             onClick={selectAllRespondents}
-            className="text-xs text-primary-400 transition-colors hover:text-primary-300"
+            className="text-xs text-c-info transition-colors hover:text-c-info"
           >
             {isPolish ? 'Wszystkie osoby' : 'All people'}
           </button>
@@ -1912,7 +1912,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               onClick={selectAllRespondents}
               className={`flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition ${
                 selectedRespondents.length === 0
-                  ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
+                  ? 'border-c-info/50 bg-c-info/10 dark:bg-c-info/15'
                   : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
               }`}
             >
@@ -1932,7 +1932,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                     key={respondent.id}
                     className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 transition ${
                       isSelected
-                        ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
+                        ? 'border-c-info/50 bg-c-info/10 dark:bg-c-info/15'
                         : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
                     }`}
                   >
@@ -1970,7 +1970,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           </div>
         )}
 
-        <p className="mt-2 text-xs text-primary-400">{selectedPeopleSummary}</p>
+        <p className="mt-2 text-xs text-c-info">{selectedPeopleSummary}</p>
       </div>
     </div>
   );
@@ -1980,7 +1980,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     return (
       <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 dark:border-white/[0.08] dark:bg-navy-950/30">
         <div className="mb-1.5 flex items-center gap-2">
-          <Package size={15} className="text-primary-500" />
+          <Package size={15} className="text-c-info" />
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
             {isPolish ? 'Koszyk źródeł' : 'Source basket'}
           </span>
@@ -2096,7 +2096,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 setFilterDateFrom('');
                 setFilterDateTo('');
               }}
-              className="text-xs text-primary-400 transition-colors hover:text-primary-300"
+              className="text-xs text-c-info transition-colors hover:text-c-info"
             >
               {isPolish ? 'Cały okres' : 'All dates'}
             </button>
@@ -2139,7 +2139,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                   setUseRoleFilter(false);
                   setFilterRole('');
                 }}
-                className="text-xs text-primary-400 transition-colors hover:text-primary-300"
+                className="text-xs text-c-info transition-colors hover:text-c-info"
               >
                 {isPolish ? 'Wszystkie role' : 'All roles'}
               </button>
@@ -2171,7 +2171,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                   setUseDepartmentFilter(false);
                   setFilterDepartment('');
                 }}
-                className="text-xs text-primary-400 transition-colors hover:text-primary-300"
+                className="text-xs text-c-info transition-colors hover:text-c-info"
               >
                 {isPolish ? 'Wszystkie działy' : 'All departments'}
               </button>
@@ -2207,7 +2207,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           <button
             type="button"
             onClick={toggleAllSessions}
-            className="text-xs text-primary-400 hover:text-primary-300 transition-colors"
+            className="text-xs text-c-info hover:text-c-info transition-colors"
           >
             {filteredSessions.every((session) => selectedSessions.includes(session.id))
               ? isPolish
@@ -2262,7 +2262,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 key={session.id}
                 className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 transition ${
                   isSelected
-                    ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
+                    ? 'border-c-info/50 bg-c-info/10 dark:bg-c-info/15'
                     : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
                 }`}
               >
@@ -2298,7 +2298,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         </div>
       )}
 
-      <p className="text-xs text-primary-400 mt-2">{selectedSourceSummary}</p>
+      <p className="text-xs text-c-info mt-2">{selectedSourceSummary}</p>
     </div>
   );
 
@@ -2350,7 +2350,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 key={mode.id}
                 className={`flex cursor-pointer items-start gap-2 rounded-lg border px-2.5 py-2 transition ${
                   isSelected
-                    ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
+                    ? 'border-c-info/50 bg-c-info/10 dark:bg-c-info/15'
                     : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
                 }`}
               >
@@ -2378,7 +2378,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             ? 'Tryby analizy są soczewkami promptu dla jednego insightu. Nie uruchamiają downstream actions bez osobnego zatwierdzenia.'
             : 'Analysis modes are prompt lenses for one insight. They do not run downstream actions without separate approval.'}
         </p>
-        <p className="mt-2 text-xs text-primary-400">
+        <p className="mt-2 text-xs text-c-info">
           {isPolish
             ? `Wybrano: ${selectedAnalysisModes.length}`
             : `Selected: ${selectedAnalysisModes.length}`}
@@ -2394,7 +2394,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             <button
               type="button"
               onClick={() => setSelectedTopicFocus([])}
-              className="text-xs text-primary-400 transition-colors hover:text-primary-300"
+              className="text-xs text-c-info transition-colors hover:text-c-info"
             >
               {isPolish ? 'Ogólnie' : 'General'}
             </button>
@@ -2410,8 +2410,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 onClick={() => toggleTopicFocus(topic.id)}
                 className={`truncate rounded-lg border px-2.5 py-1.5 text-left text-xs transition ${
                   selected
-                    ? 'border-primary-500/50 bg-primary-50 text-primary-700 dark:bg-primary-500/15 dark:text-primary-200'
-                    : 'border-slate-200 bg-white text-slate-700 hover:border-primary-500/40 dark:border-white/[0.08] dark:bg-navy-900/70 dark:text-slate-200'
+                    ? 'border-c-info/50 bg-c-info/10 text-c-info dark:bg-c-info/15 dark:text-c-info'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-c-info/40 dark:border-white/[0.08] dark:bg-navy-900/70 dark:text-slate-200'
                 }`}
               >
                 {isPolish ? topic.labelPl : topic.labelEn}
@@ -2419,7 +2419,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             );
           })}
         </div>
-        <p className="mt-1.5 text-xs text-primary-400">
+        <p className="mt-1.5 text-xs text-c-info">
           {selectedTopicFocus.length === 0
             ? isPolish
               ? 'Brak wyboru = ogólna synteza konsultingowa'
@@ -2466,8 +2466,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 onClick={() => setContextMode(option.value)}
                 className={`rounded-lg border px-2.5 py-2 text-left transition ${
                   selected
-                    ? 'border-primary-500/50 bg-primary-50 ring-1 ring-primary-500/20 dark:bg-primary-500/15'
-                    : 'border-slate-200 bg-white hover:border-primary-500/40 dark:border-white/[0.08] dark:bg-navy-900/70'
+                    ? 'border-c-info/50 bg-c-info/10 ring-1 ring-c-focus dark:bg-c-info/15'
+                    : 'border-slate-200 bg-white hover:border-c-info/40 dark:border-white/[0.08] dark:bg-navy-900/70'
                 }`}
               >
                 <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -2527,16 +2527,16 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           onDrop={(event) => void handleContextDrop(event)}
           className={`flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed px-4 py-5 text-center transition ${
             isContextDragActive
-              ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-500/20 dark:bg-primary-500/10'
-              : 'border-slate-300 bg-white hover:border-primary-500/60 hover:bg-primary-50/40 dark:border-white/[0.15] dark:bg-navy-900/60 dark:hover:border-primary-500/40'
+              ? 'border-c-info bg-c-info/10 ring-2 ring-c-focus dark:bg-c-info/10'
+              : 'border-slate-300 bg-white hover:border-c-info/60 hover:bg-c-info/40 dark:border-white/[0.15] dark:bg-navy-900/60 dark:hover:border-c-info/40'
           } ${isUploadingContextDocument ? 'pointer-events-none opacity-70' : ''}`}
         >
           {isUploadingContextDocument ? (
-            <Loader2 size={20} className="animate-spin text-primary-500" />
+            <Loader2 size={20} className="animate-spin text-c-info" />
           ) : (
             <UploadCloud
               size={22}
-              className={isContextDragActive ? 'text-primary-500' : 'text-slate-400'}
+              className={isContextDragActive ? 'text-c-info' : 'text-slate-400'}
             />
           )}
           <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
@@ -2588,7 +2588,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                   key={doc.id}
                   className={`flex items-center gap-2 rounded-md border px-2.5 py-2 transition ${
                     selected
-                      ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
+                      ? 'border-c-info/50 bg-c-info/10 dark:bg-c-info/15'
                       : 'border-slate-200 bg-white dark:border-white/[0.08] dark:bg-navy-900/70'
                   } ${disabled ? 'opacity-80' : 'cursor-pointer hover:border-slate-300 dark:hover:border-white/[0.16]'}`}
                 >
@@ -2630,7 +2630,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           <button
             type="button"
             onClick={() => void fetchContextDocuments()}
-            className="text-primary-500 hover:text-primary-400"
+            className="text-c-info hover:text-c-info"
           >
             {isPolish ? 'Odśwież' : 'Refresh'}
           </button>
@@ -2667,7 +2667,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   const renderRefineStep = () => (
     <div className="space-y-5">
       {renderSimilarWarning()}
-      <div className="rounded-xl border border-primary-200/60 bg-primary-50/50 p-3.5 dark:border-primary-500/20 dark:bg-primary-500/[0.07]">
+      <div className="rounded-xl border border-c-info/60 bg-c-info/50 p-3.5 dark:border-c-info/20 dark:bg-c-info/[0.07]">
         <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
           {isPolish ? 'Pytanie przewodnie / hipoteza' : 'Leading question / hypothesis'}
           <InfoHint

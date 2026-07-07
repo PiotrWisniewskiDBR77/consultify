@@ -64,7 +64,7 @@ export const FinancialImpactSection: React.FC<InitiativeSectionProps> = ({
             handleGenerateAI('financialImpact');
           }}
           disabled={isGeneratingAI === 'financialImpact'}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 text-xs font-medium transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-c-info/50 text-c-info dark:text-c-info hover:bg-c-info/10 text-xs font-medium transition-colors disabled:opacity-50"
         >
           {isGeneratingAI === 'financialImpact' ? (
             <Loader2 size={14} className="animate-spin" />

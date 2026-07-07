@@ -30,7 +30,7 @@ const ICON_MAP: Record<string, React.FC<{ className?: string }>> = {
 const SOURCE_TYPES = [
   { type: 'initiative_portfolio', icon: 'Target', color: 'text-blue-500' },
   { type: 'kpi_roi', icon: 'TrendingUp', color: 'text-amber-500' },
-  { type: 'assessment', icon: 'FileText', color: 'text-primary-500' },
+  { type: 'assessment', icon: 'FileText', color: 'text-c-info' },
   { type: 'raid', icon: 'Shield', color: 'text-danger-500' },
   { type: 'execution_status', icon: 'ClipboardList', color: 'text-emerald-500' },
   { type: 'tool_session', icon: 'Zap', color: 'text-blue-500' },
@@ -199,7 +199,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {loadingArtifacts && <Loader2 className="h-5 w-5 animate-spin text-primary-500" />}
+            {loadingArtifacts && <Loader2 className="h-5 w-5 animate-spin text-c-info" />}
             <label className="flex cursor-pointer select-none items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
               <input
                 type="checkbox"
@@ -208,7 +208,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
                   setShowDrafts(event.target.checked);
                   setVisibleCount(12);
                 }}
-                className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/40 dark:border-navy-600"
+                className="h-4 w-4 rounded border-slate-300 text-c-info focus:ring-c-focus dark:border-navy-600"
               />
               {t('presentations.sources.showDrafts', 'Pokaż robocze')}
             </label>
@@ -226,7 +226,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
               'presentations.sources.searchArtifacts',
               'Search project, study, report, initiative...'
             )}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-c-focus focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
           />
           <select
             value={typeFilter}
@@ -234,7 +234,7 @@ export const SourceStep: React.FC<SourceStepProps> = ({
               setTypeFilter(event.target.value);
               setVisibleCount(12);
             }}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-c-focus focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
           >
             {artifactTypes.map((type) => (
               <option key={type} value={type}>

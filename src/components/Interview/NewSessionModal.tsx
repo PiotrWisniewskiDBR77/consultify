@@ -275,7 +275,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                     flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border text-sm font-medium transition-all
                     ${
                       mode === 'myself'
-                        ? 'bg-primary-500/15 border-primary-500 text-primary-400'
+                        ? 'bg-c-info/15 border-c-info text-c-info'
                         : 'bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:border-slate-500'
                     }
                   `}
@@ -290,7 +290,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                     flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border text-sm font-medium transition-all
                     ${
                       mode === 'team'
-                        ? 'bg-primary-500/15 border-primary-500 text-primary-400'
+                        ? 'bg-c-info/15 border-c-info text-c-info'
                         : 'bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:border-slate-500'
                     }
                   `}
@@ -347,7 +347,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                           w-full flex items-center justify-between px-4 py-3 text-left transition-colors
                           ${
                             selectedTemplateId === template.id
-                              ? 'bg-primary-500/10 text-primary-400'
+                              ? 'bg-c-info/10 text-c-info'
                               : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700'
                           }
                         `}
@@ -361,7 +361,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                             )}
                           </div>
                           {selectedTemplateId === template.id && (
-                            <Check size={16} className="text-primary-400" />
+                            <Check size={16} className="text-c-info" />
                           )}
                         </button>
                       ))}
@@ -399,7 +399,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                             w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors
                             ${
                               selectedAssignees.includes(member.id)
-                                ? 'bg-primary-500/15 text-primary-400'
+                                ? 'bg-c-info/15 text-c-info'
                                 : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700'
                             }
                           `}
@@ -513,7 +513,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                           }}
                           className={`
                             w-full flex items-center justify-between px-4 py-3 text-left transition-colors
-                            ${priority === p ? 'bg-primary-500/10' : 'hover:bg-navy-700'}
+                            ${priority === p ? 'bg-c-info/10' : 'hover:bg-navy-700'}
                           `}
                         >
                           <span
@@ -521,7 +521,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
                           >
                             {isPolish ? PRIORITY_CONFIG[p].labelPl : PRIORITY_CONFIG[p].label}
                           </span>
-                          {priority === p && <Check size={16} className="text-primary-400" />}
+                          {priority === p && <Check size={16} className="text-c-info" />}
                         </button>
                       ))}
                     </div>

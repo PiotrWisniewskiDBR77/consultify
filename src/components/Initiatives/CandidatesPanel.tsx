@@ -178,7 +178,7 @@ export function useCandidates(status: CandidateStatus = 'pending'): UseCandidate
 function FitScoreBadge({ score }: { score: number }) {
   const pct = Math.round(Math.max(0, Math.min(1, score)) * 100);
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-900/20 dark:text-primary-300">
+    <span className="inline-flex items-center gap-1 rounded-full bg-c-info/10 px-2 py-0.5 text-xs font-medium text-c-info dark:bg-c-info/20 dark:text-c-info">
       {pct}%
     </span>
   );
@@ -209,7 +209,7 @@ export function CandidatesPanel({ onAccept }: CandidatesPanelProps) {
   return (
     <div className="flex h-full flex-col gap-4 overflow-auto p-4">
       <header className="flex flex-wrap items-center gap-2">
-        <Sparkles className="h-4 w-4 text-primary-500" />
+        <Sparkles className="h-4 w-4 text-c-info" />
         <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           {t('initiatives.candidates.title', 'Kandydaci AI')}
         </h3>

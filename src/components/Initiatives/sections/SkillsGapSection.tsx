@@ -115,7 +115,7 @@ const RECOMMENDATION_LABELS: Record<string, { en: string; pl: string; color: str
   outsource: {
     en: 'Outsource',
     pl: 'Outsource',
-    color: 'text-primary-600 bg-primary-50 dark:bg-primary-500/10',
+    color: 'text-c-info bg-c-info/10 dark:bg-c-info/10',
   },
   resequence: {
     en: 'Resequence',
@@ -178,7 +178,7 @@ export const SkillsGapSection: React.FC<InitiativeSectionProps> = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <BarChart3 size={16} className="text-primary-500" />
+          <BarChart3 size={16} className="text-c-info" />
           <h3 className="text-sm font-semibold text-navy-900 dark:text-white">
             {t('skillsGap.title', 'Skills Gap Analysis')}
           </h3>
@@ -234,7 +234,7 @@ export const SkillsGapSection: React.FC<InitiativeSectionProps> = () => {
             onClick={() => setActiveTab(key)}
             className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
               activeTab === key
-                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                ? 'border-c-info text-c-info dark:text-c-info'
                 : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
@@ -349,7 +349,7 @@ const PersonsView: React.FC<{ gap: GapSummary }> = ({ gap }) => {
               <div
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
                   person.hasProfile
-                    ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400'
+                    ? 'bg-c-info/10 dark:bg-c-info/20 text-c-info dark:text-c-info'
                     : 'bg-slate-100 dark:bg-slate-700 text-slate-600'
                 }`}
               >

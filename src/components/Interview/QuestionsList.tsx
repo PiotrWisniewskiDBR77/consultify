@@ -156,7 +156,7 @@ const TAG_OPTIONS = [
     value: 'priority',
     labelEn: 'Priority',
     labelPl: 'Priorytet',
-    color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
+    color: 'bg-c-info/10 text-c-info dark:bg-c-info/30 dark:text-c-info',
   },
 ];
 
@@ -744,7 +744,7 @@ Rules:
                           <button
                             onClick={() => handleAISuggest(item)}
                             disabled={aiLoadingId === item.id}
-                            className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-500 disabled:opacity-50"
+                            className="flex items-center gap-1 text-xs text-c-info hover:text-c-info disabled:opacity-50"
                           >
                             <Sparkles size={12} />
                             {aiLoadingId === item.id ? 'AI...' : 'AI'}
@@ -778,7 +778,7 @@ Rules:
                           <textarea
                             value={editNotes}
                             onChange={(e) => setEditNotes(e.target.value)}
-                            className="w-full p-3 text-sm border border-slate-200 dark:border-navy-700 rounded-xl bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none min-h-[72px]"
+                            className="w-full p-3 text-sm border border-slate-200 dark:border-navy-700 rounded-xl bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-c-focus resize-none min-h-[72px]"
                             rows={3}
                             placeholder={
                               isPolish
@@ -971,7 +971,7 @@ Rules:
                           onDoubleClick={() => !readOnly && handleStartEdit(question)}
                           className={`border-b border-slate-200/50 dark:border-navy-700/50 last:border-0 cursor-pointer transition-colors ${
                             isSelected
-                              ? 'bg-primary-50 dark:bg-primary-500/10'
+                              ? 'bg-c-info/10 dark:bg-c-info/10'
                               : 'hover:bg-slate-50/80 dark:hover:bg-navy-800/40'
                           }`}
                         >
@@ -1064,14 +1064,14 @@ Rules:
                               {!readOnly && (
                                 <button
                                   onClick={() => openChatForQuestion(question)}
-                                  className="p-1.5 rounded hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
+                                  className="p-1.5 rounded hover:bg-c-info/10 dark:hover:bg-c-info/30 transition-colors"
                                   title={
                                     isPolish
                                       ? 'Czat AI do tego pytania'
                                       : 'AI chat for this question'
                                   }
                                 >
-                                  <Sparkles size={14} className="text-primary-400" />
+                                  <Sparkles size={14} className="text-c-info" />
                                 </button>
                               )}
                               <div className="relative">
@@ -1206,7 +1206,7 @@ Rules:
                       setChatMessages([{ role: 'user' as const, content: prompt }]);
                     }
                   }}
-                  className="flex items-center gap-1.5 px-3 py-2 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg border border-dashed border-primary-300 dark:border-primary-700 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm text-c-info dark:text-c-info hover:bg-c-info/10 dark:hover:bg-c-info/20 rounded-lg border border-dashed border-c-info dark:border-c-info transition-colors"
                   title={
                     isPolish ? 'AI zaproponuje kolejne pytania' : 'AI will propose next questions'
                   }
@@ -1267,7 +1267,7 @@ Rules:
                     className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${
                       m.role === 'user'
                         ? 'bg-white border border-slate-200 dark:border-navy-700 text-slate-800 dark:text-slate-200'
-                        : 'bg-primary-50 dark:bg-primary-900/20 text-slate-800 dark:text-slate-200'
+                        : 'bg-c-info/10 dark:bg-c-info/20 text-slate-800 dark:text-slate-200'
                     }`}
                   >
                     {m.content}
@@ -1280,7 +1280,7 @@ Rules:
                   <div className="w-7 h-7 rounded-full bg-navy-900 flex items-center justify-center shrink-0">
                     <TeresaMark size={12} className="text-white" />
                   </div>
-                  <div className="px-3 py-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg text-sm text-slate-600">
+                  <div className="px-3 py-2 bg-c-info/10 dark:bg-c-info/20 rounded-lg text-sm text-slate-600">
                     {isPolish ? 'Piszę...' : 'Typing...'}
                   </div>
                 </div>
@@ -1291,7 +1291,7 @@ Rules:
             <div className="p-4 bg-white dark:bg-navy-900 border-t border-slate-200 dark:border-navy-700 space-y-3">
               <div className="flex gap-2">
                 <input
-                  className="flex-1 bg-slate-100 dark:bg-navy-950 border border-transparent focus:border-primary-500 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500/30 transition-all dark:text-white text-sm"
+                  className="flex-1 bg-slate-100 dark:bg-navy-950 border border-transparent focus:border-c-focus rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-c-focus transition-all dark:text-white text-sm"
                   placeholder={isPolish ? 'Wpisz odpowiedź...' : 'Type your response...'}
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}

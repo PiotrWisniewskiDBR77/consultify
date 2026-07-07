@@ -107,9 +107,9 @@ interface LogicAnalysisProps {
 const SortIcon: React.FC<{ col: SortCol; cur: SortCol; dir: SortDir }> = ({ col, cur, dir }) => {
   if (col !== cur) return <ArrowUpDown size={11} className="text-slate-600 dark:text-slate-400" />;
   return dir === 'asc' ? (
-    <ArrowUp size={11} className="text-primary-500" />
+    <ArrowUp size={11} className="text-c-info" />
   ) : (
-    <ArrowDown size={11} className="text-primary-500" />
+    <ArrowDown size={11} className="text-c-info" />
   );
 };
 
@@ -575,23 +575,23 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
 
   const discoveredDepsPanel =
     discoveredDeps !== null ? (
-      <div className="m-4 rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden">
-        <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
+      <div className="m-4 rounded-xl border border-c-info dark:border-c-info/50 bg-c-info/5 dark:bg-c-info/10 overflow-hidden">
+        <div className="px-4 py-3 bg-c-info/10 dark:bg-c-info/20 border-b border-c-info dark:border-c-info/50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
-            <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
+            <Sparkles size={16} className="text-c-info dark:text-c-info" />
+            <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
               {t(
                 'initiatives.analysis.logic.discoveredDeps',
                 'AI discovered potential dependencies'
               )}
             </h3>
-            <span className="text-xs text-primary-500 dark:text-primary-400">
+            <span className="text-xs text-c-info dark:text-c-info">
               ({discoveredDeps.length})
             </span>
           </div>
           <button
             onClick={closeWorkspacePanels}
-            className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30"
+            className="p-1 rounded text-c-info hover:bg-c-info/30 dark:hover:bg-c-info/30"
           >
             <X size={14} />
           </button>
@@ -604,7 +604,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-primary-200/50 dark:divide-primary-900/30">
+          <div className="divide-y divide-c-info/20 dark:divide-c-info/15">
             {discoveredDeps.map((dep, idx) => {
               const key = `${dep.fromId}::${dep.toId}`;
               const isAccepted = acceptedDiscovered.has(key);
@@ -630,7 +630,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                       <span className="font-medium text-slate-900 dark:text-white truncate max-w-[180px]">
                         {dep.fromName}
                       </span>
-                      <ArrowRight size={14} className="text-primary-400 shrink-0" />
+                      <ArrowRight size={14} className="text-c-info shrink-0" />
                       <span className="text-slate-600 dark:text-slate-400 truncate max-w-[180px]">
                         {dep.toName}
                       </span>
@@ -792,7 +792,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
               <React.Fragment key={step.id}>
                 <button
                   onClick={() => onOpenInitiative(step.id)}
-                  className="group relative px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-amber-200 dark:border-amber-800/50 hover:border-primary-400 dark:hover:border-primary-600 transition-colors shadow-sm"
+                  className="group relative px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-amber-200 dark:border-amber-800/50 hover:border-c-info dark:hover:border-c-info transition-colors shadow-sm"
                 >
                   <div className="text-xs font-medium text-slate-900 dark:text-white">
                     {step.name}
@@ -828,7 +828,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                 <Zap size={14} className="text-amber-500 shrink-0" />
                 <button
                   onClick={() => onOpenInitiative(b.initiativeId)}
-                  className="font-medium text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate"
+                  className="font-medium text-slate-900 dark:text-white hover:text-c-info dark:hover:text-c-info transition-colors truncate"
                 >
                   {b.initiativeName}
                 </button>
@@ -884,7 +884,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                   <div key={init.id} className="flex items-center gap-2 text-sm">
                     <button
                       onClick={() => onOpenInitiative(init.id)}
-                      className="font-medium text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate max-w-[250px]"
+                      className="font-medium text-slate-900 dark:text-white hover:text-c-info dark:hover:text-c-info transition-colors truncate max-w-[250px]"
                     >
                       {init.name}
                     </button>
@@ -1149,23 +1149,23 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
 
       {/* AI Discover Dependencies panel */}
       {!onRegisterWorkspacePanel && discoveredDeps !== null && (
-        <div className="rounded-xl border border-primary-200 dark:border-primary-900/50 bg-primary-500/5 dark:bg-primary-500/10 overflow-hidden">
-          <div className="px-4 py-3 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-200 dark:border-primary-900/50 flex items-center justify-between">
+        <div className="rounded-xl border border-c-info dark:border-c-info/50 bg-c-info/5 dark:bg-c-info/10 overflow-hidden">
+          <div className="px-4 py-3 bg-c-info/10 dark:bg-c-info/20 border-b border-c-info dark:border-c-info/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles size={16} className="text-primary-600 dark:text-primary-400" />
-              <h3 className="text-sm font-semibold text-primary-700 dark:text-primary-300">
+              <Sparkles size={16} className="text-c-info dark:text-c-info" />
+              <h3 className="text-sm font-semibold text-c-info dark:text-c-info">
                 {t(
                   'initiatives.analysis.logic.discoveredDeps',
                   'AI discovered potential dependencies'
                 )}
               </h3>
-              <span className="text-xs text-primary-500 dark:text-primary-400">
+              <span className="text-xs text-c-info dark:text-c-info">
                 ({discoveredDeps.length})
               </span>
             </div>
             <button
               onClick={() => setDiscoveredDeps(null)}
-              className="p-1 rounded text-primary-500 hover:bg-primary-200/30 dark:hover:bg-primary-800/30"
+              className="p-1 rounded text-c-info hover:bg-c-info/30 dark:hover:bg-c-info/30"
             >
               <X size={14} />
             </button>
@@ -1178,7 +1178,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-primary-200/50 dark:divide-primary-900/30">
+            <div className="divide-y divide-c-info/20 dark:divide-c-info/15">
               {discoveredDeps.map((dep, idx) => {
                 const key = `${dep.fromId}::${dep.toId}`;
                 const isAccepted = acceptedDiscovered.has(key);
@@ -1203,7 +1203,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                         <span className="font-medium text-slate-900 dark:text-white truncate max-w-[180px]">
                           {dep.fromName}
                         </span>
-                        <ArrowRight size={14} className="text-primary-400 shrink-0" />
+                        <ArrowRight size={14} className="text-c-info shrink-0" />
                         <span className="text-slate-600 dark:text-slate-400 truncate max-w-[180px]">
                           {dep.toName}
                         </span>
@@ -1369,7 +1369,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                     <button
                       onClick={() => onOpenInitiative(step.id)}
                       className="group relative px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-amber-200 dark:border-amber-800/50
-                        hover:border-primary-400 dark:hover:border-primary-600 transition-colors shadow-sm"
+                        hover:border-c-info dark:hover:border-c-info transition-colors shadow-sm"
                     >
                       <div className="text-xs font-medium text-slate-900 dark:text-white">
                         {step.name}
@@ -1407,7 +1407,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                     <Zap size={14} className="text-amber-500 shrink-0" />
                     <button
                       onClick={() => onOpenInitiative(b.initiativeId)}
-                      className="font-medium text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate"
+                      className="font-medium text-slate-900 dark:text-white hover:text-c-info dark:hover:text-c-info transition-colors truncate"
                     >
                       {b.initiativeName}
                     </button>
@@ -1475,7 +1475,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                       <div key={init.id} className="flex items-center gap-2 text-sm">
                         <button
                           onClick={() => onOpenInitiative(init.id)}
-                          className="font-medium text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate max-w-[250px]"
+                          className="font-medium text-slate-900 dark:text-white hover:text-c-info dark:hover:text-c-info transition-colors truncate max-w-[250px]"
                         >
                           {init.name}
                         </button>
@@ -1502,7 +1502,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                 <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
                   <button
                     onClick={() => handleSort('from')}
-                    className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400"
+                    className="inline-flex items-center gap-1 hover:text-c-info dark:hover:text-c-info"
                   >
                     {t('initiatives.analysis.logic.from', 'Predecessor')}
                     <SortIcon col="from" cur={sortCol} dir={sortDir} />
@@ -1512,7 +1512,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                 <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
                   <button
                     onClick={() => handleSort('to')}
-                    className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400"
+                    className="inline-flex items-center gap-1 hover:text-c-info dark:hover:text-c-info"
                   >
                     {t('initiatives.analysis.logic.to', 'Successor')}
                     <SortIcon col="to" cur={sortCol} dir={sortDir} />
@@ -1521,7 +1521,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                 <th className="text-center px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
                   <button
                     onClick={() => handleSort('type')}
-                    className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400"
+                    className="inline-flex items-center gap-1 hover:text-c-info dark:hover:text-c-info"
                   >
                     {t('initiatives.analysis.logic.type', 'Type')}
                     <SortIcon col="type" cur={sortCol} dir={sortDir} />
@@ -1530,7 +1530,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                 <th className="text-center px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
                   <button
                     onClick={() => handleSort('status')}
-                    className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400"
+                    className="inline-flex items-center gap-1 hover:text-c-info dark:hover:text-c-info"
                   >
                     {t('initiatives.analysis.logic.status', 'Status')}
                     <SortIcon col="status" cur={sortCol} dir={sortDir} />
@@ -1563,7 +1563,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                             e.stopPropagation();
                             onOpenInitiative(d.fromId);
                           }}
-                          className="font-medium text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate max-w-[200px] block"
+                          className="font-medium text-slate-900 dark:text-white hover:text-c-info dark:hover:text-c-info transition-colors truncate max-w-[200px] block"
                         >
                           {d.fromName}
                         </button>
@@ -1580,7 +1580,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                             e.stopPropagation();
                             onOpenInitiative(d.toId);
                           }}
-                          className="text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate max-w-[200px] block"
+                          className="text-slate-600 dark:text-slate-400 hover:text-c-info dark:hover:text-c-info transition-colors truncate max-w-[200px] block"
                         >
                           {d.toName}
                         </button>
@@ -1621,7 +1621,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
                                       <Sparkles
                                         size={10}
-                                        className="inline mr-1 text-primary-500"
+                                        className="inline mr-1 text-c-info"
                                       />
                                       {relatedIssue.fixSuggestion}
                                     </p>
@@ -1634,7 +1634,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                                       }}
                                       disabled={applyingFix === relatedIssue.id}
                                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium
-                                        bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20
+                                        bg-c-info/10 text-c-info dark:text-c-info hover:bg-c-info/20
                                         disabled:opacity-50 transition-colors"
                                     >
                                       {applyingFix === relatedIssue.id ? (
@@ -1660,7 +1660,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                                     onOpenInitiative(d.fromId);
                                   }}
                                   className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium
-                                    bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                                    bg-c-info/10 text-c-info dark:text-c-info hover:bg-c-info/20 transition-colors"
                                 >
                                   <ExternalLink size={12} />
                                   {d.fromName}
@@ -1671,7 +1671,7 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                                     onOpenInitiative(d.toId);
                                   }}
                                   className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium
-                                    bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                                    bg-c-info/10 text-c-info dark:text-c-info hover:bg-c-info/20 transition-colors"
                                 >
                                   <ExternalLink size={12} />
                                   {d.toName}
@@ -1711,9 +1711,9 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
                 onClick={computeDiscoverDeps}
                 disabled={discoverRunning}
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold
-                bg-gradient-to-r from-primary-600 to-crimson-600 text-white
-                hover:from-primary-700 hover:to-crimson-700
-                disabled:opacity-60 shadow-lg shadow-primary-500/20 transition-all"
+                bg-gradient-to-r from-c-info to-c-info text-white
+                hover:from-c-info hover:to-c-info
+                disabled:opacity-60 shadow-lg shadow-c-info/20 transition-all"
               >
                 {discoverRunning ? (
                   <Loader2 size={16} className="animate-spin" />
