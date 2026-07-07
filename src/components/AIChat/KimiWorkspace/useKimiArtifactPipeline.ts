@@ -602,57 +602,25 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       }
 
       if (lane === 'excele') {
-        // P23-ext: Try intelligent workbook generation first, fallback to table export
-        const generateWorkbook = async () => {
-          try {
-            const wbResult = await Api.generateWorkbook({
-              prompt: lastGoal || title,
-              language: navigator.language,
-            });
-            if (wbResult?.id) {
-              const qualityLabel =
-                wbResult.qualityScore != null ? `${wbResult.qualityScore.toFixed(1)}/5` : 'N/A';
+        // D1(a): the server already materialized the canonical artifact for this
+        // run. We no longer fire a second Api.generateWorkbook() here (that created
+        // an unlinked parallel artifact — the split-brain). Instead we probe the
+        // materialization origin: a real .xlsx workbook resolves via GET /workbook/:id,
+        // a degraded tp_table fallback returns 404 and we render the tabular export
+        // with a visible notice.
+        const sheetId = origin?.originRecordId;
 
-              setPreview({
-                type: 'xlsx',
-                title: wbResult.title || title,
-                fileName: wbResult.fileName || `${title.replace(/\s+/g, '_')}.xlsx`,
-                summary: `Workbook "${wbResult.title}" — ${wbResult.sheets?.length || 1} sheets. Quality: ${qualityLabel}`,
-                kpiItems: [
-                  { label: 'Sheets', value: String(wbResult.sheets?.length || 1) },
-                  { label: 'Quality', value: qualityLabel },
-                  { label: 'Size', value: `${Math.round((wbResult.fileSize || 0) / 1024)} KB` },
-                  ...(wbResult.sheets || []).map((s: any) => ({
-                    label: s.name,
-                    value: `${s.rowCount} rows × ${s.columnCount} cols`,
-                  })),
-                ],
-                sheetNames: (wbResult.sheets || []).map((s: any) => s.name),
-                workbookId: wbResult.id,
-                downloadUrl: wbResult.downloadUrl,
-                qualityScore: wbResult.qualityScore,
-                pipelineLog: wbResult.pipelineLog,
-              });
-              setContentGenerated(true);
-              return true;
-            }
-          } catch (err) {
-            console.warn('[KIMI] Workbook generation failed, falling back to table export:', err);
-          }
-          return false;
-        };
-
-        const workbookGenerated = await generateWorkbook();
-
-        if (!workbookGenerated && origin?.originRecordId) {
-          const tableId = origin.originRecordId;
-          fetchSheetPreviewData(tableId)
+        const renderTableFallback = (tableId: string) => {
+          toast.error(
+            'Nie udało się wygenerować pliku .xlsx — pokazujemy dane tabelaryczne. Spróbuj wygenerować ponownie.'
+          );
+          return fetchSheetPreviewData(tableId)
             .then((data) => {
               setPreview({
                 type: 'xlsx',
                 title,
                 fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
-                summary: `Spreadsheet "${title}" — ${data.kpiItems.find((k) => k.label === 'Rows')?.value || '0'} rows, ${data.kpiItems.find((k) => k.label === 'Columns')?.value || '0'} columns.`,
+                summary: `Spreadsheet "${title}" — ${data.kpiItems.find((k) => k.label === 'Rows')?.value || '0'} rows, ${data.kpiItems.find((k) => k.label === 'Columns')?.value || '0'} columns. (tabular fallback — .xlsx generation failed)`,
                 kpiItems: data.kpiItems,
                 sheetNames: data.sheetNames,
                 tableData: { columns: data.columns, rows: data.rows },
@@ -664,13 +632,55 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
                 type: 'xlsx',
                 title,
                 fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
-                summary: `Spreadsheet "${title}" generated.`,
+                summary: `Spreadsheet "${title}" generated (tabular fallback).`,
                 kpiItems: [],
                 sheetNames: ['Sheet1'],
               });
               setContentGenerated(true);
             });
-        } else if (!workbookGenerated) {
+        };
+
+        if (sheetId) {
+          try {
+            const wb = await Api.getWorkbook(sheetId);
+            if (wb?.id) {
+              const sheets: any[] = Array.isArray(wb.schema_json?.sheets)
+                ? wb.schema_json.sheets
+                : [];
+              const qualityScore =
+                typeof wb.quality_score === 'number' ? wb.quality_score : undefined;
+              const qualityLabel = qualityScore != null ? `${qualityScore.toFixed(1)}/5` : 'N/A';
+
+              setPreview({
+                type: 'xlsx',
+                title: wb.title || title,
+                fileName: wb.file_name || `${title.replace(/\s+/g, '_')}.xlsx`,
+                summary: `Workbook "${wb.title || title}" — ${wb.sheet_count || sheets.length || 1} sheets. Quality: ${qualityLabel}`,
+                kpiItems: [
+                  { label: 'Sheets', value: String(wb.sheet_count || sheets.length || 1) },
+                  { label: 'Quality', value: qualityLabel },
+                  { label: 'Size', value: `${Math.round((wb.file_size || 0) / 1024)} KB` },
+                  ...sheets.map((s: any) => ({
+                    label: s.name,
+                    value: `${s.rows?.length ?? 0} rows × ${s.columns?.length ?? 0} cols`,
+                  })),
+                ],
+                sheetNames: sheets.map((s: any) => s.name),
+                workbookId: wb.id,
+                downloadUrl: wb.downloadUrl || `/api/workbook/${wb.id}/download`,
+                qualityScore,
+                pipelineLog: wb.pipeline_log,
+              });
+              setContentGenerated(true);
+              return;
+            }
+            // 404 → sheetId is a degraded tp_table, not a workbook.
+            await renderTableFallback(sheetId);
+          } catch (err) {
+            console.warn('[KIMI] Failed to load materialized workbook, using table fallback:', err);
+            await renderTableFallback(sheetId);
+          }
+        } else {
           setPreview({
             type: 'xlsx',
             title,
@@ -979,7 +989,16 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
               params: {
                 title: accepted.plan.titleHint,
                 config:
-                  outputType === 'sheet' ? { tableName: accepted.plan.titleHint, goal } : undefined,
+                  outputType === 'sheet'
+                    ? {
+                        tableName: accepted.plan.titleHint,
+                        goal,
+                        // Tell the server which sheet runtime to materialize:
+                        // 'workbook' → real .xlsx via WorkbookGeneratorService (lane excele);
+                        // 'table'    → tp_tables auto-create (lane tabele).
+                        sheetRuntime: lane === 'excele' ? 'workbook' : 'table',
+                      }
+                    : undefined,
               },
             });
             setCurrentRun(materialized);

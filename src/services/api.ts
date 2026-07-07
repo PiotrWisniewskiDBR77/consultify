@@ -6834,6 +6834,14 @@ export const Api = {
     return handleResponse(res, 'Failed to generate workbook');
   },
 
+  // Fetch workbook metadata by id. Returns null on 404 so callers can probe an
+  // artifact origin: a real .xlsx workbook resolves, a tp_table id does not.
+  getWorkbook: async (workbookId: string): Promise<any | null> => {
+    const res = await fetch(`${API_URL}/workbook/${workbookId}`, { headers: getHeaders() });
+    if (res.status === 404) return null;
+    return handleResponse(res, 'Failed to load workbook');
+  },
+
   downloadWorkbook: (workbookId: string): void => {
     window.open(`${API_URL}/workbook/${workbookId}/download`, '_blank');
   },
@@ -15619,16 +15627,10 @@ export const Api = {
     return {
       preferences: {
         tone: (userSettings?.writing_tone || 'professional') as
-          | 'professional'
-          | 'friendly'
-          | 'casual'
-          | 'academic',
+          'professional' | 'friendly' | 'casual' | 'academic',
         formality: (userSettings?.formality || 'balanced') as 'formal' | 'balanced' | 'informal',
         verbosity: (userSettings?.verbosity || 'concise') as
-          | 'minimal'
-          | 'concise'
-          | 'detailed'
-          | 'comprehensive',
+          'minimal' | 'concise' | 'detailed' | 'comprehensive',
       },
     };
   },
