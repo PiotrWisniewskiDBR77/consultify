@@ -58,6 +58,21 @@ export interface TopBarChipDescriptor {
   tooltip?: string;
   /** Optional explicit `data-testid` override. */
   testId?: string;
+  /**
+   * Semantic section this chip belongs to WHEN folded into the `⋯`
+   * overflow menu (editor-shell-canon overflow pattern, adopted from
+   * `NotebookHamburgerMenu`). Chips sharing a section render together
+   * under a small uppercase heading, separated from other sections by a
+   * divider. Ignored for `primary`/`secondary` chips (they never fold).
+   * Omit for the default (unlabelled) leading section.
+   */
+  overflowSection?: string;
+  /**
+   * Marks a destructive action inside the overflow menu — the ONLY chip
+   * that renders in red (danger semantics). Never use for non-destructive
+   * actions (crimson budget). Effective only in the `⋯` menu.
+   */
+  danger?: boolean;
 }
 
 /**

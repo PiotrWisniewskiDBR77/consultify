@@ -55,6 +55,33 @@ export interface ExecutiveModuleShellProps {
   /** Center canvas. */
   canvas: React.ReactNode;
 
+  /**
+   * Center archetype (editor-shell-canon — EditorShell W pattern).
+   *   - `'chrome'` (default): left rail lives in the chrome column beside
+   *     the canvas — today's behaviour (Document Studio / Deck Builder).
+   *   - `'canvas'`: Miro-style. The columnar left rail is suppressed and
+   *     `floatingLeftRail` floats ABOVE the canvas instead; `canvasOverlaySlot`
+   *     (zoom / minimap) pins to a corner.
+   * ADDITIVE — existing callers omit this and keep `'chrome'` unchanged.
+   */
+  centerMode?: 'chrome' | 'canvas';
+  /**
+   * `centerMode==='canvas'` only: floating tool rail (cursor / shapes /
+   * undo / zoom) rendered ABSOLUTELY over the canvas, not in a column.
+   */
+  floatingLeftRail?: React.ReactNode;
+  /**
+   * `centerMode==='canvas'` only: floating zoom / minimap overlay pinned
+   * to the bottom-right corner of the canvas.
+   */
+  canvasOverlaySlot?: React.ReactNode;
+  /**
+   * Unified AI entry slot — "Discuss with Teresa". Rendered as a docked
+   * aside on the right of the shell body (canonises what Deck does today
+   * via a bespoke `<aside>`). Works in both center modes; omit to hide.
+   */
+  aiEntrySlot?: React.ReactNode;
+
   /** Optional shortcut handlers (run / agent / command palette). */
   onRunPrimary?: () => void;
   onToggleAgent?: () => void;
@@ -105,6 +132,10 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   rightRailTools,
   renderRightRailPanel,
   canvas,
+  centerMode = 'chrome',
+  floatingLeftRail,
+  canvasOverlaySlot,
+  aiEntrySlot,
   onRunPrimary,
   onToggleAgent,
   onOpenCommandPalette,
@@ -158,6 +189,8 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
     [renderRightRailPanel, activeToolId]
   );
 
+  const isCanvasMode = centerMode === 'canvas';
+
   return (
     <div
       className={`flex flex-col h-full bg-white dark:bg-navy-950 ${className ?? ''}`}
@@ -175,25 +208,59 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
       />
 
       <div className="flex flex-1 min-h-0">
-        <LeftRail
-          width={rail.leftWidth}
-          collapsed={rail.leftCollapsed}
-          onToggleCollapse={rail.toggleLeft}
-          title={leftRailTitle}
-          toolsSlot={leftRailToolsSlot}
-          bottomSlot={leftRailBottomSlot}
-          onResize={rail.setLeftWidth}
-        >
-          {leftRailContent}
-        </LeftRail>
+        {/*
+         * 'chrome' mode: columnar left rail beside the canvas (today's
+         * behaviour). 'canvas' mode: the column is suppressed and the
+         * floating rail is layered over the canvas instead.
+         */}
+        {!isCanvasMode ? (
+          <LeftRail
+            width={rail.leftWidth}
+            collapsed={rail.leftCollapsed}
+            onToggleCollapse={rail.toggleLeft}
+            title={leftRailTitle}
+            toolsSlot={leftRailToolsSlot}
+            bottomSlot={leftRailBottomSlot}
+            onResize={rail.setLeftWidth}
+          >
+            {leftRailContent}
+          </LeftRail>
+        ) : null}
 
-        <main
-          className="flex-1 min-w-0 overflow-auto bg-slate-50 dark:bg-navy-950"
-          data-testid="mels-canvas"
-          aria-label={`${moduleLabel} canvas`}
-        >
-          {canvas}
-        </main>
+        {isCanvasMode ? (
+          <main
+            className="relative flex-1 min-w-0 overflow-hidden bg-slate-50 dark:bg-navy-950"
+            data-testid="mels-canvas"
+            data-center-mode="canvas"
+            aria-label={`${moduleLabel} canvas`}
+          >
+            {canvas}
+            {floatingLeftRail ? (
+              <div
+                className="pointer-events-none absolute inset-y-0 left-0 z-sticky flex items-center"
+                data-testid="mels-floating-left-rail"
+              >
+                <div className="pointer-events-auto">{floatingLeftRail}</div>
+              </div>
+            ) : null}
+            {canvasOverlaySlot ? (
+              <div
+                className="pointer-events-none absolute bottom-4 right-4 z-sticky"
+                data-testid="mels-canvas-overlay"
+              >
+                <div className="pointer-events-auto">{canvasOverlaySlot}</div>
+              </div>
+            ) : null}
+          </main>
+        ) : (
+          <main
+            className="flex-1 min-w-0 overflow-auto bg-slate-50 dark:bg-navy-950"
+            data-testid="mels-canvas"
+            aria-label={`${moduleLabel} canvas`}
+          >
+            {canvas}
+          </main>
+        )}
 
         <RightRail
           tools={rightRailTools}
@@ -205,6 +272,16 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
           onToggleCollapse={rail.toggleRight}
           onResize={rail.setRightWidth}
         />
+
+        {aiEntrySlot ? (
+          <aside
+            className="flex-shrink-0 border-l border-c-border-subtle bg-c-surface"
+            data-testid="mels-ai-entry"
+            aria-label="Discuss with Teresa"
+          >
+            {aiEntrySlot}
+          </aside>
+        ) : null}
       </div>
 
       {builtInModalEnabled ? (
@@ -244,5 +321,16 @@ export {
 export { TopBar } from './TopBar';
 export type { RailDimensions, UseRailStateOptions, UseRailStateResult } from './useRailState';
 export { RAIL_WIDTH_BOUNDS, useRailState } from './useRailState';
+
+/**
+ * Canonical `EditorShell` alias (editor-shell-canon — Wave W). Subsequent
+ * agents/tools import `EditorShell`/`EditorShellProps` rather than the
+ * legacy `ExecutiveModuleShell*` names. Same component, same (now extended)
+ * contract — the additive canvas props (`centerMode`, `floatingLeftRail`,
+ * `canvasOverlaySlot`, `aiEntrySlot`) live on `ExecutiveModuleShellProps`,
+ * so `EditorShellProps` is a straight alias.
+ */
+export type EditorShellProps = ExecutiveModuleShellProps;
+export const EditorShell = ExecutiveModuleShell;
 
 export default ExecutiveModuleShell;
