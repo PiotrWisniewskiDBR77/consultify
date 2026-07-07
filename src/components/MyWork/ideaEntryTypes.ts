@@ -101,6 +101,13 @@ export type IdeaStructuredBrief = {
 export type IdeaWorkspaceSeedGraph = {
   nodes: Array<Record<string, unknown>>;
   edges: Array<Record<string, unknown>>;
+  /**
+   * Optional canvas extensions the backend skeleton carries alongside the graph.
+   * Currently `table.columns` — custom Ideas-Table columns requested in the chat
+   * prompt (e.g. ROI / Budżet PLN / Ryzyko). Merged into the persisted map's
+   * extensions so those columns render filled (values live on node.data[key]).
+   */
+  extensions?: Record<string, unknown> | null;
 };
 
 export type IdeaWorkspaceSeedIntent = {

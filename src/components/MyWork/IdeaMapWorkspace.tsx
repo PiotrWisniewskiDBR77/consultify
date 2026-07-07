@@ -1409,12 +1409,23 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             : Array.isArray(map.edges)
               ? map.edges
               : [];
+          // Merge any canvas extensions the backend skeleton carried (e.g.
+          // Ideas-Table custom columns ROI/Budżet/Ryzyko under `table.columns`)
+          // over the startup metadata so those columns persist + render.
+          const seedExt = (seedGraph as { extensions?: Record<string, unknown> } | null)
+            ?.extensions;
+          const startupExt = buildStartupExtensions(seedIntent, creationPayload) as Record<
+            string,
+            unknown
+          >;
+          const mergedExtensions =
+            seedExt && typeof seedExt === 'object' ? { ...startupExt, ...seedExt } : startupExt;
           await Api.syncMyIdeaMap(nextId, {
             nodes,
             edges,
             baseVersion: Number(map.version || 1),
             preferredTool: preferredSeedSystem || undefined,
-            extensions: buildStartupExtensions(seedIntent, creationPayload),
+            extensions: mergedExtensions,
             reason: hasSeedGraph ? 'ai' : 'manual',
           });
         } catch {
