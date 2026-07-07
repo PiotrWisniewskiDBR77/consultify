@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -47,6 +47,7 @@ const setAIConfigMock = vi.fn();
 const setCurrentViewMock = vi.fn();
 const setChatKickoffMessageMock = vi.fn();
 const setChatOutputToolMock = vi.fn();
+const setMyWorkIntentMock = vi.fn();
 
 let appStoreState: any = {
   currentStreamContent: '',
@@ -68,6 +69,7 @@ let appStoreState: any = {
   chatOutputTool: 'auto',
   setChatKickoffMessage: setChatKickoffMessageMock,
   setChatOutputTool: setChatOutputToolMock,
+  setMyWorkIntent: setMyWorkIntentMock,
 };
 
 const useAppStoreMock: any = () => appStoreState;
@@ -509,6 +511,89 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(screen.getByText('Quick savings')).toBeInTheDocument();
     expect(screen.getByTestId('chat-new-button')).toBeInTheDocument();
     expect(screen.getByTestId('chat-history-button')).toBeInTheDocument();
+  });
+
+  it('mindmap deliverable: forwards the backend skeleton graph as seedGraph and skips the AI-kickoff startMode', async () => {
+    // Regression test for the "Teresa Mind Map: backend skeleton ignored by
+    // FE" bug — onDeliverable used to always set
+    // seedIntent.startMode = 'describe_with_ai' and drop payload.graph on the
+    // floor, so IdeaMapWorkspace always re-kicked-off a fresh AI generation
+    // instead of opening the graph the backend already built. The fix
+    // forwards `graph` as `seedIntent.seedGraph` and only falls back to the
+    // AI-kickoff startMode when no usable graph was provided.
+    renderWithRouter(<UnifiedChatPanel mode="full" />);
+
+    expect(aiStreamOptionsCaptured?.onDeliverable).toBeInstanceOf(Function);
+
+    const skeletonGraph = {
+      nodes: [
+        { id: 'center', type: 'center', data: { label: 'Transformacja cyfrowa' } },
+        { id: 'branch-1', type: 'branch', data: { label: 'Ludzie' } },
+      ],
+      edges: [{ id: 'e-center-branch-1', source: 'center', target: 'branch-1' }],
+    };
+
+    act(() => {
+      aiStreamOptionsCaptured.onDeliverable({
+        draftId: 'chat-mindmap-1',
+        generationId: 'chat-mindmap-1',
+        kind: 'mindmap',
+        format: 'mindmap',
+        title: 'Transformacja cyfrowa',
+        graph: skeletonGraph,
+        seedText: 'Mapa myśli o transformacji cyfrowej',
+        preferredSystem: 'mindmap',
+      });
+    });
+
+    expect(setMyWorkIntentMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tab: 'ideas',
+        open: expect.objectContaining({
+          type: 'idea',
+          data: expect.objectContaining({
+            isNew: true,
+            seedIntent: expect.objectContaining({
+              // The skeleton graph made it through instead of being dropped.
+              seedGraph: { nodes: skeletonGraph.nodes, edges: skeletonGraph.edges },
+              // No AI re-kickoff: startMode must NOT be describe_with_ai when
+              // a usable graph is already present.
+              startMode: 'blank_canvas',
+              preferredSystem: 'mindmap',
+            }),
+          }),
+        }),
+      })
+    );
+  });
+
+  it('mindmap deliverable: falls back to the AI-kickoff startMode when no graph is provided', async () => {
+    renderWithRouter(<UnifiedChatPanel mode="full" />);
+
+    act(() => {
+      aiStreamOptionsCaptured.onDeliverable({
+        draftId: 'chat-mindmap-2',
+        generationId: 'chat-mindmap-2',
+        kind: 'mindmap',
+        format: 'mindmap',
+        title: 'Bez szkieletu',
+        seedText: 'Mapa myśli bez szkieletu',
+        preferredSystem: 'mindmap',
+      });
+    });
+
+    expect(setMyWorkIntentMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        open: expect.objectContaining({
+          data: expect.objectContaining({
+            seedIntent: expect.objectContaining({
+              seedGraph: null,
+              startMode: 'describe_with_ai',
+            }),
+          }),
+        }),
+      })
+    );
   });
 
   it('does not render the full welcome surface in split/sidebar mode', () => {

@@ -1192,6 +1192,8 @@ export type DocumentAuditAction =
   | 'document_version_snapshot_created'
   | 'document_rolled_back'
   | 'content_block_inserted'
+  // P0 fix — manual (non-AI) TipTap editor autosave
+  | 'manual_content_saved'
   // Epic E6 — Comments + review mode
   | 'comment_added'
   | 'comment_replied'

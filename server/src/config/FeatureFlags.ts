@@ -32,10 +32,12 @@ const FeatureFlagsSchema = z.object({
   ENABLE_V8_SHADOW_MODE: z.boolean().default(false),
   ENABLE_DELIVERABLES_LIGHT: z.boolean().default(false),
   ENABLE_TERESA_RETRIEVAL: z.boolean().default(false),
-  ENABLE_TERESA_MINDMAP: z.boolean().default(false),
+  ENABLE_TERESA_MINDMAP: z.boolean().default(true),
   ENABLE_DELIVERABLES_DOC_STREAMING: z.boolean().default(false),
   ENABLE_DELIVERABLES_PREMIUM: z.boolean().default(false),
-  ENABLE_SHARED_IDEA_MAPS: z.boolean().default(false),
+  ENABLE_SHARED_IDEA_MAPS: z.boolean().default(true),
+  ENABLE_TERESA_CANVAS_TOOLS: z.boolean().default(true),
+  ENABLE_TERESA_NOTE_CREATE: z.boolean().default(true),
 });
 
 export type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
@@ -125,12 +127,19 @@ export function loadFeatureFlags(): FeatureFlags {
     // Opt-in; when off the chat stream and persona prompt are untouched.
     ENABLE_TERESA_RETRIEVAL: process.env.ENABLE_TERESA_RETRIEVAL === 'true',
 
-    // Teresa mind-map integration (ff_teresaMindmap / M06 Fala 2): chat-side
-    // READ tool `search_org_mindmaps` that lets Teresa locate an org idea-map
-    // by topic and inject its serialized outline. Co-gated with
-    // ENABLE_TERESA_RETRIEVAL for retrieval (S2). Opt-in; when off the tool
-    // returns an empty envelope and the retrieval regex block stays inert.
-    ENABLE_TERESA_MINDMAP: process.env.ENABLE_TERESA_MINDMAP === 'true',
+    // Teresa mind-map deliverable creation (ff_teresaMindmap / M06 Fala 2):
+    // generate_deliverable(type:'mindmap') handler self-gate — mounts a real
+    // my_ideas + my_idea_maps row via the SAME idea-workspace "new idea" path
+    // as process_flow/table/whiteboard. Default ON (2026-07-06,
+    // collab-enable-flags): end-to-end since the seedGraph fix landed;
+    // mirrors ENABLE_TERESA_CANVAS_TOOLS / ENABLE_TERESA_NOTE_CREATE. Set to
+    // 'false' to omit 'mindmap' from the enum.
+    // NOTE: this same env var ALSO co-gates the separate, still opt-in
+    // `search_org_mindmaps` RETRIEVAL tool (persona.ts / orgRetrievalShared.ts
+    // / ai.routes.ts org-retrieval block) which stays default OFF — those
+    // call sites read process.env directly and are intentionally untouched
+    // here; that tool only activates when ENABLE_TERESA_RETRIEVAL is ALSO on.
+    ENABLE_TERESA_MINDMAP: process.env.ENABLE_TERESA_MINDMAP !== 'false',
 
     // Deliverables A3: per-section streaming for documents. Generates section
     // by section (each call sees prior sections for coherence) and writes the
@@ -148,9 +157,31 @@ export function loadFeatureFlags(): FeatureFlags {
 
     // DP-3 (M06/M07/M09 Ideas): shared/canonical idea maps — one my_idea_maps
     // row per idea_id instead of one per user_id, with membership-gated
-    // read/write and server-persisted WS graph_patch. OFF = full rollback to
-    // today's per-user reads/writes (Harvard/wdrozenie-100/_M06_DP3_MULTIPLAYER_PLAN_2026-07-04.md).
-    ENABLE_SHARED_IDEA_MAPS: process.env.ENABLE_SHARED_IDEA_MAPS === 'true',
+    // read/write and server-persisted WS graph_patch. Default ON (2026-07-06,
+    // collab-enable-flags): the read/write paths already fall back safely to
+    // legacy per-user behavior when the `is_canonical` column is absent
+    // (selectCanonicalMapRow / sharedIdeaMapsActive guards). Set
+    // ENABLE_SHARED_IDEA_MAPS=false to force the old per-user rollback path
+    // (Harvard/wdrozenie-100/_M06_DP3_MULTIPLAYER_PLAN_2026-07-04.md).
+    ENABLE_SHARED_IDEA_MAPS: process.env.ENABLE_SHARED_IDEA_MAPS !== 'false',
+
+    // Teresa creates all idea-workspace canvas tools (M07 Process Flow · M08
+    // Ideas Table · Whiteboard) via generate_deliverable, following the exact
+    // ENABLE_TERESA_MINDMAP pattern: a real skeleton {nodes,edges} handed to
+    // the FE, which mounts it on the SAME "new idea" path as mind-map — a real
+    // my_ideas + my_idea_maps row (preferred_tool set) survives reload.
+    // Default ON (2026-07-06, collab-enable-flags); set to 'false' to omit
+    // process_flow/table/whiteboard from the enum. Mirror this default in
+    // server/src/services/ai/mcpServer.ts (raw process.env read, same flag).
+    ENABLE_TERESA_CANVAS_TOOLS: process.env.ENABLE_TERESA_CANVAS_TOOLS !== 'false',
+
+    // Teresa creates a real notebook page (notebook_pages row) via
+    // generate_deliverable(type:'note'). Reuses the canonical
+    // notebookService.createNote path (same INSERT the "save as note" chat
+    // action already uses). Default ON (2026-07-06, collab-enable-flags); set
+    // to 'false' to omit 'note'. Mirror this default in
+    // server/src/services/ai/mcpServer.ts (raw process.env read, same flag).
+    ENABLE_TERESA_NOTE_CREATE: process.env.ENABLE_TERESA_NOTE_CREATE !== 'false',
   };
 
   // Validate configuration

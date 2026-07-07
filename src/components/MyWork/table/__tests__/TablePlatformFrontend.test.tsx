@@ -92,6 +92,10 @@ const tpApiMocks = vi.hoisted(() => ({
   searchRecordsGlobal: vi.fn(),
   getRecordWatchers: vi.fn().mockResolvedValue([]),
   toggleRecordWatch: vi.fn().mockResolvedValue({ watching: true }),
+  listRecordComments: vi.fn().mockResolvedValue({ comments: [], total: 0 }),
+  addRecordComment: vi.fn(),
+  updateRecordComment: vi.fn(),
+  deleteRecordComment: vi.fn(),
 }));
 
 vi.mock('@/services/api/tablePlatform.api', () => tpApiMocks);

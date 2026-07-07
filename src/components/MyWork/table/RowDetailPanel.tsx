@@ -167,6 +167,10 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
   const [watchLoading, setWatchLoading] = useState(false);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionPool, setMentionPool] = useState<Array<{ id: string; name: string }>>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentsError, setCommentsError] = useState<string | null>(null);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState('');
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [subItemsExpanded, setSubItemsExpanded] = useState(true);
   const [aiLoading, setAiLoading] = useState(false);
@@ -199,6 +203,44 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
       })
       .catch(() => {});
   }, [open, node?.id, isPlatform, currentUserId]);
+
+  useEffect(() => {
+    if (!open || !node?.id || !isPlatform) return;
+    let cancelled = false;
+    setCommentsLoading(true);
+    setCommentsError(null);
+    TablePlatformApi.listRecordComments(node.id, { limit: 100 })
+      .then((result: any) => {
+        if (cancelled) return;
+        const rows: any[] = result?.comments ?? result ?? [];
+        const mapped: NodeComment[] = rows.map((r) => ({
+          id: String(r.id),
+          text: String(r.content ?? r.text ?? ''),
+          author: String(r.author_name ?? r.authorName ?? r.author_id ?? r.authorId ?? 'User'),
+          authorId: String(r.author_id ?? r.authorId ?? ''),
+          createdAt: String(r.created_at ?? r.createdAt ?? new Date().toISOString()),
+          editedAt:
+            r.updated_at && r.updated_at !== r.created_at
+              ? String(r.updated_at)
+              : r.updatedAt && r.updatedAt !== r.createdAt
+                ? String(r.updatedAt)
+                : undefined,
+          mentions: Array.isArray(r.mentions) ? r.mentions : undefined,
+        }));
+        onFieldChange(node.id, 'comments', mapped);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setCommentsError(isPl ? 'Nie udało się wczytać komentarzy' : 'Failed to load comments');
+      })
+      .finally(() => {
+        if (!cancelled) setCommentsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, node?.id, isPlatform]);
 
   useEffect(() => {
     if (!open || !currentOrganization?.id) return;
@@ -353,6 +395,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
           id: String(created?.id ?? `cmt-${Date.now()}`),
           text,
           author: authorDisplayName,
+          authorId: String(created?.author_id ?? currentUserId ?? ''),
           createdAt: String(created?.created_at ?? new Date().toISOString()),
           mentions: mentions.length ? mentions : undefined,
         };
@@ -395,6 +438,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
     setMentionQuery(null);
   }, [
     authorDisplayName,
+    currentUserId,
     isPl,
     isPlatform,
     locked,
@@ -421,6 +465,57 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
     }
     setMentionQuery(afterAt);
   }, []);
+
+  const handleStartEditComment = useCallback((comment: NodeComment) => {
+    setEditingCommentId(comment.id);
+    setEditingCommentText(comment.text);
+  }, []);
+
+  const handleCancelEditComment = useCallback(() => {
+    setEditingCommentId(null);
+    setEditingCommentText('');
+  }, []);
+
+  const handleSaveEditComment = useCallback(async () => {
+    if (!node || !editingCommentId || !editingCommentText.trim() || locked) return;
+    const commentId = editingCommentId;
+    const text = editingCommentText.trim();
+    try {
+      const updated = await TablePlatformApi.updateRecordComment(commentId, text);
+      const prev: NodeComment[] = node.data?.comments || [];
+      onFieldChange(
+        node.id,
+        'comments',
+        prev.map((c) =>
+          c.id === commentId
+            ? { ...c, text, editedAt: String(updated?.updated_at ?? new Date().toISOString()) }
+            : c
+        )
+      );
+      setEditingCommentId(null);
+      setEditingCommentText('');
+    } catch {
+      toast.error(isPl ? 'Nie udało się zaktualizować komentarza' : 'Failed to update comment');
+    }
+  }, [editingCommentId, editingCommentText, isPl, locked, node, onFieldChange]);
+
+  const handleDeleteComment = useCallback(
+    async (commentId: string) => {
+      if (!node) return;
+      try {
+        await TablePlatformApi.deleteRecordComment(commentId);
+        const prev: NodeComment[] = node.data?.comments || [];
+        onFieldChange(
+          node.id,
+          'comments',
+          prev.filter((c) => c.id !== commentId)
+        );
+      } catch {
+        toast.error(isPl ? 'Nie udało się usunąć komentarza' : 'Failed to delete comment');
+      }
+    },
+    [isPl, node, onFieldChange]
+  );
 
   const toggleWatch = useCallback(async () => {
     if (!node?.id || watchLoading || !resolvedPlatformTableId) return;
@@ -1067,30 +1162,113 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
             {/* Comments */}
             {((isPlatform && platformSheetTab === 'comments') ||
               (!isPlatform && activeTab === 'comments')) && (
-              <div className="space-y-3">
-                {comments.length === 0 && (
+              <div className="space-y-3" data-testid="comments-section">
+                {commentsLoading && comments.length === 0 && (
+                  <p className="text-[11px] text-c-text-muted text-center py-6">
+                    {isPl ? 'Wczytywanie komentarzy...' : 'Loading comments...'}
+                  </p>
+                )}
+                {commentsError && (
+                  <p
+                    className="text-[11px] text-c-danger text-center py-2"
+                    data-testid="comments-error"
+                  >
+                    {commentsError}
+                  </p>
+                )}
+                {!commentsLoading && !commentsError && comments.length === 0 && (
                   <p className="text-[11px] text-c-text-muted text-center py-6">
                     {isPl ? 'Brak komentarzy' : 'No comments yet'}
                   </p>
                 )}
-                {comments.map((cmt) => (
-                  <div key={cmt.id} className="rounded-xl bg-c-surface-raised p-3">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <div className="w-5 h-5 rounded-full bg-c-accent flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
-                        {cmt.author.charAt(0).toUpperCase()}
+                {comments.map((cmt) => {
+                  const isOwnComment = !!cmt.authorId && cmt.authorId === currentUserId;
+                  const isEditingThis = editingCommentId === cmt.id;
+                  return (
+                    <div
+                      key={cmt.id}
+                      className="rounded-xl bg-c-surface-raised p-3 group"
+                      data-testid="comment-item"
+                    >
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <div className="w-5 h-5 rounded-full bg-c-accent flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
+                          {cmt.author.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="text-[10px] font-bold text-c-text-secondary">
+                          {cmt.author}
+                        </span>
+                        <span className="text-[9px] text-c-text-muted ml-auto">
+                          {formatTime(cmt.createdAt)}
+                          {cmt.editedAt ? ` · ${isPl ? 'edytowano' : 'edited'}` : ''}
+                        </span>
+                        {isOwnComment && !locked && !isEditingThis && (
+                          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              type="button"
+                              onClick={() => handleStartEditComment(cmt)}
+                              className="p-1 rounded text-c-text-muted hover:text-c-text-secondary"
+                              title={isPl ? 'Edytuj' : 'Edit'}
+                              data-testid="comment-edit-btn"
+                            >
+                              <Pencil size={10} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void handleDeleteComment(cmt.id)}
+                              className="p-1 rounded text-c-text-muted hover:text-c-danger"
+                              title={isPl ? 'Usuń' : 'Delete'}
+                              data-testid="comment-delete-btn"
+                            >
+                              <Trash2 size={10} />
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      <span className="text-[10px] font-bold text-c-text-secondary">
-                        {cmt.author}
-                      </span>
-                      <span className="text-[9px] text-c-text-muted ml-auto">
-                        {formatTime(cmt.createdAt)}
-                      </span>
+                      {isEditingThis ? (
+                        <div className="pl-7 space-y-1.5">
+                          <textarea
+                            value={editingCommentText}
+                            onChange={(e) => setEditingCommentText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Escape') {
+                                e.preventDefault();
+                                handleCancelEditComment();
+                              }
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                void handleSaveEditComment();
+                              }
+                            }}
+                            rows={2}
+                            autoFocus
+                            className="w-full rounded-lg border border-c-border bg-c-surface px-2 py-1.5 text-[11px] outline-none focus:ring-2 focus:ring-c-focus resize-y"
+                          />
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => void handleSaveEditComment()}
+                              disabled={!editingCommentText.trim()}
+                              className="text-[10px] font-semibold text-c-accent disabled:opacity-40"
+                            >
+                              {isPl ? 'Zapisz' : 'Save'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleCancelEditComment}
+                              className="text-[10px] font-semibold text-c-text-muted"
+                            >
+                              {isPl ? 'Anuluj' : 'Cancel'}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-c-text-muted leading-relaxed pl-7">
+                          {cmt.text}
+                        </p>
+                      )}
                     </div>
-                    <p className="text-[11px] text-c-text-muted leading-relaxed pl-7">
-                      {cmt.text}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
                 {!locked && (
                   <div ref={commentComposerRef} className="relative flex items-end gap-2 pt-2">
                     {mentionQuery !== null && mentionSuggestions.length > 0 && (

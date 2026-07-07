@@ -308,13 +308,20 @@ type StreamOptions = {
   onDeliverable?: (payload: {
     draftId: string;
     generationId: string;
-    kind: 'doc' | 'sheet' | 'deck' | 'mindmap';
+    kind: 'doc' | 'sheet' | 'deck' | 'mindmap' | 'process_flow' | 'table' | 'whiteboard' | 'note';
     format?: string;
     title?: string;
-    /** Only for kind:'mindmap' (M06 Fala 2 · 2.3): backend-built skeleton graph. */
+    /**
+     * For kind: mindmap / process_flow / table / whiteboard (M06 Fala 2 · 2.3
+     * + Teresa "all 8 tools"): backend-built skeleton graph, ReactFlow-like
+     * {nodes, edges}. The workspace mount should hydrate this directly
+     * instead of re-deriving from `seedText` via a fresh AI kickoff.
+     */
     graph?: { nodes?: unknown[]; edges?: unknown[] };
-    /** Only for kind:'mindmap': topic seed text for AI expansion in Ideas. */
+    /** For the 4 canvas-tool kinds: topic seed text for AI expansion in Ideas. */
     seedText?: string;
+    /** Which canvas tool the skeleton `graph` targets (mindmap/process_flow/table/whiteboard). */
+    preferredSystem?: string;
   }) => void;
 };
 
@@ -847,11 +854,23 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         if (evt.type === 'deliverable') {
           const draftId = String((evt as any).draftId || (evt as any).generationId || '').trim();
           const kindRaw = String((evt as any).kind || 'doc');
-          // M06 Fala 2 · 2.3: mind map is a first-class deliverable kind. It
-          // carries a pre-built skeleton graph instead of a canvas draft id.
-          const kind: 'doc' | 'sheet' | 'deck' | 'mindmap' =
-            kindRaw === 'mindmap'
-              ? 'mindmap'
+          // M06 Fala 2 · 2.3 (+ Teresa "all 8 tools"): mind map / process_flow /
+          // table / whiteboard / note are first-class deliverable kinds that
+          // carry a pre-built skeleton graph (or, for note, a real row id)
+          // instead of a canvas draft id. Previously this narrowed to only
+          // 'doc' | 'sheet' | 'deck' | 'mindmap', silently downgrading
+          // process_flow/table/whiteboard/note to 'doc' — UnifiedChatPanel's
+          // CANVAS_TOOL_KINDS check then never matched, so those deliverables
+          // fell through into the generic doc-canvas mount path instead of the
+          // Ideas-workspace handoff. Pass the backend `kind` straight through;
+          // it is already whitelisted server-side by KIND_TO_FORMAT.
+          const kind: 'doc' | 'sheet' | 'deck' | 'mindmap' | 'process_flow' | 'table' | 'whiteboard' | 'note' =
+            kindRaw === 'mindmap' ||
+            kindRaw === 'process_flow' ||
+            kindRaw === 'table' ||
+            kindRaw === 'whiteboard' ||
+            kindRaw === 'note'
+              ? kindRaw
               : kindRaw === 'sheet'
                 ? 'sheet'
                 : kindRaw === 'deck'
@@ -866,7 +885,12 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
               title: (evt as any).title,
               graph: (evt as any).graph,
               seedText: (evt as any).seedText,
-            });
+              // Which canvas tool the skeleton graph targets — dropped before
+              // (never forwarded), so UnifiedChatPanel's mount fell back to
+              // `payloadKind` and lost this distinction for kind:'mindmap'
+              // shared across all 4 canvas tools.
+              preferredSystem: (evt as any).preferredSystem,
+            } as any);
           }
           return;
         }

@@ -157,6 +157,16 @@ export interface DocumentSchema {
   sourcePackId?: string;
   clientId?: string;
   owner?: string;
+  createdAt?: string;
+  /**
+   * P0 fix — manual-edit autosave optimistic-lock version. Mirrors the
+   * server `DocumentSchema.updatedAt` (documentStudioTypes.ts). The
+   * TipTap editor sends this back as `expectedVersion` on
+   * `PUT /:artifactId/content` so a stale write 409s instead of
+   * silently overwriting newer content (an approved AI proposal, or
+   * another tab's autosave).
+   */
+  updatedAt?: string;
 }
 
 /**

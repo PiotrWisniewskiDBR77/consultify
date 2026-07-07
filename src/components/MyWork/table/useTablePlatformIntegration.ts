@@ -133,6 +133,14 @@ export interface UseTablePlatformIntegrationReturn {
   handleSave: () => Promise<void>;
   refresh: () => Promise<void>;
 
+  // Realtime — canonical table id + broadcast appliers (fold peer mutations
+  // into local state; echo-safe + table-scoped inside the bridge).
+  realtimeTableId: string | null;
+  applyRealtimeCreated: (payload: unknown) => void;
+  applyRealtimeUpdated: (recordId: string, payload: unknown) => void;
+  applyRealtimeDeleted: (recordId: string) => void;
+  applyRealtimeSchemaChanged: () => void;
+
   // Platform-specific
   loadMore: () => Promise<void>;
   hasMore: boolean;
@@ -516,6 +524,11 @@ export function useTablePlatformIntegration(
       deleteSavedView: NOOP_ASYNC,
       handleSave: NOOP_ASYNC,
       refresh: NOOP_ASYNC,
+      realtimeTableId: null,
+      applyRealtimeCreated: NOOP_FN,
+      applyRealtimeUpdated: NOOP_FN,
+      applyRealtimeDeleted: NOOP_FN,
+      applyRealtimeSchemaChanged: NOOP_FN,
       loadMore: NOOP_ASYNC,
       hasMore: false,
       totalRecords: 0,
@@ -572,6 +585,11 @@ export function useTablePlatformIntegration(
     deleteSavedView: views.deleteSavedView,
     handleSave,
     refresh,
+    realtimeTableId: bridge.loadedTableId,
+    applyRealtimeCreated: bridge.applyRealtimeCreated,
+    applyRealtimeUpdated: bridge.applyRealtimeUpdated,
+    applyRealtimeDeleted: bridge.applyRealtimeDeleted,
+    applyRealtimeSchemaChanged: bridge.applyRealtimeSchemaChanged,
     loadMore: bridge.loadMore,
     hasMore: bridge.hasMore,
     totalRecords: bridge.totalRecords,

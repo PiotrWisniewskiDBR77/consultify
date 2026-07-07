@@ -5,7 +5,6 @@
 import logger from '../../../utils/Logger.js';
 import { mcpServer } from '../mcpServer.js';
 import { calculateRoiDraft } from './calculateRoiDraft.js';
-import { createInitiative } from './createInitiative.js';
 import { generateDeliverable } from './generateDeliverable.js';
 import { generateInitiative } from './generateInitiative.js';
 import { getInitiative } from './getInitiativeCard.js';
@@ -20,7 +19,9 @@ export function registerAllTools(): void {
   mcpServer.registerHandler('get_project_details', getProjectDetails as any);
   mcpServer.registerHandler('search_knowledge_base', searchKnowledgeBase as any);
   mcpServer.registerHandler('calculate_roi_draft', calculateRoiDraft as any);
-  mcpServer.registerHandler('create_initiative', createInitiative as any);
+  // NOTE: legacy 'create_initiative' MUTATION handler removed (T-hig higiena) —
+  // never exposed to chat, superseded by generate_initiative below. See
+  // mcpServer.ts for the full rationale.
   mcpServer.registerHandler('update_assessment_score', updateAssessmentScore as any);
   // Teresa org-content retrieval (ff_teresaRetrieval) — handlers self-gate on
   // featureFlags.ENABLE_TERESA_RETRIEVAL and return empty results when off.

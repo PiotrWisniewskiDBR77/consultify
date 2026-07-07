@@ -270,10 +270,25 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   }, [preferredViewId, platformActive, platformIntegration.setActiveViewId]);
 
   // ── Table Platform real-time collaboration ─────────────────────────────────
+  // Join the CANONICAL tp_tables id (the room the server broadcasts CRUD to),
+  // not `ideaId` (a workspace id). Record broadcasts target `table:${tp_tables.id}`,
+  // so joining ideaId would never receive them. Falls back to ideaId only until
+  // the real table id resolves (presence continuity).
+  const realtimeTableId = platformActive
+    ? (platformIntegration.realtimeTableId ?? ideaId)
+    : null;
   const realtime = useTableRealtime({
-    tableId: platformActive ? ideaId : null,
+    tableId: realtimeTableId,
     userId: currentUserId,
     userName: currentUserName,
+    onRecordCreated: platformActive ? platformIntegration.applyRealtimeCreated : undefined,
+    onRecordUpdated: platformActive
+      ? (data) => platformIntegration.applyRealtimeUpdated(data.recordId, data.data)
+      : undefined,
+    onRecordDeleted: platformActive
+      ? (data) => platformIntegration.applyRealtimeDeleted(data.recordId)
+      : undefined,
+    onSchemaChanged: platformActive ? platformIntegration.applyRealtimeSchemaChanged : undefined,
   });
 
   // ── Domain hooks (Stage 1 extraction) ───────────────────────────────────────
@@ -790,12 +805,29 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
   const handleTabRenameTable = useCallback(
     (_tableId: string, _newName: string) => {
-      // M08 L-02: optimistic, session-only. Persisting the rename needs a M20
-      // backend endpoint (PATCH /table-platform/tables/:id) that does not exist
-      // yet — owned by Harvard 5 (table-platform.routes.ts). Wire the API call
-      // here once that endpoint lands; until then the new name resets on reload.
-      setBaseTables((prev) => prev.map((t) => (t.id === _tableId ? { ...t, name: _newName } : t)));
+      const trimmedName = _newName.trim();
+      if (!trimmedName) return;
+      let previousName: string | undefined;
+      setBaseTables((prev) =>
+        prev.map((t) => {
+          if (t.id === _tableId) {
+            previousName = t.name;
+            return { ...t, name: trimmedName };
+          }
+          return t;
+        })
+      );
       toast.success(isPl ? 'Nazwa zmieniona' : 'Renamed');
+      TablePlatformApi.updateTable(_tableId, { name: trimmedName }).catch(() => {
+        setBaseTables((prev) =>
+          prev.map((t) =>
+            t.id === _tableId && previousName !== undefined ? { ...t, name: previousName } : t
+          )
+        );
+        toast.error(
+          isPl ? 'Nie udało się zapisać nazwy tabeli' : 'Failed to save table name'
+        );
+      });
     },
     [isPl]
   );
@@ -3333,14 +3365,16 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         open={showAuditTrail}
         onClose={() => setShowAuditTrail(false)}
         recordId={detailNodeId}
-        tableId={ideaId}
+        tableId={platformTableId ?? ideaId}
+        isPlatformTable={usePlatform && !!platformTableId}
       />
 
       {/* Activity Feed (table-level) */}
       <ActivityFeed
         open={showActivityFeed}
         onClose={() => setShowActivityFeed(false)}
-        tableId={ideaId}
+        tableId={platformTableId ?? ideaId}
+        isPlatformTable={usePlatform && !!platformTableId}
         onEventClick={(entityId) => {
           setDetailNodeId(entityId);
           setDetailMode('preview');

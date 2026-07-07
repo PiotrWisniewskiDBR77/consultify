@@ -13,6 +13,15 @@
  *   GET /api/document-studio/:artifactId
  *     Returns: { schema }
  *
+ *   PUT /api/document-studio/:artifactId/content
+ *     P0 fix — manual (non-AI) TipTap editor autosave. Content-only save;
+ *     never touches the proposal/approve pipeline.
+ *     Body: { sections, expectedVersion }
+ *     Returns: { schema }
+ *     Errors: 409 manual_save_conflict (optimistic-lock, mirrors
+ *             PUT /api/v8/notebook/pages/:noteId/content) with
+ *             { conflict: { yourVersion, serverVersion } }.
+ *
  *   GET /api/document-studio/:artifactId/export/:format
  *     Query: qaOverride=true to bypass the QA soft-block (audited; requires
  *            a privileged role per `canOverrideQa`).
@@ -275,6 +284,8 @@ import {
   DocumentCommentError,
   DocumentContentBlockInsertError,
   DocumentLifecycleTransitionError,
+  DocumentManualSaveConflictError,
+  DocumentManualSaveNotFoundError,
   DocumentRollbackError,
   ensureDocumentCommentsHydrated,
   ensureDocumentLifecycleHydrated,
@@ -304,6 +315,7 @@ import {
   rollbackDocumentToVersion,
   runQaForDocument,
   transitionDocumentStatus,
+  updateDocumentManualContent,
 } from '../services/documentStudio/documentStudioService.js';
 import type {
   AudienceProfileAppendixPolicy,
@@ -328,6 +340,7 @@ import type {
   DocumentIntake,
   DocumentLanguageStyle,
   DocumentOutline,
+  DocumentSchema,
   DocumentShareLinkAccessScope,
   DocumentShareLinkStatus,
   DocumentSourceRef,
@@ -3623,6 +3636,70 @@ router.get(
     // just immediately after generation. Best-effort ([] on any miss).
     const generationWarnings = await getDocumentGenerationWarnings(artifactId, organizationId);
     res.json({ schema, generationWarnings });
+  })
+);
+
+// P0 data-loss fix — manual (non-AI) TipTap editor autosave.
+// Body: { sections, expectedVersion }. `expectedVersion` is the
+// `schema.updatedAt` the client last read; mirrors the notebook
+// pattern (`PUT /api/v8/notebook/pages/:noteId/content`). Returns 409
+// with { conflict: { yourVersion, serverVersion } } on a stale write —
+// never a silent overwrite. This is a content-only save; it never
+// touches the proposal/approve pipeline (see
+// `updateDocumentManualContent` doc-comment).
+router.put(
+  '/:artifactId/content',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const artifactId = String(req.params.artifactId || '');
+    if (!artifactId) {
+      res.status(400).json({ error: 'artifactId is required' });
+      return;
+    }
+    const body = (req.body ?? {}) as { sections?: unknown; expectedVersion?: unknown };
+    if (!Array.isArray(body.sections)) {
+      res.status(400).json({ error: 'sections_required', code: 'DOC_CONTENT_SECTIONS_REQUIRED' });
+      return;
+    }
+    if (!body.expectedVersion || typeof body.expectedVersion !== 'string') {
+      res
+        .status(400)
+        .json({ error: 'expectedVersion_required', code: 'DOC_CONTENT_EXPECTED_VERSION_REQUIRED' });
+      return;
+    }
+    try {
+      const result = await updateDocumentManualContent({
+        artifactId,
+        organizationId,
+        userId,
+        sections: body.sections as DocumentSchema['sections'],
+        expectedVersion: body.expectedVersion,
+      });
+      res.json({ schema: result.schema });
+    } catch (err) {
+      if (err instanceof DocumentManualSaveNotFoundError) {
+        res.status(404).json({ error: 'document_not_found' });
+        return;
+      }
+      if (err instanceof DocumentManualSaveConflictError) {
+        res.status(409).json({
+          error: 'manual_save_conflict',
+          code: 'DOC_CONTENT_CONFLICT',
+          conflict: {
+            yourVersion: body.expectedVersion,
+            serverVersion: err.serverVersion,
+          },
+        });
+        return;
+      }
+      const message = err instanceof Error ? err.message : 'manual_save_failed';
+      logger.error('[DocumentStudio] manual content save failed', { message });
+      res.status(400).json({ error: message });
+    }
   })
 );
 
