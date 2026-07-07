@@ -60,6 +60,13 @@ export interface SectionRequirement {
   listFields?: Record<string, number>;
   /** Minimum word count for prose sections (content is a plain string). */
   minWords?: number;
+  /**
+   * Field names inside `content` that must read as a MEASURABLE END-STATE
+   * (sędzia BCG #2): a number + unit + direction-of-change, not a bare list
+   * of activities ("identyfikacja X", "szacowanie Y"). Checked with
+   * `validateMeasurableOutcome` below. Currently only Task.strategy.expectedOutcome.
+   */
+  measurableOutcomeFields?: string[];
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -87,7 +94,7 @@ export const SECTION_REQUIREMENTS: Record<string, SectionRequirement> = {
   // Task (server/src/services/taskSectionGenerationService.ts)
   execution: { listFields: { checklist: 3 } },
   evidence: { listFields: { evidence: 2 } },
-  strategy: { minWords: 10 },
+  strategy: { minWords: 10, measurableOutcomeFields: ['expectedOutcome'] },
   // dependencies: intentionally NOT in listFields — an empty [] is a valid,
   // honest answer when the task has no real dependencies (§ dependencies
   // prompt explicitly allows "[]" instead of fabricating one).
@@ -116,6 +123,71 @@ const ASSUMPTION_MARKER_RE =
 
 /** A number that looks like currency/percentage/count worth flagging if bare. */
 const BARE_NUMBER_RE = /(?<![\d.,%~±])\b\d[\d\s.,]*\s?(zł|pln|eur|usd|%|mln|tys\.?|k\b)/i;
+
+/**
+ * §0 anti-pattern (sędzia BCG #2): "mierzalny outcome" written as an ACTIVITY
+ * ("identyfikacja 3 maszyn", "szacowanie ROI") rather than an END-STATE
+ * ("ranking 3 maszyn gotowy", "ROI oszacowany na X%"). These are gerund/verbal
+ * nouns or bare infinitives that describe doing the work, not the result of
+ * having done it — a strong signal the field is really a checklist item that
+ * leaked into the outcome field.
+ */
+const ACTIVITY_VERB_RE =
+  /^(identyfikacj|szacowani|analiz|przegląd|zebrani[ae]|gromadzeni|zbieran|opracowani|przygotowani|wykonani|realizacj|wdrażani|badani|ocenian|sprawdzani|weryfikacj|ustaleni|określeni|zaplanowani|planowani)/i;
+
+/** Any digit — used to require the outcome states a quantity, not just prose. */
+const ANY_NUMBER_RE = /\d/;
+
+/**
+ * §0.3/#3 (sędzia BCG): a number inside a measurable-outcome field with NO
+ * accompanying assumption/estimate marker is a HARD FAIL here (stricter than
+ * the generic bare-number `warn` below) — this is the field the doctrine
+ * explicitly requires to be quantified, so an un-sourced number reads as a
+ * fabricated fact, not a stylistic nit. Mirrors chatPolicyGateway's
+ * `uncertaintyMarkerRequiredIfInsufficientEvidence` policy, enforced here on
+ * the actual generated content rather than only at the chat-turn level.
+ */
+function validateMeasurableOutcome(fieldName: string, sectionKey: string, raw: unknown): ContentViolation[] {
+  const violations: ContentViolation[] = [];
+  const text = typeof raw === 'string' ? raw.trim() : '';
+
+  if (!text) {
+    // Field entirely absent/empty is a structural gap, not this check's concern.
+    return violations;
+  }
+
+  const firstWord = text.split(/\s+/)[0] || '';
+  if (ACTIVITY_VERB_RE.test(firstWord)) {
+    violations.push({
+      rule: 'outcome_is_activity',
+      message:
+        `Pole "${fieldName}" w sekcji "${sectionKey}" opisuje CZYNNOŚĆ ("${firstWord}…") zamiast STANU KOŃCOWEGO ` +
+        `— outcome musi być rezultatem z liczbą, jednostką i kierunkiem zmiany (§0 anty-wzorzec, sędzia BCG #2).`,
+      severity: 'error',
+    });
+  }
+
+  if (!ANY_NUMBER_RE.test(text)) {
+    violations.push({
+      rule: 'outcome_not_quantified',
+      message: `Pole "${fieldName}" w sekcji "${sectionKey}" nie zawiera liczby — mierzalny outcome wymaga liczby+jednostki.`,
+      severity: 'error',
+    });
+  } else if (BARE_NUMBER_RE.test(text) && !ASSUMPTION_MARKER_RE.test(text)) {
+    // Also catch plain counts (no currency/% suffix) that lack a marker, e.g.
+    // "ranking 3 maszyn" alone is fine (count-of-deliverable), but a
+    // benchmark-shaped number ("redukcja 30-50%") without a marker is not.
+    violations.push({
+      rule: 'outcome_unmarked_estimate',
+      message:
+        `Pole "${fieldName}" w sekcji "${sectionKey}" zawiera liczbę bez marker'a niepewności ` +
+        `("szacunek:", "benchmark, do walidacji:", "założenie:") — wymagane gdy liczba nie ma twardego źródła w kontekście.`,
+      severity: 'error',
+    });
+  }
+
+  return violations;
+}
 
 function toWords(text: string): string[] {
   return String(text || '')
@@ -247,6 +319,13 @@ export function validateCardContent(
           severity: 'error',
         });
       }
+    }
+  }
+
+  // ── sędzia BCG #2/#3: measurable-outcome fields — end-state + number + marker ──
+  if (structured && req.measurableOutcomeFields) {
+    for (const field of req.measurableOutcomeFields) {
+      violations.push(...validateMeasurableOutcome(field, sectionKey, structured[field]));
     }
   }
 

@@ -175,7 +175,16 @@ export function isPlaceholderDocumentProse(text: string): boolean {
     text.includes(SECTION_STUB_PREFIX) ||
     text.includes(EXEC_SUMMARY_STUB) ||
     text.includes('MVP-1') ||
-    text.includes('go here. Replace with grounded')
+    text.includes('go here. Replace with grounded') ||
+    // naprawa-r2Narr · Problem 2 — the NARRATIVE PLANNER placeholder (a section
+    // `purpose` with no PURPOSE_HINTS entry: `Substantive section "X" relevant to
+    // the document goal.`) was NOT detected here, so when it leaked into the
+    // rendered body (schema renderer emits `_Purpose: …_`, or the skeleton renders
+    // each purpose as `*…*` body) the anti-placeholder gate passed and shipped it
+    // as if it were real content. This closes that hole: any such text is a
+    // placeholder, never final prose. See documentNarrativePlanner.PURPOSE_HINTS.
+    text.includes('Substantive section') ||
+    text.includes('relevant to the document goal')
   );
 }
 

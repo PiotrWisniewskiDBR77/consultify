@@ -615,14 +615,31 @@ export async function acceptCandidate(
     let filled = false;
     if (fill && initiativeId) {
       try {
+        const orgForFill = orgId || candidate.organizationId;
         const result = await deps.generateFull(deps.generatorDeps(), {
           initiativeId,
           brief,
           sourceType: lineageSourceType,
-          organizationId: orgId || candidate.organizationId,
+          organizationId: orgForFill,
           language,
         });
         filled = (result?.qualitySummary?.filled ?? 0) > 0;
+        // PERSIST + HYDRATE onto authoritative typed columns (parity with the Teresa
+        // tool + the /generate-full route): the brain returns cards only in-memory;
+        // without this the assessment/audit → initiative path leaves the object as an
+        // empty skeleton. Best-effort & fail-soft (never breaks accept).
+        if (filled && orgForFill) {
+          try {
+            const { persistCards } = await import('../ai/tools/generateInitiative.js');
+            await persistCards(initiativeId, orgForFill, result?.cards ?? {});
+          } catch (persistErr) {
+            logger.warn(
+              `[initiativeCandidateService] persist/hydrate failed for ${initiativeId} (ignored): ${
+                (persistErr as Error)?.message || persistErr
+              }`,
+            );
+          }
+        }
       } catch (fillErr) {
         logger.warn(
           `[initiativeCandidateService] generateFullInitiative failed for initiative ${initiativeId} (fail-soft): ${

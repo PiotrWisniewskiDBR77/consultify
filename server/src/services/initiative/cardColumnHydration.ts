@@ -18,10 +18,16 @@
  * Kształty wejścia (output AI per sekcja — parytet z handleGenerateAI w FE):
  *   problemDefinition → { symptom, rootCause, costOfInaction }
  *   scope            → { inScope[], outOfScope[]|outScope[], killCriteria[] }
- *   targetState      → { successCriteria[], deliverables[], vision? }
+ *   targetState      → { targetDescription|description, successCriteria[], deliverables[], vision? }
+ *        → success_criteria[] + deliverables[] (JSON-array) ORAZ target_state
+ *          (JSON-OBIEKT: { description, successCriteria[], deliverables[] } — tak
+ *          czyta FE: initiative.targetState.description/.deliverables/.successCriteria)
  *   financialImpact / businessCase → { businessValue, costCapex, costOpex, expectedRoi }
  *        LUB realny kształt premium: { revenueImpact, costSavings, benefitsRealization }
  *        (narracja składana w business_value, gdy brak jawnego businessValue)
+ *        → dodatkowo estimated_budget = suma capex+opex, gdy oba liczbowe
+ *   raid             → { risks[] | items[] }  → key_risks[] (JSON-array stringów
+ *        "Ryzyko — mitygacja: …"; FE renderuje płaską listę, nie {risk,mitigation})
  *   kpis             → POMIJANE (osobna tabela `/initiatives/:id/kpis`)
  *   control          → POMIJANE (owner_* = referencja user-id, nie z tekstu AI)
  */
@@ -64,6 +70,69 @@ function cleanStr(v: unknown): string | undefined {
 function cleanList(v: unknown): string[] {
   if (!Array.isArray(v)) return [];
   return v.map((x) => (typeof x === 'string' ? x.trim() : '')).filter((x) => x.length > 0);
+}
+
+/**
+ * Wyłuskuje pierwszą liczbę z pola (number lub tekst typu "1,2 mln zł" / "500000").
+ * Zwraca number lub undefined. Obsługuje polski separator dziesiętny (przecinek)
+ * i skróty rzędu wielkości (tys./k, mln/m, mld). Konserwatywny: bez liczby → undefined.
+ */
+function parseAmount(v: unknown): number | undefined {
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  const s = String(v ?? '').trim();
+  if (!s) return undefined;
+  // Znajdź pierwszy token liczbowy (z opcjonalnym separatorem tysięcy/dziesiętnym).
+  const m = s.match(/-?\d[\d\s.,]*\d|-?\d/);
+  if (!m) return undefined;
+  let numStr = m[0].replace(/\s/g, '');
+  // Heurystyka separatorów: jeśli są i kropka i przecinek → przecinek = tysiące.
+  if (numStr.includes('.') && numStr.includes(',')) {
+    numStr = numStr.replace(/,/g, '');
+  } else if (numStr.includes(',')) {
+    // Sam przecinek → traktuj jako dziesiętny (PL) tylko gdy po nim ≤2 cyfry.
+    numStr = /,\d{1,2}$/.test(numStr) ? numStr.replace(',', '.') : numStr.replace(/,/g, '');
+  }
+  let n = Number(numStr);
+  if (!Number.isFinite(n)) return undefined;
+  const lower = s.toLowerCase();
+  if (/\bmld\b|\bbn\b|miliard/.test(lower)) n *= 1_000_000_000;
+  else if (/\bmln\b|\bm\b|milion/.test(lower)) n *= 1_000_000;
+  else if (/\btys\b|\bk\b|tysi/.test(lower)) n *= 1_000;
+  return Number.isFinite(n) ? n : undefined;
+}
+
+/**
+ * Buduje płaskie linie ryzyk z karty RAID. FE (`InitiativeFullView` → key_risks)
+ * renderuje ZWYKŁĄ listę stringów, więc {risk,mitigation} spłaszczamy do jednego
+ * czytelnego wiersza. Akceptuje wiele kształtów, jakie emitują różne prompty.
+ */
+function buildRiskLines(j: any): string[] {
+  const raw =
+    (Array.isArray(j?.risks) && j.risks) ||
+    (Array.isArray(j?.items) && j.items) ||
+    (Array.isArray(j?.raid) && j.raid) ||
+    (Array.isArray(j?.add) && j.add) ||
+    (Array.isArray(j) ? j : null);
+  if (!Array.isArray(raw)) return [];
+  const lines: string[] = [];
+  for (const it of raw) {
+    if (typeof it === 'string') {
+      const s = it.trim();
+      if (s) lines.push(s);
+      continue;
+    }
+    if (!it || typeof it !== 'object') continue;
+    // Tylko wpisy typu RISK (gdy typ podany); brak typu → traktuj jako ryzyko.
+    const type = String(it.type ?? it.category ?? '').toLowerCase();
+    if (type && !/risk|ryzyk/.test(type)) continue;
+    const title = cleanStr(it.risk ?? it.title ?? it.name ?? it.description ?? it.text);
+    if (!title) continue;
+    const mitigation = cleanStr(
+      it.mitigation ?? it.mitigationPlan ?? it.mitigation_plan ?? it.proposedAction ?? it.contingency,
+    );
+    lines.push(mitigation ? `${title} — mitygacja: ${mitigation}` : title);
+  }
+  return lines;
 }
 
 /** Kolumna jest „pusta" (wolno wypełnić): null / '' / '[]' / '{}'. */
@@ -127,13 +196,35 @@ export function buildTypedColumnUpdates(
     }
   }
 
-  // targetState → success_criteria / deliverables (JSON-arrays)
+  // targetState → success_criteria / deliverables (JSON-arrays) ORAZ target_state
+  // (JSON-OBIEKT: FE czyta initiative.targetState.description/.successCriteria/.deliverables).
   const ts = cards['targetState'];
   if (ts !== undefined) {
     const j = parseJsonLoose(ts);
     if (j && typeof j === 'object') {
-      pushList('success_criteria', cleanList(j.successCriteria ?? j.criteria));
-      pushList('deliverables', cleanList(j.deliverables));
+      const successCriteria = cleanList(j.successCriteria ?? j.criteria);
+      const deliverables = cleanList(j.deliverables);
+      const description = cleanStr(j.targetDescription ?? j.description ?? j.vision ?? j.targetState);
+      pushList('success_criteria', successCriteria);
+      pushList('deliverables', deliverables);
+      // target_state jako OBIEKT (JSON.stringify obiektu, nie tablicy) — parytet z
+      // JSON_FIELDS.targetState w InitiativeController i kształtem czytanym przez FE.
+      if (description || successCriteria.length || deliverables.length) {
+        const targetObj: Record<string, unknown> = {};
+        if (description) targetObj.description = description;
+        if (successCriteria.length) targetObj.successCriteria = successCriteria;
+        if (deliverables.length) targetObj.deliverables = deliverables;
+        push('target_state', JSON.stringify(targetObj));
+      }
+    }
+  }
+
+  // raid → key_risks (JSON-array płaskich stringów; FE renderuje listę, nie obiekty)
+  const raid = cards['raid'];
+  if (raid !== undefined) {
+    const j = parseJsonLoose(raid);
+    if (j && typeof j === 'object') {
+      pushList('key_risks', buildRiskLines(j));
     }
   }
 
@@ -155,9 +246,25 @@ export function buildTypedColumnUpdates(
           .filter(Boolean)
           .join(' ') || undefined;
       push('business_value', explicitBv ?? narrativeBv);
-      push('cost_capex', cleanStr(j.costCapex ?? j.capex));
-      push('cost_opex', cleanStr(j.costOpex ?? j.opex));
+      const capexRaw = cleanStr(j.costCapex ?? j.capex);
+      const opexRaw = cleanStr(j.costOpex ?? j.opex);
+      push('cost_capex', capexRaw);
+      push('cost_opex', opexRaw);
       push('expected_roi', cleanStr(j.expectedRoi ?? j.roi));
+      // estimated_budget: jawne pole, a gdy go brak — suma capex+opex (gdy oba
+      // dają się sparsować na liczbę). Kolumna jest liczbowa/skalarna → zapisz
+      // gołą wartość, nie tekst z jednostką.
+      const explicitBudget =
+        parseAmount(j.estimatedBudget ?? j.budget ?? j.totalCost ?? j.totalBudget);
+      if (explicitBudget !== undefined) {
+        push('estimated_budget', String(explicitBudget));
+      } else {
+        const capexN = parseAmount(j.costCapex ?? j.capex);
+        const opexN = parseAmount(j.costOpex ?? j.opex);
+        if (capexN !== undefined || opexN !== undefined) {
+          push('estimated_budget', String((capexN ?? 0) + (opexN ?? 0)));
+        }
+      }
     }
   }
 

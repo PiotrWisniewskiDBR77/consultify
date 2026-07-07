@@ -14,6 +14,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   classifyChatCreationIntent,
   INTENT_TO_TOOL,
+  INTENT_DROP_TOOLS,
 } from '../../../server/src/services/ai/chatCreationIntent.js';
 
 const RICH_BRIEF =
@@ -57,12 +58,47 @@ describe('BUG1 — chat creation intent pre-classification (rich prompts route t
     expect(INTENT_TO_TOOL.decision).toBe('create_decision');
   });
 
-  it('does NOT fire on plain document/chat requests (no create-verb + object-noun pair)', () => {
-    expect(classifyChatCreationIntent('napisz dokument o naszej inicjatywie OEE')).toBeNull();
+  it('does NOT fire on plain chat requests (no create-verb + object-noun pair)', () => {
     expect(classifyChatCreationIntent('zrób mapę myśli o transformacji')).toBeNull();
-    expect(classifyChatCreationIntent('podsumuj wnioski ze spotkania')).toBeNull();
+    expect(classifyChatCreationIntent('podsumuj wnioski ze spotkania')).toBeNull(); // "podsumuj" nie jest create-verbem
     expect(classifyChatCreationIntent('jak stworzyć dobrą prezentację?')).toBeNull();
     expect(classifyChatCreationIntent('')).toBeNull();
+  });
+});
+
+describe('PROBLEM #2 — "wniosek/insight" routuje na DOKUMENT, nie na inicjatywę', () => {
+  it('classifies "wygeneruj wniosek strategiczny" as document (→ generate_deliverable)', () => {
+    expect(classifyChatCreationIntent('wygeneruj wniosek strategiczny')).toBe('document');
+    expect(classifyChatCreationIntent('Wygeneruj wniosek strategiczny dla inicjatywy OEE')).toBe(
+      'document',
+    );
+    expect(INTENT_TO_TOOL.document).toBe('generate_deliverable');
+  });
+
+  it('classifies insight/raport/analiza/dokument creation as document', () => {
+    expect(classifyChatCreationIntent('przygotuj analizę rynku')).toBe('document');
+    expect(classifyChatCreationIntent('stwórz raport z wywiadu')).toBe('document');
+    expect(classifyChatCreationIntent('napisz dokument o naszej inicjatywie OEE')).toBe('document');
+    expect(classifyChatCreationIntent('generate an insight from the interview')).toBe('document');
+  });
+
+  it('document intent DROPS the object creators (so a wniosek can never become an initiative)', () => {
+    const drop = INTENT_DROP_TOOLS.document;
+    expect(drop).toContain('generate_initiative');
+    expect(drop).toContain('create_task');
+    expect(drop).toContain('create_decision');
+    expect(drop).not.toContain('generate_deliverable');
+  });
+
+  it('object intents still drop generate_deliverable (no doc fallback)', () => {
+    expect(INTENT_DROP_TOOLS.initiative).toEqual(['generate_deliverable']);
+    expect(INTENT_DROP_TOOLS.task).toEqual(['generate_deliverable']);
+    expect(INTENT_DROP_TOOLS.decision).toEqual(['generate_deliverable']);
+  });
+
+  it('an explicit "stwórz inicjatywę" still wins as initiative (not document)', () => {
+    // "inicjatywę" without a document noun in-window → initiative.
+    expect(classifyChatCreationIntent('stwórz inicjatywę transformacji')).toBe('initiative');
   });
 });
 

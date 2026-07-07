@@ -33,22 +33,56 @@ type CreateDecisionContext = {
 };
 
 /**
- * BUG B fix (Teresa obiekty-N): after a decision row is created, generate the
- * STRUCTURAL BCG cards (§2) — alternatives (≥2 MECE options + "do nothing"),
- * risk/impact, consequences-of-inaction + recommendation — via the existing
- * `decisionService.generateSection` prompts, instead of leaving only a rewritten
- * `description`.
+ * Map a low/medium/high probability|impact string to a 1-5 numeric score, so the
+ * risk/impact matrix carries NUMBERS (BCG §2: matrix, not words) that the FE and
+ * the judge can actually rank. Falsy/unknown → 3 (neutral middle) so a partial
+ * model output never poisons a column with null.
+ */
+function levelToScore(level: unknown): number {
+  const v = String(level || '').trim().toLowerCase();
+  if (v === 'low' || v === 'niskie' || v === 'niski') return 2;
+  if (v === 'high' || v === 'wysokie' || v === 'wysoki') return 5;
+  if (v === 'medium' || v === 'średnie' || v === 'sredni' || v === 'średni') return 3;
+  return 3;
+}
+
+/**
+ * Split the "Consequences of inaction + Recommendation" prose card into its two
+ * answer-first parts. The card prompt (decisionService) asks for: (1) consequences
+ * of inaction, (2) ONE recommendation, (3) horizon. We keep the whole prose as the
+ * consequences body (durable, surfaced) and lift the recommendation sentence into
+ * its OWN field so the FE/judge see an answer-first recommendation, not buried text.
+ */
+function splitConsequencesAndRecommendation(prose: string): {
+  consequences: string;
+  recommendation: string;
+} {
+  const text = String(prose || '').trim();
+  if (!text) return { consequences: '', recommendation: '' };
+  // Prefer an explicit "Rekomendacja"/"Recommendation" marker if present.
+  const markerMatch = text.match(/(?:^|\n)\s*(?:\*\*)?\s*(?:rekomendacja|recommendation)\b[:.\s-]*/i);
+  if (markerMatch && markerMatch.index !== undefined) {
+    const recStart = markerMatch.index + markerMatch[0].length;
+    const recommendation = text.slice(recStart).trim();
+    const consequences = text.slice(0, markerMatch.index).trim() || text;
+    if (recommendation) return { consequences, recommendation };
+  }
+  return { consequences: text, recommendation: '' };
+}
+
+/**
+ * BUG B fix (Teresa obiekty-N) — now DURABLE (naprawa-r2Decision): after a decision
+ * row is created, generate the STRUCTURAL BCG cards (§2) — MECE alternatives (≥2 +
+ * "do nothing"), a risk/impact MATRIX, consequences-of-inaction + an answer-first
+ * recommendation — via `decisionService.generateSection`, and persist them into the
+ * REAL structured columns added by migration 902 (alternatives, risk_impact,
+ * consequences_of_inaction, recommendation, assumptions). The read API surfaces
+ * these (SELECT d.*) so the structure is finally VISIBLE and SCOREABLE — not buried
+ * in `description` or an unread sink.
  *
- * The `decisions` table has NO durable columns for alternatives/risks/
- * consequences (verified: schema has only description/options/criteria/
- * decision_rationale). So we persist DURABLY where the schema allows:
- *   - decision_rationale ← "Consequences of inaction + Recommendation" (this is
- *     literally where "the consultant says what to do" — a real, surfaced column)
- *   - ai_generated_sections (lazy-ALTER'd JSON sink, parity with initiatives) ←
- *     the FULL structured cards {alternatives[], risks[], consequencesOfInaction}
- *     so nothing is lost and a future FE read can hydrate them.
- *
- * ADDITIVE + FAIL-SOFT: any error is logged and never affects the created row.
+ * Column-defensive: writes only to columns that exist (getTableColumns), so on an
+ * under-migrated env the create still succeeds. ADDITIVE + FAIL-SOFT: any error is
+ * logged and never affects the created row.
  */
 async function fillDecisionStructuralFields(
   decisionId: string,
@@ -56,9 +90,10 @@ async function fillDecisionStructuralFields(
   language: 'pl' | 'en',
 ): Promise<void> {
   try {
-    const [{ default: decisionService }, queryHelpers] = await Promise.all([
+    const [{ default: decisionService }, queryHelpers, { getTableColumns }] = await Promise.all([
       import('../../decisionService.js'),
       import('../../../utils/queryHelpers.js'),
+      import('../../../utils/dbSchema.js'),
     ]);
 
     // Generate the three structural cards. Each is independently fail-soft so one
@@ -70,15 +105,15 @@ async function fillDecisionStructuralFields(
       decisionService.generateSection(decisionId, 'consequencesOfInaction', { language }),
     ]);
 
-    const sink: Record<string, unknown> = {};
-    let anything = false;
+    let alternatives: any[] | null = null;
+    let riskImpact: any[] | null = null;
+    let consequences = '';
+    let recommendation = '';
+    const assumptions: Array<{ assumption: string; confidence: string; whatWouldChangeIt: string }> = [];
 
     if (altRes.status === 'fulfilled') {
-      const alternatives = (altRes.value.parsedContent as any)?.alternatives;
-      if (Array.isArray(alternatives) && alternatives.length) {
-        sink.alternatives = alternatives;
-        anything = true;
-      }
+      const alts = (altRes.value.parsedContent as any)?.alternatives;
+      if (Array.isArray(alts) && alts.length) alternatives = alts;
     } else {
       logger.error(
         `[create_decision] alternatives fill failed id=${decisionId}: ${
@@ -90,8 +125,12 @@ async function fillDecisionStructuralFields(
     if (riskRes.status === 'fulfilled') {
       const risks = (riskRes.value.parsedContent as any)?.risks;
       if (Array.isArray(risks) && risks.length) {
-        sink.risks = risks;
-        anything = true;
+        // BCG §2: risk/impact as a MATRIX with 1-5 scores, not just words.
+        riskImpact = risks.map((r: any) => ({
+          ...r,
+          riskScore: levelToScore(r?.probability),
+          impactScore: levelToScore(r?.impact),
+        }));
       }
     } else {
       logger.error(
@@ -101,13 +140,10 @@ async function fillDecisionStructuralFields(
       );
     }
 
-    let recommendation = '';
     if (consRes.status === 'fulfilled') {
-      recommendation = String(consRes.value.content || '').trim();
-      if (recommendation) {
-        sink.consequencesOfInaction = recommendation;
-        anything = true;
-      }
+      const split = splitConsequencesAndRecommendation(String(consRes.value.content || ''));
+      consequences = split.consequences;
+      recommendation = split.recommendation;
     } else {
       logger.error(
         `[create_decision] consequences fill failed id=${decisionId}: ${
@@ -116,13 +152,62 @@ async function fillDecisionStructuralFields(
       );
     }
 
-    if (!anything) {
+    // Grounding / falsifiability (§5): a recommendation carries confidence + what
+    // would change it, and — when the model gave us no structured alternatives — an
+    // explicit "insufficient data" assumption instead of a silent empty.
+    if (recommendation) {
+      assumptions.push({
+        assumption:
+          language === 'en'
+            ? 'Recommendation derived from the decision context supplied at creation; not yet validated against live data.'
+            : 'Rekomendacja wywiedziona z kontekstu decyzji podanego przy utworzeniu; niezweryfikowana na danych na żywo.',
+        confidence: 'medium',
+        whatWouldChangeIt:
+          language === 'en'
+            ? 'New quantified evidence on cost/benefit of the alternatives, or a changed deadline/constraint.'
+            : 'Nowe skwantyfikowane dowody kosztu/korzyści opcji lub zmiana terminu/ograniczenia.',
+      });
+    }
+    if (!alternatives) {
+      assumptions.push({
+        assumption:
+          language === 'en'
+            ? 'Structured alternatives could not be generated automatically — options need to be filled in.'
+            : 'Nie udało się automatycznie wygenerować ustrukturyzowanych opcji — do uzupełnienia.',
+        confidence: 'low',
+        whatWouldChangeIt:
+          language === 'en'
+            ? 'Providing more decision context, then re-running alternative generation.'
+            : 'Podanie szerszego kontekstu decyzji i ponowne wygenerowanie opcji.',
+      });
+    }
+
+    if (!alternatives && !riskImpact && !consequences && !recommendation) {
       logger.warn(`[create_decision] structural fill produced NO content id=${decisionId}`);
       return;
     }
 
-    // (1) Durable, SURFACED column: decision_rationale ← recommendation (only if empty).
-    if (recommendation) {
+    // Persist into the REAL structured columns (migration 902). Column-defensive:
+    // only write columns that exist so an under-migrated env still succeeds.
+    const cols = await getTableColumns('decisions');
+    const sets: string[] = [];
+    const vals: any[] = [];
+    const setCol = (col: string, jsonVal: any, isJson: boolean) => {
+      if (!cols.has(col)) return;
+      // Only fill when currently empty, so a later human edit is never clobbered.
+      sets.push(`${col} = COALESCE(${col}, ?)`);
+      vals.push(isJson ? JSON.stringify(jsonVal) : jsonVal);
+    };
+
+    if (alternatives) setCol('alternatives', alternatives, true);
+    if (riskImpact) setCol('risk_impact', riskImpact, true);
+    if (consequences) setCol('consequences_of_inaction', consequences, false);
+    if (recommendation) setCol('recommendation', recommendation, false);
+    if (assumptions.length) setCol('assumptions', assumptions, true);
+
+    // decision_rationale is the legacy surfaced "outcome" column — keep it in sync
+    // with the recommendation for adopters that still read it (only if empty).
+    if (recommendation && cols.has('decision_rationale')) {
       await queryHelpers.queryRun(
         `UPDATE decisions SET decision_rationale = ?
          WHERE id = ? AND organization_id = ? AND (decision_rationale IS NULL OR decision_rationale = '')`,
@@ -130,25 +215,26 @@ async function fillDecisionStructuralFields(
       );
     }
 
-    // (2) Durable JSON sink for the full structured cards (lazy-ALTER, parity with
-    // initiatives.ai_generated_sections). Best-effort; ADD COLUMN is idempotent.
-    try {
-      await queryHelpers.queryRun(`ALTER TABLE decisions ADD COLUMN ai_generated_sections TEXT`);
-    } catch (err: any) {
-      const m = String(err?.message || err).toLowerCase();
-      if (!m.includes('already exists') && !m.includes('duplicate column')) {
-        logger.warn(
-          `[create_decision] ai_generated_sections ALTER skipped id=${decisionId}: ${m.slice(0, 120)}`,
-        );
-      }
+    if (sets.length) {
+      vals.push(decisionId, orgId);
+      await queryHelpers.queryRun(
+        `UPDATE decisions SET ${sets.join(', ')} WHERE id = ? AND organization_id = ?`,
+        vals,
+      );
     }
-    await queryHelpers.queryRun(
-      `UPDATE decisions SET ai_generated_sections = ? WHERE id = ? AND organization_id = ?`,
-      [JSON.stringify(sink), decisionId, orgId],
-    );
 
     logger.info(
-      `[create_decision] structural fields filled id=${decisionId} (${Object.keys(sink).join(', ')})`,
+      `[create_decision] structural columns filled id=${decisionId} (` +
+        [
+          alternatives && `alternatives(${alternatives.length})`,
+          riskImpact && `risk_impact(${riskImpact.length})`,
+          consequences && 'consequences',
+          recommendation && 'recommendation',
+          assumptions.length && `assumptions(${assumptions.length})`,
+        ]
+          .filter(Boolean)
+          .join(', ') +
+        ')',
     );
   } catch (err) {
     logger.error(

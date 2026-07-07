@@ -39,6 +39,54 @@ type CreateTaskContext = {
 
 const ALLOWED_PRIORITIES = new Set(['low', 'medium', 'high']);
 
+/** Priority → sane default offset (days) when the model omits due_date entirely. */
+const PRIORITY_DEFAULT_OFFSET_DAYS: Record<string, number> = {
+  high: 3,
+  medium: 7,
+  low: 14,
+};
+
+/**
+ * BUG (sędzia BCG #1): the model was free to emit ANY ISO date for `due_date`
+ * — including dates before the task's own `createdAt` (e.g. task created
+ * 2026-07-07 with due_date=2026-02-10). `create_task`'s tool schema gives the
+ * model no anchor for "today", so a hallucinated/stale-training-data date
+ * slips straight through TaskExecutor's column-defensive INSERT (which just
+ * writes whatever `due_date` it receives — see taskExecutor.ts:62).
+ *
+ * Fix here, at the real caller boundary (not in TaskExecutor, which is also
+ * used by other non-chat callers and must stay a dumb persistence layer):
+ * reject any due_date that is invalid or <= now, and replace it with a
+ * priority-derived offset from `createdAt` (effectively `now`, since the row
+ * is inserted moments later) — so `dueDate` is NEVER before the task's own
+ * `createdAt`. Never left as a bare `null` here because that would silently
+ * drop every chat-created task's deadline; a computed default is preferable
+ * to an admittedly-wrong past date. Fail-soft: never throws, only logs.
+ */
+export function sanitizeDueDate(
+  rawDueDate: string | undefined,
+  priority: string,
+): string | undefined {
+  const now = Date.now();
+
+  if (rawDueDate) {
+    const parsed = new Date(rawDueDate);
+    if (!Number.isNaN(parsed.getTime()) && parsed.getTime() > now) {
+      return rawDueDate;
+    }
+    logger.warn(
+      `[create_task] rejected dueDate not in the future (raw="${rawDueDate}", now=${new Date(
+        now,
+      ).toISOString()}) — clamping to computed default`,
+    );
+  }
+
+  // No usable model-supplied date — derive a realistic one from priority
+  // instead of leaving every chat-created task without a deadline.
+  const offsetDays = PRIORITY_DEFAULT_OFFSET_DAYS[priority] ?? PRIORITY_DEFAULT_OFFSET_DAYS.medium;
+  return new Date(now + offsetDays * 24 * 60 * 60 * 1000).toISOString();
+}
+
 /**
  * BUG B fix (Teresa obiekty-N): after a task row is created, fill its STRUCTURAL
  * fields (why · expectedOutcome · acceptanceCriteria) via the existing
@@ -194,13 +242,15 @@ export async function createTask(
     : 'medium';
 
   try {
+    const dueDate = sanitizeDueDate(params?.due_date || undefined, priority);
+
     const { default: TaskExecutor } = await import('../../../ai/actionExecutors/taskExecutor.js');
     const result = await TaskExecutor.execute(
       {
         title,
         description: params?.description || undefined,
         priority,
-        due_date: params?.due_date || undefined,
+        due_date: dueDate,
       },
       { userId, organizationId: orgId }
     );

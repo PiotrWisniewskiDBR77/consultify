@@ -19,7 +19,7 @@
  * create-verb+noun pair and fall through to normal model routing.
  */
 
-export type ChatCreationIntent = 'initiative' | 'task' | 'decision' | null;
+export type ChatCreationIntent = 'initiative' | 'task' | 'decision' | 'document' | null;
 
 /**
  * Create verbs (PL + EN). PL forms cover imperative + common inflections.
@@ -40,6 +40,13 @@ const CREATE_VERBS = [
   'zapisz', // "zapisz decyzję" → decision
   'zarejestruj',
   'zaplanuj', // "zaplanuj zadanie" → task
+  'wygeneruj', // "wygeneruj wniosek" → document
+  'wygenerować',
+  'przygotuj', // "przygotuj wniosek/analizę" → document
+  'napisz', // "napisz wniosek" → document
+  'sporządź',
+  'sporzadz',
+  'opracuj',
   // English
   'create',
   'add',
@@ -48,6 +55,10 @@ const CREATE_VERBS = [
   'record',
   'register',
   'start',
+  'generate',
+  'write',
+  'prepare',
+  'draft',
 ];
 
 /**
@@ -55,6 +66,27 @@ const CREATE_VERBS = [
  * (inicjatywę/inicjatywa/inicjatywy, zadanie/zadania, decyzję/decyzja).
  */
 const OBJECT_NOUNS: Array<{ intent: Exclude<ChatCreationIntent, null>; roots: string[] }> = [
+  // KOLEJNOŚĆ MA ZNACZENIE: 'document' PRZED 'initiative' — "wniosek strategiczny"
+  // to DOKUMENT (świadoma decyzja produktowa: insight standalone = doc, bo wymaga
+  // sesji wywiadu), NIE inicjatywa. Bez tego "wygeneruj wniosek" wpadał na
+  // generate_initiative(kind:doc) i tworzył pusty szkielet inicjatywy (sędzia score 44).
+  {
+    intent: 'document',
+    roots: [
+      'wniosek',
+      'wnioski',
+      'wniosek', // tolerancja literówki
+      'insight',
+      'wglądy',
+      'wglad',
+      'dokument',
+      'raport',
+      'analiz', // analiza/analizę/analizy
+      'notatk', // notatka strategiczna
+      'memo',
+      'brief',
+    ],
+  },
   { intent: 'initiative', roots: ['inicjatyw', 'initiative'] },
   { intent: 'task', roots: ['zadani', 'task', 'to-do', 'todo', 'action item'] },
   { intent: 'decision', roots: ['decyzj', 'decision'] },
@@ -99,14 +131,27 @@ export function classifyChatCreationIntent(message: string): ChatCreationIntent 
   const WINDOW = 60;
   const window = text.slice(verbIdx, verbIdx + verb_len(text, verbIdx) + WINDOW);
 
+  // Find the object noun CLOSEST to the verb (leftmost position in the window),
+  // breaking ties by OBJECT_NOUNS array order. Position-first avoids a far-away
+  // document noun ("…do przygotowania raportu") hijacking a nearer object noun
+  // ("dodaj zadanie …" → task, not document). See PROBLEM #2 precedence note.
+  let bestIntent: ChatCreationIntent = null;
+  let bestPos = Infinity;
   for (const { intent, roots } of OBJECT_NOUNS) {
     for (const root of roots) {
       // Word-start match of the root inside the window.
       const re = new RegExp(`(^|[^a-ząćęłńóśźż])${escapeRe(root)}`, 'i');
-      if (re.test(window)) return intent;
+      const m = re.exec(window);
+      if (m) {
+        const pos = m.index + (m[1] ? m[1].length : 0);
+        if (pos < bestPos) {
+          bestPos = pos;
+          bestIntent = intent;
+        }
+      }
     }
   }
-  return null;
+  return bestIntent;
 }
 
 /** Length of the matched verb token starting at idx (up to next space). */
@@ -120,11 +165,25 @@ function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/** Maps a classified intent to the single object tool that must handle it. */
+/** Maps a classified intent to the single tool that must handle it. */
 export const INTENT_TO_TOOL: Record<Exclude<ChatCreationIntent, null>, string> = {
   initiative: 'generate_initiative',
   task: 'create_task',
   decision: 'create_decision',
+  // "wniosek/insight/raport/analiza" → DOKUMENT (deliverable), NIE inicjatywa.
+  document: 'generate_deliverable',
 };
 
-export default { classifyChatCreationIntent, INTENT_TO_TOOL };
+/**
+ * Tools to DROP for a given intent so the model is forced onto INTENT_TO_TOOL.
+ * - object intents (initiative/task/decision) drop generate_deliverable (no doc fallback);
+ * - document intent drops the OBJECT creators so "wniosek" can't become an initiative.
+ */
+export const INTENT_DROP_TOOLS: Record<Exclude<ChatCreationIntent, null>, string[]> = {
+  initiative: ['generate_deliverable'],
+  task: ['generate_deliverable'],
+  decision: ['generate_deliverable'],
+  document: ['generate_initiative', 'create_task', 'create_decision'],
+};
+
+export default { classifyChatCreationIntent, INTENT_TO_TOOL, INTENT_DROP_TOOLS };

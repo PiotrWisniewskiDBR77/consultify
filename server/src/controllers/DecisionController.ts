@@ -28,6 +28,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
+import { parseMaybeJson } from '../utils/pgFlags.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type {
   CreateDecisionRequest,
@@ -62,6 +63,14 @@ interface DecisionRow {
   created_at: string;
   decided_at?: string | null;
   decision_rationale?: string | null;
+  // Structured BCG decision anatomy (migration 902). JSONB on Postgres → object;
+  // TEXT on SQLite → string. `parseMaybeJson` normalizes both on read.
+  alternatives?: unknown;
+  risk_impact?: unknown;
+  consequences_of_inaction?: string | null;
+  recommendation?: string | null;
+  assumptions?: unknown;
+  ai_generated_sections?: unknown;
   owner_name?: string | null;
   owner_avatar_url?: string | null;
   requested_by_name?: string | null;
@@ -70,6 +79,62 @@ interface DecisionRow {
 }
 
 const ESCALATION_RED_DAYS = 7;
+
+/**
+ * Build the structured BCG decision anatomy (alternatives / risk-impact matrix /
+ * consequences of inaction / answer-first recommendation / assumptions) for the
+ * API response from a `decisions` row.
+ *
+ * Primary source = the real columns added by migration 902. Fallback = the legacy
+ * `ai_generated_sections` JSON sink (written by the earlier fix, keys:
+ * alternatives / risks / consequencesOfInaction) so rows created before migration
+ * 902 still surface their structure. JSONB (Postgres) and TEXT (SQLite) are both
+ * normalized via `parseMaybeJson`.
+ */
+function buildStructuredFields(row: DecisionRow): {
+  alternatives: unknown[] | null;
+  riskImpact: unknown[] | null;
+  risks: unknown[] | null;
+  consequencesOfInaction: string | null;
+  recommendation: string | null;
+  assumptions: unknown[] | null;
+} {
+  const legacy = parseMaybeJson<Record<string, unknown>>(row.ai_generated_sections, {});
+
+  const alternatives =
+    parseMaybeJson<unknown[] | null>(row.alternatives, null) ??
+    (Array.isArray(legacy.alternatives) ? (legacy.alternatives as unknown[]) : null);
+
+  const riskImpact =
+    parseMaybeJson<unknown[] | null>(row.risk_impact, null) ??
+    (Array.isArray(legacy.risks) ? (legacy.risks as unknown[]) : null);
+
+  const assumptions = parseMaybeJson<unknown[] | null>(row.assumptions, null);
+
+  const consequencesOfInaction =
+    (typeof row.consequences_of_inaction === 'string' && row.consequences_of_inaction.trim()
+      ? row.consequences_of_inaction
+      : null) ??
+    (typeof legacy.consequencesOfInaction === 'string' && legacy.consequencesOfInaction.trim()
+      ? (legacy.consequencesOfInaction as string)
+      : null);
+
+  const recommendation =
+    typeof row.recommendation === 'string' && row.recommendation.trim()
+      ? row.recommendation
+      : null;
+
+  return {
+    alternatives,
+    // `riskImpact` is the matrix; `risks` is kept as an alias because the FE
+    // DecisionDetailView hydrates `decision.risks`.
+    riskImpact,
+    risks: riskImpact,
+    consequencesOfInaction,
+    recommendation,
+    assumptions,
+  };
+}
 
 const normalizeStatus = (status?: string | null): string => {
   if (!status) return 'pending';
@@ -433,11 +498,23 @@ export class DecisionController {
             : null;
           const { type: relatedObjectType, id: relatedObjectIdValue } = resolveRelatedObject(row);
 
+          // Lightweight structure signal for the list (full anatomy is fetched by
+          // getDecisionById). Surfaces the answer-first recommendation + a flag.
+          const structured = buildStructuredFields(row);
+          const hasStructure = Boolean(
+            (structured.alternatives && structured.alternatives.length) ||
+              (structured.riskImpact && structured.riskImpact.length) ||
+              structured.consequencesOfInaction ||
+              structured.recommendation
+          );
+
           return {
             id: row.id,
             title: row.title,
             description: row.description || undefined,
             decisionType: row.type,
+            recommendation: structured.recommendation,
+            hasStructure,
             pmoDomain: row.pmo_domain || undefined,
             status: toApiStatus(nextStatus),
             decisionOwnerId: row.decision_maker_id,
@@ -631,6 +708,10 @@ export class DecisionController {
 
       const { type: relatedObjectType, id: relatedObjectId } = resolveRelatedObject(decision);
 
+      // Structured BCG anatomy (migration 902, with legacy sink fallback) — the FE
+      // DecisionDetailView hydrates these, and the judge scores structure not prose.
+      const structured = buildStructuredFields(decision);
+
       res.json({
         id: decision.id,
         title: decision.title,
@@ -650,10 +731,18 @@ export class DecisionController {
         createdAt: decision.created_at,
         dueDate: decision.deadline || undefined,
         outcome: decision.decision_rationale || undefined,
+        rationale: decision.decision_rationale || undefined,
         decidedAt: decision.decided_at || undefined,
         workflowStatus: decision.workflow_status || 'proposed',
         relatedObjectType,
         relatedObjectId,
+        // --- Structured decision anatomy (answer-first, scoreable) ---
+        alternatives: structured.alternatives,
+        riskImpact: structured.riskImpact,
+        risks: structured.risks,
+        consequencesOfInaction: structured.consequencesOfInaction,
+        recommendation: structured.recommendation,
+        assumptions: structured.assumptions,
         impacts: impacts.map((impact: any) => ({
           id: impact.id,
           impactedType: impact.impacted_type,
@@ -1827,6 +1916,114 @@ export class DecisionController {
           message: err?.message || String(err),
         });
       }
+    }
+  );
+
+  /**
+   * Delete (soft) a decision
+   *
+   * DELETE /api/decisions/:id
+   * Body (optional): { reason?: string }
+   *
+   * Policy: reversible archive — sets status = 'cancelled' (a recognized status
+   * already excluded by any status='pending'/'approved' filter downstream)
+   * rather than a hard DELETE. Allowed for the requester (created_by), the
+   * decision owner, or admins. Any prior status may be cancelled (unlike the
+   * legacy `cancelDecision` service method, which refuses on
+   * approved/rejected/cancelled — cleanup needs to work regardless of
+   * terminal state).
+   */
+  static deleteDecision = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id } = req.params;
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const reason =
+        typeof (req.body as any)?.reason === 'string'
+          ? String((req.body as any).reason).trim().slice(0, 500)
+          : undefined;
+
+      const decision = await queryHelpers.queryOne<{
+        id: string;
+        title?: string | null;
+        status?: string | null;
+        decision_maker_id?: string | null;
+        created_by?: string | null;
+        organization_id?: string | null;
+      }>(
+        `SELECT id, title, status, decision_maker_id, created_by, organization_id
+         FROM decisions
+         WHERE id = ? AND organization_id = ?
+         LIMIT 1`,
+        [id, orgId]
+      );
+
+      if (!decision) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+
+      const normalizedRole = normalizeAdminLikeRole(req.user?.role);
+      const isAdmin = normalizedRole === 'ADMIN' || normalizedRole === 'SUPERADMIN';
+      const isRequester = String(decision.created_by || '') === String(userId);
+      const isOwner = String(decision.decision_maker_id || '') === String(userId);
+      if (!isAdmin && !isRequester && !isOwner) {
+        res.status(403).json({ error: 'Only requester, owner, or admin can delete' });
+        return;
+      }
+
+      const previousStatus = normalizeStatus(decision.status);
+      if (previousStatus === 'cancelled') {
+        res.json({ success: true, id, message: 'Decision already cancelled' });
+        return;
+      }
+
+      await queryHelpers.queryRun(
+        `UPDATE decisions SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
+
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO decision_history (id, decision_id, action, old_status, new_status, changed_by, details)
+           VALUES (?, ?, 'cancelled', ?, 'cancelled', ?, ?)`,
+          [
+            uuidv4(),
+            id,
+            previousStatus,
+            userId,
+            JSON.stringify({ reason: reason || 'Deleted via API' }),
+          ]
+        );
+      } catch (e: any) {
+        logger.warn(
+          '[DecisionController.deleteDecision] history insert failed (continuing):',
+          e?.message || e
+        );
+      }
+
+      auditEventsService
+        .log({
+          actorId: userId,
+          actorType: 'USER',
+          action: 'DECISION_DELETE',
+          resourceType: 'decision',
+          resourceId: id,
+          organizationId: orgId,
+          metadata: { reason, previousStatus },
+        })
+        .catch((err: any) =>
+          logger.error('[DecisionController.deleteDecision] Audit log failed:', err)
+        );
+
+      logger.info(`[DecisionController] Decision ${id} soft-deleted (cancelled) by ${userId}`);
+
+      res.json({ success: true, id, message: 'Decision cancelled' });
     }
   );
 }

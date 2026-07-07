@@ -1077,6 +1077,16 @@ export class LLMService {
     // Captured when a tool runs successfully: its user-facing confirmation, used
     // to rescue a post-tool empty stream (see firstChunk.done branch).
     let lastToolMessage: string | undefined;
+    // naprawa-r2Narr · Problem 1 — the created artifact's REAL kind + title. This
+    // is the single source of truth for the confirmation the user reads: the rescue
+    // sentence is derived from `kind` (not whichever tool wrote `message` last), and
+    // a model confirmation that names a DIFFERENT artifact type gets a corrective
+    // canonical line. `kind` matches the deliverable SSE event the FE navigates on,
+    // so the words and the landing module can never disagree.
+    let lastCreatedKind: import('./creationConfirmation.js').CreationKind | undefined;
+    let lastCreatedTitle: string | undefined;
+    const confirmationLang: 'pl' | 'en' =
+      String((params.context as any)?.language || '').toLowerCase() === 'en' ? 'en' : 'pl';
     if (params.tools?.length && !wantsReasoning) {
       const mcpModule = await import('./mcpServer.js');
       const mcpServer = (mcpModule.mcpServer || mcpModule.default) as McpServer;
@@ -1098,7 +1108,10 @@ export class LLMService {
             // `{ status: 'SUCCESS', data: <handlerResult> }`, so the confirmation
             // lives at r.data.message — NOT r.message.
             try {
-              const wrapped = r as { status?: string; data?: { ok?: unknown; message?: unknown } };
+              const wrapped = r as {
+                status?: string;
+                data?: { ok?: unknown; message?: unknown; kind?: unknown; title?: unknown };
+              };
               const m = wrapped?.data?.message;
               if (
                 wrapped?.status === 'SUCCESS' &&
@@ -1107,6 +1120,19 @@ export class LLMService {
                 m.trim()
               ) {
                 lastToolMessage = m;
+                // naprawa-r2Narr · Problem 1 — remember the REAL created kind/title
+                // so the confirmation the user reads is derived from `kind`, the one
+                // authoritative type token (never a stale/other tool's message).
+                const k = wrapped?.data?.kind;
+                const KNOWN = new Set([
+                  'initiative', 'task', 'decision', 'note',
+                  'doc', 'sheet', 'deck', 'mindmap', 'process_flow', 'table', 'whiteboard',
+                ]);
+                if (typeof k === 'string' && KNOWN.has(k)) {
+                  lastCreatedKind = k as typeof lastCreatedKind;
+                  lastCreatedTitle =
+                    typeof wrapped?.data?.title === 'string' ? wrapped.data.title : undefined;
+                }
               }
             } catch {
               /* never let result inspection break tool execution */
@@ -1277,7 +1303,24 @@ export class LLMService {
             // candidate model — those retries re-ran the tool and created
             // duplicate initiatives (verified on demo 2026-06-28).
             if (lastToolMessage) {
-              const toolMsg = lastToolMessage;
+              // naprawa-r2Narr · Problem 1 — prefer the canonical kind-derived
+              // confirmation over the raw tool `message`. On a multi-tool turn the
+              // captured `message` can belong to a DIFFERENT tool than the artifact
+              // the FE actually opens; deriving from `kind` guarantees the words
+              // match the created object.
+              let toolMsg = lastToolMessage;
+              if (lastCreatedKind) {
+                try {
+                  const { buildCreationConfirmation } = await import('./creationConfirmation.js');
+                  toolMsg = buildCreationConfirmation(
+                    lastCreatedKind,
+                    lastCreatedTitle || '',
+                    confirmationLang,
+                  );
+                } catch {
+                  /* fall back to the raw tool message */
+                }
+              }
               async function* toolOnlyStream(): AsyncGenerator<StreamItem> {
                 yield toolMsg;
               }
@@ -1298,8 +1341,12 @@ export class LLMService {
           // arrival order); with reasoning OFF only strings flow (unchanged).
           async function* prependedStream(): AsyncGenerator<StreamItem> {
             let emittedText = false;
+            let visibleText = '';
             const track = (v: StreamItem) => {
-              if (typeof v === 'string' && v.trim().length > 0) emittedText = true;
+              if (typeof v === 'string' && v.trim().length > 0) {
+                emittedText = true;
+                visibleText += v;
+              }
             };
             if (firstChunk.value !== undefined) {
               track(firstChunk.value);
@@ -1313,16 +1360,49 @@ export class LLMService {
                 yield next.value;
               }
             }
+            // naprawa-r2Narr · Problem 1 — the canonical, kind-derived confirmation
+            // (single source of truth). Built lazily only when a creation tool ran.
+            let canonicalConfirmation: string | undefined;
+            if (lastCreatedKind) {
+              try {
+                const { buildCreationConfirmation } = await import('./creationConfirmation.js');
+                canonicalConfirmation = buildCreationConfirmation(
+                  lastCreatedKind,
+                  lastCreatedTitle || '',
+                  confirmationLang,
+                );
+              } catch {
+                /* fall through to raw tool message below */
+              }
+            }
             // END-OF-STREAM RESCUE: a reasoning model can call a tool successfully
             // and emit NO meaningful visible text (e.g. GLM-4.6 finishes on the
             // tool-call step with only whitespace). The firstChunk.done rescue
             // above only fires when the FIRST pull is already done; here we also
             // cover the case where some whitespace/reasoning flowed first. If the
             // turn produced a successful tool message but no real answer text,
-            // surface that message so the user sees a confirmation (and the turn
-            // is not perceived as empty).
-            if (!emittedText && lastToolMessage) {
-              yield lastToolMessage;
+            // surface the kind-derived confirmation (or the raw tool message).
+            if (!emittedText && (canonicalConfirmation || lastToolMessage)) {
+              yield (canonicalConfirmation || lastToolMessage) as string;
+            } else if (
+              emittedText &&
+              lastCreatedKind &&
+              canonicalConfirmation
+            ) {
+              // narracja ≠ kind GUARD: the model DID write a confirmation, but it
+              // names a DIFFERENT artifact type than the one actually created
+              // (verbatim live bug: "Utworzyłem DECYZJĘ…" after creating an
+              // initiative). We do NOT delete the model's prose — we append the
+              // authoritative, kind-derived line so the user reads the truth about
+              // what was created and where it lives. Additive + deterministic.
+              try {
+                const { textContradictsKind } = await import('./creationConfirmation.js');
+                if (textContradictsKind(visibleText, lastCreatedKind)) {
+                  yield `\n\n${canonicalConfirmation}`;
+                }
+              } catch {
+                /* never let the guard break the stream */
+              }
             }
           }
 

@@ -93,6 +93,13 @@ router.post('/', validateBody(CreateDecisionSchema), DecisionController.createDe
 router.put('/:id', validateBody(UpdateDecisionSchema), DecisionController.updateDecision);
 
 /**
+ * DELETE /api/decisions/:id
+ * Soft-delete (archive/cancel) a decision — reversible, org-scoped.
+ * Allowed for requester, decision owner, or admin. Body: { reason?: string }
+ */
+router.delete('/:id', DecisionController.deleteDecision);
+
+/**
  * PATCH /api/decisions/:id/decide
  * Make a decision (approve/reject/defer)
  */
