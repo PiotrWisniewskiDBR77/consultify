@@ -47,6 +47,17 @@ vi.mock('../../../server/src/services/notebookService.js', () => ({
   createNote: (...args: unknown[]) => createNoteMock(...args),
 }));
 
+// naprawa-c1Graph: these tests assert the DETERMINISTIC skeleton path. Force the
+// LLM generators to the null (fail-soft) branch so the skeleton fallback + raw
+// intent body run deterministically, without any network call.
+vi.mock('../../../server/src/services/ai/canvasGraphLlm.js', () => ({
+  generateMindmapGraph: vi.fn().mockResolvedValue(null),
+  generateProcessFlowGraph: vi.fn().mockResolvedValue(null),
+  generateWhiteboardGraph: vi.fn().mockResolvedValue(null),
+  generateTableGraph: vi.fn().mockResolvedValue(null),
+  generateNoteContent: vi.fn().mockResolvedValue(null),
+}));
+
 import { generateDeliverable } from '../../../server/src/services/ai/tools/generateDeliverable.js';
 
 const baseCtx = {
