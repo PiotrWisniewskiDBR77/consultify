@@ -128,6 +128,7 @@ import { AIConnections } from './shared/AIConnections';
 import { buildAskAIMessage } from './shared/askAiHelper';
 // ── Presentation Mode Switcher ───────────────────────────────────────────────
 import { PresentationModeSwitcher } from './shared/PresentationModeSwitcher';
+import { ReadEditToggle } from './shared/ReadEditToggle';
 import { RelatedContext } from './shared/RelatedContext';
 
 interface TaskDetailViewProps {
@@ -604,6 +605,10 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const reducedMotion = useReducedMotion();
   const motionDuration = reducedMotion ? 0 : 0.22;
   const [activeNSection, setActiveNSection] = useState('description-scope');
+  // ── Read/Edit toggle (Menu 1, klasa S) ─────────────────────────────────────
+  // "Do pokazania klientowi": read = karty read-only (hideActions), główne pola
+  // wyłączone, pasek akcji stanu (Reassign/Delay/Mark complete) ukryty.
+  const [readMode, setReadMode] = useState(false);
 
   useEffect(() => {
     if (presentationMode === 'c') {
@@ -2357,9 +2362,10 @@ Return ONLY the final comment text.`;
                   </div>
                   <textarea
                     value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    onChange={(e) => !readMode && setDescription(e.target.value)}
+                    readOnly={readMode}
                     rows={10}
-                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[200px]"
+                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus transition-colors min-h-[200px]"
                     placeholder={
                       isPolish
                         ? 'Opisz zadanie szczegółowo — co należy zrobić, dlaczego jest to ważne, jakie są ograniczenia...'
@@ -2575,9 +2581,10 @@ Return ONLY the final comment text.`;
                   </div>
                   <textarea
                     value={expectedOutcome}
-                    onChange={(e) => setExpectedOutcome(e.target.value)}
+                    onChange={(e) => !readMode && setExpectedOutcome(e.target.value)}
+                    readOnly={readMode}
                     rows={8}
-                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-primary-400 transition-colors min-h-[160px]"
+                    className="w-full px-0 py-2 bg-transparent text-sm leading-relaxed text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y border-b border-slate-200 dark:border-navy-700/40 focus:border-c-focus transition-colors min-h-[160px]"
                     placeholder={
                       isPolish
                         ? 'Zdefiniuj mierzalny rezultat — co oznacza sukces, jakie kryteria akceptacji...'
@@ -3586,6 +3593,7 @@ Return ONLY the final comment text.`;
             sectionName={cardMeta.name}
             aiGenerated={cardAI[cKey]}
             isPolish={isPolish}
+            hideActions={readMode}
             onRegenerate={() => generateCard(cKey)}
             onGenerate={() => generateCard(cKey)}
             onFillManually={() => setCard(cKey, 'edited')}
@@ -3657,6 +3665,7 @@ Return ONLY the final comment text.`;
     showCreateDecision,
     showDecisionSearch,
     blockedReason,
+    readMode,
   ]);
 
   // ── Dirty tracking + autosave (SaaS online persistence) ───────────────────
@@ -3775,6 +3784,7 @@ Return ONLY the final comment text.`;
             <NModeHeader
               title={title}
               onTitleChange={setTitle}
+              titleReadOnly={readMode}
               titlePlaceholder={{ en: 'Task title...', pl: 'Tytuł zadania...' }}
               artifactId={taskId || undefined}
               artifactType="task"
@@ -3798,6 +3808,10 @@ Return ONLY the final comment text.`;
 
             {/* ── N-Mode Content ──────────────────────────────── */}
             <div className="col-span-full space-y-4 mt-4">
+              {/* ── Menu 1 (klasa S): Read/Edit toggle "do pokazania klientowi" ── */}
+              <div className="flex items-center justify-end">
+                <ReadEditToggle readMode={readMode} onChange={setReadMode} />
+              </div>
               {/* Deadline Alert */}
               {dueDate && dueDateAlertBorderClass && (
                 <div className="mb-3 px-4 py-2 rounded-xl bg-danger-500/5 dark:bg-danger-500/10 border border-danger-200/60 dark:border-danger-500/30 text-sm text-danger-600 dark:text-danger-400 flex items-center gap-2">
@@ -3993,6 +4007,8 @@ Return ONLY the final comment text.`;
               )}
 
               {/* ── Task Action Bar ──────────────────────────────── */}
+              {/* Read mode ("do pokazania klientowi"): ukryj cały pasek akcji stanu. */}
+              {!readMode && (
               <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
                 <div className="flex items-center gap-2">
                   {/* Start / Resume — shown when todo or blocked */}
@@ -4300,6 +4316,7 @@ Return ONLY the final comment text.`;
                   )}
                 </div>
               </div>
+              )}
 
               {/* 2-Pane: LeftNav + Canvas */}
               <div className="flex gap-0 min-h-[60vh]">

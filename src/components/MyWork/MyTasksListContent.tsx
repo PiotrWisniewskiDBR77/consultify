@@ -24,10 +24,12 @@ import {
   Edit,
   Eye,
   Inbox,
+  Link2,
   Loader2,
   Minus,
   Pause,
   Plus,
+  Sparkles,
   Square,
   Trash2,
   User,
@@ -79,6 +81,7 @@ import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { Api, type DataContextSummary } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { Task } from '@/types';
+import { getArtifactPath } from '@/utils/artifactLinks';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -853,17 +856,22 @@ const TaskTableRow: React.FC<{
             className="opacity-40 transition-opacity group-hover:opacity-100"
             sections={
               [
-                // GÓRA — kontekst (status/triage)
+                // ── §6.4 grupa 1: NAWIGACJA (Otwórz/Podgląd) + akcje stanu ────────
                 {
-                  id: 'context',
-                  kind: 'context',
+                  id: 'open',
+                  kind: 'open',
                   actions: [
+                    {
+                      id: 'open-preview',
+                      label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+                      icon: ChevronRight,
+                      onClick: () => onPreview(task.id, task),
+                    },
                     {
                       id: 'view',
                       label: t('common.view', 'View'),
                       icon: Eye,
                       onClick: () => onOpenFull(task.id, task),
-                      variant: 'primary',
                     },
                     {
                       id: 'complete',
@@ -872,13 +880,13 @@ const TaskTableRow: React.FC<{
                         : t('myWork.personalTasks.complete', 'Complete'),
                       icon: CheckCircle2,
                       onClick: () => onToggleComplete(task.id, !isCompleted),
+                      divider: true,
                     },
                     {
                       id: 'status_todo',
                       label: t('myWork.personalTasks.status.todo', 'To do'),
                       icon: CheckSquare,
                       onClick: () => onSetStatus(task.id, 'todo'),
-                      divider: true,
                     },
                     {
                       id: 'status_in_progress',
@@ -899,7 +907,6 @@ const TaskTableRow: React.FC<{
                             label: t('myWork.triage.acceptToday', 'Accept (Today)'),
                             icon: Zap,
                             onClick: () => onTriageAccept(task.id),
-                            variant: 'primary' as const,
                             divider: true,
                           },
                           {
@@ -912,34 +919,37 @@ const TaskTableRow: React.FC<{
                       : []),
                   ],
                 },
-                // DÓŁ — FIXED BOTTOM MANIFEST (canon §9.2)
+                // ── §6.4 grupa 2: MANIPULACJA (Edytuj) ────────────────────────────
                 {
-                  id: 'fixed',
+                  id: 'manage',
                   kind: 'manage',
                   actions: [
-                    {
-                      id: 'open-preview',
-                      label: isPolish ? 'Otwórz podgląd' : 'Open preview',
-                      icon: ChevronRight,
-                      onClick: () => onPreview(task.id, task),
-                    },
                     {
                       id: 'edit',
                       label: t('common.edit', 'Edit'),
                       icon: Edit,
                       onClick: () => onOpenFull(task.id, task),
                     },
+                  ],
+                },
+                // ── §6.4 grupa 3: RELACJE/WYJŚCIE (Kopiuj link · Odłóż termin) ─────
+                {
+                  id: 'output',
+                  kind: 'output',
+                  actions: [
                     {
-                      id: 'archive',
-                      label: t('myWork.triage.archive', 'Archive'),
-                      icon: Archive,
-                      disabled: !onTriageArchive,
-                      description: onTriageArchive
-                        ? undefined
-                        : isPolish
-                          ? 'Wkrótce (backend)'
-                          : 'Coming soon (backend)',
-                      onClick: () => onTriageArchive?.(task.id),
+                      id: 'copy-link',
+                      label: isPolish ? 'Kopiuj link' : 'Copy link',
+                      icon: Link2,
+                      onClick: () => {
+                        try {
+                          const url = `${window.location.origin}${getArtifactPath('task', task.id)}`;
+                          void navigator.clipboard?.writeText(url);
+                          toast.success(isPolish ? 'Link skopiowany' : 'Link copied');
+                        } catch {
+                          /* clipboard unavailable */
+                        }
+                      },
                     },
                     // Delay ▸ — tasks have a due date, so the slot is present.
                     ...(onInlineEdit
@@ -967,11 +977,36 @@ const TaskTableRow: React.FC<{
                       : []),
                   ],
                 },
-                // DANGER
+                // ── §6.4 grupa 4: AI ──────────────────────────────────────────────
+                {
+                  id: 'ai',
+                  kind: 'ai',
+                  actions: [
+                    {
+                      id: 'ai-open',
+                      label: isPolish ? '✨ AI: otwórz i uzupełnij' : '✨ AI: open & fill',
+                      icon: Sparkles,
+                      onClick: () => onOpenFull(task.id, task),
+                    },
+                  ],
+                },
+                // ── §6.4 grupa 5: DESTRUKCYJNE (Archiwizuj · Usuń — danger, ostatni) ─
                 {
                   id: 'danger',
                   kind: 'danger',
                   actions: [
+                    {
+                      id: 'archive',
+                      label: t('myWork.triage.archive', 'Archive'),
+                      icon: Archive,
+                      disabled: !onTriageArchive,
+                      description: onTriageArchive
+                        ? undefined
+                        : isPolish
+                          ? 'Wkrótce (backend)'
+                          : 'Coming soon (backend)',
+                      onClick: () => onTriageArchive?.(task.id),
+                    },
                     {
                       id: 'delete',
                       label: t('common.delete', 'Delete'),

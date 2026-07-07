@@ -13,16 +13,19 @@ import {
   CheckSquare,
   ChevronRight,
   Clock,
+  Copy,
   Cpu,
   DollarSign,
   Edit2,
   FolderKanban,
+  Link2,
   Loader2,
   type LucideIcon,
   Minus,
   Scale,
   Settings2,
   Shield,
+  Sparkles,
   Square,
   Target,
   Trash2,
@@ -58,6 +61,7 @@ import {
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
+import { getArtifactPath } from '@/utils/artifactLinks';
 
 import {
   type DecisionBrief,
@@ -420,33 +424,10 @@ const DecisionTableRow: React.FC<{
 
   const kebabSections = useMemo<RowActionSection[]>(() => {
     const sections: RowActionSection[] = [];
-    // GÓRA — kontekst (zależny od statusu)
-    if (isPending) {
-      sections.push({
-        id: 'context',
-        kind: 'context',
-        actions: [
-          {
-            id: 'approve',
-            label: isPolish ? 'Przyjmij' : 'Approve',
-            icon: Check,
-            variant: 'primary',
-            onClick: () => onApprove(decision.id),
-          },
-          {
-            id: 'reject',
-            label: isPolish ? 'Odrzuć' : 'Reject',
-            icon: X,
-            variant: 'danger',
-            onClick: () => onReject(decision.id),
-          },
-        ],
-      });
-    }
-    // DÓŁ — FIXED BOTTOM MANIFEST (kanon §9.2): Otwórz podgląd · Edytuj · Archiwizuj · Delay▸
+    // ── §6.4 grupa 1: NAWIGACJA (Otwórz/Podgląd) + akcje stanu (Approve/Reject) ──
     sections.push({
-      id: 'fixed',
-      kind: 'manage',
+      id: 'open',
+      kind: 'open',
       actions: [
         {
           id: 'open',
@@ -454,19 +435,56 @@ const DecisionTableRow: React.FC<{
           icon: ChevronRight,
           onClick: () => onOpenPreview(decision.id),
         },
+        ...(isPending
+          ? [
+              {
+                id: 'approve',
+                label: isPolish ? 'Przyjmij' : 'Approve',
+                icon: Check,
+                onClick: () => onApprove(decision.id),
+              },
+              {
+                id: 'reject',
+                label: isPolish ? 'Odrzuć' : 'Reject',
+                icon: X,
+                variant: 'danger' as const,
+                onClick: () => onReject(decision.id),
+              },
+            ]
+          : []),
+      ],
+    });
+    // ── §6.4 grupa 2: MANIPULACJA (Edytuj · Zmień nazwę · Powiel) ──────────────
+    sections.push({
+      id: 'manage',
+      kind: 'manage',
+      actions: [
         {
           id: 'edit',
           label: isPolish ? 'Edytuj' : 'Edit',
           icon: Edit2,
           onClick: () => onOpenFull?.(decision.id, decision) ?? onClick?.(decision.id, decision),
         },
+      ],
+    });
+    // ── §6.4 grupa 3: RELACJE/WYJŚCIE (Kopiuj link · Odłóż termin) ─────────────
+    sections.push({
+      id: 'output',
+      kind: 'output',
+      actions: [
         {
-          id: 'archive',
-          label: isPolish ? 'Archiwizuj' : 'Archive',
-          icon: Archive,
-          disabled: true,
-          description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
-          onClick: () => {},
+          id: 'copy-link',
+          label: isPolish ? 'Kopiuj link' : 'Copy link',
+          icon: Link2,
+          onClick: () => {
+            try {
+              const url = `${window.location.origin}${getArtifactPath('decision', decision.id)}`;
+              void navigator.clipboard?.writeText(url);
+              toast.success(isPolish ? 'Link skopiowany' : 'Link copied');
+            } catch {
+              /* clipboard unavailable */
+            }
+          },
         },
         ...(dueDate
           ? [
@@ -488,11 +506,32 @@ const DecisionTableRow: React.FC<{
           : []),
       ],
     });
-    // DANGER — Usuń
+    // ── §6.4 grupa 4: AI ──────────────────────────────────────────────────────
+    sections.push({
+      id: 'ai',
+      kind: 'ai',
+      actions: [
+        {
+          id: 'ai-open',
+          label: isPolish ? '✨ AI: otwórz i uzupełnij' : '✨ AI: open & fill',
+          icon: Sparkles,
+          onClick: () => onOpenFull?.(decision.id, decision) ?? onClick?.(decision.id, decision),
+        },
+      ],
+    });
+    // ── §6.4 grupa 5: DESTRUKCYJNE (Archiwizuj · Usuń — danger, ostatni) ───────
     sections.push({
       id: 'danger',
       kind: 'danger',
       actions: [
+        {
+          id: 'archive',
+          label: isPolish ? 'Archiwizuj' : 'Archive',
+          icon: Archive,
+          disabled: true,
+          description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+          onClick: () => {},
+        },
         {
           id: 'delete',
           label: isPolish ? 'Usuń' : 'Delete',
@@ -696,32 +735,10 @@ const AwaitingDecisionTableRow: React.FC<{
 
   const kebabSections = useMemo<RowActionSection[]>(() => {
     const sections: RowActionSection[] = [];
-    // GÓRA — kontekst (Remind / Escalate dla oczekujących)
-    if (isPending) {
-      sections.push({
-        id: 'context',
-        kind: 'context',
-        actions: [
-          {
-            id: 'remind',
-            label: isPolish ? 'Przypomnij' : 'Send reminder',
-            icon: Bell,
-            onClick: () => onRemind(decision.id),
-          },
-          {
-            id: 'escalate',
-            label: isPolish ? 'Eskaluj' : overdue ? 'Escalate (urgent)' : 'Escalate',
-            icon: TrendingUp,
-            variant: overdue ? 'danger' : 'default',
-            onClick: () => onEscalate(decision.id),
-          },
-        ],
-      });
-    }
-    // DÓŁ — FIXED BOTTOM MANIFEST (kanon §9.2)
+    // ── §6.4 grupa 1: NAWIGACJA (Otwórz/Podgląd) + akcje stanu (Remind/Escalate) ──
     sections.push({
-      id: 'fixed',
-      kind: 'manage',
+      id: 'open',
+      kind: 'open',
       actions: [
         {
           id: 'open',
@@ -729,19 +746,56 @@ const AwaitingDecisionTableRow: React.FC<{
           icon: ChevronRight,
           onClick: () => onOpenPreview(decision.id),
         },
+        ...(isPending
+          ? [
+              {
+                id: 'remind',
+                label: isPolish ? 'Przypomnij' : 'Send reminder',
+                icon: Bell,
+                onClick: () => onRemind(decision.id),
+              },
+              {
+                id: 'escalate',
+                label: isPolish ? 'Eskaluj' : overdue ? 'Escalate (urgent)' : 'Escalate',
+                icon: TrendingUp,
+                variant: (overdue ? 'danger' : 'default') as 'danger' | 'default',
+                onClick: () => onEscalate(decision.id),
+              },
+            ]
+          : []),
+      ],
+    });
+    // ── §6.4 grupa 2: MANIPULACJA (Edytuj) ────────────────────────────────────
+    sections.push({
+      id: 'manage',
+      kind: 'manage',
+      actions: [
         {
           id: 'edit',
           label: isPolish ? 'Edytuj' : 'Edit',
           icon: Edit2,
           onClick: () => onOpenFull?.(decision.id, decision) ?? onClick?.(decision.id, decision),
         },
+      ],
+    });
+    // ── §6.4 grupa 3: RELACJE/WYJŚCIE (Kopiuj link · Odłóż termin) ─────────────
+    sections.push({
+      id: 'output',
+      kind: 'output',
+      actions: [
         {
-          id: 'archive',
-          label: isPolish ? 'Archiwizuj' : 'Archive',
-          icon: Archive,
-          disabled: true,
-          description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
-          onClick: () => {},
+          id: 'copy-link',
+          label: isPolish ? 'Kopiuj link' : 'Copy link',
+          icon: Link2,
+          onClick: () => {
+            try {
+              const url = `${window.location.origin}${getArtifactPath('decision', decision.id)}`;
+              void navigator.clipboard?.writeText(url);
+              toast.success(isPolish ? 'Link skopiowany' : 'Link copied');
+            } catch {
+              /* clipboard unavailable */
+            }
+          },
         },
         ...(dueDate
           ? [
@@ -763,11 +817,32 @@ const AwaitingDecisionTableRow: React.FC<{
           : []),
       ],
     });
-    // DANGER — Usuń
+    // ── §6.4 grupa 4: AI ──────────────────────────────────────────────────────
+    sections.push({
+      id: 'ai',
+      kind: 'ai',
+      actions: [
+        {
+          id: 'ai-open',
+          label: isPolish ? '✨ AI: otwórz i uzupełnij' : '✨ AI: open & fill',
+          icon: Sparkles,
+          onClick: () => onOpenFull?.(decision.id, decision) ?? onClick?.(decision.id, decision),
+        },
+      ],
+    });
+    // ── §6.4 grupa 5: DESTRUKCYJNE (Archiwizuj · Usuń — danger, ostatni) ───────
     sections.push({
       id: 'danger',
       kind: 'danger',
       actions: [
+        {
+          id: 'archive',
+          label: isPolish ? 'Archiwizuj' : 'Archive',
+          icon: Archive,
+          disabled: true,
+          description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+          onClick: () => {},
+        },
         {
           id: 'delete',
           label: isPolish ? 'Usuń' : 'Delete',
