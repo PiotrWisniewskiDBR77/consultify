@@ -370,6 +370,17 @@ async function callStructuredOnce<T>(
     timeoutMs: LLM_TIMEOUT_MS,
   });
   const obj = (result as { object?: unknown })?.object;
+  // TEMP DEBUG (c5): why does mindmap return object=null live? Log the real shape.
+  try {
+    const r = result as Record<string, unknown>;
+    logger.warn(
+      `[canvas-debug] structured result: keys=${Object.keys(r || {}).join(',')} hasObject=${!!obj} ` +
+        `contentSnip=${String(r?.content ?? r?.text ?? '').slice(0, 200)} ` +
+        `errSnip=${String((r as any)?.error ?? (r as any)?._error ?? '').slice(0, 200)}`
+    );
+  } catch {
+    /* debug best-effort */
+  }
   if (!obj) return null;
   // parse() throws on a shape mismatch — let it propagate to the retry wrapper so a
   // one-off malformed shape gets a second chance before we drop to the skeleton.
