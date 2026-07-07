@@ -38,6 +38,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_SHARED_IDEA_MAPS: z.boolean().default(true),
   ENABLE_TERESA_CANVAS_TOOLS: z.boolean().default(true),
   ENABLE_TERESA_NOTE_CREATE: z.boolean().default(true),
+  ENABLE_TERESA_RECORD_CREATE: z.boolean().default(true),
 });
 
 export type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
@@ -182,6 +183,14 @@ export function loadFeatureFlags(): FeatureFlags {
     // to 'false' to omit 'note'. Mirror this default in
     // server/src/services/ai/mcpServer.ts (raw process.env read, same flag).
     ENABLE_TERESA_NOTE_CREATE: process.env.ENABLE_TERESA_NOTE_CREATE !== 'false',
+
+    // Teresa routing-N (naprawa-rN-routing): "stwórz zadanie/decyzję" become real
+    // N-objects (a `tasks` / `decisions` row) via the create_task / create_decision
+    // MCP tools — NOT a document. Reuses the live-proven, column-defensive INSERTs
+    // (TaskExecutor / the decisions INSERT the AI_TOOLS path already used). The
+    // handler emits a `deliverable` event so the FE navigates to My Work
+    // (Tasks / Decisions). Default ON; set to 'false' to omit both tools.
+    ENABLE_TERESA_RECORD_CREATE: process.env.ENABLE_TERESA_RECORD_CREATE !== 'false',
   };
 
   // Validate configuration

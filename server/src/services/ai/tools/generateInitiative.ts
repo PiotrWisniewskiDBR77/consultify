@@ -43,6 +43,13 @@ type ToolContext = {
   sourceId?: string;
   /** UI language for the generated cards. */
   language?: 'en' | 'pl' | string;
+  /**
+   * Teresa routing-N — same deliverable side-channel generate_deliverable uses.
+   * When present, we emit a `{kind:'initiative'}` event after the DRAFT is
+   * created so the FE deep-links into the Initiatives module (previously the
+   * initiative was created but the user had to open it manually).
+   */
+  onDeliverable?: (payload: Record<string, unknown>) => void;
 };
 
 /**
@@ -266,6 +273,26 @@ export async function generateInitiative(
       }
     })();
 
+    // Teresa routing-N — emit the deliverable event so the FE opens the new
+    // initiative in the Initiatives module (parity with generate_deliverable /
+    // create_task / create_decision). Fires once per real create (the memoized
+    // early-return above short-circuits retries before reaching here). Fail-soft.
+    try {
+      context.onDeliverable?.({
+        draftId: id,
+        generationId: id,
+        kind: 'initiative',
+        format: 'initiative',
+        title,
+        initiativeId: id,
+      });
+    } catch (emitErr: any) {
+      logger.warn(
+        '[teresa] generate_initiative onDeliverable emit failed (ignored):',
+        emitErr?.message || emitErr
+      );
+    }
+
     const result = {
       ok: true,
       id,
@@ -274,7 +301,7 @@ export async function generateInitiative(
       filledCards: 0,
       message:
         `Created a draft initiative "${title}" and started filling its sections with AI ` +
-        `in the background — open it from Initiatives in a moment to review.`,
+        `in the background — I'm opening it in Initiatives now.`,
     };
     // Memoize on the turn context so any retry in this turn returns this exact
     // result instead of creating a duplicate (see TURN IDEMPOTENCY above).

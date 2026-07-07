@@ -199,6 +199,66 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
       message: z.string(),
     }),
   },
+  // ── Teresa routing-N (naprawa-rN-routing) — create real N-objects, not docs ──
+  // READ/auto (mirror generate_initiative): a personal task / decision is a
+  // low-risk reversible entity (same one /task & /decision slash commands persist).
+  // Without these the chat pipeline only had generate_deliverable + generate_
+  // initiative, so "stwórz zadanie/decyzję" fell back to a DOCUMENT. Both handlers
+  // self-gate on ENABLE_TERESA_RECORD_CREATE and emit a deliverable event so the
+  // FE navigates to My Work → Tasks / Decisions.
+  create_task: {
+    name: 'create_task',
+    description:
+      'Create a real TASK object (an actionable to-do that lands in My Work → Tasks) from the user request. ' +
+      'Use this WHENEVER the user asks to create/add/make a task, action item, to-do or "zadanie" — e.g. "stwórz zadanie: przygotuj listę…", "dodaj zadanie", "create a task to…". ' +
+      'This creates a real Task RECORD, NOT a document about a task. DO NOT use generate_deliverable for a task request — a task is an entity, and phrasing like "przygotuj listę" inside the task title does NOT make it a document. ' +
+      'After it returns ok:true, confirm in one sentence. Do NOT claim you created a task unless this tool returned ok:true.',
+    type: TOOL_TYPE.READ,
+    parameters: z.object({
+      title: z
+        .string()
+        .describe('Short, imperative task title (what to do). Use the user language.'),
+      description: z
+        .string()
+        .optional()
+        .describe('Optional details / acceptance notes for the task.'),
+      priority: z
+        .enum(['low', 'medium', 'high'])
+        .optional()
+        .describe('Task priority; defaults to medium.'),
+      due_date: z.string().optional().describe('Optional ISO due date (YYYY-MM-DD).'),
+    }),
+    returns: z.object({
+      ok: z.boolean(),
+      id: z.string().optional(),
+      title: z.string().optional(),
+      message: z.string(),
+    }),
+  },
+  create_decision: {
+    name: 'create_decision',
+    description:
+      'Create a real DECISION object (a decision record that lands in My Work → Decisions) from the user request. ' +
+      'Use this WHENEVER the user asks to create/log/track/record a decision or "decyzję" — e.g. "stwórz decyzję…", "zapisz decyzję o…", "log a decision to…". ' +
+      'This creates a real Decision RECORD, NOT a document about a decision, and you should NOT ask the user for extra data first — create it with the title (and any context they gave) and let them refine it in the module. DO NOT use generate_deliverable for a decision request. ' +
+      'After it returns ok:true, confirm in one sentence. Do NOT claim you created a decision unless this tool returned ok:true.',
+    type: TOOL_TYPE.READ,
+    parameters: z.object({
+      title: z
+        .string()
+        .describe('The decision to be made / recorded. Use the user language.'),
+      description: z
+        .string()
+        .optional()
+        .describe('Optional context, options or rationale for the decision.'),
+    }),
+    returns: z.object({
+      ok: z.boolean(),
+      id: z.string().optional(),
+      title: z.string().optional(),
+      message: z.string(),
+    }),
+  },
   // ── Teresa org-content retrieval (ff_teresaRetrieval / ENABLE_TERESA_RETRIEVAL) ──
   search_org_notes: {
     name: 'search_org_notes',
