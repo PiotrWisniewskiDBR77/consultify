@@ -1,5 +1,6 @@
 import type { ContextPack } from './contextPackBuilder.js';
 import type { SourceArtifact } from './presentationGeneratorService.js';
+import { isTemplateInventoryLeak } from './deliverableContentGuard.js';
 
 export interface TransformationReadDeckPack {
   participants: string[];
@@ -35,6 +36,8 @@ export function buildTransformationReadDeckPack(params: {
   const isPl = language === 'pl';
   const sourceNames = sources.map((source) => source.label || source.type).filter(Boolean);
   const insights = [...stringList(artifactData._keyFindings), ...stringList(contextPack.key_points)]
+    // BUG C guardrail: never surface template-inventory system context as insight content.
+    .filter((point) => !isTemplateInventoryLeak(point))
     .slice(0, 12)
     .map((point, index) => ({
       title: isPl ? `Wniosek ${index + 1}` : `Insight ${index + 1}`,

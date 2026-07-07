@@ -15,6 +15,10 @@ import {
   getContextPackSnapshot,
   saveContextPackSnapshot,
 } from './contextPackBuilder.js';
+import {
+  isTemplateInventoryLeak,
+  contentLeaksTemplateInventory,
+} from './deliverableContentGuard.js';
 import { generateNarrative } from './narrativeEngine/index.js';
 import type { NarrativeEngineInput } from './narrativeEngine/types.js';
 import { recordDeckGeneration } from './organizationStyleProfileService.js';
@@ -1275,9 +1279,13 @@ export async function generateDeck(
     );
 
     let artifactData = await loadArtifactData(sourceArtifacts, organizationId);
-    // Enrich artifact data with ContextPack extracted data
-    if (contextPack.key_points.length > 0 && !artifactData._keyFindings) {
-      artifactData._keyFindings = contextPack.key_points.slice(0, 5);
+    // Enrich artifact data with ContextPack extracted data.
+    // BUG C guardrail: strip any layout/template-inventory strings that may have leaked into
+    // key_points (from older snapshots or other paths) so template names can never become
+    // slide content. Template inventory now lives in metadata.template_inventory.
+    const contentKeyPoints = contextPack.key_points.filter((kp) => !isTemplateInventoryLeak(kp));
+    if (contentKeyPoints.length > 0 && !artifactData._keyFindings) {
+      artifactData._keyFindings = contentKeyPoints.slice(0, 5);
     }
     if (contextPack.data_points.length > 0 && !artifactData._kpis) {
       artifactData._kpis = contextPack.data_points.slice(0, 4).map((dp) => ({

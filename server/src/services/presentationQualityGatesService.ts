@@ -14,9 +14,10 @@
  *  - Gate 10: Text density per presentation mode
  */
 
-import { get as dbGet } from '../utils/DbPromise.js';
+import { get as dbGet, all as dbAll } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { normalizeDeckDocument } from './presentationDeckDocumentService.js';
+import { contentLeaksTemplateInventory } from './deliverableContentGuard.js';
 
 export type DeckGateSeverity = 'error' | 'warning' | 'info';
 export type DeckGateCategory = 'structure' | 'content' | 'brand' | 'traceability' | 'quality';
@@ -137,6 +138,62 @@ function inferFreshnessDays(ref: any): number | null {
       return Math.floor((Date.now() - capturedAt) / (24 * 60 * 60 * 1000));
   }
   return null;
+}
+
+/**
+ * Load the org's deliverable-template display names so the validator can detect a deck
+ * that pasted the template catalogue verbatim as content (BUG C). Best-effort: on any
+ * failure returns [] and the leak gate falls back to structural markers only.
+ */
+async function loadOrgTemplateNames(organizationId: string): Promise<string[]> {
+  try {
+    const rows = await dbAll<{ origin_summary_json: string | null; output_type: string }>(
+      `SELECT output_type, origin_summary_json FROM v8_output_artifacts
+       WHERE organization_id = ? AND artifact_family = 'template'
+       ORDER BY last_transition_at DESC LIMIT 40`,
+      [organizationId],
+      { fallback: true }
+    );
+    if (!rows || rows.length === 0) return [];
+    const names: string[] = [];
+    for (const r of rows) {
+      let summary: any = null;
+      try {
+        summary = r.origin_summary_json ? JSON.parse(r.origin_summary_json) : null;
+      } catch {
+        /* ignore */
+      }
+      const tpl = summary?.template;
+      const title = tpl?.metadata?.resolvedTitle || tpl?.description || r.output_type;
+      if (title) names.push(String(title));
+    }
+    return names;
+  } catch {
+    return [];
+  }
+}
+
+/** Decision intents that MUST carry substantive content when present in a deck. */
+const REQUIRED_DECISION_CONTENT_INTENTS = new Set([
+  'recommendation_portfolio',
+  'recommendation_single',
+  'risk_management',
+  'roadmap',
+  'next_steps',
+]);
+
+function cardAggregateText(card: DeckCard): string {
+  return [
+    String(card.title || ''),
+    String(card.key_message || ''),
+    ...(card.blocks || []).map((block) => {
+      if (typeof block.content === 'string') return block.content;
+      if (block.content && typeof block.content.text === 'string') return block.content.text;
+      return JSON.stringify(block.content || {});
+    }),
+  ]
+    .filter(Boolean)
+    .join(' ');
 }
 
 export async function checkDeckQualityGates(
@@ -394,6 +451,70 @@ export async function checkDeckQualityGates(
       priority: 'P2',
       message: `${thesisMissingCards.length} slide(s) have weak thesis/key message.`,
       cardIndex: thesisMissingCards[0],
+      category: 'content',
+    });
+  }
+
+  // Gate 6c: Template-inventory leak (P0) — BUG C.
+  // A slide that contains the template catalogue ("Available templates (20): ...") or
+  // multiple template names pasted as content is a hard FAIL, not "clean". This is the
+  // exact failure the adversarial judge caught (score 6/100) that QA marked clean.
+  const templateNames = await loadOrgTemplateNames(organizationId);
+  const leakCards: number[] = [];
+  cards.forEach((card, index) => {
+    if (contentLeaksTemplateInventory(cardAggregateText(card), templateNames)) {
+      leakCards.push(index);
+    }
+  });
+  if (leakCards.length > 0) {
+    pushGate({
+      id: 'qg-template-inventory-leak',
+      gateType: 'TEMPLATE_INVENTORY_LEAK',
+      severity: 'error',
+      priority: 'P0',
+      message: `Template/layout inventory leaked into slide content on ${leakCards.length} slide(s). Template names must never appear as findings/messages.`,
+      cardIndex: leakCards[0],
+      category: 'content',
+    });
+  }
+
+  // Gate 6d: Empty decision sections (P1) — BUG C.
+  // The judge's deck had recommendations=[], risks=[], roadmap=[] yet passed. If a deck
+  // has decision-section slides but their content is empty, that is a FAIL. We also flag a
+  // deck that has NO recommendation/next-steps slide at all when it has enough content cards.
+  const contentCards = cards.filter((c) => c.intent !== 'cover' && c.intent !== 'section_divider');
+  const emptyDecisionCards: number[] = [];
+  let hasAnyDecisionSection = false;
+  cards.forEach((card, index) => {
+    if (!REQUIRED_DECISION_CONTENT_INTENTS.has(String(card.intent || ''))) return;
+    hasAnyDecisionSection = true;
+    const text = cardAggregateText(card).replace(/[{}\[\]"',:]/g, ' ').trim();
+    // Strip the title/key_message so we measure BODY substance, not just a heading.
+    const body = text
+      .replace(String(card.title || ''), '')
+      .replace(String(card.key_message || ''), '')
+      .trim();
+    if (body.length < 15) emptyDecisionCards.push(index);
+  });
+  if (emptyDecisionCards.length > 0) {
+    pushGate({
+      id: 'qg-empty-decision-sections',
+      gateType: 'EMPTY_DECISION_SECTIONS',
+      severity: 'error',
+      priority: 'P1',
+      message: `${emptyDecisionCards.length} decision slide(s) (recommendations/risks/roadmap/next steps) have empty content.`,
+      cardIndex: emptyDecisionCards[0],
+      category: 'content',
+    });
+  }
+  if (!hasAnyDecisionSection && contentCards.length >= 4) {
+    pushGate({
+      id: 'qg-no-decision-sections',
+      gateType: 'NO_DECISION_SECTIONS',
+      severity: 'warning',
+      priority: 'P2',
+      message:
+        'Deck has no recommendation/next-steps/roadmap slide. A decision deck should end with a call to action.',
       category: 'content',
     });
   }

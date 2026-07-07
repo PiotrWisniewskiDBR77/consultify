@@ -48,6 +48,13 @@ export interface ContextPack {
     extraction_warnings: string[];
     source_coverage_map?: Record<string, { extracted: boolean; warnings: string[] }>;
     data_gap_register?: Array<{ artifact_id: string; artifact_type: string; issue: string }>;
+    /**
+     * Layout/template inventory available to the organization. This is SYSTEM context
+     * used ONLY for choosing a layout/template — it is NEVER slide/document content.
+     * Kept OUT of `key_points` (which generators treat as company findings) so template
+     * names can never leak into deck/doc/sheet content. See BUG C fix.
+     */
+    template_inventory?: { active: string[]; deprecated: string[] };
   };
 }
 
@@ -77,6 +84,7 @@ export async function buildContextPack(
       extraction_warnings: [],
       source_coverage_map: {},
       data_gap_register: [],
+      template_inventory: { active: [], deprecated: [] },
     },
   };
 
@@ -194,13 +202,13 @@ async function injectTemplateInventory(pack: ContextPack, organizationId: string
     }
   }
 
-  if (active.length > 0) {
-    pack.key_points.push(
-      `Available templates (${active.length}): ${active.slice(0, 5).join(', ')}${active.length > 5 ? '...' : ''}`
-    );
-  }
-  if (deprecated.length > 0) {
-    pack.key_points.push(`Deprecated templates: ${deprecated.join(', ')}`);
+  // BUG C fix: template inventory is LAYOUT/SYSTEM context, not content. It must NEVER
+  // land in `key_points` (which presentationGeneratorService/transformationReadDeckPackService
+  // copy into `_keyFindings` = slide content). Store it in a dedicated metadata field so
+  // the layout picker can read it while generators can never surface template names as content.
+  if (pack.metadata.template_inventory) {
+    pack.metadata.template_inventory.active = active;
+    pack.metadata.template_inventory.deprecated = deprecated;
   }
 }
 

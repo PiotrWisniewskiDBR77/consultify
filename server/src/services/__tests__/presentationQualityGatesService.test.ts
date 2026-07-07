@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const dbGet = vi.fn();
+const dbAll = vi.fn();
 const normalizeDeckDocument = vi.fn();
 
 vi.mock('../../utils/DbPromise.js', () => ({
   get: (...args: any[]) => dbGet(...args),
+  all: (...args: any[]) => dbAll(...args),
 }));
 
 vi.mock('../presentationDeckDocumentService.js', () => ({
@@ -16,6 +18,8 @@ import { checkDeckQualityGates } from '../presentationQualityGatesService.js';
 describe('presentationQualityGatesService', () => {
   beforeEach(() => {
     dbGet.mockReset();
+    dbAll.mockReset();
+    dbAll.mockResolvedValue([]);
     normalizeDeckDocument.mockReset();
   });
 
@@ -111,5 +115,77 @@ describe('presentationQualityGatesService', () => {
     expect(report.scorecard.p0).toBe(0);
     expect(report.scorecard.p1).toBe(0);
     expect(report.scorecard.p2).toBeGreaterThan(0);
+  });
+
+  // BUG C: a slide that pasted the template catalogue as content must HARD FAIL (P0),
+  // never "clean". This is the exact regression the adversarial judge caught (score 6/100).
+  it('FAILS (P0) when template inventory leaked into slide content', async () => {
+    dbGet.mockImplementation(async (query: string) => {
+      if (query.includes('presentation_decks'))
+        return { id: 'deck-3', presentation_mode: 'briefing' };
+      if (query.includes('brand_kits')) return { id: 'brand-1' };
+      return null;
+    });
+    normalizeDeckDocument.mockReturnValue({
+      presentation_mode: 'briefing',
+      cards: [
+        { intent: 'cover', title: 'Cover', blocks: [{ content: { text: 'Report' } }] },
+        {
+          intent: 'single_insight',
+          title: 'Key findings',
+          key_message: 'Findings',
+          source_refs: [{ artifact_id: 'a1', confidence: 0.9 }],
+          blocks: [
+            {
+              content: {
+                text: 'Available templates (20): Okresowy raport postępu, Pitch inwestorski, Analiza rynku',
+              },
+            },
+          ],
+        },
+      ],
+      meta: { confidentiality: 'internal' },
+    });
+
+    const report = await checkDeckQualityGates('org-1', 'deck-3');
+
+    expect(report.canExport).toBe(false);
+    expect(
+      report.gates.some(
+        (gate) => gate.gateType === 'TEMPLATE_INVENTORY_LEAK' && gate.priority === 'P0'
+      )
+    ).toBe(true);
+  });
+
+  // BUG C: decision slides (recommendations/risks/roadmap) with empty content must FAIL (P1).
+  it('FAILS (P1) when decision sections are present but empty', async () => {
+    dbGet.mockImplementation(async (query: string) => {
+      if (query.includes('presentation_decks'))
+        return { id: 'deck-4', presentation_mode: 'briefing' };
+      if (query.includes('brand_kits')) return { id: 'brand-1' };
+      return null;
+    });
+    normalizeDeckDocument.mockReturnValue({
+      presentation_mode: 'briefing',
+      cards: [
+        { intent: 'cover', title: 'Cover', blocks: [{ content: { text: 'Report' } }] },
+        {
+          intent: 'recommendation_portfolio',
+          title: 'Recommendations',
+          key_message: 'Recommendations',
+          source_refs: [{ artifact_id: 'a1', confidence: 0.9 }],
+          blocks: [{ content: { text: '' } }],
+        },
+      ],
+      meta: { confidentiality: 'internal' },
+    });
+
+    const report = await checkDeckQualityGates('org-1', 'deck-4');
+
+    expect(
+      report.gates.some(
+        (gate) => gate.gateType === 'EMPTY_DECISION_SECTIONS' && gate.priority === 'P1'
+      )
+    ).toBe(true);
   });
 });
