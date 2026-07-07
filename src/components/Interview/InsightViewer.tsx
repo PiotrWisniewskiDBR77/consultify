@@ -76,6 +76,7 @@ import {
 } from '@/components/shared/NModeLayout';
 import type { AIConsultantAction } from '@/components/shared/NModeLayout/AIConsultantPanel';
 import { AIConsultantPanel } from '@/components/shared/NModeLayout/AIConsultantPanel';
+import { ReadEditToggle } from '@/components/MyWork/shared/ReadEditToggle';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 import {
   ToolbarAISolidButton,
@@ -8191,20 +8192,24 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 )}
               </div>
 
-              {/* Slot 2 — New : contextual add in the active section */}
-              <ToolbarSubtleButton
-                icon={<Plus size={14} />}
-                disabled={!canAddInSection}
-                title={
-                  canAddInSection
-                    ? undefined
-                    : isPolish
-                      ? 'Ta sekcja nie obsługuje ręcznego dodawania'
-                      : 'This section has no manual add action'
-                }
-              >
-                {isPolish ? 'Nowy' : 'New'}
-              </ToolbarSubtleButton>
+              {/* Slot 2 — New : contextual add in the active section.
+                  Read = ukryte: ręczne dodawanie treści to edycja, Podgląd ma
+                  być czysty do pokazania klientowi. */}
+              {!readMode && (
+                <ToolbarSubtleButton
+                  icon={<Plus size={14} />}
+                  disabled={!canAddInSection}
+                  title={
+                    canAddInSection
+                      ? undefined
+                      : isPolish
+                        ? 'Ta sekcja nie obsługuje ręcznego dodawania'
+                        : 'This section has no manual add action'
+                  }
+                >
+                  {isPolish ? 'Nowy' : 'New'}
+                </ToolbarSubtleButton>
+              )}
 
               {/* Slot 3 — Export ▾ : canon destinations only */}
               <div className="relative" ref={exportMenuRef}>
@@ -8329,65 +8334,47 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               )}
 
               {/* Slot 5 — section-level AI (teal-subtle split). Wired to the same
-                  per-section AI handler used by each section's `aiAction`. */}
-              <ToolbarAISplitButton
-                icon={<Sparkles size={14} />}
-                disabled={isRegenerating}
-                onClick={handleRegenerate}
-                title={
-                  isPolish
-                    ? `AI dla sekcji: ${activeSectionLabel}`
-                    : `AI for section: ${activeSectionLabel}`
-                }
-              >
-                {isRegenerating && <Loader2 size={13} className="animate-spin" />}
-                {isPolish ? 'AI sekcji' : 'AI section'}
-              </ToolbarAISplitButton>
+                  per-section AI handler used by each section's `aiAction`.
+                  Read = ukryte: Podgląd „do pokazania klientowi" bez afordancji
+                  generowania/regeneracji AI. */}
+              {!readMode && (
+                <ToolbarAISplitButton
+                  icon={<Sparkles size={14} />}
+                  disabled={isRegenerating}
+                  onClick={handleRegenerate}
+                  title={
+                    isPolish
+                      ? `AI dla sekcji: ${activeSectionLabel}`
+                      : `AI for section: ${activeSectionLabel}`
+                  }
+                >
+                  {isRegenerating && <Loader2 size={13} className="animate-spin" />}
+                  {isPolish ? 'AI sekcji' : 'AI section'}
+                </ToolbarAISplitButton>
+              )}
 
               {/* ── spacer ─────────────────────────────────────────────────── */}
               <div className="flex-1 min-w-0" />
 
               {/* ── RIGHT ZONE: AI + modes ─────────────────────────────────── */}
-              {/* Tryb Read/Edit (§5A) — pstryczek „do pokazania klientowi".
-                  Read = pasek akcji kart znika. Neutralny; aktywny = c-focus. */}
-              <div className="inline-flex items-center gap-0.5 rounded-lg bg-c-surface-raised/60 p-0.5 mr-1">
-                <button
-                  type="button"
-                  onClick={() => setReadMode(false)}
-                  aria-pressed={!readMode}
-                  title={isPolish ? 'Tryb edycji' : 'Edit mode'}
-                  className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-                    !readMode
-                      ? 'bg-c-surface text-c-focus shadow-sm'
-                      : 'text-c-text-secondary hover:text-c-text'
-                  }`}
-                >
-                  <Pencil size={13} />
-                  <span>{isPolish ? 'Edycja' : 'Edit'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setReadMode(true)}
-                  aria-pressed={readMode}
-                  title={isPolish ? 'Tryb do pokazania klientowi' : 'Read / client view'}
-                  className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-                    readMode
-                      ? 'bg-c-surface text-c-focus shadow-sm'
-                      : 'text-c-text-secondary hover:text-c-text'
-                  }`}
-                >
-                  <Eye size={13} />
-                  <span>{isPolish ? 'Podgląd' : 'Read'}</span>
-                </button>
+              {/* Tryb Read/Edit (§5A) — wspólny komponent „do pokazania
+                  klientowi" (ujednolicony z Task/Decision). Read = pasek akcji
+                  kart znika + afordancje AI/edycji gasną. Aktywny = c-focus. */}
+              <div className="mr-1">
+                <ReadEditToggle readMode={readMode} onChange={setReadMode} />
               </div>
 
-              {/* Slot 6 — Fork · Slot 7 — Present */}
-              <ToolbarIconButton
-                icon={<GitFork size={14} />}
-                tooltip={isPolish ? 'Forkuj' : 'Fork'}
-                disabled={isForking}
-                onClick={handleFork}
-              />
+              {/* Slot 6 — Fork · Slot 7 — Present.
+                  Read = Fork ukryte (tworzy edytowalną kopię = afordancja edycji);
+                  Prezentuj zostaje (pokazanie klientowi jest częścią trybu Read). */}
+              {!readMode && (
+                <ToolbarIconButton
+                  icon={<GitFork size={14} />}
+                  tooltip={isPolish ? 'Forkuj' : 'Fork'}
+                  disabled={isForking}
+                  onClick={handleFork}
+                />
+              )}
               <ToolbarIconButton
                 icon={<Monitor size={14} />}
                 tooltip={isPolish ? 'Prezentuj' : 'Present'}
@@ -8396,20 +8383,25 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               {/* Slot 9 — artifact-level AI Consultant (solid teal). Now TOGGLES
                   the right-side AIConsultantPanel (POZIOM 3) instead of opening a
-                  one-shot dropdown. Stays teal/solid. */}
-              <div className="h-4 w-px bg-slate-200 dark:bg-navy-700 mx-1 shrink-0" />
-              <ToolbarAISolidButton
-                icon={<Sparkles size={14} />}
-                onClick={() => {
-                  setAiPanelOpen((v) => !v);
-                  setExportMenuOpen(false);
-                  setSectionsMenuOpen(false);
-                  setAiMenuOpen(false);
-                }}
-                title={isPolish ? 'AI Konsultant' : 'AI Consultant'}
-              >
-                {isPolish ? 'AI Konsultant' : 'AI Consultant'}
-              </ToolbarAISolidButton>
+                  one-shot dropdown. Stays teal/solid.
+                  Read = ukryte: Podgląd „do pokazania klientowi" bez afordancji AI. */}
+              {!readMode && (
+                <>
+                  <div className="h-4 w-px bg-slate-200 dark:bg-navy-700 mx-1 shrink-0" />
+                  <ToolbarAISolidButton
+                    icon={<Sparkles size={14} />}
+                    onClick={() => {
+                      setAiPanelOpen((v) => !v);
+                      setExportMenuOpen(false);
+                      setSectionsMenuOpen(false);
+                      setAiMenuOpen(false);
+                    }}
+                    title={isPolish ? 'AI Konsultant' : 'AI Consultant'}
+                  >
+                    {isPolish ? 'AI Konsultant' : 'AI Consultant'}
+                  </ToolbarAISolidButton>
+                </>
+              )}
             </div>
           );
         }}
