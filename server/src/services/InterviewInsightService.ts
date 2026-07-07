@@ -428,7 +428,7 @@ const BCG_P10_PROMPT_DOCTRINE = `BCG-GRADE DOCTRINE (hard rules — a deliverabl
 
 P10 FINDING CONTRACT (every finding — theme / issue / opportunity / signal):
 - Each finding MUST carry: a confidence_level (one of: ${P10_CONFIDENCE_LEVELS.join(' | ')}), limits[] (what would break it), and evidence_refs[] (answer_ids).
-- "high" confidence requires triangulation: 3+ evidence pointers from different sources/segments with no contradictions. Otherwise cap at "medium" or lower.
+- "high" confidence requires triangulation: 2+ evidence pointers from different sources/segments with no contradictions. Otherwise cap at "medium" or lower.
 - No overclaim: ${P10_NO_OVERCLAIM_RULES.join(' ')}
 - Prefer "A correlates with B in this context" over "A causes B" unless confidence is high with explicit evidence.`;
 
