@@ -2352,13 +2352,15 @@ Return ONLY the final comment text.`;
                     <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       {isPolish ? 'Opis zadania' : 'Task description'}
                     </label>
-                    <AIFieldEnhancer
-                      fieldKey="task-description"
-                      sectionLabel={isPolish ? 'Opis zadania' : 'Task Description'}
-                      currentValue={description}
-                      onApply={setDescription}
-                      artifactContext={{ title, status, priority, type: 'task' }}
-                    />
+                    {!readMode && (
+                      <AIFieldEnhancer
+                        fieldKey="task-description"
+                        sectionLabel={isPolish ? 'Opis zadania' : 'Task Description'}
+                        currentValue={description}
+                        onApply={setDescription}
+                        artifactContext={{ title, status, priority, type: 'task' }}
+                      />
+                    )}
                   </div>
                   <textarea
                     value={description}
@@ -2374,7 +2376,8 @@ Return ONLY the final comment text.`;
                   />
                 </div>
 
-                {/* 2.1) Relevant ideas (T009) */}
+                {/* 2.1) Relevant ideas (T009) — hidden in Read (do pokazania klientowi) */}
+                {!readMode && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
@@ -2467,8 +2470,10 @@ Return ONLY the final comment text.`;
                     </div>
                   )}
                 </div>
+                )}
 
-                {/* 2.2) Relevant notes (T011) */}
+                {/* 2.2) Relevant notes (T011) — hidden in Read (do pokazania klientowi) */}
+                {!readMode && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
@@ -2564,6 +2569,7 @@ Return ONLY the final comment text.`;
                     </div>
                   )}
                 </div>
+                )}
 
                 {/* 3) Expected Outcome */}
                 <div className="space-y-2">
@@ -2571,13 +2577,15 @@ Return ONLY the final comment text.`;
                     <label className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       {isPolish ? 'Oczekiwany rezultat' : 'Expected outcome'}
                     </label>
-                    <AIFieldEnhancer
-                      fieldKey="task-expected-outcome"
-                      sectionLabel={isPolish ? 'Oczekiwany rezultat' : 'Expected Outcome'}
-                      currentValue={expectedOutcome}
-                      onApply={setExpectedOutcome}
-                      artifactContext={{ title, status, priority, type: 'task' }}
-                    />
+                    {!readMode && (
+                      <AIFieldEnhancer
+                        fieldKey="task-expected-outcome"
+                        sectionLabel={isPolish ? 'Oczekiwany rezultat' : 'Expected Outcome'}
+                        currentValue={expectedOutcome}
+                        onApply={setExpectedOutcome}
+                        artifactContext={{ title, status, priority, type: 'task' }}
+                      />
+                    )}
                   </div>
                   <textarea
                     value={expectedOutcome}
@@ -2609,13 +2617,15 @@ Return ONLY the final comment text.`;
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
                   {isPolish ? 'Lista kontrolna' : 'Checklist'}
                 </h2>
-                <button
-                  onClick={addChecklistItem}
-                  className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
-                >
-                  <Plus size={13} />
-                  {isPolish ? 'Dodaj element' : 'Add item'}
-                </button>
+                {!readMode && (
+                  <button
+                    onClick={addChecklistItem}
+                    className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+                  >
+                    <Plus size={13} />
+                    {isPolish ? 'Dodaj element' : 'Add item'}
+                  </button>
+                )}
               </div>
 
               {/* Progress counter */}
@@ -2655,7 +2665,10 @@ Return ONLY the final comment text.`;
                       >
                         {/* Checkbox */}
                         <button
-                          onClick={() => updateChecklistItem(item.id, { completed: !done })}
+                          onClick={() =>
+                            !readMode && updateChecklistItem(item.id, { completed: !done })
+                          }
+                          disabled={readMode}
                           className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition duration-200 ${
                             done
                               ? 'bg-emerald-500 border-emerald-500 text-white'
@@ -2688,7 +2701,10 @@ Return ONLY the final comment text.`;
                         <input
                           type="text"
                           value={item.text}
-                          onChange={(e) => updateChecklistItem(item.id, { text: e.target.value })}
+                          onChange={(e) =>
+                            !readMode && updateChecklistItem(item.id, { text: e.target.value })
+                          }
+                          readOnly={readMode}
                           placeholder={isPolish ? 'Wprowadź element...' : 'Enter item...'}
                           className={`flex-1 bg-transparent text-sm leading-snug focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 transition-colors ${
                             done
@@ -2698,12 +2714,14 @@ Return ONLY the final comment text.`;
                         />
 
                         {/* Delete */}
-                        <button
-                          onClick={() => removeChecklistItem(item.id)}
-                          className="mt-0.5 opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-danger-50 dark:hover:bg-danger-500/20 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition"
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                        {!readMode && (
+                          <button
+                            onClick={() => removeChecklistItem(item.id)}
+                            className="mt-0.5 opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-danger-50 dark:hover:bg-danger-500/20 text-slate-500 dark:text-slate-400 hover:text-danger-500 transition"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
                       </div>
                     );
                   })}
@@ -2711,7 +2729,7 @@ Return ONLY the final comment text.`;
               )}
 
               {/* Quick-add row at the bottom */}
-              {totalCount > 0 && (
+              {totalCount > 0 && !readMode && (
                 <button
                   onClick={addChecklistItem}
                   className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-emerald-500 dark:hover:text-emerald-400 py-1.5 px-3 rounded-lg hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-colors"
@@ -2771,13 +2789,15 @@ Return ONLY the final comment text.`;
                 <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
                   {isPolish ? 'Pomysły realizacji' : 'Implementation Ideas'}
                 </h2>
-                <button
-                  onClick={addIdea}
-                  className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
-                >
-                  <Plus size={13} />
-                  {isPolish ? 'Dodaj pomysł' : 'Add idea'}
-                </button>
+                {!readMode && (
+                  <button
+                    onClick={addIdea}
+                    className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+                  >
+                    <Plus size={13} />
+                    {isPolish ? 'Dodaj pomysł' : 'Add idea'}
+                  </button>
+                )}
               </div>
 
               {/* Ideas list */}
@@ -2822,6 +2842,7 @@ Return ONLY the final comment text.`;
                               <div className="flex items-center gap-1.5 pt-1">
                                 <button
                                   onClick={() =>
+                                    !readMode &&
                                     setImplementationIdeas(
                                       implementationIdeas.map((i) =>
                                         i.id === idea.id
@@ -2830,7 +2851,8 @@ Return ONLY the final comment text.`;
                                       )
                                     )
                                   }
-                                  className={`p-1 rounded-md transition-colors ${
+                                  disabled={readMode}
+                                  className={`p-1 rounded-md transition-colors disabled:cursor-default ${
                                     idea.votedByMe
                                       ? 'text-emerald-500 dark:text-emerald-400 bg-emerald-500/10'
                                       : 'text-slate-500 dark:text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-emerald-500/10'
@@ -2844,6 +2866,7 @@ Return ONLY the final comment text.`;
                                 </span>
                                 <button
                                   onClick={() =>
+                                    !readMode &&
                                     setImplementationIdeas(
                                       implementationIdeas.map((i) =>
                                         i.id === idea.id
@@ -2856,7 +2879,8 @@ Return ONLY the final comment text.`;
                                       )
                                     )
                                   }
-                                  className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-danger-500 dark:hover:text-danger-400 hover:bg-danger-500/10 transition-colors"
+                                  disabled={readMode}
+                                  className="p-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-danger-500 dark:hover:text-danger-400 hover:bg-danger-500/10 transition-colors disabled:cursor-default"
                                   title={isPolish ? 'Głosuj przeciw' : 'Vote down'}
                                 >
                                   <ThumbsDown size={14} />
@@ -2906,12 +2930,14 @@ Return ONLY the final comment text.`;
                                   type="text"
                                   value={idea.title}
                                   onChange={(e) =>
+                                    !readMode &&
                                     setImplementationIdeas(
                                       implementationIdeas.map((i) =>
                                         i.id === idea.id ? { ...i, title: e.target.value } : i
                                       )
                                     )
                                   }
+                                  readOnly={readMode}
                                   className="w-full text-sm font-medium bg-transparent text-slate-800 dark:text-slate-200 focus:outline-none"
                                   placeholder={isPolish ? 'Nazwa podejścia...' : 'Approach name...'}
                                 />
@@ -2920,12 +2946,14 @@ Return ONLY the final comment text.`;
                                 <textarea
                                   value={idea.description}
                                   onChange={(e) =>
+                                    !readMode &&
                                     setImplementationIdeas(
                                       implementationIdeas.map((i) =>
                                         i.id === idea.id ? { ...i, description: e.target.value } : i
                                       )
                                     )
                                   }
+                                  readOnly={readMode}
                                   rows={3}
                                   className="w-full mt-1 px-0 py-1 bg-transparent text-xs leading-relaxed text-slate-600 dark:text-slate-400 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 resize-y min-h-[48px]"
                                   placeholder={
@@ -2937,6 +2965,7 @@ Return ONLY the final comment text.`;
                               </div>
 
                               {/* Actions */}
+                              {!readMode && (
                               <div className="flex items-center gap-1 shrink-0">
                                 <select
                                   value={idea.status}
@@ -2993,6 +3022,7 @@ Return ONLY the final comment text.`;
                                   artifactContext={{ title, status, priority, type: 'task' }}
                                 />
                               </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -3029,6 +3059,7 @@ Return ONLY the final comment text.`;
               onRemoveRisk={removeRisk}
               onAIGenerate={generateRisksAI}
               isGeneratingAI={isGeneratingRisks}
+              locked={readMode}
               artifactType="task"
               artifactContext={{ title, status, priority, type: 'task' }}
               fieldKeyPrefix="t"
@@ -3050,6 +3081,7 @@ Return ONLY the final comment text.`;
                     status: item.status,
                     priority: item.priority,
                   }))}
+                readOnly={readMode}
                 showSampleDataWhenEmpty
               />
             </div>
@@ -3074,6 +3106,7 @@ Return ONLY the final comment text.`;
                 signedOff={signedOff}
                 signedOffAt={signedOffAt}
                 signedOffBy={signedOffBy}
+                readOnly={readMode}
                 availableUsers={users.map((u) => ({
                   id: u.id,
                   name: `${u.firstName} ${u.lastName}`,
@@ -3130,6 +3163,7 @@ Return ONLY the final comment text.`;
                         ? 'RACI (macierz odpowiedzialności)'
                         : 'RACI (responsibility matrix)'}
                     </h3>
+                    {!readMode && (
                     <button
                       onClick={() => {
                         const fallbackUser = users[0];
@@ -3156,6 +3190,7 @@ Return ONLY the final comment text.`;
                     >
                       + {isPolish ? 'Dodaj osobę' : 'Add person'}
                     </button>
+                    )}
                   </div>
                   <div className="overflow-auto flex-1">
                     <table /* §27-exempt: sub-tabela w widoku szczegolow, nie samodzielna lista */  className="w-full text-sm">
@@ -3205,6 +3240,7 @@ Return ONLY the final comment text.`;
                                 </div>
                               </td>
                               <td className="py-2 text-right">
+                                {!readMode && (
                                 <div className="inline-flex items-center gap-1">
                                   <button
                                     onClick={() => {
@@ -3228,6 +3264,7 @@ Return ONLY the final comment text.`;
                                     <Trash2 size={13} />
                                   </button>
                                 </div>
+                                )}
                               </td>
                             </tr>
                           ))
@@ -3243,6 +3280,7 @@ Return ONLY the final comment text.`;
                     <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
                       {isPolish ? 'Przypomnienia' : 'Reminders'}
                     </h3>
+                    {!readMode && (
                     <button
                       onClick={() => {
                         setEditingReminderId('__new__');
@@ -3262,6 +3300,7 @@ Return ONLY the final comment text.`;
                     >
                       + {isPolish ? 'Dodaj reminder' : 'Add reminder'}
                     </button>
+                    )}
                   </div>
                   <div className="overflow-auto flex-1">
                     <table className="w-full text-sm">
@@ -3327,6 +3366,7 @@ Return ONLY the final comment text.`;
                                 </div>
                               </td>
                               <td className="py-2 text-right">
+                                {!readMode && (
                                 <div className="inline-flex items-center gap-1">
                                   <button
                                     onClick={() => {
@@ -3350,6 +3390,7 @@ Return ONLY the final comment text.`;
                                     <Trash2 size={13} />
                                   </button>
                                 </div>
+                                )}
                               </td>
                             </tr>
                           ))
@@ -3365,6 +3406,7 @@ Return ONLY the final comment text.`;
                     <h3 className="text-base font-semibold text-slate-700 dark:text-slate-100">
                       {isPolish ? 'Eskalacja i zasady' : 'Escalation and rules'}
                     </h3>
+                    {!readMode && (
                     <button
                       onClick={() => {
                         setEscalationDraft(
@@ -3389,6 +3431,7 @@ Return ONLY the final comment text.`;
                     >
                       + {isPolish ? 'Dodaj eskalację' : 'Add escalation'}
                     </button>
+                    )}
                   </div>
                   <div className="overflow-auto flex-1">
                     <table className="w-full text-sm">
@@ -3470,6 +3513,7 @@ Return ONLY the final comment text.`;
                                 </div>
                               </td>
                               <td className="py-2 text-right">
+                                {!readMode && (
                                 <div className="inline-flex items-center gap-1">
                                   <button
                                     onClick={() => {
@@ -3493,6 +3537,7 @@ Return ONLY the final comment text.`;
                                     <Trash2 size={13} />
                                   </button>
                                 </div>
+                                )}
                               </td>
                             </tr>
                           ))
@@ -3511,7 +3556,7 @@ Return ONLY the final comment text.`;
           component = (
             <CommentsCanvas
               comments={nModeComments}
-              locked={isDone}
+              locked={isDone || readMode}
               onDeleteComment={handleDeleteComment}
               dateFilter={nCommentDateFilter}
               onDateFilterChange={setNCommentDateFilter}
@@ -3538,7 +3583,7 @@ Return ONLY the final comment text.`;
           component = (
             <AttachmentsLinksCanvas
               attachments={attachments}
-              readOnly={isDone}
+              readOnly={isDone || readMode}
               onUploadAttachments={handleUploadAttachments}
               onDeleteAttachment={handleDeleteAttachment}
               onEditAttachment={(id, patch) => {
