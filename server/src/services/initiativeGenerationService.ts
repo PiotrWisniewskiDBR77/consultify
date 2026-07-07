@@ -194,8 +194,10 @@ REGUŁY BEZWZGLĘDNE — złamanie którejkolwiek = FAIL (każda dotyczy KAŻDEJ
 6. FALSYFIKOWALNOŚĆ: tezy w formie testowalnej ("Jeśli X, to Y (mierzalne), bo Z"), nie życzeniowej.
 7. UCZCIWA NIEPEWNOŚĆ: gdy brak danych — oznacz jako szacunek z założeniem (NIE "do ustalenia"). Niepewność wyrażasz przez jawne założenie i horyzont, nie przez pustą wartość. Spory/braki nazwane, nie wygładzone.
 8. ZERO FILLERA: bez ozdobników typu "w dzisiejszym dynamicznym świecie". Każde zdanie niesie informację.
+9. SPÓJNOŚĆ LICZB (jedna wartość na metrykę): dla KAŻDEJ metryki (CAC, ARR, przychód, wzrost %, liczba klientów, koszt, ROI, payback) użyj DOKŁADNIE JEDNEJ wartości LUB jednego przedziału w CAŁEJ karcie. Baseline metryki = jedna liczba. NIE podawaj sprzecznych wartości tej samej wielkości w różnych polach/akapitach (np. raz "62%", potem "62-124%", potem "3×" dla tego samego wzrostu; ani dwóch różnych CAC w jednym rekordzie). Jeśli używasz przedziału — ten SAM przedział wszędzie. Przelicz raz i trzymaj się jednej liczby.
+10. KOTWICE RYNKOWE TYLKO Z ŹRÓDŁEM (grounding): liczby rynkowe ZEWNĘTRZNE (TAM, wielkość rynku €/$, udziały rynkowe, benchmarki branżowe) podawaj TYLKO gdy możesz wskazać metodę wyliczenia LUB źródło. Inaczej oznacz jawnie jako "szacunek własny, do uźródłowienia" ALBO pomiń. ⛔ ZAKAZ FABRYKOWANIA ATRYBUCJI: nie pisz "według Gartnera", "wg IDC", "raport McKinsey podaje" ani nie podawaj konkretnych kwot rynkowych (np. "rynek €3,2 mld") bez pewności co do źródła. Zmyślona kotwica z fałszywym źródłem = FAIL.
 
-ANTY-WZORCE = AUTOMATYCZNY FAIL: ogólniki bez liczb; listy 1-elementowe tam gdzie wymagane ≥3; "TBD"/"do ustalenia"/"do określenia"/"do uzupełnienia" jako wartość celu/KPI/ROI (ZAWSZE zastąp szacunkiem z założeniem); przepisanie tytułu sekcji jako treści; placeholder udający treść.
+ANTY-WZORCE = AUTOMATYCZNY FAIL: ogólniki bez liczb; listy 1-elementowe tam gdzie wymagane ≥3; "TBD"/"do ustalenia"/"do określenia"/"do uzupełnienia" jako wartość celu/KPI/ROI (ZAWSZE zastąp szacunkiem z założeniem); przepisanie tytułu sekcji jako treści; placeholder udający treść; sprzeczne wartości tej samej metryki w jednej karcie; zmyślone źródło zewnętrzne ("według Gartnera" bez pewności); daty/terminy planów w PRZESZŁOŚCI.
 
 DOKTRYNA INICJATYWY (gdy dotyczy sekcji):
 - TEZA falsyfikowalna w formacie "Jeśli X, to Y (mierzalne) bo Z".
@@ -204,6 +206,7 @@ DOKTRYNA INICJATYWY (gdy dotyczy sekcji):
 - scope_out: MECE — przynajmniej jedna pozycja odwołuje się do innej inicjatywy ("→ N…").
 - kill_criteria: konkretny warunek STOP, min. 2.
 - Sizing/ROI: rząd wielkości + jawne założenie + ROI (krotność lub %); enabler → wartość pośrednia + proxy.
+  ROI POLICZONY: gdy podajesz przychód/oszczędność ORAZ koszt/nakład — MUSISZ jawnie policzyć i podać ROI z tych własnych liczb w formacie "ROI = [X]% (zysk netto ÷ nakład), payback [Y] mies., przy założeniu [Z]". NIE zostawiaj ROI pustego ani opisowego, skoro masz obie liczby. Budżet podaj jako JEDNĄ jawną kwotę z jednostką i skalą (np. "1,2 mln PLN"), nie "~400k" wtopione w prozę.
 
 Gdy proszą o JSON — zwróć WYŁĄCZNIE poprawny JSON (bez markdown, bez komentarza).
 Gdy proszą o prozę — answer-first, po polsku (chyba że kontekst jawnie żąda angielskiego).`;
@@ -224,8 +227,10 @@ ABSOLUTE RULES — breaking any = FAIL (apply to EVERY field):
 6. FALSIFIABILITY: theses in testable form ("If X, then Y (measurable), because Z"), not wishful.
 7. HONEST UNCERTAINTY: when data is missing, mark it as an estimate with an assumption (NOT "to be determined"). Express uncertainty via an explicit assumption + horizon, not an empty value. Disputes/gaps named, not smoothed.
 8. ZERO FILLER: no ornaments like "in today's dynamic world". Every sentence carries information.
+9. NUMBER CONSISTENCY (one value per metric): for EVERY metric (CAC, ARR, revenue, growth %, customer count, cost, ROI, payback) use EXACTLY ONE value OR one range across the WHOLE card. A metric baseline = one number. Do NOT give conflicting values of the same quantity in different fields/paragraphs (e.g. "62%" then "62-124%" then "3×" for the same growth; or two different CACs in one record). If you use a range — the SAME range everywhere. Compute once and stick to one number.
+10. MARKET ANCHORS ONLY WITH A SOURCE (grounding): EXTERNAL market numbers (TAM, market size €/$, market share, industry benchmarks) only when you can cite a computation method OR a source. Otherwise mark them explicitly as "own estimate, to be sourced" OR omit. ⛔ NO FABRICATED ATTRIBUTION: do not write "according to Gartner", "per IDC", "a McKinsey report states", nor cite specific market amounts (e.g. "€3.2B market") without certainty of the source. A fabricated anchor with a fake source = FAIL.
 
-ANTI-PATTERNS = AUTOMATIC FAIL: generalities without numbers; 1-item lists where ≥3 are required; "TBD"/"to be determined" as a goal/KPI/ROI value (always replace with an estimate-plus-assumption); restating the section title as content; filler posing as content.
+ANTI-PATTERNS = AUTOMATIC FAIL: generalities without numbers; 1-item lists where ≥3 are required; "TBD"/"to be determined" as a goal/KPI/ROI value (always replace with an estimate-plus-assumption); restating the section title as content; filler posing as content; conflicting values of the same metric in one card; a fabricated external source ("according to Gartner" without certainty); dates/plan deadlines in the PAST.
 
 INITIATIVE DOCTRINE (where the section applies):
 - Falsifiable HYPOTHESIS in the form "If X, then Y (measurable) because Z".
@@ -234,9 +239,25 @@ INITIATIVE DOCTRINE (where the section applies):
 - scope_out: MECE — at least one item references another initiative.
 - kill_criteria: a concrete STOP condition, min 2.
 - Sizing/ROI: order of magnitude + explicit assumption + ROI (multiple or %); enabler → indirect value + proxy.
+  COMPUTED ROI: when you state revenue/savings AND cost/investment — you MUST explicitly compute and give ROI from your own numbers as "ROI = [X]% (net gain ÷ investment), payback [Y] months, assuming [Z]". Do NOT leave ROI empty or purely narrative when you already have both numbers. Give the budget as ONE explicit amount with unit and scale (e.g. "1.2M PLN"), not "~400k" buried in prose.
 
 When JSON is requested — return ONLY valid JSON (no markdown, no commentary).
 When prose is requested — answer-first.`;
+
+/**
+ * DEFEKT SĘDZIEGO #2 — daty z przeszłości. Model recyklinguje szablony z przeszłymi
+ * terminami (np. "Q1 2025", "Q4 2024") w projekcie realizowanym w 2026+. Wstrzykujemy
+ * DYNAMICZNIE bieżący rok (z zegara serwera, nie hardcode) i twardą regułę, że KAŻDA
+ * data/kamień milowy planu musi być w PRZYSZŁOŚCI względem teraz. Dołączane do system-
+ * promptu przy KAŻDYM wywołaniu, więc reguła nie starzeje się z upływem lat.
+ */
+export function buildTemporalRule(isPolish: boolean, now: Date = new Date()): string {
+  const year = now.getFullYear();
+  const q = Math.floor(now.getMonth() / 3) + 1;
+  return isPolish
+    ? `\n\n⏱ REGUŁA CZASU (bezwzględna): DZIŚ jest ${year} r. (Q${q} ${year}). WSZYSTKIE daty, kwartały, kamienie milowe, terminy i horyzonty planów MUSZĄ być w PRZYSZŁOŚCI względem teraz — czyli ${year} lub później. ⛔ ZAKAZ dat/terminów planów z PRZESZŁOŚCI (np. Q4 2024, Q1 2025, "do końca 2025"). Jeśli szablon podpowiada przeszły termin — ZASTĄP go przyszłym (${year}+) lub użyj horyzontu WZGLĘDNEGO ("w ciągu 6 mies. od startu", "kwartał po pilocie"). Data przeszła jako termin planu = FAIL.`
+    : `\n\n⏱ TIME RULE (absolute): TODAY is ${year} (Q${q} ${year}). ALL dates, quarters, milestones, deadlines and plan horizons MUST be in the FUTURE relative to now — i.e. ${year} or later. ⛔ NO past plan dates/deadlines (e.g. Q4 2024, Q1 2025, "by end of 2025"). If a template suggests a past deadline — REPLACE it with a future one (${year}+) or use a RELATIVE horizon ("within 6 months of start", "the quarter after the pilot"). A past date as a plan deadline = FAIL.`;
+}
 
 // ==========================================
 // ADVERSARIAL REVIEWER (CARD_CONTENT_FORMULA §B4/§B6)
@@ -258,6 +279,10 @@ NAJPIERW uruchom walidatory §B3 właściwe dla tej sekcji (każdy PASS/FAIL):
 - scope_out_mece: ≥1 pozycja scope_out odwołuje się do INNEJ inicjatywy;
 - kill_count: ≥2 konkretne warunki STOP;
 - sizing_present: liczba + jawne założenie + ROI;
+- roi_computed: gdy karta podaje przychód/oszczędność ORAZ koszt/nakład — ROI jest JAWNIE POLICZONY liczbą (% lub krotność) + payback. FAIL jeśli ROI pusty/tylko opisowy mimo obecnych obu liczb; FAIL jeśli budżet podany tylko jako mgliste "~400k" w prozie, bez jednej jawnej kwoty z jednostką;
+- number_consistency: KAŻDA metryka (CAC, ARR, wzrost %, koszt, ROI, liczba klientów) ma DOKŁADNIE JEDNĄ wartość/przedział w całej karcie. FAIL jeśli ta sama wielkość ma sprzeczne wartości w różnych polach/akapitach (np. "62%" vs "62-124%" vs "3×"; dwa różne CAC);
+- future_dates: WSZYSTKIE daty/terminy/kamienie planów w PRZYSZŁOŚCI względem bieżącego roku. FAIL jeśli termin planu w przeszłości (np. Q4 2024, Q1 2025);
+- market_grounding: zewnętrzne kotwice rynkowe (TAM, wielkość rynku €/$, udziały, benchmarki) mają metodę/źródło LUB oznaczenie "szacunek własny, do uźródłowienia". FAIL jeśli zmyślona atrybucja ("według Gartnera", "raport IDC") bez pewności lub gołe kwoty rynkowe bez źródła;
 - deliverables_count/success_count: ≥4 każdy; scope_in/scope_out: ≥3 każdy;
 - lang_pl: 0 angielskich słów w prozie poza słownikiem §A5;
 - no_filler: brak placeholderów/ogólników udających treść;
@@ -279,6 +304,10 @@ FIRST run the §B3 validators relevant to this section (each PASS/FAIL):
 - scope_out_mece: ≥1 scope_out item references ANOTHER initiative;
 - kill_count: ≥2 concrete STOP conditions;
 - sizing_present: number + explicit assumption + ROI;
+- roi_computed: when the card states revenue/savings AND cost/investment — ROI is EXPLICITLY COMPUTED as a number (% or multiple) + payback. FAIL if ROI is empty/only narrative despite both numbers being present; FAIL if budget is only a vague "~400k" in prose without one explicit amount + unit;
+- number_consistency: EVERY metric (CAC, ARR, growth %, cost, ROI, customer count) has EXACTLY ONE value/range across the card. FAIL if the same quantity has conflicting values in different fields/paragraphs (e.g. "62%" vs "62-124%" vs "3×"; two different CACs);
+- future_dates: ALL dates/deadlines/plan milestones are in the FUTURE relative to the current year. FAIL if a plan deadline is in the past (e.g. Q4 2024, Q1 2025);
+- market_grounding: external market anchors (TAM, market size €/$, share, benchmarks) cite a method/source OR are flagged "own estimate, to be sourced". FAIL if fabricated attribution ("according to Gartner", "an IDC report") without certainty, or bare market amounts without a source;
 - deliverables_count/success_count: ≥4 each; scope_in/scope_out: ≥3 each;
 - no_filler: no placeholders/platitudes posing as content;
 - grounded: claims cite evidence or are explicitly flagged as a hypothesis with a confidence limit.
@@ -405,7 +434,8 @@ const SECTION_FORMULA_GUIDANCE: Record<string, string> = {
   kpis: `WYMÓG FORMUŁY: ≥2 KPI, ≥1 primary. KAŻDY KPI: baseline→target + kierunek (wzrost/spadek) + jednostka. ⛔ ZAKAZ baseline:"do ustalenia" oraz target:"do ustalenia"/"redukcja o do ustalenia %". Brak twardego baseline → OSZACUJ punkt startowy z jawnym założeniem w polu baseline (np. "~40h/mies. (szacunek; zakładając 8 przestojów × 5h)") i target liczbowo. Cele i baseline ZAWSZE liczbowe z jednostką.`,
   raid: `WYMÓG FORMUŁY: min 2×RISK + 1×ASSUMPTION + 1×DEPENDENCY. Każde RISK ma probability ORAZ impact ORAZ mitigation (+contingency). Każdy element ma proposedAction z konkretem. Bez generycznych placeholderów — wszystko ugruntowane w kontekście inicjatywy.`,
   financialAnalysis: `WYMÓG FORMUŁY (sizing): podaj rząd wielkości + JAWNE ZAŁOŻENIE + horyzont oraz ROI (krotność lub %) z logiką. Enabler → wartość pośrednia + proxy. Oznacz jako szacunki AI do walidacji. ⛔ ZAKAZ "do ustalenia"/"do określenia" w kwotach i ROI — zawsze liczbowy szacunek z założeniem (zakotwicz w danych finansowych org, jeśli są). Bez "przyniesie miliony" bez założeń.`,
-  financialImpact: `WYMÓG FORMUŁY: revenueImpact/costSavings z rzędem wielkości + JAWNYM ZAŁOŻENIEM; benefitsRealization z horyzontem (kiedy i jak korzyści się zmaterializują). ⛔ ZAKAZ "do ustalenia"/"do określenia PLN"/"o do ustalenia %" — KAŻDA kwota/ROI to szacunek liczbowy z założeniem. Jeśli dane finansowe org są w kontekście, ZAKOTWICZ szacunek jako % przychodu/kosztów/EBITDA i wskaż tę bazę.`,
+  financialImpact: `WYMÓG FORMUŁY: revenueImpact/costSavings z rzędem wielkości + JAWNYM ZAŁOŻENIEM; benefitsRealization z horyzontem (kiedy i jak korzyści się zmaterializują). ⛔ ZAKAZ "do ustalenia"/"do określenia PLN"/"o do ustalenia %" — KAŻDA kwota/ROI to szacunek liczbowy z założeniem. Jeśli dane finansowe org są w kontekście, ZAKOTWICZ szacunek jako % przychodu/kosztów/EBITDA i wskaż tę bazę.
+⛔ ROI POLICZONY (obowiązkowo): wypełnij pole "expectedRoi" JEDNĄ jawną liczbą POLICZONĄ z Twojego revenueImpact/costSavings i nakładu (estimatedBudget), w formacie "[X]%" lub "[N]×" + payback w mies. — NIGDY nie zostawiaj pustego, skoro podałeś przychód i koszt. Przykład: revenue 500k PLN/rok, nakład 400k PLN → "expectedRoi":"25% (zysk netto 100k ÷ nakład 400k), payback ~10 mies.". "estimatedBudget" = JEDNA kwota PLN z jednostką i skalą (np. "400 tys. PLN"), nie "~400k" w prozie. Trzymaj JEDNĄ wartość każdej metryki (revenue, koszt, ROI) w całej karcie — bez sprzecznych liczb.`,
   pilot: `WYMÓG FORMUŁY: hypotheses jako falsyfikowalne ("Jeśli X to Y bo Z"); successCriteria i failureCriteria MIERZALNE; suggestedScope konkretny.`,
   tasks: `WYMÓG FORMUŁY: zadania fazowane i konkretne; powiązane z deliverables i kamieniami milowymi inicjatywy.`,
   decisions: `WYMÓG FORMUŁY: decyzje krytyczne dla bramki/postępu, z jasnym uzasadnieniem "dlaczego ważne" i pilnością.`,
@@ -528,15 +558,16 @@ Context:
 - Description: {{summary}}
 - KPIs: {{kpis}}
 
-Provide P&L impact estimates as JSON. Where you can, put a NUMBER + unit for ROI and budget so they are machine-readable (e.g. "expectedRoi": "285%", "estimatedBudget": "1.2M PLN"):
+Provide P&L impact estimates as JSON. Put a NUMBER + unit for ROI and budget so they are machine-readable (e.g. "expectedRoi": "285%", "estimatedBudget": "1.2M PLN"):
 {
   "revenueImpact": "Numeric revenue impact estimate with an explicit assumption (currency + horizon)",
   "costSavings": "Numeric cost-savings estimate with an explicit assumption (currency + horizon)",
   "benefitsRealization": "How and when benefits will be realized (include payback horizon if known)",
-  "expectedRoi": "ROI as a number + unit if estimable, else empty",
-  "estimatedBudget": "Total budget as a number + unit if estimable, else empty"
+  "expectedRoi": "ROI COMPUTED from your own revenue/savings and budget above, as a single number + unit + payback (e.g. \"25% (net gain 100k / investment 400k), payback ~10 months\"). MANDATORY when you gave revenue and cost — never leave empty.",
+  "estimatedBudget": "Total investment as ONE explicit amount with unit and scale (e.g. \"400k PLN\"), not a fuzzy \"~400k\" in prose."
 }
 Every amount MUST be a number with an assumption (e.g. "~120k PLN/yr (estimate; assuming 2% of operating cost)"). If org financials are available, anchor to them. NEVER write "to be determined"/"TBD"/"do ustalenia" as an amount.
+COMPUTE expectedRoi from revenueImpact/costSavings and estimatedBudget — do not leave it blank when both are present. Use EXACTLY ONE value per metric (revenue, cost, ROI) across the whole card — no conflicting numbers for the same quantity.
 Language: {{language}}
 Return valid JSON only.`,
   // FIX 1a (naprawa-r4Struct): raid is now a CORE section (see
@@ -701,7 +732,9 @@ export class InitiativeGenerationService {
     // 4. Call LLM with the McKinsey-grade doctrine system prompt.
     const lang = String(enrichedContext.language || context.language || 'en').toLowerCase();
     const isPolish = lang === 'pl' || lang === 'polish';
-    const systemPrompt = isPolish ? DOCTRINE_SYSTEM_PROMPT : DOCTRINE_SYSTEM_PROMPT_EN;
+    const systemPrompt =
+      (isPolish ? DOCTRINE_SYSTEM_PROMPT : DOCTRINE_SYSTEM_PROMPT_EN) +
+      buildTemporalRule(isPolish);
 
     const llm = llmEarly;
 
@@ -1243,9 +1276,12 @@ export function extractJsonObject(content: string): unknown {
 }
 
 function buildCardSpecSystemPrompt(isPolish: boolean): string {
-  return isPolish
-    ? `Jesteś konsultantem klasy McKinsey (docs/standards/CARD_CONTENT_FORMULA.md, docs/initiatives/INITIATIVE_FORMULA.md). Komponujesz KARTĘ inicjatywy jako listę deklaratywnych BLOKÓW (grammar), nie wolny tekst. Zwracasz WYŁĄCZNIE poprawny JSON — bez markdown, bez code-fence, bez komentarza.`
-    : `You are a McKinsey-grade consultant (per docs/standards/CARD_CONTENT_FORMULA.md and docs/initiatives/INITIATIVE_FORMULA.md). You compose an initiative CARD as a list of declarative BLOCKS (a grammar), not free prose. Return ONLY valid JSON — no markdown, no code fences, no commentary.`;
+  const base = isPolish
+    ? `Jesteś konsultantem klasy McKinsey (docs/standards/CARD_CONTENT_FORMULA.md, docs/initiatives/INITIATIVE_FORMULA.md). Komponujesz KARTĘ inicjatywy jako listę deklaratywnych BLOKÓW (grammar), nie wolny tekst. Zwracasz WYŁĄCZNIE poprawny JSON — bez markdown, bez code-fence, bez komentarza.
+SPÓJNOŚĆ: każda metryka (CAC/ARR/wzrost %/koszt/ROI) = DOKŁADNIE JEDNA wartość lub przedział w całej karcie — bez sprzecznych liczb tej samej wielkości. ROI POLICZONY: masz przychód i koszt → policz ROI jawnie (% = zysk netto ÷ nakład) + payback; budżet jako jedna kwota z jednostką. GROUNDING: kotwic rynkowych (TAM/udziały/benchmarki) bez źródła NIE fabrykuj — oznacz "szacunek własny, do uźródłowienia" lub pomiń; zakaz "według Gartnera" bez pewności.`
+    : `You are a McKinsey-grade consultant (per docs/standards/CARD_CONTENT_FORMULA.md and docs/initiatives/INITIATIVE_FORMULA.md). You compose an initiative CARD as a list of declarative BLOCKS (a grammar), not free prose. Return ONLY valid JSON — no markdown, no code fences, no commentary.
+CONSISTENCY: each metric (CAC/ARR/growth %/cost/ROI) = EXACTLY ONE value or range across the whole card — no conflicting numbers for the same quantity. COMPUTED ROI: if you have revenue and cost → compute ROI explicitly (% = net gain ÷ investment) + payback; budget as one amount with unit. GROUNDING: do NOT fabricate market anchors (TAM/share/benchmarks) without a source — mark "own estimate, to be sourced" or omit; no "according to Gartner" without certainty.`;
+  return base + buildTemporalRule(isPolish);
 }
 
 interface CardSpecUserPromptArgs {
