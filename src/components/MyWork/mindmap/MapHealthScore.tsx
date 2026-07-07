@@ -230,7 +230,7 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
   const ringColor = overallScore >= 70 ? 'var(--c-success)' : overallScore >= 40 ? 'var(--c-warning)' : 'var(--c-danger)';
 
   return (
-    <div className="absolute top-14 right-3 z-[89]">
+    <div className="absolute top-14 right-3 z-dropdown">
       <div className="rounded-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border border-c-border-subtle dark:border-c-border-subtle shadow-2xl overflow-hidden min-w-[180px]">
         <button
           onClick={() => setExpanded(!expanded)}

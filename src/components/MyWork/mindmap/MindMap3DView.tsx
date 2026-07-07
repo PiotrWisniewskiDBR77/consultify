@@ -159,7 +159,7 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[93] bg-c-surface flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-modal bg-c-surface flex flex-col overflow-hidden">
       <div className="flex items-center gap-3 px-6 py-3 bg-c-surface border-b border-c-border-subtle">
         <button
           onClick={onClose}
