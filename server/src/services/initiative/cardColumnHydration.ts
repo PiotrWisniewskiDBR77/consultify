@@ -118,62 +118,105 @@ function extractRoiFromText(text: string): string | undefined {
   const s = String(text || '');
   if (!s.trim()) return undefined;
   // 1) Jawne "ROI ... 285%" (ROI w pobliżu procentu, dowolna kolejność, PL/EN).
+  //    Klasa liczby dopuszcza „-" → łapie zakres „ROI 120-180%".
   const roiPct =
-    s.match(/\broi\b[^%\n]{0,24}?(\d[\d\s.,]*\s*%)/i) ||
-    s.match(/(\d[\d\s.,]*\s*%)[^%\n]{0,12}?\broi\b/i);
+    s.match(/\broi\b[^%\n]{0,24}?(\d[\d\s.,-]*\s*%)/i) ||
+    s.match(/(\d[\d\s.,-]*\s*%)[^%\n]{0,12}?\broi\b/i);
   if (roiPct) return `ROI ${roiPct[1].replace(/\s+/g, '')}`;
-  // 2) Zwrot krotności "3,2x" / "zwrot 3x" / "return of 2.5x".
-  const roiMult = s.match(/(?:roi|zwrot|return)[^0-9\n]{0,16}?(\d[\d.,]*\s*x)\b/i) ||
-    s.match(/\b(\d[\d.,]*\s*x)\s*(?:roi|zwrot|return)/i);
+  // 2) Zwrot krotności "3,2x" / "zwrot 3x" / "return of 2.5x". Klasa liczby zawiera
+  //    „-" → łapie ZAKRES który Claude realnie generuje: „ROI 2.5-3.5x" (bez „-"
+  //    poprzedni regex kończył na „2.5" i wymagał „x" natychmiast → 0 trafień, demo
+  //    2026-07-07: expected_roi = NULL mimo „ROI 2.5-3.5x" w karcie).
+  const roiMult = s.match(/(?:roi|zwrot|return)[^0-9\n]{0,16}?(\d[\d.,-]*\s*x)\b/i) ||
+    s.match(/\b(\d[\d.,-]*\s*x)\s*(?:roi|zwrot|return)/i);
   if (roiMult) return `ROI ${roiMult[1].replace(/\s+/g, '')}`;
   // 3) Payback / okres zwrotu "payback 14 miesięcy" / "zwrot w 12 mies.".
   const payback = s.match(
-    /(?:payback|okres zwrotu|zwrot(?:\s+w)?)[^0-9\n]{0,16}?(\d[\d.,]*)\s*(mies|month|m-?cy|lat|year|rok)/i,
+    /(?:payback|okres zwrotu|zwrot(?:\s+w)?)[^0-9\n]{0,16}?(\d[\d.,-]*)\s*(mies|month|m-?cy|lat|year|rok)/i,
   );
   if (payback) {
     const unit = payback[2].toLowerCase();
     const label = /lat|year|rok/.test(unit) ? 'lat' : 'mies.';
     return `payback ${payback[1]} ${label}`;
   }
+  // 4) OSTATECZNOŚĆ — próg rentowności / break-even / pełna rentowność jako
+  //    HORYZONT (data „Q2 2028" lub liczba miesięcy). Żywy prompt financialImpact
+  //    często NIE podaje jawnego ROI/krotności, tylko moment osiągnięcia
+  //    rentowności (demo 2026-07-07 INI-1: „Break-even produktu: Q1 2028. Pełna
+  //    rentowność inicjatywy: Q2 2028"). To realny wskaźnik zwrotu — lepszy niż NULL.
+  const breakEven = s.match(
+    /(?:break-?even|pr[oó]g rentowno[śs]ci|pe[łl]na rentowno[śs][ćc]|rentowno[śs][ćc])[^\n]{0,40}?((?:Q[1-4]\s*)?\d{4}|\d{1,3}\s*(?:mies|month|m-?cy))/i,
+  );
+  if (breakEven) return `rentowność ${breakEven[1].replace(/\s+/g, ' ').trim()}`;
   return undefined;
 }
 
 /**
- * FIX 1b — wyłuskuje KWOTĘ BUDŻETU z narracji karty finansowej. Szuka słowa-klucza
- * budżetu/kosztu obok liczby z jednostką (mln/tys/k/M + waluta) i zwraca number.
- * Formaty: "budżet 1,2 mln zł", "€500k", "koszt 2.4M PLN", "300 tys. zł".
- * Bez trafienia → undefined.
+ * Token KWOTOWY: liczba, która MUSI nieść MARKER wartości pieniężnej — skrót rzędu
+ * wielkości (mln/tys/k/M/mld) LUB walutę (zł/PLN/€/EUR/$/…). Bez markera token nie
+ * jest kwotą (to procent, liczba klientów, rok itd.).
+ *
+ * Dlaczego twardo (demo 2026-07-07): stary regex miał WSZYSTKIE markery opcjonalne,
+ * więc słowo „koszt" tuż przy „…akwizycji klienta o 40% dzięki…" łapało gołą „40"
+ * → estimated_budget = 40 (śmieć). Wymóg markera + próg ≥1000 to eliminuje: lepiej
+ * NULL niż „40".
+ */
+const MONEY_SCALE = '(?:mld|mln|tys\\.?|bn|m|k|miliard|milion|tysi[ąa]c)';
+const MONEY_CUR = '(?:z[łl]|pln|eur|usd|€|\\$|£)';
+const MONEY_TOKEN_RE = new RegExp(
+  // 1) symbol waluty PRZED liczbą (opcjonalny skrót po): „€500k", „$1.2 mln"
+  `(?:[€$£]\\s*\\d[\\d\\s.,]*\\s*${MONEY_SCALE}?)` +
+    // 2) liczba + SKRÓT rzędu wielkości (opcjonalna waluta po): „800K PLN", „1.2M"
+    `|(?:\\d[\\d\\s.,]*\\s*${MONEY_SCALE}\\s*${MONEY_CUR}?)` +
+    // 3) liczba + WALUTA bez skrótu: „500000 PLN", „750 tys" łapie (2)
+    `|(?:\\d[\\d\\s.,]*\\s*${MONEY_CUR})`,
+  'gi',
+);
+
+/** Pierwszy token kwotowy w oknie o wartości ≥1000 (odrzuca gołe małe liczby). */
+function firstMoneyAmount(window: string): number | undefined {
+  const toks = window.match(MONEY_TOKEN_RE);
+  if (!toks) return undefined;
+  for (const t of toks) {
+    const n = parseAmount(t);
+    if (n !== undefined && n >= 1000) return n;
+  }
+  return undefined;
+}
+
+/**
+ * FIX 1b (naprawa-r5Extract) — wyłuskuje KWOTĘ BUDŻETU z narracji karty finansowej.
+ * Token kwotowy MUSI mieć marker (skrót/waluta) i wartość ≥1000 — inaczej odrzucony
+ * (naprawia śmieciowe „40" z „redukcję kosztów o 40%").
+ *
+ * Priorytet słów-kluczy: MOCNE (budżet/nakład/inwestycja/capex/opex — jednoznaczny
+ * wydatek) przed SŁABYM „koszt/cost" (przeciążone „redukcją/oszczędnością kosztów",
+ * które opisują KORZYŚĆ, nie nakład). Demo 2026-07-07 INI-1: „koszt" trafiał w
+ * „redukcji kosztów delivery … 2.1M PLN" (przychód!) — priorytet „nakład" bierze
+ * poprawnie „nakłady … 1.8M PLN". Bez trafienia → undefined.
  */
 function extractBudgetFromText(text: string): number | undefined {
   const s = String(text || '');
   if (!s.trim()) return undefined;
-  // Słowo-klucz budżetu/kosztu/inwestycji, potem (w ~40 znakach) token kwotowy.
-  const kw =
-    /(bud[żz]et|koszt|inwestycj|nak[łl]ad|capex|opex|cost|budget|investment|spend)/i;
-  const m = kw.exec(s);
-  if (m) {
-    const tail = s.slice(m.index, m.index + 80);
-    // Token kwotowy: liczba + opcjonalny skrót rzędu wielkości + opcjonalna waluta.
-    const amt = tail.match(
-      /[€$£]?\s*\d[\d\s.,]*\s*(?:mld|mln|tys\.?|bn|m|k|miliard|milion|tysi[ąa]c)?\s*(?:z[łl]|pln|eur|usd|€|\$|£)?/i,
-    );
-    if (amt) {
-      const n = parseAmount(amt[0]);
-      if (n !== undefined && n > 0) return n;
+
+  const nearKeyword = (kwSource: string): number | undefined => {
+    const kw = new RegExp(kwSource, 'gi');
+    let m: RegExpExecArray | null;
+    while ((m = kw.exec(s)) !== null) {
+      const n = firstMoneyAmount(s.slice(m.index, m.index + 90));
+      if (n !== undefined) return n;
     }
-  }
-  // Fallback: dowolny token z jawną walutą + skrótem rzędu wielkości ("€500k").
-  const anyMoney = s.match(
-    /[€$£]\s*\d[\d\s.,]*\s*(?:mld|mln|tys\.?|bn|m|k|miliard|milion|tysi[ąa]c)?/i,
-  ) ||
-    s.match(
-      /\d[\d\s.,]*\s*(?:mld|mln|tys\.?|bn|m|k)\s*(?:z[łl]|pln|eur|usd|€|\$|£)/i,
-    );
-  if (anyMoney) {
-    const n = parseAmount(anyMoney[0]);
-    if (n !== undefined && n > 0) return n;
-  }
-  return undefined;
+    return undefined;
+  };
+
+  // 1) MOCNE słowa-klucze (jednoznaczny nakład kapitałowy).
+  const strong = nearKeyword('(bud[żz]et|inwestycj|nak[łl]ad|capex|opex|budget|investment|spend)');
+  if (strong !== undefined) return strong;
+  // 2) SŁABE „koszt/cost" (dopiero gdy brak mocnego — przeciążone semantycznie).
+  const weak = nearKeyword('(koszt|cost)');
+  if (weak !== undefined) return weak;
+  // 3) Fallback: dowolny token kwotowy z markerem gdziekolwiek w tekście.
+  return firstMoneyAmount(s);
 }
 
 /**
