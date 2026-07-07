@@ -3751,9 +3751,9 @@ Return ONLY the final comment text.`;
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
         <div className="p-6">
-          <div className="max-w-[1500px] mx-auto lg:flex lg:gap-6 lg:items-start space-y-0">
+          <div className="max-w-[1500px] mx-auto xl:flex xl:gap-6 xl:items-start space-y-0">
             {/* ── Lewa kolumna: header + treść (dokowany panel po prawej) ── */}
-            <div className="lg:flex-1 lg:min-w-0 space-y-0">
+            <div className="xl:flex-1 xl:min-w-0 space-y-0">
             {/* ── Header ──────────────────────────────────────── */}
             <NModeHeader
               title={title}
@@ -4303,7 +4303,7 @@ Return ONLY the final comment text.`;
             </div>
 
             {/* ── Dokowany prawy panel artefaktu (lg+; ukryty na <lg) ── */}
-            <div className="hidden lg:block shrink-0 sticky top-6 self-start">
+            <div className="hidden xl:block shrink-0 sticky top-6 self-start">
               <ArtifactRightPanel
                 sections={rightPanelSections}
                 className="rounded-2xl border border-c-border-subtle max-h-[calc(100vh-3rem)]"
