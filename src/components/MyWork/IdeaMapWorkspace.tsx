@@ -29,6 +29,7 @@ import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api, getMapVersionFromPayload } from '@/services/api';
 import { isMelsCanvasEnabled } from '@/utils/melsCanvasFlag';
+import { isMindmapConsolidatedPanel } from '@/utils/melsMindmapPanelFlag';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
@@ -93,6 +94,7 @@ import { IdeaVotingMode } from './IdeaVotingMode';
 import { IdeaWhiteboardTool } from './IdeaWhiteboardTool';
 import { getIdeaWorkspaceToolLabel, IdeaWorkspaceToolbar } from './IdeaWorkspaceToolbar';
 import { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
+import { IdeaMapConsolidatedPanel } from './IdeaMapConsolidatedPanel';
 import { IdeaCanvasMelsView } from './IdeaCanvasMelsView';
 import {
   buildIdeaCanvasRightRailTools,
@@ -2681,6 +2683,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // handlers/hooks — TDZ-safe). Flag OFF → nothing below is consumed and the
   // legacy render is byte-for-byte unchanged.
   const melsCanvasEnabled = isMelsCanvasEnabled();
+  // ── Oś P (SPEC-A) — consolidated Mind Map right panel (flag-gated, default OFF).
+  // When ON *and* the Mind Map tool is active, the three legacy right drawers
+  // (tools/context/ai) are replaced by one <IdeaMapConsolidatedPanel>
+  // (ArtifactRightPanel accordion). Flag OFF → three legacy drawers unchanged.
+  const mindmapConsolidatedPanel = isMindmapConsolidatedPanel();
+  // Scoped to the legacy (non-mels) render path + the Mind Map tool only. When
+  // the mels-canvas shell is ON it already owns the right rail, so the two flags
+  // never stack a duplicate inspector.
+  const useConsolidatedMindmapPanel =
+    mindmapConsolidatedPanel && activeTool === 'mindmap' && !melsCanvasEnabled;
   const melsCanvasChips = useMemo(
     () =>
       melsCanvasEnabled
@@ -2842,6 +2854,115 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       handleSave, handleAcceptChallenge, handleStageChange, handleConvert, openChat,
       handleQuickAction, whiteboardSession, whiteboardOutcomes,
       setTitle, setSeedText, setBranch, setArea, setPriority, setDirty,
+    ]
+  );
+
+  // ── Shared context / AI-suggestions panel prop bundles ──────────────────
+  // Single source for the two remaining right-side panels so the legacy drawers
+  // (renderWorkspaceSiblings) and the Oś-P consolidated panel never drift. The
+  // `open`/`onClose` framing props are supplied at each render site.
+  const ideaContextPanelSharedProps = useMemo(
+    () => ({
+      ideaId: realId,
+      title: title || safeTitleFromSeed(seedText, isPolish),
+      selectedNodeId: selection.ids?.[0] || null,
+      selectionMeta:
+        selection.type === 'node' && selection.count === 1 ? selection.meta : null,
+      refreshToken: mapRefreshToken,
+      liveGraphNodes: graphNodes,
+      liveGraphEdges: graphEdges,
+      mapExtensions,
+      activeTool,
+      stage,
+      seedText,
+      onInsertToCanvas: (item: { text: string; type: string; detail?: string }) => {
+        window.dispatchEvent(
+          new CustomEvent('idea-workspace-insert', { detail: { items: [item], ideaId: realId } })
+        );
+      },
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      realId, title, seedText, isPolish, selection, mapRefreshToken,
+      graphNodes, graphEdges, mapExtensions, activeTool, stage,
+    ]
+  );
+
+  const ideaAISuggestionsPanelSharedProps = useMemo(
+    () => ({
+      ideaId: realId,
+      title: title || safeTitleFromSeed(seedText, isPolish),
+      seedText,
+      activeTool,
+      isAccepted,
+      selectedNodeId: selection.ids?.[0] || null,
+      onSendToChat: openChat,
+      onInsertToWorkspace: (items: Array<{ text: string; type: string }>) => {
+        const anchorNodeId = selection.ids?.[0] || null;
+        const batch: AIProposalBatch = {
+          id: `ai-suggestions-${Date.now()}`,
+          tool: activeTool,
+          generatorType: 'ai_suggestions_panel',
+          createdAt: Date.now(),
+          proposals: items.map((item, index) => {
+            const nodeId = `ai-suggestion-${Date.now()}-${index}`;
+            const anchorNode = anchorNodeId
+              ? graphNodes.find((node: any) => String(node?.id) === String(anchorNodeId))
+              : null;
+            return {
+              id: `proposal-${nodeId}`,
+              type: 'graph_patch' as const,
+              rationale: item.text,
+              confidence: 0.74,
+              targetTool: activeTool,
+              focusNodeId: anchorNodeId || undefined,
+              resultSummary: item.text,
+              status: 'pending' as const,
+              patch: {
+                addNodes: [
+                  {
+                    id: nodeId,
+                    label: item.text,
+                    type: 'idea',
+                    position: anchorNode
+                      ? {
+                          x: Number(anchorNode?.position?.x || 0) + 220,
+                          y: Number(anchorNode?.position?.y || 0) + index * 80,
+                        }
+                      : { x: 240 + index * 40, y: 180 + index * 70 },
+                    data: {
+                      label: item.text,
+                      semanticType: item.type,
+                      sourceType: 'ai',
+                    },
+                  },
+                ],
+                ...(anchorNodeId && activeTool === 'mindmap'
+                  ? {
+                      addEdges: [
+                        {
+                          id: `edge-${nodeId}`,
+                          source: anchorNodeId,
+                          target: nodeId,
+                          data: { edgeRole: 'structural', sourceType: 'ai' },
+                        },
+                      ],
+                    }
+                  : {}),
+              },
+            };
+          }),
+        };
+        setProposalBatch(batch);
+        setActivePanel('tools');
+      },
+      graphNodes,
+      graphEdges,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      realId, title, seedText, isPolish, activeTool, isAccepted, selection,
+      openChat, graphNodes, graphEdges, setProposalBatch, setActivePanel,
     ]
   );
 
@@ -3356,11 +3477,34 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   function renderWorkspaceSiblings(): React.ReactNode {
     return (
       <>
+      {/*
+        Oś P (SPEC-A, flag `ff.mels_mindmap_panel`, default OFF): when ON *and*
+        the Mind Map tool is active, the three legacy drawers below are replaced
+        by ONE <IdeaMapConsolidatedPanel> (ArtifactRightPanel accordion). It only
+        mounts when one of the three panels would be open — matching the legacy
+        self-hide (each drawer returns null when its `open` is false). Flag OFF →
+        this block is inert and the three drawers render byte-for-byte as before.
+      */}
+      {useConsolidatedMindmapPanel &&
+        (toolsPanelOpen || contextPanelOpen || aiPanelOpen) && (
+          <IdeaMapConsolidatedPanel
+            activePanel={
+              toolsPanelOpen ? 'tools' : contextPanelOpen ? 'context' : 'ai_suggestions'
+            }
+            onClose={() => handlePanelChange(null)}
+            toolsProps={ideaWorkspaceToolsSharedProps}
+            contextProps={ideaContextPanelSharedProps}
+            aiSuggestionsProps={ideaAISuggestionsPanelSharedProps}
+          />
+        )}
+
       {/* Tools panel sidebar — legacy sliding drawer. Under the EditorShell
           flag this same inspector is rendered `embedded` in the shell right
           rail (renderMelsCanvasRightRailPanel), so we suppress this drawer to
-          avoid a duplicate panel. Both paths consume ideaWorkspaceToolsSharedProps. */}
-      {!melsCanvasEnabled && (
+          avoid a duplicate panel. Under the Oś-P consolidated-panel flag the
+          Mind Map tool suppresses it too (rendered as an accordion section
+          above instead). Both paths consume ideaWorkspaceToolsSharedProps. */}
+      {!melsCanvasEnabled && !useConsolidatedMindmapPanel && (
         <IdeaWorkspaceTools
           {...ideaWorkspaceToolsSharedProps}
           open={toolsPanelOpen}
@@ -3368,99 +3512,21 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         />
       )}
 
-      <IdeaContextPanel
-        open={contextPanelOpen}
-        onClose={() => handlePanelChange(null)}
-        ideaId={realId}
-        title={title || safeTitleFromSeed(seedText, isPolish)}
-        selectedNodeId={selection.ids?.[0] || null}
-        selectionMeta={selection.type === 'node' && selection.count === 1 ? selection.meta : null}
-        refreshToken={mapRefreshToken}
-        liveGraphNodes={graphNodes}
-        liveGraphEdges={graphEdges}
-        mapExtensions={mapExtensions}
-        activeTool={activeTool}
-        stage={stage}
-        seedText={seedText}
-        onInsertToCanvas={(item) => {
-          window.dispatchEvent(
-            new CustomEvent('idea-workspace-insert', { detail: { items: [item], ideaId: realId } })
-          );
-        }}
-      />
+      {!useConsolidatedMindmapPanel && (
+        <IdeaContextPanel
+          {...ideaContextPanelSharedProps}
+          open={contextPanelOpen}
+          onClose={() => handlePanelChange(null)}
+        />
+      )}
 
-      <IdeaAISuggestionsPanel
-        open={aiPanelOpen}
-        onClose={() => handlePanelChange(null)}
-        ideaId={realId}
-        title={title || safeTitleFromSeed(seedText, isPolish)}
-        seedText={seedText}
-        activeTool={activeTool}
-        isAccepted={isAccepted}
-        selectedNodeId={selection.ids?.[0] || null}
-        onSendToChat={openChat}
-        onInsertToWorkspace={(items) => {
-          const anchorNodeId = selection.ids?.[0] || null;
-          const batch: AIProposalBatch = {
-            id: `ai-suggestions-${Date.now()}`,
-            tool: activeTool,
-            generatorType: 'ai_suggestions_panel',
-            createdAt: Date.now(),
-            proposals: items.map((item, index) => {
-              const nodeId = `ai-suggestion-${Date.now()}-${index}`;
-              const anchorNode = anchorNodeId
-                ? graphNodes.find((node: any) => String(node?.id) === String(anchorNodeId))
-                : null;
-              return {
-                id: `proposal-${nodeId}`,
-                type: 'graph_patch' as const,
-                rationale: item.text,
-                confidence: 0.74,
-                targetTool: activeTool,
-                focusNodeId: anchorNodeId || undefined,
-                resultSummary: item.text,
-                status: 'pending' as const,
-                patch: {
-                  addNodes: [
-                    {
-                      id: nodeId,
-                      label: item.text,
-                      type: 'idea',
-                      position: anchorNode
-                        ? {
-                            x: Number(anchorNode?.position?.x || 0) + 220,
-                            y: Number(anchorNode?.position?.y || 0) + index * 80,
-                          }
-                        : { x: 240 + index * 40, y: 180 + index * 70 },
-                      data: {
-                        label: item.text,
-                        semanticType: item.type,
-                        sourceType: 'ai',
-                      },
-                    },
-                  ],
-                  ...(anchorNodeId && activeTool === 'mindmap'
-                    ? {
-                        addEdges: [
-                          {
-                            id: `edge-${nodeId}`,
-                            source: anchorNodeId,
-                            target: nodeId,
-                            data: { edgeRole: 'structural', sourceType: 'ai' },
-                          },
-                        ],
-                      }
-                    : {}),
-                },
-              };
-            }),
-          };
-          setProposalBatch(batch);
-          setActivePanel('tools');
-        }}
-        graphNodes={graphNodes}
-        graphEdges={graphEdges}
-      />
+      {!useConsolidatedMindmapPanel && (
+        <IdeaAISuggestionsPanel
+          {...ideaAISuggestionsPanelSharedProps}
+          open={aiPanelOpen}
+          onClose={() => handlePanelChange(null)}
+        />
+      )}
 
       {/* MM-12: AI Governance Panel */}
       <AIGovernancePanel
