@@ -45,8 +45,6 @@ import {
   MessageSquare,
   Monitor,
   MoreVertical,
-  Eye,
-  Pencil,
   NotebookPen,
   Package,
   Plus,
@@ -127,6 +125,7 @@ import {
   type TaskDependency,
   type WarningThresholds,
 } from '../MyWork/shared';
+import { ReadEditToggle } from '../MyWork/shared/ReadEditToggle';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { HubWorkAreaLoadError, HubWorkAreaLoading } from '../shared/ModuleHub';
 import {
@@ -10212,7 +10211,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           )}
                         </div>
 
-                        {/* Slot 2 — New ▾ (context create actions) */}
+                        {/* Slot 2 — New ▾ (context create actions).
+                            Read = ukryte: dodawanie zadań/decyzji/RAID to edycja,
+                            a Podgląd ma być czysty do pokazania klientowi. */}
+                        {!readMode && (
                         <div className="relative">
                           <ToolbarSubtleButton
                             icon={<Plus size={14} />}
@@ -10253,6 +10255,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             </>
                           )}
                         </div>
+                        )}
 
                         {/* Slot 3 — Export ▾ (destination selector) */}
                         <div className="relative">
@@ -10407,8 +10410,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           </span>
                         )}
 
-                        {/* Slot 5 — section-level AI (teal split) */}
-                        {activeNSection !== 'activity-log' && (
+                        {/* Slot 5 — section-level AI (teal split).
+                            Read = ukryte: „czysty do pokazania klientowi" bez
+                            afordancji generowania AI. */}
+                        {!readMode && activeNSection !== 'activity-log' && (
                           <ToolbarAISplitButton
                             onClick={() => void runActiveSectionAi()}
                             disabled={
@@ -10436,38 +10441,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         {/* ── Spacer ─────────────────────────────────────────── */}
                         <div className="flex-1 min-w-[8px]" />
 
-                        {/* Tryb Read/Edit (§5A) — pstryczek „do pokazania klientowi".
-                            Read = pasek akcji kart znika + pola read-only. Neutralny;
-                            aktywny stan = c-focus (nie crimson). */}
-                        <div className="inline-flex items-center gap-0.5 rounded-lg bg-c-surface-raised/60 p-0.5 mr-1">
-                          <button
-                            type="button"
-                            onClick={() => setReadMode(false)}
-                            aria-pressed={!readMode}
-                            title={t('initiatives.editModeTooltip', 'Tryb edycji')}
-                            className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-                              !readMode
-                                ? 'bg-c-surface text-c-focus shadow-sm'
-                                : 'text-c-text-secondary hover:text-c-text'
-                            }`}
-                          >
-                            <Pencil size={13} />
-                            <span>{t('initiatives.editMode', 'Edycja')}</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setReadMode(true)}
-                            aria-pressed={readMode}
-                            title={t('initiatives.readModeTooltip', 'Tryb do pokazania klientowi')}
-                            className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-                              readMode
-                                ? 'bg-c-surface text-c-focus shadow-sm'
-                                : 'text-c-text-secondary hover:text-c-text'
-                            }`}
-                          >
-                            <Eye size={13} />
-                            <span>{t('initiatives.readMode', 'Podgląd')}</span>
-                          </button>
+                        {/* Tryb Read/Edit (§5A) — wspólny komponent „do pokazania
+                            klientowi" (ujednolicony z Task/Decision). Read = pasek
+                            akcji kart znika + pola read-only + afordancje edycji/AI
+                            gasną. Neutralny; aktywny = c-focus (nie crimson). */}
+                        <div className="mr-1">
+                          <ReadEditToggle readMode={readMode} onChange={setReadMode} />
                         </div>
 
                         {/* Slot 6/7 — Fork · Present */}
@@ -10555,23 +10534,29 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           </div>
                         )}
 
-                        {/* ── Slot 9: artifact-level AI (solid teal) ─────────── */}
-                        <div className="h-4 w-px bg-c-surface-raised mx-1 shrink-0" />
-                        <ToolbarAISolidButton
-                          onClick={() => {
-                            if (!canUseAi) {
-                              toast.error(t('initiatives.aiIsUnavailableBecauseYouHave2'));
-                              return;
-                            }
-                            setAiPanelOpen((v) => !v);
-                          }}
-                          disabled={!canUseAi}
-                          title={t('initiatives.aiConsultant3')}
-                          aria-expanded={aiPanelOpen}
-                          icon={<Sparkles size={14} />}
-                        >
-                          <span>{t('initiatives.aiConsultant4')}</span>
-                        </ToolbarAISolidButton>
+                        {/* ── Slot 9: artifact-level AI (solid teal).
+                            Read = ukryte: Podgląd ma być czysty do pokazania
+                            klientowi, bez afordancji AI. */}
+                        {!readMode && (
+                          <>
+                            <div className="h-4 w-px bg-c-surface-raised mx-1 shrink-0" />
+                            <ToolbarAISolidButton
+                              onClick={() => {
+                                if (!canUseAi) {
+                                  toast.error(t('initiatives.aiIsUnavailableBecauseYouHave2'));
+                                  return;
+                                }
+                                setAiPanelOpen((v) => !v);
+                              }}
+                              disabled={!canUseAi}
+                              title={t('initiatives.aiConsultant3')}
+                              aria-expanded={aiPanelOpen}
+                              icon={<Sparkles size={14} />}
+                            >
+                              <span>{t('initiatives.aiConsultant4')}</span>
+                            </ToolbarAISolidButton>
+                          </>
+                        )}
                       </div>
                     );
                   })()}
