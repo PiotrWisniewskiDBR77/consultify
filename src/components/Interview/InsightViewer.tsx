@@ -78,11 +78,15 @@ import type { AIConsultantAction } from '@/components/shared/NModeLayout/AIConsu
 import { AIConsultantPanel } from '@/components/shared/NModeLayout/AIConsultantPanel';
 import { ReadEditToggle } from '@/components/MyWork/shared/ReadEditToggle';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
+import { AddCardMenu } from '@/components/shared/NModeLayout/NModeCardManager';
+import {
+  useCardLayout,
+  type CardLayout,
+} from '@/components/shared/NModeLayout/useCardLayout';
 import {
   ToolbarAISolidButton,
   ToolbarAISplitButton,
   ToolbarGhostButton,
-  ToolbarSubtleButton,
 } from '@/components/shared/NModeLayout/NModeToolbar';
 import { SectionErrorBoundary } from '@/components/shared/NModeLayout/SectionErrorBoundary';
 import type {
@@ -968,6 +972,51 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     [nModeOrderStorageKey]
   );
 
+  // ── Card-management primitive (wzorzec N §3.5) ────────────────────────────
+  // Referencyjne wpięcie `useCardLayout`: model { id, visible, order }[] dla kart
+  // Insightu. Persystencja = localStorage (callback `onLayoutChange`), analogicznie
+  // do `nModeSectionOrder`. Layout jest SSOT dla dodawania/usuwania/ukrywania kart;
+  // istniejące `hiddenSectionIds` + `nModeSectionOrder` są z niego synchronizowane
+  // niżej (minimalny blast-radius — reszta maszynerii bez zmian).
+  const cardLayoutStorageKey = `insight:nmode:card-layout:v1:${insight?.id ?? 'new'}`;
+  const initialCardLayout = useMemo<CardLayout | null>(() => {
+    try {
+      const raw = localStorage.getItem(cardLayoutStorageKey);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return null;
+      const cleaned = parsed.filter(
+        (c: unknown): c is { id: string; visible: boolean; order: number } =>
+          !!c &&
+          typeof (c as { id?: unknown }).id === 'string' &&
+          typeof (c as { visible?: unknown }).visible === 'boolean' &&
+          typeof (c as { order?: unknown }).order === 'number'
+      );
+      return cleaned.length > 0 ? cleaned : null;
+    } catch {
+      return null;
+    }
+    // Hydrate once per insight id; layout state is owned by the hook afterwards.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardLayoutStorageKey]);
+
+  const persistCardLayout = useCallback(
+    (next: CardLayout) => {
+      try {
+        localStorage.setItem(cardLayoutStorageKey, JSON.stringify(next));
+      } catch {
+        // Ignore storage errors; card management still works for this session.
+      }
+    },
+    [cardLayoutStorageKey]
+  );
+
+  const cardLayout = useCardLayout({
+    artifactType: 'insight',
+    initialLayout: initialCardLayout,
+    onLayoutChange: persistCardLayout,
+  });
+
   // Editable fields
   const [title, setTitle] = useState('');
 
@@ -1018,6 +1067,24 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // Maps section id → hidden. Sections absent from the map are visible.
   // Local UI state only — drops hidden sections from the nav/canvas; no backend.
   const [hiddenSectionIds, setHiddenSectionIds] = useState<Set<string>>(new Set());
+
+  // Sync the card-layout SSOT → existing hide/order machinery. Cards that are in
+  // the layout but not `visible` (hidden OR removed from the visible set) drop out
+  // of the nav/canvas; the visible order drives `nModeSectionOrder`. This lets the
+  // new `useCardLayout` primitive + `+ Nowa karta` menu drive the same downstream
+  // filtering the ad-hoc Sections dropdown already used, without a deep refactor.
+  const cardLayoutVisibleIds = cardLayout.visibleOrderedIds;
+  const cardLayoutAllIds = useMemo(
+    () => cardLayout.layout.map((c) => c.id),
+    [cardLayout.layout]
+  );
+  useEffect(() => {
+    const hidden = new Set(
+      cardLayoutAllIds.filter((id) => !cardLayoutVisibleIds.includes(id))
+    );
+    setHiddenSectionIds(hidden);
+    setNModeSectionOrder(cardLayoutVisibleIds.length > 0 ? cardLayoutVisibleIds : null);
+  }, [cardLayoutVisibleIds, cardLayoutAllIds]);
 
   // #26b — "Submit for Information" (no review/approval gate; just notifies)
   const [submittingForInfo, setSubmittingForInfo] = useState(false);
@@ -8067,7 +8134,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         sections={visibleNModeSections}
         activeSection={activeNSection}
         onSectionChange={setActiveNSection}
-        onSectionReorder={handleNModeSectionReorder}
+        onSectionReorder={(ids) => {
+          // Left-nav drag → cardLayout is SSOT. Keep the legacy order key in
+          // sync for back-compat; the layout persist owns the real order.
+          cardLayout.reorderByIds(ids);
+          handleNModeSectionReorder(ids);
+        }}
         presentationMode={presentationMode}
         onPresentationModeChange={setPresentationMode}
         buildArtifactCode={(type, id) => buildArtifactCode(type as ArtifactType, id)}
@@ -8082,11 +8154,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               ? activeSectionMeta.label.pl
               : activeSectionMeta.label.en
             : '';
-          // No current insight section is an additive user list (all are
-          // AI-generated analysis sections), so "New" has no per-section add
-          // handler to bind to — it stays disabled with an explanatory tooltip
-          // rather than inventing a backend (canon: disabled + tooltip allowed).
-          const canAddInSection = false;
           return (
             <div className="flex items-center gap-1 min-h-[36px] flex-wrap">
               {/* ── LEFT ZONE: content work ───────────────────────────────── */}
@@ -8136,12 +8203,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 key={s.id}
                                 type="button"
                                 onClick={() =>
-                                  setHiddenSectionIds((prev) => {
-                                    const next = new Set(prev);
-                                    if (next.has(s.id)) next.delete(s.id);
-                                    else next.add(s.id);
-                                    return next;
-                                  })
+                                  // SSOT = cardLayout; hidden state syncs down via effect.
+                                  hidden ? cardLayout.showCard(s.id) : cardLayout.hideCard(s.id)
                                 }
                                 className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800"
                               >
@@ -8180,7 +8243,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     <button
                       type="button"
                       onClick={() => {
-                        setHiddenSectionIds(new Set());
+                        cardLayout.resetToDefault();
                         setSectionsMenuOpen(false);
                       }}
                       className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800"
@@ -8192,24 +8255,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 )}
               </div>
 
-              {/* Slot 2 — New : contextual add in the active section.
-                  Read = ukryte: ręczne dodawanie treści to edycja, Podgląd ma
-                  być czysty do pokazania klientowi. */}
-              {!readMode && (
-                <ToolbarSubtleButton
-                  icon={<Plus size={14} />}
-                  disabled={!canAddInSection}
-                  title={
-                    canAddInSection
-                      ? undefined
-                      : isPolish
-                        ? 'Ta sekcja nie obsługuje ręcznego dodawania'
-                        : 'This section has no manual add action'
-                  }
-                >
-                  {isPolish ? 'Nowy' : 'New'}
-                </ToolbarSubtleButton>
-              )}
+              {/* Slot 2 — + Nowa karta ▾ : catalog of cards not yet on the
+                  artifact (wzorzec N §3.5). Klik → cardLayout.addCard →
+                  karta wraca do nav/canvas. Read = ukryte (podgląd czysty). */}
+              {!readMode && <AddCardMenu layout={cardLayout} isPolish={isPolish} />}
 
               {/* Slot 3 — Export ▾ : canon destinations only */}
               <div className="relative" ref={exportMenuRef}>
