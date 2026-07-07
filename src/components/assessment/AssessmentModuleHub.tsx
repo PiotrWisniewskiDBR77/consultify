@@ -71,6 +71,9 @@ const CMPracticeMap = React.lazy(() =>
 const DBR77LeanMap = React.lazy(() =>
   import('./maps/DBR77LeanMap').then((m) => ({ default: m.DBR77LeanMap }))
 );
+const DRDAssessmentMap = React.lazy(() =>
+  import('./maps/DRDAssessmentMap').then((m) => ({ default: m.DRDAssessmentMap }))
+);
 const SIRIAssessmentMap = React.lazy(() =>
   import('./maps/SIRIAssessmentMap').then((m) => ({ default: m.SIRIAssessmentMap }))
 );
@@ -882,6 +885,15 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
 
         const frameworkMap = (
           <React.Suspense fallback={<FallbackLoader />}>
+            {/* DRD Assessment Map (7-axis radar). The per-axis editor above
+                (AssessmentAxisWorkspace, framework === 'DRD' branch) is the
+                canonical DRD editing path; this radar view is a read-only
+                normalized profile, wired here for map-section parity with the
+                other frameworks. */}
+            {framework === 'DRD' && (
+              <DRDAssessmentMap readOnly showLegalNotice />
+            )}
+
             {/* SIRI Assessment Map */}
             {framework === 'SIRI' && (
               <SIRIAssessmentMap
