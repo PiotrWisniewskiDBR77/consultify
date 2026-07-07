@@ -120,6 +120,9 @@ export async function createTask(
         format: 'task',
         title,
         taskId,
+        // BUG2 — give the post-stream scorer the task's own scope, not the thin
+        // "Utworzyłem zadanie…" chat-confirmation.
+        scorerContent: `${title}\n\n${String(params?.description || '')}`.trim(),
       });
     } catch (emitErr) {
       logger.warn(

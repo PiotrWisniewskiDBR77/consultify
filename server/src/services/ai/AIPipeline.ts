@@ -367,9 +367,48 @@ export class AIPipeline {
                 ? ['create_task', 'create_decision']
                 : []),
             ]);
-            const defs = mcp
+            let defs = mcp
               .getToolDefinitions()
               .filter((d: { name: string }) => CHAT_CREATION_TOOLS.has(d.name));
+
+            // ── Teresa routing-N · BUG1 — deterministic pre-classification ──────
+            // Description-only steering is probabilistic: on RICH "stwórz
+            // inicjatywę: <200-word brief>" prompts the model drifts to
+            // generate_deliverable(type:'doc'). When the user's OWN words
+            // explicitly ask to create an OBJECT (inicjatywa/zadanie/decyzja),
+            // we REMOVE generate_deliverable for this turn so the model *cannot*
+            // fall back to a document — it can only call the matching object tool
+            // (which is present in defs) or answer in text. The rich brief then
+            // lands in the object's fields (problem/description), not a doc.
+            try {
+              const { classifyChatCreationIntent, INTENT_TO_TOOL } = await import(
+                './chatCreationIntent.js'
+              );
+              const lastUser = [...nonSystemMsgs]
+                .reverse()
+                .find((m) => m.role === 'user')?.content;
+              const intent = classifyChatCreationIntent(String(lastUser || ''));
+              if (intent) {
+                const forcedTool = INTENT_TO_TOOL[intent];
+                const hasForced = defs.some((d: { name: string }) => d.name === forcedTool);
+                if (hasForced) {
+                  const before = defs.length;
+                  defs = defs.filter(
+                    (d: { name: string }) => d.name !== 'generate_deliverable'
+                  );
+                  logger.info(
+                    `[AIPipeline] routing-N pre-classify intent=${intent} → forcing ${forcedTool}, dropped generate_deliverable (${before}→${defs.length} tools)`
+                  );
+                }
+              }
+            } catch (classifyErr: any) {
+              logger.debug(
+                `[AIPipeline] routing-N pre-classify skipped: ${String(
+                  classifyErr?.message || classifyErr
+                ).slice(0, 120)}`
+              );
+            }
+
             if (defs.length > 0) deliverableToolDefs = defs;
           } catch (e: any) {
             logger.warn(

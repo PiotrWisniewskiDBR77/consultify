@@ -285,6 +285,9 @@ export async function generateInitiative(
         format: 'initiative',
         title,
         initiativeId: id,
+        // BUG2 — scorer gets the initiative's own scope (title + problem brief),
+        // not the thin "Utworzyłem inicjatywę…" chat-confirmation.
+        scorerContent: `${title}\n\n${problem || ''}`.trim(),
       });
     } catch (emitErr: any) {
       logger.warn(

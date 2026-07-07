@@ -111,6 +111,8 @@ export async function createDecision(
         format: 'decision',
         title,
         decisionId: id,
+        // BUG2 — scorer gets the decision's own scope, not the confirmation line.
+        scorerContent: `${title}\n\n${String(params?.description || '')}`.trim(),
       });
     } catch (emitErr) {
       logger.warn(
