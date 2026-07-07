@@ -681,6 +681,26 @@ export async function createAttachment(
   return handleResponse(res, 'Failed to create attachment');
 }
 
+/** Upload a real file (multipart) as an attachment for a record+field */
+export async function uploadAttachment(
+  recordId: string,
+  fieldId: string,
+  file: File
+): Promise<any> {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/records/${recordId}/fields/${fieldId}/attachments`,
+    {
+      method: 'POST',
+      skipDefaultHeaders: true,
+      headers: { Authorization: getHeaders()['Authorization'] },
+      body: formData,
+    }
+  );
+  return handleResponse(res, 'Failed to upload attachment');
+}
+
 /** List attachments for a record, optionally filtered by field */
 export async function getAttachments(recordId: string, fieldId?: string): Promise<any[]> {
   const params = new URLSearchParams();
