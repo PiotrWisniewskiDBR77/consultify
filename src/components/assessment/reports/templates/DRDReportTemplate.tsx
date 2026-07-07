@@ -28,6 +28,8 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { buildDRDVisualizationData } from '../../../../services/drdVizAdapter';
+import { buildDRDConclusionModel } from '../../../../services/report/drdConclusion';
+import type { DRDAssessmentData, DRDAxisId } from '../../../../types';
 import type { AssessmentVisualizationData } from '../AssessmentReportVisualizations';
 import {
   DimensionBars,
@@ -35,6 +37,7 @@ import {
   GapHeatmap,
   ScoreCardsGrid,
 } from '../AssessmentReportVisualizations';
+import { ConclusionExecutiveSummary, ConclusionGapCards } from '../ConclusionSummary';
 import { MaturityPathwaySection } from '../MaturityPathwaySection';
 
 /**
@@ -101,6 +104,70 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
       .sort((a, b) => b.gap - a.gap)
       .slice(0, 5);
   }, [vizData.dimensions]);
+
+  // ---- WNIOSKOWA (conclusion layer) ----
+  // Reconstruct the typed DRDAssessmentData from the viz payload (axes 1..7 with
+  // per-axis current/target/maxLevel), then build the deterministic conclusion
+  // model (executive summary + top-3 gap cards). Mirrors SIRIReportTemplate.
+  const drdData = useMemo<DRDAssessmentData>(() => {
+    const axes = {} as DRDAssessmentData['axes'];
+    const nc: number[] = [];
+    const nt: number[] = [];
+    for (const d of vizData.dimensions) {
+      const axisId = Number(d.id) as DRDAxisId;
+      if (!axisId) continue;
+      const levelCount = d.maxLevel || 5;
+      const current = Math.round(d.current * 10) / 10;
+      const target = Math.round(d.target * 10) / 10;
+      const normalizedCurrent = levelCount > 0 ? Math.round((current / levelCount) * 100) : 0;
+      const normalizedTarget = levelCount > 0 ? Math.round((target / levelCount) * 100) : 0;
+      axes[axisId] = {
+        current,
+        target,
+        gap: Math.round(Math.max(0, target - current) * 10) / 10,
+        levelCount,
+        normalizedCurrent,
+        normalizedTarget,
+        areas: {},
+      };
+      if (current > 0) nc.push(normalizedCurrent);
+      if (current > 0 || target > 0) nt.push(normalizedTarget);
+    }
+    const mean = (xs: number[]) => (xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : 0);
+    return {
+      axes,
+      overallNormalized: mean(nc),
+      targetNormalized: mean(nt),
+      metadata: {
+        assessmentDate: new Date().toISOString().slice(0, 10),
+        version: '1.0',
+        source: 'manual',
+      },
+    };
+  }, [vizData.dimensions]);
+
+  const conclusion = useMemo(
+    () => buildDRDConclusionModel(drdData, isPolish ? 'pl' : 'en'),
+    [drdData, isPolish]
+  );
+
+  const execVM = {
+    headline: conclusion.executiveSummary.headline,
+    k1_state: conclusion.executiveSummary.k1_state,
+    k2_meaning: conclusion.executiveSummary.k2_meaning,
+    k3_threeGaps: conclusion.executiveSummary.k3_threeGaps,
+    k4_whatFirst: conclusion.executiveSummary.k4_whatFirst,
+    k5_effect: conclusion.executiveSummary.k5_effect,
+    confidence: conclusion.executiveSummary.confidence,
+  };
+  const gapCardVMs = conclusion.gapCards.map((c) => ({
+    title: c.axisName,
+    badge: `${c.current} → ${c.target} · ${isPolish ? 'luka' : 'gap'} ${c.gap}`,
+    whatIs: c.whatIs,
+    whatItMeans: c.whatItMeans,
+    whatToDo: c.whatToDo,
+    effect: c.effect,
+  }));
 
   // Maturity-pathway rows: below-target axes mapped to canon dimension ids so
   // getMaturityPathway() returns the DRD Canon N→N+1 recipe (not a fallback).
@@ -205,6 +272,31 @@ export const DRDReportTemplate: React.FC<DRDReportTemplateProps> = ({
           )}
         </p>
       </section>
+
+      {/* ====================================================== */}
+      {/* WNIOSKOWA — verdict (K1→K5) + top-3 gap cards           */}
+      {/* Deterministic, engine-grounded (mirrors SIRIReportTemplate). */}
+      {/* ====================================================== */}
+      <section className="mb-8">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <Target size={20} className="text-blue-600 dark:text-blue-400" />
+          {label('Werdykt i priorytety', 'Verdict & priorities')}
+        </h2>
+        <ConclusionExecutiveSummary vm={execVM} language={isPolish ? 'pl' : 'en'} />
+      </section>
+
+      {gapCardVMs.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+            <TrendingUp size={20} className="text-amber-600 dark:text-amber-400" />
+            {label(
+              'Kluczowe luki — co jest → co znaczy → co robić → efekt',
+              'Key gaps — what is → what it means → what to do → effect'
+            )}
+          </h2>
+          <ConclusionGapCards cards={gapCardVMs} language={isPolish ? 'pl' : 'en'} />
+        </section>
+      )}
 
       {/* ====================================================== */}
       {/* (b) MATURITY DASHBOARD                                  */}
