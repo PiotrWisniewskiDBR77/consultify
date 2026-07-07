@@ -11,6 +11,7 @@ import {
   BarChart3,
   BookOpen,
   Brain,
+  Check,
   CheckCircle2,
   CheckSquare,
   ChevronDown,
@@ -36,6 +37,7 @@ import {
   MessageSquare,
   Monitor,
   Network,
+  Pencil,
   Plus,
   Quote,
   Radio,
@@ -58,8 +60,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { TEXT_L1 } from '@/styles/typography';
-
 import { InitiativeGeneratorModal } from '@/components/Initiatives/Wizard/InitiativeGeneratorModal';
 import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode';
 import type { DeckCard } from '@/components/Presentations/wizard/types';
@@ -69,6 +69,8 @@ import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
 import {
   EvidenceBadge,
+  NModeCardBadge,
+  type NModeCardStatus,
   NModeSectionWrapper,
   ToolbarIconButton,
 } from '@/components/shared/NModeLayout';
@@ -119,6 +121,7 @@ import {
 } from '@/services/api/v8/interview';
 import { exportReportToPDF } from '@/services/pdf/pdfExport';
 import { useAppStore } from '@/store/useAppStore';
+import { TEXT_L1 } from '@/styles/typography';
 import { type ArtifactType, buildArtifactCode } from '@/utils/artifactLinks';
 import { getHandoffLandingPath } from '@/utils/initiativeLinks';
 
@@ -141,6 +144,54 @@ type InsightPromptType =
   | 'between_the_lines';
 
 type InsightStatus = 'generating' | 'completed' | 'failed' | 'draft' | 'in_review' | 'published';
+
+/**
+ * Mapowanie stanu artefaktu Insight (`InsightStatus`, whole-artifact) na model
+ * stanu karty wzorca N (`NModeCardStatus`). Wzorzec N §3.2.
+ *
+ *   generating → generating   (AI pisze — skeleton „Teresa pisze…")
+ *   failed     → error        (generacja padła)
+ *   draft      → ai-draft      (AI napisało, człowiek jeszcze nie zaakceptował)
+ *   in_review  → edited        (człowiek recenzuje/dotknął treści)
+ *   published  → done          (zatwierdzone)
+ *   completed  → ai-draft      (domyślnie: treść z AI, czeka na akceptację)
+ *
+ * Per-sekcja nakładamy jeszcze:
+ *   - `regenerating` (globalny) → generating (ta karta jest właśnie odświeżana)
+ *   - sekcja bez treści (`hasContent === false`) → empty
+ */
+const insightStatusToCardBaseState = (status: InsightStatus | undefined): NModeCardStatus => {
+  switch (status) {
+    case 'generating':
+      return 'generating';
+    case 'failed':
+      return 'error';
+    case 'draft':
+      return 'ai-draft';
+    case 'in_review':
+      return 'edited';
+    case 'published':
+      return 'done';
+    case 'completed':
+    default:
+      return 'ai-draft';
+  }
+};
+
+/**
+ * Rozwiązuje stan pojedynczej karty-sekcji Insightu: łączy stan whole-artifact
+ * z sygnałami per-sekcja (odświeżanie tej karty, obecność treści).
+ */
+const resolveInsightSectionCardState = (
+  status: InsightStatus | undefined,
+  opts: { hasContent: boolean; regenerating?: boolean }
+): NModeCardStatus => {
+  if (opts.regenerating) return 'generating';
+  if (status === 'generating') return 'generating';
+  if (status === 'failed') return 'error';
+  if (!opts.hasContent) return 'empty';
+  return insightStatusToCardBaseState(status);
+};
 
 type P10ConfidenceLevel = 'high' | 'medium' | 'low' | 'insufficient' | 'contradicted';
 
@@ -516,7 +567,11 @@ const STATUS_CONFIG: Record<
     color: 'bg-sky-500',
     textColor: 'text-primary-500',
   },
-  failed: { label: { en: 'Failed', pl: 'Błąd' }, color: 'bg-danger-500', textColor: 'text-danger-500' },
+  failed: {
+    label: { en: 'Failed', pl: 'Błąd' },
+    color: 'bg-danger-500',
+    textColor: 'text-danger-500',
+  },
 };
 
 // Colored-pill visual map for the Properties Strip STATUS field (parity with
@@ -724,6 +779,106 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
     cSpan: 2,
   },
 ];
+
+// ── AI-draft affordance na kartach Insightu (wzorzec N §3.3) ────────────────
+//
+// Insight renderuje własne nagłówki sekcji (bespoke, przez NModeSectionWrapper),
+// więc NIE możemy wpiąć całego `NModeCardState` (który dostarcza własny nagłówek).
+// Zamiast tego dokładamy cienki pasek stanu karty POD nagłówkiem sekcji:
+//   [badge stanu: AI-draft / Edytowane / Gotowe / Błąd]  ···  [✨Regeneruj ✎Edytuj ✓Zaakceptuj]
+// Badge = `NModeCardBadge` (c-info/c-success/c-danger — NIGDY crimson); akcent AI
+// (✨/regeneracja) = teal jak reszta kitu; fokus = c-focus. Wszystko theme-aware
+// przez tokeny c-*. Pasek akcji jest ukryty w trybie Read/Present (readOnly).
+interface InsightSectionCardHeaderProps {
+  state: NModeCardStatus;
+  isPolish: boolean;
+  readOnly?: boolean;
+  /** ✨ Regeneruj — odśwież tę sekcję z AI. */
+  onRegenerate?: () => void;
+  regenerating?: boolean;
+  /** ✎ Edytuj — otwórz edycję (dla Insightu: czat z kontekstem sekcji). */
+  onEdit?: () => void;
+  /** ✓ Zaakceptuj — oznacz sekcję jako zatwierdzoną (toggle completion). */
+  onAccept?: () => void;
+}
+
+const InsightSectionCardHeader: React.FC<InsightSectionCardHeaderProps> = ({
+  state,
+  isPolish,
+  readOnly = false,
+  onRegenerate,
+  regenerating = false,
+  onEdit,
+  onAccept,
+}) => {
+  // Pusta karta nie ma stanu do pokazania (empty badge = null) i nie ma treści
+  // do regeneracji/akceptacji — pasek nic by nie wnosił.
+  if (state === 'empty') return null;
+
+  const isDone = state === 'done';
+  const actionBase =
+    'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
+
+  return (
+    <div className="-mt-2 mb-2 flex items-center gap-2 flex-wrap">
+      <NModeCardBadge status={state} isPolish={isPolish} />
+      {!readOnly && (state === 'ai-draft' || state === 'edited' || state === 'done') && (
+        <div className="flex items-center gap-1 ml-auto">
+          {onRegenerate && (
+            <button
+              type="button"
+              onClick={onRegenerate}
+              disabled={regenerating}
+              title={isPolish ? 'Napisz sekcję od nowa z AI' : 'Regenerate this section with AI'}
+              className={`${actionBase} text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/25`}
+            >
+              {regenerating ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <RefreshCw size={12} />
+              )}
+              {isPolish ? 'Regeneruj' : 'Regenerate'}
+            </button>
+          )}
+          {onEdit && (
+            <button
+              type="button"
+              onClick={onEdit}
+              title={isPolish ? 'Edytuj tę sekcję' : 'Edit this section'}
+              className={`${actionBase} text-c-text-secondary hover:bg-c-surface-raised`}
+            >
+              <Pencil size={12} />
+              {isPolish ? 'Edytuj' : 'Edit'}
+            </button>
+          )}
+          {onAccept && (
+            <button
+              type="button"
+              onClick={onAccept}
+              title={
+                isDone
+                  ? isPolish
+                    ? 'Cofnij akceptację'
+                    : 'Un-accept'
+                  : isPolish
+                    ? 'Zaakceptuj tę sekcję'
+                    : 'Accept this section'
+              }
+              className={`${actionBase} ${
+                isDone
+                  ? 'text-c-success'
+                  : 'text-c-text-secondary hover:bg-c-success/10 hover:text-c-success'
+              }`}
+            >
+              {isDone ? <CheckCircle2 size={12} /> : <Check size={12} />}
+              {isPolish ? 'Zaakceptuj' : 'Accept'}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -1971,6 +2126,46 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     });
   };
 
+  // Pasek stanu karty AI-draft dla sekcji Insightu (wzorzec N §3.3). Wpina badge
+  // stanu (AI-draft/Edytowane/Gotowe/Błąd) + akcje ✨Regeneruj · ✎Edytuj ·
+  // ✓Zaakceptuj pod nagłówkiem sekcji. Stan liczony ze statusu artefaktu +
+  // sygnałów per-sekcja (odświeżanie, obecność treści, ręczna akceptacja).
+  //   • Edytuj → czat z kontekstem (Insight nie ma inline-edit sekcji)
+  //   • Zaakceptuj → toggle completion (już persystowany per sekcja)
+  //   • Regeneruj → whole-artifact regenerate (jedyny dostępny backend)
+  const renderSectionCardHeader = useCallback(
+    (sectionId: string, hasContent: boolean) => {
+      const accepted = !!sectionCompletions[sectionId];
+      const baseState = resolveInsightSectionCardState(insight?.status, {
+        hasContent,
+        regenerating: isRegenerating,
+      });
+      // Ręczna akceptacja sekcji ma pierwszeństwo nad stanem whole-artifact
+      // (człowiek zatwierdził tę konkretną kartę → „Gotowe").
+      const state: NModeCardStatus =
+        accepted && (baseState === 'ai-draft' || baseState === 'edited') ? 'done' : baseState;
+      return (
+        <InsightSectionCardHeader
+          state={state}
+          isPolish={!!isPolish}
+          onRegenerate={handleRegenerate}
+          regenerating={isRegenerating}
+          onEdit={handleOpenChat}
+          onAccept={() => handleToggleSectionComplete(sectionId)}
+        />
+      );
+    },
+    [
+      sectionCompletions,
+      insight?.status,
+      isRegenerating,
+      isPolish,
+      handleRegenerate,
+      handleOpenChat,
+      handleToggleSectionComplete,
+    ]
+  );
+
   const openSourceSessionInInterviewHub = useCallback(
     (session: SourceSession) => {
       try {
@@ -3096,7 +3291,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             },
             weak: {
               label: isPolish ? 'Słaby materiał decyzyjny' : 'Weak decision material',
-              className: 'border-danger-500/20 bg-danger-500/[0.08] text-danger-700 dark:text-danger-200',
+              className:
+                'border-danger-500/20 bg-danger-500/[0.08] text-danger-700 dark:text-danger-200',
             },
           }[truthReviewSummary.posture];
 
@@ -3126,9 +3322,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
                 <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
-                  <div className={TEXT_L1}>
-                    {isPolish ? 'Co można twierdzić' : 'Safe claims'}
-                  </div>
+                  <div className={TEXT_L1}>{isPolish ? 'Co można twierdzić' : 'Safe claims'}</div>
                   <div className="mt-3 space-y-2">
                     {truthReviewSummary.safeClaims.length > 0 ? (
                       truthReviewSummary.safeClaims.map((finding) => (
@@ -3197,9 +3391,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
                 <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
                   <div className="flex items-center justify-between gap-3">
-                    <div className={TEXT_L1}>
-                      {isPolish ? 'Sprzeczności' : 'Contradictions'}
-                    </div>
+                    <div className={TEXT_L1}>{isPolish ? 'Sprzeczności' : 'Contradictions'}</div>
                     <button
                       type="button"
                       onClick={() => setActiveNSection('signals')}
@@ -3242,6 +3434,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         case 'executive-summary':
           component = (
             <div className="space-y-4">
+              {renderSectionCardHeader('executive-summary', !!executiveSummary)}
               <Callout
                 variant="purple"
                 title={
@@ -3296,8 +3489,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
         case 'consulting-readout': {
           const contradictionSignals = v6Signals.filter((s) => s.type === 'contradiction');
+          const readoutHasContent =
+            contradictionSignals.length > 0 ||
+            issuesReadout.length > 0 ||
+            opportunityReadout.length > 0 ||
+            !!executiveSummary;
           component = (
             <div className="space-y-5">
+              {renderSectionCardHeader('consulting-readout', readoutHasContent)}
               {contradictionSignals.length > 0 && (
                 <Callout
                   variant="critical"
@@ -3590,6 +3789,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   : 'BLOCKED_P1: readiness blockers';
           component = (
             <div className="space-y-5">
+              {renderSectionCardHeader('report-pack', worksheets.length > 0)}
               <Callout
                 variant={reportPack?.degraded ? 'warning' : 'info'}
                 title={isPolish ? 'Pakiet raportu' : 'Report Pack'}
@@ -4527,6 +4727,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         case 'themes':
           component = (
             <div className="space-y-4">
+              {renderSectionCardHeader('themes', v6Themes.length > 0)}
               {v6MissingData.length > 0 && (
                 <Callout
                   variant="warning"
@@ -4797,6 +4998,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         case 'issues-risks':
           component = (
             <div className="space-y-4">
+              {renderSectionCardHeader('issues-risks', v6Issues.length > 0)}
               {v6Issues.some((i) => i.severity === 'high') &&
                 !v6Issues
                   .filter((i) => i.severity === 'high')
@@ -5054,6 +5256,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         case 'opportunities':
           component = (
             <div className="space-y-4">
+              {renderSectionCardHeader('opportunities', v6Opportunities.length > 0)}
               {v6Opportunities.length === 0 ? (
                 <EmptyStateInline
                   icon={TrendingUp}
@@ -5382,6 +5585,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             v6EvidenceMap.length === 0 || entriesWithNoPointers.length === 0;
           component = (
             <div className="space-y-4">
+              {renderSectionCardHeader('evidence-map', v6EvidenceMap.length > 0)}
               {!evidenceSatisfied && <EvidenceBadge />}
               <Callout variant="purple" title={isPolish ? 'Mapa dowodów' : 'Evidence Map'} compact>
                 {isPolish
@@ -6308,6 +6512,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 },
               }}
             >
+              {renderSectionCardHeader('consensus-divergence', hasMatrix)}
               <Callout
                 variant="info"
                 title={isPolish ? 'Czytaj zgodę i rozbieżności' : 'Read agreement and divergence'}
@@ -6452,9 +6657,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               )}
               {assumptionNarrative.length > 0 && (
                 <div className="space-y-2">
-                  <div className={TEXT_L1}>
-                    {isPolish ? 'Z narracji AI' : 'From AI narrative'}
-                  </div>
+                  <div className={TEXT_L1}>{isPolish ? 'Z narracji AI' : 'From AI narrative'}</div>
                   <ul className="list-disc list-inside space-y-1">
                     {assumptionNarrative.slice(0, 6).map((line, i) => (
                       <li key={i} className="text-sm text-slate-700 dark:text-slate-300">
@@ -6833,9 +7036,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     className={`rounded-2xl border bg-white/40 dark:bg-navy-900/20 px-3 py-3 space-y-2 ${col.tone}`}
                   >
                     <div className="flex items-center justify-between">
-                      <div className={TEXT_L1}>
-                        {col.title}
-                      </div>
+                      <div className={TEXT_L1}>{col.title}</div>
                       <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                         {col.items.length}
                       </span>
@@ -6964,10 +7165,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           cta: dRegenCta,
         }}
         quoteRequirementLevel="EACH_ITEM"
-        quotesSatisfied={
-          v6Themes.length > 0 && v6Themes.every((t) => t.evidence_refs.length > 0)
-        }
+        quotesSatisfied={v6Themes.length > 0 && v6Themes.every((t) => t.evidence_refs.length > 0)}
       >
+        {renderSectionCardHeader('key-findings', v6Themes.length > 0)}
         <ol className="space-y-2 list-decimal list-inside">
           {v6Themes.slice(0, 6).map((t, i) => (
             <li key={i} className={dCard}>
@@ -6993,6 +7193,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           cta: dRegenCta,
         }}
       >
+        {renderSectionCardHeader('recommendations', v6Opportunities.length + v6Issues.length > 0)}
         <ul className="space-y-2">
           {v6Opportunities.map((o, i) => (
             <li key={`o${i}`} className={dCard}>
