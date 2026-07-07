@@ -764,6 +764,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                 </p>
               </div>
               <div className="flex items-center gap-2">
+                {/* Secondary actions — neutral, lower visual weight than Compute */}
                 <ExportButton
                   analysisId={selectedModel.id}
                   analysisTitle={selectedModel.name}
@@ -776,24 +777,16 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                       `/economics?tab=valuation&createFrom=financial_model&sourceId=${selectedModel.id}`
                     )
                   }
-                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus transition-colors"
                 >
                   <TrendingUp size={14} />
                   {t('finance.model.valuateModel', 'Wycen model')}
-                </button>
-                <button
-                  onClick={handleCompute}
-                  disabled={computing}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-500 disabled:opacity-50"
-                >
-                  {computing ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
-                  {t('finance.model.compute', 'Compute')}
                 </button>
                 {selectedModel.status === 'draft' && (
                   <button
                     onClick={handleApprove}
                     disabled={loading || validationSummary.fail > 0}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-500 disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50 transition-colors"
                   >
                     <CheckCircle2 size={14} />
                     {t('finance.model.approve', 'Approve')}
@@ -804,6 +797,17 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                     <Lock size={14} /> {t('finance.model.approved', 'Approved')}
                   </span>
                 )}
+                {/* Primary action — Compute drives the model; highest visual weight.
+                    Neutral inverted style (bg-c-text/text-c-bg), matching the
+                    EditorShell TopBar primary-chip convention — NEVER crimson. */}
+                <button
+                  onClick={handleCompute}
+                  disabled={computing}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-c-text text-c-bg text-sm font-semibold rounded-xl hover:bg-c-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50 transition-colors"
+                >
+                  {computing ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
+                  {t('finance.model.compute', 'Compute')}
+                </button>
               </div>
             </div>
 
@@ -883,34 +887,38 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
               </div>
             )}
 
-            {/* Tabs */}
-            <div
-              role="tablist"
-              aria-label={t('finance.model.tabs', 'Model sections')}
-              className="px-6 pt-3 flex gap-1 border-b border-slate-200 dark:border-navy-700"
-            >
-              {TABS.map((tab) => (
-                <button
-                  key={tab.key}
-                  role="tab"
-                  aria-selected={activeTab === tab.key}
-                  aria-controls={`tabpanel-${tab.key}`}
-                  id={`tab-${tab.key}`}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
-                    activeTab === tab.key
-                      ? 'bg-white dark:bg-navy-800 text-blue-600 border border-b-0 border-slate-200 dark:border-navy-700'
-                      : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                  }`}
-                >
-                  {tab.icon} {tab.label}
-                  {tab.key === 'validation' && validationSummary.fail > 0 && (
-                    <span className="ml-1 px-1.5 py-0.5 bg-danger-100 text-danger-700 text-[10px] rounded-full">
-                      {validationSummary.fail}
-                    </span>
-                  )}
-                </button>
-              ))}
+            {/* Tabs — one segmented control (editor-shell-canon overflow/segmented
+                pattern), same activeTab/setActiveTab state + aria wiring as before. */}
+            <div className="px-6 pt-3 pb-3 border-b border-c-border-subtle">
+              <div
+                role="tablist"
+                aria-label={t('finance.model.tabs', 'Model sections')}
+                className="inline-flex items-center gap-0.5 rounded-lg bg-c-surface-raised p-0.5"
+              >
+                {TABS.map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === tab.key}
+                    aria-controls={`tabpanel-${tab.key}`}
+                    id={`tab-${tab.key}`}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                      activeTab === tab.key
+                        ? 'bg-c-surface text-c-text shadow-sm'
+                        : 'text-c-text-muted hover:text-c-text-secondary'
+                    }`}
+                  >
+                    {tab.icon} {tab.label}
+                    {tab.key === 'validation' && validationSummary.fail > 0 && (
+                      <span className="ml-1 px-1.5 py-0.5 bg-danger-100 text-danger-700 text-[10px] rounded-full">
+                        {validationSummary.fail}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Tab content */}
