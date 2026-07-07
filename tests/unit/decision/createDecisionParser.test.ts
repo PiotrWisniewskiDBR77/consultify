@@ -16,6 +16,8 @@ import { __test__ } from '../../../server/src/services/ai/tools/createDecision.t
 
 const {
   stripLeadingHeaderGlitch,
+  stripMetaLabels,
+  deriveFalsifier,
   splitConsequencesAndRecommendation,
   splitRecommendationAndRationale,
   extractAlternatives,
@@ -336,5 +338,94 @@ describe('matchArtifactBlock / looseJsonField', () => {
   it('looseJsonField wyłuskuje zbalansowaną tablicę', () => {
     const arr = looseJsonField('x "risks": [{"n":[1,2]},{"m":3}] y', 'risks');
     expect(arr).toEqual([{ n: [1, 2] }, { m: 3 }]);
+  });
+});
+
+// ── naprawa-r8Hygiene: strip meta/markdown + falsyfikator per-assumption ──────
+
+describe('stripMetaLabels (r8 DEFEKT #2 — meta/markdown przecieka do pól)', () => {
+  it('zdejmuje ECHO nagłówka karty "**Konsekwencje bezczynności + Rekomendacja**" z przodu', () => {
+    const out = stripMetaLabels(
+      '**Konsekwencje bezczynności + Rekomendacja**\n\nBrak decyzji spowoduje utratę pozycji.',
+    );
+    expect(out.startsWith('**')).toBe(false);
+    expect(out).toBe('Brak decyzji spowoduje utratę pozycji.');
+  });
+  it('odbolduje "**Horyzont realizacji: 45 dni**" zachowując wartość i spację', () => {
+    const out = stripMetaLabels('**Horyzont realizacji: 45 dni** — 30 dni na aplikacje.');
+    expect(out.includes('**')).toBe(false);
+    expect(out).toMatch(/45 dni\b/); // brak sklejenia "45 dni30"
+    expect(out).not.toMatch(/dni\d/);
+  });
+  it('nie rusza realnego pogrubienia merytorycznego', () => {
+    const out = stripMetaLabels('**Kluczowy wniosek: rośniemy 30% r/r** wg danych.');
+    expect(out).toContain('Kluczowy wniosek');
+  });
+});
+
+describe('splitConsequencesAndRecommendation (r8 — echo nagłówka nie psuje splitu)', () => {
+  it('mimo echa nagłówka wyłuskuje consequences BEZ "**" i realną rekomendację', () => {
+    const prose =
+      '**Konsekwencje bezczynności + Rekomendacja**\n\n' +
+      'Brak decyzji do końca kwartału obniży przychód (szacunek: 15%).\n\n' +
+      'Rekomendacja: wybrać opcję A jako najtańszą.\n' +
+      'Uzasadnienie: zachowuje kontrolę i najniższy koszt kapitału.';
+    const r = splitConsequencesAndRecommendation(prose);
+    expect(r.consequences.startsWith('**')).toBe(false);
+    expect(r.consequences).not.toMatch(/^Konsekwencje bezczynno/i);
+    expect(r.recommendation).toContain('opcję A');
+    expect(r.rationale).toContain('kontrolę');
+  });
+});
+
+describe('extractAssumptions (r8 DEFEKT #2/#3)', () => {
+  it('NIE wpuszcza osieroconego "**Horyzont realizacji: 45 dni**" jako założenia', () => {
+    const a = extractAssumptions(
+      'grant POIR dostępny przez 12 mies.\n**Horyzont realizacji: 45 dni** — 30 dni na aplikacje.',
+      'pl',
+    );
+    expect(a.some((x) => /horyzont realizacji/i.test(x.assumption))).toBe(false);
+    expect(a.some((x) => /dni\d/.test(x.assumption))).toBe(false); // brak śmiecia "45 dni30"
+  });
+  it('NIE przepisuje rekomendacji jako założenia', () => {
+    const a = extractAssumptions(
+      'Rekomenduję wybór opcji A z ROI 25%. Zakładając adopcję 40% w 6 mies.',
+      'pl',
+    );
+    expect(a.some((x) => /rekomend|wyb[óo]r opcji/i.test(x.assumption))).toBe(false);
+    expect(a.length).toBeGreaterThan(0); // realne założenie (adopcja/6 mies) zostaje
+  });
+  it('whatWouldChangeIt jest RÓŻNE per-assumption (koniec boilerplate 13/13)', () => {
+    const a = extractAssumptions(
+      'Zakładając koszt ~500k PLN. Grant POIR dostępny przez 12 mies. Adopcja 40% w rok.',
+      'pl',
+    );
+    const wwci = a.map((x) => x.whatWouldChangeIt);
+    expect(wwci.length).toBeGreaterThanOrEqual(2);
+    expect(new Set(wwci).size).toBe(wwci.length); // wszystkie różne
+  });
+});
+
+describe('deriveFalsifier (r8 DEFEKT #3 — próg wywiedziony z treści)', () => {
+  it('grant + miesiące → cut-off/odrzucona aplikacja', () => {
+    expect(deriveFalsifier('grant POIR dostępny przez 12 mies.', 'pl')).toMatch(
+      /cut-off|okno wypłaty|odrzucon/i,
+    );
+    expect(deriveFalsifier('grant POIR dostępny przez 12 mies.', 'pl')).toContain('12');
+  });
+  it('procent → odchylenie od wartości', () => {
+    expect(deriveFalsifier('IRR 25-40% oczekiwany', 'pl')).toMatch(/odbiegaj|25-40%/i);
+  });
+  it('kwota → koszt > budżet', () => {
+    expect(deriveFalsifier('koszt ~500k PLN', 'pl')).toMatch(/koszt.*przekracz|>20%/i);
+  });
+  it('bez twardej liczby → falsyfikator z treści (różny, nie boilerplate)', () => {
+    const f1 = deriveFalsifier('zakładając stabilne przepływy operacyjne', 'pl');
+    const f2 = deriveFalsifier('zakładając rosnący popyt rynkowy', 'pl');
+    expect(f1).not.toBe(f2);
+    expect(f1).toContain('przepływy');
+  });
+  it('EN wariant grantu', () => {
+    expect(deriveFalsifier('grant available for 12 months', 'en')).toMatch(/cut-off|rejected/i);
   });
 });

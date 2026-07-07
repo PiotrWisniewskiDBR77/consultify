@@ -95,6 +95,59 @@ function stripLeadingHeaderGlitch(v: string): string {
 }
 
 /**
+ * FIX (naprawa-r8Hygiene, DEFEKT #2) — meta/markdown przeciekał do WARTOŚCI pól.
+ * Sędzia BCG (demo 2026-07-07): `consequencesOfInaction` zaczynał się od echa nagłówka
+ * karty „**Konsekwencje bezczynności + Rekomendacja**", a jako `assumption` trafiał
+ * osierocony nagłówek „**Horyzont realizacji: 45 dni**". To META-etykiety generatora,
+ * nie treść. Ta funkcja USUWA z PRZODU wartości:
+ *   (a) zbalansowany pogrubiony nagłówek meta na starcie („**Nagłówek meta**\n\n") —
+ *       gdy jego treść to znana etykieta karty/horyzontu (nie merytoryka), zdejmujemy
+ *       i zachowujemy prozę PO nim;
+ *   (b) wiodące „Etykieta:" / „**Etykieta:**" dla znanych meta-fraz (Rekomendacja,
+ *       Konsekwencje bezczynności, Horyzont realizacji) gdy są SAMOTNYM nagłówkiem.
+ * Merytoryczna treść PO etykiecie jest ZACHOWANA. `stripLeadingHeaderGlitch` domyka
+ * resztki markerów.
+ */
+const META_LABEL =
+  /(?:konsekwencje\s+bezczynno[śs]ci(?:\s*\+\s*rekomendacja)?|rekomendacja|horyzont\s+realizacji|opis\s*\/?\s*kontekst|kontekst|uzasadnienie|consequences\s+of\s+inaction(?:\s*\+\s*recommendation)?|recommendation|realization\s+horizon|context|rationale)/i;
+
+function stripMetaLabels(v: string): string {
+  let s = String(v || '').trim();
+  let prev: string;
+  do {
+    prev = s;
+    // (a) Zbalansowany pogrubiony nagłówek meta na starcie: „**<META>>[…]**" + separator.
+    //     Zdejmij TYLKO gdy zawartość bolda zaczyna się od znanej meta-etykiety
+    //     (chroni realny bold merytoryczny typu „**Kluczowy wniosek: X**").
+    const boldHead = s.match(/^\*\*\s*([^*]+?)\s*\*\*\s*[:.\-–—]*\s*(?:\n+|\s+|$)/);
+    if (boldHead && META_LABEL.test(boldHead[1]) && /^\s*(?:konsekwencje|rekomendacja|horyzont|opis|kontekst|uzasadnienie|consequences|recommendation|realization|context|rationale)/i.test(boldHead[1].trim())) {
+      // „**Horyzont realizacji: 45 dni**" niesie DANE (45 dni) — nie zdejmuj gdy po
+      // dwukropku w BOLDZIE jest wartość merytoryczna; wtedy tylko odbolduj (usuń **).
+      const inner = boldHead[1].trim();
+      const hasInlineValue = /:/.test(inner) && inner.split(/:/).slice(1).join(':').trim().length > 0;
+      if (hasInlineValue) {
+        // Odbolduj nagłówek zachowując „Etykieta: wartość" jako zwykły tekst
+        // (spacja przed resztą, by nie skleić „45 dni" z następną frazą).
+        const rest = s.slice(boldHead[0].length);
+        s = (inner + (rest && !/^\s/.test(rest) ? ' ' : '') + rest).trim();
+      } else {
+        // Czysta etykieta bez wartości → zdejmij cały nagłówek, zostaw prozę po nim.
+        s = s.slice(boldHead[0].length).trim();
+      }
+      continue;
+    }
+    // (b) Wiodąca „Etykieta:" / „# Etykieta" (bez bolda) będąca SAMOTNYM meta-nagłówkiem
+    //     na starcie linii, po której idzie treść.
+    const plainHead = s.match(/^#{0,3}\s*([^\n:]{3,40})\s*[:.\-–—]\s*(?:\n+|\s+)/);
+    if (plainHead && META_LABEL.test(plainHead[1]) && plainHead[1].trim().split(/\s+/).length <= 4) {
+      s = s.slice(plainHead[0].length).trim();
+      continue;
+    }
+  } while (s !== prev);
+  return stripLeadingHeaderGlitch(s);
+}
+
+/**
  * Split the "Consequences of inaction + Recommendation" prose card into its two
  * answer-first parts. The card prompt (decisionService) asks for: (1) consequences
  * of inaction, (2) ONE recommendation, (3) horizon. We keep the whole prose as the
@@ -111,7 +164,11 @@ function splitConsequencesAndRecommendation(prose: string): {
   recommendation: string;
   rationale: string;
 } {
-  const text = String(prose || '').trim();
+  // FIX (naprawa-r8Hygiene, DEFEKT #2): najpierw zdejmij ECHO nagłówka karty
+  // „**Konsekwencje bezczynności + Rekomendacja**" ze STARTU — inaczej marker
+  // „Rekomendacja" trafiał w ten nagłówek (nie w prawdziwą sekcję rekomendacji)
+  // i cała proza lądowała w consequences z pustym recommendation.
+  const text = stripMetaLabels(String(prose || '').trim());
   if (!text) return { consequences: '', recommendation: '', rationale: '' };
   // Tolerant marker: optional markdown bold/heading around Rekomendacja/Recommendation.
   const markerMatch = text.match(
@@ -119,14 +176,14 @@ function splitConsequencesAndRecommendation(prose: string): {
   );
   if (markerMatch && markerMatch.index !== undefined) {
     const recStart = markerMatch.index + markerMatch[0].length;
-    const recBody = stripLeadingHeaderGlitch(text.slice(recStart).trim());
+    const recBody = stripMetaLabels(text.slice(recStart).trim());
     const consequences = text.slice(0, markerMatch.index).trim() || text;
     if (recBody) {
       const { recommendation, rationale } = splitRecommendationAndRationale(recBody);
-      return { consequences: stripLeadingHeaderGlitch(consequences), recommendation, rationale };
+      return { consequences: stripMetaLabels(consequences), recommendation, rationale };
     }
   }
-  return { consequences: stripLeadingHeaderGlitch(text), recommendation: '', rationale: '' };
+  return { consequences: stripMetaLabels(text), recommendation: '', rationale: '' };
 }
 
 /**
@@ -193,6 +250,74 @@ function splitRecommendationAndRationale(body: string): {
  * realne założenie → confidence z sygnału (szacunek/estimate → medium, inaczej high
  * gdy twarda liczba). Bez trafień → PUSTA tablica (lepiej puste niż atrapa).
  */
+/**
+ * FIX (naprawa-r8Hygiene, DEFEKT #3) — wyprowadza SPECYFICZNY próg falsyfikacji
+ * („co by to zmieniło") z TREŚCI konkretnego założenia, zamiast stałego boilerplate
+ * ×13. Sędzia BCG: identyczny string „Dane na żywo sprzeczne z tą liczbą…" we WSZYSTKICH
+ * 13/13 założeniach = brak falsyfikatora. Heurystyka deterministyczna po dominującym
+ * TYPIE skwantyfikowanej tezy: procent → odchylenie o próg; czas/miesiące → przekroczenie
+ * terminu; kwota → koszt > budżet; grant/dofinansowanie → cut-off/odmowa. Gdy założenie
+ * nie ma twardej liczby (sam marker „zakładając…") → falsyfikator z pierwszej frazy tezy,
+ * nadal RÓŻNY per-assumption (nie copy-paste).
+ */
+function deriveFalsifier(assumption: string, language: 'pl' | 'en'): string {
+  const a = assumption.toLowerCase();
+  const en = language === 'en';
+  // Wyciągnij pierwszą liczbę + jednostkę jako kotwicę progu.
+  const pct = a.match(/(\d[\d.,\s-]*)\s*%/);
+  const months = a.match(/(\d[\d.,\s-]*)\s*(mies|month|lat|rok|year)/);
+  const days = a.match(/(\d[\d.,\s-]*)\s*(dni|day)/);
+  const money = a.match(/(\d[\d.,\s-]*)\s*(mln|tys|k\b|pln|eur|usd|€|\$)/);
+  const grant = /\b(grant|dofinansow|poir|horyzont europa|horizon|dotacj|bezzwrotn)\b/.test(a);
+
+  const num = (m: RegExpMatchArray | null) => (m ? m[1].trim() : '');
+
+  if (grant && (months || days)) {
+    const horizon = num(months) || num(days);
+    const unit = months ? (en ? 'months' : 'mies.') : en ? 'days' : 'dni';
+    return en
+      ? `A grant cut-off or disbursement window longer than ${horizon} ${unit}, or a rejected application.`
+      : `Cut-off / okno wypłaty grantu dłuższe niż ${horizon} ${unit}, lub odrzucona aplikacja.`;
+  }
+  if (pct) {
+    const p = num(pct);
+    return en
+      ? `The realized figure deviating from ${p}% by more than a few points.`
+      : `Realna wartość odbiegająca od ${p}% o więcej niż kilka punktów.`;
+  }
+  if (months) {
+    const m = num(months);
+    const unit = /lat|rok|year/.test(a) ? (en ? 'years' : 'lat') : en ? 'months' : 'mies.';
+    return en
+      ? `The timeline slipping beyond ${m} ${unit}.`
+      : `Harmonogram przekraczający ${m} ${unit}.`;
+  }
+  if (days) {
+    const d = num(days);
+    return en
+      ? `The deadline slipping beyond ${d} days.`
+      : `Termin przekraczający ${d} dni.`;
+  }
+  if (money) {
+    const mv = num(money);
+    return en
+      ? `The actual cost exceeding the ~${mv} estimate by >20%.`
+      : `Realny koszt przekraczający szacunek ~${mv} o >20%.`;
+  }
+  // Brak twardej liczby — falsyfikator z pierwszej rzeczownikowej frazy tezy (≤8 słów),
+  // różny per-assumption (bierze KONKRETNĄ treść założenia).
+  const lead = assumption
+    .replace(/^\(\d+\)\s*/, '')
+    .split(/[,;:.]/)[0]
+    .trim()
+    .split(/\s+/)
+    .slice(0, 8)
+    .join(' ');
+  return en
+    ? `Evidence contradicting "${lead}".`
+    : `Dowód sprzeczny z tezą „${lead}".`;
+}
+
 function extractAssumptions(
   text: string,
   language: 'pl' | 'en',
@@ -208,10 +333,28 @@ function extractAssumptions(
   const ASSUMPTION_MARKER =
     /\b(zak[łl]adaj[ąa]c|przy za[łl]o[żz]eniu|za[łl]o[żz]enie|szacun|szacuj|assum|estimat|expect|provided that|o ile)\b/i;
   const QUANT = /\d\s*(%|x\b|mln|tys|mies|month|lat|rok|year|dni|day|k\b|pln|eur|usd|€|\$)/i;
+  // FIX (naprawa-r8Hygiene, DEFEKT #2/#3): NIE wpuszczaj META-nagłówka („Horyzont
+  // realizacji: …", „Konsekwencje bezczynności…") ani zdania-REKOMENDACJI („rekomenduję…",
+  // „wybór opcji A…", „rekomendacja:…") jako ZAŁOŻENIA. Sędzia BCG: 3/6 decyzji miało
+  // przepisaną rekomendację jako założenie + osierocony „**Horyzont realizacji: 45 dni**".
+  const META_OR_HORIZON =
+    /^(?:\*\*\s*)?(?:horyzont\s+realizacji|realization\s+horizon|konsekwencje\s+bezczynno[śs]ci|consequences\s+of\s+inaction|opis\s*\/?\s*kontekst|context)\b/i;
+  const RECOMMENDATION_SHAPE =
+    /\b(rekomenduj[eę]|rekomendacja|rekomendowa|wyb[óo]r\s+opcji|wybieram|recommend|i\s+recommend|the\s+recommendation)\b/i;
 
   const seen = new Set<string>();
   const out: Array<{ assumption: string; confidence: string; whatWouldChangeIt: string }> = [];
-  for (const part of rawParts) {
+  for (const rawPart of rawParts) {
+    // META-nagłówek („Horyzont realizacji…", „Konsekwencje bezczynności…") testuj na
+    // SUROWYM zdaniu (przed stripMetaLabels), bo strip mógłby odbolodwać go do „45 dni…"
+    // i przepuścić jako „założenie". Osierocony nagłówek karty NIGDY nie jest założeniem.
+    const rawTrim = stripLeadingHeaderGlitch(rawPart);
+    if (META_OR_HORIZON.test(rawTrim.replace(/^\*\*\s*/, ''))) continue;
+    // Zdejmij pozostałe META-etykiety także z pojedynczego zdania.
+    const part = stripMetaLabels(rawPart);
+    if (part.length < 12) continue;
+    if (META_OR_HORIZON.test(part)) continue; // meta-nagłówek, nie założenie
+    if (RECOMMENDATION_SHAPE.test(part)) continue; // rekomendacja ≠ założenie
     const hasMarker = ASSUMPTION_MARKER.test(part);
     const hasQuant = QUANT.test(part);
     if (!hasMarker && !hasQuant) continue; // ani sygnału, ani liczby → to nie założenie
@@ -223,10 +366,9 @@ function extractAssumptions(
     out.push({
       assumption: part,
       confidence: soft ? 'medium' : hasMarker ? 'medium' : 'high',
-      whatWouldChangeIt:
-        language === 'en'
-          ? 'Live data contradicting this figure, or a changed constraint/deadline.'
-          : 'Dane na żywo sprzeczne z tą liczbą lub zmiana ograniczenia/terminu.',
+      // FIX (DEFEKT #3): próg falsyfikacji WYWIEDZIONY z treści założenia (koniec
+      // boilerplate 13/13). Różny per-assumption; deterministyczny.
+      whatWouldChangeIt: deriveFalsifier(part, language),
     });
     if (out.length >= 5) break; // dość — nie zalewaj kartą
   }
@@ -643,6 +785,8 @@ export async function createDecision(
 // No DB/LLM — deterministic string parsing of realistic Claude output.
 export const __test__ = {
   stripLeadingHeaderGlitch,
+  stripMetaLabels,
+  deriveFalsifier,
   splitConsequencesAndRecommendation,
   splitRecommendationAndRationale,
   extractAlternatives,

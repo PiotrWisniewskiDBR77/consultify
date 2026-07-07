@@ -734,10 +734,17 @@ class DecisionService {
       language: language === 'pl' ? 'Polish' : 'English',
     });
 
+    // FIX (naprawa-r8Hygiene, DEFEKT #1) — reguła temporalna. r6a naprawił daty
+    // przeszłe tylko w initiativeGenerationService; createDecision → generateSection
+    // NIE miał żadnej reguły, więc karty decyzji recyklingowały przeszłe terminy
+    // ("Q1 2024", "15 stycznia 2024") w projekcie 2026+. Doklejamy TĘ SAMĄ regułę
+    // (dynamiczny rok z zegara serwera) do system-promptu decyzji, tak jak r6a robi
+    // to dla inicjatyw. Reguła nie starzeje się (rok liczony przy każdym wywołaniu).
+    const { buildTemporalRule } = await import('./initiativeGenerationService.js');
     const systemPrompt =
-      language === 'pl'
+      (language === 'pl'
         ? DECISION_DOCTRINE_SYSTEM_PROMPT_PL
-        : DECISION_DOCTRINE_SYSTEM_PROMPT_EN;
+        : DECISION_DOCTRINE_SYSTEM_PROMPT_EN) + buildTemporalRule(language === 'pl');
 
     const llm = await getDecisionLLM();
     if (!llm) {
