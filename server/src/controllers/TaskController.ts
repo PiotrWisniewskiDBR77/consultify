@@ -3583,6 +3583,8 @@ export class TaskController {
           isJson: result.isJson,
           model: result.model,
           tokensUsed: result.tokensUsed,
+          // Advisory-only (BCG §0 heuristics) — UI may show a soft warning; never blocks.
+          qualityFlags: (result as { qualityFlags?: unknown }).qualityFlags,
         });
       } catch (err: any) {
         const message = String(err?.message || 'AI generation failed');

@@ -18,6 +18,7 @@
  */
 
 import logger from '../utils/Logger.js';
+import { validateCardContent, type CardContentValidationResult } from './cardContentValidator.js';
 
 export type TaskSectionKey = 'strategy' | 'execution' | 'evidence' | 'dependencies';
 
@@ -45,6 +46,13 @@ export interface TaskSectionResult {
   isJson: boolean;
   model: string;
   tokensUsed: number;
+  /**
+   * Advisory-only quality flag from `cardContentValidator` (BCG §0 heuristics).
+   * `pass: false` means the output LOOKS weak (thin list, filler, bare number,
+   * etc.) — it is a signal for logging/review, never a reason to reject or
+   * retry automatically. Callers may surface this to the UI as a soft warning.
+   */
+  qualityFlags?: CardContentValidationResult;
 }
 
 // ── Doktryna BCG (§0) — SYSTEM prompt ────────────────────────────────────────
@@ -238,12 +246,29 @@ export async function generateTaskSection(
     }
   }
 
+  // Advisory quality flag (BCG §0 heuristics) — never blocks the response;
+  // logged so weak sections are visible without a human re-reading every card.
+  let qualityFlags: CardContentValidationResult | undefined;
+  try {
+    qualityFlags = validateCardContent(sectionKey, parsedContent ?? content);
+    if (!qualityFlags.pass) {
+      logger.warn('[TaskSectionGeneration] quality flags on generated section', {
+        sectionKey,
+        violations: qualityFlags.violations,
+      });
+    }
+  } catch (err) {
+    // Validator must never break generation — swallow and omit the flag.
+    logger.warn('[TaskSectionGeneration] cardContentValidator threw, skipping', { sectionKey });
+  }
+
   return {
     content,
     parsedContent,
     isJson: wantsJson,
     model,
     tokensUsed,
+    qualityFlags,
   };
 }
 
