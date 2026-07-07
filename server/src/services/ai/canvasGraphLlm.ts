@@ -358,7 +358,13 @@ async function callStructuredOnce<T>(
     schema,
     systemPrompt,
     messages: [{ role: 'user', content: userPrompt }],
-    maxTokens: 2048,
+    // ROOT CAUSE (naprawa-c5Tokens): a full 2-level mindmap (6 pillars × 2-3
+    // cel/ryzyko children + JSON structure) is ~2.5-3k tokens — at 2048 the JSON
+    // got TRUNCATED mid-array ⇒ parse fail ⇒ generateMindmapGraph returned null ⇒
+    // skeleton fallback. This is the live "intermittent flat mindmap" defect that
+    // 4 rounds of mock-based fixes missed (mock outputs were short and fit). The
+    // raw LLM output is correct; it just didn't fit. 4096 holds the largest graph.
+    maxTokens: 4096,
     temperature,
     cache: false,
     timeoutMs: LLM_TIMEOUT_MS,
