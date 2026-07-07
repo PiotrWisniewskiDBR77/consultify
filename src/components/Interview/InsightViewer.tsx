@@ -2126,46 +2126,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     });
   };
 
-  // Pasek stanu karty AI-draft dla sekcji Insightu (wzorzec N §3.3). Wpina badge
-  // stanu (AI-draft/Edytowane/Gotowe/Błąd) + akcje ✨Regeneruj · ✎Edytuj ·
-  // ✓Zaakceptuj pod nagłówkiem sekcji. Stan liczony ze statusu artefaktu +
-  // sygnałów per-sekcja (odświeżanie, obecność treści, ręczna akceptacja).
-  //   • Edytuj → czat z kontekstem (Insight nie ma inline-edit sekcji)
-  //   • Zaakceptuj → toggle completion (już persystowany per sekcja)
-  //   • Regeneruj → whole-artifact regenerate (jedyny dostępny backend)
-  const renderSectionCardHeader = useCallback(
-    (sectionId: string, hasContent: boolean) => {
-      const accepted = !!sectionCompletions[sectionId];
-      const baseState = resolveInsightSectionCardState(insight?.status, {
-        hasContent,
-        regenerating: isRegenerating,
-      });
-      // Ręczna akceptacja sekcji ma pierwszeństwo nad stanem whole-artifact
-      // (człowiek zatwierdził tę konkretną kartę → „Gotowe").
-      const state: NModeCardStatus =
-        accepted && (baseState === 'ai-draft' || baseState === 'edited') ? 'done' : baseState;
-      return (
-        <InsightSectionCardHeader
-          state={state}
-          isPolish={!!isPolish}
-          onRegenerate={handleRegenerate}
-          regenerating={isRegenerating}
-          onEdit={handleOpenChat}
-          onAccept={() => handleToggleSectionComplete(sectionId)}
-        />
-      );
-    },
-    [
-      sectionCompletions,
-      insight?.status,
-      isRegenerating,
-      isPolish,
-      handleRegenerate,
-      handleOpenChat,
-      handleToggleSectionComplete,
-    ]
-  );
-
   const openSourceSessionInInterviewHub = useCallback(
     (session: SourceSession) => {
       try {
@@ -2272,6 +2232,48 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       setIsRegenerating(false);
     }
   };
+
+  // Pasek stanu karty AI-draft dla sekcji Insightu (wzorzec N §3.3). Wpina badge
+  // stanu (AI-draft/Edytowane/Gotowe/Błąd) + akcje ✨Regeneruj · ✎Edytuj ·
+  // ✓Zaakceptuj pod nagłówkiem sekcji. Stan liczony ze statusu artefaktu +
+  // sygnałów per-sekcja (odświeżanie, obecność treści, ręczna akceptacja).
+  //   • Edytuj → czat z kontekstem (Insight nie ma inline-edit sekcji)
+  //   • Zaakceptuj → toggle completion (już persystowany per sekcja)
+  //   • Regeneruj → whole-artifact regenerate (jedyny dostępny backend)
+  // UWAGA: MUSI być zadeklarowany PO sectionCompletions/handleRegenerate/
+  // handleToggleSectionComplete — tablica deps czytana w renderze (TDZ fix).
+  const renderSectionCardHeader = useCallback(
+    (sectionId: string, hasContent: boolean) => {
+      const accepted = !!sectionCompletions[sectionId];
+      const baseState = resolveInsightSectionCardState(insight?.status, {
+        hasContent,
+        regenerating: isRegenerating,
+      });
+      // Ręczna akceptacja sekcji ma pierwszeństwo nad stanem whole-artifact
+      // (człowiek zatwierdził tę konkretną kartę → „Gotowe").
+      const state: NModeCardStatus =
+        accepted && (baseState === 'ai-draft' || baseState === 'edited') ? 'done' : baseState;
+      return (
+        <InsightSectionCardHeader
+          state={state}
+          isPolish={!!isPolish}
+          onRegenerate={handleRegenerate}
+          regenerating={isRegenerating}
+          onEdit={handleOpenChat}
+          onAccept={() => handleToggleSectionComplete(sectionId)}
+        />
+      );
+    },
+    [
+      sectionCompletions,
+      insight?.status,
+      isRegenerating,
+      isPolish,
+      handleRegenerate,
+      handleOpenChat,
+      handleToggleSectionComplete,
+    ]
+  );
 
   // ── Phase A4 — Fork ────────────────────────────────────────────────────────
   // Creates an independent copy of this insight (new id) and opens it. Reuses
