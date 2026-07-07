@@ -358,29 +358,16 @@ async function callStructuredOnce<T>(
     schema,
     systemPrompt,
     messages: [{ role: 'user', content: userPrompt }],
-    // ROOT CAUSE (naprawa-c5Tokens): a full 2-level mindmap (6 pillars × 2-3
-    // cel/ryzyko children + JSON structure) is ~2.5-3k tokens — at 2048 the JSON
-    // got TRUNCATED mid-array ⇒ parse fail ⇒ generateMindmapGraph returned null ⇒
-    // skeleton fallback. This is the live "intermittent flat mindmap" defect that
-    // 4 rounds of mock-based fixes missed (mock outputs were short and fit). The
-    // raw LLM output is correct; it just didn't fit. 4096 holds the largest graph.
+    // A full 2-level mindmap (6 pillars × 2-3 children) can approach ~2.5k tokens;
+    // 4096 gives comfortable headroom so a large graph is never truncated. (Note:
+    // the real "flat mindmap" root cause was the center anti-fragment gate, fixed
+    // in generateMindmapGraph — this is just a safety margin.)
     maxTokens: 4096,
     temperature,
     cache: false,
     timeoutMs: LLM_TIMEOUT_MS,
   });
   const obj = (result as { object?: unknown })?.object;
-  // TEMP DEBUG (c5): why does mindmap return object=null live? Log the real shape.
-  try {
-    const r = result as Record<string, unknown>;
-    logger.warn(
-      `[canvas-debug] structured result: keys=${Object.keys(r || {}).join(',')} hasObject=${!!obj} ` +
-        `contentSnip=${String(r?.content ?? r?.text ?? '').slice(0, 200)} ` +
-        `errSnip=${String((r as any)?.error ?? (r as any)?._error ?? '').slice(0, 200)}`
-    );
-  } catch {
-    /* debug best-effort */
-  }
   if (!obj) return null;
   // parse() throws on a shape mismatch — let it propagate to the retry wrapper so a
   // one-off malformed shape gets a second chance before we drop to the skeleton.
@@ -465,7 +452,15 @@ export async function generateMindmapGraph(
 
   // Anti-fragment gate: reject the whole LLM result if the center or a majority
   // of branch labels are fragments (fall back to skeleton).
-  if (isFragmentLabel(centerLabel, seedText)) return null;
+  // ROOT CAUSE (c5, found via live debug): the CENTER is the THESIS the user
+  // explicitly asked for (e.g. "3x revenue w 30-36 mies"), so it NATURALLY appears
+  // verbatim in the prompt. Passing seedText made isFragmentLabel's ≥3-word
+  // seed-slice rule flag the correct thesis as a "lifted fragment" ⇒ null ⇒
+  // skeleton — the real "flat mindmap" bug (NOT truncation/structured-mode). For
+  // the center we only reject empty / instruction-copy / lowercase-start (no
+  // seedText), so a thesis that echoes the request is allowed. Pillars/children
+  // keep the seed-slice check (there, lifting a clause IS a defect).
+  if (isFragmentLabel(centerLabel)) return null;
   if (acceptedRatio(pillarLabels, seedText) < 0.6) return null;
   if (pillarLabels.length === 0) return null;
 
