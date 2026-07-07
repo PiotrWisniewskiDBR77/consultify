@@ -84,18 +84,23 @@ function depsFor(gen: SectionGenerator, passThreshold = 90): GeneratorDeps {
 // ── proposeCards ─────────────────────────────────────────────────────────────
 
 describe('F1 — proposeCards (D2/D10)', () => {
-  it('zawsze zwraca 6 kart rdzenia (D10) w kanonicznej kolejności', () => {
+  it('zawsze zwraca 7 kart rdzenia (D10 + raid) w kanonicznej kolejności', () => {
     const r = proposeCards('general', 'manual');
+    // FIX 1a (naprawa-r4Struct): raid dołączone do rdzenia, aby key_risks zawsze
+    // się generowało i hydratowało (było puste na żywym demo).
     expect(r.core).toEqual([
       'problemDefinition',
       'targetState',
       'kpis',
       'scope',
       'control',
+      'raid',
       'financialImpact',
     ]);
-    expect(r.core).toHaveLength(6);
-    expect(CORE_SECTION_KEYS).toHaveLength(6);
+    expect(r.core).toHaveLength(7);
+    expect(CORE_SECTION_KEYS).toHaveLength(7);
+    // raid jest częścią rdzenia (weryfikacja wprost pod FIX 1a).
+    expect(CORE_SECTION_KEYS).toContain('raid');
   });
 
   it('proponuje opcjonalne karty zależne od typu (cost ≠ people)', () => {
@@ -143,13 +148,13 @@ describe('F1 — proposeCards (D2/D10)', () => {
 // ── generateFullInitiative — happy path ──────────────────────────────────────
 
 describe('F1 — generateFullInitiative (pełny fill)', () => {
-  it('wypełnia WSZYSTKIE 6 kart rdzenia z mock-serwisu', async () => {
+  it('wypełnia WSZYSTKIE 7 kart rdzenia z mock-serwisu', async () => {
     const { gen, calls } = makeGen();
     const r = await generateFullInitiative(depsFor(gen), { initiativeId: 'i-1', brief: 'brief' });
 
     expect(Object.keys(r.cards).sort()).toEqual([...CORE_SECTION_KEYS].sort());
-    expect(r.qualitySummary.total).toBe(6);
-    expect(r.qualitySummary.filled).toBe(6);
+    expect(r.qualitySummary.total).toBe(7);
+    expect(r.qualitySummary.filled).toBe(7);
     expect(r.qualitySummary.failed).toBe(0);
     expect(r.qualitySummary.healed).toBe(0);
     // every core key was generated exactly once (no heal on PASS)
@@ -277,17 +282,17 @@ describe('F1 — fail-soft', () => {
 
     expect(r.cards.kpis).toBeUndefined(); // failed card absent from cards map
     expect(r.qualitySummary.failed).toBe(1);
-    expect(r.qualitySummary.filled).toBe(5); // 6 core − 1 failed
+    expect(r.qualitySummary.filled).toBe(6); // 7 core − 1 failed
     const failedOutcome = r.outcomes.find((o) => o.key === 'kpis')!;
     expect(failedOutcome.failed).toBe(true);
     expect(failedOutcome.error).toContain('boom');
   });
 
-  it('wszystkie karty rzucają → puste cards, failed=6, brak wyjątku', async () => {
+  it('wszystkie karty rzucają → puste cards, failed=7, brak wyjątku', async () => {
     const { gen } = makeGen({ throwFor: () => true });
     const r = await generateFullInitiative(depsFor(gen), { initiativeId: 'i-11' });
     expect(Object.keys(r.cards)).toHaveLength(0);
-    expect(r.qualitySummary.failed).toBe(6);
+    expect(r.qualitySummary.failed).toBe(7);
     expect(r.qualitySummary.averageScore).toBeNull();
   });
 });

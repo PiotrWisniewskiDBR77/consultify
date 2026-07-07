@@ -730,7 +730,12 @@ export class DecisionController {
         requestedByName: decision.requested_by_name || undefined,
         createdAt: decision.created_at,
         dueDate: decision.deadline || undefined,
-        outcome: decision.decision_rationale || undefined,
+        // DEDUP (naprawa-r4Struct, sędzia BCG defekt #2): `rationale` carries the
+        // "why this option" text (decision_rationale). `outcome` = the expected
+        // RESULT once decided — a distinct concept with no dedicated column, so we
+        // do NOT copy decision_rationale into it (that produced rationale==outcome).
+        // Once a real outcome column exists it can be surfaced here.
+        outcome: undefined,
         rationale: decision.decision_rationale || undefined,
         decidedAt: decision.decided_at || undefined,
         workflowStatus: decision.workflow_status || 'proposed',
@@ -738,7 +743,9 @@ export class DecisionController {
         relatedObjectId,
         // --- Structured decision anatomy (answer-first, scoreable) ---
         alternatives: structured.alternatives,
-        riskImpact: structured.riskImpact,
+        // `risks` is the canonical risk/impact matrix the FE DecisionDetailView
+        // hydrates. The former `riskImpact` alias emitted the SAME array under a
+        // second key (defekt #2 dup) and no consumer reads it → dropped.
         risks: structured.risks,
         consequencesOfInaction: structured.consequencesOfInaction,
         recommendation: structured.recommendation,

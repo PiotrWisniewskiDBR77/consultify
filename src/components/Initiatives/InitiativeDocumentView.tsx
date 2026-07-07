@@ -2419,23 +2419,28 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         Api.get(`/decisions?relatedObjectId=${initiativeId}&relatedObjectType=initiative`)
           .then((ds: any) => {
             const raw = Array.isArray(ds) ? ds : ds?.decisions || [];
+            // Hide soft-deleted decisions (DELETE /api/decisions/:id sets status='cancelled').
+            // No archive view exists yet for this context — cancelled just drops out of
+            // the active list (tab badge, DecisionsSection table, etc.).
             setDecisions(
-              raw.map((d: any) => ({
-                id: d.id,
-                title: d.title || '',
-                description: d.description || undefined,
-                type: d.decisionType || d.type || 'GENERAL',
-                status: d.status || 'PENDING',
-                priority: d.priority || undefined,
-                decisionMakerId: d.decisionOwnerId || d.decisionMakerId || undefined,
-                ownerName: d.ownerName || undefined,
-                requestedByName: d.requestedByName || undefined,
-                dueDate: d.dueDate || undefined,
-                createdAt: d.createdAt || undefined,
-                isOverdue: d.isOverdue || false,
-                daysOverdue: d.daysOverdue || 0,
-                source: d.source || 'manual',
-              }))
+              raw
+                .filter((d: any) => String(d.status || '').toUpperCase() !== 'CANCELLED')
+                .map((d: any) => ({
+                  id: d.id,
+                  title: d.title || '',
+                  description: d.description || undefined,
+                  type: d.decisionType || d.type || 'GENERAL',
+                  status: d.status || 'PENDING',
+                  priority: d.priority || undefined,
+                  decisionMakerId: d.decisionOwnerId || d.decisionMakerId || undefined,
+                  ownerName: d.ownerName || undefined,
+                  requestedByName: d.requestedByName || undefined,
+                  dueDate: d.dueDate || undefined,
+                  createdAt: d.createdAt || undefined,
+                  isOverdue: d.isOverdue || false,
+                  daysOverdue: d.daysOverdue || 0,
+                  source: d.source || 'manual',
+                }))
             );
           })
           .catch(() => setDecisions([])),

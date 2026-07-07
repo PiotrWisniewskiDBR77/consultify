@@ -47,27 +47,199 @@ function levelToScore(level: unknown): number {
 }
 
 /**
+ * FIX (naprawa-r4Struct, sędzia BCG defekt #1) — czyści osierocone resztki
+ * nagłówka markdown z POCZĄTKU wartości pola tekstowego. Parser bloków „**Nagłówek**:
+ * treść" bywał tnie po „**Nagłówek**" i zostawiał wiodące `**:`, `**`, osierocony
+ * `:` albo pusty `**` — wartość zaczynała się od „**: Wybór Microsoft…". Strip robimy
+ * tylko z PRZODU i tylko sekwencji-śmieci, nie ruszając treści.
+ */
+function stripLeadingHeaderGlitch(v: string): string {
+  let s = String(v || '').trim();
+  // Iteracyjnie: pusty **…**, wiodące **:, **, osierocone : / - / – na starcie.
+  // Pętla bo mogą wystąpić w kombinacji ("**: - Wybór…").
+  let prev: string;
+  do {
+    prev = s;
+    s = s
+      .replace(/^\*\*\s*\*\*/, '') // pusty pogrubiony nagłówek "****"
+      .replace(/^\*\*\s*[:.\-–—]+/, '') // "**:" / "**." / "**-"
+      .replace(/^\*\*(?=\s|$)/, '') // osierocone "**"
+      .replace(/^[:.\-–—]+\s*/, '') // wiodący ": " / "- " / "– "
+      .trim();
+  } while (s !== prev);
+  return s;
+}
+
+/**
  * Split the "Consequences of inaction + Recommendation" prose card into its two
  * answer-first parts. The card prompt (decisionService) asks for: (1) consequences
  * of inaction, (2) ONE recommendation, (3) horizon. We keep the whole prose as the
  * consequences body (durable, surfaced) and lift the recommendation sentence into
  * its OWN field so the FE/judge see an answer-first recommendation, not buried text.
+ *
+ * ROBUST (naprawa-r4Struct): tolerant PL/EN markers, header-glitch strip, and a
+ * split of the recommendation body into an answer-first recommendation vs. the
+ * rationale (the "dlaczego ta opcja" part), so downstream fields are DIFFERENT
+ * (defekt #2 dedup) not the same blob copied 3×.
  */
 function splitConsequencesAndRecommendation(prose: string): {
   consequences: string;
   recommendation: string;
+  rationale: string;
 } {
   const text = String(prose || '').trim();
-  if (!text) return { consequences: '', recommendation: '' };
-  // Prefer an explicit "Rekomendacja"/"Recommendation" marker if present.
-  const markerMatch = text.match(/(?:^|\n)\s*(?:\*\*)?\s*(?:rekomendacja|recommendation)\b[:.\s-]*/i);
+  if (!text) return { consequences: '', recommendation: '', rationale: '' };
+  // Tolerant marker: optional markdown bold/heading around Rekomendacja/Recommendation.
+  const markerMatch = text.match(
+    /(?:^|\n)\s*#{0,3}\s*(?:\*\*)?\s*(?:rekomendacja|recommendation|rekomenduj[eę]?)\b\s*(?:\*\*)?\s*[:.\s\-–—]*/i,
+  );
   if (markerMatch && markerMatch.index !== undefined) {
     const recStart = markerMatch.index + markerMatch[0].length;
-    const recommendation = text.slice(recStart).trim();
+    const recBody = stripLeadingHeaderGlitch(text.slice(recStart).trim());
     const consequences = text.slice(0, markerMatch.index).trim() || text;
-    if (recommendation) return { consequences, recommendation };
+    if (recBody) {
+      const { recommendation, rationale } = splitRecommendationAndRationale(recBody);
+      return { consequences: stripLeadingHeaderGlitch(consequences), recommendation, rationale };
+    }
   }
-  return { consequences: text, recommendation: '' };
+  return { consequences: stripLeadingHeaderGlitch(text), recommendation: '', rationale: '' };
+}
+
+/**
+ * FIX (defekt #2 — dedup) — recommendation vs rationale są RÓŻNE pola:
+ *   recommendation = answer-first JEDNO zdanie „co zrobić";
+ *   rationale      = UZASADNIENIE „dlaczego ta opcja" (reszta akapitu / po markerze).
+ * Rozdzielamy po jawnym markerze uzasadnienia, a gdy go brak — pierwsze zdanie =
+ * rekomendacja, reszta = uzasadnienie (o ile jest co rozdzielić). Nigdy nie kopiujemy
+ * tej samej treści do obu.
+ */
+function splitRecommendationAndRationale(body: string): {
+  recommendation: string;
+  rationale: string;
+} {
+  const text = String(body || '').trim();
+  if (!text) return { recommendation: '', rationale: '' };
+  // Jawny marker uzasadnienia?
+  const why = text.match(
+    /(?:^|\n)\s*#{0,3}\s*(?:\*\*)?\s*(?:uzasadnienie|rationale|dlaczego|why|bo\b|poniewa[żz])\b\s*(?:\*\*)?\s*[:.\s\-–—]*/i,
+  );
+  if (why && why.index !== undefined && why.index > 0) {
+    const recommendation = stripLeadingHeaderGlitch(text.slice(0, why.index).trim());
+    const rationale = stripLeadingHeaderGlitch(text.slice(why.index + why[0].length).trim());
+    if (recommendation && rationale) return { recommendation, rationale };
+  }
+  // Brak markera: pierwsze zdanie = rekomendacja; reszta = uzasadnienie.
+  const sentence = text.match(/^.*?[.!?](?:\s|$)/s);
+  if (sentence) {
+    const recommendation = stripLeadingHeaderGlitch(sentence[0].trim());
+    const rationale = stripLeadingHeaderGlitch(text.slice(sentence[0].length).trim());
+    // Tylko gdy reszta NIETRYWIALNA (inaczej zostaw rationale pusty — bez duplikacji).
+    if (recommendation && rationale.length > 20) return { recommendation, rationale };
+    return { recommendation, rationale: '' };
+  }
+  return { recommendation: text, rationale: '' };
+}
+
+/**
+ * ROBUST alternatives extraction (naprawa-r4Struct PROBLEM #2). Order of trust:
+ *   1. clean parsedContent.alternatives (decisionService parsed the JSON section);
+ *   2. an ```artifact:comparison``` fenced block Teresa emits in free chat
+ *      ({options|alternatives|rows}), normalized to the alternatives shape;
+ *   3. any loose {"alternatives":[…]} JSON embedded in the raw prose.
+ * Returns null when nothing usable — never a placeholder.
+ */
+function extractAlternatives(parsed: any, rawContent: string): any[] | null {
+  const fromParsed = parsed?.alternatives;
+  if (Array.isArray(fromParsed) && fromParsed.length) return fromParsed;
+  // artifact:comparison fenced block.
+  const cmp = matchArtifactBlock(rawContent, 'comparison');
+  if (cmp) {
+    const opts = cmp.options ?? cmp.alternatives ?? cmp.rows ?? cmp.items;
+    if (Array.isArray(opts) && opts.length) {
+      return opts.map((o: any) => ({
+        title: o?.title ?? o?.name ?? o?.option ?? o?.label,
+        description: o?.description ?? o?.summary,
+        pros: Array.isArray(o?.pros) ? o.pros : [],
+        cons: Array.isArray(o?.cons) ? o.cons : [],
+        estimatedCostTime: o?.estimatedCostTime ?? o?.cost ?? o?.effort,
+      }));
+    }
+  }
+  const loose = looseJsonField(rawContent, 'alternatives');
+  if (Array.isArray(loose) && loose.length) return loose;
+  return null;
+}
+
+/**
+ * ROBUST risk extraction. Order: parsedContent.risks → ```artifact:matrix``` block
+ * ({items|risks} with x/y) → loose {"risks":[…]} JSON. Returns null when none.
+ */
+function extractRisks(parsed: any, rawContent: string): any[] | null {
+  const fromParsed = parsed?.risks;
+  if (Array.isArray(fromParsed) && fromParsed.length) return fromParsed;
+  const mtx = matchArtifactBlock(rawContent, 'matrix');
+  if (mtx) {
+    const items = mtx.risks ?? mtx.items ?? mtx.rows;
+    if (Array.isArray(items) && items.length) {
+      return items.map((it: any) => ({
+        title: it?.title ?? it?.name ?? it?.risk ?? it?.label,
+        probability: it?.probability ?? it?.likelihood,
+        impact: it?.impact,
+        category: it?.category,
+        mitigation: it?.mitigation,
+        contingency: it?.contingency,
+      }));
+    }
+  }
+  const loose = looseJsonField(rawContent, 'risks');
+  if (Array.isArray(loose) && loose.length) return loose;
+  return null;
+}
+
+/**
+ * Parse a ```artifact:<kind>:Title\n{JSON}``` fenced block (persona.ts format) and
+ * return the inner JSON object, or null. Tolerant of the optional :Title segment
+ * and of surrounding prose.
+ */
+function matchArtifactBlock(text: string, kind: 'comparison' | 'matrix'): any | null {
+  const s = String(text || '');
+  const re = new RegExp('```artifact:' + kind + '[^\\n]*\\n([\\s\\S]*?)```', 'i');
+  const m = s.match(re);
+  if (!m) return null;
+  try {
+    return JSON.parse(m[1].trim());
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Find a JSON array value for `key` embedded loosely in prose: matches
+ * `"key": [ … ]` (balanced-ish via the first '[' after the key to its matching
+ * ']') and JSON.parses it. Best-effort; returns null on any failure.
+ */
+function looseJsonField(text: string, key: string): any[] | null {
+  const s = String(text || '');
+  const keyIdx = s.search(new RegExp('"' + key + '"\\s*:\\s*\\['));
+  if (keyIdx < 0) return null;
+  const start = s.indexOf('[', keyIdx);
+  if (start < 0) return null;
+  let depth = 0;
+  for (let i = start; i < s.length; i++) {
+    if (s[i] === '[') depth++;
+    else if (s[i] === ']') {
+      depth--;
+      if (depth === 0) {
+        try {
+          const arr = JSON.parse(s.slice(start, i + 1));
+          return Array.isArray(arr) ? arr : null;
+        } catch {
+          return null;
+        }
+      }
+    }
+  }
+  return null;
 }
 
 /**
@@ -109,11 +281,15 @@ async function fillDecisionStructuralFields(
     let riskImpact: any[] | null = null;
     let consequences = '';
     let recommendation = '';
+    let rationale = '';
     const assumptions: Array<{ assumption: string; confidence: string; whatWouldChangeIt: string }> = [];
 
     if (altRes.status === 'fulfilled') {
-      const alts = (altRes.value.parsedContent as any)?.alternatives;
-      if (Array.isArray(alts) && alts.length) alternatives = alts;
+      // ROBUST: parsedContent → artifact:comparison → loose JSON (PROBLEM #2).
+      alternatives = extractAlternatives(
+        altRes.value.parsedContent as any,
+        String(altRes.value.content || ''),
+      );
     } else {
       logger.error(
         `[create_decision] alternatives fill failed id=${decisionId}: ${
@@ -123,8 +299,12 @@ async function fillDecisionStructuralFields(
     }
 
     if (riskRes.status === 'fulfilled') {
-      const risks = (riskRes.value.parsedContent as any)?.risks;
-      if (Array.isArray(risks) && risks.length) {
+      // ROBUST: parsedContent → artifact:matrix → loose JSON (PROBLEM #2).
+      const risks = extractRisks(
+        riskRes.value.parsedContent as any,
+        String(riskRes.value.content || ''),
+      );
+      if (risks && risks.length) {
         // BCG §2: risk/impact as a MATRIX with 1-5 scores, not just words.
         riskImpact = risks.map((r: any) => ({
           ...r,
@@ -144,6 +324,7 @@ async function fillDecisionStructuralFields(
       const split = splitConsequencesAndRecommendation(String(consRes.value.content || ''));
       consequences = split.consequences;
       recommendation = split.recommendation;
+      rationale = split.rationale;
     } else {
       logger.error(
         `[create_decision] consequences fill failed id=${decisionId}: ${
@@ -205,13 +386,18 @@ async function fillDecisionStructuralFields(
     if (recommendation) setCol('recommendation', recommendation, false);
     if (assumptions.length) setCol('assumptions', assumptions, true);
 
-    // decision_rationale is the legacy surfaced "outcome" column — keep it in sync
-    // with the recommendation for adopters that still read it (only if empty).
-    if (recommendation && cols.has('decision_rationale')) {
+    // DEDUP (defekt #2): decision_rationale surfaces as BOTH `rationale` and
+    // `outcome` in the API. Historically we copied `recommendation` here → all three
+    // fields showed the SAME text. Persist the DISTINCT `rationale` (the "dlaczego ta
+    // opcja" part) so rationale ≠ recommendation. Fallback to recommendation ONLY when
+    // no separate rationale was extractable (so the column is never left empty on a
+    // valid decision). Header-glitch stripped either way.
+    const rationaleForColumn = stripLeadingHeaderGlitch(rationale || recommendation);
+    if (rationaleForColumn && cols.has('decision_rationale')) {
       await queryHelpers.queryRun(
         `UPDATE decisions SET decision_rationale = ?
          WHERE id = ? AND organization_id = ? AND (decision_rationale IS NULL OR decision_rationale = '')`,
-        [recommendation, decisionId, orgId],
+        [rationaleForColumn, decisionId, orgId],
       );
     }
 
@@ -366,5 +552,17 @@ export async function createDecision(
     };
   }
 }
+
+// Pure parser/extractor helpers exported for unit tests (naprawa-r4Struct).
+// No DB/LLM — deterministic string parsing of realistic Claude output.
+export const __test__ = {
+  stripLeadingHeaderGlitch,
+  splitConsequencesAndRecommendation,
+  splitRecommendationAndRationale,
+  extractAlternatives,
+  extractRisks,
+  matchArtifactBlock,
+  looseJsonField,
+};
 
 export default { createDecision };

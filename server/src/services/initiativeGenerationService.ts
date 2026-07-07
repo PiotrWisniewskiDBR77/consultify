@@ -187,16 +187,19 @@ REGUŁY BEZWZGLĘDNE — złamanie którejkolwiek = FAIL (każda dotyczy KAŻDEJ
 2. ANSWER-FIRST (piramida Minto): pierwsze zdanie niesie konkluzję/tezę, potem dowód. Żadnej "rozgrzewki".
 3. MECE: listy wzajemnie wykluczające się i wyczerpujące; brak nakładania i luk. Tam gdzie wymagane ≥3 pozycje — lista 1-elementowa = FAIL.
 4. UGRUNTOWANIE (grounded): opieraj się TYLKO na dostępnych dowodach (kontekst/insight/dokument/sesja/dane); brak dowodu → jawnie oznacz jako hipotezę z limitem pewności. NIGDY nie zmyślaj faktów o firmie, danych ani liczb.
-5. KWANTYFIKACJA Z JAWNYM ZAŁOŻENIEM: każda liczba ma źródło LUB oznaczenie "szacunek: [założenie]" + horyzont (zł/%/dni/szt.). Nigdy gołe liczby. Brak danych → "do ustalenia" + gdzie/kiedy się je ustali.
+5. KWANTYFIKACJA Z JAWNYM ZAŁOŻENIEM: każda liczba ma źródło LUB oznaczenie "szacunek: [założenie]" + horyzont (zł/%/dni/szt.). Nigdy gołe liczby.
+   ⛔ ZAKAZ BEZWZGLĘDNY w CELACH, KPI, ROI, kryteriach sukcesu i kosztach: fraz "do ustalenia" / "TBD" / "do określenia" / "do uzupełnienia" jako WARTOŚCI celu/baseline/targetu. Cel bez liczby = niefalsyfikowalny = FAIL.
+   ZAMIAST tego ZAWSZE podaj SZACUNEK Z JAWNYM ZAŁOŻENIEM w formacie: "[liczba+jednostka] (szacunek; zakładając [konkretne założenie])". Przykład ZŁY: "redukcja o do ustalenia %". Przykład DOBRY: "redukcja o 15% (szacunek; zakładając eliminację 3 z 8 przestojów miesięcznie)".
+   Jeśli w kontekście są dane finansowe org (przychód/EBITDA/koszty) — ZAKOTWICZ szacunek jako % lub ułamek tej bazy (np. "oszczędność ~2% kosztów operacyjnych = [kwota] PLN rocznie") i wskaż tę bazę wprost. Baseline nieznany → oszacuj rozsądny punkt startowy z jawnym założeniem, NIE zostawiaj pustego.
 6. FALSYFIKOWALNOŚĆ: tezy w formie testowalnej ("Jeśli X, to Y (mierzalne), bo Z"), nie życzeniowej.
-7. UCZCIWA NIEPEWNOŚĆ: gdy brak danych — powiedz to wprost + co trzeba zbadać. Nie udawaj pewności; spory/braki nazwane, nie wygładzone.
+7. UCZCIWA NIEPEWNOŚĆ: gdy brak danych — oznacz jako szacunek z założeniem (NIE "do ustalenia"). Niepewność wyrażasz przez jawne założenie i horyzont, nie przez pustą wartość. Spory/braki nazwane, nie wygładzone.
 8. ZERO FILLERA: bez ozdobników typu "w dzisiejszym dynamicznym świecie". Każde zdanie niesie informację.
 
-ANTY-WZORCE = AUTOMATYCZNY FAIL: ogólniki bez liczb; listy 1-elementowe tam gdzie wymagane ≥3; "TBD"/"do ustalenia" bez planu uzupełnienia; przepisanie tytułu sekcji jako treści; placeholder udający treść.
+ANTY-WZORCE = AUTOMATYCZNY FAIL: ogólniki bez liczb; listy 1-elementowe tam gdzie wymagane ≥3; "TBD"/"do ustalenia"/"do określenia"/"do uzupełnienia" jako wartość celu/KPI/ROI (ZAWSZE zastąp szacunkiem z założeniem); przepisanie tytułu sekcji jako treści; placeholder udający treść.
 
 DOKTRYNA INICJATYWY (gdy dotyczy sekcji):
 - TEZA falsyfikowalna w formacie "Jeśli X, to Y (mierzalne) bo Z".
-- KPI: zawsze baseline→target + kierunek + jednostka; brak baseline → "do ustalenia" + powód. Min. 1 KPI primary.
+- KPI: zawsze baseline→target + kierunek + jednostka. Brak baseline → OSZACUJ punkt startowy z jawnym założeniem (np. baseline:"~40h/mies. (szacunek; zakładając X)"), NIGDY baseline:"do ustalenia". Target ZAWSZE liczbowy. Min. 1 KPI primary.
 - RAID: min. 2×RISK + 1×ASSUMPTION + 1×DEPENDENCY; każdy z probability+impact+mitigation_plan.
 - scope_out: MECE — przynajmniej jedna pozycja odwołuje się do innej inicjatywy ("→ N…").
 - kill_criteria: konkretny warunek STOP, min. 2.
@@ -214,16 +217,19 @@ ABSOLUTE RULES — breaking any = FAIL (apply to EVERY field):
 2. ANSWER-FIRST (Minto pyramid): the first sentence carries the conclusion/thesis, then the proof. No "warm-up".
 3. MECE: mutually exclusive, collectively exhaustive lists; no overlaps, no gaps. Where ≥3 items are required, a 1-item list = FAIL.
 4. GROUNDING: rely ONLY on available evidence (context/insight/document/session/data); no evidence → explicitly mark as a hypothesis with a confidence limit. NEVER fabricate company facts, data, or numbers.
-5. QUANTIFICATION WITH EXPLICIT ASSUMPTION: every number cites a source OR is tagged "estimate: [assumption]" + horizon (currency/%/days/units). Never bare numbers. Missing data → "to be determined" + where/when.
+5. QUANTIFICATION WITH EXPLICIT ASSUMPTION: every number cites a source OR is tagged "estimate: [assumption]" + horizon (currency/%/days/units). Never bare numbers.
+   ⛔ HARD BAN in GOALS, KPIs, ROI, success criteria and costs: the phrases "to be determined" / "TBD" / "to be defined" as the VALUE of a goal/baseline/target. A goal without a number = non-falsifiable = FAIL.
+   INSTEAD always give an ESTIMATE WITH AN EXPLICIT ASSUMPTION in the form: "[number+unit] (estimate; assuming [concrete assumption])". BAD: "reduce by TBD %". GOOD: "reduce by 15% (estimate; assuming elimination of 3 of 8 monthly outages)".
+   If org financial data (revenue/EBITDA/costs) is in context — ANCHOR the estimate as a % or fraction of that base and state the base explicitly. Unknown baseline → estimate a reasonable starting point with an explicit assumption; never leave it empty.
 6. FALSIFIABILITY: theses in testable form ("If X, then Y (measurable), because Z"), not wishful.
-7. HONEST UNCERTAINTY: when data is missing, say so + what must be investigated. Don't fake certainty; disputes/gaps named, not smoothed.
+7. HONEST UNCERTAINTY: when data is missing, mark it as an estimate with an assumption (NOT "to be determined"). Express uncertainty via an explicit assumption + horizon, not an empty value. Disputes/gaps named, not smoothed.
 8. ZERO FILLER: no ornaments like "in today's dynamic world". Every sentence carries information.
 
-ANTI-PATTERNS = AUTOMATIC FAIL: generalities without numbers; 1-item lists where ≥3 are required; "TBD" without a fill-in plan; restating the section title as content; filler posing as content.
+ANTI-PATTERNS = AUTOMATIC FAIL: generalities without numbers; 1-item lists where ≥3 are required; "TBD"/"to be determined" as a goal/KPI/ROI value (always replace with an estimate-plus-assumption); restating the section title as content; filler posing as content.
 
 INITIATIVE DOCTRINE (where the section applies):
 - Falsifiable HYPOTHESIS in the form "If X, then Y (measurable) because Z".
-- KPI: always baseline→target + direction + unit; missing baseline → "to be determined" + reason. At least 1 primary KPI.
+- KPI: always baseline→target + direction + unit. Missing baseline → ESTIMATE a starting point with an explicit assumption (e.g. baseline:"~40h/mo (estimate; assuming X)"), NEVER baseline:"to be determined". Target always numeric. At least 1 primary KPI.
 - RAID: min 2×RISK + 1×ASSUMPTION + 1×DEPENDENCY; each with probability+impact+mitigation_plan.
 - scope_out: MECE — at least one item references another initiative.
 - kill_criteria: a concrete STOP condition, min 2.
@@ -247,7 +253,7 @@ Oceniasz JEDNĄ sekcję karty inicjatywy. Domyślnie szukasz powodów do FAIL, n
 
 NAJPIERW uruchom walidatory §B3 właściwe dla tej sekcji (każdy PASS/FAIL):
 - hypothesis_format: teza pasuje do "Jeśli X to Y (bo|ponieważ) Z" z mierzalnym Y;
-- kpi_baseline_target: ≥2 KPI, ≥1 primary, każdy baseline→target + kierunek + jednostka (brak baseline → "do ustalenia" + powód);
+- kpi_baseline_target: ≥2 KPI, ≥1 primary, każdy baseline→target + kierunek + jednostka. FAIL jeśli baseline LUB target = "do ustalenia"/"TBD"/"do określenia" (musi być liczbowy szacunek z założeniem);
 - raid_mix: ≥2 RISK + ≥1 ASSUMPTION + ≥1 DEPENDENCY, każde z probability+impact+mitigation;
 - scope_out_mece: ≥1 pozycja scope_out odwołuje się do INNEJ inicjatywy;
 - kill_count: ≥2 konkretne warunki STOP;
@@ -268,7 +274,7 @@ You assess ONE section of an initiative card. By default you look for reasons to
 
 FIRST run the §B3 validators relevant to this section (each PASS/FAIL):
 - hypothesis_format: "If X then Y (because) Z" with a measurable Y;
-- kpi_baseline_target: ≥2 KPI, ≥1 primary, each baseline→target + direction + unit (missing baseline → "to be determined" + reason);
+- kpi_baseline_target: ≥2 KPI, ≥1 primary, each baseline→target + direction + unit. FAIL if baseline OR target = "to be determined"/"TBD" (must be a numeric estimate with an assumption);
 - raid_mix: ≥2 RISK + ≥1 ASSUMPTION + ≥1 DEPENDENCY, each with probability+impact+mitigation;
 - scope_out_mece: ≥1 scope_out item references ANOTHER initiative;
 - kill_count: ≥2 concrete STOP conditions;
@@ -289,7 +295,7 @@ Return ONLY valid JSON (no markdown), per the contract:
  * markers, obvious EN-prose, placeholder/"do ustalenia" honesty) so unit tests can
  * assert behaviour without a model. NEVER claims PASS on thin content.
  */
-function heuristicReview(sectionKey: string, content: string): SectionReviewResult {
+export function heuristicReview(sectionKey: string, content: string): SectionReviewResult {
   const text = String(content || '').trim();
   const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
   const failedValidators: string[] = [];
@@ -324,12 +330,34 @@ function heuristicReview(sectionKey: string, content: string): SectionReviewResu
     score -= 30;
   }
 
+  // "do ustalenia"/"do określenia"/"do uzupełnienia" jako WARTOŚĆ celu/KPI/ROI =
+  // niefalsyfikowalny cel (defekt sędziego BCG #1). Doktryna wymaga szacunku z
+  // założeniem — nie pustej frazy. Karzemy je jak placeholder w sekcjach celów.
+  const unquantifiedGoalRe = /\bdo ustalenia\b|\bdo określenia\b|\bdo uzupełnienia\b|\bto be determined\b/i;
+  const isGoalSection =
+    sectionKey === 'kpis' ||
+    sectionKey === 'kpi' ||
+    sectionKey === 'target-state' ||
+    sectionKey === 'targetState' ||
+    sectionKey === 'financial-analysis' ||
+    sectionKey === 'financial-impact' ||
+    sectionKey === 'financialAnalysis' ||
+    sectionKey === 'financialImpact';
+  if (isGoalSection && unquantifiedGoalRe.test(text)) {
+    failedValidators.push('quantified_goal');
+    qualityGaps.push('Cel/KPI/ROI z frazą „do ustalenia" zamiast liczbowego szacunku — niefalsyfikowalny.');
+    fixes.push('Zastąp „do ustalenia" szacunkiem z jawnym założeniem, np. „redukcja o 15% (szacunek; zakładając X)".');
+    score -= 30;
+  }
+
   // Section-specific structural checks (cheap, deterministic).
   if (sectionKey === 'kpis' || sectionKey === 'kpi') {
-    if (!/baseline|do ustalenia|to be determined/i.test(text)) {
+    // A quantified KPI section carries an explicit baseline→target with numbers.
+    // Presence of the escape phrase is NO LONGER a PASS signal (see above).
+    if (!/baseline/i.test(text) || !/\d/.test(text)) {
       failedValidators.push('kpi_baseline_target');
-      qualityGaps.push('Brak baseline→target lub adnotacji „do ustalenia" w KPI.');
-      fixes.push('Dodaj baseline→target + kierunek + jednostkę dla każdego KPI.');
+      qualityGaps.push('Brak liczbowego baseline→target w KPI.');
+      fixes.push('Dodaj liczbowy baseline→target + kierunek + jednostkę dla każdego KPI.');
       score -= 20;
     }
   }
@@ -371,13 +399,13 @@ function heuristicReview(sectionKey: string, content: string): SectionReviewResu
  */
 const SECTION_FORMULA_GUIDANCE: Record<string, string> = {
   overview: `WYMÓG FORMUŁY (executive summary): 3–5 zdań / 60–130 słów. Answer-first: pierwsze zdanie = konkluzja (czym jest inicjatywa + jaki efekt). Dodaj "so-what" i poziom pewności. Konkret, bez frazesów.`,
-  problemDefinition: `WYMÓG FORMUŁY (problem): przyczyny ŹRÓDŁOWE (nie objawy), ugruntowane w dowodach z kontekstu. symptom = obserwowalne objawy; rootCause = analiza przyczyny źródłowej; costOfInaction = skwantyfikowany koszt zaniechania (kwota/%/dni + założenie). Bez zmyślania liczb — brak danych → "do ustalenia".`,
-  targetState: `WYMÓG FORMUŁY: deliverables ≥4, konkretne i rzeczownikowe; successCriteria ≥4, MIERZALNE/obserwowalne i spójne z KPI. targetDescription answer-first.`,
+  problemDefinition: `WYMÓG FORMUŁY (problem): przyczyny ŹRÓDŁOWE (nie objawy), ugruntowane w dowodach z kontekstu. symptom = obserwowalne objawy; rootCause = analiza przyczyny źródłowej; costOfInaction = skwantyfikowany koszt zaniechania (kwota/%/dni + JAWNE ZAŁOŻENIE). ⛔ costOfInaction NIGDY "do ustalenia" — podaj szacunek liczbowy z założeniem (zakotwicz w danych finansowych org, jeśli są).`,
+  targetState: `WYMÓG FORMUŁY: deliverables ≥4, konkretne i rzeczownikowe; successCriteria ≥4, MIERZALNE (każde z liczbą+jednostką+kierunkiem) i spójne z KPI. ⛔ ZAKAZ "do ustalenia"/"TBD" w successCriteria — każde kryterium ma liczbowy cel z jawnym założeniem (np. "skrócenie cyklu o 20% (szacunek; zakładając X)"). targetDescription answer-first.`,
   scope: `WYMÓG FORMUŁY: inScope ≥3 jednoznaczne; outOfScope ≥3 MECE — przynajmniej jedna pozycja odwołuje się do INNEJ inicjatywy; killCriteria ≥2 konkretne warunki STOP (np. "jeśli po 3 mies. baseline nie drgnie → zatrzymaj").`,
-  kpis: `WYMÓG FORMUŁY: ≥2 KPI, ≥1 primary. KAŻDY KPI: baseline→target + kierunek (wzrost/spadek) + jednostka. Brak baseline → baseline:"do ustalenia" + powód w opisie. Cele MUSZĄ mieć jednostkę. Bez zmyślania baseline.`,
+  kpis: `WYMÓG FORMUŁY: ≥2 KPI, ≥1 primary. KAŻDY KPI: baseline→target + kierunek (wzrost/spadek) + jednostka. ⛔ ZAKAZ baseline:"do ustalenia" oraz target:"do ustalenia"/"redukcja o do ustalenia %". Brak twardego baseline → OSZACUJ punkt startowy z jawnym założeniem w polu baseline (np. "~40h/mies. (szacunek; zakładając 8 przestojów × 5h)") i target liczbowo. Cele i baseline ZAWSZE liczbowe z jednostką.`,
   raid: `WYMÓG FORMUŁY: min 2×RISK + 1×ASSUMPTION + 1×DEPENDENCY. Każde RISK ma probability ORAZ impact ORAZ mitigation (+contingency). Każdy element ma proposedAction z konkretem. Bez generycznych placeholderów — wszystko ugruntowane w kontekście inicjatywy.`,
-  financialAnalysis: `WYMÓG FORMUŁY (sizing): podaj rząd wielkości + JAWNE ZAŁOŻENIE + horyzont oraz ROI (krotność lub %) z logiką. Enabler → wartość pośrednia + proxy. Oznacz jako szacunki AI do walidacji. Bez "przyniesie miliony" bez założeń.`,
-  financialImpact: `WYMÓG FORMUŁY: revenueImpact/costSavings z rzędem wielkości + założeniem; benefitsRealization z horyzontem (kiedy i jak korzyści się zmaterializują).`,
+  financialAnalysis: `WYMÓG FORMUŁY (sizing): podaj rząd wielkości + JAWNE ZAŁOŻENIE + horyzont oraz ROI (krotność lub %) z logiką. Enabler → wartość pośrednia + proxy. Oznacz jako szacunki AI do walidacji. ⛔ ZAKAZ "do ustalenia"/"do określenia" w kwotach i ROI — zawsze liczbowy szacunek z założeniem (zakotwicz w danych finansowych org, jeśli są). Bez "przyniesie miliony" bez założeń.`,
+  financialImpact: `WYMÓG FORMUŁY: revenueImpact/costSavings z rzędem wielkości + JAWNYM ZAŁOŻENIEM; benefitsRealization z horyzontem (kiedy i jak korzyści się zmaterializują). ⛔ ZAKAZ "do ustalenia"/"do określenia PLN"/"o do ustalenia %" — KAŻDA kwota/ROI to szacunek liczbowy z założeniem. Jeśli dane finansowe org są w kontekście, ZAKOTWICZ szacunek jako % przychodu/kosztów/EBITDA i wskaż tę bazę.`,
   pilot: `WYMÓG FORMUŁY: hypotheses jako falsyfikowalne ("Jeśli X to Y bo Z"); successCriteria i failureCriteria MIERZALNE; suggestedScope konkretny.`,
   tasks: `WYMÓG FORMUŁY: zadania fazowane i konkretne; powiązane z deliverables i kamieniami milowymi inicjatywy.`,
   decisions: `WYMÓG FORMUŁY: decyzje krytyczne dla bramki/postępu, z jasnym uzasadnieniem "dlaczego ważne" i pilnością.`,
@@ -454,10 +482,11 @@ Context:
 Generate a structured JSON response with:
 {
   "kpis": [
-    { "name": "KPI name", "unit": "unit of measure", "baseline": "current value", "target": "target value" }
+    { "name": "KPI name", "unit": "unit of measure", "baseline": "numeric current value or estimate with assumption", "target": "numeric target value" }
   ]
 }
 Provide 2-4 KPIs that are measurable conditions of success, not tasks.
+Every baseline and target MUST be a number with a unit. If the real baseline is unknown, ESTIMATE a starting point and state the assumption inline (e.g. "~40h/mo (estimate; assuming X)"). NEVER write "to be determined"/"TBD"/"do ustalenia" as a baseline or target.
 Language: {{language}}
 Return valid JSON only.`,
   scope: `You are a strategic consultant. Define the scope boundaries for this initiative.
@@ -499,13 +528,36 @@ Context:
 - Description: {{summary}}
 - KPIs: {{kpis}}
 
-Provide P&L impact estimates as JSON:
+Provide P&L impact estimates as JSON. Where you can, put a NUMBER + unit for ROI and budget so they are machine-readable (e.g. "expectedRoi": "285%", "estimatedBudget": "1.2M PLN"):
 {
-  "revenueImpact": "Expected revenue impact description",
-  "costSavings": "Expected cost savings description",
-  "benefitsRealization": "How and when benefits will be realized"
+  "revenueImpact": "Numeric revenue impact estimate with an explicit assumption (currency + horizon)",
+  "costSavings": "Numeric cost-savings estimate with an explicit assumption (currency + horizon)",
+  "benefitsRealization": "How and when benefits will be realized (include payback horizon if known)",
+  "expectedRoi": "ROI as a number + unit if estimable, else empty",
+  "estimatedBudget": "Total budget as a number + unit if estimable, else empty"
 }
+Every amount MUST be a number with an assumption (e.g. "~120k PLN/yr (estimate; assuming 2% of operating cost)"). If org financials are available, anchor to them. NEVER write "to be determined"/"TBD"/"do ustalenia" as an amount.
+Language: {{language}}
+Return valid JSON only.`,
+  // FIX 1a (naprawa-r4Struct): raid is now a CORE section (see
+  // initiativeGeneratorBrain CORE_SECTION_KEYS) so it needs a built-in fallback —
+  // otherwise a NULL DB ai_prompt_template would throw 503 and leave key_risks null.
+  // JSON shape matches buildRiskLines() in cardColumnHydration: risks[] with
+  // {type,risk,mitigation}. type:"risk" so the hydrator keeps it (assumptions/
+  // dependencies are filtered out of key_risks by design).
+  raid: `You are a PMO risk consultant. Build the RAID risk register for this initiative.
 
+Context:
+- Initiative name: {{initiativeName}}
+- Problem: {{problemStatement}}
+- Description: {{summary}}
+
+Generate a structured JSON response with at least 2 RISK items, each grounded in the initiative context (no generic placeholders):
+{
+  "risks": [
+    { "type": "risk", "risk": "Concrete risk (1 sentence)", "probability": "low|medium|high", "impact": "low|medium|high", "mitigation": "Preventive action", "contingency": "Plan B if it happens" }
+  ]
+}
 Language: {{language}}
 Return valid JSON only.`,
 };
@@ -643,7 +695,7 @@ export class InitiativeGenerationService {
     // Surface available evidence/grounding so the model cites it instead of inventing.
     const grounding = buildGroundingBlock(enrichedContext);
     if (grounding) {
-      userPrompt += `\n\n--- DOWODY DOSTĘPNE DO UGRUNTOWANIA (nie wykraczaj poza nie; brak → "do ustalenia") ---\n${grounding}`;
+      userPrompt += `\n\n--- DOWODY DOSTĘPNE DO UGRUNTOWANIA (nie zmyślaj faktów poza nie; brak twardej liczby → SZACUNEK z jawnym założeniem, NIGDY "do ustalenia") ---\n${grounding}`;
     }
 
     // 4. Call LLM with the McKinsey-grade doctrine system prompt.
