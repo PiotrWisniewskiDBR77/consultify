@@ -608,6 +608,9 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
             const wbResult = await Api.generateWorkbook({
               prompt: lastGoal || title,
               language: navigator.language,
+              // P-2: adopt the run's single canonical artifact onto this workbook
+              // (no duplicate Outputs card for the excele lane).
+              artifactRunId: currentRun.runId,
             });
             if (wbResult?.id) {
               const qualityLabel =

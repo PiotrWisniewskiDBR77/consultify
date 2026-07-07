@@ -1193,6 +1193,102 @@ export async function registerArtifactOrigin(
 }
 
 /**
+ * P-2 (split-brain fix, excele lane): adopt an existing artifact-run's canonical
+ * artifact onto a freshly generated real .xlsx workbook, instead of registering a
+ * SECOND Outputs card.
+ *
+ * Background: for the `excele` lane the pipeline first materializes a governed
+ * `tp_tables` sheet artifact (so the run can complete), then the frontend calls
+ * `POST /api/workbook` which produces the real .xlsx in `generated_workbooks`.
+ * Previously the workbook route registered a NEW artifact (origin `sheet:workbookId`),
+ * so one click produced two Outputs cards — the tp_tables one being an orphan.
+ *
+ * This helper re-points the run's existing primary origin link
+ * (`sheet:tableId`) to `sheet:workbookId` and refreshes the artifact metadata,
+ * yielding exactly ONE canonical Outputs card whose download is the real .xlsx.
+ *
+ * Returns the adopted artifactId when successful, or `null` when the run has no
+ * usable artifact (caller should then fall back to registering a fresh one).
+ * Fail-soft: never throws — the workbook itself is already persisted.
+ */
+export async function adoptRunArtifactForWorkbook(params: {
+  runId: string;
+  organizationId: string;
+  workbookId: string;
+  title: string;
+  originSummary?: Record<string, unknown>;
+}): Promise<string | null> {
+  try {
+    const run = await getArtifactRun(params.runId, params.organizationId);
+    if (!run) {
+      logger.warn(
+        `${LOG_PREFIX} adoptRunArtifactForWorkbook: run ${params.runId} not found (org ${params.organizationId})`
+      );
+      return null;
+    }
+    // Only sheet runs are adoptable by the workbook route.
+    if (run.plan.outputType !== 'sheet') {
+      logger.warn(
+        `${LOG_PREFIX} adoptRunArtifactForWorkbook: run ${params.runId} is ${run.plan.outputType}, not sheet — skipping adoption`
+      );
+      return null;
+    }
+    const artifactId = run.artifactId;
+    if (!artifactId) {
+      // Run not yet materialized / no artifact — caller registers fresh.
+      return null;
+    }
+
+    // If a workbook origin link already exists on this artifact, we're idempotent.
+    const links = await getArtifactOriginLinks(artifactId, params.organizationId);
+    const alreadyWorkbook = links.some(
+      (l) => l.originRuntime === 'sheet' && l.originRecordId === params.workbookId
+    );
+
+    if (!alreadyWorkbook) {
+      const now = new Date().toISOString();
+      // Re-point the primary origin link to the real workbook.
+      const primary = links.find((l) => l.isPrimaryOrigin) || links[0] || null;
+      if (primary) {
+        await dbRun(
+          `UPDATE v8_artifact_origin_links
+             SET origin_runtime = 'sheet',
+                 origin_record_id = ?
+           WHERE link_id = ? AND organization_id = ?`,
+          [params.workbookId, primary.linkId, params.organizationId]
+        );
+      } else {
+        // Defensive: artifact row exists but has no origin link — create the primary.
+        await dbRun(
+          `INSERT INTO v8_artifact_origin_links (
+            link_id, artifact_id, organization_id, origin_runtime, origin_record_id, is_primary_origin, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [uuidv4(), artifactId, params.organizationId, 'sheet', params.workbookId, 1, now]
+        );
+      }
+    }
+
+    // Refresh title + summary so the single Outputs card reflects the real workbook.
+    await updateArtifactMetadata(artifactId, params.organizationId, {
+      titleSnapshot: params.title || run.plan.titleHint,
+      originSummary: params.originSummary,
+    });
+
+    logger.info(
+      `${LOG_PREFIX} adoptRunArtifactForWorkbook: artifact ${artifactId} adopted workbook ${params.workbookId} for run ${params.runId} (no second card)`
+    );
+    return artifactId;
+  } catch (err) {
+    logger.warn(
+      `${LOG_PREFIX} adoptRunArtifactForWorkbook failed for run ${params.runId}: ${
+        err instanceof Error ? err.message : String(err)
+      }`
+    );
+    return null;
+  }
+}
+
+/**
  * Notify the organization context that a new artifact was produced.
  * Gated behind the 'outputs' feature flag to allow incremental rollout.
  * On success, logs the action; on failure, swallows and logs (non-critical path).

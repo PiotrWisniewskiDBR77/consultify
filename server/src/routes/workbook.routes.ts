@@ -105,6 +105,7 @@ router.post(
       actionContract,
       sourcePack,
       evidenceRefs,
+      artifactRunId,
     } = req.body;
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length < 5) {
       res.status(400).json({ error: 'prompt is required (min 5 chars)' });
@@ -168,37 +169,67 @@ router.post(
     // Register in V8 artifact registry (P19 Outputs Library integration)
     let artifactId: string | null = null;
     try {
-      const { registerArtifactOrigin } = await import('../services/v8/artifactRegistryService.js');
-      const registered = await registerArtifactOrigin({
-        organizationId: user.organizationId,
-        outputType: 'sheet',
-        artifactFamily: 'sheet',
-        originRuntime: 'sheet',
-        originRecordId: result.id,
-        titleSnapshot: result.schema.title || 'Untitled workbook',
-        ownerUserId: user.id,
-        createdBy: user.id,
-        deliveryState: 'ready',
-        visibilityScope: 'organization',
-        projectId: projectId || null,
-        sourceInitiativeId: sourceInitiativeId || null,
-        originSummary: {
-          title: result.schema.title,
-          description: result.schema.description || null,
-          sheetCount: result.schema.sheets.length,
-          exportFormat: 'xlsx',
-          source: 'workbook_generator_p23d',
-          qualityScore: result.qualityScore,
-          sourceRefs: {
-            conversationId: conversationId || null,
-            initiativeId: sourceInitiativeId || null,
-            projectId: projectId || null,
-          },
+      const { registerArtifactOrigin, adoptRunArtifactForWorkbook } = await import(
+        '../services/v8/artifactRegistryService.js'
+      );
+
+      const originSummary = {
+        title: result.schema.title,
+        description: result.schema.description || null,
+        sheetCount: result.schema.sheets.length,
+        exportFormat: 'xlsx',
+        source: 'workbook_generator_p23d',
+        qualityScore: result.qualityScore,
+        sourceRefs: {
+          conversationId: conversationId || null,
+          initiativeId: sourceInitiativeId || null,
+          projectId: projectId || null,
         },
-      });
-      artifactId = registered?.artifactId ?? null;
-      if (artifactId) {
-        logger.info(`[WorkbookRoutes] Registered artifact ${artifactId} for workbook ${result.id}`);
+      };
+
+      // P-2 split-brain fix (excele lane): if this workbook was generated as the
+      // real .xlsx for an existing artifact run (the run already materialized a
+      // governed tp_tables sheet artifact), ADOPT that single artifact onto this
+      // workbook instead of creating a SECOND Outputs card. One click = one card.
+      if (typeof artifactRunId === 'string' && artifactRunId.trim()) {
+        artifactId = await adoptRunArtifactForWorkbook({
+          runId: artifactRunId.trim(),
+          organizationId: user.organizationId,
+          workbookId: result.id,
+          title: result.schema.title || 'Untitled workbook',
+          originSummary,
+        });
+        if (artifactId) {
+          logger.info(
+            `[WorkbookRoutes] Adopted run ${artifactRunId} artifact ${artifactId} onto workbook ${result.id} (no duplicate card)`
+          );
+        }
+      }
+
+      // Fallback: standalone workbook (no run, e.g. direct API caller) OR the run
+      // had no adoptable artifact — register a fresh canonical artifact.
+      if (!artifactId) {
+        const registered = await registerArtifactOrigin({
+          organizationId: user.organizationId,
+          outputType: 'sheet',
+          artifactFamily: 'sheet',
+          originRuntime: 'sheet',
+          originRecordId: result.id,
+          titleSnapshot: result.schema.title || 'Untitled workbook',
+          ownerUserId: user.id,
+          createdBy: user.id,
+          deliveryState: 'ready',
+          visibilityScope: 'organization',
+          projectId: projectId || null,
+          sourceInitiativeId: sourceInitiativeId || null,
+          originSummary,
+        });
+        artifactId = registered?.artifactId ?? null;
+        if (artifactId) {
+          logger.info(
+            `[WorkbookRoutes] Registered artifact ${artifactId} for workbook ${result.id}`
+          );
+        }
       }
     } catch (err) {
       logger.warn('[WorkbookRoutes] Failed to register workbook in artifact registry:', err);
