@@ -143,13 +143,27 @@ function splitRecommendationAndRationale(body: string): {
 } {
   const text = String(body || '').trim();
   if (!text) return { recommendation: '', rationale: '' };
-  // Jawny marker uzasadnienia?
+  // Jawny marker uzasadnienia? Grupa 1 = SAM wyraz-marker (bez otoczki), grupa 2 =
+  // separator tuż po nim. Dzielimy tak, by móc ZACHOWAĆ początek zdania rationale.
   const why = text.match(
-    /(?:^|\n)\s*#{0,3}\s*(?:\*\*)?\s*(?:uzasadnienie|rationale|dlaczego|why|bo\b|poniewa[żz])\b\s*(?:\*\*)?\s*[:.\s\-–—]*/i,
+    /(?:^|\n)\s*#{0,3}\s*(?:\*\*)?\s*(uzasadnienie|rationale|dlaczego|why|bo|poniewa[żz])\b(\*\*)?([:.\s\-–—]*)/i,
   );
   if (why && why.index !== undefined && why.index > 0) {
     const recommendation = stripLeadingHeaderGlitch(text.slice(0, why.index).trim());
-    const rationale = stripLeadingHeaderGlitch(text.slice(why.index + why[0].length).trim());
+    // FIX (naprawa-r6bExtract, defekt #3): zdanie rationale ucinało się na starcie,
+    // bo zdejmowaliśmy CAŁY match (wyraz-marker + to co po nim), a Claude często pisze
+    // „Uzasadnienie wyboru tej opcji nad alternatywami: (1)…". Zdjęcie samego
+    // „Uzasadnienie" zostawiało urwane „wyboru tej opcji…" / „tej opcji nad
+    // alternatywami:…". ZASADA: zdejmij marker TYLKO gdy po nim jest CZYSTY separator
+    // (`:`/`-`/`.`/nowa linia) — wtedy to prawdziwy nagłówek („Uzasadnienie: <treść>").
+    // Gdy po markerze idzie DALSZA PROZA (np. „ wyboru …"), ZACHOWAJ marker jako
+    // początek zdania rationale (pełne zdanie zamiast fragmentu od środka).
+    const sep = why[3] || '';
+    const hasCleanSeparator = /[:.\-–—]/.test(sep) || /\n/.test(sep);
+    const rationaleRaw = hasCleanSeparator
+      ? text.slice(why.index + why[0].length) // czysty nagłówek → zdejmij marker
+      : text.slice(why.index); // proza po markerze → zachowaj wyraz-marker
+    const rationale = stripLeadingHeaderGlitch(rationaleRaw.trim());
     if (recommendation && rationale) return { recommendation, rationale };
   }
   // Brak markera: pierwsze zdanie = rekomendacja; reszta = uzasadnienie.
@@ -162,6 +176,61 @@ function splitRecommendationAndRationale(body: string): {
     return { recommendation, rationale: '' };
   }
   return { recommendation: text, rationale: '' };
+}
+
+/**
+ * FIX (naprawa-r6bExtract, defekt #2) — wyłuskuje REALNE założenia biznesowe z
+ * narracji rekomendacji/uzasadnienia, zamiast wstawiać generyczny placeholder-atrapę
+ * („Rekomendacja wywiedziona z kontekstu… niezweryfikowana na danych na żywo") ×5.
+ *
+ * Sędzia BCG (demo 2026-07-07): wszystkie 5 decyzji miały IDENTYCZNY placeholder. To
+ * nie są założenia — to atrapa udająca treść. Realne założenia SĄ w tekście: Claude
+ * jawnie je sygnalizuje frazami „zakładając…", „przy założeniu…", „szacunek…",
+ * „assuming…” i podaje liczby („40-60%", „12-18 miesięcy", „14 dni").
+ *
+ * Metoda: tnij narrację na zdania i zachowaj te, które (a) niosą jawny marker
+ * założenia LUB (b) zawierają skwantyfikowaną tezę (liczba %/x/czas/kwota). Każde
+ * realne założenie → confidence z sygnału (szacunek/estimate → medium, inaczej high
+ * gdy twarda liczba). Bez trafień → PUSTA tablica (lepiej puste niż atrapa).
+ */
+function extractAssumptions(
+  text: string,
+  language: 'pl' | 'en',
+): Array<{ assumption: string; confidence: string; whatWouldChangeIt: string }> {
+  const s = String(text || '').trim();
+  if (!s) return [];
+  // Podział na zdania (zachowuje numeryczne wyliczenia „(1)…, (2)…" jako osobne).
+  const rawParts = s
+    .split(/(?<=[.!?])\s+|\n+|(?=\(\d+\)\s)/)
+    .map((p) => stripLeadingHeaderGlitch(p.trim()))
+    .filter((p) => p.length > 12);
+
+  const ASSUMPTION_MARKER =
+    /\b(zak[łl]adaj[ąa]c|przy za[łl]o[żz]eniu|za[łl]o[żz]enie|szacun|szacuj|assum|estimat|expect|provided that|o ile)\b/i;
+  const QUANT = /\d\s*(%|x\b|mln|tys|mies|month|lat|rok|year|dni|day|k\b|pln|eur|usd|€|\$)/i;
+
+  const seen = new Set<string>();
+  const out: Array<{ assumption: string; confidence: string; whatWouldChangeIt: string }> = [];
+  for (const part of rawParts) {
+    const hasMarker = ASSUMPTION_MARKER.test(part);
+    const hasQuant = QUANT.test(part);
+    if (!hasMarker && !hasQuant) continue; // ani sygnału, ani liczby → to nie założenie
+    const key = part.toLowerCase().slice(0, 60);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    // „szacunek/estimate/~" → niepewne (medium); twarda liczba bez „~" → high.
+    const soft = /szacun|estimat|~|oko[łl]o|about|approx/i.test(part);
+    out.push({
+      assumption: part,
+      confidence: soft ? 'medium' : hasMarker ? 'medium' : 'high',
+      whatWouldChangeIt:
+        language === 'en'
+          ? 'Live data contradicting this figure, or a changed constraint/deadline.'
+          : 'Dane na żywo sprzeczne z tą liczbą lub zmiana ograniczenia/terminu.',
+    });
+    if (out.length >= 5) break; // dość — nie zalewaj kartą
+  }
+  return out;
 }
 
 /**
@@ -357,22 +426,15 @@ async function fillDecisionStructuralFields(
       );
     }
 
-    // Grounding / falsifiability (§5): a recommendation carries confidence + what
-    // would change it, and — when the model gave us no structured alternatives — an
-    // explicit "insufficient data" assumption instead of a silent empty.
-    if (recommendation) {
-      assumptions.push({
-        assumption:
-          language === 'en'
-            ? 'Recommendation derived from the decision context supplied at creation; not yet validated against live data.'
-            : 'Rekomendacja wywiedziona z kontekstu decyzji podanego przy utworzeniu; niezweryfikowana na danych na żywo.',
-        confidence: 'medium',
-        whatWouldChangeIt:
-          language === 'en'
-            ? 'New quantified evidence on cost/benefit of the alternatives, or a changed deadline/constraint.'
-            : 'Nowe skwantyfikowane dowody kosztu/korzyści opcji lub zmiana terminu/ograniczenia.',
-      });
-    }
+    // FIX (naprawa-r6bExtract, defekt #2): REALNE założenia z narracji rekomendacji +
+    // uzasadnienia — NIE generyczny placeholder-atrapa ×5. Wyłuskujemy skwantyfikowane
+    // tezy / jawne „zakładając…". Gdy narracja nic nie daje → zostaw PUSTO (lepiej
+    // puste niż atrapa udająca treść). Sędzia BCG: 5 decyzji z tym samym boilerplate =
+    // brak realnych założeń — usunięte u źródła.
+    const realAssumptions = extractAssumptions(`${recommendation}\n${rationale}`, language);
+    for (const a of realAssumptions) assumptions.push(a);
+    // Uwaga o brakujących opcjach jest INFORMACYJNA (realny stan degradacji), nie atrapa
+    // treści — zostaje, ale tylko gdy faktycznie brak ustrukturyzowanych alternatyw.
     if (!alternatives) {
       assumptions.push({
         assumption:
@@ -585,6 +647,7 @@ export const __test__ = {
   splitRecommendationAndRationale,
   extractAlternatives,
   extractRisks,
+  extractAssumptions,
   matchArtifactBlock,
   looseJsonField,
 };
