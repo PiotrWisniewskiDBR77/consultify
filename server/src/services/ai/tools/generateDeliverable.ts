@@ -31,6 +31,14 @@ import {
   buildWhiteboardSkeleton,
   type CanvasSkeletonGraph,
 } from '../canvasToolSkeletons.js';
+import {
+  generateMindmapGraph,
+  generateNoteContent,
+  generateProcessFlowGraph,
+  generateTableGraph,
+  generateWhiteboardGraph,
+  type LlmGraph,
+} from '../canvasGraphLlm.js';
 import { buildMindmapSkeleton, type MindmapSkeletonGraph } from '../mindmapSkeleton.js';
 
 type DeliverableKind =
@@ -67,7 +75,7 @@ export type DeliverableEmit = (payload: {
    * DB-bound generation runtime via draftId) and for `note` (already a real
    * DB row by the time this fires).
    */
-  graph?: MindmapSkeletonGraph | CanvasSkeletonGraph;
+  graph?: MindmapSkeletonGraph | CanvasSkeletonGraph | LlmGraph;
   /** Only present for canvas-tool kinds — the topic seed text for AI expansion. */
   seedText?: string;
   /**
@@ -189,10 +197,21 @@ export async function generateDeliverable(
       };
     }
 
-    // TODO (M06 Fala 2 · [REAL-AI] nightly): swap this deterministic skeleton for
-    // an LLM-backed generator (semantic branches + sub-nodes + notes). Wiring is
-    // format-stable; only buildMindmapSkeleton changes. Tracked as risk R1.
-    const graph: MindmapSkeletonGraph = buildMindmapSkeleton(intent, params.title);
+    // naprawa-c1Graph: LLM-generate a real hierarchical mind map (concise center
+    // + semantic pillars + goal/risk sub-nodes) instead of the seedText splitter
+    // (which produced fragment labels + flat stars). Fail-soft: on any LLM error /
+    // parse failure / anti-fragment rejection, fall back to the deterministic
+    // skeleton so the map always opens.
+    const llmGraph: LlmGraph | null = await generateMindmapGraph(
+      intent,
+      params.title,
+      language === 'pl'
+    );
+    const graph: MindmapSkeletonGraph | LlmGraph =
+      llmGraph ?? buildMindmapSkeleton(intent, params.title);
+    logger.info(
+      `[generate_deliverable] mindmap graph source=${llmGraph ? 'llm' : 'skeleton'}`
+    );
     // Client-generated id — the real idea/map rows are created on the FE mount
     // path (setMyWorkIntent → IdeaMapWorkspace), which owns idea/map persistence.
     const mindmapId = `chat-mindmap-${Date.now()}`;
@@ -253,12 +272,27 @@ export async function generateDeliverable(
 
     const isPolish = language === 'pl';
     const preferredSystem = kind as 'process_flow' | 'table' | 'whiteboard';
-    const graph: CanvasSkeletonGraph =
+
+    // naprawa-c1Graph: LLM-generate the structured graph (verb-first steps with
+    // decision diamonds + yes/no branches; linked whiteboard blocks; populated
+    // table rows) instead of the seedText splitter. Fail-soft to the skeleton.
+    const llmGraph: LlmGraph | null =
       preferredSystem === 'process_flow'
+        ? await generateProcessFlowGraph(intent, params.title, isPolish)
+        : preferredSystem === 'table'
+          ? await generateTableGraph(intent, params.title, isPolish)
+          : await generateWhiteboardGraph(intent, params.title, isPolish);
+
+    const graph: CanvasSkeletonGraph | LlmGraph =
+      llmGraph ??
+      (preferredSystem === 'process_flow'
         ? buildProcessFlowSkeleton(intent, params.title, isPolish)
         : preferredSystem === 'table'
           ? buildIdeasTableSkeleton(intent, params.title, isPolish)
-          : buildWhiteboardSkeleton(intent, params.title, isPolish);
+          : buildWhiteboardSkeleton(intent, params.title, isPolish));
+    logger.info(
+      `[generate_deliverable] ${preferredSystem} graph source=${llmGraph ? 'llm' : 'skeleton'}`
+    );
 
     // Client-generated id — the real idea/map rows are created on the FE mount
     // path (setMyWorkIntent → IdeaMapWorkspace), which owns idea/map persistence
@@ -333,11 +367,20 @@ export async function generateDeliverable(
     }
 
     try {
+      // naprawa-c1Graph: LLM-generate real prose (thesis + sections) for the note
+      // body instead of dumping the model's short restatement (which left the note
+      // an empty shell). Fail-soft to the raw intent if generation fails.
+      const proseBody = await generateNoteContent(intent, params.title, language === 'pl');
+      const noteBody = proseBody || intent;
+      logger.info(
+        `[generate_deliverable] note content source=${proseBody ? 'llm' : 'intent'}`
+      );
+
       const created = await createNote({
         organizationId: orgId,
         userId,
         title,
-        body: intent,
+        body: noteBody,
         source: 'chat',
       });
 

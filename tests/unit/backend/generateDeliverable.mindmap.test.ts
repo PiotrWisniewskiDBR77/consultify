@@ -37,6 +37,16 @@ vi.mock('../../../server/src/utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
+// naprawa-c1Graph: this test asserts the DETERMINISTIC skeleton mind-map path.
+// Force the LLM generator to null (fail-soft) so the skeleton fallback runs.
+vi.mock('../../../server/src/services/ai/canvasGraphLlm.js', () => ({
+  generateMindmapGraph: vi.fn().mockResolvedValue(null),
+  generateProcessFlowGraph: vi.fn().mockResolvedValue(null),
+  generateWhiteboardGraph: vi.fn().mockResolvedValue(null),
+  generateTableGraph: vi.fn().mockResolvedValue(null),
+  generateNoteContent: vi.fn().mockResolvedValue(null),
+}));
+
 import { generateDeliverable } from '../../../server/src/services/ai/tools/generateDeliverable.js';
 
 const baseCtx = {
