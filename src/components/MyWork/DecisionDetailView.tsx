@@ -688,6 +688,69 @@ const DEMO_ESCALATION: EscalationRule = {
 };
 // ── END DEMO DATA ─────────────────────────────────────────────────────────────
 
+// ── Decision section AI helpers (wzorzec N: POST /decisions/:id/generate-section) ──
+// The endpoint (DecisionController.generateSection → decisionService.generateSection)
+// returns { sectionKey, content, isJson, parsedContent, model, tokensUsed }. When no
+// LLM provider is configured the service degrades honestly: model === 'placeholder'
+// and content is a bracketed "[…]" notice. We treat that as a soft failure so the
+// card lands on `error` (retry available) instead of persisting a placeholder draft.
+const isDecisionSectionPlaceholder = (res: any): boolean =>
+  String(res?.model || '') === 'placeholder' ||
+  /^\s*\[.*\]\s*$/.test(String(res?.content || ''));
+
+const extractDecisionSectionContent = (res: any): string => {
+  if (isDecisionSectionPlaceholder(res)) {
+    throw new Error('AI provider unavailable (placeholder response)');
+  }
+  const content = String(res?.content || '').trim();
+  if (!content) {
+    throw new Error('Empty AI section content');
+  }
+  return content;
+};
+
+const extractDecisionSectionJson = (res: any): any => {
+  if (isDecisionSectionPlaceholder(res)) {
+    throw new Error('AI provider unavailable (placeholder response)');
+  }
+  if (res?.parsedContent && typeof res.parsedContent === 'object') {
+    return res.parsedContent;
+  }
+  // Fallback: parse the raw content (fenced or bare JSON) if the server did not.
+  const raw = String(res?.content || '');
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  const candidate = fenced ? fenced[1] : raw;
+  return JSON.parse(candidate);
+};
+
+const normalizeRiskLevel = (v: any): 'low' | 'medium' | 'high' | 'critical' => {
+  const s = String(v || '').toLowerCase();
+  return s === 'critical' || s === 'high' || s === 'medium' || s === 'low'
+    ? (s as 'low' | 'medium' | 'high' | 'critical')
+    : 'medium';
+};
+
+const normalizeRiskCategory = (
+  v: any
+): 'technical' | 'business' | 'operational' | 'financial' | 'legal' | 'other' => {
+  const s = String(v || '').toLowerCase();
+  // Backend enum: scope|schedule|cost|quality|business|operational.
+  // FE enum: technical|business|operational|financial|legal|other.
+  const map: Record<string, 'technical' | 'business' | 'operational' | 'financial' | 'legal' | 'other'> = {
+    scope: 'operational',
+    schedule: 'operational',
+    cost: 'financial',
+    quality: 'technical',
+    business: 'business',
+    operational: 'operational',
+    technical: 'technical',
+    financial: 'financial',
+    legal: 'legal',
+    other: 'other',
+  };
+  return map[s] || 'other';
+};
+
 export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   decisionId,
   onClose,
@@ -2300,48 +2363,26 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     }
 
     setIsGeneratingAlternatives(true);
+    setCardState('alternatives', 'generating');
     try {
-      // Simulated AI generation - replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const res = await Api.post(`/decisions/${decisionId}/generate-section`, {
+        sectionKey: 'alternatives',
+        language: isPolish ? 'pl' : 'en',
+      });
+      const parsed = extractDecisionSectionJson(res);
+      const rawAlternatives = Array.isArray(parsed?.alternatives) ? parsed.alternatives : [];
+      if (rawAlternatives.length === 0) {
+        throw new Error('No alternatives returned by AI');
+      }
 
-      const generatedAlternatives: Alternative[] = [
-        {
-          id: Math.random().toString(36).substr(2, 9),
-          title: t('decisions.detail.altGen.option1Title', 'Option 1: Conservative approach'),
-          description: t('decisions.detail.altGen.option1Desc', 'Minimal changes, low risk, gradual implementation'),
-          pros: [
-            t('decisions.detail.altGen.lowRisk', 'Low risk'),
-            t('decisions.detail.altGen.easyImplementation', 'Easy implementation'),
-          ],
-          cons: [t('decisions.detail.altGen.slowerResults', 'Slower results')],
-          isRecommended: false,
-        },
-        {
-          id: Math.random().toString(36).substr(2, 9),
-          title: t('decisions.detail.altGen.option2Title', 'Option 2: Aggressive approach'),
-          description: t('decisions.detail.altGen.option2Desc', 'Fast implementation, higher risk, faster results'),
-          pros: [
-            t('decisions.detail.altGen.fastResults', 'Fast results'),
-            t('decisions.detail.altGen.competitiveAdvantage', 'Competitive advantage'),
-          ],
-          cons: [
-            t('decisions.detail.altGen.higherRisk', 'Higher risk'),
-            t('decisions.detail.altGen.higherCosts', 'Higher costs'),
-          ],
-          isRecommended: false,
-        },
-        {
-          id: Math.random().toString(36).substr(2, 9),
-          title: t('decisions.detail.altGen.option3Title', 'Option 3: Hybrid approach'),
-          description: t('decisions.detail.altGen.option3Desc', 'Balance between speed and safety'),
-          pros: [
-            t('decisions.detail.altGen.balancedRisk', 'Balanced risk'),
-            t('decisions.detail.altGen.flexibility', 'Flexibility'),
-          ],
-          cons: [t('decisions.detail.altGen.moreCoordination', 'Requires more coordination')],
-          isRecommended: true,
-        },
-      ];
+      const generatedAlternatives: Alternative[] = rawAlternatives.map((a: any) => ({
+        id: Math.random().toString(36).substr(2, 9),
+        title: String(a?.title || '').trim(),
+        description: String(a?.description || a?.estimatedCostTime || '').trim(),
+        pros: Array.isArray(a?.pros) ? a.pros.map((p: any) => String(p)) : [],
+        cons: Array.isArray(a?.cons) ? a.cons.map((c: any) => String(c)) : [],
+        isRecommended: false,
+      }));
 
       setAlternatives(withProsConsFallback([...alternatives, ...generatedAlternatives]));
       setCardState('alternatives', 'ai-draft');
@@ -2362,16 +2403,15 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       return;
     }
     setIsGeneratingDescription(true);
+    setCardState('description', 'generating');
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const res = await Api.post(`/decisions/${decisionId}/generate-section`, {
+        sectionKey: 'description',
+        language: isPolish ? 'pl' : 'en',
+      });
+      const content = extractDecisionSectionContent(res);
 
-      const generatedDescription = t(
-        'decisions.detail.decisionContextTemplate',
-        '## Decision Context\n\nThis decision concerns selecting the optimal solution for {{title}}.\n\n### Background\nThe analysis has identified the following key factors:\n- Business and technical requirements\n- Budget and timeline constraints\n- Impact on existing processes\n\n### Scope\nThe decision covers:\n1. Vendor/technology selection\n2. Implementation timeline definition\n3. Resource allocation\n\n### Expected Outcomes\n- Process efficiency improvement\n- Operational cost reduction\n- Increased competitiveness',
-        { title: title || t('decisions.detail.theCurrentIssue', 'the current issue') }
-      );
-
-      setDescription(generatedDescription);
+      setDescription(content);
       setCardState('description', 'ai-draft');
       toast.success(t('decisions.detail.toast.descriptionGenerated', 'Description generated by AI'));
     } catch {
@@ -3092,28 +3132,30 @@ Use userId only from this list:
     }
   };
 
-  const generateConsequencesOfInactionAI = () => {
+  const generateConsequencesOfInactionAI = async () => {
     if (isDecisionStageLocked) {
       toast.error(
         t('decisions.detail.toast.aiGenAvailableOnlyBeforeDecision', 'AI generation is available only before decision stage')
       );
       return;
     }
-    const generated = t(
-      'decisions.detail.toast.consequencesGenerated',
-      `If "{{title}}" is not made in time, likely consequences are:
-- growing operational uncertainty and delivery delays,
-- increased cost (time, resources, rework risk),
-- escalation risk and loss of business momentum.
+    setCardState('consequences', 'generating');
+    try {
+      const res = await Api.post(`/decisions/${decisionId}/generate-section`, {
+        sectionKey: 'consequencesOfInaction',
+        language: isPolish ? 'pl' : 'en',
+      });
+      const content = extractDecisionSectionContent(res);
 
-Recommendation: assign a decider, deadline, and minimum decision scope to approve.`,
-      { title: title || t('decisions.detail.ai.consequencesTitleFallbackDecision', 'this decision') }
-    );
-
-    setRationale(generated);
-    toast.success(
-      t('decisions.detail.toast.consequencesGenerated', 'Consequences of inaction generated')
-    );
+      setRationale(content);
+      setCardState('consequences', 'ai-draft');
+      toast.success(
+        t('decisions.detail.toast.consequencesGenerated', 'Consequences of inaction generated')
+      );
+    } catch {
+      setCardState('consequences', 'error');
+      toast.error(t('decisions.detail.toast.generationFailed', 'Generation failed'));
+    }
   };
 
   const generateRisksAI = async () => {
@@ -3129,39 +3171,27 @@ Recommendation: assign a decider, deadline, and minimum decision scope to approv
     }
 
     setIsGeneratingRisks(true);
+    setCardState('risk', 'generating');
     try {
-      // Simulated AI generation - replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const res = await Api.post(`/decisions/${decisionId}/generate-section`, {
+        sectionKey: 'risk',
+        language: isPolish ? 'pl' : 'en',
+      });
+      const parsed = extractDecisionSectionJson(res);
+      const rawRisks = Array.isArray(parsed?.risks) ? parsed.risks : [];
+      if (rawRisks.length === 0) {
+        throw new Error('No risks returned by AI');
+      }
 
-      const generatedRisks: RiskItem[] = [
-        {
-          id: Math.random().toString(36).substr(2, 9),
-          title: t('decisions.detail.riskGen.budgetRisk', 'Budget risk'),
-          probability: 'medium',
-          impact: 'high',
-          category: 'financial',
-          mitigation: t('decisions.detail.riskGen.budgetMitigation', 'Regular budget reviews, 15% buffer'),
-          contingency: t('decisions.detail.riskGen.budgetContingency', 'Scope reduction or timeline extension'),
-        },
-        {
-          id: Math.random().toString(36).substr(2, 9),
-          title: t('decisions.detail.riskGen.technicalRisk', 'Technical risk'),
-          probability: 'low',
-          impact: 'high',
-          category: 'technical',
-          mitigation: t('decisions.detail.riskGen.technicalMitigation', 'POC before full implementation'),
-          contingency: t('decisions.detail.riskGen.technicalContingency', 'Alternative technical solution'),
-        },
-        {
-          id: Math.random().toString(36).substr(2, 9),
-          title: t('decisions.detail.riskGen.resourceRisk', 'Resource risk'),
-          probability: 'medium',
-          impact: 'medium',
-          category: 'operational',
-          mitigation: t('decisions.detail.riskGen.resourceMitigation', 'Team cross-training, documentation'),
-          contingency: t('decisions.detail.riskGen.resourceContingency', 'External consultants'),
-        },
-      ];
+      const generatedRisks: RiskItem[] = rawRisks.map((r: any) => ({
+        id: Math.random().toString(36).substr(2, 9),
+        title: String(r?.title || '').trim(),
+        probability: normalizeRiskLevel(r?.probability),
+        impact: normalizeRiskLevel(r?.impact),
+        category: normalizeRiskCategory(r?.category),
+        mitigation: String(r?.mitigation || '').trim(),
+        contingency: String(r?.contingency || '').trim(),
+      }));
 
       setRisks([...risks, ...generatedRisks]);
       setCardState('risk', 'ai-draft');
