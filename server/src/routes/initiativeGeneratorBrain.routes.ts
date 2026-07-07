@@ -27,6 +27,7 @@ import {
   generateFullInitiative,
   proposeCards,
 } from '../services/initiative/initiativeGeneratorBrain.js';
+import { persistCards } from '../services/ai/tools/generateInitiative.js';
 import initiativeGenerationService from '../services/initiativeGenerationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -97,6 +98,19 @@ router.post(
       language,
       organizationId: orgId,
     });
+
+    // PERSIST + HYDRATE: the brain only returns cards in-memory. Persist them to the
+    // JSON sink AND map onto the AUTHORITATIVE typed columns (problem_statement/
+    // scope_in/target_state/…) so the object/UI/judge — which read typed columns —
+    // see real content, not an empty skeleton. Non-destructive + fail-soft.
+    try {
+      await persistCards(initiativeId, orgId, result.cards ?? {});
+    } catch (persistErr: any) {
+      logger.warn(
+        '[initiativeGenerator] generate-full persist/hydrate failed (ignored):',
+        persistErr?.message || persistErr,
+      );
+    }
 
     logger.info('[initiativeGenerator] generate-full', {
       initiativeId,

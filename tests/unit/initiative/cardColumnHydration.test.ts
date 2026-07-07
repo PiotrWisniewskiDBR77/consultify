@@ -26,15 +26,18 @@ import { hydrateTypedColumns } from '../../../server/src/services/ai/tools/gener
 
 const ALL_COLS = new Set([
   'problem_statement',
+  'target_state',
   'scope_in',
   'scope_out',
   'kill_criteria',
   'success_criteria',
   'deliverables',
+  'key_risks',
   'business_value',
   'cost_capex',
   'cost_opex',
   'expected_roi',
+  'estimated_budget',
 ]);
 
 // ── L1: pure mapper ──────────────────────────────────────────────────────────
@@ -70,14 +73,79 @@ describe('buildTypedColumnUpdates (R3 mapper)', () => {
     expect(JSON.parse(byCol.kill_criteria)).toEqual(['ROI < 0']);
   });
 
-  it('targetState JSON → success_criteria + deliverables', () => {
+  it('targetState JSON → success_criteria + deliverables + target_state OBJECT', () => {
     const ups = buildTypedColumnUpdates(
-      { targetState: JSON.stringify({ successCriteria: ['NPS > 50'], deliverables: ['Kreator'] }) },
+      {
+        targetState: JSON.stringify({
+          targetDescription: 'Cel: skrócić cykl o 30% do Q4',
+          successCriteria: ['NPS > 50'],
+          deliverables: ['Kreator'],
+        }),
+      },
       ALL_COLS,
     );
     const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
     expect(JSON.parse(byCol.success_criteria)).toEqual(['NPS > 50']);
     expect(JSON.parse(byCol.deliverables)).toEqual(['Kreator']);
+    // target_state jest OBIEKTEM (nie tablicą) — parytet z tym co czyta FE.
+    const parsedTs = JSON.parse(byCol.target_state);
+    expect(parsedTs).toEqual({
+      description: 'Cel: skrócić cykl o 30% do Q4',
+      successCriteria: ['NPS > 50'],
+      deliverables: ['Kreator'],
+    });
+  });
+
+  it('raid JSON → key_risks (płaskie linie „ryzyko — mitygacja: …")', () => {
+    const ups = buildTypedColumnUpdates(
+      {
+        raid: JSON.stringify({
+          risks: [
+            { type: 'risk', risk: 'Opóźnienie integracji ERP', mitigation: 'Bufor 2 tyg.' },
+            { type: 'assumption', title: 'Zespół dostępny w Q3' }, // NIE ryzyko → pominięte
+            { type: 'risk', title: 'Brak akceptacji użytkowników' }, // bez mitygacji
+          ],
+        }),
+      },
+      ALL_COLS,
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(JSON.parse(byCol.key_risks)).toEqual([
+      'Opóźnienie integracji ERP — mitygacja: Bufor 2 tyg.',
+      'Brak akceptacji użytkowników',
+    ]);
+  });
+
+  it('financialImpact → estimated_budget = suma capex+opex gdy oba liczbowe', () => {
+    const ups = buildTypedColumnUpdates(
+      {
+        financialImpact: JSON.stringify({
+          businessValue: 'Wartość X',
+          costCapex: '1,2 mln zł',
+          costOpex: '300 tys. zł/rok',
+        }),
+      },
+      ALL_COLS,
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    // 1,2 mln = 1_200_000 ; 300 tys = 300_000 → 1_500_000
+    expect(byCol.estimated_budget).toBe('1500000');
+  });
+
+  it('financialImpact → estimated_budget: jawne pole wygrywa nad sumą', () => {
+    const ups = buildTypedColumnUpdates(
+      {
+        financialImpact: JSON.stringify({
+          businessValue: 'v',
+          estimatedBudget: 2_000_000,
+          costCapex: 100,
+          costOpex: 50,
+        }),
+      },
+      ALL_COLS,
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.estimated_budget).toBe('2000000');
   });
 
   it('financialImpact JSON → financial scalar columns (number coerced to string)', () => {

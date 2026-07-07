@@ -381,9 +381,8 @@ export class AIPipeline {
             // (which is present in defs) or answer in text. The rich brief then
             // lands in the object's fields (problem/description), not a doc.
             try {
-              const { classifyChatCreationIntent, INTENT_TO_TOOL } = await import(
-                './chatCreationIntent.js'
-              );
+              const { classifyChatCreationIntent, INTENT_TO_TOOL, INTENT_DROP_TOOLS } =
+                await import('./chatCreationIntent.js');
               const lastUser = [...nonSystemMsgs]
                 .reverse()
                 .find((m) => m.role === 'user')?.content;
@@ -392,12 +391,18 @@ export class AIPipeline {
                 const forcedTool = INTENT_TO_TOOL[intent];
                 const hasForced = defs.some((d: { name: string }) => d.name === forcedTool);
                 if (hasForced) {
+                  // Drop the tools that would let the model route AROUND the forced
+                  // one. For object intents that's generate_deliverable (no doc
+                  // fallback); for a 'document' intent (wniosek/insight/raport) it's
+                  // the OBJECT creators, so "wygeneruj wniosek" can NEVER become an
+                  // empty-skeleton initiative (sędzia score 44).
+                  const dropSet = new Set(INTENT_DROP_TOOLS[intent] || []);
                   const before = defs.length;
-                  defs = defs.filter(
-                    (d: { name: string }) => d.name !== 'generate_deliverable'
-                  );
+                  defs = defs.filter((d: { name: string }) => !dropSet.has(d.name));
                   logger.info(
-                    `[AIPipeline] routing-N pre-classify intent=${intent} → forcing ${forcedTool}, dropped generate_deliverable (${before}→${defs.length} tools)`
+                    `[AIPipeline] routing-N pre-classify intent=${intent} → forcing ${forcedTool}, dropped [${[
+                      ...dropSet,
+                    ].join(', ')}] (${before}→${defs.length} tools)`
                   );
                 }
               }

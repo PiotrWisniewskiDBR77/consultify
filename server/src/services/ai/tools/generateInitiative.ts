@@ -97,7 +97,7 @@ async function stampLineage(
  * NOT lost. See the PERSIST NOTE in the module doc / report for the FE read step
  * that turns this into typed-column hydration.
  */
-async function persistCards(
+export async function persistCards(
   initiativeId: string,
   organizationId: string,
   cards: Record<string, string>,
@@ -150,15 +150,18 @@ export async function hydrateTypedColumns(
     // Candidate target columns we know how to hydrate.
     const TARGETS = [
       'problem_statement',
+      'target_state',
       'scope_in',
       'scope_out',
       'kill_criteria',
       'success_criteria',
       'deliverables',
+      'key_risks',
       'business_value',
       'cost_capex',
       'cost_opex',
       'expected_roi',
+      'estimated_budget',
     ].filter((c) => colSet.has(c));
     if (TARGETS.length === 0) return;
 
@@ -176,21 +179,49 @@ export async function hydrateTypedColumns(
     }
 
     const updates = buildTypedColumnUpdates(cards, new Set(TARGETS), existingRow);
-    if (updates.length === 0) return;
+    if (updates.length > 0) {
+      const { setClause, params } = toUpdateSql(updates);
+      await queryHelpers.queryRun(
+        `UPDATE initiatives SET ${setClause} WHERE id = ? AND organization_id = ?`,
+        [...params, initiativeId, organizationId],
+      );
+      logger.info(
+        `[teresa] hydrated ${updates.length} typed column(s) for initiative ${initiativeId}: ${updates
+          .map((u) => u.column)
+          .join(', ')}`,
+      );
+    }
 
-    const { setClause, params } = toUpdateSql(updates);
-    await queryHelpers.queryRun(
-      `UPDATE initiatives SET ${setClause} WHERE id = ? AND organization_id = ?`,
-      [...params, initiativeId, organizationId],
+    // COMPLETENESS GATE (bramka): after hydration, verify the KEY typed columns are
+    // actually populated. If they remain empty AFTER we had cards to map, this is
+    // the exact "pusty szkielet" defect — surface it LOUD so it is never invisible.
+    const filledNow = new Set<string>();
+    for (const u of updates) filledNow.add(u.column);
+    for (const col of TARGETS) {
+      if (!isColEmpty(existingRow[col])) filledNow.add(col);
+    }
+    const KEY_COLS = ['problem_statement', 'target_state', 'scope_in', 'success_criteria'].filter(
+      (c) => (colSet as Set<string>).has(c),
     );
-    logger.info(
-      `[teresa] hydrated ${updates.length} typed column(s) for initiative ${initiativeId}: ${updates
-        .map((u) => u.column)
-        .join(', ')}`,
-    );
+    const stillEmpty = KEY_COLS.filter((c) => !filledNow.has(c));
+    if (Object.keys(cards).length > 0 && stillEmpty.length > 0) {
+      logger.error(
+        `[teresa] COMPLETENESS GATE: initiative ${initiativeId} still has EMPTY key typed columns ` +
+          `after full-fill hydration: ${stillEmpty.join(', ')}. Cards present: ${Object.keys(cards).join(
+            ', ',
+          )}. The object/UI/judge read typed columns → they will see an empty skeleton.`,
+      );
+    }
   } catch (e: any) {
     logger.warn('[teresa] typed-column hydration failed (ignored):', e?.message || e);
   }
+}
+
+/** Kolumna „pusta": null / '' / '[]' / '{}'. Parytet z cardColumnHydration.isEmptyCol. */
+function isColEmpty(v: unknown): boolean {
+  if (v === null || v === undefined) return true;
+  const s = String(v).trim();
+  return s === '' || s === '[]' || s === '{}';
 }
 
 export async function generateInitiative(
