@@ -39,6 +39,113 @@ type CreateTaskContext = {
 
 const ALLOWED_PRIORITIES = new Set(['low', 'medium', 'high']);
 
+/**
+ * BUG B fix (Teresa obiekty-N): after a task row is created, fill its STRUCTURAL
+ * fields (why · expectedOutcome · acceptanceCriteria) via the existing
+ * TASK_SECTION_PROMPTS generator — instead of leaving everything flat in
+ * `description`. The `tasks` table has durable `why`, `expected_outcome` and
+ * `acceptance_criteria` columns, so this content survives (unlike the decision
+ * N-card which is client-persisted). ADDITIVE + FAIL-SOFT: any error is logged
+ * and never affects the already-created task. Only fills EMPTY columns.
+ */
+async function fillTaskStructuralFields(
+  taskId: string,
+  input: { title: string; description?: string; priority?: string },
+  language: 'pl' | 'en',
+): Promise<void> {
+  try {
+    const [{ generateTaskSection }, queryHelpers] = await Promise.all([
+      import('../../taskSectionGenerationService.js'),
+      import('../../../utils/queryHelpers.js'),
+    ]);
+
+    const ctx = {
+      title: input.title,
+      description: input.description || null,
+      priority: input.priority || null,
+    };
+
+    // strategy → { description, why, expectedOutcome }; execution → { checklist }.
+    // Run them in parallel (only 2 calls, low burst) but each is independently
+    // fail-soft so one throwing does not lose the other.
+    const [strategyRes, executionRes] = await Promise.allSettled([
+      generateTaskSection('strategy', ctx, { language }),
+      generateTaskSection('execution', ctx, { language }),
+    ]);
+
+    const updates: string[] = [];
+    const params: unknown[] = [];
+    const setIf = (col: string, value: unknown) => {
+      const s = typeof value === 'string' ? value.trim() : '';
+      if (!s) return;
+      updates.push(`${col} = ?`);
+      params.push(s);
+    };
+
+    if (strategyRes.status === 'fulfilled') {
+      const p = strategyRes.value.parsedContent as
+        | { why?: string; expectedOutcome?: string }
+        | undefined;
+      if (p && typeof p === 'object') {
+        setIf('why', p.why);
+        setIf('expected_outcome', p.expectedOutcome);
+      }
+    } else {
+      logger.error(
+        `[create_task] strategy fill failed id=${taskId}: ${
+          strategyRes.reason instanceof Error ? strategyRes.reason.message : String(strategyRes.reason)
+        }`,
+      );
+    }
+
+    if (executionRes.status === 'fulfilled') {
+      const p = executionRes.value.parsedContent as { checklist?: unknown[] } | undefined;
+      const checklist = Array.isArray(p?.checklist)
+        ? (p!.checklist as unknown[]).map((x) => String(x).trim()).filter(Boolean)
+        : [];
+      if (checklist.length) {
+        updates.push('acceptance_criteria = ?');
+        params.push(JSON.stringify(checklist));
+      }
+    } else {
+      logger.error(
+        `[create_task] execution fill failed id=${taskId}: ${
+          executionRes.reason instanceof Error
+            ? executionRes.reason.message
+            : String(executionRes.reason)
+        }`,
+      );
+    }
+
+    if (updates.length === 0) {
+      logger.warn(`[create_task] structural fill produced NO fields id=${taskId}`);
+      return;
+    }
+
+    // Only fill columns that are still empty (non-destructive).
+    params.push(taskId);
+    await queryHelpers.queryRun(
+      `UPDATE tasks SET ${updates.join(', ')} WHERE id = ? AND (
+         (why IS NULL OR why = '') OR
+         (expected_outcome IS NULL OR expected_outcome = '') OR
+         (acceptance_criteria IS NULL OR acceptance_criteria = '')
+       )`,
+      params,
+    );
+    logger.info(
+      `[create_task] structural fields filled id=${taskId} (${updates
+        .map((u) => u.split(' ')[0])
+        .join(', ')})`,
+    );
+  } catch (err) {
+    logger.error(
+      `[create_task] structural fill FAILED id=${taskId}: ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
+  }
+}
+
 export async function createTask(
   params: CreateTaskParams,
   context: CreateTaskContext = {}
@@ -112,6 +219,18 @@ export async function createTask(
 
     const taskId = String((result.result as any)?.taskId || '');
 
+    // BUG B: fill structural fields (why/expectedOutcome/acceptanceCriteria) in the
+    // BACKGROUND. Fire-and-forget so the chat stream returns immediately; the task
+    // row already exists, the AI-fill only enriches it. Fail-soft (logs its own
+    // errors). Skipped when we somehow got no id back.
+    if (taskId) {
+      void fillTaskStructuralFields(
+        taskId,
+        { title, description: params?.description || undefined, priority },
+        language,
+      );
+    }
+
     try {
       context.onDeliverable?.({
         draftId: taskId,
@@ -120,6 +239,9 @@ export async function createTask(
         format: 'task',
         title,
         taskId,
+        // BUG2 — give the post-stream scorer the task's own scope, not the thin
+        // "Utworzyłem zadanie…" chat-confirmation.
+        scorerContent: `${title}\n\n${String(params?.description || '')}`.trim(),
       });
     } catch (emitErr) {
       logger.warn(

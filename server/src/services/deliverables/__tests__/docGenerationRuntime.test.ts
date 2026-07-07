@@ -79,6 +79,7 @@ const {
   planDoc,
   planSheet,
   polishMarkdownForCanvas,
+  dedupeMarkdownHeadings,
   startDoc,
   startSheet,
   statusDoc,
@@ -187,6 +188,39 @@ describe('polishMarkdownForCanvas (Kimi-parity: czysty deliverable)', () => {
     expect(polished).not.toContain('KEY_MESSAGE');
     expect(polished).toContain('> **Kluczowa myśl:** Najważniejszy wniosek.');
     expect(polished).toContain('Realna treść.');
+  });
+});
+
+describe('dedupeMarkdownHeadings (BUG E — zdublowane nagłówki)', () => {
+  it('scala dwa równoważne H2 pod rząd (tytuł + opis bez treści między)', () => {
+    const raw = ['## Streszczenie', '', '## Streszczenie', '', 'Treść sekcji.'].join('\n');
+    const out = dedupeMarkdownHeadings(raw);
+    expect(out.match(/## Streszczenie/g)?.length).toBe(1);
+    expect(out).toContain('Treść sekcji.');
+  });
+
+  it('traktuje Streszczenie/Podsumowanie jako synonim gdy stoją pod rząd', () => {
+    const raw = ['## Streszczenie', '', '## Podsumowanie', '', 'Kluczowe wnioski.'].join('\n');
+    const out = dedupeMarkdownHeadings(raw);
+    // Zostaje jeden nagłówek (pierwszy), treść zachowana.
+    const h2 = out.match(/^## .*/gm) || [];
+    expect(h2.length).toBe(1);
+    expect(out).toContain('Kluczowe wnioski.');
+  });
+
+  it('NIE łączy nagłówków rozdzielonych realną treścią', () => {
+    const raw = [
+      '## Streszczenie',
+      '',
+      'Realny akapit.',
+      '',
+      '## Podsumowanie',
+      '',
+      'Inny akapit.',
+    ].join('\n');
+    const out = dedupeMarkdownHeadings(raw);
+    expect(out).toContain('## Streszczenie');
+    expect(out).toContain('## Podsumowanie');
   });
 });
 
@@ -458,6 +492,49 @@ describe('planSheet + startSheet (L3)', () => {
     getDraftMock.mockResolvedValue(sheetDraftRow({ content: GFM_TABLE }));
     const status = await statusDoc({ generationId: 'draft-1', organizationId: ORG });
     expect(status.format).toBe('sheet');
+    expect(status.state).toBe('draft');
+  });
+
+  // BUG D: bogaty prompt → 1. próba proza bez tabeli, 2. próba (z korektą) poprawna tabela ⇒ draft.
+  it('startSheet: retry ratuje bogaty prompt — 1. bez tabeli, 2. poprawna ⇒ draft', async () => {
+    getDraftMock.mockResolvedValue(sheetDraftRow());
+    generateChatResponseMock
+      .mockResolvedValueOnce({ content: 'Oto analiza Twojego budżetu w formie opisowej...' })
+      .mockResolvedValueOnce({ content: GFM_TABLE });
+
+    await startSheet({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER });
+    await flushBackgroundWork();
+    await flushBackgroundWork();
+    await flushBackgroundWork();
+
+    expect(generateChatResponseMock).toHaveBeenCalledTimes(2);
+    // 2. wywołanie zawiera twardą instrukcję korygującą.
+    const secondPrompt = String(generateChatResponseMock.mock.calls[1][0].messages[0].content);
+    expect(secondPrompt).toMatch(/NIE zawierała poprawnej tabeli|did NOT contain a valid table/);
+    const contentPatches = updateDraftMock.mock.calls.filter((c) => 'content' in c[0].patch);
+    expect(contentPatches.length).toBeGreaterThan(0);
+    const status = await statusDoc({ generationId: 'draft-1', organizationId: ORG });
+    expect(status.state).toBe('draft');
+  });
+
+  // BUG D: tabela otoczona prozą (borderless / prefiks) ⇒ extractor salvage’uje ją, draft.
+  it('startSheet: tabela otoczona prozą ⇒ salvage, draft', async () => {
+    getDraftMock.mockResolvedValue(sheetDraftRow());
+    generateChatResponseMock.mockResolvedValue({
+      content:
+        'Przygotowałem następujące zestawienie:\n\n# Budżet Q1\n\n| Pozycja | Kwota | Status |\n| --- | --- | --- |\n| Licencje | 12000 | planowane |\n| Szkolenia | 8000 | planowane |\n\nDaj znać, jeśli chcesz coś zmienić.',
+    });
+
+    await startSheet({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER });
+    await flushBackgroundWork();
+    await flushBackgroundWork();
+    await flushBackgroundWork();
+
+    const contentPatch = updateDraftMock.mock.calls.filter((c) => 'content' in c[0].patch).at(-1);
+    expect(contentPatch?.[0]?.patch?.content).toContain('| Licencje |');
+    // Trailing prose salvaged out of the stored content.
+    expect(contentPatch?.[0]?.patch?.content).not.toContain('Daj znać');
+    const status = await statusDoc({ generationId: 'draft-1', organizationId: ORG });
     expect(status.state).toBe('draft');
   });
 });

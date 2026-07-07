@@ -1556,6 +1556,12 @@ router.post(
 
     const streamSessionId = conversationId || `stream-${req.userId}-${Date.now()}`;
     let accumulatedContent = '';
+    // BUG2 — when a deliverable/object tool fires mid-stream, accumulatedContent
+    // is only the thin "Utworzyłem…" chat-confirmation (150-400 chars) while the
+    // REAL artifact scope lives in the tool's `scorerContent` (its rich intent).
+    // We capture the last deliverable's scorerContent here and hand THAT to
+    // qc.check so mece/actionability score the artifact, not the confirmation.
+    let lastDeliverableScorerContent: string | null = null;
     let lastSaveTime = Date.now();
     let isClientConnected = true;
     let streamAborted = false;
@@ -4247,8 +4253,16 @@ router.post(
                 conversationId: conversationId || null,
                 language: langCode,
                 role: generateRole,
-                onDeliverable: (payload: Record<string, unknown>) =>
-                  emitSSE({ type: 'deliverable', ...payload }),
+                onDeliverable: (payload: Record<string, unknown>) => {
+                  // BUG2 — capture the artifact scope for the post-stream scorer;
+                  // strip it from the client SSE (FE only needs id/kind/title).
+                  const sc = payload?.scorerContent;
+                  if (typeof sc === 'string' && sc.trim().length > 0) {
+                    lastDeliverableScorerContent = sc.trim();
+                  }
+                  const { scorerContent: _omit, ...clientPayload } = payload;
+                  emitSSE({ type: 'deliverable', ...clientPayload });
+                },
               },
             },
           };
@@ -4743,7 +4757,14 @@ router.post(
           // ================================================================
           // Post-stream: Quality scoring (best-effort, non-blocking)
           // ================================================================
-          if (accumulatedContent && accumulatedContent.trim().length > 0) {
+          // BUG2 — score the ARTIFACT scope when a deliverable fired. Without this
+          // the scorer sees only the thin "Utworzyłem dokument…" confirmation and
+          // systematically under-rates mece/actionability despite good content.
+          const scorerResponse =
+            lastDeliverableScorerContent && lastDeliverableScorerContent.trim().length > 0
+              ? lastDeliverableScorerContent
+              : accumulatedContent;
+          if (scorerResponse && scorerResponse.trim().length > 0) {
             try {
               const qcMod = await import('../services/ai/qualityChecker.js');
               const qc = (qcMod as any).qualityChecker || (qcMod as any).default;
@@ -4752,7 +4773,7 @@ router.post(
                 const selectedTier = (pipelineRequest as any)?.options?.selectedTier || 'STANDARD';
                 const qualityScore = await qc.check({
                   question: message,
-                  response: accumulatedContent,
+                  response: scorerResponse,
                   conversationId: conversationId || undefined,
                   messageId: chatRunId || undefined,
                   userId: req.userId,

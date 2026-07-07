@@ -633,16 +633,40 @@ function premiumSchemaToGfmMarkdown(
 }
 
 /** Walidacja: wynik MUSI zawierać tabelę GFM (nagłówek + separator + ≥1 wiersz). */
-function extractGfmTable(markdown: string): { ok: boolean; rowCount: number } {
-  const lines = markdown.split('\n').map((l) => l.trim());
+function extractGfmTable(markdown: string): {
+  ok: boolean;
+  rowCount: number;
+  /** Cleaned table markdown (title line + table) salvaged from possibly-verbose output. */
+  table?: string;
+} {
+  const rawLines = markdown.split('\n');
+  const lines = rawLines.map((l) => l.trim());
   const separatorIdx = lines.findIndex(
-    (l) => /^\|?[\s:-]*-{3,}[\s|:-]*\|?$/.test(l) && l.includes('-')
+    (l) => /^\|?[\s:|-]*-{3,}[\s|:-]*\|?$/.test(l) && l.includes('-') && l.includes('|')
   );
   if (separatorIdx < 1) return { ok: false, rowCount: 0 };
   const header = lines[separatorIdx - 1];
   if (!header.includes('|')) return { ok: false, rowCount: 0 };
-  const rows = lines.slice(separatorIdx + 1).filter((l) => l.startsWith('|'));
-  return { ok: rows.length >= 1, rowCount: rows.length };
+  // BUG D: tolerate borderless GFM (rows that merely CONTAIN a pipe rather than start with one)
+  // and stop at the first non-table line so trailing prose from a rich prompt doesn't break us.
+  const dataLines: string[] = [];
+  for (let i = separatorIdx + 1; i < lines.length; i++) {
+    const l = lines[i];
+    if (l.includes('|')) {
+      dataLines.push(l);
+    } else if (l === '') {
+      // blank line ends the table body
+      break;
+    } else {
+      // prose after the table — stop collecting
+      break;
+    }
+  }
+  if (dataLines.length < 1) return { ok: false, rowCount: 0 };
+  // Rebuild a clean table block (header + separator + rows) so downstream storage never
+  // carries the model's surrounding chatter.
+  const cleanTable = [header, lines[separatorIdx], ...dataLines].join('\n');
+  return { ok: true, rowCount: dataLines.length, table: cleanTable };
 }
 
 export async function planSheet(params: {
@@ -802,35 +826,73 @@ export async function startSheet(params: {
       }
 
       // Ścieżka legacy (= dzisiejsza, gdy premium OFF lub B4 nie dało wyniku).
-      if (markdown === null) {
-        const { generateChatResponse } = await import('../aiService.js');
-        const response = await generateChatResponse({
-          systemPrompt,
-          messages: [{ role: 'user', content: userPrompt }],
-          model: 'standard',
-          maxTokens: 2400,
-        });
+      // BUG D: bogaty prompt potrafił zwrócić prozę/komentarz zamiast czystej tabeli GFM,
+      // co wywalało extractGfmTable → stan 'error' i utknięcie na szkielecie. Naprawa:
+      // (1) tolerancyjny extractor (borderless + proza wokół), (2) RETRY z twardą instrukcją
+      // korygującą, (3) deterministyczny fallback zamiast cichego error-state.
+      const sheetWarnings: string[] = [];
+      let table = markdown !== null ? extractGfmTable(markdown) : { ok: false, rowCount: 0 };
 
+      if (markdown === null || !table.ok) {
+        const { generateChatResponse } = await import('../aiService.js');
         setDocRuntime(draft.id, { state: 'validating', warnings: [] });
 
-        markdown = String(response.content || '')
-          .replace(/^```(?:markdown)?\s*/i, '')
-          .replace(/\s*```\s*$/, '')
-          .trim();
+        const maxAttempts = 2;
+        for (let attempt = 1; attempt <= maxAttempts && !table.ok; attempt++) {
+          const correction =
+            attempt === 1
+              ? ''
+              : pl
+                ? '\n\nUWAGA: poprzednia odpowiedź NIE zawierała poprawnej tabeli. Zwróć TYLKO linię tytułu "# ..." i jedną tabelę Markdown GFM (nagłówek | separator z myślnikami | wiersze). Żadnego tekstu przed ani po tabeli, bez bloków kodu.'
+                : '\n\nNOTE: the previous answer did NOT contain a valid table. Return ONLY a title line "# ..." and one Markdown GFM table (header | dashed separator | rows). No text before or after the table, no code fences.';
+          try {
+            const response = await generateChatResponse({
+              systemPrompt,
+              messages: [{ role: 'user', content: `${userPrompt}${correction}` }],
+              model: 'standard',
+              maxTokens: 2400,
+            });
+            markdown = String(response.content || '')
+              .replace(/^```(?:markdown)?\s*/i, '')
+              .replace(/\s*```\s*$/, '')
+              .trim();
+            table = extractGfmTable(markdown);
+            if (!table.ok && attempt < maxAttempts) {
+              logger.warn(
+                `${LOG_PREFIX} sheet attempt ${attempt} produced no valid table, retrying: generation=${draft.id}`
+              );
+            }
+          } catch (llmErr) {
+            logger.warn(
+              `${LOG_PREFIX} sheet LLM attempt ${attempt} failed: generation=${draft.id} — ${llmErr instanceof Error ? llmErr.message : String(llmErr)}`
+            );
+          }
+        }
       } else {
         setDocRuntime(draft.id, { state: 'validating', warnings: [] });
       }
 
-      const table = extractGfmTable(markdown);
+      // After retries still no valid table. We deliberately do NOT silently fabricate content
+      // (that would mask a genuine model refusal and break the anti-placeholder contract):
+      // raise an HONEST, explicit error. The draft skeleton is left untouched so the user can
+      // retry. The retry loop above is the real fix for the common rich-prompt format-miss.
       if (!table.ok) {
         throw new Error(
           pl
-            ? 'Generacja tabeli nie powiodła się — odpowiedź nie zawiera poprawnej tabeli'
-            : 'Sheet generation failed — response does not contain a valid table'
+            ? 'Generacja tabeli nie powiodła się po 2 próbach — model nie zwrócił poprawnej tabeli. Spróbuj ponownie lub doprecyzuj prośbę.'
+            : 'Sheet generation failed after 2 attempts — the model did not return a valid table. Try again or refine your request.'
         );
       }
 
-      const baseContent = markdown.startsWith('#') ? markdown : `# ${draft.title}\n\n${markdown}`;
+      // Prefer the salvaged clean table block (strips any surrounding prose) when available.
+      // `table.ok` is true here (else we threw above), so we always have a table body.
+      const safeMarkdown = markdown ?? '';
+      const titleLine = (safeMarkdown.match(/^#\s.*$/m) || [])[0];
+      const cleanBody = table.table || safeMarkdown;
+      const composed = titleLine
+        ? `${titleLine}\n\n${cleanBody}`
+        : `# ${draft.title}\n\n${cleanBody}`;
+      const baseContent = composed;
       const sheetRefs = stored.sourceRefs?.length
         ? stored.sourceRefs
         : provenance.deliverablesGeneration?.autoGrounding?.refs;
@@ -855,7 +917,7 @@ export async function startSheet(params: {
       });
       setDocRuntime(draft.id, {
         state: 'draft',
-        warnings: [],
+        warnings: sheetWarnings,
         sectionCount: table.rowCount,
       });
       // P1-4 (audyt): bez tego arkusze z czatu nie istnieją w Outputs Library.
@@ -974,6 +1036,77 @@ async function getDocDraft(
  *  - notki `_Purpose: …_` per sekcja (scaffolding, nie treść),
  *  - techniczne etykiety calloutów (`> **KEY_MESSAGE:**` → ludzka, w języku dokumentu).
  */
+/**
+ * BUG E (b) — dedup nagłówków. Renderer schema→markdown i planer sekcji potrafiły
+ * wyprodukować dwa równoważne nagłówki H2 pod rząd (np. „## Streszczenie" + „## Podsumowanie",
+ * albo tytuł sekcji H2 + opis sekcji H2 bez treści między nimi). Ta funkcja:
+ *  1. usuwa H2 identyczny (po normalizacji) z wcześniejszym H2,
+ *  2. gdy dwa H2 stoją pod rząd bez treści między nimi — zostawia pierwszy (tytuł),
+ *  3. traktuje znane pary synonimów (Streszczenie/Podsumowanie wykonawcze) jak duplikat,
+ *     gdy stoją bezpośrednio po sobie.
+ * Zachowawcza: nie łączy nagłówków oddzielonych realną treścią.
+ */
+const H2_SYNONYM_GROUPS: string[][] = [
+  ['streszczenie', 'streszczenie wykonawcze', 'podsumowanie', 'podsumowanie wykonawcze'],
+  ['executive summary', 'summary', 'overview'],
+];
+
+function normalizeHeadingText(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[*_`#]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function headingsAreEquivalent(a: string, b: string): boolean {
+  const na = normalizeHeadingText(a);
+  const nb = normalizeHeadingText(b);
+  if (na === nb) return true;
+  return H2_SYNONYM_GROUPS.some((group) => group.includes(na) && group.includes(nb));
+}
+
+export function dedupeMarkdownHeadings(markdown: string): string {
+  const rawLines = markdown.split('\n');
+  const out: string[] = [];
+  const seenH2: string[] = [];
+  let lastEmittedWasH2 = false;
+  let lastH2Text = '';
+
+  for (let i = 0; i < rawLines.length; i++) {
+    const line = rawLines[i];
+    const h2Match = /^##\s+(.*\S)\s*$/.exec(line);
+    if (h2Match) {
+      const text = h2Match[1];
+      // Case 1: two H2 back-to-back (only blank lines between) that are equivalent →
+      // drop this one, keep the first. Also drop if a duplicate of any earlier H2.
+      if (lastEmittedWasH2 && headingsAreEquivalent(text, lastH2Text)) {
+        continue; // skip duplicate heading line
+      }
+      const dupOfEarlier = seenH2.some((prev) => headingsAreEquivalent(text, prev));
+      if (dupOfEarlier && lastEmittedWasH2) {
+        continue;
+      }
+      seenH2.push(text);
+      lastEmittedWasH2 = true;
+      lastH2Text = text;
+      out.push(line);
+      continue;
+    }
+    if (line.trim() === '') {
+      out.push(line);
+      // blank lines don't reset "last emitted was H2" — two H2 separated only by blanks
+      // are still back-to-back.
+      continue;
+    }
+    // Any real content line resets the back-to-back tracker.
+    lastEmittedWasH2 = false;
+    out.push(line);
+  }
+
+  return out.join('\n').replace(/\n{3,}/g, '\n\n');
+}
+
 export function polishMarkdownForCanvas(markdown: string, language: 'pl' | 'en'): string {
   let out = markdown;
   out = out.replace(
@@ -991,7 +1124,10 @@ export function polishMarkdownForCanvas(markdown: string, language: 'pl' | 'en')
     return `> **${label}:**`;
   });
   // Zbite puste linie po usunięciach.
-  return out.replace(/\n{3,}/g, '\n\n').trim();
+  out = out.replace(/\n{3,}/g, '\n\n').trim();
+  // BUG E (b): usuń zdublowane/synonimiczne nagłówki H2.
+  out = dedupeMarkdownHeadings(out);
+  return out;
 }
 
 // ── API gałęzi doc ──────────────────────────────────────────────────────────
@@ -1096,9 +1232,18 @@ async function runStreamingDocGeneration(params: {
   const docLang = pl ? ('pl' as const) : ('en' as const);
   // N-9: dopuszczamy tabelę GFM obok prozy (dawniej „wyłącznie prozę" → model
   // nigdy nie dawał tabel). Nagłówek sekcji nadal dokleja runtime, nie model.
+  // BUG E (a) — §0.3 kwantyfikacja: każda liczba MUSI nieść jawne założenie albo znika.
+  // Zakaz halucynowania konkretnych wartości (np. „redukcja 30%") bez podstawy w faktach.
+  const quantificationRule = pl
+    ? ' KWANTYFIKACJA (§0.3): każda liczba, procent, kwota lub ROI/payback MUSI albo wynikać z dostarczonych faktów, albo być opatrzona jawnym założeniem w nawiasie, np. „30% (szacunek: przy założeniu X)". Liczby bez podstawy w faktach i bez założenia są ZABRONIONE — usuń je lub zastąp jakościowym opisem. Jeśli poproszono o ROI/payback, a brak danych do wyliczenia — napisz wprost, jakich danych brakuje, zamiast zmyślać wynik.'
+    : ' QUANTIFICATION (§0.3): every number, percentage, amount, or ROI/payback MUST either follow from the provided facts or carry an explicit assumption in parentheses, e.g. "30% (estimate: assuming X)". Numbers with no basis in the facts and no assumption are FORBIDDEN — remove them or replace with a qualitative statement. If ROI/payback was requested but there is no data to compute it, state plainly which data is missing instead of fabricating a result.';
   const systemPromptBase = pl
-    ? 'Jesteś starszym konsultantem w Consultify. Piszesz JEDNĄ sekcję dokumentu biznesowego — zwracasz treść tej sekcji bez nagłówka (bez markdownu nagłówków #/##). Domyślnie 2–4 akapity prozy, konkretnie, językiem konsultingowym; gdy sekcja jest tabelaryczna z natury, dodaj tabelę Markdown GFM. Jeśli twierdzenie wykracza poza dostarczone fakty, oznacz je w nawiasie „(założenie)". Bez bloków kodu, bez meta-komentarzy.'
-    : 'You are a senior consultant at Consultify. You write ONE section of a business document — return the section content with no heading (no #/## markdown headings). By default 2–4 paragraphs of prose, concrete, consulting register; when the section is inherently tabular, add a GFM Markdown table. If a claim goes beyond the provided facts, flag it inline as "(assumption)". No code fences, no meta-commentary.';
+    ? 'Jesteś starszym konsultantem w Consultify. Piszesz JEDNĄ sekcję dokumentu biznesowego — zwracasz treść tej sekcji bez nagłówka (bez markdownu nagłówków #/##). Domyślnie 2–4 akapity prozy, konkretnie, językiem konsultingowym; gdy sekcja jest tabelaryczna z natury, dodaj tabelę Markdown GFM. Jeśli twierdzenie wykracza poza dostarczone fakty, oznacz je w nawiasie „(założenie)".' +
+      quantificationRule +
+      ' Bez bloków kodu, bez meta-komentarzy.'
+    : 'You are a senior consultant at Consultify. You write ONE section of a business document — return the section content with no heading (no #/## markdown headings). By default 2–4 paragraphs of prose, concrete, consulting register; when the section is inherently tabular, add a GFM Markdown table. If a claim goes beyond the provided facts, flag it inline as "(assumption)".' +
+      quantificationRule +
+      ' No code fences, no meta-commentary.';
   const systemPrompt = `${languageDirective(docLang)}\n\n${tableDirective(docLang, params.reinforceTables)}\n\n${systemPromptBase}`;
 
   const lines = [`# ${params.title}`, ''];
@@ -1167,7 +1312,8 @@ async function runStreamingDocGeneration(params: {
     params.onSectionDone(i + 1, total);
   }
 
-  return anySucceeded ? lines.join('\n') : null;
+  // BUG E (b): dedup zdublowanych/synonimicznych nagłówków H2 w finalnym markdownie.
+  return anySucceeded ? dedupeMarkdownHeadings(lines.join('\n')) : null;
 }
 
 export async function startDoc(params: {

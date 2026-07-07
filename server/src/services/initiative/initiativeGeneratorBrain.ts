@@ -294,18 +294,48 @@ export async function generateFullInitiative(
     ...(input.sourceType ? { sourceLineage: input.sourceType } : {}),
   };
 
-  // Fill ONE card (generate → advisory review → optional auto-heal). Extracted so
-  // the cards can run CONCURRENTLY (see Promise.all below).
+  // Generate ONE section with a bounded retry on a HARD failure (thrown error).
+  // Root cause of the "cicho pada" bug (demo 2026-07): all 6 cards were fired
+  // CONCURRENTLY (Promise.all) and each then triggered a review + heal call — a
+  // burst of up to ~24 premium LLM calls. A single provider rate-limit / 429
+  // then made EVERY card throw fail-soft → cards={} → nothing persisted →
+  // ai_generated_sections stayed NULL and the whole §1 looked empty. We now
+  // (a) fill SEQUENTIALLY (below) and (b) retry a thrown section once here, so a
+  // transient hiccup on one card no longer wipes the initiative.
+  const HARD_RETRY = 1;
+  const generateWithRetry = async (
+    key: (typeof keys)[number],
+  ): Promise<GenerationResult> => {
+    let lastErr: any;
+    for (let attempt = 0; attempt <= HARD_RETRY; attempt++) {
+      try {
+        return await deps.generationService.generateSectionContent(
+          key,
+          baseContext,
+          input.organizationId,
+          { withReview: true },
+        );
+      } catch (err: any) {
+        lastErr = err;
+        if (attempt < HARD_RETRY) {
+          logger.warn(
+            `[GeneratorBrain] section "${key}" threw (attempt ${attempt + 1}/${
+              HARD_RETRY + 1
+            }) — retrying:`,
+            err?.message || err,
+          );
+        }
+      }
+    }
+    throw lastErr;
+  };
+
+  // Fill ONE card (generate → advisory review → optional auto-heal).
   const fillCard = async (key: (typeof keys)[number]): Promise<CardOutcome> => {
     const outcome: CardOutcome = { key, content: null, failed: false, healed: false };
     try {
       // First pass — always with review so we can decide whether to heal (D12).
-      const first = await deps.generationService.generateSectionContent(
-        key,
-        baseContext,
-        input.organizationId,
-        { withReview: true },
-      );
+      const first = await generateWithRetry(key);
       let finalResult = first;
       const firstScore = reviewScore(first);
 
@@ -344,18 +374,26 @@ export async function generateFullInitiative(
       if (typeof finalScore === 'number') outcome.score = finalScore;
     } catch (err: any) {
       // FAIL-SOFT: one card throwing never aborts the whole initiative fill.
+      // LOUD: this is logged at ERROR (not warn) — the demo bug was invisible
+      // precisely because every card failed quietly at warn level.
       outcome.failed = true;
       outcome.error = err?.message || String(err);
-      logger.warn(`[GeneratorBrain] card "${key}" failed (fail-soft):`, outcome.error);
+      logger.error(`[GeneratorBrain] card "${key}" failed after retry (fail-soft):`, outcome.error);
     }
     return outcome;
   };
 
-  // Cards are independent (shared read-only baseContext), so fill them
-  // CONCURRENTLY. Sequential filling was N× slower and, with slow reasoning
-  // models (GLM-4.6), exceeded any reasonable wait window; wall time is now ≈ the
-  // slowest single card instead of the sum.
-  const outcomes: CardOutcome[] = await Promise.all(keys.map((key) => fillCard(key)));
+  // Fill cards SEQUENTIALLY (was Promise.all). Concurrent bursts of premium LLM
+  // calls (6 sections × review × heal) tripped provider rate-limits and made the
+  // WHOLE fill fail silently (see generateWithRetry note above). Sequential is
+  // slower but each section already has a generous 150s timeout and the fill runs
+  // in the BACKGROUND (fire-and-forget in the Teresa tool), so wall time no longer
+  // blocks the chat stream. Correctness (cards actually get filled) beats speed.
+  const outcomes: CardOutcome[] = [];
+  for (const key of keys) {
+    // eslint-disable-next-line no-await-in-loop
+    outcomes.push(await fillCard(key));
+  }
 
   // Assemble cards map (only successfully-filled cards) + quality summary.
   const cards: Record<string, string> = {};
@@ -379,6 +417,25 @@ export async function generateFullInitiative(
     averageScore,
     belowThreshold,
   };
+
+  // LOUD SUMMARY: make the outcome visible in logs regardless of success. A fully
+  // empty fill (filled=0) is an ERROR — it means the whole §1 (all core cards)
+  // came back empty, which is exactly the "cicho pada" failure we are hunting.
+  if (qualitySummary.filled === 0 && qualitySummary.total > 0) {
+    logger.error(
+      `[GeneratorBrain] initiative ${input.initiativeId}: ZERO cards filled ` +
+        `(${qualitySummary.failed}/${qualitySummary.total} failed). Errors: ` +
+        outcomes
+          .filter((o) => o.failed)
+          .map((o) => `${o.key}=${o.error || 'unknown'}`)
+          .join(' | '),
+    );
+  } else {
+    logger.info(
+      `[GeneratorBrain] initiative ${input.initiativeId}: filled ${qualitySummary.filled}/${qualitySummary.total} ` +
+        `(failed=${qualitySummary.failed}, healed=${qualitySummary.healed}, avg=${qualitySummary.averageScore ?? 'n/a'})`,
+    );
+  }
 
   return { initiativeId: input.initiativeId, language, cards, outcomes, qualitySummary };
 }

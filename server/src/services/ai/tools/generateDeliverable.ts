@@ -78,6 +78,16 @@ export type DeliverableEmit = (payload: {
   preferredSystem?: 'mindmap' | 'process_flow' | 'table' | 'whiteboard';
   /** Only present for `kind:'note'` — the real notebook_pages id. */
   noteId?: string;
+  /**
+   * Best-effort SYNCHRONOUS content signal for the post-stream quality scorer
+   * (BUG2). doc/sheet/deck generate their body in the BACKGROUND, so the real
+   * artifact text is not available when this fires — `intent` is the model's own
+   * rich restatement of what the artifact must contain and is the strongest
+   * synchronous proxy. For canvas tools this is the seed text. The route feeds
+   * this (not the thin "Utworzyłem…" chat-confirmation) to qc.check so mece/
+   * actionability reflect the ARTIFACT scope, not the confirmation sentence.
+   */
+  scorerContent?: string;
 }) => void;
 
 type GenerateDeliverableContext = {
@@ -196,6 +206,7 @@ export async function generateDeliverable(
         title,
         graph,
         seedText: intent || title,
+        scorerContent: `${title}\n\n${intent || ''}`.trim(),
       });
     } catch (emitErr) {
       logger.warn(
@@ -264,6 +275,7 @@ export async function generateDeliverable(
         graph,
         seedText: intent || title,
         preferredSystem,
+        scorerContent: `${title}\n\n${intent || ''}`.trim(),
       });
     } catch (emitErr) {
       logger.warn(
@@ -337,6 +349,7 @@ export async function generateDeliverable(
           format: 'note',
           title: created.title,
           noteId: created.id,
+          scorerContent: `${created.title}\n\n${intent || ''}`.trim(),
         });
       } catch (emitErr) {
         logger.warn(
@@ -437,6 +450,7 @@ export async function generateDeliverable(
         kind: shortKind,
         format,
         title,
+        scorerContent: `${title}\n\n${intent || ''}`.trim(),
       });
     } catch (emitErr) {
       logger.warn(

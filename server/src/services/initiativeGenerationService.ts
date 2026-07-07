@@ -399,6 +399,123 @@ function getFormulaGuidance(sectionKey: string): string | null {
 }
 
 /**
+ * CODE-LEVEL FALLBACK PROMPTS for the 6 CORE section keys (camelCase).
+ *
+ * Why this exists: the DB-seeded `ai_prompt_template` is the source of truth, but
+ * if the seed migration (20260628_initiative_core_section_prompts / 542) did NOT
+ * run — or a row exists with a NULL template (the exact `finding_section_prompt_
+ * key_mismatch` snake-vs-camel trap) — then EVERY core card threw
+ * "AI prompt template is not configured" and the whole full-fill came back empty
+ * (the "cicho pada" demo bug). Rather than depend on migration state at runtime,
+ * we fall back to these built-in templates so the card ALWAYS generates.
+ *
+ * The JSON shapes are IDENTICAL to migration 20260628 so typed-column hydration
+ * (cardColumnHydration R3) keeps working (symptom→problem_statement,
+ * inScope/outOfScope/killCriteria→scope_*, successCriteria/deliverables, etc.).
+ */
+const CORE_FALLBACK_PROMPTS: Record<string, string> = {
+  problemDefinition: `You are a strategic consultant. Analyze the initiative and generate a structured problem definition.
+
+Context:
+- Initiative name: {{initiativeName}}
+- Current description: {{summary}}
+
+Generate a structured JSON response with:
+{
+  "symptom": "Observable symptoms of the problem (2-3 sentences)",
+  "rootCause": "Root cause analysis (2-3 sentences)",
+  "costOfInaction": "What happens if we do nothing (2-3 sentences)"
+}
+
+Language: {{language}}
+Respond in the requested language only. Return valid JSON only.`,
+  targetState: `You are a strategic consultant. Define the target state for this initiative.
+
+Context:
+- Initiative name: {{initiativeName}}
+- Problem: {{problemStatement}}
+- Current description: {{summary}}
+
+Generate a structured JSON response with:
+{
+  "targetDescription": "Vision of the desired end state (2-3 sentences)",
+  "successCriteria": ["Criterion 1", "Criterion 2", "Criterion 3"],
+  "deliverables": ["Deliverable 1", "Deliverable 2", "Deliverable 3"]
+}
+
+Language: {{language}}
+Return valid JSON only.`,
+  kpis: `You are a performance management consultant. Propose measurable KPIs for this initiative.
+
+Context:
+- Initiative name: {{initiativeName}}
+- Description: {{summary}}
+
+Generate a structured JSON response with:
+{
+  "kpis": [
+    { "name": "KPI name", "unit": "unit of measure", "baseline": "current value", "target": "target value" }
+  ]
+}
+Provide 2-4 KPIs that are measurable conditions of success, not tasks.
+Language: {{language}}
+Return valid JSON only.`,
+  scope: `You are a strategic consultant. Define the scope boundaries for this initiative.
+
+Context:
+- Initiative name: {{initiativeName}}
+- Problem: {{problemStatement}}
+- Description: {{summary}}
+
+Generate a structured JSON response with:
+{
+  "inScope": ["What is explicitly in scope (3-5 concrete items)"],
+  "outOfScope": ["What is explicitly excluded (2-4 items)"],
+  "killCriteria": ["Conditions under which the initiative should be stopped (1-3 items)"]
+}
+
+Language: {{language}}
+Return valid JSON only.`,
+  control: `You are a PMO governance consultant. Recommend the control and ownership setup for this initiative.
+
+Context:
+- Initiative name: {{initiativeName}}
+- Description: {{summary}}
+- Status: {{status}}
+
+Generate a structured JSON response with:
+{
+  "recommendedOwner": "Profile of the ideal business owner (role, not a person name)",
+  "governanceCadence": "Suggested review cadence and forum",
+  "escalationTrigger": "Conditions that should trigger escalation"
+}
+
+Language: {{language}}
+Return valid JSON only.`,
+  financialImpact: `You are a business analyst. Estimate the financial impact of this initiative.
+
+Context:
+- Initiative name: {{initiativeName}}
+- Description: {{summary}}
+- KPIs: {{kpis}}
+
+Provide P&L impact estimates as JSON:
+{
+  "revenueImpact": "Expected revenue impact description",
+  "costSavings": "Expected cost savings description",
+  "benefitsRealization": "How and when benefits will be realized"
+}
+
+Language: {{language}}
+Return valid JSON only.`,
+};
+
+/** Fallback template for a core section when the DB template is missing/NULL. */
+export function getCoreFallbackPrompt(sectionKey: string): string | null {
+  return CORE_FALLBACK_PROMPTS[sectionKey] || null;
+}
+
+/**
  * Build a human-readable evidence/grounding block from the enriched context so the
  * model cites real data instead of inventing it (CARD_CONTENT_FORMULA §A8).
  * Returns null when there is nothing concrete to ground in.
@@ -477,17 +594,38 @@ export class InitiativeGenerationService {
       throw err;
     }
 
+    // CORE-CARD RESILIENCE: for the 6 core sections, a missing section-type row OR
+    // a NULL ai_prompt_template (the snake-vs-camel migration trap) must NOT kill
+    // the card — fall back to the built-in template so full-fill always produces
+    // content. Non-core sections keep the strict behavior (honest 503).
+    const coreFallback = getCoreFallbackPrompt(sectionKey);
+
     if (!sectionType) {
-      throw new Error(`Section type "${sectionKey}" not found`);
+      if (coreFallback) {
+        logger.warn(
+          `[InitiativeGeneration] section type "${sectionKey}" not found — using built-in core fallback prompt`,
+        );
+      } else {
+        throw new Error(`Section type "${sectionKey}" not found`);
+      }
     }
 
-    const promptTemplate = sectionType.aiPromptTemplate;
+    let promptTemplate = sectionType?.aiPromptTemplate;
     if (!promptTemplate) {
-      throw new AppError(
-        `AI prompt template is not configured for section "${sectionKey}"`,
-        503,
-        'FEATURE_UNAVAILABLE'
-      );
+      if (coreFallback) {
+        if (sectionType) {
+          logger.warn(
+            `[InitiativeGeneration] ai_prompt_template NULL for core section "${sectionKey}" — using built-in fallback (check migration 20260628/542)`,
+          );
+        }
+        promptTemplate = coreFallback;
+      } else {
+        throw new AppError(
+          `AI prompt template is not configured for section "${sectionKey}"`,
+          503,
+          'FEATURE_UNAVAILABLE'
+        );
+      }
     }
 
     // 2. Enrich context with initiative data from DB (incl. lineage + KPIs for grounding)
