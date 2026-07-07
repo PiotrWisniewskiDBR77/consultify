@@ -75,6 +75,62 @@ describe('cardContentValidator — validateCardContent (BCG §0 heuristics)', ()
     expect(result.violations.some((v) => v.rule === 'too_short')).toBe(true);
   });
 
+  // ── sędzia BCG #2/#3: Task.strategy.expectedOutcome must be a measurable
+  // end-state (number + unit + direction), not an activity, and any bare
+  // benchmark number must carry an uncertainty marker. ─────────────────────
+  describe('strategy.expectedOutcome — measurable-outcome enforcement', () => {
+    it('fail: outcome written as an ACTIVITY, not an end-state (reported defect)', () => {
+      const result = validateCardContent('strategy', {
+        description: 'Zidentyfikować maszyny o najwyższym potencjale automatyzacji.',
+        why: 'Redukcja przestojów wspiera cel inicjatywy Operational Excellence.',
+        expectedOutcome: 'Identyfikacja 3 maszyn i szacowanie ROI dla każdej z nich.',
+      });
+      expect(result.pass).toBe(false);
+      expect(result.violations.some((v) => v.rule === 'outcome_is_activity')).toBe(true);
+    });
+
+    it('fail: outcome with no number at all (not measurable)', () => {
+      const result = validateCardContent('strategy', {
+        description: 'Wdrożyć nowy proces triage zgłoszeń.',
+        why: 'Skraca lead-time obsługi.',
+        expectedOutcome: 'Proces triage działa i jest używany przez zespół wsparcia.',
+      });
+      expect(result.pass).toBe(false);
+      expect(result.violations.some((v) => v.rule === 'outcome_not_quantified')).toBe(true);
+    });
+
+    it('fail: benchmark number in outcome without an uncertainty marker', () => {
+      const result = validateCardContent('strategy', {
+        description: 'Wdrożyć automatyzację procesu obsługi zgłoszeń.',
+        why: 'Redukuje koszt operacyjny zespołu wsparcia.',
+        expectedOutcome: 'Redukcja czasu przestoju maszyn o 30-50% rocznie.',
+      });
+      expect(result.pass).toBe(false);
+      expect(result.violations.some((v) => v.rule === 'outcome_unmarked_estimate')).toBe(true);
+    });
+
+    it('pass: outcome is a measurable end-state with number+unit+direction', () => {
+      const result = validateCardContent('strategy', {
+        description: 'Uszeregować maszyny wg potencjału automatyzacji i policzyć zwrot z inwestycji.',
+        why: 'Wspiera decyzję o priorytetyzacji CAPEX w programie Operational Excellence.',
+        // "3 maszyn" (bare count, no currency/%/mln suffix) is a fine, sourced
+        // deliverable count — no estimate/assumption marker needed for it.
+        expectedOutcome: 'Ranking 3 maszyn gotowy, każda z payback poniżej 18 miesięcy.',
+      });
+      expect(result.violations.filter((v) => v.severity === 'error')).toHaveLength(0);
+      expect(result.pass).toBe(true);
+    });
+
+    it('pass: benchmark number WITH an explicit uncertainty marker', () => {
+      const result = validateCardContent('strategy', {
+        description: 'Wdrożyć automatyzację procesu obsługi zgłoszeń.',
+        why: 'Redukuje koszt operacyjny zespołu wsparcia.',
+        expectedOutcome: 'Szacunek: redukcja czasu przestoju maszyn o 30-50% rocznie (benchmark branżowy, do walidacji).',
+      });
+      expect(result.violations.some((v) => v.rule === 'outcome_unmarked_estimate')).toBe(false);
+    });
+  });
+
   it('checkTitleEcho: flags content that merely repeats the title', () => {
     const echo = checkTitleEcho('Poprawić proces obsługi zgłoszeń', 'Poprawić proces obsługi zgłoszeń');
     expect(echo).not.toBeNull();

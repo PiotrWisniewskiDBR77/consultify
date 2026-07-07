@@ -98,8 +98,13 @@ export const TASK_SECTION_PROMPTS: Record<TaskSectionKey, SectionPrompt> = {
       'Napisz kartę STRATEGIA zadania. Zwróć JSON o kluczach: ' +
       '{"description": "zadanie sformułowane jako REZULTAT (nie tylko czynność), 2-4 zdania answer-first", ' +
       '"why": "po co to zadanie — jawny link do celu inicjatywy / wartości biznesowej, 1-2 zdania", ' +
-      '"expectedOutcome": "mierzalny efekt końcowy (liczba+jednostka+termin gdy możliwe), 1-2 zdania"}. ' +
-      'Nie mieszaj warstw: description=CO, why=PO CO, expectedOutcome=EFEKT MIERZALNY. Return valid JSON.',
+      '"expectedOutcome": "mierzalny STAN KOŃCOWY, nie czynność — MUSI zawierać: liczbę + jednostkę + kierunek zmiany ' +
+      '(np. \'ranking 3 maszyn z payback <18 mies, redukcja przestojów >15%\'), 1-2 zdania"}. ' +
+      'expectedOutcome ZAKAZ: czasowniki-aktywności jako outcome (\'identyfikacja X\', \'szacowanie Y\', \'przegląd Z\', ' +
+      '\'analiza...\', \'zebranie danych...\') — to są kroki WYKONANIA, nie efekt końcowy. Napisz co JEST PRAWDĄ po zakończeniu, ' +
+      'mierzalnie (liczba+jednostka+kierunek: spadek/wzrost/próg). Jeśli liczba jest szacunkiem/benchmarkiem bez twardego źródła ' +
+      'z kontekstu zadania — oznacz ją jawnie („szacunek:", „benchmark, do walidacji:", „założenie:"), NIGDY nie podawaj liczby ' +
+      'branżowej jako faktu. Nie mieszaj warstw: description=CO, why=PO CO, expectedOutcome=EFEKT MIERZALNY. Return valid JSON.',
   },
   // §3: „Acceptance / checklist" — kryteria akceptacji jako sprawdzalne kroki (definition of done).
   execution: {
