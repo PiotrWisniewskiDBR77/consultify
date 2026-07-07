@@ -84,7 +84,17 @@ export const handleResponse = async (res: Response, defaultError: string) => {
     }
   }
 
-  throw new Error(data.error || data.message || defaultError);
+  const err = new Error(data.error || data.message || defaultError) as Error & {
+    status?: number;
+    code?: string;
+    data?: unknown;
+  };
+  // Preserve HTTP status/code so callers can branch (e.g. 409 optimistic-lock
+  // conflict) instead of only seeing a generic message.
+  err.status = res.status;
+  if (data?.code) err.code = data.code;
+  if (data?.data !== undefined) err.data = data.data;
+  throw err;
 };
 
 export const handleBlobResponse = async (res: Response, defaultError: string) => {

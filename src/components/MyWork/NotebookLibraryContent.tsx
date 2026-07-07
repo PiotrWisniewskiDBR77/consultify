@@ -500,9 +500,11 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
   const [title, setTitle] = useState(editing?.title || '');
   const [scope, setScope] = useState<NotebookScope>(editing?.scope || 'personal');
   const [teamId, setTeamId] = useState(editing?.teamId || '');
-  const [contextSharing, setContextSharing] = useState<NotebookContextSharing>(
-    editing?.contextSharing || 'private'
-  );
+  // G6: setter intentionally omitted — the org_context toggle is hidden for v1
+  // (facade: Teresa retrieval does not read it yet). Value is still read on save
+  // so an existing note's org_context is preserved on edit; new notes stay
+  // 'private'. TODO: re-enable setter when org_context wired to Teresa retrieval.
+  const [contextSharing] = useState<NotebookContextSharing>(editing?.contextSharing || 'private');
   const [teams, setTeams] = useState<TeamOption[]>([]);
   const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -654,24 +656,13 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
           </div>
         )}
 
-        <label className="flex items-start gap-2 mb-5 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={contextSharing === 'org_context'}
-            onChange={(e) => setContextSharing(e.target.checked ? 'org_context' : 'private')}
-            className="mt-0.5"
-          />
-          <span className="text-sm text-c-text-secondary">
-            {pl
-              ? 'Udostępnij treść do kontekstu AI organizacji'
-              : 'Share content with organization AI context'}
-            <span className="block text-xs text-c-text-muted">
-              {pl
-                ? 'Domyślnie wyłączone. Treść może zasilać pamięć/AI org po zatwierdzeniu.'
-                : 'Off by default. Content may feed org memory/AI after approval.'}
-            </span>
-          </span>
-        </label>
+        {/*
+          org_context sharing control hidden for v1: the toggle promised that
+          content feeds the org AI context, but Teresa's retrieval does NOT read
+          context_sharing='org_context' yet — it was a facade. Keep state default
+          'private' (deny-by-default) and the DB column/backend intact.
+          TODO: re-enable when org_context wired to Teresa retrieval
+        */}
 
         <div className="flex justify-end gap-2">
           <button
