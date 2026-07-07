@@ -19,22 +19,24 @@
  * (block insertion, media library, agent activity) live in the rail.
  */
 
-import { Activity, Image, LayoutGrid } from 'lucide-react';
+import { Activity, Image, LayoutGrid, MessageSquare } from 'lucide-react';
 import React from 'react';
 
 import { type RightRailToolDescriptor } from '@/components/shared/ExecutiveModuleShell/RightRail';
 
-export type DeckBuilderRightRailToolId = 'blocks' | 'media' | 'activity';
+export type DeckBuilderRightRailToolId = 'blocks' | 'media' | 'comments' | 'activity';
 
 export interface DeckBuilderRightRailLabels {
   blocks?: string;
   media?: string;
+  comments?: string;
   activity?: string;
 }
 
 const DEFAULT_LABELS: Required<DeckBuilderRightRailLabels> = {
   blocks: 'Blocks',
   media: 'Media',
+  comments: 'Comments',
   activity: 'Activity',
 };
 
@@ -43,6 +45,8 @@ export interface DeckBuilderRightRailState {
   agentActivityCount?: number;
   /** Activity dot tone (info when the agent is live). */
   activityTone?: 'success' | 'warning' | 'danger' | 'info' | null;
+  /** Count of open comment threads — drives the badge on the Comments icon. */
+  openCommentCount?: number;
 }
 
 export function buildDeckBuilderRightRailTools(args: {
@@ -56,10 +60,20 @@ export function buildDeckBuilderRightRailTools(args: {
     typeof state.agentActivityCount === 'number' && state.agentActivityCount > 0
       ? state.agentActivityCount
       : undefined;
+  const commentsBadge =
+    typeof state.openCommentCount === 'number' && state.openCommentCount > 0
+      ? state.openCommentCount
+      : undefined;
 
   return [
     { id: 'blocks', label: L.blocks, icon: LayoutGrid },
     { id: 'media', label: L.media, icon: Image },
+    {
+      id: 'comments',
+      label: L.comments,
+      icon: MessageSquare,
+      ...(commentsBadge !== undefined ? { badge: commentsBadge } : {}),
+    },
     {
       id: 'activity',
       label: L.activity,
@@ -73,6 +87,7 @@ export function buildDeckBuilderRightRailTools(args: {
 export interface DeckBuilderRightRailPanelRenderers {
   blocks?: React.ReactNode;
   media?: React.ReactNode;
+  comments?: React.ReactNode;
   activity?: React.ReactNode;
 }
 
@@ -86,6 +101,7 @@ interface DeckBuilderRightRailPanelProps {
 const PANEL_KEY: Record<DeckBuilderRightRailToolId, keyof DeckBuilderRightRailPanelRenderers> = {
   blocks: 'blocks',
   media: 'media',
+  comments: 'comments',
   activity: 'activity',
 };
 

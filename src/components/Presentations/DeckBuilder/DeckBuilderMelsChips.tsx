@@ -18,6 +18,7 @@ import {
   Eye,
   FileSearch,
   History,
+  MessageSquare,
   Palette,
   Play,
   Share2,
@@ -48,6 +49,7 @@ export interface DeckBuilderTopBarChipsLabels {
   governance?: string;
   analytics?: string;
   audit?: string;
+  comments?: string;
   share?: string;
   agent?: string;
   run?: string;
@@ -61,6 +63,8 @@ export interface DeckBuilderTopBarChipsHandlers {
   onGovernance?: () => void;
   onAnalytics?: () => void;
   onAudit?: () => void;
+  /** Toggle the Comments right-rail panel. */
+  onToggleComments?: () => void;
   onShare?: () => void;
   onToggleAgent?: () => void;
   /** Primary chip — "Present" for the deck lane. */
@@ -78,6 +82,10 @@ export interface DeckBuilderTopBarChipsState {
   qaDotTone?: TopBarChipDotTone;
   /** Auto-disables analytics until the deck has a shareable link. */
   analyticsEnabled?: boolean;
+  /** Whether the Comments right-rail panel is currently active. */
+  commentsOpen?: boolean;
+  /** Open comment threads — drives the info dot on the Comments chip. */
+  openCommentCount?: number;
 }
 
 const DEFAULT_LABELS: Required<Omit<DeckBuilderTopBarChipsLabels, 'internalLabels'>> & {
@@ -95,6 +103,7 @@ const DEFAULT_LABELS: Required<Omit<DeckBuilderTopBarChipsLabels, 'internalLabel
   governance: 'Governance',
   analytics: 'Analytics',
   audit: 'Audit',
+  comments: 'Comments',
   share: 'Share',
   agent: 'Teresa',
   run: 'Present',
@@ -192,6 +201,17 @@ export function buildDeckBuilderTopBarChips(args: {
       icon: Share2,
       onClick: handlers.onShare,
       disabled: !handlers.onShare,
+    },
+    {
+      id: 'comments',
+      label: L.comments,
+      icon: MessageSquare,
+      onClick: handlers.onToggleComments,
+      disabled: !handlers.onToggleComments,
+      kind: 'toggle',
+      active: Boolean(state.commentsOpen),
+      dotTone:
+        typeof state.openCommentCount === 'number' && state.openCommentCount > 0 ? 'info' : null,
     },
     {
       id: 'agent',

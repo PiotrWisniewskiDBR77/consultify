@@ -60,6 +60,9 @@ export interface DeckBuilderMelsViewProps {
   rightRailState?: DeckBuilderRightRailState;
   rightRailLabels?: DeckBuilderRightRailLabels;
   rightRailPanels?: DeckBuilderRightRailPanelRenderers;
+  /** Controlled active right-rail tool (so the top-bar can toggle a panel). */
+  activeRightRailToolId?: string | null;
+  onActiveRightRailToolChange?: (toolId: string | null) => void;
 
   /** Core slots. */
   leftRail: React.ReactNode;
@@ -102,6 +105,8 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
   rightRailState,
   rightRailLabels,
   rightRailPanels = {},
+  activeRightRailToolId,
+  onActiveRightRailToolChange,
   leftRail,
   canvas,
   leftRailTitle = 'Slides',
@@ -143,6 +148,8 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
       leftRailTitle={leftRailTitle}
       leftRailContent={leftRail}
       rightRailTools={rightTools}
+      activeRightRailToolId={activeRightRailToolId}
+      onActiveRightRailToolChange={onActiveRightRailToolChange}
       renderRightRailPanel={(activeToolId) => (
         <DeckBuilderRightRailPanel
           activeToolId={activeToolId as DeckBuilderRightRailToolId | null}
