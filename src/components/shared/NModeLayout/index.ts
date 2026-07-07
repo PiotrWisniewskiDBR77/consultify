@@ -37,6 +37,8 @@ export { NModeLeftNav } from './NModeLeftNav';
 export { NModePropertiesStrip } from './NModePropertiesStrip';
 export { EvidenceBadge, NModeSectionWrapper } from './NModeSectionWrapper';
 export type { QuoteRequirementLevel } from './NModeSectionWrapper';
+export { NModeCardState, NModeCardBadge } from './NModeCardState';
+export type { NModeCardStatus, NModeCardStateProps } from './NModeCardState';
 export { NModeShell, NMODE_TOOLBAR_SHELL_CLASS } from './NModeShell';
 export {
   NModeToolbar,
