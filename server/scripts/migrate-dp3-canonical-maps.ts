@@ -454,10 +454,12 @@ async function main() {
 
   const { getDatabaseAsync } = await import('../src/database/Database.js');
   const { getTableColumns } = await import('../src/utils/dbSchema.js');
-  const { getDatabaseType } = await import('../src/database/sqliteAsyncAdapter.js');
 
   const db = await getDatabaseAsync();
-  const isPostgres = getDatabaseType() === 'postgres';
+  // Same convention as server/scripts/migrate.ts:481 — sqliteAsyncAdapter has no
+  // getDatabaseType export on this base; DATABASE_URL presence implies postgres.
+  const isPostgres =
+    (process.env.DB_TYPE || '').toLowerCase() === 'postgres' || Boolean(process.env.DATABASE_URL);
 
   const hasColumn = async (table: string, column: string) => {
     const cols = await getTableColumns(table);
