@@ -1652,13 +1652,7 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
  * marker of test/throwaway scaffolding. Used by both the SQL backfill (migration)
  * and the runtime guard below so the two stay in lockstep. Pure, side-effect free.
  */
-const DRAFT_TITLE_MARKERS = [
-  'e2e',
-  'throwaway',
-  'probe',
-  'smoke',
-  'toreport-',
-] as const;
+const DRAFT_TITLE_MARKERS = ['e2e', 'throwaway', 'probe', 'smoke', 'toreport-'] as const;
 
 export function isDraftHeuristicTitle(title: string | null | undefined): boolean {
   if (!title) return false;
@@ -2377,7 +2371,10 @@ function inferArtifactPlan(
   return {
     artifactFamily: explicitFamily || 'document',
     outputType: request.requestedOutputType || 'report',
-    titleHint: deriveArtifactTitle(request.goal, goal.includes('brief') ? 'Working brief' : 'Raport'),
+    titleHint: deriveArtifactTitle(
+      request.goal,
+      goal.includes('brief') ? 'Working brief' : 'Raport'
+    ),
     governancePath: 'execution_spine',
     visibilityScope: 'private',
   };
@@ -3211,128 +3208,218 @@ export async function materializeArtifactRun(
         resolvedArtifactId = link?.artifactId || null;
       }
     } else {
-      let tableId =
-        typeof validated.config?.tableId === 'string' ? validated.config.tableId.trim() : '';
-      const tableName =
-        typeof validated.config?.tableName === 'string' ? validated.config.tableName.trim() : '';
-      const workspaceId =
-        typeof validated.config?.workspaceId === 'string' && validated.config.workspaceId.trim()
-          ? validated.config.workspaceId.trim()
+      // outputType === 'sheet'. Two runtimes share this branch:
+      //   - 'workbook' (lane 'excele'): a real .xlsx via WorkbookGeneratorService.
+      //     This is the canonical, SINGLE artifact — no tp_table is created.
+      //   - 'table' / default (lane 'tabele'): auto-create a tp_tables row
+      //     (Table Studio). Unchanged behaviour.
+      // Before D1(a), lane 'excele' fell into the tp_table path here AND the client
+      // then fired a second, unlinked Api.generateWorkbook() — one user action =
+      // two independent "sheet" artifacts (the split-brain, see
+      // Harvard/wdrozenie-100/_PLANY_KONCOWE_2026-07-07/07_excel_sheet.md).
+      const sheetRuntime =
+        typeof validated.config?.sheetRuntime === 'string'
+          ? validated.config.sheetRuntime.trim()
           : '';
-      const workspaceTarget = workspaceId || validated.organizationId;
 
-      // Hardening (P1): never trust incoming tableId blindly.
-      // If the provided table is missing or belongs to another organization,
-      // fall back to deterministic auto-create flow below.
-      if (tableId) {
-        const existingTable = await dbGet<{ table_id: string }>(
-          `SELECT t.id AS table_id
+      if (sheetRuntime === 'workbook') {
+        const workbookPrompt =
+          (typeof validated.config?.prompt === 'string' && validated.config.prompt.trim()) ||
+          (typeof validated.config?.goal === 'string' && validated.config.goal.trim()) ||
+          validated.title ||
+          current.plan.titleHint ||
+          'Generated workbook';
+        try {
+          const { generateAndPersistWorkbook } =
+            await import('../workbook/workbookArtifactService.js');
+          const wb = await generateAndPersistWorkbook({
+            prompt: workbookPrompt,
+            userId: validated.actorUserId,
+            organizationId: validated.organizationId,
+            language:
+              typeof validated.config?.language === 'string'
+                ? validated.config.language
+                : undefined,
+          });
+
+          const registered = await registerArtifactOrigin({
+            organizationId: validated.organizationId,
+            outputType: 'sheet',
+            artifactFamily: 'sheet',
+            originRuntime: 'sheet',
+            originRecordId: wb.id,
+            titleSnapshot:
+              wb.schema.title || validated.title || current.plan.titleHint || 'Workbook',
+            ownerUserId: validated.actorUserId,
+            createdBy: validated.actorUserId,
+            deliveryState: 'ready',
+            visibilityScope: current.plan.visibilityScope,
+            contextSnapshotId: current.contextSnapshotId,
+            executionRunId: current.executionRunId,
+            originSummary: {
+              title: wb.schema.title,
+              description: wb.schema.description || null,
+              sheetCount: wb.schema.sheets.length,
+              exportFormat: 'xlsx',
+              source: 'workbook_generator_materialize',
+              qualityScore: wb.qualityScore,
+              sourceRefs: {
+                conversationId: current.sourceContextId || null,
+                runId: validated.runId,
+              },
+            },
+          });
+
+          materializationOrigin = { originRuntime: 'sheet', originRecordId: wb.id };
+          await persistMaterializationOrigin({
+            runId: validated.runId,
+            organizationId: validated.organizationId,
+            originRuntime: materializationOrigin.originRuntime,
+            originRecordId: materializationOrigin.originRecordId,
+          });
+
+          resolvedArtifactId = registered?.artifactId ?? null;
+          if (!resolvedArtifactId) {
+            const link = await getOriginLinkByOrigin(validated.organizationId, 'sheet', wb.id);
+            resolvedArtifactId = link?.artifactId || null;
+          }
+        } catch (workbookErr) {
+          // Explicit degraded path: fall through to the tp_table auto-create below
+          // (resolvedArtifactId stays null). The client probes the workbook id and,
+          // on a 404, renders the tabular fallback with a visible notice.
+          logger.warn(
+            `${LOG_PREFIX} Workbook materialization failed for run ${validated.runId}; falling back to degraded tp_table sheet`,
+            workbookErr
+          );
+        }
+      }
+
+      // tp_table path — runs for the 'table' runtime, and as the degraded
+      // fallback when a 'workbook' runtime failed to generate above.
+      if (!resolvedArtifactId) {
+        let tableId =
+          typeof validated.config?.tableId === 'string' ? validated.config.tableId.trim() : '';
+        const tableName =
+          typeof validated.config?.tableName === 'string' ? validated.config.tableName.trim() : '';
+        const workspaceId =
+          typeof validated.config?.workspaceId === 'string' && validated.config.workspaceId.trim()
+            ? validated.config.workspaceId.trim()
+            : '';
+        const workspaceTarget = workspaceId || validated.organizationId;
+
+        // Hardening (P1): never trust incoming tableId blindly.
+        // If the provided table is missing or belongs to another organization,
+        // fall back to deterministic auto-create flow below.
+        if (tableId) {
+          const existingTable = await dbGet<{ table_id: string }>(
+            `SELECT t.id AS table_id
              FROM tp_tables t
              JOIN tp_bases b ON b.id = t.base_id
             WHERE t.id = ? AND b.organization_id = ?
             LIMIT 1`,
-          [tableId, validated.organizationId],
-          { fallback: true }
-        );
-        if (!existingTable?.table_id) {
-          logger.warn(
-            `${LOG_PREFIX} Ignoring invalid sheet tableId from materialize config; auto-create fallback will run`,
-            {
-              runId: validated.runId,
-              organizationId: validated.organizationId,
-              providedTableId: tableId,
-            }
+            [tableId, validated.organizationId],
+            { fallback: true }
           );
-          tableId = '';
+          if (!existingTable?.table_id) {
+            logger.warn(
+              `${LOG_PREFIX} Ignoring invalid sheet tableId from materialize config; auto-create fallback will run`,
+              {
+                runId: validated.runId,
+                organizationId: validated.organizationId,
+                providedTableId: tableId,
+              }
+            );
+            tableId = '';
+          }
         }
-      }
 
-      // Auto-create table when Excele pipeline doesn't provide one
-      if (!tableId) {
-        try {
-          const metadataService = (await import('../tablePlatform/MetadataService.js')).default;
+        // Auto-create table when Excele pipeline doesn't provide one
+        if (!tableId) {
+          try {
+            const metadataService = (await import('../tablePlatform/MetadataService.js')).default;
 
-          // Find or create a base for this org/workspace sheet artifacts.
-          let baseId: string | null = null;
-          const workspaceScopedBase = await dbGet<{ id: string }>(
-            `SELECT id
+            // Find or create a base for this org/workspace sheet artifacts.
+            let baseId: string | null = null;
+            const workspaceScopedBase = await dbGet<{ id: string }>(
+              `SELECT id
                FROM tp_bases
               WHERE organization_id = ? AND workspace_id = ?
               ORDER BY created_at DESC
               LIMIT 1`,
-            [validated.organizationId, workspaceTarget],
-            { fallback: true }
-          );
-          if (workspaceScopedBase?.id) {
-            baseId = workspaceScopedBase.id;
-          } else {
-            const newBase = await metadataService.createBase(
-              workspaceTarget,
-              validated.organizationId,
-              'Excele Workspace',
-              validated.actorUserId
+              [validated.organizationId, workspaceTarget],
+              { fallback: true }
             );
-            baseId = (newBase as any)?.id;
+            if (workspaceScopedBase?.id) {
+              baseId = workspaceScopedBase.id;
+            } else {
+              const newBase = await metadataService.createBase(
+                workspaceTarget,
+                validated.organizationId,
+                'Excele Workspace',
+                validated.actorUserId
+              );
+              baseId = (newBase as any)?.id;
+            }
+
+            if (baseId) {
+              const newTable = await metadataService.createTable(
+                baseId,
+                tableName || validated.title || current.plan.titleHint || 'Generated Sheet',
+                `Auto-created by Table Studio pipeline for artifact run ${validated.runId}`,
+                validated.actorUserId
+              );
+              tableId = (newTable as any)?.id || '';
+            }
+          } catch (tableCreateErr) {
+            logger.warn(
+              '[ArtifactRegistry] Auto-create table failed, falling back to error:',
+              tableCreateErr
+            );
           }
 
-          if (baseId) {
-            const newTable = await metadataService.createTable(
-              baseId,
-              tableName || validated.title || current.plan.titleHint || 'Generated Sheet',
-              `Auto-created by Table Studio pipeline for artifact run ${validated.runId}`,
-              validated.actorUserId
+          if (!tableId) {
+            throw new Error(
+              `ArtifactRun ${validated.runId} requires config.tableId for sheet materialization (auto-create also failed)`
             );
-            tableId = (newTable as any)?.id || '';
           }
-        } catch (tableCreateErr) {
-          logger.warn(
-            '[ArtifactRegistry] Auto-create table failed, falling back to error:',
-            tableCreateErr
-          );
         }
 
-        if (!tableId) {
-          throw new Error(
-            `ArtifactRun ${validated.runId} requires config.tableId for sheet materialization (auto-create also failed)`
-          );
-        }
+        const tableSeed = buildStarterTableSeed({
+          goal:
+            typeof validated.config?.goal === 'string'
+              ? validated.config.goal
+              : current.plan.titleHint,
+          title: tableName || validated.title || current.plan.titleHint,
+          explicitColumns: validated.config?.columns,
+          explicitRows: validated.config?.rows,
+        });
+        await ensureStarterTableData({
+          tableId,
+          seed: tableSeed,
+          actorUserId: validated.actorUserId,
+        });
+        await assertMaterializedTableReady({
+          tableId,
+          organizationId: validated.organizationId,
+        });
+
+        const artifact = await registerGovernedTableSheetArtifact({
+          organizationId: validated.organizationId,
+          userId: validated.actorUserId,
+          tableId,
+          tableName: tableName || validated.title || current.plan.titleHint,
+          contextSnapshotId: current.contextSnapshotId,
+          executionRunId: current.executionRunId,
+        });
+        materializationOrigin = { originRuntime: 'sheet', originRecordId: tableId };
+        await persistMaterializationOrigin({
+          runId: validated.runId,
+          organizationId: validated.organizationId,
+          originRuntime: materializationOrigin.originRuntime,
+          originRecordId: materializationOrigin.originRecordId,
+        });
+        resolvedArtifactId = artifact.artifactId;
       }
-
-      const tableSeed = buildStarterTableSeed({
-        goal:
-          typeof validated.config?.goal === 'string'
-            ? validated.config.goal
-            : current.plan.titleHint,
-        title: tableName || validated.title || current.plan.titleHint,
-        explicitColumns: validated.config?.columns,
-        explicitRows: validated.config?.rows,
-      });
-      await ensureStarterTableData({
-        tableId,
-        seed: tableSeed,
-        actorUserId: validated.actorUserId,
-      });
-      await assertMaterializedTableReady({
-        tableId,
-        organizationId: validated.organizationId,
-      });
-
-      const artifact = await registerGovernedTableSheetArtifact({
-        organizationId: validated.organizationId,
-        userId: validated.actorUserId,
-        tableId,
-        tableName: tableName || validated.title || current.plan.titleHint,
-        contextSnapshotId: current.contextSnapshotId,
-        executionRunId: current.executionRunId,
-      });
-      materializationOrigin = { originRuntime: 'sheet', originRecordId: tableId };
-      await persistMaterializationOrigin({
-        runId: validated.runId,
-        organizationId: validated.organizationId,
-        originRuntime: materializationOrigin.originRuntime,
-        originRecordId: materializationOrigin.originRecordId,
-      });
-      resolvedArtifactId = artifact.artifactId;
     }
     if (!resolvedArtifactId) {
       throw new Error(
