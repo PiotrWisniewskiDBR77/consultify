@@ -294,7 +294,7 @@ export const IdeaSlashCommandMenu: React.FC<IdeaSlashCommandMenuProps> = ({
     >
       <div className="px-3 py-2 border-b border-slate-200/30 dark:border-white/[0.04]">
         <div className="flex items-center gap-2">
-          <Sparkles size={14} className="text-primary-500 shrink-0" />
+          <Sparkles size={14} className="text-c-info shrink-0" />
           <input
             ref={inputRef}
             value={query}

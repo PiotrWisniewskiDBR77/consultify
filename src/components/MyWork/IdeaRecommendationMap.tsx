@@ -336,10 +336,10 @@ const BRANCH_COLORS: Record<
     edge: '#38bdf8',
   },
   risks: {
-    bg: 'bg-primary-100 dark:bg-primary-900/25',
-    border: 'border-primary-400/70',
-    text: 'text-primary-700 dark:text-primary-300',
-    ring: 'ring-primary-400',
+    bg: 'bg-violet-100 dark:bg-violet-900/25',
+    border: 'border-violet-400/70',
+    text: 'text-violet-700 dark:text-violet-300',
+    ring: 'ring-violet-400',
     edge: '#a78bfa',
   },
   experiments: {
@@ -379,10 +379,10 @@ const BRANCH_COLORS: Record<
     edge: '#fbbf24',
   },
   threats: {
-    bg: 'bg-primary-100 dark:bg-primary-900/25',
-    border: 'border-primary-400/70',
-    text: 'text-primary-700 dark:text-primary-300',
-    ring: 'ring-primary-400',
+    bg: 'bg-violet-100 dark:bg-violet-900/25',
+    border: 'border-violet-400/70',
+    text: 'text-violet-700 dark:text-violet-300',
+    ring: 'ring-violet-400',
     edge: '#a78bfa',
   },
   // 5 Whys
@@ -444,10 +444,10 @@ const BRANCH_COLORS: Record<
     edge: '#2dd4bf',
   },
   method: {
-    bg: 'bg-primary-100 dark:bg-primary-900/25',
-    border: 'border-primary-400/70',
-    text: 'text-primary-700 dark:text-primary-300',
-    ring: 'ring-primary-400',
+    bg: 'bg-violet-100 dark:bg-violet-900/25',
+    border: 'border-violet-400/70',
+    text: 'text-violet-700 dark:text-violet-300',
+    ring: 'ring-violet-400',
     edge: '#6366f1',
   },
   measurement: {
@@ -538,10 +538,10 @@ const BRANCH_COLORS: Record<
     edge: '#60a5fa',
   },
   outbound: {
-    bg: 'bg-primary-100 dark:bg-primary-900/25',
-    border: 'border-primary-400/70',
-    text: 'text-primary-700 dark:text-primary-300',
-    ring: 'ring-primary-400',
+    bg: 'bg-violet-100 dark:bg-violet-900/25',
+    border: 'border-violet-400/70',
+    text: 'text-violet-700 dark:text-violet-300',
+    ring: 'ring-violet-400',
     edge: '#6366f1',
   },
   marketing: {
@@ -581,10 +581,10 @@ const BRANCH_COLORS: Record<
     edge: '#818cf8',
   },
   systems: {
-    bg: 'bg-primary-100 dark:bg-primary-900/25',
-    border: 'border-primary-400/70',
-    text: 'text-primary-700 dark:text-primary-300',
-    ring: 'ring-primary-400',
+    bg: 'bg-violet-100 dark:bg-violet-900/25',
+    border: 'border-violet-400/70',
+    text: 'text-violet-700 dark:text-violet-300',
+    ring: 'ring-violet-400',
     edge: '#6366f1',
   },
   shared_values: {
@@ -681,10 +681,10 @@ const BRANCH_COLORS: Record<
     edge: '#60a5fa',
   },
   anchor: {
-    bg: 'bg-primary-100 dark:bg-primary-900/25',
-    border: 'border-primary-400/70',
-    text: 'text-primary-700 dark:text-primary-300',
-    ring: 'ring-primary-400',
+    bg: 'bg-violet-100 dark:bg-violet-900/25',
+    border: 'border-violet-400/70',
+    text: 'text-violet-700 dark:text-violet-300',
+    ring: 'ring-violet-400',
     edge: '#a78bfa',
   },
   uncategorized: {
@@ -1428,7 +1428,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
               <div className="flex items-start gap-1.5">
                 <div className="flex-shrink-0 mt-0.5">
                   {isAI ? (
-                    <TeresaMark size={10} className="text-primary-500" />
+                    <TeresaMark size={10} className="text-c-info" />
                   ) : (
                     <Lightbulb size={10} className="text-amber-500" />
                   )}
@@ -6492,7 +6492,7 @@ function MindMapInner({
                   <span className="rounded bg-white/5 px-1.5 py-0.5 text-emerald-300">
                     handlers {debugStats.handlers}
                   </span>
-                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-primary-300">
+                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-violet-300">
                     custom {debugStats.customs}
                   </span>
                   <span className="rounded bg-white/5 px-1.5 py-0.5 text-amber-300">
@@ -6590,7 +6590,7 @@ function MindMapInner({
                             : entry.source === 'keyboard'
                               ? 'text-sky-300'
                               : entry.source === 'custom'
-                                ? 'text-primary-300'
+                                ? 'text-violet-300'
                                 : entry.source === 'persistence'
                                   ? 'text-blue-300'
                                   : entry.source === 'selection'

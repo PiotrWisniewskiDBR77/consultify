@@ -87,12 +87,12 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
   if (!batch || pending.length === 0) return null;
 
   return (
-    <div className="border border-primary-300/30 dark:border-primary-700/30 rounded-2xl bg-gradient-to-b from-primary-50/60 to-white dark:from-primary-950/30 dark:to-navy-950 overflow-hidden shadow-lg shadow-primary-500/5">
+    <div className="border border-c-info/20 rounded-2xl bg-gradient-to-b from-c-info/5 to-white dark:to-navy-950 overflow-hidden shadow-lg shadow-c-info/5">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-primary-200/30 dark:border-primary-800/30">
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-c-info/15">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-primary-500/20 to-crimson-500/15 flex items-center justify-center">
-            <Sparkles size={12} className="text-primary-600 dark:text-primary-400" />
+          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-c-info/20 to-c-info/15 flex items-center justify-center">
+            <Sparkles size={12} className="text-c-info" />
           </div>
           <div>
             <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200">
@@ -321,7 +321,7 @@ const ProposalItem: React.FC<{
                   {proposal.citations.slice(0, 4).map((citation, idx) => (
                     <span
                       key={`${citation.label}-${idx}`}
-                      className="rounded-full bg-primary-500/10 px-2 py-0.5 text-[9px] font-semibold text-primary-600 dark:text-primary-300"
+                      className="rounded-full bg-c-info/10 px-2 py-0.5 text-[9px] font-semibold text-c-info"
                     >
                       {citation.label}
                     </span>

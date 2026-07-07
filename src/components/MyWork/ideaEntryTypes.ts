@@ -33,7 +33,7 @@ export const IDEA_STAGE_LABELS: Record<IdeaStageV5, { en: string; pl: string }> 
 export const IDEA_STAGE_COLORS: Record<IdeaStageV5, string> = {
   spark: 'from-amber-400/20 to-amber-400/10 text-amber-600 dark:text-amber-400',
   framing: 'from-sky-400/20 to-blue-400/10 text-sky-600 dark:text-sky-400',
-  exploring: 'from-primary-400/20 to-primary-400/10 text-primary-600 dark:text-primary-400',
+  exploring: 'from-violet-400/20 to-violet-400/10 text-violet-600 dark:text-violet-400',
   structuring: 'from-blue-400/20 to-emerald-400/10 text-blue-600 dark:text-blue-400',
   validating: 'from-indigo-400/20 to-blue-400/10 text-indigo-600 dark:text-indigo-400',
   ready_to_convert: 'from-emerald-400/20 to-green-400/10 text-emerald-600 dark:text-emerald-400',

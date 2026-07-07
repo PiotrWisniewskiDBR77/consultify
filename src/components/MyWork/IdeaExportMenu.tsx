@@ -610,9 +610,9 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
                   key={format.id}
                   onClick={() => handleExport(format.id)}
                   disabled={!!exporting || !canExportFormat(format.id)}
-                  className="group w-full flex items-center gap-3 p-3 rounded-xl border border-slate-200/60 dark:border-navy-700/60 hover:border-primary-400/40 hover:bg-primary-500/[0.02] transition-all disabled:opacity-50"
+                  className="group w-full flex items-center gap-3 p-3 rounded-xl border border-slate-200/60 dark:border-navy-700/60 hover:border-c-info/40 hover:bg-c-info/[0.02] transition-all disabled:opacity-50"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500/10 to-primary-500/10 flex items-center justify-center text-primary-600 dark:text-primary-400 shrink-0">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-c-info/10 to-c-info/10 flex items-center justify-center text-c-info shrink-0">
                     {isExporting ? (
                       <Loader2 size={18} className="animate-spin" />
                     ) : (
@@ -629,7 +629,7 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
                   </div>
                   <Code2
                     size={14}
-                    className="text-slate-600 dark:text-slate-400 group-hover:text-primary-400 transition-colors"
+                    className="text-slate-600 dark:text-slate-400 group-hover:text-c-info transition-colors"
                   />
                 </button>
               );

@@ -187,7 +187,7 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
           </div>
           <div className="flex items-center gap-3 mt-2">
             <div className="flex items-center gap-1">
-              <ThumbsUp size={10} className="text-primary-500" />
+              <ThumbsUp size={10} className="text-c-info" />
               <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
                 {myVoteCount}/{maxVotes}
               </span>
@@ -231,7 +231,7 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
                     {!timerExpired && myVoteCount < maxVotes && (
                       <button
                         onClick={() => handleVote(node.id)}
-                        className="p-1 rounded text-slate-600 hover:text-primary-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="p-1 rounded text-slate-600 hover:text-c-info opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <ThumbsUp size={10} />
                       </button>
@@ -239,7 +239,7 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
                     {!persistent && myVotes > 0 && (
                       <button
                         onClick={() => handleUnvote(node.id)}
-                        className="p-1 rounded text-primary-500 hover:text-danger-500"
+                        className="p-1 rounded text-c-info hover:text-danger-500"
                       >
                         <ThumbsUp size={10} className="fill-current" />
                       </button>

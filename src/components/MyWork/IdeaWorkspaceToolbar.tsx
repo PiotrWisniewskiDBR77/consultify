@@ -137,7 +137,7 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
                 {getIdeaWorkspaceToolLabel(tool.id, Boolean(isPl))}
               </span>
               {hasContent && !isActive && (
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary-500/60" />
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-c-info/60" />
               )}
             </button>
           );

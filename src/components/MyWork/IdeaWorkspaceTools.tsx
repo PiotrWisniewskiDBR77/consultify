@@ -55,7 +55,7 @@ import { ProcessFlowPropertiesPanel } from './processflow/ProcessFlowPropertiesP
 import { IdeaCompletenessWidget } from './table/IdeaCompletenessWidget';
 
 const FIELD_CLASS =
-  'w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder:text-slate-400 focus:outline-none focus:border-primary-400 dark:focus:border-primary-400 transition-colors';
+  'w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 placeholder:text-slate-400 focus:outline-none focus:border-c-focus dark:focus:border-c-focus transition-colors';
 
 // Convert-target union is owned by the SSOT registry (ideaConvertTargets.ts).
 type ConvertTarget = IdeaConvertTarget;
@@ -274,7 +274,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
     initiative: { icon: Rocket, gradient: 'from-amber-500/15 to-amber-500/10', textColor: 'text-amber-600 dark:text-amber-400' },
     task_set: { icon: CheckSquare, gradient: 'from-emerald-500/15 to-green-500/10', textColor: 'text-emerald-600 dark:text-emerald-400' },
     decision: { icon: Star, gradient: 'from-blue-500/15 to-blue-500/10', textColor: 'text-blue-600 dark:text-blue-400' },
-    team_chat: { icon: MessageSquarePlus, gradient: 'from-primary-500/15 to-primary-500/10', textColor: 'text-primary-600 dark:text-primary-400' },
+    team_chat: { icon: MessageSquarePlus, gradient: 'from-violet-500/15 to-violet-500/10', textColor: 'text-violet-600 dark:text-violet-400' },
     report: { icon: FileText, gradient: 'from-slate-500/15 to-gray-500/10', textColor: 'text-slate-600 dark:text-slate-400' },
     presentation: { icon: Presentation, gradient: 'from-indigo-500/15 to-blue-500/10', textColor: 'text-indigo-600 dark:text-indigo-400' },
     action_plan: { icon: ListChecks, gradient: 'from-blue-500/15 to-blue-500/10', textColor: 'text-blue-600 dark:text-blue-400' },
@@ -400,7 +400,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               {canAdvance && onStageChange && v5Stage !== 'converted' && (
                 <button
                   onClick={() => onStageChange(IDEA_STAGES_V5[stageIdx + 1])}
-                  className="ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:bg-primary-500/5 transition-colors"
+                  className="ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-c-info hover:bg-c-info/5 transition-colors"
                 >
                   →{' '}
                   {isPl
@@ -422,7 +422,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                         }}
                         className={`w-full text-left px-3 py-1.5 text-[11px] transition-colors ${
                           isActive
-                            ? 'font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/5'
+                            ? 'font-semibold text-c-info bg-c-info/5'
                             : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
                         }`}
                       >
@@ -456,7 +456,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
             {onAISummarize && (
               <button
                 onClick={onAISummarize}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-primary-500 dark:text-primary-400 hover:text-primary-600 dark:hover:text-primary-300 hover:bg-primary-500/5 transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-c-info hover:text-c-info/80 hover:bg-c-info/5 transition-colors"
               >
                 <Sparkles size={10} />
                 {isPl ? 'AI podsumuj' : 'AI summarize'}
@@ -465,7 +465,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
             {onAIExpand && (
               <button
                 onClick={onAIExpand}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/15 transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold bg-c-info/10 text-c-info hover:bg-c-info/15 transition-colors"
               >
                 <Sparkles size={10} />
                 {isPl ? 'AI rozbuduj' : 'AI expand'}
@@ -503,7 +503,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                   onKeyDown={(e) => e.key === 'Enter' && handleBranchBlur()}
                   placeholder={isPl ? 'Gałąź…' : 'Branch…'}
                   autoFocus
-                  className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-primary-400 text-slate-700 dark:text-slate-300 outline-none w-28"
+                  className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-c-focus-solid text-slate-700 dark:text-slate-300 outline-none w-28"
                 />
               ) : (
                 <button
@@ -525,7 +525,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                   onKeyDown={(e) => e.key === 'Enter' && handleAreaBlur()}
                   placeholder={isPl ? 'Obszar…' : 'Area…'}
                   autoFocus
-                  className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-primary-400 text-slate-700 dark:text-slate-300 outline-none w-28"
+                  className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-c-focus-solid text-slate-700 dark:text-slate-300 outline-none w-28"
                 />
               ) : (
                 <button
@@ -553,7 +553,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                         onClick={() => handlePrioritySelect(o.value)}
                         className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
                           o.value === normalizedPriority
-                            ? 'font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/5'
+                            ? 'font-semibold text-c-info bg-c-info/5'
                             : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
                         }`}
                       >
@@ -574,7 +574,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       {/* ── 3. Convert ── */}
       <Section title={isPl ? 'Konwertuj' : 'Convert'} icon={<Rocket size={12} />}>
         {selection.type !== 'none' && selection.count > 0 && (
-          <div className="mb-2 text-[10px] font-medium text-primary-600 dark:text-primary-400 bg-primary-500/5 rounded-lg px-2 py-1.5">
+          <div className="mb-2 text-[10px] font-medium text-c-info bg-c-info/5 rounded-lg px-2 py-1.5">
             {isPl
               ? `Konwertuj zaznaczenie (${selection.count})`
               : `Convert selection (${selection.count})`}
@@ -670,7 +670,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                       {node.data?.label || (isPl ? '(bez etykiety)' : '(no label)')}
                     </div>
                     {node.data?.semanticType && (
-                      <div className="text-[9px] font-bold uppercase tracking-wide text-primary-600 dark:text-primary-400">
+                      <div className="text-[9px] font-bold uppercase tracking-wide text-c-info">
                         {String(node.data.semanticType)}
                       </div>
                     )}

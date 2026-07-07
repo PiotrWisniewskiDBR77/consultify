@@ -345,7 +345,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                   value={Number(value) || 0}
                   onChange={(e) => !locked && onChange(Number(e.target.value))}
                   disabled={locked}
-                  className="flex-1 accent-primary-500"
+                  className="flex-1 accent-c-info"
                 />
                 <span className="text-sm font-bold text-c-text w-10 text-right">
                   {value || 0}%

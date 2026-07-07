@@ -562,7 +562,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
       icon: Lightbulb,
       labelPl: 'Powiązane pomysły',
       labelEn: 'Related ideas',
-      color: 'text-primary-600 dark:text-primary-400',
+      color: 'text-c-info',
       items: grouped.similar,
     },
   ];
@@ -592,20 +592,20 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
       <div className="px-3 py-2 flex-1 overflow-auto space-y-3">
         {/* MM-10: Selected node detail — reactive to selection changes */}
         {selectedNodeData ? (
-          <div className="rounded-xl border border-primary-500/20 bg-primary-500/5 p-2.5 space-y-2">
+          <div className="rounded-xl border border-c-info/20 bg-c-info/5 p-2.5 space-y-2">
             <button
               type="button"
               onClick={() => toggleSection('selected_node')}
               className="flex items-center gap-1.5 w-full text-left"
             >
-              <Target size={12} className="text-primary-500" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400 flex-1">
+              <Target size={12} className="text-c-info" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-c-info flex-1">
                 {isPl ? 'Wybrany węzeł' : 'Selected Node'}
               </span>
               {expandedSections.has('selected_node') ? (
-                <ChevronUp size={12} className="text-primary-400" />
+                <ChevronUp size={12} className="text-c-info" />
               ) : (
-                <ChevronDown size={12} className="text-primary-400" />
+                <ChevronDown size={12} className="text-c-info" />
               )}
             </button>
             {expandedSections.has('selected_node') && (
@@ -1099,10 +1099,10 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
         </div>
 
         {/* V5-IDEA-30: Search and insert knowledge */}
-        <div className="rounded-xl border border-primary-200/40 dark:border-primary-800/30 bg-primary-50/30 dark:bg-primary-900/10 p-2.5">
+        <div className="rounded-xl border border-c-info/20 bg-c-info/5 p-2.5">
           <div className="flex items-center gap-1.5 mb-2">
-            <Search size={12} className="text-primary-500" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400">
+            <Search size={12} className="text-c-info" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-c-info">
               {isPl ? 'Szukaj wiedzy' : 'Search Knowledge'}
             </span>
           </div>
@@ -1113,7 +1113,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                   ? 'Szukaj w wywiadach, narzędziach, notatkach...'
                   : 'Search interviews, tools, notes...'
               }
-              className="flex-1 text-[10px] px-2 py-1.5 rounded-lg border border-primary-200/40 dark:border-primary-800/30 bg-white/50 dark:bg-white/[0.02] text-slate-700 dark:text-slate-300 placeholder:text-slate-400/60 outline-none focus:ring-1 focus:ring-blue-500/40"
+              className="flex-1 text-[10px] px-2 py-1.5 rounded-lg border border-c-info/20 bg-white/50 dark:bg-white/[0.02] text-slate-700 dark:text-slate-300 placeholder:text-slate-400/60 outline-none focus:ring-1 focus:ring-c-focus"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   const query = (e.target as HTMLInputElement).value.trim();
@@ -1164,7 +1164,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                     })
                   );
                 }}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-medium text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-medium text-c-info bg-c-info/10 hover:bg-c-info/20 transition-colors"
               >
                 <src.icon size={9} />
                 {isPl ? src.labelPl : src.labelEn}
@@ -1250,7 +1250,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                             {onInsertToCanvas && (
                               <button
                                 onClick={() => handleInsert(item)}
-                                className="text-primary-400 hover:text-primary-600 dark:hover:text-primary-300 transition-colors shrink-0 mt-0.5"
+                                className="text-c-info hover:text-c-info/80 transition-colors shrink-0 mt-0.5"
                                 title={isPl ? 'Dodaj na canvas' : 'Add to canvas'}
                               >
                                 <Plus size={14} />
