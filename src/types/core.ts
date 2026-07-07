@@ -6467,6 +6467,49 @@ export interface SIRIAssessmentData {
 }
 
 // =====================================================
+// DRD (Digital Readiness Diagnosis) Types
+// =====================================================
+
+/** DRD axis ids are the numeric 1..7 of DRD_STRUCTURE. */
+export type DRDAxisId = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+/**
+ * Per-axis DRD score. Because DRD axes use MIXED level scales (5, 6 or 7),
+ * every axis carries both the raw level (`current`/`target` on its own scale)
+ * and a scale-independent 0–100% projection (`normalizedCurrent`/`normalizedTarget`)
+ * so the 7-arm radar can plot heterogeneous axes on one grid.
+ */
+export interface DRDAxisScore {
+  /** Raw achieved level on this axis' own scale (avg of its areas). */
+  current: number;
+  /** Raw target level on this axis' own scale. */
+  target: number;
+  /** target − current, clamped ≥ 0, on the raw scale. */
+  gap: number;
+  /** Max level for this axis (5, 6 or 7) — carried through for renderers. */
+  levelCount: number;
+  /** current / levelCount × 100, rounded. */
+  normalizedCurrent: number;
+  /** target / levelCount × 100, rounded. */
+  normalizedTarget: number;
+  /** Per-area raw levels keyed by area id (e.g. "1A"). */
+  areas: Record<string, { current: number; target: number }>;
+}
+
+export interface DRDAssessmentData {
+  axes: Record<DRDAxisId, DRDAxisScore>;
+  /** Scale-normalized overall maturity (0–100%), averaged across assessed axes. */
+  overallNormalized: number;
+  /** Scale-normalized overall target (0–100%). */
+  targetNormalized: number;
+  metadata: {
+    assessmentDate: string;
+    version: string;
+    source: 'manual' | 'imported';
+  };
+}
+
+// =====================================================
 // ADMA (Advanced Digital Maturity Assessment) Types
 // =====================================================
 
