@@ -73,7 +73,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
         {isValidating ? (
           <div className="flex flex-col items-center justify-center gap-3 py-10 text-c-text-muted">
             <div
-              className="h-8 w-8 animate-spin rounded-full border-2 border-c-border-subtle border-t-primary-500 dark:border-t-primary-400"
+              className="h-8 w-8 animate-spin rounded-full border-2 border-c-border-subtle border-t-c-info"
               role="status"
               aria-label={isPl ? 'Ładowanie' : 'Loading'}
             />
