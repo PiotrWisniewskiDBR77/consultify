@@ -14,9 +14,12 @@
  *   - Left rail         → SlideSorter (supplied as `leftRail`)
  *   - Canvas            → CardCanvas (supplied as `canvas`)
  *   - Right rail        → Blocks / Media / Activity (supplied per tool)
- *   - Teresa            → kept as an independent left aside (supplied as
- *                         `teresaSlot`), since the shell's left rail is the
- *                         slide outline (per the migration map).
+ *   - Teresa            → canonised as the shell's `aiEntrySlot` (docked
+ *                         aside on the RIGHT of the shell body), per
+ *                         editor-shell-canon §6 Agent E. Previously rendered
+ *                         as a bespoke `<aside>` to the LEFT of the shell,
+ *                         outside its contract — now passed straight through
+ *                         to `ExecutiveModuleShell`'s `aiEntrySlot` prop.
  *   - Banner / overlays → agent-edit proposal banner, modals, command
  *                         palette, share modal, bottom bar (supplied verbatim).
  */
@@ -64,11 +67,11 @@ export interface DeckBuilderMelsViewProps {
   leftRailTitle?: string;
 
   /**
-   * Teresa split-chat aside. Rendered to the LEFT of the shell when present
-   * (the shell's own left rail hosts the slide outline). Pass `null`/omit
+   * Teresa split-chat aside — forwarded verbatim to the shell's canonical
+   * `aiEntrySlot` (docked on the RIGHT of the shell body). Pass `null`/omit
    * when Teresa is closed.
    */
-  teresaSlot?: React.ReactNode;
+  aiEntrySlot?: React.ReactNode;
   /** Full-width banner above the shell (e.g. the agent-edit proposal banner). */
   bannerSlot?: React.ReactNode;
   /** Full-width bar below the shell (e.g. the deck bottom bar). */
@@ -102,7 +105,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
   leftRail,
   canvas,
   leftRailTitle = 'Slides',
-  teresaSlot,
+  aiEntrySlot,
   bannerSlot,
   bottomBarSlot,
   overlays,
@@ -147,6 +150,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
         />
       )}
       canvas={canvas}
+      aiEntrySlot={aiEntrySlot}
       onRunPrimary={onRunPrimary}
       onToggleAgent={topBarHandlers.onToggleAgent}
       onOpenCommandPalette={onOpenCommandPalette}
@@ -163,7 +167,6 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
     >
       {bannerSlot}
       <div className="flex-1 flex min-h-0 overflow-hidden">
-        {teresaSlot}
         <div className="flex-1 min-w-0 flex flex-col">{shell}</div>
       </div>
       {bottomBarSlot}

@@ -1133,9 +1133,9 @@ export const DeckBuilder: React.FC = () => {
               animationsEnabled={animationsEnabled}
             />
           }
-          teresaSlot={
+          aiEntrySlot={
             teresaOpen ? (
-              <aside className="w-[360px] min-w-[320px] max-w-[420px] flex-shrink-0 border-r border-c-border-subtle bg-c-surface-raised">
+              <div className="w-[360px] min-w-[320px] max-w-[420px] h-full">
                 <UnifiedChatPanel
                   mode="split"
                   title={t('presentations.builder.teresa.title', 'Teresa')}
@@ -1146,7 +1146,7 @@ export const DeckBuilder: React.FC = () => {
                   showFocusMode
                   maxHeight="100%"
                 />
-              </aside>
+              </div>
             ) : null
           }
           bannerSlot={
