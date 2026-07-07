@@ -71,6 +71,10 @@ import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 import { NModeCanvas } from '../shared/NModeLayout/NModeCanvas';
 // ── N-Mode Layout (shared) ──────────────────────────────────────────────────
+import {
+  NModeCardState,
+  type NModeCardStatus,
+} from '../shared/NModeLayout/NModeCardState';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
 import { NModePropertiesStrip } from '../shared/NModeLayout/NModePropertiesStrip';
@@ -252,6 +256,29 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   // Tags
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
+
+  // ── Wzorzec N: stan kart AI-draft per sekcja (§3.2) + flaga „AI-generated". ──
+  // Klucze = id sekcji AI-zapisywalnych; mapowanie na backend section keys niżej.
+  type AICardKey = 'description-scope' | 'checklist' | 'dependencies';
+  const [cardState, setCardState] = useState<Record<AICardKey, NModeCardStatus>>({
+    'description-scope': 'edited',
+    checklist: 'edited',
+    dependencies: 'edited',
+  });
+  const [cardAI, setCardAI] = useState<Record<AICardKey, boolean>>({
+    'description-scope': false,
+    checklist: false,
+    dependencies: false,
+  });
+  const setCard = useCallback((key: AICardKey, next: NModeCardStatus) => {
+    setCardState((prev) => ({ ...prev, [key]: next }));
+  }, []);
+  // Backend key per sekcja (taskSectionGenerationService).
+  const CARD_BACKEND_KEY: Record<AICardKey, string> = {
+    'description-scope': 'strategy',
+    checklist: 'execution',
+    dependencies: 'dependencies',
+  };
 
   // T009: Suggested ideas (private) while editing task
   const [suggestedIdeas, setSuggestedIdeas] = useState<
@@ -2150,6 +2177,72 @@ Return ONLY the final comment text.`;
     );
   };
 
+  // ── Wzorzec N: aplikacja wygenerowanej treści karty na pola ──────────────
+  const applyGeneratedCard = useCallback((key: AICardKey, content: any) => {
+    if (!content) return;
+    if (key === 'description-scope') {
+      // Strategy → description (+ scal why/expectedOutcome jako blok, bo ten widok
+      // nie ma dedykowanych pól why/outcome; nie gubimy treści).
+      if (typeof content === 'string') {
+        setDescription(content);
+      } else if (typeof content === 'object') {
+        const parts: string[] = [];
+        if (content.description) parts.push(String(content.description));
+        if (content.why) parts.push(`${isPolish ? 'Po co' : 'Why'}: ${content.why}`);
+        if (content.expectedOutcome)
+          parts.push(`${isPolish ? 'Oczekiwany efekt' : 'Expected outcome'}: ${content.expectedOutcome}`);
+        if (parts.length) setDescription(parts.join('\n\n'));
+      }
+    } else if (key === 'checklist') {
+      const items: any[] = Array.isArray(content)
+        ? content
+        : Array.isArray(content?.checklist)
+          ? content.checklist
+          : Array.isArray(content?.acceptanceCriteria)
+            ? content.acceptanceCriteria
+            : [];
+      if (items.length) {
+        setChecklist(
+          items.map((it: any) => ({
+            id: Math.random().toString(36).slice(2, 11),
+            text: typeof it === 'string' ? it : it.text || it.title || '',
+            completed: false,
+          }))
+        );
+      }
+    }
+    // 'dependencies' → treść informacyjna; ten widok trzyma zależności jako
+    // powiązane zadania (DependenciesSection), więc AI-draft pokazujemy jako
+    // sugestie w opisie sekcji bez nadpisywania realnych powiązań.
+  }, [isPolish]);
+
+  // ── Wzorzec N: generacja karty przez AI (onRegenerate / onGenerate) ──────
+  const generateCard = useCallback(
+    async (key: AICardKey) => {
+      if (!taskId) {
+        toast.error(
+          isPolish ? 'Zapisz zadanie przed generacją AI' : 'Save the task before generating with AI'
+        );
+        return;
+      }
+      setCard(key, 'generating');
+      try {
+        const backendKey = CARD_BACKEND_KEY[key];
+        const result: any = await Api.post(`/tasks/${taskId}/sections/${backendKey}/generate`, {
+          language: isPolish ? 'pl' : 'en',
+        });
+        applyGeneratedCard(key, result?.content);
+        setCardAI((p) => ({ ...p, [key]: true }));
+        setCard(key, 'ai-draft');
+      } catch (err) {
+        console.error('[TaskDetailView] section generation failed', err);
+        setCard(key, 'error');
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [taskId, isPolish, applyGeneratedCard, setCard]
+  );
+
   // ── Build N-mode sections with components ────────────────────────────────
   const nModeSectionsWithContent: NModeSection[] = useMemo(() => {
     return taskNSections.map((section) => {
@@ -3386,11 +3479,46 @@ Return ONLY the final comment text.`;
           break;
       }
 
+      // ── Wzorzec N: opakuj sekcje AI-zapisywalne w NModeCardState ──────────
+      // (badge AI-draft + pasek ✨Regeneruj · ✎Edytuj · ✓Zaakceptuj). Pozostałe
+      // sekcje (governance/comments/attachments/activity-log) zostają bez zmian.
+      const AI_CARD_META: Partial<
+        Record<string, { key: AICardKey; name: { en: string; pl: string } }>
+      > = {
+        'description-scope': { key: 'description-scope', name: { en: 'Strategy', pl: 'Strategia' } },
+        checklist: { key: 'checklist', name: { en: 'Execution', pl: 'Wykonanie' } },
+        dependencies: { key: 'dependencies', name: { en: 'Dependencies', pl: 'Zależności' } },
+      };
+      const cardMeta = AI_CARD_META[section.id];
+      if (cardMeta) {
+        const cKey = cardMeta.key;
+        component = (
+          <NModeCardState
+            state={cardState[cKey]}
+            sectionName={cardMeta.name}
+            aiGenerated={cardAI[cKey]}
+            isPolish={isPolish}
+            onRegenerate={() => generateCard(cKey)}
+            onGenerate={() => generateCard(cKey)}
+            onFillManually={() => setCard(cKey, 'edited')}
+            onEdit={() => setCard(cKey, 'edited')}
+            onAccept={() => setCard(cKey, 'done')}
+            onRetry={() => generateCard(cKey)}
+          >
+            {component}
+          </NModeCardState>
+        );
+      }
+
       return { ...section, component };
     });
   }, [
     taskNSections,
     isPolish,
+    cardState,
+    cardAI,
+    generateCard,
+    setCard,
     description,
     expectedOutcome,
     initiativeName,
