@@ -95,10 +95,85 @@ function parseAmount(v: unknown): number | undefined {
   let n = Number(numStr);
   if (!Number.isFinite(n)) return undefined;
   const lower = s.toLowerCase();
+  // Skrót rzędu wielkości: albo słowo (spacja: „1,2 mln zł"), albo sufiks
+  // przyklejony do liczby („500k", „1.2M", „2m"). Kolejność: mld → mln → tys.
+  const suffixAttached = /\d\s*([a-z])\b/.exec(lower)?.[1]; // litera tuż po liczbie
   if (/\bmld\b|\bbn\b|miliard/.test(lower)) n *= 1_000_000_000;
-  else if (/\bmln\b|\bm\b|milion/.test(lower)) n *= 1_000_000;
-  else if (/\btys\b|\bk\b|tysi/.test(lower)) n *= 1_000;
+  else if (/\bmln\b|milion|\bmillion\b/.test(lower) || suffixAttached === 'm') n *= 1_000_000;
+  else if (/\btys\b|tysi|\bthousand\b/.test(lower) || suffixAttached === 'k') n *= 1_000;
+  else if (/\bm\b/.test(lower)) n *= 1_000_000; // samotne „m" (np. „$5 m") — po sufiksach
   return Number.isFinite(n) ? n : undefined;
+}
+
+/**
+ * FIX 1b (naprawa-r4Struct) — wyłuskuje ROI z NARRACJI karty finansowej.
+ * Żywy section-prompt financialImpact emituje {revenueImpact, costSavings,
+ * benefitsRealization} — NIE ma jawnego pola expectedRoi, więc `expected_roi`
+ * zostawał NULL mimo że narracja zawiera „ROI 285%" / „zwrot 3,2x" / „payback 14
+ * miesięcy". Skanujemy tekst w kolejności ważności i zwracamy pierwszy trafiony
+ * wskaźnik jako czytelny string (kolumna expected_roi jest tekstowa). Bez trafienia
+ * → undefined (nie zmyślamy).
+ */
+function extractRoiFromText(text: string): string | undefined {
+  const s = String(text || '');
+  if (!s.trim()) return undefined;
+  // 1) Jawne "ROI ... 285%" (ROI w pobliżu procentu, dowolna kolejność, PL/EN).
+  const roiPct =
+    s.match(/\broi\b[^%\n]{0,24}?(\d[\d\s.,]*\s*%)/i) ||
+    s.match(/(\d[\d\s.,]*\s*%)[^%\n]{0,12}?\broi\b/i);
+  if (roiPct) return `ROI ${roiPct[1].replace(/\s+/g, '')}`;
+  // 2) Zwrot krotności "3,2x" / "zwrot 3x" / "return of 2.5x".
+  const roiMult = s.match(/(?:roi|zwrot|return)[^0-9\n]{0,16}?(\d[\d.,]*\s*x)\b/i) ||
+    s.match(/\b(\d[\d.,]*\s*x)\s*(?:roi|zwrot|return)/i);
+  if (roiMult) return `ROI ${roiMult[1].replace(/\s+/g, '')}`;
+  // 3) Payback / okres zwrotu "payback 14 miesięcy" / "zwrot w 12 mies.".
+  const payback = s.match(
+    /(?:payback|okres zwrotu|zwrot(?:\s+w)?)[^0-9\n]{0,16}?(\d[\d.,]*)\s*(mies|month|m-?cy|lat|year|rok)/i,
+  );
+  if (payback) {
+    const unit = payback[2].toLowerCase();
+    const label = /lat|year|rok/.test(unit) ? 'lat' : 'mies.';
+    return `payback ${payback[1]} ${label}`;
+  }
+  return undefined;
+}
+
+/**
+ * FIX 1b — wyłuskuje KWOTĘ BUDŻETU z narracji karty finansowej. Szuka słowa-klucza
+ * budżetu/kosztu obok liczby z jednostką (mln/tys/k/M + waluta) i zwraca number.
+ * Formaty: "budżet 1,2 mln zł", "€500k", "koszt 2.4M PLN", "300 tys. zł".
+ * Bez trafienia → undefined.
+ */
+function extractBudgetFromText(text: string): number | undefined {
+  const s = String(text || '');
+  if (!s.trim()) return undefined;
+  // Słowo-klucz budżetu/kosztu/inwestycji, potem (w ~40 znakach) token kwotowy.
+  const kw =
+    /(bud[żz]et|koszt|inwestycj|nak[łl]ad|capex|opex|cost|budget|investment|spend)/i;
+  const m = kw.exec(s);
+  if (m) {
+    const tail = s.slice(m.index, m.index + 80);
+    // Token kwotowy: liczba + opcjonalny skrót rzędu wielkości + opcjonalna waluta.
+    const amt = tail.match(
+      /[€$£]?\s*\d[\d\s.,]*\s*(?:mld|mln|tys\.?|bn|m|k|miliard|milion|tysi[ąa]c)?\s*(?:z[łl]|pln|eur|usd|€|\$|£)?/i,
+    );
+    if (amt) {
+      const n = parseAmount(amt[0]);
+      if (n !== undefined && n > 0) return n;
+    }
+  }
+  // Fallback: dowolny token z jawną walutą + skrótem rzędu wielkości ("€500k").
+  const anyMoney = s.match(
+    /[€$£]\s*\d[\d\s.,]*\s*(?:mld|mln|tys\.?|bn|m|k|miliard|milion|tysi[ąa]c)?/i,
+  ) ||
+    s.match(
+      /\d[\d\s.,]*\s*(?:mld|mln|tys\.?|bn|m|k)\s*(?:z[łl]|pln|eur|usd|€|\$|£)/i,
+    );
+  if (anyMoney) {
+    const n = parseAmount(anyMoney[0]);
+    if (n !== undefined && n > 0) return n;
+  }
+  return undefined;
 }
 
 /**
@@ -250,10 +325,27 @@ export function buildTypedColumnUpdates(
       const opexRaw = cleanStr(j.costOpex ?? j.opex);
       push('cost_capex', capexRaw);
       push('cost_opex', opexRaw);
-      push('expected_roi', cleanStr(j.expectedRoi ?? j.roi));
-      // estimated_budget: jawne pole, a gdy go brak — suma capex+opex (gdy oba
-      // dają się sparsować na liczbę). Kolumna jest liczbowa/skalarna → zapisz
-      // gołą wartość, nie tekst z jednostką.
+
+      // Cała narracja karty (do skanu ROI/budżetu, gdy brak jawnych pól). Żywy
+      // prompt zwraca {revenueImpact, costSavings, benefitsRealization} — liczby
+      // ROI/budżetu żyją WEWNĄTRZ tych stringów, nie w osobnych polach.
+      const narrativeText = [
+        cleanStr(j.revenueImpact),
+        cleanStr(j.costSavings),
+        cleanStr(j.benefitsRealization),
+        cleanStr(j.businessValue),
+        cleanStr(j.rationale),
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+      // expected_roi: jawne pole → inaczej wyłuskaj z narracji (FIX 1b).
+      const explicitRoi = cleanStr(j.expectedRoi ?? j.roi);
+      push('expected_roi', explicitRoi ?? extractRoiFromText(narrativeText));
+
+      // estimated_budget: jawne pole → inaczej suma capex+opex (gdy liczbowe) →
+      // inaczej wyłuskaj kwotę z narracji (FIX 1b). Kolumna liczbowa/skalarna →
+      // zapisz gołą wartość, nie tekst z jednostką.
       const explicitBudget =
         parseAmount(j.estimatedBudget ?? j.budget ?? j.totalCost ?? j.totalBudget);
       if (explicitBudget !== undefined) {
@@ -263,6 +355,9 @@ export function buildTypedColumnUpdates(
         const opexN = parseAmount(j.costOpex ?? j.opex);
         if (capexN !== undefined || opexN !== undefined) {
           push('estimated_budget', String((capexN ?? 0) + (opexN ?? 0)));
+        } else {
+          const narrativeBudget = extractBudgetFromText(narrativeText);
+          if (narrativeBudget !== undefined) push('estimated_budget', String(narrativeBudget));
         }
       }
     }

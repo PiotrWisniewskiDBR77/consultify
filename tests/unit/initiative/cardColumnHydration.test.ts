@@ -214,6 +214,125 @@ describe('buildTypedColumnUpdates (R3 mapper)', () => {
   });
 });
 
+// ── FIX 1b: ROI / budżet wyłuskane z NARRACJI karty finansowej ────────────────
+
+describe('buildTypedColumnUpdates — FIX 1b (ROI/budget z narracji)', () => {
+  it('expected_roi z "ROI 285%" w benefitsRealization (brak jawnego pola)', () => {
+    const ups = buildTypedColumnUpdates(
+      {
+        financialImpact: JSON.stringify({
+          revenueImpact: 'Wzrost przychodu ~2 mln zł/rok.',
+          costSavings: 'Oszczędności OPEX 400 tys. zł.',
+          benefitsRealization: 'Oczekiwane ROI 285% w horyzoncie 24 mies.',
+        }),
+      },
+      ALL_COLS,
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.expected_roi).toBe('ROI 285%');
+  });
+
+  it('expected_roi z "payback 14 miesięcy" gdy brak ROI %', () => {
+    const ups = buildTypedColumnUpdates(
+      {
+        financialImpact: JSON.stringify({
+          revenueImpact: 'Brak bezpośredniego wzrostu.',
+          costSavings: 'Redukcja kosztów.',
+          benefitsRealization: 'Payback 14 miesięcy przy pełnym wdrożeniu.',
+        }),
+      },
+      ALL_COLS,
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.expected_roi).toBe('payback 14 mies.');
+  });
+
+  it('expected_roi z krotności "zwrot 3,2x"', () => {
+    const ups = buildTypedColumnUpdates(
+      {
+        financialImpact: JSON.stringify({
+          costSavings: 'Inwestycja daje zwrot 3,2x w 3 lata.',
+        }),
+      },
+      ALL_COLS,
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.expected_roi).toBe('ROI 3,2x');
+  });
+
+  it('jawne expectedRoi wygrywa nad ekstrakcją z narracji', () => {
+    const ups = buildTypedColumnUpdates(
+      {
+        financialImpact: JSON.stringify({
+          expectedRoi: '150%',
+          benefitsRealization: 'gdzieś tu ROI 285%',
+        }),
+      },
+      ALL_COLS,
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.expected_roi).toBe('150%');
+  });
+
+  it('estimated_budget z "budżet 1,2 mln zł" w narracji (brak capex/opex/jawnego pola)', () => {
+    const ups = buildTypedColumnUpdates(
+      {
+        financialImpact: JSON.stringify({
+          revenueImpact: 'Szacowany budżet 1,2 mln zł na wdrożenie w 2026.',
+          costSavings: 'Oszczędności do ustalenia.',
+        }),
+      },
+      ALL_COLS,
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.estimated_budget).toBe('1200000');
+  });
+
+  it('estimated_budget z "€500k" (waluta + skrót rzędu)', () => {
+    const ups = buildTypedColumnUpdates(
+      {
+        financialImpact: JSON.stringify({
+          benefitsRealization: 'Total investment of €500k over two years.',
+        }),
+      },
+      ALL_COLS,
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.estimated_budget).toBe('500000');
+  });
+
+  it('brak liczb w narracji → expected_roi/estimated_budget zostają puste (nie zmyśla)', () => {
+    const ups = buildTypedColumnUpdates(
+      {
+        financialImpact: JSON.stringify({
+          revenueImpact: 'Trudne do oszacowania na tym etapie.',
+          costSavings: 'Do ustalenia po pilotażu.',
+          benefitsRealization: 'Korzyści jakościowe, bez twardych liczb.',
+        }),
+      },
+      ALL_COLS,
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.expected_roi).toBeUndefined();
+    expect(byCol.estimated_budget).toBeUndefined();
+  });
+
+  it('capex+opex mają pierwszeństwo nad ekstrakcją budżetu z narracji', () => {
+    const ups = buildTypedColumnUpdates(
+      {
+        financialImpact: JSON.stringify({
+          costCapex: '800 tys. zł',
+          costOpex: '200 tys. zł',
+          revenueImpact: 'gdzieś tu budżet 5 mln zł',
+        }),
+      },
+      ALL_COLS,
+    );
+    const byCol = Object.fromEntries(ups.map((u) => [u.column, u.value]));
+    expect(byCol.estimated_budget).toBe('1000000'); // 800k + 200k, nie 5 mln z narracji
+  });
+});
+
 describe('toUpdateSql', () => {
   it('produces a SET clause + ordered params', () => {
     const { setClause, params } = toUpdateSql([

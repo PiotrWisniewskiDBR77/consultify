@@ -123,6 +123,20 @@ vi.mock('../../../server/src/services/decisionService.js', () => ({
 vi.mock('../../../server/src/utils/queryHelpers.js', () => ({
   queryRun: (...a: any[]) => taskMocks.queryRun(...a),
 }));
+// getTableColumns must report the decisions structural + rationale columns so the
+// column-defensive writes actually fire (otherwise the fill is silently skipped).
+vi.mock('../../../server/src/utils/dbSchema.js', () => ({
+  getTableColumns: vi.fn(async (table: string) => {
+    if (table === 'decisions') {
+      return new Set([
+        'id', 'organization_id', 'title', 'description', 'status', 'created_by',
+        'decision_maker_id', 'alternatives', 'risk_impact', 'consequences_of_inaction',
+        'recommendation', 'assumptions', 'decision_rationale', 'ai_generated_sections',
+      ]);
+    }
+    return new Set(['id', 'organization_id', 'title', 'description', 'status']);
+  }),
+}));
 vi.mock('../../../server/src/config/FeatureFlags.js', () => ({
   featureFlags: { ENABLE_TERESA_RECORD_CREATE: true },
 }));
@@ -190,17 +204,25 @@ describe('BUG B — create_task fills why/expectedOutcome/acceptanceCriteria', (
   });
 });
 
-describe('BUG B — create_decision fills rationale + structured sink', () => {
-  it('fills decision_rationale + ai_generated_sections (alternatives/risks/consequences)', async () => {
+describe('BUG B — create_decision fills structured columns (902) + rationale (dedup)', () => {
+  it('fills alternatives/risk_impact/consequences/recommendation + DISTINCT decision_rationale', async () => {
     decisionMocks.generateSection.mockImplementation(async (_id: string, key: string) => {
       if (key === 'alternatives') {
         return { parsedContent: { alternatives: [{ title: 'Opcja A' }, { title: 'Nie robić nic' }] } };
       }
       if (key === 'risk') {
-        return { parsedContent: { risks: [{ title: 'Ryzyko 1' }] } };
+        return {
+          parsedContent: { risks: [{ title: 'Ryzyko 1', probability: 'high', impact: 'high' }] },
+        };
       }
-      // consequencesOfInaction → prose recommendation
-      return { content: 'Rekomendacja: wybierz Opcję A, bo ...' };
+      // consequencesOfInaction → proza: konsekwencje + Rekomendacja + Uzasadnienie.
+      // Ucięty nagłówek "**:" na starcie rekomendacji testuje defekt #1 (glitch).
+      return {
+        content:
+          'Bez decyzji w 30 dni tracimy okno wdrożeniowe (~300k PLN).\n\n' +
+          '**Rekomendacja**: **: Wdrożyć Opcję A w Q1. ' +
+          'Uzasadnienie: najniższy TCO i gotowe kompetencje zespołu.',
+      };
     });
 
     const r = await createDecision(
@@ -209,24 +231,37 @@ describe('BUG B — create_decision fills rationale + structured sink', () => {
     );
     expect(r.ok).toBe(true);
 
-    // rationale UPDATE
+    // (1) Structured-columns UPDATE (migration 902) — alternatives/risk_impact/
+    // consequences_of_inaction/recommendation w jednym SET.
+    const structCall = await vi.waitFor(() => {
+      const c = taskMocks.queryRun.mock.calls.find((c) => /recommendation = COALESCE/.test(String(c[0])));
+      if (!c) throw new Error('structured columns UPDATE not issued yet');
+      return c;
+    });
+    const structSql = String(structCall[0]);
+    expect(structSql).toContain('alternatives = COALESCE');
+    expect(structSql).toContain('risk_impact = COALESCE');
+    expect(structSql).toContain('consequences_of_inaction = COALESCE');
+    const structParams = structCall[1] as any[];
+    // recommendation column = answer-first, glitch-free (defekt #1).
+    const recVal = structParams.find(
+      (p) => typeof p === 'string' && p.includes('Wdrożyć Opcję A'),
+    ) as string;
+    expect(recVal).toBeTruthy();
+    expect(recVal.startsWith('**')).toBe(false);
+    expect(recVal).toBe('Wdrożyć Opcję A w Q1.');
+
+    // (2) decision_rationale UPDATE — the DISTINCT "why" (rationale), NOT a copy of
+    // recommendation (defekt #2 dedup).
     const ratCall = await vi.waitFor(() => {
       const c = taskMocks.queryRun.mock.calls.find((c) => /decision_rationale = \?/.test(String(c[0])));
       if (!c) throw new Error('rationale UPDATE not issued yet');
       return c;
     });
-    expect((ratCall[1] as any[])).toContain('Rekomendacja: wybierz Opcję A, bo ...');
-
-    // structured sink UPDATE
-    const sinkCall = await vi.waitFor(() => {
-      const c = taskMocks.queryRun.mock.calls.find((c) => /ai_generated_sections = \?/.test(String(c[0])));
-      if (!c) throw new Error('sink UPDATE not issued yet');
-      return c;
-    });
-    const stored = JSON.parse(String((sinkCall[1] as any[])[0]));
-    expect(stored.alternatives).toHaveLength(2);
-    expect(stored.risks).toHaveLength(1);
-    expect(stored.consequencesOfInaction).toContain('Opcję A');
+    const ratVal = (ratCall[1] as any[])[0] as string;
+    expect(ratVal).toContain('najniższy TCO'); // to jest UZASADNIENIE, nie rekomendacja
+    expect(ratVal).not.toBe(recVal); // dedup: rationale ≠ recommendation
+    expect(ratVal.startsWith('**')).toBe(false); // glitch-free
   });
 
   it('decision still created even when all structural sections fail', async () => {

@@ -528,13 +528,36 @@ Context:
 - Description: {{summary}}
 - KPIs: {{kpis}}
 
-Provide P&L impact estimates as JSON:
+Provide P&L impact estimates as JSON. Where you can, put a NUMBER + unit for ROI and budget so they are machine-readable (e.g. "expectedRoi": "285%", "estimatedBudget": "1.2M PLN"):
 {
   "revenueImpact": "Numeric revenue impact estimate with an explicit assumption (currency + horizon)",
   "costSavings": "Numeric cost-savings estimate with an explicit assumption (currency + horizon)",
-  "benefitsRealization": "How and when benefits will be realized"
+  "benefitsRealization": "How and when benefits will be realized (include payback horizon if known)",
+  "expectedRoi": "ROI as a number + unit if estimable, else empty",
+  "estimatedBudget": "Total budget as a number + unit if estimable, else empty"
 }
 Every amount MUST be a number with an assumption (e.g. "~120k PLN/yr (estimate; assuming 2% of operating cost)"). If org financials are available, anchor to them. NEVER write "to be determined"/"TBD"/"do ustalenia" as an amount.
+Language: {{language}}
+Return valid JSON only.`,
+  // FIX 1a (naprawa-r4Struct): raid is now a CORE section (see
+  // initiativeGeneratorBrain CORE_SECTION_KEYS) so it needs a built-in fallback —
+  // otherwise a NULL DB ai_prompt_template would throw 503 and leave key_risks null.
+  // JSON shape matches buildRiskLines() in cardColumnHydration: risks[] with
+  // {type,risk,mitigation}. type:"risk" so the hydrator keeps it (assumptions/
+  // dependencies are filtered out of key_risks by design).
+  raid: `You are a PMO risk consultant. Build the RAID risk register for this initiative.
+
+Context:
+- Initiative name: {{initiativeName}}
+- Problem: {{problemStatement}}
+- Description: {{summary}}
+
+Generate a structured JSON response with at least 2 RISK items, each grounded in the initiative context (no generic placeholders):
+{
+  "risks": [
+    { "type": "risk", "risk": "Concrete risk (1 sentence)", "probability": "low|medium|high", "impact": "low|medium|high", "mitigation": "Preventive action", "contingency": "Plan B if it happens" }
+  ]
+}
 Language: {{language}}
 Return valid JSON only.`,
 };

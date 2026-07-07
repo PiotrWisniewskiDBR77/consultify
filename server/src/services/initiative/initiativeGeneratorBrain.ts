@@ -46,7 +46,17 @@ import logger from '../../utils/Logger.js';
  *   KPI            → kpis
  *   Zakres         → scope              (scope + kill criteria)
  *   Właściciel     → control            (owner/sponsor control panel)
+ *   Ryzyka (RAID)  → raid               (risk register → hydrates key_risks; see below)
  *   Business case  → financialImpact    (the live business-case card; financialAnalysis enum is dead per F0)
+ *
+ * NOTE (FIX 1a, naprawa-r4Struct): `raid` was measured EMPTY on live demo —
+ * `key_risks` (mapped from the raid card in cardColumnHydration) stayed null
+ * because the raid card was NEVER generated in the core-fill (it lived only in
+ * OPTIONAL_LIBRARY_KEYS and was proposed for some types, not guaranteed). Adding
+ * it to the core makes the risk register a MANDATORY generated card so key_risks
+ * populates on every fast-track initiative. `raid` is a verified section key
+ * (member of OPTIONAL_LIBRARY_KEYS below + has a real prompt in
+ * initiativeGenerationService: RISK_FORMULA_HINTS.raid / SECTION registry).
  *
  * Order is the canonical reading order of an initiative document.
  */
@@ -56,6 +66,7 @@ export const CORE_SECTION_KEYS = [
   'kpis', // KPI
   'scope', // Zakres
   'control', // Właściciel (owner/sponsor)
+  'raid', // Ryzyka (RAID) → key_risks
   'financialImpact', // Business case
 ] as const;
 

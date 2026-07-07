@@ -158,3 +158,27 @@ Generate a structured JSON response with:
 Language: {{language}}
 Return valid JSON only.'
 WHERE key = 'control';
+
+-- ── 8) raid (FIX 1a naprawa-r4Struct; risks→R3 key_risks; now CORE) ──
+-- raid promoted into CORE_SECTION_KEYS so the risk register always generates and
+-- hydrates key_risks (was empty on live demo). JSON shape matches buildRiskLines()
+-- in cardColumnHydration: risks[] with {type,risk,mitigation}; type:"risk" so the
+-- hydrator keeps them (assumptions/dependencies excluded from key_risks by design).
+UPDATE initiative_section_types SET ai_prompt_template =
+'You are a PMO risk consultant. Build the RAID risk register for this initiative.
+
+Context:
+- Initiative name: {{initiativeName}}
+- Problem: {{problemStatement}}
+- Description: {{summary}}
+
+Generate a structured JSON response with at least 2 RISK items, each grounded in the initiative context (no generic placeholders):
+{
+  "risks": [
+    { "type": "risk", "risk": "Concrete risk (1 sentence)", "probability": "low|medium|high", "impact": "low|medium|high", "mitigation": "Preventive action", "contingency": "Plan B if it happens" }
+  ]
+}
+
+Language: {{language}}
+Return valid JSON only.'
+WHERE key = 'raid';
