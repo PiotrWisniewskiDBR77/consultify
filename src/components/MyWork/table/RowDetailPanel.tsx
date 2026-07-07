@@ -117,7 +117,13 @@ interface RowDetailPanelProps {
 
 type TabId = 'properties' | 'comments' | 'attachments' | 'activity' | 'ai' | 'drawing';
 
-type PlatformSheetTabId = 'fields' | 'activity' | 'audit' | 'comments';
+type PlatformSheetTabId = 'fields' | 'activity' | 'audit' | 'comments' | 'attachments';
+
+/** Fallback grouping key for record attachments uploaded from the generic Row
+ * Detail panel when the table has no dedicated `attachment`-type field. The
+ * backend (`tp_attachments.field_id`) has no FK constraint on this value — it
+ * is used only to group/filter attachments, so a stable synthetic id is safe. */
+const GENERIC_ATTACHMENTS_FIELD_ID = '__row_detail_attachments__';
 
 export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
   open,
@@ -149,6 +155,16 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
     return platformTableId ?? fields?.[0]?.tableId ?? null;
   }, [isPlatform, platformTableId, fields]);
 
+  /** Prefer a real `attachment`-type field if the table declares one; otherwise
+   * fall back to a stable synthetic grouping key (see GENERIC_ATTACHMENTS_FIELD_ID). */
+  const resolvedAttachmentFieldId = useMemo(() => {
+    if (!isPlatform) return null;
+    const attachmentField = fields?.find(
+      (f) => 'fieldType' in f && f.fieldType === 'attachment'
+    );
+    return attachmentField?.id ?? GENERIC_ATTACHMENTS_FIELD_ID;
+  }, [isPlatform, fields]);
+
   const currentUser = useAppStore((s) => s.currentUser);
   const currentOrganization = useAppStore((s) => s.currentOrganization);
   const currentUserId = String(currentUser?.id ?? '');
@@ -169,6 +185,10 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
   const [mentionPool, setMentionPool] = useState<Array<{ id: string; name: string }>>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsError, setCommentsError] = useState<string | null>(null);
+  const [attachmentsLoading, setAttachmentsLoading] = useState(false);
+  const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
+  const [attachmentUploading, setAttachmentUploading] = useState(false);
+  const attachmentFileInputRef = useRef<HTMLInputElement>(null);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -235,6 +255,43 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
       })
       .finally(() => {
         if (!cancelled) setCommentsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, node?.id, isPlatform]);
+
+  useEffect(() => {
+    if (!open || !node?.id || !isPlatform) return;
+    let cancelled = false;
+    setAttachmentsLoading(true);
+    setAttachmentsError(null);
+    TablePlatformApi.getAttachments(node.id)
+      .then((rows: any[]) => {
+        if (cancelled) return;
+        const mapped: NodeAttachment[] = (rows || []).map((r) => {
+          const mimeType = String(r.mime_type ?? r.mimeType ?? '');
+          return {
+            id: String(r.id),
+            type: mimeType.startsWith('image/') ? 'image' : 'file',
+            name: String(r.file_name ?? r.fileName ?? 'file'),
+            url: r.download_url ?? r.downloadUrl ?? undefined,
+            mimeType,
+            size: Number(r.size_bytes ?? r.sizeBytes ?? 0),
+            createdAt: String(r.created_at ?? r.createdAt ?? new Date().toISOString()),
+          };
+        });
+        onFieldChange(node.id, 'attachments', mapped);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setAttachmentsError(
+          isPl ? 'Nie udało się wczytać załączników' : 'Failed to load attachments'
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setAttachmentsLoading(false);
       });
     return () => {
       cancelled = true;
@@ -559,6 +616,67 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
       );
     },
     [locked, node, onFieldChange]
+  );
+
+  /** Platform mode: real file upload via POST /records/:id/fields/:fieldId/attachments. */
+  const handleUploadPlatformAttachment = useCallback(
+    async (file: File) => {
+      if (!node?.id || locked || !resolvedAttachmentFieldId) return;
+      setAttachmentUploading(true);
+      try {
+        const created = await TablePlatformApi.uploadAttachment(
+          node.id,
+          resolvedAttachmentFieldId,
+          file
+        );
+        const att: NodeAttachment = {
+          id: String(created?.id ?? `att-${Date.now()}`),
+          type: file.type.startsWith('image/') ? 'image' : 'file',
+          name: String(created?.file_name ?? created?.fileName ?? file.name),
+          url: created?.download_url ?? created?.downloadUrl ?? undefined,
+          mimeType: String(created?.mime_type ?? created?.mimeType ?? file.type),
+          size: Number(created?.size_bytes ?? created?.sizeBytes ?? file.size),
+          createdAt: String(created?.created_at ?? created?.createdAt ?? new Date().toISOString()),
+        };
+        const prev: NodeAttachment[] = node.data?.attachments || [];
+        onFieldChange(node.id, 'attachments', [att, ...prev]);
+      } catch (e: any) {
+        toast.error(
+          e?.message || (isPl ? 'Nie udało się przesłać pliku' : 'Failed to upload file')
+        );
+      } finally {
+        setAttachmentUploading(false);
+      }
+    },
+    [isPl, locked, node, onFieldChange, resolvedAttachmentFieldId]
+  );
+
+  const handlePlatformAttachmentFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      e.target.value = '';
+      if (file) void handleUploadPlatformAttachment(file);
+    },
+    [handleUploadPlatformAttachment]
+  );
+
+  /** Platform mode: real delete via DELETE /attachments/:id, then drop from local cache. */
+  const handleRemovePlatformAttachment = useCallback(
+    async (attId: string) => {
+      if (!node?.id || locked) return;
+      try {
+        await TablePlatformApi.deleteAttachment(attId);
+        const prev: NodeAttachment[] = node.data?.attachments || [];
+        onFieldChange(
+          node.id,
+          'attachments',
+          prev.filter((a) => a.id !== attId)
+        );
+      } catch {
+        toast.error(isPl ? 'Nie udało się usunąć załącznika' : 'Failed to delete attachment');
+      }
+    },
+    [isPl, locked, node, onFieldChange]
   );
 
   const handleColorChange = useCallback(
@@ -978,6 +1096,13 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   labelPl: 'Komentarze',
                   Icon: MessageSquare,
                   count: comments.length,
+                },
+                {
+                  id: 'attachments' as const,
+                  labelEn: 'Attachments',
+                  labelPl: 'Załączniki',
+                  Icon: Paperclip,
+                  count: attachments.length,
                 },
               ] as const
             ).map((tab) => {
@@ -1519,6 +1644,96 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     >
                       <Link2 size={12} />
                       {isPl ? 'Dodaj link' : 'Add link'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Attachments (Platform mode — real upload/list/delete via table-platform API) */}
+            {isPlatform && platformSheetTab === 'attachments' && (
+              <div className="space-y-2">
+                {attachmentsLoading && (
+                  <p className="text-[11px] text-c-text-muted text-center py-6">
+                    {isPl ? 'Wczytywanie…' : 'Loading…'}
+                  </p>
+                )}
+                {!attachmentsLoading && attachmentsError && (
+                  <p className="text-[11px] text-c-danger text-center py-4">{attachmentsError}</p>
+                )}
+                {!attachmentsLoading && !attachmentsError && attachments.length === 0 && (
+                  <p className="text-[11px] text-c-text-muted text-center py-6">
+                    {isPl ? 'Brak załączników' : 'No attachments'}
+                  </p>
+                )}
+                {!attachmentsLoading &&
+                  attachments.map((att) => (
+                    <div
+                      key={att.id}
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-c-surface-raised"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-c-surface-raised flex items-center justify-center flex-shrink-0">
+                        {att.type === 'image' ? (
+                          <Image size={14} className="text-c-text-muted" />
+                        ) : (
+                          <FileText size={14} className="text-c-text-muted" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        {att.url ? (
+                          <a
+                            href={att.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[11px] font-medium text-c-info hover:underline truncate block"
+                          >
+                            {att.name}
+                          </a>
+                        ) : (
+                          <span className="text-[11px] font-medium text-c-text-secondary truncate block">
+                            {att.name}
+                          </span>
+                        )}
+                        <span className="text-[9px] text-c-text-muted">
+                          {formatTime(att.createdAt)}
+                          {att.size ? ` · ${(att.size / 1024).toFixed(0)} KB` : ''}
+                        </span>
+                      </div>
+                      {!locked && (
+                        <button
+                          onClick={() => void handleRemovePlatformAttachment(att.id)}
+                          className="p-1 rounded text-c-text-muted hover:text-danger-500 transition-colors"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                {!locked && (
+                  <div className="flex items-center gap-2 pt-2">
+                    <input
+                      ref={attachmentFileInputRef}
+                      type="file"
+                      className="hidden"
+                      onChange={handlePlatformAttachmentFileChange}
+                    />
+                    <button
+                      onClick={() => attachmentFileInputRef.current?.click()}
+                      disabled={attachmentUploading}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-c-accent bg-c-accent-soft hover:bg-[color-mix(in_srgb,var(--c-accent)_20%,transparent)] transition-colors disabled:opacity-50"
+                    >
+                      {attachmentUploading ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <Paperclip size={12} />
+                      )}
+                      {attachmentUploading
+                        ? isPl
+                          ? 'Przesyłanie…'
+                          : 'Uploading…'
+                        : isPl
+                          ? 'Prześlij plik'
+                          : 'Upload file'}
                     </button>
                   </div>
                 )}
