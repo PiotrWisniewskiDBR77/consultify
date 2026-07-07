@@ -86,7 +86,7 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
     : ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
   return (
-    <div className="fixed inset-0 z-[92] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl flex flex-col">
+    <div className="fixed inset-0 z-modal bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl flex flex-col">
       <div className="flex items-center gap-3 px-6 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
         <button
           onClick={onClose}

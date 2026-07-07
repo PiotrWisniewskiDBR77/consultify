@@ -75,7 +75,7 @@ export const PresentMode: React.FC<PresentModeProps> = ({
 
   if (presenterView) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-c-bg flex">
+      <div className="fixed inset-0 z-modal bg-c-bg flex">
         {/* Main slide */}
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="w-full max-w-4xl">
@@ -144,7 +144,7 @@ export const PresentMode: React.FC<PresentModeProps> = ({
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center"
+      className="fixed inset-0 z-modal bg-black flex flex-col items-center justify-center"
       onClick={goNext}
     >
       {/* Progress bar */}

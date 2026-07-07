@@ -158,7 +158,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
   const progress = ((currentSlide + 1) / slides.length) * 100;
 
   return (
-    <div className="fixed inset-0 z-[98] bg-c-surface-raised dark:bg-c-surface flex flex-col">
+    <div className="fixed inset-0 z-modal bg-c-surface-raised dark:bg-c-surface flex flex-col">
       {/* Progress bar */}
       <div className="h-1 bg-c-surface-raised dark:bg-c-surface">
         <div

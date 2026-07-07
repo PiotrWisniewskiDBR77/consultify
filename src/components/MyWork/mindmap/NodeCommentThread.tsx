@@ -225,7 +225,7 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed top-0 right-0 bottom-0 z-[86] w-[360px] max-w-[85vw] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border-l border-c-border-subtle dark:border-c-border-subtle shadow-2xl flex flex-col overflow-hidden">
+    <div className="fixed top-0 right-0 bottom-0 z-dropdown w-[360px] max-w-[85vw] bg-c-surface-raised dark:bg-c-surface backdrop-blur-xl border-l border-c-border-subtle dark:border-c-border-subtle shadow-2xl flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-c-border-subtle dark:border-c-border-subtle">
         <MessageSquare size={14} className="text-c-info shrink-0" />

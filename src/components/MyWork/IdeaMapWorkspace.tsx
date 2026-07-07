@@ -2695,7 +2695,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       >
         {/* Breadcrumb for drill-down navigation */}
         {drillDownStack.length > 0 && (
-          <div className="absolute top-2 left-4 z-[60] flex items-center gap-1 bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm rounded-xl px-3 py-1.5 border border-c-border-subtle dark:border-c-border-subtle shadow-sm">
+          <div className="absolute top-2 left-4 z-sticky flex items-center gap-1 bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm rounded-xl px-3 py-1.5 border border-c-border-subtle dark:border-c-border-subtle shadow-sm">
             <button
               onClick={() => handleDrillUp(0)}
               className="text-[10px] font-semibold text-c-text-secondary dark:text-c-text-muted hover:underline"
@@ -2722,7 +2722,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
         {/* V5-IDEA-15: Focus mode indicator */}
         {focusMode !== 'full' && (
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[58] flex items-center gap-2 bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm rounded-xl px-3 py-1.5 border border-c-border-subtle dark:border-c-border-subtle shadow-sm">
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-sticky flex items-center gap-2 bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm rounded-xl px-3 py-1.5 border border-c-border-subtle dark:border-c-border-subtle shadow-sm">
             <span className="text-[10px] font-bold uppercase tracking-wide text-c-text-secondary dark:text-c-text">
               {focusMode === 'system'
                 ? t('mindmap.focusedOnTool', { activeToolLabel })
@@ -2738,7 +2738,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         )}
 
         <div
-          className={`absolute ${workspaceHeaderOffsetClass} left-20 z-[57] max-w-[28rem] rounded-2xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 shadow-sm backdrop-blur-sm dark:border-c-border-subtle dark:bg-c-surface`}
+          className={`absolute ${workspaceHeaderOffsetClass} left-20 z-sticky max-w-[28rem] rounded-2xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 shadow-sm backdrop-blur-sm dark:border-c-border-subtle dark:bg-c-surface`}
         >
           <div className="flex flex-wrap items-center gap-1.5">
             {/* A4: breadcrumb — Ideas › {idea title} › {tool} */}
@@ -3051,7 +3051,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         />
 
         {/* MM-12: AI Governance badge — opens governance panel */}
-        <div className="absolute left-[4.5rem] top-4 z-[56]">
+        <div className="absolute left-[4.5rem] top-4 z-sticky">
           <AIGovernanceBadge
             mapExtensions={mapExtensions}
             onClick={() => setGovernancePanelOpen(true)}
@@ -3069,7 +3069,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         />
 
         {proposalBatch && (
-          <div className="absolute bottom-4 left-4 right-4 z-[90] max-w-lg mx-auto">
+          <div className="absolute bottom-4 left-4 right-4 z-dropdown max-w-lg mx-auto">
             <IdeaProposalReview
               batch={proposalBatch}
               onAccept={handleAcceptProposal}
