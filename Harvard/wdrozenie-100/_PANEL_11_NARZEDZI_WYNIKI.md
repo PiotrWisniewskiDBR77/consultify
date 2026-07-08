@@ -10,7 +10,7 @@ Metodyka: A=Merytoryka, B=Ścieżka pracy z klientem, C=Prezentacja (proxy code-
 | automation-pipeline | 2 | 5,5 | 5,5 | 6 | 5,67 | **✅ DONE — 4 braki rundy 1 naprawione i zweryfikowane runtime (commity 505ec3d620 · b69d14d2f7 · e5063c3db4). Harness 11/11 PASS.** |
 | robotics-feasibility | 2 | 5,5 | 5,5 | 5,5 | 5,5 | **✅ DONE — 6 braków rundy 1 (martwa gałąź cobot-change · brak degradacji GO→PILOT przy measured=false · zbyt pobłażliwy fallback bramki technicznej · martwa oś cycleTime vs model danych · `shifts` nieużyte · drabina niepodpięta) naprawione i zweryfikowane runtime (commity 20e254d8de → 6bbae40a26). Harness 12/12 PASS.** |
 | logistics-automation | 2 | 5,5 | 5,5 | 5,5 | 5,5 | **✅ DONE — 5 braków rundy 1 (drabina+bank martwe w runtime · payback #8 zawsze `unknown` · reslot 16%≠17% · komentarz nieścisły) naprawione i zweryfikowane runtime (commity aebc84dabc → 9e1be31571). Harness 12/12 PASS.** |
-| integration-diagnostic | — | — | — | — | — | kolejka |
+| integration-diagnostic | 2 | 5,5 | 5,5 | 6 | 5,67 | **✅ DONE — 5 braków rundy 1 (zaokrąglanie udziałów do 10% niszczyło 77%→80% · FTE 1800 rozjeżdżało się z doktryną 1950 · drabina `buildIntegrationDeepenPrompt` bez callerów · `INTEGRATION_PROPOSAL_BANK` bez konsumentów · move #4 API-first bezwarunkowe) naprawione i zweryfikowane runtime (commity 159365ad60 · 45efbe86b0). Harness 12/12 PASS.** |
 | data-inventory | 2 | 5,5 | 5,5 | 6 | 5,67 | **✅ DONE — 2 defekty silnika (skala 1-5 min czytana jako max · gotowość AI = ŚREDNIA zamiast bramy najsłabszego wymiaru) + 2 martwe assety (drabina + bank propozycji bez callerów) naprawione i zweryfikowane runtime (commity 2abdf51670 · d9d8bd9af2 · aff10a119e). Harness 12/12 PASS.** |
 | decision-engine | 2 | 5,5 | 5,5 | 5,5 | 5,5 | **✅ DONE — 5 braków rundy 1 (silnik głodzony w żywej sesji: parseItems zjadał pola strukturalne · pre-mortem/robustness nie wpływały na oceny · brak wielo-profilowej rekomendacji wag · drabina+bank propozycji martwe) naprawione i zweryfikowane runtime end-to-end (commity 09… → promptRegistry wiring). Harness 12/12 PASS.** |
 | digital-value-pool | — | — | — | — | — | kolejka |
@@ -196,3 +196,18 @@ Reszta do ew. rundy 3 (nie blokuje DONE): degradacja measured per-parametr (cycl
 
 **Średnia (5,5+5,5+5,5)/3 = 5,5 ≥ 5,5 → DONE.** 1 runda naprawy.
 Reszta do ew. rundy 3 (nie blokuje DONE): interaktywny caller „pogłęb element X na szczeblu Y" (dziś `quantification` zahardkodowany); rozważ ważenie `premortemBoost` siłą dowodu zamiast liczbą; lżejszy kanał pól strukturalnych niż poszerzanie `OperationalItem` (np. bag `structured`); wspólny sibling-defekt a3/sop deepen martwy po early-return `OPERATIONAL_TOOL_TYPES`.
+
+
+## integration-diagnostic — RUNDA 2 (fix + re-panel, 07-08)
+
+**Runda 1: A=5, B=5, C=6 → średnia 5,33 < 5,5 → NAPRAWA.** Pięć udokumentowanych braków:
+- **(A-1)** `round1` (granulacja 10%) na `pointToPointShare`/`integratedShare` (ułamki 0..1) — 17/22=0,7727 pokazywane jako 80% zamiast doktrynalnego 77% (§7). FIX: `round2` (pełny procent). Runtime: `pointToPointShare` 0,80→0,77 ⇒ 77%. `rekeyingFte` też `round2` (276/1950=0,14 nie snapuje do 0,1).
+- **(A-2)** `FTE_HOURS_PER_YEAR=1800` rozjeżdżało się z worked example (§7: 156h ≈ 0,08 FTE ⇒ 1950). FIX: 1950 + komentarz. Bez regresji dojrzałości (maturity=2).
+- **(B-3)** `buildIntegrationDeepenPrompt` — ZERO callerów. FIX: nowy `buildIntegrationSectionPrompt` (analogicznie do `buildLogisticsSectionPrompt`), podpięty w gałęzi operacyjnej `getToolSuggestionPrompt`; kroki systems/integrations/bridges→dźwignia (rung kwantyfikacja), `moves`→wszystkie 4 dźwignie (rung ryzyko/zdolności). Runtime: 4 kroki emitują 2078–6493 znaków.
+- **(B-4)** `INTEGRATION_PROPOSAL_BANK` (~185 linii) — ZERO konsumentów. FIX: konsumowany w tym samym helperze (bank per dźwignia). Runtime: `bank=true` we wszystkich 4 krokach.
+- **(B-5)** Move #4 (apiled migration) bezwarunkowe. FIX: `if (maturityLevel < 4)` — pomijane dla org już na poziomie Gartner 4-5 (rekomendacja „przejdź na API-first" dla org już API-first jest pusta).
+- **(A-6, opcjonalny)** `errorCostMultiple 55/15` — dodany komentarz uzasadniający mid-band 1-10-100.
+
+**Nota weryfikacyjna:** `integratedShare` w fixture = 100% (wszystkie 18 systemów dotknięte ≥1 realną krawędzią), NIE 28% — 28% to zewnętrzny benchmark MuleSoft (`MULESOFT_INTEGRATED_BENCHMARK`), nie policzony udział tej firmy. Premisa z briefu (integratedShare≈0,28) była błędna; wymuszenie 28% zniszczyłoby topologię worked-example (77% p2p, hub ERP). `round2` zastosowany mimo to (poprawność precyzji). Rezydualny drobiazg A: linia „100% zintegrowanych (benchmark ~28%)" czyta się niezręcznie — kandydat do osobnej decyzji produktowej, poza zakresem fixu zaokrągleń.
+
+**Re-panel (sceptyk, 3 niezależne sub-recenzje):** A=5,5 (77% odtworzone runtime; rezydualny integratedShare vs benchmark), B=5,5 (drabina+bank żywe end-to-end, zweryfikowane runtime; mapowanie krok→dźwignia to wybór, nie jedyność), C=6 (esbuild czysty, harness 12/12, komentarze doktrynalne, wzorzec spójny z logistics). **Średnia 5,67 ≥ 5,5 → DONE (1 runda).** Commity: 159365ad60 (silnik) · 45efbe86b0 (wiring promptRegistry).
