@@ -131,6 +131,7 @@ const minutesToFteHours = (minutes: number): number => round1(minutes / 60);
 
 const EXCEPTION_REDESIGN_THRESHOLD = 0.3; // >30% exceptions => process is immature
 const PATH_CONCENTRATION_FLOOR = 0.5; // <50% on the dominant path => no dominant path
+const PATH_CONCENTRATION_PARETO = 0.8; // >=80% on the dominant path => 80/20: scope to main path + escalate exceptions
 
 /**
  * True when the process is "chaos, not a candidate": a high exception rate or a
@@ -178,13 +179,40 @@ export function selectTechTier(c: ProcessCandidate): TechTier {
   return 'rpa';
 }
 
-/** Build/maintenance effort weight of a tech tier, 1..5 (higher = more effort). */
-const TECH_EFFORT_WEIGHT: Record<TechTier, number> = {
+/**
+ * 80/20 scoping signal (doctrine §5 "koncentracja wolumenu" / §6 insight #4).
+ * True when a dominant path carries most of the volume (>=80%) and the process is
+ * technically ready — the right move is to automate the main path + escalate the
+ * long-tail exceptions to a human, capturing most of the value at a fraction of
+ * the effort needed to cover 100% of variants. Redesign-first processes are
+ * excluded: their concentration is too low to have a dominant path in the first
+ * place, so they never qualify for Pareto scoping.
+ */
+export function isParetoScopable(c: ProcessCandidate): boolean {
+  if (needsRedesignFirst(c)) return false;
+  return c.pathConcentration !== undefined && c.pathConcentration >= PATH_CONCENTRATION_PARETO;
+}
+
+/** Build (implementation) effort weight of a tech tier, 1..5. */
+const TECH_BUILD_WEIGHT: Record<TechTier, number> = {
   rpa: 2,
   idp: 3,
   ipa: 4,
   agentic: 5,
   'redesign-first': 5,
+};
+
+/**
+ * Ongoing maintenance weight of a tech tier, 1..5 — the 2-3yr TCO horizon, not
+ * dev-time. RPA is cheap to build but brittle to source-UI changes; IDP/IPA/agentic
+ * carry model drift, monitoring, eval and guardrail upkeep that RPA does not.
+ */
+const TECH_MAINTENANCE_WEIGHT: Record<TechTier, number> = {
+  rpa: 2,
+  idp: 2,
+  ipa: 3,
+  agentic: 4,
+  'redesign-first': 3,
 };
 
 const TECH_LABEL: Record<TechTier, Bilingual> = {
@@ -201,6 +229,24 @@ export const techTierLabel = (tier: TechTier): Bilingual => TECH_LABEL[tier];
 // Per-process effort × impact → quadrant (doctrine 4.4)
 // ---------------------------------------------------------------------------
 
+/**
+ * Total cost of ownership breakdown (doctrine §4.4 effort axis + §5 TCO trap).
+ * Effort is NOT a single build multiplier: it is implementation + ongoing
+ * maintenance (2-3yr horizon) + project/organizational risk. Splitting them out
+ * stops a low-build/high-maintenance process (a brittle bot on an unstable legacy
+ * UI) from being systematically under-scored on the effort axis.
+ */
+export interface TcoBreakdown {
+  /** Build cost 1..5: tech tier + integration surface (API vs UI). */
+  implementation: number;
+  /** Ongoing cost 1..5: tier upkeep + stability (unstable UI = high TCO) + brittleness. */
+  maintenance: number;
+  /** Project/org risk 1..5: no governance owner + compliance/error risk + redesign dependency. */
+  risk: number;
+  /** Blended effort 1..5 used for the effort×impact quadrant. */
+  effort: number;
+}
+
 export interface ProcessAssessment {
   id: string;
   techTier: TechTier;
@@ -209,11 +255,15 @@ export interface ProcessAssessment {
   automatableFteHours: number;
   /** Impact score 1..5 (FTE-hours + error-risk quality lift). */
   impact: number;
-  /** Effort score 1..5 (tech tier + integration + stability/TCO). */
+  /** Effort score 1..5 — the blended TCO (see `tco` for the breakdown). */
   effort: number;
+  /** Full TCO breakdown behind `effort` (implementation + maintenance + risk). */
+  tco: TcoBreakdown;
   quadrant: Quadrant;
   /** True when the process must be redesigned before any automation. */
   redesignFirst: boolean;
+  /** True when a dominant path carries >=80% volume — scope to main path + escalate exceptions. */
+  paretoScopable: boolean;
   /** True when volume/handling is measured rather than estimated. */
   measured: boolean;
   /** True when a governance owner is ready. */
@@ -233,17 +283,57 @@ const impactScore = (c: ProcessCandidate, portfolioMaxHours: number): number => 
   return clamp(round1(volumeScore + riskLift), 1, 5);
 };
 
+/** Stability penalty on ongoing maintenance: unstable UI/rules break bots on every change. */
+const STABILITY_MAINT_PENALTY: Record<Level, number> = { high: 0, medium: 1, low: 2 };
+
 /**
- * Effort 1..5: tech tier weight (build complexity) + integration penalty (UI
- * scraping over API) + stability penalty (unstable UI = high maintenance TCO,
- * not just dev-time) — doctrine 4.4 effort axis + the TCO trap in section 5.
+ * Compute the TCO breakdown (doctrine §4.4 effort axis + §5 TCO trap), then blend
+ * into a single 1..5 effort used by the quadrant. Three real components, not one
+ * hardcoded multiplier:
+ *   - implementation: tech tier build weight + UI-vs-API integration surface;
+ *   - maintenance:    tier upkeep + stability penalty + UI-scraping brittleness —
+ *                     the 2-3yr horizon, where a "cheap to build" bot can still be
+ *                     expensive to keep alive on an unstable legacy UI;
+ *   - risk:           no governance owner (organizational barrier, §6 insight #8)
+ *                     + compliance/error risk + a redesign-first dependency.
+ * The blend weights build and maintenance above risk (0.45 / 0.35 / 0.20) so a
+ * high-maintenance process is no longer under-scored, without letting soft risk
+ * alone dominate the axis.
  */
-const effortScore = (c: ProcessCandidate, tier: TechTier): number => {
-  let e = TECH_EFFORT_WEIGHT[tier];
-  if (c.apiAvailable === false) e += 1; // UI scraping is costlier and more brittle
-  if ((c.stability ?? 'medium') === 'low') e += 1; // low stability => high ongoing TCO
-  return clamp(round1(e), 1, 5);
-};
+export function computeTco(c: ProcessCandidate, tier: TechTier): TcoBreakdown {
+  const stability = c.stability ?? 'medium';
+
+  const implementation = clamp(
+    round1(TECH_BUILD_WEIGHT[tier] + (c.apiAvailable === false ? 1 : 0)),
+    1,
+    5
+  );
+
+  const maintenance = clamp(
+    round1(
+      TECH_MAINTENANCE_WEIGHT[tier] +
+        STABILITY_MAINT_PENALTY[stability] +
+        (c.apiAvailable === false ? 1 : 0)
+    ),
+    1,
+    5
+  );
+
+  const risk = clamp(
+    round1(
+      1 +
+        (c.ownerReady === false ? 2 : 0) + // no owner ready to govern the bot => stalls post-build
+        (c.errorRisk === 'high' ? 1 : c.errorRisk === 'medium' ? 0.5 : 0) +
+        (needsRedesignFirst(c) ? 2 : 0)
+    ),
+    1,
+    5
+  );
+
+  const effort = clamp(round1(implementation * 0.45 + maintenance * 0.35 + risk * 0.2), 1, 5);
+
+  return { implementation, maintenance, risk, effort };
+}
 
 const IMPACT_HIGH_CUTOFF = 3;
 const EFFORT_HIGH_CUTOFF = 3.5;
@@ -270,10 +360,25 @@ export function assessProcess(c: ProcessCandidate, portfolioMaxHours: number): P
   const techTier = selectTechTier(c);
   const automatableFteHours = minutesToFteHours(candidateAutomatableMinutes(c));
   const impact = impactScore(c, portfolioMaxHours);
-  const effort = effortScore(c, techTier);
+  const tco = computeTco(c, techTier);
+  const effort = tco.effort;
+  const paretoScopable = isParetoScopable(c);
+  const ownerReady = !!c.ownerReady;
   // A redesign-first process is a question mark by construction: you cannot
   // automate it as-is regardless of its apparent volume.
   const quadrant = redesignFirst ? 'question-mark' : toQuadrant(impact, effort);
+
+  // 80/20 scoping note (doctrine §6 insight #4): a dominant path means most of
+  // the value is reachable by automating the main path + escalating exceptions.
+  const paretoNotePl = paretoScopable
+    ? ` Koncentracja ścieżki ${Math.round((c.pathConcentration ?? 0) * 100)}% — automatyzuj główną ścieżkę + eskalacja wyjątków, nie 100% wariantów.`
+    : '';
+  const paretoNoteEn = paretoScopable
+    ? ` Path concentration ${Math.round((c.pathConcentration ?? 0) * 100)}% — automate the main path + escalate exceptions, not 100% of variants.`
+    : '';
+  // Governance barrier note (doctrine §6 insight #8): technically buildable but no owner.
+  const ownerNotePl = !redesignFirst && !ownerReady ? ' Brak właściciela governance — bariera pozatechniczna podnosi realny effort.' : '';
+  const ownerNoteEn = !redesignFirst && !ownerReady ? ' No governance owner — a non-technical barrier raises the real effort.' : '';
 
   const rationale: Bilingual = redesignFirst
     ? {
@@ -281,8 +386,8 @@ export function assessProcess(c: ProcessCandidate, portfolioMaxHours: number): P
         en: `High exception share / no dominant path — this is automating chaos. Redesign the process first (${automatableFteHours} FTE-h/yr of apparent impact is unreachable without standardization).`,
       }
     : {
-        pl: `${localize(techTierLabel(techTier), true)} · impact ${impact}/5 (${automatableFteHours} FTE-h/rok) × effort ${effort}/5 → ${localize(QUADRANT_LABEL[quadrant], true)}.`,
-        en: `${localize(techTierLabel(techTier), false)} · impact ${impact}/5 (${automatableFteHours} FTE-h/yr) × effort ${effort}/5 → ${localize(QUADRANT_LABEL[quadrant], false)}.`,
+        pl: `${localize(techTierLabel(techTier), true)} · impact ${impact}/5 (${automatableFteHours} FTE-h/rok) × effort ${effort}/5 (TCO: wdrożenie ${tco.implementation} · utrzymanie ${tco.maintenance} · ryzyko ${tco.risk}) → ${localize(QUADRANT_LABEL[quadrant], true)}.${paretoNotePl}${ownerNotePl}`,
+        en: `${localize(techTierLabel(techTier), false)} · impact ${impact}/5 (${automatableFteHours} FTE-h/yr) × effort ${effort}/5 (TCO: build ${tco.implementation} · maintenance ${tco.maintenance} · risk ${tco.risk}) → ${localize(QUADRANT_LABEL[quadrant], false)}.${paretoNoteEn}${ownerNoteEn}`,
       };
 
   return {
@@ -292,10 +397,12 @@ export function assessProcess(c: ProcessCandidate, portfolioMaxHours: number): P
     automatableFteHours,
     impact,
     effort,
+    tco,
     quadrant,
     redesignFirst,
+    paretoScopable,
     measured: !!c.measured,
-    ownerReady: !!c.ownerReady,
+    ownerReady,
     rationale,
   };
 }
@@ -322,6 +429,14 @@ export interface PipelineBaseline {
   tierCounts: Record<TechTier, number>;
   /** Count of candidates in each effort×impact quadrant. */
   quadrantCounts: Record<Quadrant, number>;
+  /** ids of technically-ready processes whose dominant path is >=80% (80/20 scopable). */
+  paretoScopableIds: string[];
+  /** FTE-hours carried by the dominant path of pareto-scopable processes (main-path win). */
+  paretoMainPathFteHours: number;
+  /** ids of technically-ready processes (not redesign-first) with NO governance owner. */
+  technicallyReadyNoOwnerIds: string[];
+  /** FTE-hours stalled in technically-ready processes that lack a governance owner. */
+  noOwnerFteHours: number;
   /** Share of candidates whose figures are measured, 0..1. */
   measuredRatio: number;
   /** Share of candidates sourced from process/task mining (vs top-down), 0..1. */
@@ -381,6 +496,18 @@ export function computeBaseline(session: AutomationPipelineSession): PipelineBas
     quadrantCounts[a.quadrant] += 1;
   });
 
+  const paretoScopableAssessments = assessments.filter((a) => a.paretoScopable);
+  const paretoScopableIds = paretoScopableAssessments.map((a) => a.id);
+  const paretoMainPathFteHours = round1(
+    paretoScopableAssessments.reduce((acc, a) => acc + a.automatableFteHours, 0)
+  );
+
+  const noOwnerAssessments = assessments.filter((a) => !a.redesignFirst && !a.ownerReady);
+  const technicallyReadyNoOwnerIds = noOwnerAssessments.map((a) => a.id);
+  const noOwnerFteHours = round1(
+    noOwnerAssessments.reduce((acc, a) => acc + a.automatableFteHours, 0)
+  );
+
   const measured = cands.filter((c) => c.measured).length;
   const mined = cands.filter((c) => c.source === 'process-mining' || c.source === 'task-mining')
     .length;
@@ -395,6 +522,10 @@ export function computeBaseline(session: AutomationPipelineSession): PipelineBas
     notReadyShare: automatableFteHours > 0 ? round1(notReadyFteHours / automatableFteHours) : 0,
     tierCounts,
     quadrantCounts,
+    paretoScopableIds,
+    paretoMainPathFteHours,
+    technicallyReadyNoOwnerIds,
+    noOwnerFteHours,
     measuredRatio: candidateCount > 0 ? round1(measured / candidateCount) : 0,
     miningRatio: candidateCount > 0 ? round1(mined / candidateCount) : 0,
     assessments,
@@ -609,7 +740,31 @@ export interface SequencedMove {
   validation: W2ValidationResult;
 }
 
-const VALID: W2ValidationResult = { valid: true, missing: [], weak: [] };
+/** A sequenced move before its validation is computed from its own content. */
+type DraftMove = Omit<SequencedMove, 'validation'>;
+
+/**
+ * Validate a synthesized move against the W2 contract by running its ACTUAL
+ * bilingual content through `validateW2Move` — not a hardcoded pass. Both
+ * languages must satisfy the contract; a field is missing/weak if it fails in
+ * either language, so an empty or thin string in one locale can never slip a move
+ * through as valid.
+ */
+function validateSequencedMove(m: DraftMove): W2ValidationResult {
+  const pl = validateW2Move({
+    rationale: m.rationale.pl,
+    tradeOff: m.tradeOff.pl,
+    rejectedVariant: m.rejectedVariant.pl,
+  });
+  const en = validateW2Move({
+    rationale: m.rationale.en,
+    tradeOff: m.tradeOff.en,
+    rejectedVariant: m.rejectedVariant.en,
+  });
+  const missing = Array.from(new Set([...pl.missing, ...en.missing]));
+  const weak = Array.from(new Set([...pl.weak, ...en.weak])).filter((f) => !missing.includes(f));
+  return { valid: missing.length === 0 && weak.length === 0, missing, weak };
+}
 
 /**
  * Build the W2-validated pipeline WAVE sequence from the assessed portfolio.
@@ -628,7 +783,7 @@ export function buildW2MoveSequence(session: AutomationPipelineSession): Sequenc
   const baseline = computeBaseline(session);
   if (baseline.candidateCount === 0) return [];
 
-  const moves: SequencedMove[] = [];
+  const moves: DraftMove[] = [];
   let order = 1;
 
   const quickWins = baseline.assessments.filter((a) => a.quadrant === 'quick-win');
@@ -659,7 +814,6 @@ export function buildW2MoveSequence(session: AutomationPipelineSession): Sequenc
       },
       expectedImpact: 'medium',
       estimatedEffort: 'low',
-      validation: VALID,
     });
   }
 
@@ -687,7 +841,6 @@ export function buildW2MoveSequence(session: AutomationPipelineSession): Sequenc
       },
       expectedImpact: 'high',
       estimatedEffort: 'medium',
-      validation: VALID,
     });
   }
 
@@ -718,7 +871,6 @@ export function buildW2MoveSequence(session: AutomationPipelineSession): Sequenc
       },
       expectedImpact: top.impact >= 4 ? 'high' : 'medium',
       estimatedEffort: top.effort <= 2.5 ? 'low' : 'medium',
-      validation: VALID,
     });
   }
 
@@ -751,7 +903,6 @@ export function buildW2MoveSequence(session: AutomationPipelineSession): Sequenc
       },
       expectedImpact: 'medium',
       estimatedEffort: 'medium',
-      validation: VALID,
     });
   }
 
@@ -782,11 +933,12 @@ export function buildW2MoveSequence(session: AutomationPipelineSession): Sequenc
       },
       expectedImpact: 'high',
       estimatedEffort: 'high',
-      validation: VALID,
     });
   }
 
-  return moves;
+  // Each synthesized move self-validates against its OWN bilingual content — the
+  // UI never renders an unjustified move, and the pass is earned, not hardcoded.
+  return moves.map((m) => ({ ...m, validation: validateSequencedMove(m) }));
 }
 
 /**
