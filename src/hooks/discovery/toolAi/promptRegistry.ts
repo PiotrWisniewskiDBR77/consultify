@@ -64,7 +64,12 @@ import {
   VALUE_POOL_PROPOSAL_BANK,
   type ValuePoolPhaseId,
 } from '@/config/digitalvaluepool';
-import { buildLegacyConclusionPrompt, toLegacySession } from '@/config/legacyanalyzer';
+import {
+  buildLegacyConclusionPrompt,
+  buildLegacyStepSuggestionPrompt,
+  toLegacyMeta,
+  toLegacySession,
+} from '@/config/legacyanalyzer';
 import {
   SOP_SECTIONS,
   buildSopConclusionPrompt,
@@ -217,6 +222,92 @@ Return JSON:
 }
 
 /**
+ * Integration Diagnostic section suggestions — the runtime consumer of the
+ * integration deepening ladder (buildIntegrationDeepenPrompt) and the per-lever
+ * proposal bank (INTEGRATION_PROPOSAL_BANK). Mirrors buildLogisticsSectionPrompt:
+ * each analytical section is disciplined by the doctrine's four-lever depth
+ * staircase (inventory -> topology -> bridges -> API-led). The wizard steps map to
+ * levers: systems->inventory, integrations->topology, bridges->bridges, and the
+ * cross-lever `moves` step seeds candidate moves from the whole proposal bank.
+ */
+function buildIntegrationSectionPrompt(stepId: string, inputData: unknown): string | null {
+  const isPolish = detectIsPolish(inputData);
+  const L = (pl: string, en: string) => (isPolish ? pl : en);
+  const leverLabel = (l: IntegrationLeverId) =>
+    L(integrationLeverLabel(l).pl, integrationLeverLabel(l).en);
+
+  const STEP_LEVER: Record<string, IntegrationLeverId> = {
+    systems: 'inventory',
+    integrations: 'topology',
+    bridges: 'bridges',
+  };
+
+  const lever = STEP_LEVER[stepId];
+  if (lever) {
+    // Quantification-rung framing for the analytical data-collection steps.
+    const framing = buildIntegrationDeepenPrompt(lever, 'quantification', isPolish);
+    const proposals = INTEGRATION_PROPOSAL_BANK[lever]
+      .map((p) => `- [${p.rung}] ${L(p.title.pl, p.title.en)} — ${L(p.explanation.pl, p.explanation.en)}`)
+      .join('\n');
+    return `${L(
+      'Działaj jako partner ds. architektury integracji (dojrzałość Gartner, API-led MuleSoft, topologia point-to-point vs hub, koszt danych 1-10-100). Zaproponuj 4-6 pozycji dla tej sekcji, zdyscyplinowanych drabiną pogłębiającą (powierzchnia → dowód → kwantyfikacja → ryzyko/zdolności).',
+      'Act as an integration-architecture partner (Gartner maturity, MuleSoft API-led, point-to-point vs hub topology, 1-10-100 data cost). Propose 4-6 items for this section, disciplined by the deepening ladder (surface → evidence → quantification → risk/capability).'
+    )}
+
+${L('Dźwignia', 'Lever')}: ${leverLabel(lever)}
+${L('Rama kwantyfikacji', 'Quantification framing')}: ${framing ?? ''}
+
+${L('Bank propozycji (użyj jako punktu wyjścia, nie kopiuj dosłownie):', 'Proposal bank (use as a starting point, do not copy verbatim):')}
+${proposals}
+
+${L('Zasady:', 'Rules:')}
+- ${L(
+      'Ręczne przepisywanie danych = brakująca integracja (dowód, nie hipoteza); nie zmyślaj liczb — gdy brak, oznacz jako do zmierzenia.',
+      'Manual re-keying = a missing integration (proof, not hypothesis); do not invent numbers — where missing, mark as to-measure.'
+    )}
+- ${L(
+      'Nie stawiaj celu „zintegruj wszystko": które 10-15% integracji odblokowuje 80% wartości.',
+      'Do not set "integrate everything" as the goal: which 10-15% of integrations unlocks 80% of the value.'
+    )}
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "category": "${lever}"}]}`;
+  }
+
+  if (stepId === 'moves') {
+    const bank = INTEGRATION_LEVERS.map((l) => {
+      const proposals = INTEGRATION_PROPOSAL_BANK[l]
+        .map((p) => `    · [${p.rung}] ${L(p.title.pl, p.title.en)} — ${L(p.explanation.pl, p.explanation.en)}`)
+        .join('\n');
+      const risk = buildIntegrationDeepenPrompt(l, 'risk-capability', isPolish);
+      return `- ${leverLabel(l)} — ${risk ?? ''}\n${proposals}`;
+    }).join('\n');
+    return `${L(
+      'Działaj jako partner ds. architektury integracji. Zaproponuj 4-6 ruchów-kandydatów per dźwignia (inwentarz / topologia / mostki / API-led), każdy z impaktem, wysiłkiem i dowodem — zasilają sekwencję W2 System→Process→Experience.',
+      'Act as an integration-architecture partner. Propose 4-6 candidate moves per lever (inventory / topology / bridges / API-led), each with impact, effort and evidence — they feed the W2 System→Process→Experience sequence.'
+    )}
+
+${L('Bank propozycji per dźwignia + rama ryzyka/zdolności:', 'Proposal bank per lever + risk/capability framing:')}
+${bank}
+
+${L('Zasady:', 'Rules:')}
+- ${L(
+      'Trzymaj porządek zależności: inwentarz → topologia/hub (SPOF) → automatyzacja mostków (quick win) → warstwa API-first. Nie kupuj platformy przed inwentarzem.',
+      'Keep the dependency order: inventory → topology/hub (SPOF) → bridge automation (quick win) → API-first layer. Do not buy a platform before the inventory.'
+    )}
+- ${L(
+      'Pojedynczy punkt awarii bez właściciela to cichy najwyższy priorytet, nawet bez historii awarii; zacznij automatyzację od mostka, którego oba systemy mają już API.',
+      'A single point of failure with no owner is the silent top priority even without a failure history; start automation with a bridge whose both systems already expose an API.'
+    )}
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "category": "inventory|topology|bridges|apiled"}]}`;
+  }
+
+  return null;
+}
+
+/**
  * Decision Engine section-suggestion prompts, seeded with the per-element
  * deepening ladder (buildDecisionDeepenPrompt) and the partner-grade proposal bank
  * (DECISION_PROPOSAL_BANK). This is what makes the ladder and the proposal bank
@@ -307,6 +398,75 @@ Return JSON:
 ${schema[element]}`;
 }
 
+/**
+ * Digital Value Pool section-suggestion prompts. Seeds the `functions` and
+ * `useCases` steps with the deepening ladder (buildValuePoolDeepenPrompt) + the
+ * partner-grade proposal bank (VALUE_POOL_PROPOSAL_BANK) — making both live in
+ * runtime rather than dead config (Fix 5/6). Crucially it also instructs the
+ * model to EMIT the exact fields the deterministic engine reads (side / base /
+ * benchmarkShare / captureRate for functions; feasibility + the four scale-gate
+ * flags + captureRate for use-cases) so the engine is no longer starved: without
+ * these the generic operational generator emitted only title/impact/effort and
+ * every valueAtStake collapsed to 0 and the gate never fired (Fix 1). Returns
+ * null for steps it does not own (context/summary fall through to generic).
+ */
+function buildValuePoolSectionPrompt(stepId: string, inputData: unknown): string | null {
+  const isPolish = detectIsPolish(inputData);
+  const L = (pl: string, en: string) => (isPolish ? pl : en);
+  const proposalLines = (phase: ValuePoolPhaseId) =>
+    VALUE_POOL_PROPOSAL_BANK[phase]
+      .map((p) => `- [${p.rung}] ${L(p.title.pl, p.title.en)} — ${L(p.explanation.pl, p.explanation.en)}`)
+      .join('\n');
+
+  if (stepId === 'functions') {
+    const framing = buildValuePoolDeepenPrompt('decompose', 'quantification', isPolish) ?? '';
+    return `${L(
+      'Działaj jako partner ds. strategii cyfrowej/AI (McKinsey value-at-stake, BCG digital value gap). Rozłóż organizację na 3-6 FUNKCJI łańcucha wartości — każda z bazą kosztową/przychodową i benchmarkiem branżowym, żeby silnik policzył value-at-stake (baza × benchmark) i realistyczne przechwycenie.',
+      'Act as a digital/AI strategy partner (McKinsey value-at-stake, BCG digital value gap). Decompose the organization into 3-6 value-chain FUNCTIONS — each with a cost/revenue base and an industry benchmark share, so the engine can size value-at-stake (base × benchmark) and a realistic capture.'
+    )}
+
+${L('Rama pogłębiająca (próg istotności):', 'Deepening framing (materiality):')}
+${framing}
+
+${L('Bank propozycji partnerskich:', 'Partner-grade proposal bank:')}
+${proposalLines('decompose')}
+
+${L('Zasady — POLA, KTÓRE MUSISZ WYPEŁNIĆ (silnik je czyta):', 'Rules — FIELDS YOU MUST FILL (the engine reads them):')}
+- ${L('"side": "cost" dla funkcji na bazie kosztowej, "revenue" dla przychodowej.', '"side": "cost" for a function on a cost base, "revenue" for a revenue base.')}
+- ${L('"base": baza kosztowa/przychodowa (waluta, ta sama jednostka co budżet). "benchmarkShare": część bazy realnie „w grze" pod AI/cyfryzacją, 0..1 (np. 0.18 = 18%).', '"base": the cost/revenue base (currency, same unit as the budget). "benchmarkShare": fraction of the base realistically "in play" under AI/digitization, 0..1 (e.g. 0.18 = 18%).')}
+- ${L('"captureRate" (0..1): ile z pułapu teoretycznego firma realnie przechwyci w horyzoncie — NIE cała pula; przy braku danych ~0.4.', '"captureRate" (0..1): how much of the theoretical ceiling the firm realistically captures within the horizon — NOT the whole pool; default ~0.4 when unknown.')}
+- ${L('"measured": true tylko gdy baza/benchmark z realnych danych; false gdy szacunek. Nie zmyślaj liczb — zostaw base/benchmarkShare puste, gdy fakt nie istnieje.', '"measured": true only when base/benchmark come from real data; false when estimated. Do not invent numbers — leave base/benchmarkShare unset when the fact does not exist.')}
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "side": "cost|revenue", "base": 0, "benchmarkShare": 0.0, "captureRate": 0.4, "measured": true}]}`;
+  }
+
+  if (stepId === 'useCases') {
+    const framing = buildValuePoolDeepenPrompt('prioritize', 'risk-capability', isPolish) ?? '';
+    return `${L(
+      'Działaj jako partner ds. strategii cyfrowej/AI. Zaproponuj 3-6 kandydackich USE-CASE\'ów, każdy przypisany do funkcji (functionId), oceniony na DWÓCH osiach (impact × feasibility) i przepuszczony przez bramkę gotowości do SKALI.',
+      'Act as a digital/AI strategy partner. Propose 3-6 candidate USE-CASES, each attributed to a function (functionId), scored on TWO axes (impact × feasibility) and passed through the scale-readiness gate.'
+    )}
+
+${L('Rama pogłębiająca (feasibility SKALOWANIA, nie tylko techniczna):', 'Deepening framing (feasibility TO SCALE, not just technical):')}
+${framing}
+
+${L('Bank propozycji partnerskich:', 'Partner-grade proposal bank:')}
+${proposalLines('prioritize')}
+
+${L('Zasady — POLA, KTÓRE MUSISZ WYPEŁNIĆ (silnik je czyta):', 'Rules — FIELDS YOU MUST FILL (the engine reads them):')}
+- ${L('"functionId": id funkcji, do której należy use-case (musi pasować do funkcji z poprzedniego kroku). "phase": decompose|size|prioritize|sequence.', '"functionId": id of the function this use-case belongs to (must match a function from the previous step). "phase": decompose|size|prioritize|sequence.')}
+- ${L('"impact" i "feasibility": high|medium|low. Feasibility to feasibility TECHNICZNA — bramka skalowania jest osobno poniżej.', '"impact" and "feasibility": high|medium|low. Feasibility is TECHNICAL feasibility — the scale gate below is separate.')}
+- ${L('BRAMKA SKALOWANIA (kluczowa): "dataReady", "hasOwner", "scalable", "businessMetric" — każde true/false. Wysoka feasibility techniczna NIE promuje use-case\'u sama: brak danych LUB właściciela to bloker decydujący, który wypycha go z quick-winu do „pilota bez skali".', 'SCALE GATE (critical): "dataReady", "hasOwner", "scalable", "businessMetric" — each true/false. High technical feasibility does NOT promote a use-case alone: missing data OR owner is a decisive blocker that pushes it out of quick-win into "pilot without scale".')}
+- ${L('"bottomUpValue": skwantyfikowana wartość oddolna (waluta), gdy istnieje. "captureRate" (0..1): realny capture, ~0.4 przy braku danych. Nie zmyślaj liczb.', '"bottomUpValue": the bottom-up quantified value (currency) where it exists. "captureRate" (0..1): realistic capture, ~0.4 when unknown. Do not invent numbers.')}
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "feasibility": "high|medium|low", "functionId": "fn-...", "phase": "prioritize", "bottomUpValue": 0, "dataReady": true, "hasOwner": true, "scalable": true, "businessMetric": true, "captureRate": 0.4}]}`;
+  }
+
+  return null;
+}
+
 export function getToolSuggestionPrompt(
   toolType: ToolType,
   stepId: string,
@@ -323,6 +483,14 @@ export function getToolSuggestionPrompt(
     if (toolType === 'logistics-automation') {
       const logisticsPrompt = buildLogisticsSectionPrompt(stepId, inputData);
       if (logisticsPrompt) return logisticsPrompt;
+    }
+
+    // Integration Diagnostic seeds section suggestions with the four-lever
+    // deepening ladder + proposal bank (buildIntegrationSectionPrompt); fall
+    // through to the generic operational prompt for steps it does not own.
+    if (toolType === 'integration-diagnostic') {
+      const integrationPrompt = buildIntegrationSectionPrompt(stepId, inputData);
+      if (integrationPrompt) return integrationPrompt;
     }
 
     // Data Inventory seeds its capture-step suggestions with the deepening ladder
@@ -385,6 +553,15 @@ Return JSON:
 
     const opData = inputData as any;
     const ctx = opData?.context || {};
+    // Digital Value Pool seeds its functions/useCases suggestions with the
+    // deepening ladder + proposal bank AND emits the exact fields the engine
+    // reads (side/base/benchmarkShare/captureRate + scale-gate flags); falls
+    // through to the generic operational prompt for steps it does not own.
+    if (toolType === 'digital-value-pool') {
+      const valuePoolPrompt = buildValuePoolSectionPrompt(stepId, inputData);
+      if (valuePoolPrompt) return valuePoolPrompt;
+    }
+
     const sectionName = humanizeStepId(stepId);
     return `Act as a senior operations consultant. Generate 3-6 concrete, specific items for the "${sectionName}" section of this engagement.
 
@@ -1010,7 +1187,10 @@ export function getToolSummaryPrompt(toolType: ToolType, inputData: unknown): st
   }
   if (toolType === 'legacy-analyzer') {
     const op = inputData as OperationalToolData | undefined;
-    const prompt = buildLegacyConclusionPrompt(toLegacySession(op?.sections), isPolish);
+    const prompt = buildLegacyConclusionPrompt(
+      toLegacySession(op?.sections, toLegacyMeta(op?.context)),
+      isPolish
+    );
     if (prompt) return prompt;
   }
 
