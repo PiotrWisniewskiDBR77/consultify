@@ -93,6 +93,20 @@ export interface LegacyApp {
   commoditized?: boolean;
   /** Whether another portfolio system already covers this function (duplication → retire/eliminate). */
   duplicatedElsewhere?: boolean;
+  /**
+   * Whether the application hits a CONFIRMED scaling barrier — the load/capacity
+   * ceiling that a lift-and-tinker move (Replatform) cannot lift, so only a
+   * Refactor/Rearchitect removes it. Doctrine §5: a Refactor is justified only at
+   * a real scaling barrier, NOT at high debt alone ("rewrite it because the code
+   * is ugly" is the costliest reverse trap). Left undefined until measured.
+   */
+  scalingBarrier?: boolean;
+  /**
+   * Peak capacity utilization (%). A sustained ceiling (>= SCALING_BARRIER_UTILIZATION)
+   * is itself evidence of a scaling barrier even when `scalingBarrier` was not set
+   * by hand — the architecture cannot absorb more load without a rebuild.
+   */
+  capacityUtilizationPct?: number;
 }
 
 /** One directed integration edge: `from` depends on / consumes `to`. */
@@ -123,6 +137,17 @@ export interface LegacySession {
 const AXIS_MID = 3;
 /** In-degree at or above which a node is a critical integration node. */
 const CRITICAL_NODE_INDEGREE = 2;
+/** Peak utilization (%) at/above which the architecture is treated as capacity-bound. */
+const SCALING_BARRIER_UTILIZATION = 85;
+
+/**
+ * Whether the app has a CONFIRMED scaling barrier: either explicitly flagged, or
+ * evidenced by a sustained capacity ceiling. This — not high debt — is what
+ * qualifies a MIGRATE app for Refactor (doctrine §5).
+ */
+const hasScalingBarrier = (app: LegacyApp): boolean =>
+  app.scalingBarrier === true ||
+  (app.capacityUtilizationPct ?? 0) >= SCALING_BARRIER_UTILIZATION;
 
 const highValue = (app: LegacyApp) => (app.businessValue ?? AXIS_MID) >= AXIS_MID;
 const highHealth = (app: LegacyApp) => (app.technicalHealth ?? AXIS_MID) >= AXIS_MID;
@@ -276,8 +301,11 @@ const appDebt = (app: LegacyApp): AppDebt => {
  * - ELIMINATE lifted by a dependency to MIGRATE → refactor (rebuild the integration first).
  * - Commoditized function → repurchase (drop-and-shop to SaaS) — the default
  *   question before an expensive refactor.
- * - High value + hard support deadline, low debt → replatform (move, tinker).
- * - High value + high debt / scaling barrier → refactor (the only R that removes debt).
+ * - CONFIRMED scaling barrier → refactor (the only R that removes an architectural
+ *   ceiling). Doctrine §5: high debt ALONE does NOT justify a refactor — a rewrite
+ *   without a real scaling barrier is the costliest reverse trap.
+ * - High value + hard support deadline / high debt but no confirmed barrier →
+ *   replatform (move, tinker — keep processes, drop the on-prem/EOL platform).
  * - INVEST / TOLERATE → retain (keep as is; refactor without a business case is the costliest trap).
  */
 export function pickSixR(
@@ -295,9 +323,12 @@ export function pickSixR(
     // A node lifted from ELIMINATE by a hidden dependency must be rebuilt, not lifted-and-shifted.
     if (dependencyOverride) return 'refactor';
     if (app.commoditized) return 'repurchase';
-    const highDebt = debt.debtRatio >= 0.3;
-    if (highDebt) return 'refactor';
-    // High value, deadline-driven, manageable debt: move with point improvements.
+    // Refactor is gated by a CONFIRMED scaling barrier, not by high debt: a high
+    // debtRatio with no scaling ceiling (e.g. an EOL ERP that still meets load)
+    // is a Replatform — migrate and keep the processes, do not rearchitect.
+    if (hasScalingBarrier(app)) return 'refactor';
+    // High value, deadline-driven, high debt but no confirmed barrier: move with
+    // point improvements rather than the costliest reverse trap.
     return 'replatform';
   }
   // INVEST / TOLERATE: don't rebuild working systems without a scaling case.
@@ -460,15 +491,26 @@ export function scorePortfolio(session: LegacySession): PortfolioScore {
 // Roadmap — sequenced by the dependency graph, not value priority
 // ---------------------------------------------------------------------------
 
+/**
+ * What kind of roadmap action this item represents. A dependency-lifted node is
+ * split into TWO items — `build-replacement` (build the new integration, early)
+ * and `retire-legacy` (retire the old node, after full cut-over) — so the
+ * roadmap models the doctrine's two-step retire pattern explicitly.
+ */
+export type RoadmapItemKind = 'standard' | 'build-replacement' | 'retire-legacy';
+
 export interface RoadmapItem {
   order: number;
+  /** Stable graph id (may be synthetic, e.g. `app::build` / `app::retire`). */
+  id: string;
   appId: string;
   name: string;
+  kind: RoadmapItemKind;
   decision: TimeDecision;
   sixR: SixRStrategy;
   /** Earliest wave the item can enter, bounded below by its dependencies. */
   wave: number;
-  /** appIds that must complete before this item can safely start. */
+  /** item ids that must complete before this item can safely start. */
   blockedBy: string[];
   /** Plain-language entry condition. */
   entryCondition: Bilingual;
@@ -487,6 +529,7 @@ const withinWavePriority = (v: AppVerdict, app: LegacyApp): number => {
   if (v.risk.singlePointOfKnowledge) p += 1;
   if (v.decision === 'ELIMINATE' && v.inDegree === 0) p += 2; // quick win, funds the rest
   if (v.decision === 'INVEST' || v.decision === 'TOLERATE') p -= 5; // not a modernization move
+  p += (app.knownCves ?? 0) * 0.1; // tie-break within a wave: more security exposure goes sooner
   return p;
 };
 
@@ -510,63 +553,182 @@ export function buildRoadmap(session: LegacySession): RoadmapItem[] {
   const verdictById = new Map(verdicts.map((v) => [v.appId, v] as const));
   const appById = new Map(session.apps.map((a) => [a.id, a] as const));
 
-  // An action item X is blocked by any in-scope app Y that DEPENDS ON X (Y is
-  // `from`, X is `to`): X cannot be retired/rebuilt until its consumers cut over.
-  const blockedBy = (appId: string): string[] => {
-    const consumers = session.dependencies
-      .filter((e) => e.to === appId)
-      .map((e) => e.from)
-      .filter((from) => verdictById.has(from) && from !== appId);
-    return Array.from(new Set(consumers));
+  const buildIdFor = (appId: string) => `${appId}::build`;
+  const retireIdFor = (appId: string) => `${appId}::retire`;
+  const isOverride = (appId: string) => verdictById.get(appId)?.dependencyOverride === true;
+
+  // --- Plan nodes: a dependency-lifted node becomes TWO synthetic items ------
+  // (build-replacement, retire-legacy) so the two-step retire pattern is
+  // explicit and a surviving consumer can wait on the *build* step, not just on
+  // the retirement of its consumers.
+  interface PlanNode {
+    id: string;
+    appId: string;
+    v: AppVerdict;
+    kind: RoadmapItemKind;
+    name: string;
+    decision: TimeDecision;
+    sixR: SixRStrategy;
+  }
+
+  const nodes: PlanNode[] = [];
+  verdicts.forEach((v) => {
+    if (v.dependencyOverride) {
+      nodes.push({
+        id: buildIdFor(v.appId),
+        appId: v.appId,
+        v,
+        kind: 'build-replacement',
+        name: v.name,
+        decision: 'MIGRATE',
+        sixR: 'refactor',
+      });
+      nodes.push({
+        id: retireIdFor(v.appId),
+        appId: v.appId,
+        v,
+        kind: 'retire-legacy',
+        name: v.name,
+        decision: 'ELIMINATE',
+        sixR: 'retire',
+      });
+    } else {
+      nodes.push({
+        id: v.appId,
+        appId: v.appId,
+        v,
+        kind: 'standard',
+        name: v.name,
+        decision: v.decision,
+        sixR: v.sixR,
+      });
+    }
+  });
+  const nodeById = new Map(nodes.map((n) => [n.id, n] as const));
+
+  // In-scope consumers of appId (systems that DEPEND ON it: they are `from`).
+  const inScopeConsumers = (appId: string): string[] =>
+    Array.from(
+      new Set(
+        session.dependencies
+          .filter((e) => e.to === appId && e.from !== appId)
+          .map((e) => e.from)
+          .filter((from) => verdictById.has(from))
+      )
+    );
+
+  // The node id that represents a consumer being "done / cut over".
+  const doneNodeId = (appId: string): string =>
+    isOverride(appId) ? retireIdFor(appId) : appId;
+
+  // Blockers per PLAN NODE over the synthetic graph.
+  const blockersFor = (node: PlanNode): string[] => {
+    if (node.kind === 'build-replacement') {
+      // Building the new integration is the prerequisite — nothing blocks it.
+      return [];
+    }
+    const set = new Set<string>();
+    if (node.kind === 'retire-legacy') {
+      // Retire the old node only after its replacement is built AND every in-scope
+      // consumer has cut over to that replacement.
+      set.add(buildIdFor(node.appId));
+      inScopeConsumers(node.appId).forEach((c) => set.add(doneNodeId(c)));
+    } else {
+      // Standard node.
+      // (a) Replacement prerequisite: a SURVIVING (MIGRATE) app that depends on a
+      //     lifted node must wait for that node's NEW integration — you cannot
+      //     replatform onto a moving integration. A retired (ELIMINATE) app just
+      //     disconnects, so it does NOT wait.
+      if (node.decision === 'MIGRATE') {
+        session.dependencies
+          .filter((e) => e.from === node.appId && isOverride(e.to))
+          .forEach((e) => set.add(buildIdFor(e.to)));
+      }
+      // (b) Consumer prerequisite: this node cannot be retired/rebuilt until its
+      //     in-scope consumers cut over first.
+      inScopeConsumers(node.appId).forEach((c) => set.add(doneNodeId(c)));
+    }
+    set.delete(node.id);
+    return Array.from(set);
   };
 
   // Longest-path wave via memoized DFS over the blocking relation (acyclic
   // assumed; a cycle short-circuits to wave 0 defensively).
   const waveCache = new Map<string, number>();
   const inProgress = new Set<string>();
-  const waveOf = (appId: string): number => {
-    if (waveCache.has(appId)) return waveCache.get(appId)!;
-    if (inProgress.has(appId)) return 0; // cycle guard
-    inProgress.add(appId);
-    const blockers = blockedBy(appId);
+  const waveOf = (id: string): number => {
+    if (waveCache.has(id)) return waveCache.get(id)!;
+    if (inProgress.has(id)) return 0; // cycle guard
+    inProgress.add(id);
+    const node = nodeById.get(id);
+    const blockers = node ? blockersFor(node) : [];
     const wave = blockers.length === 0 ? 0 : 1 + Math.max(...blockers.map((b) => waveOf(b)));
-    inProgress.delete(appId);
-    waveCache.set(appId, wave);
+    inProgress.delete(id);
+    waveCache.set(id, wave);
     return wave;
   };
 
-  const withWave = verdicts
-    .map((v) => ({ v, wave: waveOf(v.appId), blockers: blockedBy(v.appId) }))
+  const nodePriority = (node: PlanNode): number => {
+    // The build-replacement step is an enabler: sequence it AFTER the
+    // dependency-free quick wins that share its wave (the apps that wait on it
+    // already live in a later wave).
+    if (node.kind === 'build-replacement') return -2;
+    return withinWavePriority(node.v, appById.get(node.appId)!);
+  };
+
+  const withWave = nodes
+    .map((node) => ({ node, wave: waveOf(node.id), blockers: blockersFor(node) }))
     .sort((a, b) => {
       if (a.wave !== b.wave) return a.wave - b.wave;
-      const pa = withinWavePriority(a.v, appById.get(a.v.appId)!);
-      const pb = withinWavePriority(b.v, appById.get(b.v.appId)!);
-      return pb - pa;
+      return nodePriority(b.node) - nodePriority(a.node);
     });
 
-  return withWave.map(({ v, wave, blockers }, idx) => {
-    const app = appById.get(v.appId)!;
-    const entryCondition: Bilingual =
-      blockers.length === 0
-        ? {
-            pl: 'Brak zależności blokujących — może ruszyć od razu.',
-            en: 'No blocking dependencies — can start immediately.',
-          }
-        : {
-            pl: `Wymaga wcześniejszego cutoveru systemów: ${blockers.join(', ')} — nie da się wykonać, zanim ich integracja nie przejdzie na zastępstwo.`,
-            en: `Requires prior cut-over of: ${blockers.join(', ')} — cannot execute before their integration moves to the replacement.`,
-          };
+  return withWave.map(({ node, wave, blockers }, idx) => {
+    const app = appById.get(node.appId)!;
+    const v = node.v;
+    const blockerNames = blockers.map((b) => nodeById.get(b)?.name ?? b);
 
-    const rationale: Bilingual =
-      v.dependencyOverride
-        ? {
-            pl: `${v.name}: dwuetapowo — najpierw zbuduj nową warstwę integracyjną (wcześniejsza fala), wygaszenie starego węzła dopiero po pełnym cutoverze. Bus factor i in-degree ${v.inDegree} podnoszą pilność niezależnie od budżetu.`,
-            en: `${v.name}: two-step — build the new integration layer first (earlier wave), retire the old node only after full cut-over. Bus factor and in-degree ${v.inDegree} raise urgency independent of budget.`,
-          }
-        : (app.supportEndsInMonths ?? 99) <= 18
+    let entryCondition: Bilingual;
+    let rationale: Bilingual;
+
+    if (node.kind === 'build-replacement') {
+      entryCondition = {
+        pl: 'Brak zależności blokujących — buduj zastępczą integrację od razu; to warunek wejścia dla systemów zależnych i dla wygaszenia starego węzła.',
+        en: 'No blocking dependencies — build the replacement integration immediately; it is the entry condition for the dependent systems and for retiring the old node.',
+      };
+      rationale = {
+        pl: `${v.name}: najpierw nowa warstwa integracyjna — musi powstać, zanim którykolwiek z ${v.inDegree} zależnych systemów przejdzie na zastępstwo i zanim wygaśniesz stary węzeł. Bus factor i in-degree podnoszą pilność niezależnie od budżetu.`,
+        en: `${v.name}: the new integration layer first — it must exist before any of the ${v.inDegree} dependent systems cut over and before the old node is retired. Bus factor and in-degree raise urgency independent of budget.`,
+      };
+    } else if (node.kind === 'retire-legacy') {
+      entryCondition =
+        blockers.length === 0
+          ? { pl: 'Brak zależności blokujących.', en: 'No blocking dependencies.' }
+          : {
+              pl: `Dopiero po zbudowaniu zastępstwa i pełnym cutoverze: ${blockerNames.join(', ')}.`,
+              en: `Only after the replacement is built and full cut-over of: ${blockerNames.join(', ')}.`,
+            };
+      rationale = {
+        pl: `${v.name}: wygaszenie starego węzła to druga połowa sekwencji dwuetapowej — dopiero gdy wszystkie systemy zależne działają już na nowej integracji, żeby wygaszenie nie zablokowało niczego.`,
+        en: `${v.name}: retiring the old node is the second half of the two-step sequence — only once every dependent system runs on the new integration, so the retirement blocks nothing.`,
+      };
+    } else {
+      entryCondition =
+        blockers.length === 0
           ? {
-              pl: `${v.name}: twardy deadline (${app.supportEndsInMonths} mies. do końca wsparcia) determinuje falę — priorytet wynika z faktu, nie z ogólnego „kiedyś".`,
-              en: `${v.name}: a hard deadline (${app.supportEndsInMonths} months to support end) sets the wave — priority from fact, not a general "someday".`,
+              pl: 'Brak zależności blokujących — może ruszyć od razu.',
+              en: 'No blocking dependencies — can start immediately.',
+            }
+          : {
+              pl: `Wymaga wcześniejszego cutoveru: ${blockerNames.join(', ')} — nie da się wykonać, zanim ich integracja nie przejdzie na zastępstwo.`,
+              en: `Requires prior cut-over of: ${blockerNames.join(', ')} — cannot execute before their integration moves to the replacement.`,
+            };
+
+      rationale =
+        (app.supportEndsInMonths ?? 99) <= 18
+          ? {
+              pl: `${v.name}: twardy deadline (${app.supportEndsInMonths} mies. do końca wsparcia) determinuje falę — priorytet wynika z faktu, nie z ogólnego „kiedyś".${blockers.length ? ' Mimo deadline’u czeka na warunek wejścia powyżej — nie migruje się na ruchomej integracji.' : ''}`,
+              en: `${v.name}: a hard deadline (${app.supportEndsInMonths} months to support end) sets the wave — priority from fact, not a general "someday".${blockers.length ? ' Despite the deadline it waits on the entry condition above — you do not migrate onto a moving integration.' : ''}`,
             }
           : v.decision === 'ELIMINATE' && v.inDegree === 0
             ? {
@@ -574,13 +736,16 @@ export function buildRoadmap(session: LegacySession): RoadmapItem[] {
                 en: `${v.name}: dependency-free retirement — lowest risk, fastest return; a quick win that funds part of a larger migration.`,
               }
             : v.rationale;
+    }
 
     return {
       order: idx + 1,
-      appId: v.appId,
-      name: v.name,
-      decision: v.decision,
-      sixR: v.sixR,
+      id: node.id,
+      appId: node.appId,
+      name: node.name,
+      kind: node.kind,
+      decision: node.decision,
+      sixR: node.sixR,
       wave,
       blockedBy: blockers,
       entryCondition,

@@ -28,7 +28,11 @@ import {
   type RoadmapItem,
 } from './legacyEngine';
 import { localizeLadder } from './index';
-import { type LegacyDimensionId } from './deepeningLadder';
+import {
+  LEGACY_PROPOSAL_BANK,
+  legacyDimensionLabel,
+  type LegacyDimensionId,
+} from './deepeningLadder';
 
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 const pct = (ratio: number) => `${Math.round(ratio * 100)}%`;
@@ -150,7 +154,7 @@ export function buildLegacyConclusionPrompt(
   const roadmapLines = roadmap
     .map(
       (r) =>
-        `${r.order}. [fala/wave ${r.wave}] ${r.name} — ${r.decision}/${r.sixR}; ${localize('warunek wejścia', 'entry condition', isPolish)}: ${localize(r.entryCondition.pl, r.entryCondition.en, isPolish)}${r.blockedBy.length ? ` (blokery/blockers: ${r.blockedBy.join(', ')})` : ''}`
+        `${r.order}. [fala/wave ${r.wave}] ${r.name} — ${r.decision}/${r.sixR}; ${localize('warunek wejścia', 'entry condition', isPolish)}: ${localize(r.entryCondition.pl, r.entryCondition.en, isPolish)}`
     )
     .join('\n');
 
@@ -232,4 +236,72 @@ export function buildLegacyDeepenPrompt(
   const rung = rungs.find((r) => r.id === rungId);
   if (!rung) return null;
   return `${rung.question}\n\n${isPolish ? 'Kontekst konsultanta' : 'Consultant framing'}: ${rung.rationale}`;
+}
+
+/**
+ * Which deepening-ladder dimensions each wizard STEP covers. The Legacy Analyzer
+ * has four steps (context / apps / dependencies / summary), but the doctrine's
+ * six assessment dimensions all live inside the per-application scoring — so the
+ * `apps` step is disciplined by the five per-app dimensions and `dependencies`
+ * by the integration-graph dimension. This is what makes the deepening ladder
+ * (buildLegacyDeepenPrompt) AND the proposal bank (LEGACY_PROPOSAL_BANK) LIVE in
+ * runtime instead of sitting as dead config.
+ */
+const STEP_DIMENSIONS: Record<string, LegacyDimensionId[]> = {
+  apps: ['inventory', 'businessValue', 'techHealth', 'cost', 'risk'],
+  dependencies: ['dependencies'],
+};
+
+/**
+ * Section-level suggestion prompt for a Legacy Analyzer capture step, disciplined
+ * by the deepening ladder (surface → evidence → quantification → risk/capability)
+ * and seeded with the partner-grade proposal bank. Returns null for steps with no
+ * assessment dimension (context / summary), so the caller falls back to the
+ * generic operational prompt.
+ */
+export function buildLegacyStepSuggestionPrompt(
+  stepId: string,
+  isPolish: boolean
+): string | null {
+  const dimensions = STEP_DIMENSIONS[stepId];
+  if (!dimensions || dimensions.length === 0) return null;
+
+  const blocks = dimensions.map((dimension) => {
+    const label = legacyDimensionLabel(dimension);
+    // Quantification rung frames the "turn a feeling into a number" discipline.
+    const framing = buildLegacyDeepenPrompt(dimension, 'quantification', isPolish);
+    const proposals = LEGACY_PROPOSAL_BANK[dimension]
+      .map(
+        (p) =>
+          `  · [${p.rung}] ${localize(p.title.pl, p.title.en, isPolish)} — ${localize(
+            p.explanation.pl,
+            p.explanation.en,
+            isPolish
+          )}`
+      )
+      .join('\n');
+    return `${isPolish ? 'Wymiar' : 'Dimension'}: ${localize(label.pl, label.en, isPolish)}
+${framing ? `${framing}\n` : ''}${
+      isPolish
+        ? 'Bank propozycji (kandydaci do dopracowania i dopasowania, nie do skopiowania w ciemno)'
+        : 'Proposal bank (candidates to refine and fit, not copy blind)'
+    }:
+${proposals}`;
+  });
+
+  const isApps = stepId === 'apps';
+  const header = isPolish
+    ? `Działaj jako partner ds. architektury korporacyjnej i racjonalizacji portfela aplikacji (Gartner TIME, AWS 6R, kwantyfikacja długu McKinsey). Zaproponuj 3-6 pozycji do sekcji „${stepId}", zdyscyplinowanych drabiną pogłębiającą (powierzchnia → dowód → kwantyfikacja → ryzyko/zdolności). Oprzyj je na bankach propozycji poniżej — dopracuj i dopasuj do kontekstu sesji; nie zmyślaj systemów, kwot TCO, wartości/kondycji ani zależności niepopartych sesją.`
+    : `Act as an enterprise-architecture and application-portfolio-rationalization partner (Gartner TIME, AWS 6R, McKinsey tech-debt quantification). Propose 3-6 items for the "${stepId}" section, disciplined by the deepening staircase (surface → evidence → quantification → risk/capability). Ground them in the proposal banks below — refine and fit them to the session context; do not invent systems, TCO figures, value/health scores or dependencies the session does not support.`;
+
+  const fields = isApps
+    ? '{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "category": "...", "businessValue": 1, "technicalHealth": 1, "tcoPerYear": 0, "supportStatus": "active|expiring|none", "busFactor": 0, "knownCves": 0}]}'
+    : '{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "from": "<appId>", "to": "<appId>", "documented": true}]}';
+
+  return `${header}
+
+${blocks.join('\n\n')}
+
+${isPolish ? 'Zwróć JSON' : 'Return JSON'}:
+${fields}`;
 }

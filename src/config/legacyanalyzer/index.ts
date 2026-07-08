@@ -144,3 +144,82 @@ export function toLegacySession(
     regulated: meta?.regulated,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Meta adapter: mission context -> { itBudgetPerYear, regulated }
+// ---------------------------------------------------------------------------
+
+const BUDGET_UNIT_MULTIPLIER: Record<string, number> = {
+  mld: 1_000_000_000,
+  mln: 1_000_000,
+  m: 1_000_000,
+  tys: 1_000,
+  k: 1_000,
+};
+
+/**
+ * Pull the annual IT budget out of the free-text mission context. Anchored on a
+ * budget keyword (so a random "5 systems" count is never mistaken for a budget),
+ * it takes the amount+unit token nearest to that keyword. Returns undefined when
+ * no budget is stated, so `scorePortfolio` keeps its own defensive default.
+ */
+function parseBudgetFromText(text: string): number | undefined {
+  const kw = /bud[żz]et|budget/i.exec(text);
+  if (!kw) return undefined;
+  const numRe = /(\d+(?:[.,]\d+)?)\s*(mld|mln|tys|k|m)\b/gi;
+  const matches: Array<{ amount: number; index: number }> = [];
+  let m: RegExpExecArray | null;
+  while ((m = numRe.exec(text)) !== null) {
+    const mult = BUDGET_UNIT_MULTIPLIER[m[2].toLowerCase()] ?? 1;
+    matches.push({ amount: parseFloat(m[1].replace(',', '.')) * mult, index: m.index });
+  }
+  if (matches.length === 0) return undefined;
+  const kwPos = kw.index;
+  matches.sort((a, b) => Math.abs(a.index - kwPos) - Math.abs(b.index - kwPos));
+  return Math.round(matches[0].amount);
+}
+
+/**
+ * Infer whether the organization is regulated from the mission context. An
+ * explicit negation ("nieregulowana", "non-regulated") wins over a positive
+ * keyword; returns undefined when the text is silent so the engine's neutral
+ * default applies.
+ */
+function inferRegulatedFromText(text: string): boolean | undefined {
+  if (!text.trim()) return undefined;
+  if (/nieregulowan|non[-\s]?regulated|not\s+regulated|poza\s+regulacj/i.test(text)) return false;
+  if (
+    /regulowan|regulated|\bbank\b|ubezpieczyciel|insurer|insurance|\bRODO\b|\bGDPR\b|\bHIPAA\b|PCI[-\s]?DSS|\bKNF\b|\bNBP\b|healthcare|ochron[ay]\s+zdrowia|farmaceut|pharma|data\s+residency/i.test(
+      text
+    )
+  )
+    return true;
+  return undefined;
+}
+
+/**
+ * Defensive adapter from the operational tool's mission `context` to the engine
+ * meta the portfolio scorer needs ({ itBudgetPerYear, regulated }). Prefers
+ * explicit structured fields when a future UI writes them, otherwise falls back
+ * to parsing the free-text mission context (the only source today). Without this,
+ * `scorePortfolio` computes the tech-debt share against total portfolio TCO
+ * instead of the real IT budget, and the regulated-compliance risk weight never
+ * fires — see legacyEngine.ts scorePortfolio / assessRisk.
+ */
+export function toLegacyMeta(
+  context: unknown
+): { itBudgetPerYear?: number; regulated?: boolean } {
+  const c = (context ?? {}) as Record<string, unknown>;
+
+  let itBudgetPerYear = asNumber(c['itBudgetPerYear']);
+  let regulated = typeof c['regulated'] === 'boolean' ? (c['regulated'] as boolean) : undefined;
+
+  const text = [c['goal'], c['scope'], c['constraints'], c['assumptions'], c['kpiTarget'], c['successSignal']]
+    .filter((v): v is string => typeof v === 'string')
+    .join(' \n ');
+
+  if (itBudgetPerYear === undefined) itBudgetPerYear = parseBudgetFromText(text);
+  if (regulated === undefined) regulated = inferRegulatedFromText(text);
+
+  return { itBudgetPerYear, regulated };
+}
