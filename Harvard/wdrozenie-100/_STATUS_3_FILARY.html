@@ -1,0 +1,448 @@
+<title>Consultify — status 3 filarów</title>
+<style>
+  :root {
+    --bg: #FBFAF7;
+    --panel: #FFFFFF;
+    --panel-2: #F4F2EC;
+    --ink: #1C1E24;
+    --ink-soft: #52565F;
+    --ink-faint: #85898F;
+    --line: #E4E1D8;
+    --line-strong: #D2CEC1;
+    --accent: #2B4C8C;
+    --accent-soft: #E8EDF6;
+    --done: #2E7D57;
+    --done-bg: #E4F1EA;
+    --partial: #B4801F;
+    --partial-bg: #F7EDD6;
+    --empty: #8A8F9A;
+    --empty-bg: #ECEAE4;
+    --block: #85182F;
+    --block-bg: #F6E2E6;
+    --shadow: 0 1px 2px rgba(28,30,36,.05), 0 4px 16px rgba(28,30,36,.04);
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161B;
+      --panel: #1C1F26;
+      --panel-2: #23262F;
+      --ink: #E9EAED;
+      --ink-soft: #A9ADB6;
+      --ink-faint: #767B85;
+      --line: #2C303A;
+      --line-strong: #383D48;
+      --accent: #7BA0E0;
+      --accent-soft: #22293A;
+      --done: #5FC08D;
+      --done-bg: #172A21;
+      --partial: #E0B458;
+      --partial-bg: #2E2716;
+      --empty: #8A8F9A;
+      --empty-bg: #24262D;
+      --block: #E0748C;
+      --block-bg: #2E1820;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 18px rgba(0,0,0,.28);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #FBFAF7; --panel: #FFFFFF; --panel-2: #F4F2EC; --ink: #1C1E24; --ink-soft: #52565F;
+    --ink-faint: #85898F; --line: #E4E1D8; --line-strong: #D2CEC1; --accent: #2B4C8C; --accent-soft: #E8EDF6;
+    --done: #2E7D57; --done-bg: #E4F1EA; --partial: #B4801F; --partial-bg: #F7EDD6; --empty: #8A8F9A;
+    --empty-bg: #ECEAE4; --block: #85182F; --block-bg: #F6E2E6;
+    --shadow: 0 1px 2px rgba(28,30,36,.05), 0 4px 16px rgba(28,30,36,.04);
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161B; --panel: #1C1F26; --panel-2: #23262F; --ink: #E9EAED; --ink-soft: #A9ADB6;
+    --ink-faint: #767B85; --line: #2C303A; --line-strong: #383D48; --accent: #7BA0E0; --accent-soft: #22293A;
+    --done: #5FC08D; --done-bg: #172A21; --partial: #E0B458; --partial-bg: #2E2716; --empty: #8A8F9A;
+    --empty-bg: #24262D; --block: #E0748C; --block-bg: #2E1820;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 18px rgba(0,0,0,.28);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .wrap {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    padding: clamp(20px, 4vw, 56px) clamp(16px, 4vw, 48px) 72px;
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+  .wrap { font-size: 15px; }
+
+  h1, h2, h3 { text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+  h1 { font-size: clamp(26px, 4vw, 38px); font-weight: 680; letter-spacing: -0.025em; }
+  .eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-faint); font-weight: 600; }
+  .lede { color: var(--ink-soft); max-width: 68ch; font-size: 16px; margin-top: 10px; }
+
+  header.masthead { border-bottom: 1px solid var(--line); padding-bottom: 28px; margin-bottom: 34px; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 16px; font-size: 13px; color: var(--ink-faint); font-family: var(--mono); }
+  .meta-row b { color: var(--ink-soft); font-weight: 600; }
+
+  /* pillar summary cards */
+  .pillars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 28px 0 8px; }
+  @media (max-width: 720px) { .pillars { grid-template-columns: 1fr; } }
+  .pcard {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px 20px 18px;
+    box-shadow: var(--shadow); position: relative; overflow: hidden;
+  }
+  .pcard::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--rail, var(--accent)); }
+  .pcard h3 { font-size: 19px; font-weight: 660; display: flex; align-items: baseline; gap: 10px; }
+  .pcard .tag { font-size: 11px; font-family: var(--mono); color: var(--ink-faint); text-transform: uppercase; letter-spacing: .08em; }
+  .pcard .big { font-size: 30px; font-weight: 700; font-family: var(--mono); margin-top: 12px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .pcard .big span { font-size: 15px; color: var(--ink-faint); font-weight: 500; }
+  .pcard p { margin: 8px 0 0; font-size: 13.5px; color: var(--ink-soft); }
+  .bar { height: 6px; border-radius: 4px; background: var(--empty-bg); margin-top: 14px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; border-radius: 4px; background: var(--rail, var(--accent)); }
+
+  /* legend */
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 26px 0 34px; padding: 14px 16px; background: var(--panel-2); border-radius: 10px; font-size: 13px; }
+  .legend b { font-weight: 600; color: var(--ink-soft); margin-right: 4px; }
+
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; padding: 2px 10px; border-radius: 20px; white-space: nowrap; line-height: 1.7; }
+  .pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+  .p-done { color: var(--done); background: var(--done-bg); }
+  .p-part { color: var(--partial); background: var(--partial-bg); }
+  .p-empty { color: var(--empty); background: var(--empty-bg); }
+  .p-block { color: var(--block); background: var(--block-bg); }
+
+  section.block { margin-top: 52px; }
+  .sec-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; border-bottom: 2px solid var(--ink); padding-bottom: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+  .sec-head h2 { font-size: 23px; font-weight: 680; }
+  .sec-head .sub { font-size: 13px; color: var(--ink-faint); font-family: var(--mono); }
+  .sec-note { font-size: 14px; color: var(--ink-soft); margin: 14px 0 20px; max-width: 74ch; }
+
+  .tbl-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); background: var(--panel); }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 560px; }
+  thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-faint); font-weight: 600; padding: 12px 14px; background: var(--panel-2); border-bottom: 1px solid var(--line-strong); white-space: nowrap; }
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody td:first-child { font-weight: 600; color: var(--ink); white-space: nowrap; }
+  td.c { text-align: center; }
+  .muted { color: var(--ink-soft); }
+  .note-cell { font-size: 12.5px; color: var(--ink-soft); }
+  .cnt { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 600; }
+
+  /* phase timeline */
+  .phases { display: grid; gap: 14px; margin-top: 8px; }
+  .phase { display: grid; grid-template-columns: 128px 1fr; gap: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+  @media (max-width: 640px) { .phase { grid-template-columns: 1fr; } }
+  .phase .lbl { background: var(--panel-2); padding: 16px; border-right: 1px solid var(--line); }
+  @media (max-width: 640px) { .phase .lbl { border-right: none; border-bottom: 1px solid var(--line); } }
+  .phase .lbl .ph-id { font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 700; letter-spacing: .05em; }
+  .phase .lbl .ph-nm { font-size: 15px; font-weight: 650; margin-top: 3px; }
+  .phase .lbl .ph-when { font-size: 11.5px; color: var(--ink-faint); margin-top: 6px; font-family: var(--mono); }
+  .phase .body { padding: 15px 18px; }
+  .phase .body ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; }
+  .phase .body li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; font-size: 13.5px; }
+  .phase .body li .k { font-size: 11px; font-family: var(--mono); font-weight: 700; padding: 1px 7px; border-radius: 5px; background: var(--accent-soft); color: var(--accent); white-space: nowrap; margin-top: 1px; height: fit-content; }
+  .phase .body li .k.blk { background: var(--block-bg); color: var(--block); }
+  .phase .body li .k.pio { background: var(--partial-bg); color: var(--partial); }
+  .phase .body li .t { color: var(--ink-soft); }
+  .phase .body li .t b { color: var(--ink); font-weight: 600; }
+
+  .callout { margin-top: 20px; background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); border-radius: 12px; padding: 16px 18px; font-size: 13.5px; color: var(--ink-soft); }
+  .callout b { color: var(--ink); }
+  .callout .h { font-weight: 700; color: var(--accent); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; display: block; margin-bottom: 6px; }
+
+  .foot { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--ink-faint); font-family: var(--mono); }
+  .foot b { color: var(--ink-soft); font-weight: 600; }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">Consultify · przegląd wykonawczy</div>
+    <h1>Status trzech filarów — Harvard · Vegas · Oxford</h1>
+    <p class="lede">Gdzie realnie jesteśmy w każdym nurcie, co domyka Harvard do 100%, oraz twarde tabele statusu Vegas (tabele · artefakty · narzędzia) i Oxford. Stany czytane z inwentarzy i kodu na <b>origin/demo</b> / <b>origin/Londyn</b>, nie z deklaracji.</p>
+    <div class="meta-row">
+      <span><b>Stan na:</b> 2026-07-08</span>
+      <span><b>Demo HEAD:</b> cf52b0057f</span>
+      <span><b>Zasada:</b> demo = święte · odbiór wzrokiem</span>
+    </div>
+  </header>
+
+  <div class="pillars">
+    <div class="pcard" style="--rail: var(--done)">
+      <h3>Harvard <span class="tag">niezawodni</span></h3>
+      <div class="big">~90%<span> silnika</span></div>
+      <div class="bar"><i style="width:90%"></i></div>
+      <p>Silniki 8 narzędzi na demo (twórcze PRO ≥90). Zostaje: storage R2, Teresa-Sheet realny .xlsx, live-odbiór, port demo→Londyn. Powłoka SPEC-A świadomie na falę 2.</p>
+    </div>
+    <div class="pcard" style="--rail: var(--partial)">
+      <h3>Vegas <span class="tag">ładni</span></h3>
+      <div class="big">1 z 3<span> warstw</span></div>
+      <div class="bar"><i style="width:38%"></i></div>
+      <p>Tabele (TRIADA) = komplet na demo. Artefakty (SPEC-A) = fundament, 0/8 przez pełny odbiór. Powłoki narzędzi = częściowo. Kolorystyka celowo odłożona na koniec.</p>
+    </div>
+    <div class="pcard" style="--rail: var(--empty)">
+      <h3>Oxford <span class="tag">kompetentni</span></h3>
+      <div class="big">~10%<span> · 7/70</span></div>
+      <div class="bar"><i style="width:10%"></i></div>
+      <p>Najmłodszy, największa dźwignia. Sporo ZBUDOWANE (DRD, 6 q-banków, standard wniosków) ale czeka Twój podpis odbiorowy — dopiero on daje ✅.</p>
+    </div>
+  </div>
+
+  <div class="legend">
+    <b>Legenda:</b>
+    <span class="pill p-done">Gotowe / na demo</span>
+    <span class="pill p-part">Zbudowane — czeka odbiór/luka</span>
+    <span class="pill p-empty">Nietknięte</span>
+    <span class="pill p-block">Bloker (czeka na Ciebie)</span>
+  </div>
+
+  <!-- ============ HARVARD ============ -->
+  <section class="block">
+    <div class="sec-head">
+      <h2>1 · Harvard — plan dokończenia</h2>
+      <span class="sub">8 narzędzi × 4 osie (Silnik · Teresa · Kolaboracja · Odbiór)</span>
+    </div>
+    <p class="sec-note">Silniki są w większości domknięte (skok 07-08: canvas 21→93,8, persystencja server-side na demo). To co zostało to nie kod silnika, lecz <b>3 decyzje/sekrety od Ciebie</b>, jeden realny bloker infrastrukturalny (storage) i <b>jeden przelot live-odbioru</b>. Definicja „100% v1" = Silnik + Teresa + Kolaboracja + Twój odbiór; powłoka SPEC-A jest osobnym programem (Vegas, fala 2).</p>
+
+    <div class="phases">
+      <div class="phase">
+        <div class="lbl"><div class="ph-id">FAZA 0</div><div class="ph-nm">Odblokowanie</div><div class="ph-when">~2-3 dni · równolegle</div></div>
+        <div class="body"><ul>
+          <li><span class="k blk">P-4</span><span class="t"><b>Storage trwały (R2)</b> — obrazy Whiteboard i załączniki Tabeli znikają przy każdym redeployu Railway. Fix infra zamyka oba naraz. Czeka sekret R2 od Ciebie.</span></li>
+          <li><span class="k">port</span><span class="t"><b>Forward-port demo→Londyn</b> — ~98 commitów mechaniki żyje TYLKO na demo, Londyn w tyle. Port per-SHA (nie merge linii), żeby nie powtórzyć skażonego korzenia.</span></li>
+          <li><span class="k">git</span><span class="t"><b>Gałęzie-sieroty</b> — w większości rozwiązane na demo (canvas materialize, security, Excel inną drogą). Porzucić redundantny held Excel.</span></li>
+        </ul></div>
+      </div>
+
+      <div class="phase">
+        <div class="lbl"><div class="ph-id">FAZA 1</div><div class="ph-nm">Residua silnika</div><div class="ph-when">~1 tydz.</div></div>
+        <div class="body"><ul>
+          <li><span class="k">P0</span><span class="t"><b>Teresa-Sheet</b> — nadal zwraca markdown, NIE .xlsx. Silnik .xlsx (workbookArtifactService) istnieje osobno na demo — podłączyć ścieżkę Teresy do niego.</span></li>
+          <li><span class="k">P0</span><span class="t"><b>Word — siatka E2E</b> — 100-endpointowy moduł bez testów E2E; musi poprzedzać jakąkolwiek przebudowę powłoki (ryzyko cichej regresji).</span></li>
+          <li><span class="k pio">decyzja</span><span class="t"><b>Tabela — tablePlatform</b> (Airtable-parity 35-40%) twardo OFF. Świadoma decyzja (zostajemy na graph-torze) czy zapomniany przełącznik?</span></li>
+        </ul></div>
+      </div>
+
+      <div class="phase">
+        <div class="lbl"><div class="ph-id">FAZA 2</div><div class="ph-nm">Teresa tworzy 12/12</div><div class="ph-when">~2-4 dni</div></div>
+        <div class="body"><ul>
+          <li><span class="k">verify</span><span class="t"><b>Notatnik-create</b> — flaga była fantomem (0 kodu); zweryfikować grepem realnego callera czy została podłączona, jeśli nie — dobudować wzorem canvas.</span></li>
+          <li><span class="k">verify</span><span class="t"><b>Sheet</b> — po naprawie z Fazy 1, potwierdzić że „stwórz arkusz" daje jeden artefakt .xlsx.</span></li>
+          <li><span class="k">S</span><span class="t"><b>Prompt-book</b> — 8 zdań PL do odbioru (jedno na typ).</span></li>
+        </ul></div>
+      </div>
+
+      <div class="phase">
+        <div class="lbl"><div class="ph-id">FAZA 3</div><div class="ph-nm">Kolaboracja</div><div class="ph-when">~2-4 dni</div></div>
+        <div class="body"><ul>
+          <li><span class="k">verify</span><span class="t">Kod realtime/komentarze/presence jest <b>ON na demo</b> — zostaje tylko smoke-test 2 przeglądarki (węzeł u A → widoczny u B ≤2s).</span></li>
+          <li><span class="k">verify</span><span class="t"><b>Non-owner read</b> (Whiteboard/Tabela) — user B widzi mapę/metryki/eksport A. Potwierdzić na żywej bazie.</span></li>
+          <li><span class="k pio">P-1</span><span class="t">Realtime współedycji Notatnik/Word/Sheet w v1 — rekomendacja <b>NIE</b> (sharing+komentarze wystarczą; ścina ~5-8 dni).</span></li>
+        </ul></div>
+      </div>
+
+      <div class="phase">
+        <div class="lbl"><div class="ph-id">FAZA 4</div><div class="ph-nm">Live-odbiór</div><div class="ph-when">~1-2h · Ty</div></div>
+        <div class="body"><ul>
+          <li><span class="k blk">P-8</span><span class="t"><b>Uniwersalna bramka</b> — jeden przelot, 2 przeglądarki, ta sama org. Blok #1 dla ~6/8 narzędzi = „nigdy nieklikane na żywo we dwoje". Runbook gotowy. To Twój ruch, nie agenta.</span></li>
+        </ul></div>
+      </div>
+
+      <div class="phase">
+        <div class="lbl"><div class="ph-id">FAZA 5</div><div class="ph-nm">Powłoka SPEC-A</div><div class="ph-when">+2-3 tyg · fala 2</div></div>
+        <div class="body"><ul>
+          <li><span class="k">Vegas</span><span class="t">Kokpit artefaktów = <b>0/8 zrobione</b>, wysokie ryzyko, świadomie POZA krytyczną ścieżką „działa". Wzorzec #1 = Mind Map (konsolidacja 3 paneli) za bramką zrzutów. Szczegóły w filarze Vegas niżej.</span></li>
+        </ul></div>
+      </div>
+    </div>
+
+    <h3 style="margin:34px 0 6px; font-size:16px;">Macierz 8 narzędzi — stan osi (07-08)</h3>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>Narzędzie</th><th class="c">Silnik</th><th class="c">Teresa</th><th class="c">Kolab.</th><th class="c">Powłoka</th><th>Główny blok do 100%</th></tr></thead>
+        <tbody>
+          <tr><td>Mind Map</td><td class="c"><span class="pill p-done">94</span></td><td class="c"><span class="pill p-done">✓</span></td><td class="c"><span class="pill p-part">ON</span></td><td class="c"><span class="pill p-empty">—</span></td><td class="note-cell">Live-odbiór + konsolidacja 3 paneli (fala 2)</td></tr>
+          <tr><td>Process Flow</td><td class="c"><span class="pill p-done">95</span></td><td class="c"><span class="pill p-done">✓</span></td><td class="c"><span class="pill p-part">ON</span></td><td class="c"><span class="pill p-empty">—</span></td><td class="note-cell">Live-verify persist + edge-UX</td></tr>
+          <tr><td>Whiteboard</td><td class="c"><span class="pill p-done">92</span></td><td class="c"><span class="pill p-done">✓</span></td><td class="c"><span class="pill p-part">ON</span></td><td class="c"><span class="pill p-part">częśc.</span></td><td class="note-cell"><b>Obrazy na storage (P0)</b> + non-owner read</td></tr>
+          <tr><td>Tabela (Ideas)</td><td class="c"><span class="pill p-done">93</span></td><td class="c"><span class="pill p-done">✓</span></td><td class="c"><span class="pill p-done">✓</span></td><td class="c"><span class="pill p-part">~triada</span></td><td class="note-cell"><b>Załączniki storage (P0)</b> + decyzja tablePlatform</td></tr>
+          <tr><td>Notatnik</td><td class="c"><span class="pill p-done">95</span></td><td class="c"><span class="pill p-part">verify</span></td><td class="c"><span class="pill p-empty">v1 —</span></td><td class="c"><span class="pill p-empty">—</span></td><td class="note-cell">Zweryfikować Teresa-create + ukryć org_context</td></tr>
+          <tr><td>Prezentacje (Deck)</td><td class="c"><span class="pill p-done">90</span></td><td class="c"><span class="pill p-done">✓</span></td><td class="c"><span class="pill p-part">presence</span></td><td class="c"><span class="pill p-empty">—</span></td><td class="note-cell">PPTX geometria + świeży dowód vs Gamma</td></tr>
+          <tr><td>Excel / Sheet</td><td class="c"><span class="pill p-part">.xlsx✓</span></td><td class="c"><span class="pill p-block">markdown</span></td><td class="c"><span class="muted">n/d</span></td><td class="c"><span class="pill p-empty">—</span></td><td class="note-cell"><b>Teresa-sheet daje markdown, nie .xlsx</b> — podłączyć silnik</td></tr>
+          <tr><td>Word</td><td class="c"><span class="pill p-done">92</span></td><td class="c"><span class="pill p-done">✓</span></td><td class="c"><span class="pill p-part">komentarze</span></td><td class="c"><span class="pill p-empty">—</span></td><td class="note-cell"><b>Zero E2E</b> + decyzja realtime (P-1) / flaga premium</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <span class="h">Ścieżka krytyczna Harvardu</span>
+      Trzy Twoje ruchy odblokowują całą resztę: <b>P-4 sekret R2</b> (storage) → <b>P-8 live-odbiór</b> (~1-2h, 2 przeglądarki) → decyzja <b>tablePlatform ON/OFF</b>. Reszta to praca agentów wg tego planu. Realny czas do „v1 użyteczne" (silnik + Teresa + odbiór + storage): <b>~2-3 tygodnie</b>, mocno redukowalny decyzjami.
+    </div>
+  </section>
+
+  <!-- ============ VEGAS ============ -->
+  <section class="block">
+    <div class="sec-head">
+      <h2>2 · Vegas — co już wygląda jak trzeba</h2>
+      <span class="sub">3 warstwy: Tabele (TRIADA) · Artefakty (SPEC-A) · Powłoki narzędzi</span>
+    </div>
+    <p class="sec-note">Vegas ma trzy warstwy o bardzo różnym stopniu gotowości. <b>Tabele-listy są zrobione i żywe na demo</b>. Artefakty i powłoki narzędzi mają gotowy fundament, ale <b>ani jeden nie przeszedł jeszcze pełnego odbioru wzrokiem</b> (DoD §18.1) — a to jedyna miara ✅ w tym filarze. Kolorystyka (crimson-sweep) świadomie odłożona na sam koniec.</p>
+
+    <h3 style="margin:24px 0 10px; font-size:16px;">2a · Tabele-listy (TRIADA / SPEC-L) — <span class="pill p-done">komplet na demo</span></h3>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>Moduł</th><th class="c">Status</th><th>Uwaga</th></tr></thead>
+        <tbody>
+          <tr><td>My Work</td><td class="c"><span class="pill p-done">wzorzec</span></td><td class="note-cell">Źródło kanonu — z niego czerpiemy</td></tr>
+          <tr><td>Assessment</td><td class="c"><span class="pill p-done">Gotowe</span></td><td class="note-cell">Pstryczek/kebab/preview/bulk kanoniczne</td></tr>
+          <tr><td>Interview</td><td class="c"><span class="pill p-done">6/6 tabel</span></td><td class="note-cell">Preview nadal bespoke (dług nie-tabelowy)</td></tr>
+          <tr><td>Initiatives</td><td class="c"><span class="pill p-done">Gotowe</span></td><td class="note-cell">+ StandardKanban</td></tr>
+          <tr><td>Execution</td><td class="c"><span class="pill p-done">Gotowe</span></td><td class="note-cell">List + Reports</td></tr>
+          <tr><td>Results / KPI</td><td class="c"><span class="pill p-done">Gotowe</span></td><td class="note-cell">2 zakładki scalone renderKpiStandardTable</td></tr>
+          <tr><td>Finance</td><td class="c"><span class="pill p-done">6 zakładek</span></td><td class="note-cell">Wspólny blok Preview (DCF/sensitivity)</td></tr>
+          <tr><td>Materiały</td><td class="c"><span class="pill p-done">4 komp.</span></td><td class="note-cell">Presentations brak checkboxa; bulk-bar architektura Hub</td></tr>
+          <tr><td>Audit</td><td class="c"><span class="pill p-done">Gotowe</span></td><td class="note-cell">Test AuditsHub do naprawy (osobno)</td></tr>
+          <tr><td>Meeting</td><td class="c"><span class="pill p-done">Gotowe</span></td><td class="note-cell">—</td></tr>
+          <tr><td>Admin / Superadmin</td><td class="c"><span class="pill p-empty">Fala 3</span></td><td class="note-cell">~85 plików surowego &lt;table&gt;; najniższy priorytet, reachability-driven</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="sec-note" style="margin-top:12px">Werdykt: <b>standard tabel wdrożony w 100% na golden path + Fala 2</b> (demo a1685bb798). Zostają tylko długi nie-tabelowe: preview bespoke (Interview), bulk-bar (Materiały), token dark-mode danger, test Audit.</p>
+
+    <h3 style="margin:30px 0 10px; font-size:16px;">2b · Artefakty (SPEC-A) — <span class="pill p-part">fundament · 0/8 przez odbiór</span></h3>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>Element / artefakt</th><th class="c">Status</th><th>Uwaga</th></tr></thead>
+        <tbody>
+          <tr><td>ArtifactRightPanel (accordion)</td><td class="c"><span class="pill p-empty">do zbud.</span></td><td class="note-cell">#1 wspólny budulec — żadna z 3 powłok go nie ma. Największa spójność za najmniej ryzyka</td></tr>
+          <tr><td>Powłoka Canvas (IdeaMapWorkspace)</td><td class="c"><span class="pill p-done">~100%</span></td><td class="note-cell">Wzorzec, 0% dup — tylko swap panelu + audyt DoD</td></tr>
+          <tr><td>Powłoka Rekord (NModeShell)</td><td class="c"><span class="pill p-part">~70%</span></td><td class="note-cell">Brak accordion; Task/Decision/Notification na niej</td></tr>
+          <tr><td>Powłoka Dokument (ExecutiveModuleShell)</td><td class="c"><span class="pill p-part">~80%</span></td><td class="note-cell">DocumentStudio / Tabele / Deck-MELS (za flagą)</td></tr>
+          <tr><td>N-karty: Insight · Initiative · Task · Decision</td><td class="c"><span class="pill p-part">gałąź</span></td><td class="note-cell">artefakty-n-integ, NIE na demo; czeka <b>bramka promptów</b> (Twoja zgoda na doktrynę BCG)</td></tr>
+          <tr><td>Initiative → NModeShell</td><td class="c"><span class="pill p-block">ryzyko</span></td><td class="note-cell">9500 linii, 20 ekranów — największy dług; osobny głęboki zwiad przed migracją</td></tr>
+          <tr><td>Report / Notatka / Assessment (własny chrome)</td><td class="c"><span class="pill p-empty">migracja</span></td><td class="note-cell">Report ~80% dług, Notatka ~30%, Assessment ~15%</td></tr>
+          <tr><td>Odbiór wzrokiem (DoD §18.1)</td><td class="c"><span class="pill p-empty">0 / 8</span></td><td class="note-cell">Nic nie przeszło Twojej bramki zrzutów — jedyna miara ✅</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout" style="--accent: var(--partial); background: var(--partial-bg); border-color: color-mix(in srgb, var(--partial) 35%, transparent)">
+      <span class="h" style="color: var(--partial)">Prawda o Vegas artefaktach</span>
+      Rollout-plan mawiał „80-100%" — ale mierzył <b>brak duplikacji kodu, nie zgodność ze standardem</b>. Realnie SPEC-A nie jest w pełni zrobiona <b>nigdzie</b>. Decyzja architektoniczna już zapadła (WYRÓWNAĆ 3 powłoki do jednego kontraktu, nie scalać). To jest zgodne z Twoim „kolorystyką się nie przejmujmy teraz" — cały ten blok to fala 2.
+    </div>
+  </section>
+
+  <!-- ============ OXFORD ============ -->
+  <section class="block">
+    <div class="sec-head">
+      <h2>3 · Oxford — mózg konsultingowy</h2>
+      <span class="sub">7 / 70 ✅ (~10%) · najmłodszy, największa dźwignia wartości</span>
+    </div>
+    <p class="sec-note">Oxford to wiedza konsultingowa („Harvey wygrał znajomością prawa, nie interfejsem"). Kluczowa subtelność: <b>dużo jest ZBUDOWANE, ale mało ✅</b> — bo jedyna miara to Twój podpis odbiorowy („czy podpisałbyś to własnym nazwiskiem przed klientem?"). Poniżej licznik per strumień: ile pozycji zaliczonych vs. ile pozycji w strumieniu.</p>
+
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>Strumień</th><th class="c">✅</th><th class="c">Zbud., czeka odbiór</th><th>Co jest / czego nie ma</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>O1 · Kanony metodyczne</td>
+            <td class="c cnt">7/24</td>
+            <td class="c"><span class="pill p-part">DRD</span></td>
+            <td class="note-cell">SIRI + ADMA ✅ gotowe. DRD 🟡 zbudowany komplet (kanon 7 osi + q-bank 699 pytań + generator raportu, 17/17 testów) — czeka odbiór + 5 decyzji. Brak: ścieżki N→N+1, benchmark DRD.</td>
+          </tr>
+          <tr>
+            <td>O2 · Standard wniosków</td>
+            <td class="c cnt">0/5</td>
+            <td class="c"><span class="pill p-part">SSOT + 2</span></td>
+            <td class="note-cell">SSOT standardu 🟡 gotowy (formuła K1-K4, 12 walidatorów). Wdrożenia SIRI/ADMA 🟡 zbudowane (19/19). Brak: outputy tooli, finanse, generatory doc/deck.</td>
+          </tr>
+          <tr>
+            <td>O3 · Q-banki głębokie (19 tooli)</td>
+            <td class="c cnt">0/19</td>
+            <td class="c"><span class="pill p-part">6 zbud.</span></td>
+            <td class="note-cell">Zbudowane 🟡 (czekają odbiór): SWOT (wzorzec), Porter, Value Chain, Ansoff, Portfolio Priority + Market Forces. <b>13 nietkniętych</b>: SOP, A3, SMED, DMS, Inventory, AI Discovery, Pain Explorer, RPA, Risk i in.</td>
+          </tr>
+          <tr>
+            <td>O4 · Finanse jako doradztwo</td>
+            <td class="c cnt">0/7</td>
+            <td class="c"><span class="pill p-empty">—</span></td>
+            <td class="note-cell"><b>Nietknięte.</b> Business case (assumptions→model→scenariusze→rekomendacja), value tree, guidance WACC/branża, post-mortem realized-vs-projected.</td>
+          </tr>
+          <tr>
+            <td>O5 · Biblioteka promptów AI</td>
+            <td class="c cnt">0/6</td>
+            <td class="c"><span class="pill p-part">2 częśc.</span></td>
+            <td class="note-cell">25 sekcji inicjatyw 🟡 (12 przepisanych — zakaz zmyślania kwot). Briefy generatorów 🟡. Brak: guidance frameworków, przegląd persony Teresy, rejestr promptów.</td>
+          </tr>
+          <tr>
+            <td>O6 · Benchmarki i profile branż</td>
+            <td class="c cnt">0/3</td>
+            <td class="c"><span class="pill p-part">profile</span></td>
+            <td class="note-cell">Profile referencyjne 3 branż DRD 🟡 zbudowane (7/7) ale niewpięte w raport. Brak: benchmark finansowy per branża, źródła/aktualizacja.</td>
+          </tr>
+          <tr>
+            <td>O7 · Standardy treści</td>
+            <td class="c cnt">0/3</td>
+            <td class="c"><span class="pill p-part">2 częśc.</span></td>
+            <td class="note-cell">CARD_CONTENT_FORMULA + INITIATIVE_FORMULA 🟡 (walidatory). Brak: jakość języka PL/EN (ton konsultanta).</td>
+          </tr>
+          <tr>
+            <td>O8 · Pomoc i edukacja</td>
+            <td class="c cnt">0/3</td>
+            <td class="c"><span class="pill p-part">help</span></td>
+            <td class="note-cell">productHelpDigest 🟡. Brak: hinty „dlaczego to pytanie", słownik pojęć dla nie-konsultanta.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <span class="h">Powiązanie z dzisiejszą pracą</span>
+      Osobny tor <b>Panelu 11 narzędzi operacyjnych</b> (legacy-analyzer, vsm-builder, robotics-feasibility, decision-engine…) domknięty dziś do DONE (≥5,5/6, harness 12/12) w worktree <b>tools-assessment-dbr77</b> — to mechanika tych narzędzi. Same <b>doktryny</b> (wzory/progi w warstwie algorytmicznej) wciąż wymagają uzupełnień — to zazębia się z O3/O5 Oxfordu i jest nietkniętym wątkiem (audyt: <b>_AUDYT_DOKTRYN_11_NARZEDZI</b>).
+    </div>
+  </section>
+
+  <!-- ============ PLAN WYKONANIA ============ -->
+  <section class="block">
+    <div class="sec-head">
+      <h2>4 · Plan wykonania — pętla we fragmentach</h2>
+      <span class="sub">jeden narzędzie = jedna pętla · nie cały projekt naraz</span>
+    </div>
+    <p class="sec-note">Zamiast jednego wielkiego przebiegu (spala tokeny), każdy fragment to <b>zamknięta pętla test → wnioski → naprawa</b> na jednym narzędziu/temacie: świeża gałąź z origin/Londyn, własny worktree, deploy na demo, a na końcu mały wycinek Twojego odbioru na żywo. Fragmenty są niezależne — robimy tyle, na ile jest budżet, i wracamy.</p>
+
+    <div class="phase" style="margin-top:6px">
+      <div class="lbl"><div class="ph-id">PĘTLA</div><div class="ph-nm">6 kroków</div><div class="ph-when">na 1 fragment</div></div>
+      <div class="body"><ul>
+        <li><span class="k">1 · Sonnet</span><span class="t"><b>Zmierz</b> — harness niezawodności + panel treści na żywym demo (bundle z API). Trudny obiektyw finansowy → Opus.</span></li>
+        <li><span class="k">2 · Sonnet</span><span class="t"><b>Przyczyna</b> — live-debug (log realnego wyniku na demo, nie mock). Utyka → eskalacja Opus.</span></li>
+        <li><span class="k">3 · Sonnet/Opus</span><span class="t"><b>Napraw</b> — robotnik: Sonnet mechanika, Opus tylko trudny kod. Commit-per-krok, NIE push.</span></li>
+        <li><span class="k">4 · nadzorca</span><span class="t"><b>Deploy</b> — merge na demo (skill promocja, nigdy force). Ja: audyt oczami przed.</span></li>
+        <li><span class="k">5 · Sonnet</span><span class="t"><b>Re-test</b> — re-capture z żywej Teresy → PRZED/PO. Iteruj do progu.</span></li>
+        <li><span class="k pio">6 · Ty</span><span class="t"><b>Bramka</b> — mały wycinek live-odbioru (ten jeden ekran), nie cały przelot.</span></li>
+      </ul></div>
+    </div>
+
+    <h3 style="margin:28px 0 10px; font-size:16px;">Fragmenty — kolejność wg odblokowania</h3>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>#</th><th>Fragment</th><th>Model(e)</th><th class="c">Rozmiar</th><th>Zależność / bramka</th></tr></thead>
+        <tbody>
+          <tr><td class="cnt">F1</td><td>Storage R2 (Whiteboard obrazy + Tabela załączniki)</td><td class="note-cell">Sonnet · nadzorca deploy</td><td class="c"><span class="pill p-done">S</span></td><td class="note-cell"><span class="pill p-block">czeka sekret R2</span> → wgraj→redeploy→jest</td></tr>
+          <tr><td class="cnt">F2</td><td>Excel/Sheet — Teresa-sheet → realny .xlsx</td><td class="note-cell"><b>Opus</b> (hot-path) · Sonnet test</td><td class="c"><span class="pill p-part">M</span></td><td class="note-cell">niezależny → „generuj"=1 artefakt .xlsx z formułami</td></tr>
+          <tr><td class="cnt">F3</td><td>Notatnik — weryfikacja/budowa Teresa-create</td><td class="note-cell">Sonnet verify → Opus jeśli fantom</td><td class="c"><span class="pill p-done">S</span></td><td class="note-cell">niezależny → „zapisz jako notatkę"→otwiera notatkę</td></tr>
+          <tr><td class="cnt">F4</td><td>Word — siatka E2E (przed powłoką!)</td><td class="note-cell">Sonnet</td><td class="c"><span class="pill p-part">M</span></td><td class="note-cell">niezależny → ręczny tekst przeżywa reload</td></tr>
+          <tr><td class="cnt">F5</td><td>Whiteboard + Tabela — storage + non-owner read</td><td class="note-cell">Sonnet</td><td class="c"><span class="pill p-done">S</span></td><td class="note-cell">po F1 → user B widzi mapę/eksport A</td></tr>
+          <tr><td class="cnt">F6</td><td>Mind Map + Process Flow — live-verify persist/collab</td><td class="note-cell">Haiku/Sonnet</td><td class="c"><span class="pill p-done">S</span></td><td class="note-cell">niezależny → 2 przeglądarki: węzeł A→B ≤2s</td></tr>
+          <tr><td class="cnt">F7</td><td>Deck — PPTX geometria + świeży dowód vs Gamma</td><td class="note-cell"><b>Opus</b> (geometria) · Sonnet dowód</td><td class="c"><span class="pill p-part">M</span></td><td class="note-cell">niezależny → pobrany PPTX = ekran</td></tr>
+          <tr><td class="cnt">F8</td><td>Forward-port mechaniki demo→Londyn (per-SHA)</td><td class="note-cell">Sonnet</td><td class="c"><span class="pill p-part">M</span></td><td class="note-cell">po ustabilizowaniu demo → higiena, bez bramki UX</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <span class="h">Reguły ekonomii tokenów</span>
+      Domyślny robotnik = <b>Sonnet</b>; <b>Haiku</b> do czysto mechanicznych (grep, harness, re-capture); <b>Opus TYLKO</b> tam gdzie trudny kod (F2 wiring, F7 geometria, ewentualna budowa F3). <b>Zero Fable</b> u robotników (resume bije w limit). Panel i weryfikatorzy = Sonnet. Jeden fragment = jeden worktree, świeża gałąź z origin/Londyn, commit-per-krok. Robimy 1-2 fragmenty na okno, nie wszystkie naraz.
+    </div>
+  </section>
+
+  <div class="foot">
+    Źródła: _HANDOFF_MASTER_12_NARZEDZI · _PLAN_DOKONCZENIA_FINAL · _ROLLOUT_TRIADA_INWENTARZ · _ROLLOUT_ARTEFAKTY_PLAN + _N_INWENTARZ · _PROJEKT_C_OXFORD · _HANDOFF_RESKIN_CRIMSON. &nbsp;·&nbsp; Reguła: audyty starzeją się w ~3 dni — stany zweryfikowane w kodzie na origin/demo, nie w deklaracjach.
+  </div>
+</div>
