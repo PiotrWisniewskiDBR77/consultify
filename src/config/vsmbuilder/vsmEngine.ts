@@ -125,6 +125,17 @@ export interface VsmSession {
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const round1 = (value: number) => Math.round(value * 10) / 10;
 const round2 = (value: number) => Math.round(value * 100) / 100;
+/** 4-dp fraction — keeps sub-percent PCE precision (1.6% must not collapse to 2%). */
+const round4 = (value: number) => Math.round(value * 10000) / 10000;
+
+/**
+ * Render a 0..1 fraction as a percent string with up to one decimal, so a PCE
+ * of 0.0159 reads "1.6" (the doctrine's flagship number) rather than "2".
+ */
+export const formatPcePercent = (fraction: number): string => {
+  const value = Math.round(fraction * 1000) / 10;
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+};
 const asLevel = (value: unknown, fallback: Level = 'medium'): Level =>
   value === 'high' || value === 'medium' || value === 'low' ? value : fallback;
 const localize = (text: Bilingual, isPolish: boolean) => (isPolish ? text.pl : text.en);
@@ -306,7 +317,7 @@ export function computeBaseline(session: VsmSession): VsmBaseline {
   const valueAdd = steps.reduce((acc, s) => acc + valueAddTime(s), 0);
   const totalLeadTime = steps.reduce((acc, s) => acc + stepLeadTime(s), 0);
   const hasTiming = totalLeadTime > 0;
-  const pce = hasTiming ? round2(valueAdd / totalLeadTime) : 0;
+  const pce = hasTiming ? round4(valueAdd / totalLeadTime) : 0;
 
   const pureWasteSteps = steps.filter((s) => s.valueType === 'pure-waste');
   const pureWasteLeadTime = pureWasteSteps.reduce((acc, s) => acc + stepLeadTime(s), 0);
@@ -661,12 +672,12 @@ export function buildW2MoveSequence(session: VsmSession): SequencedMove[] {
     rationale:
       baseline.pureWasteCount > 0
         ? {
-            pl: `${baseline.pureWasteCount} z ${baseline.stepCount} kroków (${pct(baseline.pureWasteShare)}%) to czyste NVA trzymające ${baseline.pureWasteLeadTime} lead time${baseline.dominantMuda ? `, głównie ${mudaLabel(baseline.dominantMuda).pl}` : ''} — eliminacja podnosi PCE (dziś ${pct(baseline.pce)}%) bez inwestycji kapitałowej.`,
-            en: `${baseline.pureWasteCount} of ${baseline.stepCount} steps (${pct(baseline.pureWasteShare)}%) are pure NVA holding ${baseline.pureWasteLeadTime} of lead time${baseline.dominantMuda ? `, mostly ${mudaLabel(baseline.dominantMuda).en}` : ''} — eliminating them raises PCE (today ${pct(baseline.pce)}%) with no capital spend.`,
+            pl: `${baseline.pureWasteCount} z ${baseline.stepCount} kroków (${pct(baseline.pureWasteShare)}%) to czyste NVA trzymające ${baseline.pureWasteLeadTime} lead time${baseline.dominantMuda ? `, głównie ${mudaLabel(baseline.dominantMuda).pl}` : ''} — eliminacja podnosi PCE (dziś ${formatPcePercent(baseline.pce)}%) bez inwestycji kapitałowej.`,
+            en: `${baseline.pureWasteCount} of ${baseline.stepCount} steps (${pct(baseline.pureWasteShare)}%) are pure NVA holding ${baseline.pureWasteLeadTime} of lead time${baseline.dominantMuda ? `, mostly ${mudaLabel(baseline.dominantMuda).en}` : ''} — eliminating them raises PCE (today ${formatPcePercent(baseline.pce)}%) with no capital spend.`,
           }
         : {
-            pl: `Sklasyfikuj czas per krok na wartość dodaną / konieczne NVA / czyste muda — dopiero ta lista (przy PCE ${pct(baseline.pce)}%) mówi, które kroki wolno wyciąć bez ryzyka.`,
-            en: `Classify time per step into value-add / necessary NVA / pure muda — only that list (at PCE ${pct(baseline.pce)}%) tells you which steps may be cut without risk.`,
+            pl: `Sklasyfikuj czas per krok na wartość dodaną / konieczne NVA / czyste muda — dopiero ta lista (przy PCE ${formatPcePercent(baseline.pce)}%) mówi, które kroki wolno wyciąć bez ryzyka.`,
+            en: `Classify time per step into value-add / necessary NVA / pure muda — only that list (at PCE ${formatPcePercent(baseline.pce)}%) tells you which steps may be cut without risk.`,
           },
     tradeOff: {
       pl: 'Kosztem uwagi na to, by nie usunąć kontroli koniecznej (regulacja/ryzyko) — część NVA musi zostać, a jej cięcie tworzy przeróbki dalej w strumieniu.',
