@@ -16,15 +16,11 @@
  */
 
 import {
-  buildRoadmap,
-  buildPriorityMatrix,
-  computeBaseline,
-  detectConcentration,
-  detectDeadFields,
+  synthesizeValuePoolPlan,
   type ValuePoolSession,
 } from './valuePoolEngine';
 import { localizeLadder } from './index';
-import { type ValuePoolPhaseId } from './deepeningLadder';
+import { valuePoolPhaseLabel, type ValuePoolPhaseId } from './deepeningLadder';
 
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 const pct = (v: number) => `${Math.round(v * 100)}%`;
@@ -40,26 +36,34 @@ export function buildValuePoolConclusionPrompt(
   session: ValuePoolSession,
   isPolish: boolean
 ): string | null {
-  const baseline = computeBaseline(session);
-  const matrix = buildPriorityMatrix(session);
-  const concentration = detectConcentration(session);
-  const deadFields = detectDeadFields(session);
-  const roadmap = buildRoadmap(session);
+  // One-shot deterministic synthesis (baseline + matrix + concentration + dead
+  // fields + phase scores + W2 roadmap) — single source so the prompt can never
+  // drift from what the engine actually computed.
+  const { baseline, matrix, concentration, deadFields, phases, roadmap } =
+    synthesizeValuePoolPlan(session);
 
   if (baseline.pools.every((p) => p.valueAtStake === 0) && matrix.scored.length === 0) {
     return null;
   }
 
   const baselineLine = isPolish
-    ? `Baza puli: top-down value-at-stake ${baseline.topDownTotal} łącznie; bottom-up (suma use-case'ów) ${baseline.bottomUpTotal}; rozbieżność bottom-up/top-down = ${baseline.divergenceRatio} (${pct(baseline.divergenceRatio)}); koncentracja top-2 funkcji = ${pct(baseline.top2Concentration)}; funkcji istotnych: ${baseline.materialFunctionCount}; zmierzone ${pct(baseline.measuredRatio)} funkcji.`
-    : `Pool baseline: top-down value-at-stake ${baseline.topDownTotal} total; bottom-up (sum of use-cases) ${baseline.bottomUpTotal}; divergence bottom-up/top-down = ${baseline.divergenceRatio} (${pct(baseline.divergenceRatio)}); top-2 function concentration = ${pct(baseline.top2Concentration)}; material functions: ${baseline.materialFunctionCount}; ${pct(baseline.measuredRatio)} of functions measured.`;
+    ? `Baza puli: top-down value-at-stake ${baseline.topDownTotal} łącznie (pułap teoretyczny); realistycznie przechwycone (× capture rate) ${baseline.capturedTotal}; bottom-up (suma use-case'ów) ${baseline.bottomUpTotal}; rozbieżność bottom-up/top-down = ${baseline.divergenceRatio} (${pct(baseline.divergenceRatio)}); koncentracja top-2 funkcji = ${pct(baseline.top2Concentration)}; funkcji istotnych: ${baseline.materialFunctionCount}; zmierzone ${pct(baseline.measuredRatio)} funkcji.`
+    : `Pool baseline: top-down value-at-stake ${baseline.topDownTotal} total (theoretical ceiling); realistically captured (× capture rate) ${baseline.capturedTotal}; bottom-up (sum of use-cases) ${baseline.bottomUpTotal}; divergence bottom-up/top-down = ${baseline.divergenceRatio} (${pct(baseline.divergenceRatio)}); top-2 function concentration = ${pct(baseline.top2Concentration)}; material functions: ${baseline.materialFunctionCount}; ${pct(baseline.measuredRatio)} of functions measured.`;
 
   const poolLines = baseline.pools
     .filter((p) => p.valueAtStake > 0)
     .map(
       (p) =>
-        `- ${p.name} [${p.side}]: value-at-stake ${p.valueAtStake} (${pct(p.share)} of pool), base ${p.base} × benchmark ${pct(p.benchmarkShare)}, bottom-up ${p.bottomUp}, ${p.useCaseCount} use-case(s)`
+        `- ${p.name} [${p.side}]: value-at-stake ${p.valueAtStake} (${pct(p.share)} of pool), captured ~${p.valueCaptured} @ ${pct(p.captureRate)} capture, base ${p.base} × benchmark ${pct(p.benchmarkShare)}, bottom-up ${p.bottomUp}, ${p.useCaseCount} use-case(s)`
     )
+    .join('\n');
+
+  const phaseLines = phases
+    .filter((ph) => ph.useCaseCount > 0)
+    .map((ph) => {
+      const label = valuePoolPhaseLabel(ph.phase);
+      return `- ${isPolish ? label.pl : label.en}: ${ph.useCaseCount} use-case(s), mean score ${ph.meanScore}/9`;
+    })
     .join('\n');
 
   const matrixLines = matrix.scored
@@ -122,6 +126,7 @@ export function buildValuePoolConclusionPrompt(
         'Trzymaj porządek: dekompozycja → skwantyfikuj (top-down + bottom-up) → priorytetyzuj (impact × feasibility) → sekwencjonuj (quick win → fundament → duże obstawienie → no-go).',
         'Feasibility techniczna wysoka NIE promuje use-case\'u sama — jeśli feasibility SKALOWANIA jest zablokowana (dane/właściciel/mandat/metryka adopcyjna), nazwij go „pilotem bez skali" i zbuduj fundament, nie skaluj.',
         'Liczby (value-at-stake, %, koncentracja, rozbieżność) wyłącznie z bazy powyżej — nie licz i nie zmyślaj.',
+        'Nie myl pułapu teoretycznego (value-at-stake) z wartością realnie przechwyconą (captured @ capture rate) — CFO broni się liczbą przechwyconą, nie sufitem; pula eroduje, jeśli nic nie robisz.',
         'Jawnie nazwij martwe pola (funkcje z pulą, ale bez use-case\'u) i jawnie odrzuć ćwiartkę no-go, żeby nie wracała co kwartał.',
       ]
     : [
@@ -130,6 +135,7 @@ export function buildValuePoolConclusionPrompt(
         'Keep order: decompose → size (top-down + bottom-up) → prioritize (impact × feasibility) → sequence (quick win → foundation → big bet → no-go).',
         'High technical feasibility does NOT promote a use-case by itself — if feasibility to SCALE is blocked (data/owner/mandate/adoption-only metric), name it a "pilot without scale" and build the foundation, do not scale.',
         'Numbers (value-at-stake, %, concentration, divergence) come exclusively from the baseline above — do not compute or invent them.',
+        'Do not confuse the theoretical ceiling (value-at-stake) with realistically captured value (captured @ capture rate) — the CFO defends the captured number, not the ceiling; the pool erodes if you do nothing.',
         'Explicitly name dead fields (functions with a pool but no use-case) and explicitly reject the no-go quadrant so it does not return every quarter.',
       ];
 
@@ -146,6 +152,9 @@ ${concentrationLine}
 
 === PRIORITY MATRIX (impact × feasibility, gate flags) ===
 ${matrixLines || '(no use-cases scored)'}
+
+=== PHASE READINESS (mean scored use-case per analysis phase) ===
+${phaseLines || '(no use-cases attributed to phases)'}
 
 === DEAD FIELDS (pool present, zero use-cases) ===
 ${deadLines}
