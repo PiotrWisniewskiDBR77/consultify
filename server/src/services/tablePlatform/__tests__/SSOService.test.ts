@@ -10,6 +10,14 @@ vi.mock('../../../utils/Logger.js', () => ({
   default: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
+// Identity passthrough — mirrors the dev-mode secretEncryption fallback so
+// existing configureSAML/OIDC assertions (which compare against the raw config)
+// keep passing while getSSOConfig can still return the stored certificate.
+vi.mock('../../../utils/secretEncryption.js', () => ({
+  encryptSecret: (v: string) => v,
+  decryptSecret: (v: string) => v,
+}));
+
 import { type OIDCConfig, type SAMLConfig, type SSOConfigRow, SSOService } from '../SSOService.js';
 
 describe('SSOService', () => {
@@ -176,15 +184,85 @@ describe('SSOService', () => {
   // -----------------------------------------------------------------------
 
   describe('validateSAMLResponse', () => {
-    it('extracts NameID from base64 response', async () => {
-      const samlXml = `<samlp:Response>
+    // SECURITY (BUG 1 — auth bypass): a forged, UNSIGNED SAML response must be
+    // rejected. The old implementation returned valid:true for any base64 XML
+    // containing a <saml:NameID>, letting an attacker log in as anyone.
+    it('rejects a forged/unsigned SAML response (fail-closed, no verifier)', async () => {
+      const forgedXml = `<samlp:Response>
         <saml:Assertion>
           <saml:Subject>
-            <saml:NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">user@example.com</saml:NameID>
+            <saml:NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">attacker@evil.com</saml:NameID>
           </saml:Subject>
         </saml:Assertion>
       </samlp:Response>`;
+      const encoded = Buffer.from(forgedXml).toString('base64');
+
+      const result = await service.validateSAMLResponse('org-1', encoded);
+
+      // Must NOT be trusted — no signature verifier is configured.
+      expect(result.valid).toBe(false);
+      expect(result.email).toBeUndefined();
+      expect(result.nameId).toBeUndefined();
+      expect(result.error).toMatch(/signature verification not configured/i);
+    });
+
+    it('rejects when the configured signature verifier returns false', async () => {
+      const samlXml = `<samlp:Response>
+        <saml:Assertion><saml:Subject>
+          <saml:NameID>user@example.com</saml:NameID>
+        </saml:Subject></saml:Assertion>
+      </samlp:Response>`;
       const encoded = Buffer.from(samlXml).toString('base64');
+
+      // getSSOConfig lookup for the certificate
+      mockQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'sso-1',
+            organization_id: 'org-1',
+            provider: 'saml',
+            enabled: true,
+            config: { entityId: 'e', ssoUrl: 's', certificate: 'CERT' },
+            metadata_url: null,
+            created_at: 'x',
+            updated_at: 'x',
+          },
+        ],
+      });
+      // certificate is encrypted at rest; decryptSecret is mocked to identity below
+
+      service.setSignatureVerifier(() => false);
+
+      const result = await service.validateSAMLResponse('org-1', encoded);
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toMatch(/invalid saml signature/i);
+    });
+
+    it('accepts a response only when the signature verifier confirms it', async () => {
+      const samlXml = `<samlp:Response>
+        <saml:Assertion><saml:Subject>
+          <saml:NameID>user@example.com</saml:NameID>
+        </saml:Subject></saml:Assertion>
+      </samlp:Response>`;
+      const encoded = Buffer.from(samlXml).toString('base64');
+
+      mockQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'sso-1',
+            organization_id: 'org-1',
+            provider: 'saml',
+            enabled: true,
+            config: { entityId: 'e', ssoUrl: 's', certificate: 'CERT' },
+            metadata_url: null,
+            created_at: 'x',
+            updated_at: 'x',
+          },
+        ],
+      });
+
+      service.setSignatureVerifier(() => true);
 
       const result = await service.validateSAMLResponse('org-1', encoded);
 
@@ -193,9 +271,25 @@ describe('SSOService', () => {
       expect(result.email).toBe('user@example.com');
     });
 
-    it('returns invalid for response without NameID', async () => {
+    it('returns invalid for response without NameID (verifier passes but no subject)', async () => {
       const samlXml = '<samlp:Response><saml:Assertion></saml:Assertion></samlp:Response>';
       const encoded = Buffer.from(samlXml).toString('base64');
+
+      mockQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'sso-1',
+            organization_id: 'org-1',
+            provider: 'saml',
+            enabled: true,
+            config: { entityId: 'e', ssoUrl: 's', certificate: 'CERT' },
+            metadata_url: null,
+            created_at: 'x',
+            updated_at: 'x',
+          },
+        ],
+      });
+      service.setSignatureVerifier(() => true);
 
       const result = await service.validateSAMLResponse('org-1', encoded);
 

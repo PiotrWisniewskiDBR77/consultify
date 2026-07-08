@@ -8,6 +8,7 @@ import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import multer from 'multer';
 
 import { featureFlags } from '../config/FeatureFlags.js';
+import { getDatabase } from '../database/Database.js';
 import { type AuthRequest, requireSuperAdmin, verifyToken } from '../middleware/auth.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { automationService } from '../services/tablePlatform/AutomationService.js';
@@ -44,6 +45,7 @@ const {
   requireViewAccess,
   requireGovernedModelAccess,
   requireRoles,
+  requireRole,
   SCHEMA_ROLES,
   DATA_ROLES,
   VIEW_ROLES,
@@ -53,6 +55,39 @@ const {
 
 const router = Router();
 type Request = ExpressRequest<Record<string, string>>;
+
+/**
+ * SECURITY: resolve the caller's effective base role for a table, for
+ * field-read masking on record-list/query routes. These routes intentionally
+ * gate with requireTableAccess (any table member may read), not requireRoles,
+ * so no middleware has resolved req.userRole yet — without this, ViewQueryEngine
+ * and RecordsService's field-permission masking (both already implemented)
+ * silently never fire, and role-restricted columns leak to every reader.
+ * Resolution failure fails OPEN (returns undefined = no masking applied),
+ * matching today's behavior — this only ADDS masking for callers where a role
+ * resolves; it does not change access-denial semantics (requireTableAccess
+ * already gated that).
+ */
+async function resolveUserRoleForTable(
+  tableId: string,
+  userId: string,
+  orgId: string
+): Promise<string | undefined> {
+  try {
+    const db = getDatabase();
+    const r = await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId]);
+    const baseId = (r.rows[0] as { base_id?: string })?.base_id;
+    if (!baseId) return undefined;
+    const { role } = await requireRole(baseId, userId, orgId, ALL_ROLES);
+    return role ?? undefined;
+  } catch (e) {
+    logger.warn('[TablePlatform] resolveUserRoleForTable failed', {
+      tableId,
+      error: (e as Error).message,
+    });
+    return undefined;
+  }
+}
 
 // Cache schema readiness to avoid per-request DB check
 let _schemaReady: boolean | null = null;
@@ -924,6 +959,8 @@ router.get('/tables/:tableId/records', requireTableAccess, async (req: Request, 
     if (!tableId) {
       return res.status(400).json({ error: 'tableId is required' });
     }
+    const authReq = req as AuthRequest;
+    const userRole = await resolveUserRoleForTable(tableId, authReq.userId!, authReq.organizationId!);
 
     if (typeof filterByFormula === 'string' && filterByFormula.trim()) {
       const ViewQueryEngine = (await import('../services/tablePlatform/ViewQueryEngine.js'))
@@ -934,6 +971,7 @@ router.get('/tables/:tableId/records', requireTableAccess, async (req: Request, 
         filterByFormula,
         pageSize: pageSize !== undefined ? parseInt(String(pageSize), 10) : undefined,
         cursor: typeof cursor === 'string' ? cursor : undefined,
+        userRole,
       });
       return res.status(200).json(result);
     }
@@ -942,6 +980,7 @@ router.get('/tables/:tableId/records', requireTableAccess, async (req: Request, 
     if (typeof viewId === 'string') options.viewId = viewId;
     if (pageSize !== undefined) options.pageSize = parseInt(String(pageSize), 10);
     if (typeof cursor === 'string') options.cursor = cursor;
+    options.userRole = userRole;
     if (typeof filters === 'string') {
       try {
         options.filters = JSON.parse(filters);
@@ -1351,6 +1390,12 @@ router.post(
       const { tableId } = req.params;
       const { filters, filterByFormula, sorts, groupBy, fields, pageSize, cursor, search, viewId } =
         req.body ?? {};
+      const authReq = req as AuthRequest;
+      const userRole = await resolveUserRoleForTable(
+        tableId,
+        authReq.userId!,
+        authReq.organizationId!
+      );
       const ViewQueryEngine = (await import('../services/tablePlatform/ViewQueryEngine.js'))
         .default;
       const result = await ViewQueryEngine.executeQuery({
@@ -1364,11 +1409,11 @@ router.post(
         pageSize,
         cursor,
         search,
+        userRole,
       });
       res.json(result);
     } catch (e) {
-      logger.error('[TablePlatform] records/query failed', { error: (e as Error).message });
-      res.status(500).json({ error: 'Query failed', details: (e as Error).message });
+      handleRouteError(e, res, 'records/query');
     }
   }
 );

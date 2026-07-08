@@ -5,6 +5,7 @@
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
+import { ValidationError } from './ErrorHandling.js';
 import { type FormulaAST, parseFormula } from './formulaEngine.js';
 
 // ---------------------------------------------------------------------------
@@ -653,13 +654,19 @@ function astToSql(
     }
 
     case 'function': {
-      // For filter formulas, we don't support function calls in SQL generation.
-      // Return TRUE as a safe fallback.
-      return { sql: 'TRUE', nextIdx: idx };
+      // SECURITY: function calls are not translated to SQL here. A silent
+      // TRUE fallback would make the whole filter a no-op while looking like
+      // it worked — returning every row past a filter the caller believes is
+      // active. Surface a controlled error instead (400 at the route layer).
+      throw new ValidationError(
+        `unsupported function in filterByFormula: ${node.name || '(unknown)'}`
+      );
     }
 
     default:
-      return { sql: 'TRUE', nextIdx: idx };
+      // SECURITY: same fail-closed posture for any other unrecognized AST
+      // node — never silently degrade to an unfiltered TRUE.
+      throw new ValidationError(`unsupported expression in filterByFormula (node: ${node.type})`);
   }
 }
 
@@ -674,11 +681,58 @@ function buildFormulaFilterClause(
     const ast = parseFormula(formula);
     return astToSql(ast, params, startIdx, fieldNameToId, fieldTypes);
   } catch (e) {
+    if (e instanceof ValidationError) throw e;
+    // SECURITY: a genuine parse/syntax error (e.g. an unbalanced paren like
+    // `LOWER({Name}`) must NOT degrade to a no-op TRUE filter — that would
+    // silently return the ENTIRE table, leaking every row past a filter the
+    // caller believes is active. Surface a controlled ValidationError (400)
+    // instead, same posture as the unsupported-function/node branches above.
+    const reason = (e as Error).message;
     logger.warn('[ViewQueryEngine] filterByFormula parse failed', {
       formula,
-      error: (e as Error).message,
+      error: reason,
     });
-    return { sql: 'TRUE', nextIdx: startIdx };
+    throw new ValidationError(`invalid filterByFormula (parse error): ${reason} — formula: ${formula}`);
+  }
+}
+
+/**
+ * Mask fields the given role is not allowed to read.
+ *
+ * SECURITY: this is the MAIN record-read path (list-by-view / query), yet it
+ * historically applied only the row policy (RowPolicyService) — never the
+ * FIELD-read policy — so a role without read permission on a column still
+ * received that column's value. Mirrors RecordsService.listRecords: only mask
+ * when a userRole is present (internal/service callers pass no role and must
+ * see everything) and only when the table actually declares field permissions.
+ */
+async function applyFieldReadMasking(
+  records: unknown[],
+  tableId: string,
+  userRole: string | undefined
+): Promise<void> {
+  if (!userRole || !records.length) return;
+  try {
+    const { fieldPermissionService } = await import('./FieldPermissionService.js');
+    const hasPerms = await fieldPermissionService.tableHasFieldPermissions(tableId);
+    if (!hasPerms) return;
+    for (const record of records as Array<{ data?: Record<string, unknown> }>) {
+      if (record.data) {
+        record.data = await fieldPermissionService.filterRecordFields(
+          record as { data: Record<string, unknown> },
+          tableId,
+          userRole
+        );
+      }
+    }
+  } catch (permErr) {
+    // Fail CLOSED semantics are handled by callers of the individual services;
+    // here we log and leave records unmasked ONLY if the permission subsystem
+    // itself is unavailable — matching RecordsService.listRecords behaviour.
+    logger.warn('[ViewQueryEngine] field permission filtering failed', {
+      tableId,
+      error: (permErr as Error).message,
+    });
   }
 }
 
@@ -997,6 +1051,7 @@ const viewQueryEngine = {
         const records = listResult.rows || [];
         const hasMore = offset + records.length < total;
 
+        await applyFieldReadMasking(records, options.tableId, options.userRole);
         return { records, total, hasMore, page, pageSize };
       }
 
@@ -1058,6 +1113,7 @@ const viewQueryEngine = {
         nextCursor = `${last.created_at}${CURSOR_DELIM}${last.id}`;
       }
 
+      await applyFieldReadMasking(records, options.tableId, options.userRole);
       return { records, total, cursor: nextCursor, hasMore };
     } catch (e) {
       const errMsg = (e as Error).message || '';
