@@ -75,7 +75,19 @@ export function buildLogisticsConclusionPrompt(
 
   const topZone = baseline.topMotionZone;
   const topScore = ranking.scores.find((s) => s.zone === topZone);
-  const payback = topScore ? assessPayback(topScore.candidateTech, null) : null;
+  // Lead-candidate payback, computed from the zone's CAPEX / annual-savings business
+  // case when present (null when the session has not supplied one — we say so rather
+  // than inventing a number).
+  const leadZone = ranking.scores.find((s) => s.zone === ranking.ordered[0]);
+  const leadPay = leadZone ? assessPayback(leadZone.candidateTech, leadZone.paybackMonths) : null;
+  const paybackLine =
+    leadPay && leadPay.paybackMonths != null && leadPay.band
+      ? isPolish
+        ? `Payback wiodącego kandydata (${localize(techName(leadPay.tech).pl, '', true)}): ~${leadPay.paybackMonths} mies. wobec pasma rynkowego ${leadPay.band.minMonths}-${leadPay.band.maxMonths} mies. — werdykt: ${leadPay.verdict === 'in-band' ? 'w paśmie (obronialny)' : leadPay.verdict === 'below-benchmark' ? 'poniżej pasma (wyjątkowo dobry)' : 'powyżej pasma (wymaga uzasadnienia)'}.`
+        : `Lead-candidate payback (${localize('', techName(leadPay.tech).en, false)}): ~${leadPay.paybackMonths} months vs the market band of ${leadPay.band.minMonths}-${leadPay.band.maxMonths} months — verdict: ${leadPay.verdict}.`
+      : isPolish
+        ? 'Payback wiodącego kandydata: niepoliczalny z obecnych danych (brak CAPEX / rocznych oszczędności) — oznacz jako do domknięcia, NIE zgaduj liczby.'
+        : 'Lead-candidate payback: not computable from current data (no CAPEX / annual savings) — flag it as to-be-closed, do NOT invent a number.';
 
   const baselineLine = isPolish
     ? `Baza logistyki: ${baseline.totalNonProductiveCost} rocznego kosztu nieprodukcyjnego ruchu łącznie; najcięższa strefa: ${
@@ -101,8 +113,12 @@ export function buildLogisticsConclusionPrompt(
     .filter((s) => s.moveCount > 0 || s.laborWeight > 0)
     .map((s) => {
       const tech = techName(s.candidateTech);
-      const pay = assessPayback(s.candidateTech, null);
-      const bandTxt = pay.band ? `${pay.band.minMonths}-${pay.band.maxMonths} mo payback band` : 'no benchmark band';
+      const pay = assessPayback(s.candidateTech, s.paybackMonths);
+      const bandTxt = pay.band
+        ? pay.paybackMonths != null
+          ? `payback ${pay.paybackMonths} mo vs ${pay.band.minMonths}-${pay.band.maxMonths} mo band (${pay.verdict})`
+          : `${pay.band.minMonths}-${pay.band.maxMonths} mo payback band (payback not yet computed)`
+        : 'no benchmark band';
       return `- ${localize(s.label.pl, s.label.en, isPolish)}: fit ${s.score}/9 (urgency ${s.attractiveness} × readiness ${s.feasibility}), motion cost ${s.motionCost}, labour weight ${s.laborWeight}, candidate: ${localize(
         tech.pl,
         tech.en,
@@ -154,6 +170,9 @@ export function buildLogisticsConclusionPrompt(
 
 === LOGISTICS BASELINE (facts — the only admissible source of amounts) ===
 ${baselineLine}
+
+=== PAYBACK (the defensible number — insight #8) ===
+${paybackLine}
 
 === SCORED WAREHOUSE ZONES (5-zone flow) ===
 ${scoreLines}
