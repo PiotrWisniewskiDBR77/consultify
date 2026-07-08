@@ -17,6 +17,18 @@ import type {
   ConsultingSummarySnapshot,
 } from '@/config/consultingToolsStandard';
 import { createConsultingMissionContext } from '@/config/consultingToolsStandard';
+// 11 dedykowanych schematów kroków (kontrakt kluczy sekcji = klucze adapterów silników, 07-08)
+import { VSM_STEPS } from '@/config/vsmbuilder/steps';
+import { CONSTRAINT_STEPS } from '@/config/constraintcontrol/steps';
+import { CONTROL_TOWER_STEPS } from '@/config/controltower/steps';
+import { AUTOMATION_PIPELINE_STEPS } from '@/config/automationpipeline/steps';
+import { ROBOTICS_STEPS } from '@/config/roboticsfeasibility/steps';
+import { LOGISTICS_STEPS } from '@/config/logisticsautomation/steps';
+import { INTEGRATION_STEPS } from '@/config/integrationdiagnostic/steps';
+import { DATA_INVENTORY_STEPS } from '@/config/datainventory/steps';
+import { DECISION_STEPS } from '@/config/decisionengine/steps';
+import { VALUE_POOL_STEPS } from '@/config/digitalvaluepool/steps';
+import { LEGACY_STEPS } from '@/config/legacyanalyzer/steps';
 
 // ==================== TYPES ====================
 
@@ -2735,19 +2747,19 @@ const TOOL_STEP_DEFINITIONS: Record<ToolType, StepDefinition[]> = {
   'smed-planner': SMED_STEPS,
   'dms-builder': DMS_STEPS,
   'inventory-autopilot': INVENTORY_STEPS,
-  'vsm-builder': TOOLSET_OPERATIONAL_STEPS,
-  'constraint-control': TOOLSET_OPERATIONAL_STEPS,
-  'decision-engine': TOOLSET_OPERATIONAL_STEPS,
-  'control-tower': TOOLSET_OPERATIONAL_STEPS,
-  'automation-pipeline': TOOLSET_OPERATIONAL_STEPS,
-  'robotics-feasibility': TOOLSET_DIGITAL_STEPS,
-  'logistics-automation': TOOLSET_DIGITAL_STEPS,
+  'vsm-builder': VSM_STEPS,
+  'constraint-control': CONSTRAINT_STEPS,
+  'decision-engine': DECISION_STEPS,
+  'control-tower': CONTROL_TOWER_STEPS,
+  'automation-pipeline': AUTOMATION_PIPELINE_STEPS,
+  'robotics-feasibility': ROBOTICS_STEPS,
+  'logistics-automation': LOGISTICS_STEPS,
   'rpa-scanner': RPA_SCANNER_STEPS,
   'ai-discovery': AI_DISCOVERY_STEPS,
-  'integration-diagnostic': TOOLSET_DIGITAL_STEPS,
-  'digital-value-pool': TOOLSET_DIGITAL_STEPS,
-  'legacy-analyzer': TOOLSET_DIGITAL_STEPS,
-  'data-inventory': TOOLSET_DIGITAL_STEPS,
+  'integration-diagnostic': INTEGRATION_STEPS,
+  'digital-value-pool': VALUE_POOL_STEPS,
+  'legacy-analyzer': LEGACY_STEPS,
+  'data-inventory': DATA_INVENTORY_STEPS,
   'pain-to-solution': TOOLSET_DIGITAL_STEPS,
   'pain-explorer': PAIN_EXPLORER_STEPS,
   'process-automation': PROCESS_AUTOMATION_STEPS,
@@ -2783,19 +2795,19 @@ const TOOL_INITIAL_DATA: Record<
   'smed-planner': createInitialOperationalData(SMED_STEPS),
   'dms-builder': createInitialOperationalData(DMS_STEPS),
   'inventory-autopilot': createInitialOperationalData(INVENTORY_STEPS),
-  'vsm-builder': createInitialToolsetFlowData(['fill']),
-  'constraint-control': createInitialToolsetFlowData(['fill']),
-  'decision-engine': createInitialToolsetFlowData(['fill']),
-  'control-tower': createInitialToolsetFlowData(['fill']),
-  'automation-pipeline': createInitialToolsetFlowData(['fill']),
-  'robotics-feasibility': createInitialToolsetFlowData(['fill']),
-  'logistics-automation': createInitialToolsetFlowData(['fill']),
+  'vsm-builder': createInitialOperationalData(VSM_STEPS),
+  'constraint-control': createInitialOperationalData(CONSTRAINT_STEPS),
+  'decision-engine': createInitialOperationalData(DECISION_STEPS),
+  'control-tower': createInitialOperationalData(CONTROL_TOWER_STEPS),
+  'automation-pipeline': createInitialOperationalData(AUTOMATION_PIPELINE_STEPS),
+  'robotics-feasibility': createInitialOperationalData(ROBOTICS_STEPS),
+  'logistics-automation': createInitialOperationalData(LOGISTICS_STEPS),
   'rpa-scanner': createInitialToolsetFlowData(['candidates', 'sizing', 'backlog']),
   'ai-discovery': createInitialToolsetFlowData(['use-cases', 'prerequisites', 'pilot-plan']),
-  'integration-diagnostic': createInitialToolsetFlowData(['fill']),
-  'digital-value-pool': createInitialToolsetFlowData(['fill']),
-  'legacy-analyzer': createInitialToolsetFlowData(['fill']),
-  'data-inventory': createInitialToolsetFlowData(['fill']),
+  'integration-diagnostic': createInitialOperationalData(INTEGRATION_STEPS),
+  'digital-value-pool': createInitialOperationalData(VALUE_POOL_STEPS),
+  'legacy-analyzer': createInitialOperationalData(LEGACY_STEPS),
+  'data-inventory': createInitialOperationalData(DATA_INVENTORY_STEPS),
   'pain-to-solution': createInitialToolsetFlowData(['fill']),
   'pain-explorer': createInitialToolsetFlowData(['problems', 'hypotheses', 'evidence-gaps']),
   'process-automation': createInitialToolsetFlowData(['process-mapping', 'redesign']),
