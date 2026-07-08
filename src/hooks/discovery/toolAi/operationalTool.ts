@@ -32,7 +32,67 @@ const level = (value: unknown, fallback: 'high' | 'medium' | 'low' = 'medium') =
   LEVELS.includes(value as any) ? (value as 'high' | 'medium' | 'low') : fallback;
 
 const toNumberOrUndefined = (value: unknown): number | undefined =>
-  typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+  typeof value === 'number' && Number.isFinite(value)
+    ? value
+    : typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value))
+      ? Number(value)
+      : undefined;
+
+const toBoolOrUndefined = (value: unknown): boolean | undefined =>
+  typeof value === 'boolean'
+    ? value
+    : typeof value === 'string' && /^(true|yes|tak|1)$/i.test(value.trim())
+      ? true
+      : typeof value === 'string' && /^(false|no|nie|0)$/i.test(value.trim())
+        ? false
+        : undefined;
+
+const toStrOrUndefined = (value: unknown): string | undefined =>
+  typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;
+
+const toScoresOrUndefined = (raw: unknown): Record<string, number> | undefined => {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const out: Record<string, number> = {};
+  Object.entries(raw as Record<string, unknown>).forEach(([k, v]) => {
+    const n = toNumberOrUndefined(v);
+    if (n !== undefined) out[k] = n;
+  });
+  return Object.keys(out).length > 0 ? out : undefined;
+};
+
+/**
+ * Decision Engine structural passthrough. Other operational tools never emit
+ * these keys, so this is a no-op for them; for decision-engine it carries the
+ * matrix / tornado / commitment signals from an AI-assisted step into the
+ * section, where toDecisionSession reads them. Without this, parseItems would
+ * strip every field outside the generic OperationalItem shape and the engine
+ * would run starved in a live session (weightedScore=0, empty tornado).
+ */
+const pickDecisionFields = (item: any): Partial<OperationalItem> => {
+  const out: Partial<OperationalItem> = {};
+  const setStr = (k: 'question' | 'decisionMaker' | 'horizon' | 'criterion' | 'alternative') => {
+    const v = toStrOrUndefined(item[k]);
+    if (v !== undefined) out[k] = v;
+  };
+  const setNum = (k: 'weight' | 'low' | 'base' | 'high') => {
+    const v = toNumberOrUndefined(item[k]);
+    if (v !== undefined) out[k] = v;
+  };
+  const setBool = (
+    k: 'strawman' | 'doable' | 'realOption' | 'declared' | 'contested' | 'pointEstimate' | 'fromPremortem' | 'anchored' | 'binary' | 'implementersPresent' | 'commitmentConfirmed'
+  ) => {
+    const v = toBoolOrUndefined(item[k]);
+    if (v !== undefined) out[k] = v;
+  };
+  (['question', 'decisionMaker', 'horizon', 'criterion', 'alternative'] as const).forEach(setStr);
+  (['weight', 'low', 'base', 'high'] as const).forEach(setNum);
+  (['strawman', 'doable', 'realOption', 'declared', 'contested', 'pointEstimate', 'fromPremortem', 'anchored', 'binary', 'implementersPresent', 'commitmentConfirmed'] as const).forEach(setBool);
+  const scores = toScoresOrUndefined(item.scores);
+  if (scores) out.scores = scores;
+  if (item.disputeKind === 'fact' || item.disputeKind === 'value') out.disputeKind = item.disputeKind;
+  if (item.reversibility === 'one-way' || item.reversibility === 'two-way') out.reversibility = item.reversibility;
+  return out;
+};
 
 const parseItems = (raw: unknown): OperationalItem[] =>
   Array.isArray(raw)
@@ -52,6 +112,7 @@ const parseItems = (raw: unknown): OperationalItem[] =>
           ...(item.target ? { target: String(item.target) } : {}),
           ...(item.frequency ? { frequency: String(item.frequency) } : {}),
           ...(item.threshold ? { threshold: String(item.threshold) } : {}),
+          ...pickDecisionFields(item),
         }))
     : [];
 
