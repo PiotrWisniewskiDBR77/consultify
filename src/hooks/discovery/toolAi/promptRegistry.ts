@@ -35,13 +35,28 @@ import {
   LOGISTICS_PROPOSAL_BANK,
   type LogisticsZoneId,
 } from '@/config/logisticsautomation';
-import { buildIntegrationConclusionPrompt, toIntegrationSession } from '@/config/integrationdiagnostic';
+import {
+  buildIntegrationConclusionPrompt,
+  buildIntegrationDeepenPrompt,
+  toIntegrationSession,
+  integrationLeverLabel,
+  INTEGRATION_LEVERS,
+  INTEGRATION_PROPOSAL_BANK,
+  type IntegrationLeverId,
+} from '@/config/integrationdiagnostic';
 import {
   buildDataInventoryConclusionPrompt,
   buildDataInventoryStepSuggestionPrompt,
   toDataInventorySession,
 } from '@/config/datainventory';
-import { buildDecisionConclusionPrompt, toDecisionSession } from '@/config/decisionengine';
+import {
+  buildDecisionConclusionPrompt,
+  buildDecisionDeepenPrompt,
+  DECISION_PROPOSAL_BANK,
+  decisionElementLabel,
+  toDecisionSession,
+  type DecisionElementId,
+} from '@/config/decisionengine';
 import {
   buildValuePoolConclusionPrompt,
   buildValuePoolDeepenPrompt,
@@ -201,6 +216,97 @@ Return JSON:
   return null;
 }
 
+/**
+ * Decision Engine section-suggestion prompts, seeded with the per-element
+ * deepening ladder (buildDecisionDeepenPrompt) and the partner-grade proposal bank
+ * (DECISION_PROPOSAL_BANK). This is what makes the ladder and the proposal bank
+ * LIVE in runtime rather than dead config, AND — crucially — what makes the
+ * AI-assisted steps emit the STRUCTURAL fields the synthesis engine needs
+ * (scores, low/base/high, binary, strawman, fromPremortem, implementersPresent,
+ * commitmentConfirmed). Without these, toDecisionSession runs starved in a live
+ * session: weightedScore=0 everywhere, an empty tornado, robustness always
+ * "robust", and the doctrine's signature move (measure the flipping variable)
+ * never fires. Returns null for steps it does not own (context/summary).
+ */
+function buildDecisionSectionPrompt(stepId: string, inputData: unknown): string | null {
+  // Wizard step ids → Decision-Quality element ids (only 'uncertainties' differs).
+  const STEP_TO_ELEMENT: Record<string, DecisionElementId> = {
+    frame: 'frame',
+    alternatives: 'alternatives',
+    criteria: 'criteria',
+    uncertainties: 'uncertainty',
+    assumptions: 'assumptions',
+  };
+  const element = STEP_TO_ELEMENT[stepId];
+  if (!element) return null;
+
+  const isPolish = detectIsPolish(inputData);
+  const L = (pl: string, en: string) => (isPolish ? pl : en);
+  const opData = inputData as any;
+  const label = L(decisionElementLabel(element).pl, decisionElementLabel(element).en);
+
+  // The quantification rung disciplines the structural capture (weights, ranges,
+  // scores); it is the rung whose questions demand the numbers the engine reads.
+  const framing = buildDecisionDeepenPrompt(element, 'quantification', isPolish) ?? '';
+  const bank = DECISION_PROPOSAL_BANK[element]
+    .map((p) => `- [${p.rung}] ${L(p.title.pl, p.title.en)} — ${L(p.explanation.pl, p.explanation.en)}`)
+    .join('\n');
+
+  // Existing criteria / alternatives so the model keys per-criterion scores and
+  // uncertainty/assumption cross-references to the ids the engine already holds.
+  const listIds = (key: string) =>
+    (Array.isArray(opData?.sections?.[key]) ? opData.sections[key] : [])
+      .map((it: any) => `${it.id ?? it.title ?? '?'}${it.label || it.title ? ` (${it.label ?? it.title})` : ''}`)
+      .join(', ');
+  const criteriaIds = listIds('criteria');
+  const alternativeIds = listIds('alternatives');
+
+  const header = L(
+    'Działaj jako partner ds. jakości decyzji (Decision Quality — SDG, Howard/Spetzler + debiasing McKinsey).',
+    'Act as a decision-quality partner (Decision Quality — SDG, Howard/Spetzler + McKinsey debiasing).'
+  );
+  const bankHeader = L(
+    `Bank propozycji dla „${label}" (użyj jako inspiracji, nie kopiuj dosłownie):`,
+    `Proposal bank for "${label}" (use as inspiration, do not copy verbatim):`
+  );
+  const framingHeader = L('Rama kwantyfikacji (jaką liczbę / flagę wychwycić):', 'Quantification framing (which number / flag to capture):');
+
+  // Per-element JSON schema — the fields toDecisionSession reads and parseItems now
+  // preserves. Numbers are engine-scale swings/weights, NOT invented business data.
+  const schema: Record<DecisionElementId, string> = {
+    frame: `{"items": [{"title": "the decision as an open question", "question": "how best to… (NOT a yes/no binary)", "decisionMaker": "who actually decides", "horizon": "time horizon", "binary": false, "implementersPresent": true, "commitmentConfirmed": false, "reversibility": "one-way|two-way", "impact": "high|medium|low", "effort": "high|medium|low", "description": "..."}]}
+${L('Zwróć DOKŁADNIE jeden wiersz ramy. Ustaw binary=true tylko, gdy pytanie jest realnie postawione „robić X czy nie".', 'Return EXACTLY one frame row. Set binary=true only when the question is genuinely posed as "do X or not".')}`,
+    alternatives: `{"items": [{"title": "option name", "label": "A. …", "description": "...", "scores": {${criteriaIds ? '"<criterionId>": 1-5, …' : '"<criterionId once criteria exist>": 1-5'}}, "strawman": false, "doable": true, "realOption": false, "target": "<one-off cost as a number, optional>", "impact": "high|medium|low", "effort": "high|medium|low"}]}
+${L('Wygeneruj ≥3 realne, MECE alternatywy; oznacz strawman=true tylko dla opcji obecnej po to, by przegrać; realOption=true dla taniego pilotażu/opcji odroczonej.', 'Generate ≥3 real, MECE alternatives; set strawman=true only for an option present only to lose; realOption=true for a cheap pilot/deferred option.')}
+${criteriaIds ? L(`Klucze w "scores" to id kryteriów: ${criteriaIds}.`, `Keys in "scores" are the criterion ids: ${criteriaIds}.`) : L('Kryteria jeszcze nie istnieją — zdefiniuj je najpierw w kroku Kryteria, potem uzupełnij scores.', 'Criteria do not exist yet — define them in the Criteria step first, then fill scores.')}`,
+    criteria: `{"items": [{"title": "criterion", "label": "…", "description": "...", "weight": 0.0-1.0, "declared": true, "contested": false, "disputeKind": "fact|value", "impact": "high|medium|low", "effort": "high|medium|low"}]}
+${L('Wagi (weight) powinny sumować się do ~1 w całym zestawie. Ustaw declared=false dla kryterium, które realnie waży, ale nie zostało formalnie zadeklarowane (ukryte kryterium). contested=true + disputeKind, gdy waga jest sporna.', 'Weights should sum to ~1 across the set. Set declared=false for a criterion that truly weighs but was never formally declared (a hidden criterion). contested=true + disputeKind when the weight is disputed.')}`,
+    uncertainty: `{"items": [{"title": "uncertainty", "label": "…", "description": "...", "low": -0.5, "base": 0, "high": 0.1, "criterion": "<criterion id it perturbs>", "pointEstimate": false, "impact": "high|medium|low", "effort": "high|medium|low"}]}
+${L('low/base/high to WPŁYW tej niepewności na wynik wiodącej opcji (w skali oceny), nie wartość biznesowa — base zwykle 0, low ujemne, high dodatnie. pointEstimate=true, gdy podano pojedynczą liczbę udającą pewność.', 'low/base/high are the IMPACT of this uncertainty on the leading option\'s score (on the scoring scale), not a business value — base usually 0, low negative, high positive. pointEstimate=true when a single number pretends to be certainty.')}
+${criteriaIds ? L(`"criterion" to id kryterium, które ta niepewność zaburza: ${criteriaIds}.`, `"criterion" is the id of the criterion this uncertainty perturbs: ${criteriaIds}.`) : ''}`,
+    assumptions: `{"items": [{"title": "assumption", "label": "…", "description": "...", "alternative": "<alternative id it underpins>", "fromPremortem": true, "anchored": false, "impact": "high|medium|low", "effort": "high|medium|low"}]}
+${L('Ustaw fromPremortem=true dla założeń wydobytych przez pre-mortem („decyzja zawiodła — dlaczego?"); anchored=true, gdy założenie zakotwiczone w pierwszej liczbie/poprzedniej decyzji.', 'Set fromPremortem=true for assumptions surfaced by a pre-mortem ("the decision failed — why?"); anchored=true when the assumption is anchored to the first number/prior decision.')}
+${alternativeIds ? L(`"alternative" to id alternatywy, którą to założenie podpiera: ${alternativeIds}.`, `"alternative" is the id of the alternative this assumption underpins: ${alternativeIds}.`) : ''}`,
+  };
+
+  return `${header}
+
+${L(`Zaproponuj 3-6 pozycji dla sekcji „${label}", zdyscyplinowanych drabiną pogłębiającą.`, `Propose 3-6 items for the "${label}" section, disciplined by the deepening ladder.`)}
+
+${framingHeader}
+${framing}
+
+${bankHeader}
+${bank}
+
+${L('Zasady:', 'Rules:')}
+- ${L('Wypełnij pola strukturalne (scores/low/base/high/wagi/flagi), bo to one zasilają macierz, tornado i ocenę zaangażowania — bez nich silnik liczy zero.', 'Fill the structural fields (scores/low/base/high/weights/flags) — they feed the matrix, the tornado and the commitment score; without them the engine computes zero.')}
+- ${L('Nie zmyślaj liczb biznesowych; wpływy i wagi to wielkości modelowe. Gdy czegoś nie wiadomo — oznacz w opisie jako do zmierzenia.', 'Do not invent business numbers; impacts and weights are model-scale. Where unknown, mark it as to-measure in the description.')}
+
+Return JSON:
+${schema[element]}`;
+}
+
 export function getToolSuggestionPrompt(
   toolType: ToolType,
   stepId: string,
@@ -265,6 +371,16 @@ ${isPolish ? 'Zasady:' : 'Rules:'}
 Return JSON:
 {"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "category": "...", "repeatability": "high|medium|low", "structuredEnv": "high|medium|low", "gripSolvability": "high|medium|low", "shifts": 0, "cycleTimeManualSec": 0, "annualVolume": 0, "variability": "high|medium|low", "safetyRegime": "fenced|cobot|unknown"}]}`;
       }
+    }
+
+    // Decision Engine seeds its capture steps (frame / alternatives / criteria /
+    // uncertainties / assumptions) with the deepening ladder + proposal bank AND
+    // the structural field schema the synthesis engine reads — this is what feeds
+    // the matrix / tornado / commitment score in a LIVE session. Falls through to
+    // the generic operational prompt for steps it does not own (context/summary).
+    if (toolType === 'decision-engine') {
+      const decisionPrompt = buildDecisionSectionPrompt(stepId, inputData);
+      if (decisionPrompt) return decisionPrompt;
     }
 
     const opData = inputData as any;
