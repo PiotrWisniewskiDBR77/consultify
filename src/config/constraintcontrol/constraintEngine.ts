@@ -574,9 +574,6 @@ export function buildW2MoveSequence(session: ConstraintSession): SequencedMove[]
   const hasSteps = session.steps.length > 0;
   if (!hasSteps && session.moves.length === 0) return [];
 
-  const constraintName = localize(location.label, true); // used only for interpolation length checks
-  void constraintName;
-
   // 1. IDENTIFY — when the localization does not yet rest on queue evidence.
   if (!hasSteps || location.constraintStepId === null || location.basis !== 'queue') {
     moves.push({
@@ -699,9 +696,7 @@ export function buildW2MoveSequence(session: ConstraintSession): SequencedMove[]
 
   // 5. ELEVATE — only after 1-4, and only against a real, persistent capacity gap.
   const realGap = location.capacityGap > 0 && !baseline.policyConstraintLikely;
-  const roiLine = accounting.hasData
-    ? true
-    : false;
+  const roiLine = accounting.hasData;
   const proj = baseline.projection;
   // Projected T upside from closing the gap — the size of the prize (doctrine §7):
   // unmet demand (demand − capacity) is throughput left on the table. It is the bar
