@@ -108,7 +108,15 @@ export function toLegacySession(
 
   const apps: LegacyApp[] = rawApps.map((item, idx) => ({
     id: String(item.id ?? item.name ?? `app-${idx}`),
-    name: typeof item.name === 'string' ? item.name : undefined,
+    // Store OperationalItems carry `title`; accept `name` too. Without this the
+    // verdicts/insights/roadmap render the raw id ("app-erp") instead of the
+    // system name, which reads nothing like the doctrine's partner-grade output.
+    name:
+      typeof item.name === 'string'
+        ? item.name
+        : typeof item.title === 'string'
+          ? item.title
+          : undefined,
     businessValue: asNumber(item.businessValue),
     technicalHealth: asNumber(item.technicalHealth),
     tcoPerYear: asNumber(item.tcoPerYear),
