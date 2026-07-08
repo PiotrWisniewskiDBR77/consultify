@@ -153,21 +153,37 @@ class AIAssessmentPartnerService {
   }
 
   initializeAI() {
-    // If client was injected securely, do not overwrite it with environment variables
+    // If client was injected securely (tests), do not overwrite it.
     if (this.genAI && this.model && this._injected) return;
 
-    const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY;
-    if (apiKey) {
-      try {
-        this.genAI = new GoogleGenerativeAI(apiKey);
-        this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-      } catch (err) {
-        logger.error('[AIPartner] Failed to initialize Google AI:', err.message);
-      }
-    } else {
-      this.genAI = null;
-      this.model = null;
-    }
+    // ZMIANA 6 — scalenie Gemini-direct z platformowym LLM (tier-fallback).
+    // Wcześniej ten serwis szedł BEZPOŚREDNIO do Gemini (GoogleGenerativeAI /
+    // gemini-1.5-flash), omijając system tierów platformy — inaczej niż
+    // assessmentInitiativeService, który używa `generateChatResponse` (./aiService.js →
+    // llmService.call = tier + fallback). Zamiast przepisywać wszystkie ~15 metod
+    // (każda woła `this.model.generateContent(prompt)`), przekierowujemy JEDEN punkt
+    // dźwigni: `this.model` staje się cienkim adapterem zachowującym kontrakt Gemini
+    // (`generateContent(prompt) -> { response: { text() } }`), ale wewnątrz woła
+    // platformowy `generateChatResponse`. Dzięki temu WSZYSTKIE metody naraz idą przez
+    // tier-fallback platformy, a istniejąca w każdej metodzie logika try/catch +
+    // deterministyczny fallback pozostaje nietknięta. Klucz Gemini nie jest już potrzebny.
+    const platformModel = {
+      generateContent: async (prompt) => {
+        const { generateChatResponse } = await import('./aiService.js');
+        const response = await generateChatResponse({
+          messages: [{ role: 'user', content: String(prompt ?? '') }],
+          systemPrompt:
+            'You are an AI assessment partner for digital-maturity assessments. Follow the instructions in the user message exactly. When JSON output is requested, return only valid JSON.',
+          maxTokens: 4000,
+        });
+        const text = String(response?.content || '');
+        // Mirror the Gemini result surface the callers already expect.
+        return { response: { text: () => text } };
+      },
+    };
+
+    this.genAI = { _platform: true };
+    this.model = platformModel;
   }
 
   /**
