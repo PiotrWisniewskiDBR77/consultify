@@ -1577,20 +1577,30 @@ export async function startDoc(params: {
       });
 
       const rendered = renderSchemaToMarkdown(result.schema);
-      // D-L2-3: silnik D11 przy błędzie LLM po cichu oddaje stuby —
-      // tu zamieniamy cichą degradację na uczciwy błąd.
-      if (isPlaceholderDocumentProse(rendered)) {
-        throw new Error(
-          'Generacja treści nie powiodła się (LLM niedostępny) — dokument nie został wypełniony'
-        );
-      }
       const docLang = stored.intake.language === 'en' ? ('en' as const) : ('pl' as const);
       // N-10: renderer zachowuje EN tytuły sekcji (klucz dyspozytora bloków) —
       // po renderze lokalizujemy nagłówki do języka usera.
       // N-9: ensureTableSpacing gwarantuje pustą linię przed tabelą GFM (marked).
-      const markdown = ensureTableSpacing(
-        localizeMarkdownHeadings(polishMarkdownForCanvas(rendered, docLang), docLang)
-      );
+      // 2026-07-08 fix: polishMarkdownForCanvas MUST run before the placeholder
+      // gate below, not after — it strips the `_Purpose: …_` scaffolding line
+      // that documentSchemaRenderer.renderSection appends to EVERY section
+      // whose title has no documentNarrativePlanner.PURPOSE_HINTS entry
+      // (most real outlines, e.g. "Project Context"/"KPIs"/"Appendix"). Gating
+      // on the raw `rendered` string false-positived on fully-generated real
+      // documents purely because of that harmless scaffolding text, throwing
+      // "LLM niedostępny" even though the LLM succeeded (regression from
+      // cb2764bcb0: the two new isPlaceholderDocumentProse clauses target text
+      // that only ever appears in this pre-polish scaffolding, never in real
+      // block prose).
+      const polished = polishMarkdownForCanvas(rendered, docLang);
+      // D-L2-3: silnik D11 przy błędzie LLM po cichu oddaje stuby —
+      // tu zamieniamy cichą degradację na uczciwy błąd.
+      if (isPlaceholderDocumentProse(polished)) {
+        throw new Error(
+          'Generacja treści nie powiodła się (LLM niedostępny) — dokument nie został wypełniony'
+        );
+      }
+      const markdown = ensureTableSpacing(localizeMarkdownHeadings(polished, docLang));
       const usedRefs = stored.intake.sourceHints?.length
         ? stored.intake.sourceHints
         : stored.autoGrounding?.refs;

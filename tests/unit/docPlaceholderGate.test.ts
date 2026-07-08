@@ -60,3 +60,35 @@ describe('polishMarkdownForCanvas — strips scaffolding purpose notes', () => {
     expect(out).toContain('Realna treść ryzyk');
   });
 });
+
+describe('gate-vs-polish ORDER (2026-07-08 regression) — real content + a non-hinted section title', () => {
+  // documentSchemaRenderer.renderSection appends a `_Purpose: …_` scaffolding
+  // note to EVERY section whose title has no documentNarrativePlanner
+  // PURPOSE_HINTS entry (most real outlines — "Project Context", "KPIs",
+  // "Appendix", ...) — regardless of how good the LLM-written body is. The
+  // anti-placeholder gate MUST run on the polished (scaffolding-stripped)
+  // markdown, not the raw render, or every real document with such a section
+  // title fails with "LLM niedostępny" even though generation succeeded.
+  const realDocumentWithUnhintedSectionTitle = [
+    '## Executive Summary',
+    '',
+    'Rekomendujemy wejście na rynek DACH w Q1 przy budżecie 1,2 mln PLN.',
+    '',
+    '## Project Context',
+    '',
+    '_Purpose: Substantive section "Project Context" relevant to the document goal._',
+    '',
+    'DBR77 obsługuje 40 klientów przemysłowych w regionie; konkurencja rośnie o 12% rocznie.',
+  ].join('\n');
+
+  it('raw render (pre-polish) DOES look like a placeholder — this is why the gate must not run on it', () => {
+    expect(isPlaceholderDocumentProse(realDocumentWithUnhintedSectionTitle)).toBe(true);
+  });
+
+  it('polished render (post-polish) correctly passes the gate — real prose is not a placeholder', () => {
+    const polished = polishMarkdownForCanvas(realDocumentWithUnhintedSectionTitle, 'pl');
+    expect(isPlaceholderDocumentProse(polished)).toBe(false);
+    expect(polished).toContain('Rekomendujemy wejście na rynek DACH');
+    expect(polished).toContain('DBR77 obsługuje 40 klientów');
+  });
+});
