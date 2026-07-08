@@ -212,9 +212,40 @@ export async function generateDeliverable(
     logger.info(
       `[generate_deliverable] mindmap graph source=${llmGraph ? 'llm' : 'skeleton'}`
     );
-    // Client-generated id — the real idea/map rows are created on the FE mount
-    // path (setMyWorkIntent → IdeaMapWorkspace), which owns idea/map persistence.
-    const mindmapId = `chat-mindmap-${Date.now()}`;
+    // Materialize a REAL my_ideas/my_idea_maps row server-side (mirrors the
+    // note branch below) so persistence is not FE-contingent — the FE mount
+    // path (IdeaMapWorkspace.hydrate) simply loads this id instead of creating
+    // it. Fail-soft: on any materialize error, fall back to the old
+    // client-generated-id contract (FE creates it on mount) so a transient DB
+    // error never breaks the chat turn.
+    let mindmapId = `chat-mindmap-${Date.now()}`;
+    try {
+      const { materializeOrThrow } = await import('../../canvasMaterialize.js');
+      const materialized = await materializeOrThrow(
+        {
+          organizationId: orgId,
+          actorUserId: userId,
+          target: 'idea',
+          title,
+          contentMd: intent || title,
+          summary: intent || title,
+          projectId: null,
+          sourceDraftId: conversationId || `chat-mindmap-${Date.now()}`,
+          sourceConversationId: conversationId,
+          graph: { nodes: graph.nodes, edges: graph.edges, extensions: (graph as LlmGraph).extensions },
+          preferredTool: 'mindmap',
+          sourceType: 'teresa_chat',
+        },
+        { writer: 'chat_deliverable' }
+      );
+      mindmapId = materialized.id;
+    } catch (materializeErr) {
+      logger.warn(
+        `[generate_deliverable] mindmap server-side materialize failed, falling back to FE-mount id: ${
+          materializeErr instanceof Error ? materializeErr.message : String(materializeErr)
+        }`
+      );
+    }
 
     try {
       context.onDeliverable?.({
@@ -294,10 +325,37 @@ export async function generateDeliverable(
       `[generate_deliverable] ${preferredSystem} graph source=${llmGraph ? 'llm' : 'skeleton'}`
     );
 
-    // Client-generated id — the real idea/map rows are created on the FE mount
-    // path (setMyWorkIntent → IdeaMapWorkspace), which owns idea/map persistence
-    // (identical contract to the mindmap branch above).
-    const draftId = `chat-${preferredSystem}-${Date.now()}`;
+    // Materialize a REAL my_ideas/my_idea_maps row server-side — identical
+    // contract to the mindmap branch above (fail-soft to the old
+    // client-generated-id / FE-mount contract on any materialize error).
+    let draftId = `chat-${preferredSystem}-${Date.now()}`;
+    try {
+      const { materializeOrThrow } = await import('../../canvasMaterialize.js');
+      const materialized = await materializeOrThrow(
+        {
+          organizationId: orgId,
+          actorUserId: userId,
+          target: 'idea',
+          title,
+          contentMd: intent || title,
+          summary: intent || title,
+          projectId: null,
+          sourceDraftId: conversationId || `chat-${preferredSystem}-${Date.now()}`,
+          sourceConversationId: conversationId,
+          graph: { nodes: graph.nodes, edges: graph.edges, extensions: (graph as LlmGraph).extensions },
+          preferredTool: preferredSystem,
+          sourceType: 'teresa_chat',
+        },
+        { writer: 'chat_deliverable' }
+      );
+      draftId = materialized.id;
+    } catch (materializeErr) {
+      logger.warn(
+        `[generate_deliverable] ${preferredSystem} server-side materialize failed, falling back to FE-mount id: ${
+          materializeErr instanceof Error ? materializeErr.message : String(materializeErr)
+        }`
+      );
+    }
 
     try {
       context.onDeliverable?.({

@@ -1768,7 +1768,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           source: 'chat_handoff',
           seedGraph,
         };
-        const newIdeaId = `new-idea-${Date.now()}`;
+        // Server-side materialization (canvasMaterialize.ts, target:'idea') now
+        // creates the real my_ideas/my_idea_maps row before this event fires,
+        // so `draftId` is normally a real idea id (`idea-<ts>-<hex>`) — use it
+        // directly so IdeaMapWorkspace.hydrate's "existing idea" branch just
+        // loads it (Api.getMyIdea + Api.getMyIdeaMap), never touching
+        // createMyIdea/syncMyIdeaMap. Only fall back to the old FE-mount
+        // contract (`new-idea-<ts>`) when the backend materialize failed and
+        // fell back to its own placeholder id (`chat-<kind>-<ts>`).
+        const isRealIdeaId = /^idea-\d+-[0-9a-f]+$/i.test(draftId);
+        const newIdeaId = isRealIdeaId ? draftId : `new-idea-${Date.now()}`;
         try {
           trackFunnelEvent('my_idea_saved', {
             source: `chat_deliverable_${payloadKind}`,
