@@ -113,6 +113,73 @@ function verdictFor(normalized: number, isPL: boolean): string {
   return isPL ? 'początkowa' : 'initial';
 }
 
+/**
+ * Recommended owner role per DRD axis (deterministic mapping — R6 "adresat").
+ * Grounded in the semantics of each of the 7 DRD axes, not invented per run.
+ * Mirrors ownerForBlock (SIRI) / ownerForPillar (ADMA).
+ */
+function ownerForAxis(axisId: number, isPL: boolean): string {
+  const map: Record<number, [string, string]> = {
+    1: [isPL ? 'Dyrektor Operacyjny' : 'Operations Lead', 'Operations Lead'], // Procesy Cyfrowe
+    2: [isPL ? 'Dyrektor Produktu' : 'Head of Product', 'Head of Product'], // Produkty Cyfrowe
+    3: [isPL ? 'Zarząd / Lider Cyfrowy' : 'Board / Digital Lead', 'Board'], // Cyfrowe Modele Biznesowe
+    4: [isPL ? 'Lider Danych / CDO' : 'Data Lead / CDO', 'Data Lead'], // Zarządzanie Danymi
+    5: [isPL ? 'HR / Lider Transformacji' : 'HR / Transformation Lead', 'HR Lead'], // Kultura Transformacji
+    6: [isPL ? 'CISO / Lider Bezpieczeństwa IT' : 'CISO / IT Security Lead', 'CISO'], // Cyberbezpieczeństwo
+    7: [isPL ? 'Lider AI / Danych' : 'AI / Data Lead', 'AI Lead'], // Dojrzałość AI
+  };
+  const entry = map[axisId];
+  if (!entry) return isPL ? 'Lider Transformacji' : 'Transformation Lead';
+  return isPL ? entry[0] : entry[1];
+}
+
+/**
+ * Axis-specific business consequence of being stuck below target (the "so-what").
+ * One per DRD axis — this is what turns an identical "bottleneck" sentence into an
+ * authentic, org-relevant insight. Grounded in each axis' domain (the same domain
+ * documented by `drdKnowledgeOverridesAxis*` at the area/level granularity).
+ * Mirrors SIRI's per-block `meansTail`.
+ */
+function meansTailForAxis(axisId: number, isPL: boolean): string {
+  const map: Record<number, [string, string]> = {
+    1: [
+      'procesy sprzedaży, produkcji i logistyki działają w oderwaniu od systemów — dane wprowadza się ręcznie, a decyzje zapadają bez wglądu w czasie rzeczywistym',
+      'sales, production and logistics processes run detached from the systems — data is keyed in by hand and decisions are made without real-time visibility',
+    ],
+    2: [
+      'oferta pozostaje produktem fizycznym bez warstwy cyfrowej — firma nie zbiera danych z użytkowania ani nie buduje przewagi na usługach wokół produktu',
+      'the offering stays a physical product with no digital layer — the company collects no usage data and builds no advantage from product-adjacent services',
+    ],
+    3: [
+      'przychód opiera się na jednorazowej sprzedaży — brakuje modeli subskrypcyjnych, platformowych czy opartych na danych, które skalują się bez proporcjonalnego wzrostu kosztów',
+      'revenue rests on one-off sales — there are no subscription, platform or data-based models that scale without a proportional rise in cost',
+    ],
+    4: [
+      'dane są rozproszone w silosach i niespójne — bez jednego źródła prawdy analityka i AI opierają się na kruchym fundamencie, a raporty trzeba uzgadniać ręcznie',
+      'data sits scattered in silos and inconsistent — without a single source of truth, analytics and AI rest on a fragile foundation and reports must be reconciled by hand',
+    ],
+    5: [
+      'transformacja zależy od pojedynczych liderów, nie od zdolności organizacji — inicjatywy cyfrowe wygasają, gdy zabraknie sponsora, a zespoły nie eksperymentują samodzielnie',
+      'transformation depends on a few individuals rather than an organizational capability — digital initiatives fade when the sponsor leaves and teams do not experiment on their own',
+    ],
+    6: [
+      'zabezpieczenia są reaktywne — rosnąca cyfryzacja powiększa powierzchnię ataku szybciej niż zdolność jej obrony, co zagraża ciągłości działania i wiarygodności wobec klientów',
+      'security is reactive — growing digitalization widens the attack surface faster than the ability to defend it, threatening business continuity and customer trust',
+    ],
+    7: [
+      'AI pozostaje eksperymentem w pilotażach — bez danych, procesów i kompetencji modele nie przekładają się na powtarzalną wartość operacyjną',
+      'AI stays an experiment stuck in pilots — without the data, processes and skills, models do not convert into repeatable operational value',
+    ],
+  };
+  const entry = map[axisId];
+  if (!entry) {
+    return isPL
+      ? 'oś pozostaje wąskim gardłem transformacji cyfrowej i ogranicza efekt inwestycji w pozostałe obszary'
+      : 'the axis remains a digital-transformation bottleneck and limits the payoff of investments in other areas';
+  }
+  return isPL ? entry[0] : entry[1];
+}
+
 function buildAxisRows(data: DRDAssessmentData): AxisRow[] {
   return DRD_STRUCTURE.map((axis) => {
     const s: DRDAxisScore | undefined = data.axes?.[axis.id as DRDAxisId];
@@ -215,10 +282,11 @@ function buildExecutiveSummary(data: DRDAssessmentData, language: DRDLanguage): 
       : `No material gaps — all axes at target level.`;
 
   // ---- K4: CO NAJPIERW ----
+  const weakOwner = weakest ? ownerForAxis(weakest.id, isPL) : '';
   const k4 = weakest
     ? isPL
-      ? `Najpierw: podnieść „${weakName}” z poziomu „${levelTitle(weakest.id, weakest.current, isPL)}” do „${levelTitle(weakest.id, weakest.target, isPL)}”, bo to ta oś wyznacza sufit dojrzałości cyfrowej i blokuje zwrot z pozostałych inwestycji. Kolejność wynika z wielkości luki (${round1(weakGap)}), nie z równoległego frontu.`
-      : `First: raise "${weakName}" from "${levelTitle(weakest.id, weakest.current, isPL)}" to "${levelTitle(weakest.id, weakest.target, isPL)}", because this axis caps digital maturity and blocks the return on the other investments. The order follows gap size (${round1(weakGap)}), not a parallel front.`
+      ? `Najpierw: ${weakOwner} — podnieść „${weakName}” z poziomu „${levelTitle(weakest.id, weakest.current, isPL)}” do „${levelTitle(weakest.id, weakest.target, isPL)}”, bo to ta oś wyznacza sufit dojrzałości cyfrowej i blokuje zwrot z pozostałych inwestycji. Kolejność wynika z wielkości luki (${round1(weakGap)}), nie z równoległego frontu.`
+      : `First: ${weakOwner} — raise "${weakName}" from "${levelTitle(weakest.id, weakest.current, isPL)}" to "${levelTitle(weakest.id, weakest.target, isPL)}", because this axis caps digital maturity and blocks the return on the other investments. The order follows gap size (${round1(weakGap)}), not a parallel front.`
     : isPL
       ? `Najpierw: zweryfikować cele w warsztacie i podnieść poprzeczkę na kolejnych osiach; nie ma luki wymuszającej pojedynczy priorytet.`
       : `First: validate targets in a workshop and raise the bar on the next axes; there is no gap forcing a single priority.`;
@@ -275,13 +343,16 @@ function buildGapCards(data: DRDAssessmentData, language: DRDLanguage): DRDGapCa
       ? `Oś „${aName}” jest na poziomie ${round1(g.current)}/${g.levelCount} — „${curTitle}” (${g.normalizedCurrent}%). Cel: ${round1(g.target)}/${g.levelCount} — „${tgtTitle}” (${g.normalizedTarget}%). Luka: ${round1(g.gap)} poziomu.`
       : `The "${aName}" axis sits at ${round1(g.current)}/${g.levelCount} — "${curTitle}" (${g.normalizedCurrent}%). Target: ${round1(g.target)}/${g.levelCount} — "${tgtTitle}" (${g.normalizedTarget}%). Gap: ${round1(g.gap)} levels.`;
 
+    const owner = ownerForAxis(g.id, isPL);
+    const meansTail = meansTailForAxis(g.id, isPL);
+
     const whatItMeans = isPL
-      ? `Na poziomie „${curTitle}” organizacja nie korzysta ze zdolności poziomu „${tgtTitle}”. W praktyce oznacza to, że oś „${aName}” pozostaje wąskim gardłem transformacji cyfrowej i ogranicza efekt inwestycji w pozostałe obszary.`
-      : `At "${curTitle}", the organization does not use the "${tgtTitle}" capabilities. In practice, the "${aName}" axis remains a digital-transformation bottleneck and limits the payoff of investments in other areas.`;
+      ? `Na poziomie „${curTitle}” organizacja nie korzysta ze zdolności poziomu „${tgtTitle}”. W praktyce oznacza to, że ${meansTail} — oś „${aName}” pozostaje wąskim gardłem transformacji cyfrowej.`
+      : `At "${curTitle}", the organization does not use the "${tgtTitle}" capabilities. In practice this means ${meansTail} — the "${aName}" axis remains a digital-transformation bottleneck.`;
 
     const whatToDo = isPL
-      ? `Zaplanować i wdrożyć przejście „${aName}” na poziom „${tgtTitle}”, uruchamiając zdolności opisane dla tego poziomu; zacząć od pilotażu w jednym obszarze krytycznym, nie od całej organizacji.`
-      : `Plan and deliver the move of "${aName}" to "${tgtTitle}", enabling the capabilities described for that level; start with a pilot in one critical area, not the whole organization.`;
+      ? `${owner} — zaplanować i wdrożyć przejście „${aName}” na poziom „${tgtTitle}”, uruchamiając zdolności opisane dla tego poziomu; zacząć od pilotażu w jednym obszarze krytycznym, nie od całej organizacji.`
+      : `${owner} — plan and deliver the move of "${aName}" to "${tgtTitle}", enabling the capabilities described for that level; start with a pilot in one critical area, not the whole organization.`;
 
     const effect = isPL
       ? `Domknięcie luki ${round1(g.gap)} poziomu podnosi „${aName}” do ${round1(g.target)}/${g.levelCount} (${g.normalizedTarget}%); w horyzoncie 6–12 miesięcy odblokowuje zależne inicjatywy i integrację danych.`
