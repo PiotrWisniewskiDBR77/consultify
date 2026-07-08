@@ -149,6 +149,18 @@ const OPERATIONAL_AI_TOOLS: ReadonlySet<ToolType> = new Set<ToolType>([
   'pain-explorer',
   'rpa-scanner',
   'process-automation',
+  // 11 nowych silników operacyjnych (07-08)
+  'vsm-builder',
+  'constraint-control',
+  'control-tower',
+  'automation-pipeline',
+  'robotics-feasibility',
+  'logistics-automation',
+  'integration-diagnostic',
+  'data-inventory',
+  'decision-engine',
+  'digital-value-pool',
+  'legacy-analyzer',
 ]);
 
 const OPERATIONAL_AI_TOOL_NAMES: Partial<Record<ToolType, string>> = {

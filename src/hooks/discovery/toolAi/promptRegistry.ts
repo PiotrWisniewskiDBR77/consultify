@@ -15,6 +15,18 @@ import { buildAiDiscoveryConclusionPrompt, toDiscoverySession } from '@/config/a
 import { buildSmedConclusionPrompt, toSmedSession } from '@/config/smedplanner';
 import { buildPainConclusionPrompt, toPainSession } from '@/config/painexplorer';
 import { buildRpaConclusionPrompt, toRpaSession } from '@/config/rpascanner';
+// 11 nowych silników operacyjnych (07-08)
+import { buildVsmConclusionPrompt, toVsmSession } from '@/config/vsmbuilder';
+import { buildConstraintConclusionPrompt, toConstraintSession } from '@/config/constraintcontrol';
+import { buildControlTowerConclusionPrompt, toControlTowerSession } from '@/config/controltower';
+import { buildAutomationPipelineConclusionPrompt, toAutomationPipelineSession } from '@/config/automationpipeline';
+import { buildRoboticsConclusionPrompt, toRoboticsSession } from '@/config/roboticsfeasibility';
+import { buildLogisticsConclusionPrompt, toLogisticsSession } from '@/config/logisticsautomation';
+import { buildIntegrationConclusionPrompt, toIntegrationSession } from '@/config/integrationdiagnostic';
+import { buildDataInventoryConclusionPrompt, toDataInventorySession } from '@/config/datainventory';
+import { buildDecisionConclusionPrompt, toDecisionSession } from '@/config/decisionengine';
+import { buildValuePoolConclusionPrompt, toValuePoolSession } from '@/config/digitalvaluepool';
+import { buildLegacyConclusionPrompt, toLegacySession } from '@/config/legacyanalyzer';
 import {
   SOP_SECTIONS,
   buildSopConclusionPrompt,
@@ -661,6 +673,65 @@ export function getToolSummaryPrompt(toolType: ToolType, inputData: unknown): st
   if (toolType === 'sop-builder') {
     const grounded = buildSopConclusionPrompt(inputData as OperationalToolData, isPolish);
     if (grounded) return grounded;
+  }
+
+  // 11 nowych silników operacyjnych (07-08) — grounded W2 conclusion. MUSZĄ być
+  // przed generic OPERATIONAL_TOOL_TYPES poniżej (te typy są w tej liście, więc
+  // późniejszy check byłby dead code — lekcja OXFORD #102).
+  if (toolType === 'vsm-builder') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildVsmConclusionPrompt(toVsmSession(op?.sections), isPolish);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'constraint-control') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildConstraintConclusionPrompt(toConstraintSession(op?.sections), isPolish);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'control-tower') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildControlTowerConclusionPrompt(toControlTowerSession(op?.sections), isPolish);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'automation-pipeline') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildAutomationPipelineConclusionPrompt(toAutomationPipelineSession(op?.sections), isPolish);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'robotics-feasibility') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildRoboticsConclusionPrompt(toRoboticsSession(op?.sections), isPolish);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'logistics-automation') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildLogisticsConclusionPrompt(toLogisticsSession(op?.sections), isPolish);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'integration-diagnostic') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildIntegrationConclusionPrompt(toIntegrationSession(op?.sections), isPolish);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'data-inventory') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildDataInventoryConclusionPrompt(toDataInventorySession(op?.sections), isPolish);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'decision-engine') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildDecisionConclusionPrompt(toDecisionSession(op?.sections), isPolish);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'digital-value-pool') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildValuePoolConclusionPrompt(toValuePoolSession(op?.sections), isPolish);
+    if (prompt) return prompt;
+  }
+  if (toolType === 'legacy-analyzer') {
+    const op = inputData as OperationalToolData | undefined;
+    const prompt = buildLegacyConclusionPrompt(toLegacySession(op?.sections), isPolish);
+    if (prompt) return prompt;
   }
 
   if (OPERATIONAL_TOOL_TYPES.includes(toolType)) {
