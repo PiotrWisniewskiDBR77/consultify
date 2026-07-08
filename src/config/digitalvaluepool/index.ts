@@ -105,10 +105,11 @@ const triFlag = (raw: unknown): boolean | undefined => {
  *
  * Convention on OperationalItem for functions: `category` carries the side
  * (cost/revenue); `target` carries the cost/revenue base; `threshold` carries
- * the benchmark share. For use-cases: `category` carries the functionId;
+ * the benchmark share; `captureRate` (0..1 or a percent string) carries the
+ * realistic capture rate. For use-cases: `category` carries the functionId;
  * `phase`/impact/feasibility carry the scoring facts; `target` carries the
  * bottom-up value; boolean-ish fields (dataReady/hasOwner/scalable/
- * businessMetric) carry the scale-gate signals.
+ * businessMetric) carry the scale-gate signals; `captureRate` the capture rate.
  */
 export function toValuePoolSession(
   sections: Record<string, unknown[]> | undefined
@@ -131,6 +132,7 @@ export function toValuePoolSession(
       truthy(item.measured) ||
       asNumber(item.base) !== undefined ||
       asNumber(item.target) !== undefined,
+    captureRate: asShare(item.captureRate),
   }));
 
   const useCases: UseCaseItem[] = rawUseCases.map((item, idx) => ({
@@ -149,6 +151,7 @@ export function toValuePoolSession(
     hasOwner: triFlag(item.hasOwner),
     scalable: triFlag(item.scalable),
     businessMetric: triFlag(item.businessMetric),
+    captureRate: asShare(item.captureRate),
   }));
 
   return { functions, useCases };
