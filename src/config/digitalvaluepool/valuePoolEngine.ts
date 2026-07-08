@@ -37,6 +37,34 @@ type Level = 'high' | 'medium' | 'low';
 
 const LEVEL_SCORE: Record<Level, number> = { high: 3, medium: 2, low: 1 };
 
+/**
+ * Default capture rate applied to top-down value-at-stake when a function
+ * carries no explicit `captureRate`. The doctrine gives no formula for it, so we
+ * take the mid of the typical 0.3-0.5 realistic-capture band: value-at-stake is a
+ * theoretical CEILING, and the board must never mistake it for value captured.
+ */
+export const DEFAULT_CAPTURE_RATE = 0.4;
+
+/**
+ * Materiality thresholds (harmonized with the deepening ladder + doctrine §7).
+ * A function is "material" when it clears EITHER the relative floor (>= 2% of the
+ * mapped pool, above noise) OR the absolute floor (>= 0.5M "in play"). The
+ * doctrine states the absolute 0.5M threshold; the relative floor guards small
+ * total pools where 0.5M would swallow everything.
+ */
+export const MATERIALITY_REL = 0.02;
+export const MATERIALITY_ABS = 0.5;
+
+/** Whether a function pool clears the materiality bar (relative OR absolute). */
+const isMaterialPool = (valueAtStake: number, share: number): boolean =>
+  valueAtStake > 0 && (share >= MATERIALITY_REL || valueAtStake >= MATERIALITY_ABS);
+
+/** Clamp a capture rate into 0..1, falling back to the default when unusable. */
+const asCaptureRate = (raw: number | undefined): number =>
+  typeof raw === 'number' && Number.isFinite(raw) && raw >= 0 && raw <= 1
+    ? raw
+    : DEFAULT_CAPTURE_RATE;
+
 /** Whether a function acts primarily on a cost base or a revenue base. */
 export type ValueSide = 'cost' | 'revenue';
 
@@ -59,6 +87,13 @@ export interface ValueFunction {
   benchmarkShare?: number;
   /** Whether the base/benchmark are measured (true) or estimated/unknown. */
   measured?: boolean;
+  /**
+   * Realistic capture rate 0..1 — the fraction of the theoretical value-at-stake
+   * the firm actually captures within its horizon. Falls back to
+   * DEFAULT_CAPTURE_RATE when unset; multiplied by value-at-stake gives
+   * valueCaptured (a defensible board number, not the theoretical ceiling).
+   */
+  captureRate?: number;
 }
 
 /**
@@ -86,6 +121,12 @@ export interface UseCaseItem {
   scalable?: boolean;
   /** Is the success metric business (true) or adoption-only (false). */
   businessMetric?: boolean;
+  /**
+   * Realistic capture rate 0..1 for this use-case's bottom-up value — how much of
+   * the quantified value is realistically captured within the horizon. Falls back
+   * to DEFAULT_CAPTURE_RATE when unset.
+   */
+  captureRate?: number;
 }
 
 /** The minimal value-pool session shape the engine reads. */
@@ -104,6 +145,15 @@ const localize = (text: Bilingual, isPolish: boolean) => (isPolish ? text.pl : t
 export const functionValueAtStake = (fn: ValueFunction): number =>
   (fn.base || 0) * (fn.benchmarkShare || 0);
 
+/**
+ * Value the firm realistically CAPTURES from one function within its horizon =
+ * value-at-stake × capture rate. Distinct from the theoretical ceiling above —
+ * this is the number that survives to year 2 (see doctrine: value-at-stake is
+ * not value captured; the pool erodes if you do nothing).
+ */
+export const functionValueCaptured = (fn: ValueFunction): number =>
+  functionValueAtStake(fn) * asCaptureRate(fn.captureRate);
+
 // ---------------------------------------------------------------------------
 // Baseline — value-at-stake decomposition (top-down vs bottom-up)
 // ---------------------------------------------------------------------------
@@ -115,8 +165,12 @@ export interface FunctionPool {
   side: ValueSide;
   base: number;
   benchmarkShare: number;
-  /** base × benchmarkShare — top-down value-at-stake. */
+  /** base × benchmarkShare — top-down value-at-stake (theoretical ceiling). */
   valueAtStake: number;
+  /** The capture rate assumed for this function, 0..1. */
+  captureRate: number;
+  /** valueAtStake × captureRate — realistically captured value within horizon. */
+  valueCaptured: number;
   /** valueAtStake / total mapped value, 0..1. */
   share: number;
   /** Bottom-up value from use-cases attributed to this function. */
@@ -127,8 +181,13 @@ export interface FunctionPool {
 
 /** The headline value-pool facts: where digital/AI money sits and how sure we are. */
 export interface ValuePoolBaseline {
-  /** Sum of top-down value-at-stake across all functions. */
+  /** Sum of top-down value-at-stake across all functions (theoretical ceiling). */
   topDownTotal: number;
+  /**
+   * Sum of realistically CAPTURED value (Σ value-at-stake × capture rate) — the
+   * defensible number to put in front of a CFO, distinct from the ceiling above.
+   */
+  capturedTotal: number;
   /** Sum of bottom-up quantified use-case value. */
   bottomUpTotal: number;
   /**
@@ -158,11 +217,13 @@ export function computeBaseline(session: ValuePoolSession): ValuePoolBaseline {
   }
 
   const topDownTotal = fns.reduce((acc, fn) => acc + functionValueAtStake(fn), 0);
+  const capturedTotal = fns.reduce((acc, fn) => acc + functionValueCaptured(fn), 0);
   const bottomUpTotal = session.useCases.reduce((acc, uc) => acc + (uc.bottomUpValue || 0), 0);
 
   const pools: FunctionPool[] = fns
     .map((fn) => {
       const vas = functionValueAtStake(fn);
+      const rate = asCaptureRate(fn.captureRate);
       const bu = bottomUpByFn.get(fn.id);
       return {
         id: fn.id,
@@ -171,6 +232,8 @@ export function computeBaseline(session: ValuePoolSession): ValuePoolBaseline {
         base: round1(fn.base || 0),
         benchmarkShare: fn.benchmarkShare || 0,
         valueAtStake: round1(vas),
+        captureRate: rate,
+        valueCaptured: round1(vas * rate),
         share: topDownTotal > 0 ? round1(vas / topDownTotal) : 0,
         bottomUp: round1(bu?.value || 0),
         useCaseCount: bu?.count || 0,
@@ -180,13 +243,15 @@ export function computeBaseline(session: ValuePoolSession): ValuePoolBaseline {
 
   const top2 = pools.slice(0, 2).reduce((acc, p) => acc + p.valueAtStake, 0);
   const measured = fns.filter((fn) => fn.measured).length;
-  // "material" = a function carrying at least 2% of the mapped pool (above noise).
-  const materialFunctionCount = pools.filter(
-    (p) => p.valueAtStake > 0 && p.share >= 0.02
+  // "material" = clears the relative floor (>=2% of pool) OR the absolute floor
+  // (>=0.5M in play), harmonized with the deepening ladder + doctrine §7.
+  const materialFunctionCount = pools.filter((p) =>
+    isMaterialPool(p.valueAtStake, p.share)
   ).length;
 
   return {
     topDownTotal: round1(topDownTotal),
+    capturedTotal: round1(capturedTotal),
     bottomUpTotal: round1(bottomUpTotal),
     divergenceRatio: topDownTotal > 0 ? round1(bottomUpTotal / topDownTotal) : 0,
     pools,
@@ -236,6 +301,18 @@ export function evaluateScaleGate(uc: UseCaseItem): ScaleGate {
   };
 }
 
+/**
+ * A DECISIVE scale blocker is one that alone disqualifies a case from being a
+ * quick win no matter how small the total feasibility penalty is: no source data
+ * ('data') or no owner with mandate ('owner'). Doctrine's central thesis — a
+ * single missing foundation turns a "quick win" into a pilot that never scales.
+ * (scale-path / adoption-metric blockers still discount feasibility but are not,
+ * on their own, decisive enough to override an otherwise-ready quick win.)
+ */
+const DECISIVE_BLOCKERS: ReadonlyArray<ScaleGate['blockers'][number]> = ['data', 'owner'];
+const hasDecisiveBlocker = (gate: ScaleGate): boolean =>
+  gate.blockers.some((b) => DECISIVE_BLOCKERS.includes(b));
+
 // ---------------------------------------------------------------------------
 // Priority matrix — impact × feasibility per use-case
 // ---------------------------------------------------------------------------
@@ -271,7 +348,13 @@ export function scoreUseCase(uc: UseCaseItem): UseCaseScore {
   const score = round1(impact * feasibility);
 
   const highImpact = impact >= 2.5;
-  const highFeas = feasibility >= 2.3;
+  // A single decisive blocker (no data / no owner) revokes quick-win / fill-in
+  // status independently of the penalty arithmetic: the effective feasibility to
+  // SCALE is capped below the quick-win line even if one −0.5 penalty is not
+  // enough to cross it. This is the fix for "quick-win overlaps pilot-without-
+  // scale under a single blocker".
+  const decisive = hasDecisiveBlocker(gate);
+  const highFeas = feasibility >= 2.3 && !decisive;
   let quadrant: Quadrant;
   if (highImpact && highFeas) quadrant = 'quick-win';
   else if (highImpact && !highFeas) quadrant = 'big-bet';
@@ -375,7 +458,7 @@ export interface DeadField {
 export function detectDeadFields(session: ValuePoolSession): DeadField[] {
   const baseline = computeBaseline(session);
   return baseline.pools
-    .filter((p) => p.valueAtStake > 0 && p.share >= 0.02 && p.useCaseCount === 0)
+    .filter((p) => isMaterialPool(p.valueAtStake, p.share) && p.useCaseCount === 0)
     .map((p) => ({
       id: p.id,
       name: p.name,
@@ -523,6 +606,15 @@ export function buildRoadmap(session: ValuePoolSession): RoadmapMove[] {
   const topQuickWin = matrix.quickWins[0];
   if (topQuickWin) {
     const fn = baseline.pools.find((p) => p.id === topQuickWin.functionId);
+    // Only claim "data ready" when the case actually has no data blocker — never
+    // manufacture a truth the gate contradicts.
+    const dataReady = !topQuickWin.gate.blockers.includes('data');
+    const poolClausePl = fn
+      ? `${dataReady ? ', dane gotowe' : ''}, pula ${fn.valueAtStake} w grze`
+      : '';
+    const poolClauseEn = fn
+      ? `${dataReady ? ', data ready' : ''}, pool ${fn.valueAtStake} in play`
+      : '';
     moves.push({
       order: order++,
       wave: 'quick-win',
@@ -531,8 +623,8 @@ export function buildRoadmap(session: ValuePoolSession): RoadmapMove[] {
         en: `Start with the quick win${fn ? ` in function "${fn.name}"` : ''}`,
       },
       rationale: {
-        pl: `Wysoki impact i wysoka feasibility (dopasowanie ${topQuickWin.score}/9)${fn ? `, dane gotowe, pula ${fn.valueAtStake} w grze` : ''} — to najszybszy zwrot widoczny w P&L na jednostkę wysiłku i wiarygodność pod kolejne fale.`,
-        en: `High impact and high feasibility (fit ${topQuickWin.score}/9)${fn ? `, data ready, pool ${fn.valueAtStake} in play` : ''} — the fastest return visible in the P&L per unit of effort, and the credibility for the next waves.`,
+        pl: `Wysoki impact i wysoka feasibility (dopasowanie ${topQuickWin.score}/9)${poolClausePl} — to najszybszy zwrot widoczny w P&L na jednostkę wysiłku i wiarygodność pod kolejne fale.`,
+        en: `High impact and high feasibility (fit ${topQuickWin.score}/9)${poolClauseEn} — the fastest return visible in the P&L per unit of effort, and the credibility for the next waves.`,
       },
       tradeOff: {
         pl: 'Kosztem tempa w dużych obstawieniach strategicznych — świadomie zaczynamy od pewnego zwrotu, zanim otworzymy fronty o niższej feasibility.',
