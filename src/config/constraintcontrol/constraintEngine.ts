@@ -257,6 +257,69 @@ export function computeThroughputAccounting(session: ConstraintSession): Through
 }
 
 // ---------------------------------------------------------------------------
+// Throughput projection — what closing the capacity gap is worth
+// ---------------------------------------------------------------------------
+
+/**
+ * Projection of the Throughput (T) upside from closing the constraint's
+ * capacity gap. Doctrine §7 makes this the core Elevate argument: the system's
+ * shipped output is capped at the constraint's capacity, so unmet demand
+ * (demand − capacity) is throughput the business is leaving on the table. At an
+ * unchanged Operating Expense, every recovered unit is Net-Profit upside.
+ *
+ * Model (deliberately conservative and clearly labelled as an estimate):
+ *   - shipped units are capped by the constraint capacity, so T today reflects
+ *     ~`capacity` units → throughputPerUnit = T / capacity
+ *   - closeableGap = capacityGap (demand − capacity), the units currently lost
+ *   - projectedThroughputUplift = throughputPerUnit × closeableGap
+ *   - projectedNetProfit = netProfit + uplift (OE assumed unchanged)
+ */
+export interface ThroughputProjection {
+  /** Constraint capacity (the current throughput ceiling in work units). */
+  constraintCapacity: number;
+  /** Unmet demand = demand − capacity; the closeable throughput gap in units. */
+  closeableGap: number;
+  /** T generated per throughput unit at the constraint (T / capacity). */
+  throughputPerUnit: number | null;
+  /** Projected T uplift from fully closing the gap (perUnit × gap), OE unchanged. */
+  projectedThroughputUplift: number | null;
+  /** Projected Net Profit after the uplift (netProfit + uplift), OE unchanged. */
+  projectedNetProfit: number | null;
+  /** True when a capacity gap, a positive capacity and T data all exist. */
+  hasProjection: boolean;
+}
+
+export function computeThroughputProjection(
+  location: ConstraintLocation,
+  accounting: ThroughputAccounting
+): ThroughputProjection {
+  const constraintCapacity = location.capacity;
+  const closeableGap = Math.max(0, location.capacityGap);
+  const canProject =
+    constraintCapacity > 0 && closeableGap > 0 && accounting.hasData && accounting.throughput > 0;
+  if (!canProject) {
+    return {
+      constraintCapacity,
+      closeableGap,
+      throughputPerUnit: null,
+      projectedThroughputUplift: null,
+      projectedNetProfit: null,
+      hasProjection: false,
+    };
+  }
+  const throughputPerUnit = round1(accounting.throughput / constraintCapacity);
+  const projectedThroughputUplift = round1(throughputPerUnit * closeableGap);
+  return {
+    constraintCapacity,
+    closeableGap: round1(closeableGap),
+    throughputPerUnit,
+    projectedThroughputUplift,
+    projectedNetProfit: round1(accounting.netProfit + projectedThroughputUplift),
+    hasProjection: true,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Baseline (system-level facts, incl. policy-constraint detection)
 // ---------------------------------------------------------------------------
 
@@ -268,6 +331,8 @@ export interface ConstraintBaseline {
   growingQueueCount: number;
   location: ConstraintLocation;
   accounting: ThroughputAccounting;
+  /** What closing the constraint's capacity gap is worth in T / Net Profit. */
+  projection: ThroughputProjection;
   /**
    * Policy-constraint signal: the constraint has NO real physical capacity gap
    * (capacity >= demand) yet still carries a growing queue — meaning a rule /
@@ -284,6 +349,7 @@ export function computeBaseline(session: ConstraintSession): ConstraintBaseline 
   const growingQueueCount = steps.filter((s) => s.queueTrend === 'growing').length;
   const location = locateConstraint(session);
   const accounting = computeThroughputAccounting(session);
+  const projection = computeThroughputProjection(location, accounting);
 
   // Policy constraint: a queue exists (growing or > 0) but capacity is NOT below
   // demand at the constraint — the physical resource can keep up, so a policy is
@@ -301,6 +367,7 @@ export function computeBaseline(session: ConstraintSession): ConstraintBaseline 
     growingQueueCount,
     location,
     accounting,
+    projection,
     policyConstraintLikely,
     policyMoveCount,
   };
@@ -608,8 +675,14 @@ export function buildW2MoveSequence(session: ConstraintSession): SequencedMove[]
         en: 'Disarm the policy constraint before spending on capacity',
       },
       rationale: {
-        pl: `Kolejka rośnie, choć fizyczna przepustowość constraintu nadąża (luka capacity–demand ${location.capacityGap} ≤ 0) — to znak, że ogranicza polityka (kolejność zatwierdzeń, reguła zakupowa, harmonogram, premiowanie), nie brak zasobu. Zmiana polityki jest tańsza i szybsza niż Elevate, a często daje większy efekt na przepustowość.`,
-        en: `The queue grows although the constraint's physical capacity keeps up (capacity–demand gap ${location.capacityGap} ≤ 0) — a sign a policy throttles it (approval order, purchasing rule, schedule, incentive), not a missing resource. A policy change is cheaper and faster than Elevate, and often yields a larger throughput effect.`,
+        pl:
+          location.capacityGap <= 0
+            ? `Kolejka rośnie, choć fizyczna przepustowość constraintu nadąża (luka capacity–demand ${location.capacityGap} ≤ 0) — to znak, że ogranicza polityka (kolejność zatwierdzeń, reguła zakupowa, harmonogram, premiowanie), nie brak zasobu. Zmiana polityki jest tańsza i szybsza niż Elevate, a często daje większy efekt na przepustowość.`
+            : `Obok fizycznej luki capacity–demand (${location.capacityGap}) sesja zgłasza ${baseline.policyMoveCount} ruch(ów) polityki — reguła (kolejność zatwierdzeń, sposób premiowania, sztywny harmonogram) sztucznie zawęża przepustowość ponad sam brak mocy. Policy to domyślna PIERWSZA hipoteza: rozbrój regułę, zanim wydasz na moc, bo zmiana polityki jest tańsza i szybsza niż Elevate — i często część luki znika bez ani złotówki CAPEX.`,
+        en:
+          location.capacityGap <= 0
+            ? `The queue grows although the constraint's physical capacity keeps up (capacity–demand gap ${location.capacityGap} ≤ 0) — a sign a policy throttles it (approval order, purchasing rule, schedule, incentive), not a missing resource. A policy change is cheaper and faster than Elevate, and often yields a larger throughput effect.`
+            : `Alongside the physical capacity–demand gap (${location.capacityGap}), the session flags ${baseline.policyMoveCount} policy move(s) — a rule (approval order, incentive scheme, rigid schedule) throttles throughput beyond the raw capacity shortfall. Policy is the default FIRST hypothesis: disarm the rule before spending on capacity, because a policy change is cheaper and faster than Elevate — and often part of the gap dissolves with zero CAPEX.`,
       },
       tradeOff: {
         pl: 'Kosztem konfrontacji z „tak się u nas zawsze robi" i pracy nad ukrytym założeniem (Evaporating Cloud) — trudniejszej niż zakup, bo dotyka nawyków i władzy, nie budżetu.',
@@ -629,6 +702,15 @@ export function buildW2MoveSequence(session: ConstraintSession): SequencedMove[]
   const roiLine = accounting.hasData
     ? true
     : false;
+  const proj = baseline.projection;
+  // Projected T upside from closing the gap — the concrete number the Elevate
+  // decision must clear (doctrine §7): unmet demand is throughput left on the table.
+  const projPl = proj.hasProjection
+    ? ` Zamknięcie luki ~${proj.closeableGap} jedn. podnosi Throughput o ok. ${proj.projectedThroughputUplift} przy niezmienionym OE (T/jedn. ≈ ${proj.throughputPerUnit}; Zysk netto → ~${proj.projectedNetProfit}) — to próg, który inwestycja musi pobić.`
+    : '';
+  const projEn = proj.hasProjection
+    ? ` Closing the ~${proj.closeableGap}-unit gap lifts Throughput by ~${proj.projectedThroughputUplift} at unchanged OE (T/unit ≈ ${proj.throughputPerUnit}; Net Profit → ~${proj.projectedNetProfit}) — the bar the investment must clear.`
+    : '';
   moves.push({
     order: order++,
     step: 'elevate',
@@ -638,10 +720,10 @@ export function buildW2MoveSequence(session: ConstraintSession): SequencedMove[]
     },
     rationale: {
       pl: realGap
-        ? `Luka capacity–demand (${location.capacityGap}) jest realna i nie znika po Exploit/Subordinate — dopiero teraz inwestycja (etat, maszyna, outsourcing fragmentu Review) jest uzasadniona. Oceń ją przez zmianę T/I/OE CAŁEGO systemu${roiLine ? ` (dziś Zysk netto = T − OE = ${accounting.netProfit}${accounting.roi !== null ? `, ROI = ${accounting.roi}` : ''})` : ''}, nie przez koszt lokalny.`
+        ? `Luka capacity–demand (${location.capacityGap}) jest realna i nie znika po Exploit/Subordinate — dopiero teraz inwestycja (etat, maszyna, outsourcing fragmentu Review) jest uzasadniona. Oceń ją przez zmianę T/I/OE CAŁEGO systemu${roiLine ? ` (dziś Zysk netto = T − OE = ${accounting.netProfit}${accounting.roi !== null ? `, ROI = ${accounting.roi}` : ''})` : ''}, nie przez koszt lokalny.${projPl}`
         : `Elevate trzymamy na końcu i warunkowo: dopóki luka capacity–demand nie jest realna i trwała po Exploit/Subordinate, dokupienie mocy zwiększa OE i I bez zmiany T${roiLine ? ` (Zysk netto = T − OE = ${accounting.netProfit})` : ''}. To najdroższy i najwolniejszy krok — uruchamiany tylko, gdy 1-4 wyczerpane.`,
       en: realGap
-        ? `The capacity–demand gap (${location.capacityGap}) is real and persists after Exploit/Subordinate — only now is investment (headcount, machine, outsourcing part of Review) justified. Judge it by the change in system T/I/OE${roiLine ? ` (today Net Profit = T − OE = ${accounting.netProfit}${accounting.roi !== null ? `, ROI = ${accounting.roi}` : ''})` : ''}, not by local cost.`
+        ? `The capacity–demand gap (${location.capacityGap}) is real and persists after Exploit/Subordinate — only now is investment (headcount, machine, outsourcing part of Review) justified. Judge it by the change in system T/I/OE${roiLine ? ` (today Net Profit = T − OE = ${accounting.netProfit}${accounting.roi !== null ? `, ROI = ${accounting.roi}` : ''})` : ''}, not by local cost.${projEn}`
         : `We keep Elevate last and conditional: until the capacity–demand gap is real and persistent after Exploit/Subordinate, buying capacity raises OE and I without changing T${roiLine ? ` (Net Profit = T − OE = ${accounting.netProfit})` : ''}. It is the most expensive and slowest step — triggered only when 1-4 are exhausted.`,
     },
     tradeOff: {
