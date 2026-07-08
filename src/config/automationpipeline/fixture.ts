@@ -9,12 +9,15 @@
  * doctrine's illustrative 4-of-22 subset (processes A-D), each engineered to
  * land on a distinct technology tier / effort×impact quadrant so the fixture
  * exercises every branch of the synthesis engine:
- *   - A. Uzgadnianie faktur dostawców    -> IDP, quick win        (largest hidden FTE block)
+ *   - A. Uzgadnianie faktur dostawców    -> IDP, quick win        (largest hidden FTE block; 80/20 scopable)
  *   - B. Onboarding nowego klienta       -> redesign-first        (loudest top-down ask, but
  *                                           18% exceptions + no dominant path = automating chaos)
  *   - C. Raport miesięczny statusu SLA   -> RPA, fill-in          (small, structured, already low effort)
  *   - D. Klasyfikacja i routing zgłoszeń -> IPA, strategic bet    (ML classification needed — a
  *                                           keyword-only RPA PoC scored ~40% accuracy)
+ *   - E. Rejestracja prostych zwrotów    -> RPA, fill-in          (technically clean, but NO governance
+ *                                           owner — doctrine §6.8: qualifies for quarters, stalls on the
+ *                                           non-technical barrier; exercises the ownerReady effort penalty)
  *
  * Field convention (see index.ts `toAutomationPipelineSession` adapter
  * doc-comment): each `process-candidates` item carries OperationalItem +
@@ -165,6 +168,31 @@ const processCandidates: PipelineCandidateItem[] = [
     evidence: [
       'PoC RPA po słowach kluczowych — ~40% trafności, niewystarczające do produkcji',
       '120 oznakowanych zgłoszeń — próbka walidacyjna do modelu klasyfikacji',
+    ],
+  },
+  {
+    id: 'proces-e-zwroty',
+    title: 'E. Rejestracja prostych zwrotów w ERP',
+    description:
+      'Rejestracja zwrotów standardowych (dane systemowe, reguły w 100% jawne, API dostępne) — czysty, stabilny kandydat RPA. Kwalifikuje się technicznie od 2 kwartałów, ale dział zwrotów nie wyznaczył właściciela gotowego przejąć governance bota — pipeline stoi nie na technologii, lecz na barierze organizacyjnej.',
+    impact: 'low',
+    effort: 'low',
+    category: 'operations',
+    dataStructure: 'system',
+    ruleness: 'high',
+    stability: 'high',
+    volumePerMonth: 300,
+    handlingMinutes: 15,
+    exceptionRate: 0.03,
+    pathConcentration: 0.85,
+    apiAvailable: true,
+    errorRisk: 'low',
+    ownerReady: false,
+    measured: true,
+    source: 'process-mining',
+    evidence: [
+      'Log ERP 12 mies. — 300 zwrotów/mies., stała ścieżka (85% wolumenu w dominującym wariancie)',
+      'Brak wyznaczonego właściciela biznesowego governance bota — pozycja stoi od 2 kwartałów',
     ],
   },
 ];
