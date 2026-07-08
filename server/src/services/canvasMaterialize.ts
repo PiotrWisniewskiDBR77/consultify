@@ -41,8 +41,20 @@ export interface CanvasMaterializeInput {
   sourceDraftId: string;
   /** Source conversation id (idea provenance). May be empty for proposal-approval. */
   sourceConversationId?: string;
-  /** Pre-tokenized section list — used to seed an idea's Mind Map. */
+  /** Pre-tokenized section list — used to seed an idea's Mind Map (only
+   * consulted when `graph` below is absent — see the `idea` branch). */
   sections?: Array<{ heading: string; body: string }>;
+  /**
+   * Pre-built ReactFlow-ish graph (e.g. from canvasGraphLlm.ts) — when present,
+   * the `idea` branch seeds the map with THIS graph (validated/normalized via
+   * validateAndNormalizeGraph, same as the client PUT /my-work/my-ideas/:id/map
+   * route) instead of deriving a crude "H2 heading star map" from `sections`.
+   */
+  graph?: { nodes: unknown[]; edges: unknown[]; extensions?: Record<string, unknown> };
+  /** Which canvas tool authored `graph` (mindmap/process_flow/table/whiteboard). */
+  preferredTool?: string | null;
+  /** Idea provenance tag (defaults to 'work_canvas' for the existing Canvas callers). */
+  sourceType?: string;
   /** Optional decision type override (canonical enum). Defaults to 'APPROVAL'. */
   decisionType?: 'GO_NO_GO' | 'APPROVAL' | 'RESOURCE_ALLOCATION' | 'OTHER';
   /** Optional task priority + due. */
@@ -131,6 +143,9 @@ export async function materializeWorkspaceTarget(
     sourceDraftId,
     sourceConversationId,
     sections = [],
+    graph,
+    preferredTool = null,
+    sourceType = 'work_canvas',
     decisionType = 'APPROVAL',
     taskPriority = 'medium',
     taskAssigneeId,
@@ -154,7 +169,7 @@ export async function materializeWorkspaceTarget(
         body: summary,
         seed_text: contentMd,
         stage: 'spark',
-        source_type: 'work_canvas',
+        source_type: sourceType,
         source_conversation_id: sourceConversationId || null,
         source_message_id: sourceDraftId,
         created_at: now,
@@ -163,25 +178,70 @@ export async function materializeWorkspaceTarget(
       ['id']
     );
 
-    // Seed Mind Map (W2-E10): one node per H2, edges from synthetic root.
     const mapId = `map-${Date.now()}-${randomUUID().slice(0, 8)}`;
-    const cappedSections = sections.slice(0, 8);
-    const nodes = [
-      { id: 'root', label: title, x: 0, y: 0, kind: 'idea' },
-      ...cappedSections.map((section, i) => ({
-        id: `s${i}`,
-        label: section.heading.slice(0, 80) || `Section ${i + 1}`,
-        x: 280,
-        y: (i - (cappedSections.length - 1) / 2) * 90,
-        kind: 'thought',
-        note: section.body.slice(0, 280),
-      })),
-    ];
-    const edges = cappedSections.map((_, i) => ({
-      id: `e${i}`,
-      source: 'root',
-      target: `s${i}`,
-    }));
+    let nodes: unknown[];
+    let edges: unknown[];
+    let extensions: Record<string, unknown>;
+    let nodeCount: number;
+
+    if (graph && Array.isArray(graph.nodes) && graph.nodes.length > 0) {
+      // Pre-built graph (e.g. an LLM-generated mindmap/process_flow/table/
+      // whiteboard from canvasGraphLlm.ts): validate/normalize through the
+      // SAME path the client PUT /my-work/my-ideas/:id/map route uses, so the
+      // stored shape matches every other read path in the app (list views,
+      // metrics, cross-tool transforms) — NOT the ad-hoc star-map shape below.
+      const { validateAndNormalizeGraph } = await import(
+        '../validators/ideaWorkspaceGraph.validators.js'
+      );
+      const validation = validateAndNormalizeGraph({
+        nodes: graph.nodes,
+        edges: graph.edges,
+        extensions: graph.extensions,
+        preferredTool,
+      });
+      if (!validation.valid) {
+        logger.warn('[canvasMaterialize] graph failed validation, seeding empty map', {
+          ideaId,
+          errors: validation.errors,
+        });
+      }
+      nodes = validation.normalized.nodes;
+      edges = validation.normalized.edges;
+      extensions = {
+        ...(validation.normalized.extensions || {}),
+        source: sourceType,
+        draftId: sourceDraftId,
+      };
+      nodeCount = nodes.length;
+    } else {
+      // Fallback (existing Canvas save-to-workspace / proposal-approval
+      // callers, which pass `sections` not `graph`): one node per H2, edges
+      // from a synthetic root (W2-E10).
+      const cappedSections = sections.slice(0, 8);
+      nodes = [
+        { id: 'root', label: title, x: 0, y: 0, kind: 'idea' },
+        ...cappedSections.map((section, i) => ({
+          id: `s${i}`,
+          label: section.heading.slice(0, 80) || `Section ${i + 1}`,
+          x: 280,
+          y: (i - (cappedSections.length - 1) / 2) * 90,
+          kind: 'thought',
+          note: section.body.slice(0, 280),
+        })),
+      ];
+      edges = cappedSections.map((_, i) => ({
+        id: `e${i}`,
+        source: 'root',
+        target: `s${i}`,
+      }));
+      extensions = {
+        source: sourceType,
+        draftId: sourceDraftId,
+        seededFromSections: cappedSections.length,
+      };
+      nodeCount = nodes.length;
+    }
+
     await insertDynamic(
       'my_idea_maps',
       {
@@ -192,11 +252,15 @@ export async function materializeWorkspaceTarget(
         nodes_json: JSON.stringify(nodes),
         edges_json: JSON.stringify(edges),
         schema_version: 3,
-        extensions_json: JSON.stringify({
-          source: 'work_canvas',
-          draftId: sourceDraftId,
-          seededFromSections: cappedSections.length,
-        }),
+        preferred_tool: preferredTool,
+        extensions_json: JSON.stringify(extensions),
+        // A brand-new map (this idea_id was just minted above) is by
+        // definition the only — hence canonical — row for it, matching how
+        // my-work.routes.ts's PUT-map route seeds a fresh shared-mode row.
+        // insertDynamic silently drops columns the current schema lacks, so
+        // this is a no-op on deployments without the DP-3 columns.
+        is_canonical: true,
+        last_editor_user_id: actorUserId,
         created_at: now,
         updated_at: now,
       },
@@ -208,7 +272,7 @@ export async function materializeWorkspaceTarget(
       id: ideaId,
       title,
       url: `/my-work?ideaId=${encodeURIComponent(ideaId)}`,
-      readBack: { target, ideaId, mapId, status: 'created', nodeCount: nodes.length },
+      readBack: { target, ideaId, mapId, status: 'created', nodeCount },
     };
   }
 
@@ -310,7 +374,7 @@ export async function materializeWorkspaceTarget(
 /** Convenience: log + rethrow so caller-side error envelopes stay consistent. */
 export async function materializeOrThrow(
   input: CanvasMaterializeInput,
-  context: { writer: 'save_to_workspace' | 'proposal_approval' }
+  context: { writer: 'save_to_workspace' | 'proposal_approval' | 'chat_deliverable' }
 ): Promise<CanvasMaterializeResult> {
   try {
     return await materializeWorkspaceTarget(input);
