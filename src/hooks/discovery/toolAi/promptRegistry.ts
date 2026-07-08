@@ -31,7 +31,11 @@ import {
   type LogisticsZoneId,
 } from '@/config/logisticsautomation';
 import { buildIntegrationConclusionPrompt, toIntegrationSession } from '@/config/integrationdiagnostic';
-import { buildDataInventoryConclusionPrompt, toDataInventorySession } from '@/config/datainventory';
+import {
+  buildDataInventoryConclusionPrompt,
+  buildDataInventoryStepSuggestionPrompt,
+  toDataInventorySession,
+} from '@/config/datainventory';
 import { buildDecisionConclusionPrompt, toDecisionSession } from '@/config/decisionengine';
 import { buildValuePoolConclusionPrompt, toValuePoolSession } from '@/config/digitalvaluepool';
 import { buildLegacyConclusionPrompt, toLegacySession } from '@/config/legacyanalyzer';
@@ -202,6 +206,17 @@ export function getToolSuggestionPrompt(
     if (toolType === 'logistics-automation') {
       const logisticsPrompt = buildLogisticsSectionPrompt(stepId, inputData);
       if (logisticsPrompt) return logisticsPrompt;
+    }
+
+    // Data Inventory seeds its capture-step suggestions with the deepening ladder
+    // + governance proposal bank (making both live in runtime); falls through to
+    // the generic operational prompt for steps it does not own (context/summary).
+    if (toolType === 'data-inventory') {
+      const dataInventoryPrompt = buildDataInventoryStepSuggestionPrompt(
+        stepId,
+        detectIsPolish(inputData)
+      );
+      if (dataInventoryPrompt) return dataInventoryPrompt;
     }
 
     const opData = inputData as any;
