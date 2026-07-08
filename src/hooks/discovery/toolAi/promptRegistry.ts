@@ -20,7 +20,12 @@ import { buildVsmConclusionPrompt, toVsmSession } from '@/config/vsmbuilder';
 import { buildConstraintConclusionPrompt, toConstraintSession } from '@/config/constraintcontrol';
 import { buildControlTowerConclusionPrompt, toControlTowerSession } from '@/config/controltower';
 import { buildAutomationPipelineConclusionPrompt, toAutomationPipelineSession } from '@/config/automationpipeline';
-import { buildRoboticsConclusionPrompt, toRoboticsSession } from '@/config/roboticsfeasibility';
+import {
+  buildRoboticsConclusionPrompt,
+  buildRoboticsDeepenPrompt,
+  toRoboticsSession,
+  ROBOTICS_AXES,
+} from '@/config/roboticsfeasibility';
 import {
   buildLogisticsConclusionPrompt,
   buildLogisticsDeepenPrompt,
@@ -37,7 +42,13 @@ import {
   toDataInventorySession,
 } from '@/config/datainventory';
 import { buildDecisionConclusionPrompt, toDecisionSession } from '@/config/decisionengine';
-import { buildValuePoolConclusionPrompt, toValuePoolSession } from '@/config/digitalvaluepool';
+import {
+  buildValuePoolConclusionPrompt,
+  buildValuePoolDeepenPrompt,
+  toValuePoolSession,
+  VALUE_POOL_PROPOSAL_BANK,
+  type ValuePoolPhaseId,
+} from '@/config/digitalvaluepool';
 import { buildLegacyConclusionPrompt, toLegacySession } from '@/config/legacyanalyzer';
 import {
   SOP_SECTIONS,
@@ -217,6 +228,43 @@ export function getToolSuggestionPrompt(
         detectIsPolish(inputData)
       );
       if (dataInventoryPrompt) return dataInventoryPrompt;
+    }
+
+    // Robotics Feasibility seeds its `operations` step with the deepening ladder
+    // (buildRoboticsDeepenPrompt across all six axes, technical feasibility BEFORE
+    // economic) — this is what makes the ladder LIVE in runtime rather than dead
+    // config. Falls through to the generic operational prompt for other steps.
+    if (toolType === 'robotics-feasibility' && stepId === 'operations') {
+      const isPolish = detectIsPolish(inputData);
+      const framing = ROBOTICS_AXES.map((axis) => buildRoboticsDeepenPrompt(axis, 'evidence', isPolish))
+        .filter((x): x is string => !!x)
+        .map((x) => `- ${x}`)
+        .join('\n');
+      if (framing) {
+        return `${
+          isPolish
+            ? 'Działaj jako partner ds. feasibility robotyzacji (roboty/coboty/AMR, ISO 10218/TS 15066, business case ROI/payback). Zaproponuj 3-6 operacji-kandydatów, każdą zdyscyplinowaną drabiną pogłębiającą — bramka TECHNICZNA (powtarzalność I ustrukturyzowane środowisko I rozwiązywalny chwyt) PRZED ekonomiczną.'
+            : 'Act as a robotics-feasibility partner (robots/cobots/AMR, ISO 10218/TS 15066, ROI/payback business case). Propose 3-6 candidate operations, each disciplined by the deepening ladder — the TECHNICAL gate (repeatability AND structured environment AND solvable grip) BEFORE the economic one.'
+        }
+
+${isPolish ? 'Rama dowodowa per oś (czy to zmierzone, czy nawyk / broszura dostawcy):' : 'Evidence framing per axis (is it measured, or habit / a supplier brochure figure):'}
+${framing}
+
+${isPolish ? 'Zasady:' : 'Rules:'}
+- ${
+          isPolish
+            ? 'Nie licz ROI operacji, która nie przeszła bramki technicznej; brak danych o powtarzalności/środowisku/chwycie = do zmierzenia, nie domyślne „przejście”.'
+            : 'Do not price ROI on an operation that failed the technical gate; missing repeatability/environment/grip data = to-measure, not a default "pass".'
+        }
+- ${
+          isPolish
+            ? 'Podaj cycle time (manualny), wolumen roczny i liczbę zmian, bo payback zależy od trybu pracy (~2x dłuższy przy 1 zmianie); nie zmyślaj liczb.'
+            : 'Capture cycle time (manual), annual volume and shift count — payback depends on the work mode (~2x longer at 1 shift); do not invent numbers.'
+        }
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "category": "...", "repeatability": "high|medium|low", "structuredEnv": "high|medium|low", "gripSolvability": "high|medium|low", "shifts": 0, "cycleTimeManualSec": 0, "annualVolume": 0, "variability": "high|medium|low", "safetyRegime": "fenced|cobot|unknown"}]}`;
+      }
     }
 
     const opData = inputData as any;
