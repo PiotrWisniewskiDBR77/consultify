@@ -446,11 +446,43 @@ export interface SequencedMove {
   rejectedVariant: Bilingual;
   expectedImpact: Level;
   estimatedEffort: Level;
-  /** Every synthesized move is self-validated so the UI never renders an unjustified move. */
+  /**
+   * Every synthesized move is self-validated through the REAL W2 validator
+   * (validateW2Move), run over the move's own generated content in BOTH
+   * languages — not a hardcoded "always valid" flag. If a builder ever emits a
+   * thin/missing justification, the UI sees it here instead of trusting a constant.
+   */
   validation: W2ValidationResult;
 }
 
-const VALID: W2ValidationResult = { valid: true, missing: [], weak: [] };
+/** Merge two W2 results (e.g. PL + EN pass): a field is missing/weak if it is in either. */
+const mergeW2 = (a: W2ValidationResult, b: W2ValidationResult): W2ValidationResult => {
+  const missing = Array.from(new Set([...a.missing, ...b.missing]));
+  const weak = Array.from(new Set([...a.weak, ...b.weak])).filter((f) => !missing.includes(f));
+  return { valid: missing.length === 0 && weak.length === 0, missing, weak };
+};
+
+/**
+ * Attach a REAL validation to a drafted move by running validateW2Move over its
+ * own generated rationale / trade-off / rejected variant in both PL and EN. This
+ * is what makes validateW2Move a live guard for the auto-generated sequence
+ * (previously it was bypassed with a hardcoded `VALID` constant).
+ */
+const withValidation = (draft: Omit<SequencedMove, 'validation'>): SequencedMove => ({
+  ...draft,
+  validation: mergeW2(
+    validateW2Move({
+      rationale: draft.rationale.pl,
+      tradeOff: draft.tradeOff.pl,
+      rejectedVariant: draft.rejectedVariant.pl,
+    }),
+    validateW2Move({
+      rationale: draft.rationale.en,
+      tradeOff: draft.tradeOff.en,
+      rejectedVariant: draft.rejectedVariant.en,
+    })
+  ),
+});
 
 /**
  * Build a W2-validated move sequence from the located constraint and ranked
@@ -469,7 +501,7 @@ const VALID: W2ValidationResult = { valid: true, missing: [], weak: [] };
 export function buildW2MoveSequence(session: ConstraintSession): SequencedMove[] {
   const baseline = computeBaseline(session);
   const { location, accounting } = baseline;
-  const moves: SequencedMove[] = [];
+  const moves: Array<Omit<SequencedMove, 'validation'>> = [];
   let order = 1;
 
   const hasSteps = session.steps.length > 0;
@@ -507,7 +539,6 @@ export function buildW2MoveSequence(session: ConstraintSession): SequencedMove[]
       },
       expectedImpact: 'high',
       estimatedEffort: 'low',
-      validation: VALID,
     });
   }
 
@@ -537,7 +568,6 @@ export function buildW2MoveSequence(session: ConstraintSession): SequencedMove[]
       },
       expectedImpact: 'high',
       estimatedEffort: 'low',
-      validation: VALID,
     });
   }
 
@@ -565,7 +595,6 @@ export function buildW2MoveSequence(session: ConstraintSession): SequencedMove[]
       },
       expectedImpact: baseline.growingQueueCount > 0 ? 'high' : 'medium',
       estimatedEffort: 'medium',
-      validation: VALID,
     });
   }
 
@@ -592,7 +621,6 @@ export function buildW2MoveSequence(session: ConstraintSession): SequencedMove[]
       },
       expectedImpact: 'high',
       estimatedEffort: 'low',
-      validation: VALID,
     });
   }
 
@@ -626,10 +654,9 @@ export function buildW2MoveSequence(session: ConstraintSession): SequencedMove[]
     },
     expectedImpact: realGap ? 'medium' : 'low',
     estimatedEffort: 'high',
-    validation: VALID,
   });
 
-  return moves;
+  return moves.map(withValidation);
 }
 
 /**
