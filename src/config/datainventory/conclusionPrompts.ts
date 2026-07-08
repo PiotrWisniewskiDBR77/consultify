@@ -31,7 +31,9 @@ import {
 } from './dataInventoryEngine';
 import { localizeLadder } from './index';
 import {
+  DATA_INVENTORY_PROPOSAL_BANK,
   QUALITY_DIMENSION_META,
+  dataGovernanceLeverLabel,
   type DataGovernanceLeverId,
 } from './deepeningLadder';
 
@@ -236,4 +238,69 @@ export function buildDataInventoryDeepenPrompt(
   const rung = rungs.find((r) => r.id === rungId);
   if (!rung) return null;
   return `${rung.question}\n\n${isPolish ? 'Kontekst konsultanta' : 'Consultant framing'}: ${rung.rationale}`;
+}
+
+/**
+ * Maps a Data Inventory capture step (steps.ts) to the governance levers it
+ * deepens: `assets` is the inventory lever; `domains` carries quality +
+ * governance + AI readiness at once; `useCase` is AI readiness. Other steps
+ * (`context`, `summary`) have no per-lever suggestion.
+ */
+const STEP_LEVERS: Record<string, DataGovernanceLeverId[]> = {
+  assets: ['inventory'],
+  domains: ['quality', 'governance', 'aiReadiness'],
+  useCase: ['aiReadiness'],
+};
+
+/**
+ * Section-level suggestion prompt for a Data Inventory capture step. Unlike the
+ * generic operational item generator, this one is DISCIPLINED by two doctrine
+ * assets that would otherwise sit dead:
+ *   - the deepening ladder (buildDataInventoryDeepenPrompt) — the surface →
+ *     evidence → quantification → risk/capability staircase framing per lever;
+ *   - the partner-grade proposal bank (DATA_INVENTORY_PROPOSAL_BANK) — concrete
+ *     candidate governance moves the model refines and fits to the session,
+ *     rather than inventing blind.
+ * Returns null for steps with no governance lever (context / summary), so the
+ * caller falls back to the generic operational prompt.
+ */
+export function buildDataInventoryStepSuggestionPrompt(
+  stepId: string,
+  isPolish: boolean
+): string | null {
+  const levers = STEP_LEVERS[stepId];
+  if (!levers || levers.length === 0) return null;
+
+  const blocks = levers.map((lever) => {
+    const label = dataGovernanceLeverLabel(lever);
+    const framing = buildDataInventoryDeepenPrompt(lever, 'quantification', isPolish);
+    const proposals = DATA_INVENTORY_PROPOSAL_BANK[lever]
+      .map(
+        (p) =>
+          `  · [${p.rung}] ${localize(p.title.pl, p.title.en, isPolish)} — ${localize(
+            p.explanation.pl,
+            p.explanation.en,
+            isPolish
+          )}`
+      )
+      .join('\n');
+    return `${isPolish ? 'Dźwignia' : 'Lever'}: ${localize(label.pl, label.en, isPolish)}
+${framing ? `${framing}\n` : ''}${
+      isPolish
+        ? 'Bank propozycji (kandydaci do dopracowania i dopasowania, nie do skopiowania w ciemno)'
+        : 'Proposal bank (candidates to refine and fit, not copy blind)'
+    }:
+${proposals}`;
+  });
+
+  const header = isPolish
+    ? `Działaj jako partner ds. governance danych i gotowości pod AI (DAMA-DMBOK, Gartner data governance maturity). Zaproponuj 3-6 konkretnych pozycji do sekcji „${stepId}", zdyscyplinowanych drabiną pogłębiającą (surface → evidence → quantification → risk/capability). Oprzyj je na bankach propozycji poniżej — dopracuj i dopasuj do kontekstu sesji; nie kopiuj w ciemno ani nie wymyślaj liczb, właścicieli czy poziomów niepopartych sesją.`
+    : `Act as a data-governance and AI-readiness partner (DAMA-DMBOK, Gartner data governance maturity). Propose 3-6 concrete items for the "${stepId}" section, disciplined by the deepening staircase (surface → evidence → quantification → risk/capability). Ground them in the proposal banks below — refine and fit them to the session context; do not copy blind or invent numbers, owners or levels the session does not support.`;
+
+  return `${header}
+
+${blocks.join('\n\n')}
+
+${isPolish ? 'Zwróć JSON' : 'Return JSON'}:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "owner": "...", "target": "...", "threshold": "..."}]}`;
 }
