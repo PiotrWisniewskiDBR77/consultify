@@ -12,6 +12,9 @@
  *   - `volume`: monthly unit volume — read the same way at
  *               `sections['volume'][0]`, or from the first step's
  *               `monthlyVolume` field when present (adapter tries that first)
+ *   - `availableTime`: available working time in the period — read as a raw
+ *               number at `sections['availableTime'][0]`; with `demand` it yields
+ *               takt time = availableTime / demand (doctrine §3.3)
  *   - `moves` : candidate kaizen moves (lever/impact/effort/evidence), scored
  *               by `rankLevers`/`buildW2MoveSequence` in vsmEngine.ts
  */
@@ -45,6 +48,15 @@ export const VSM_STEPS: StepDefinition[] = [
     namePl: 'Popyt klienta',
     description: 'Capture customer demand in the period, for takt-time framing',
     descriptionPl: 'Zbierz popyt klienta w okresie, do ramowania takt time',
+    required: false,
+    aiAssisted: false,
+  },
+  {
+    id: 'availableTime',
+    name: 'Available working time',
+    namePl: 'Dostępny czas pracy',
+    description: 'Capture available working time in the period (same unit as C/T) — with demand it yields takt time',
+    descriptionPl: 'Zbierz dostępny czas pracy w okresie (ta sama jednostka co C/T) — z popytem daje takt time',
     required: false,
     aiAssisted: false,
   },
