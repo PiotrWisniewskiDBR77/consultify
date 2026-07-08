@@ -4,7 +4,7 @@ Metodyka: A=Merytoryka, B=Ścieżka pracy z klientem, C=Prezentacja (proxy code-
 
 | Narzędzie | Runda | A | B | C | Średnia | Status |
 |---|---|---|---|---|---|---|
-| vsm-builder | 1 | 5 | 5 | ? | ? | **BRAK C rundy 1 — dispatch C, potem fix (demand/takt-time martwe, 7 muda nieoperacjonalizowane)** |
+| vsm-builder | 2 | 5,5 | 5,5 | 5,5 | 5,5 | **✅ DONE — recenzja C (4/6) + 4 braki (demand/takt martwe · 7 muda nieoperacjonalizowane · validation zahardkodowane · pure-waste nietestowane) + precyzja PCE naprawione i zweryfikowane runtime (commity 6f91769d26 → b034484874). Harness 12/12 PASS.** |
 | constraint-control | 2 | 5,5 | 5,5 | 6 | 5,67 | **✅ DONE — recenzja C (4/6) + 4 braki naprawione i zweryfikowane runtime (commity 6e… → 4d1b37493a). Harness 11/11 PASS.** |
 | control-tower | 2 | 6 | 6 | 5 | 5,67 | **✅ DONE — braki A+B rundy 1 naprawione i zweryfikowane runtime (commit 2e68b62460). Harness 11/11 PASS.** |
 | automation-pipeline | 2 | 5,5 | 5,5 | 6 | 5,67 | **✅ DONE — 4 braki rundy 1 naprawione i zweryfikowane runtime (commity 505ec3d620 · b69d14d2f7 · e5063c3db4). Harness 11/11 PASS.** |
@@ -34,7 +34,30 @@ Metodyka: A=Merytoryka, B=Ścieżka pracy z klientem, C=Prezentacja (proxy code-
 
 **Średnia (5,5+5,5+6)/3 = 5,67 ≥ 5,5 → DONE.**
 Reszta do ew. rundy 3 (nie blokuje DONE): sekwencjonuj pre-krok governance dla procesów bez właściciela; rozważ archetyp §6.6 (przegląd wdrożonego portfela botów); odciążyć double-use `errorRisk`.
-- **constraint-control**: `validation: VALID` zahardkodowane w `buildW2MoveSequence`, NIE przechodzi przez `validateW2Move` dla auto-sekwencji; ścieżka policy-constraint (insight #3 doktryny) martwa w fixture (`policyConstraintLikely=false` bo capacityGap dodatni) — dodać move z `step:'policy'` LUB scenariusz w fixture gdzie się uruchamia; brak projekcji przyrostu przepustowości z zamknięcia capacity-gap mimo dostępnych danych; Evaporating Cloud tylko tekstowe pytanie bez struktury danych.
+
+## constraint-control — RUNDA 2 (recenzja C + fix + re-panel, 07-08)
+**Recenzja C rundy 1 (proxy code-review): OCENA 4/6.** Kod czysty, dwujęzyczny (PL/EN spójny), REALNY caller (`promptRegistry.ts:686` → `buildConstraintConclusionPrompt(toConstraintSession(...))` — nie fantom), self-contained, esbuild-clean, wierny doktrynie, ZERO `primary-*`/crimson (pliki config, brak JSX). ALE 3 defekty korektności + 1 minor:
+- **BRAK C-1 (`constraintEngine.ts` const VALID, 5 ruchów):** `validation: VALID` zahardkodowane — `validateW2Move` był martwym kodem dla auto-sekwencji; komentarz „every synthesized move is self-validated" fałszywy (pułapka „wygląda-na-zrobione").
+- **BRAK C-2:** ścieżka policy martwa w kanonicznym fixture (`policyConstraintLikely=false`, capacityGap=+3) — flagowy insight §6.3 nie odpalał na własnym worked-example.
+- **BRAK C-3:** brak projekcji przyrostu T z zamknięcia luki mimo pełnych danych (§7 Elevate-ROI).
+- **BRAK C-4 (minor):** Evaporating Cloud tylko tekst.
++ **Latent bug:** rationale ruchu policy hardkodował „luka ${gap} ≤ 0" — fałszywy gdy policy współistnieje z fizyczną luką.
+Średnia rundy 1 (A=5, B=5, C=4) = 4,67 < 5,5 → fix.
+
+**Naprawione, zweryfikowane runtime (`synthesizeConstraintPlan`/`buildConstraintConclusionPrompt` na fixture):**
+1. **validateW2Move na żywo** — usunięty `const VALID`; akumulator `Omit<SequencedMove,'validation'>[]` → `withValidation` przepuszcza REALNĄ treść (PL+EN, `mergeW2` unia braków) przez `validateW2Move`. Pass zapracowany.
+2. **Ścieżka policy odpala** — fixture: ruch `step:'policy'` (reguła „Partner recenzuje każdy draft osobiście", §7) + para Evaporating Cloud w `evidence[]`. Runtime: `policyConstraintLikely=true`, SEQ = exploit→subordinate→**policy**→elevate.
+3. **Projekcja przepustowości** — `computeThroughputProjection`: T/jedn. × luka. Runtime: cap 7, luka 3, T/jedn. 77,1 → **+231,3 T**, Zysk netto 160→**391,3**; na baseline + obie gałęzie Elevate + prompt.
+4. **Honest policy rationale** — rozgałęzione `capacityGap<=0` vs `>0` (policy + luka → „domyślna PIERWSZA hipoteza, część luki znika bez CAPEX"). Latent bug usunięty.
++ cleanup: martwy `constraintName/void` + redundantny ternary `roiLine`.
+**Zakres #4:** Evaporating Cloud jako ustrukturyzowana treść dowodu (para A/B + ukryte założenie) + wymóg w insight-barze promptu, NIE typowane pole — EC to technika rozumowania, pełny typ = scope creep bez źródła w sesji.
+
+**Re-panel (sceptyczny, na poprawionym kodzie):**
+- **A=5,5:** 3 defekty + latent bug domknięte; lokalizacja z kolejki, false-busy nazwany, T/I/OE + 4 wskaźniki poprawne, projekcja modelowana i JAWNIE oznaczona jako estymata, policy żywa, dyscyplina 5FS. Nity: projekcja zakłada shipped≈capacity (zasadne gdy constraint wiążący); EC nietypowany.
+- **B=5,5:** drabinka 5×4 partnerska + sekwencja identify(warunkowo)→exploit→subordinate→policy→elevate z REALNIE walidowanymi ruchami W2; policy step = materiał na inicjatywę transformacyjną. Nit: identify pomijany gdy basis=queue (poprawne), sceptyk chciałby jawnego potwierdzenia lokalizacji.
+- **C=6:** esbuild-clean, harness 11/11, `validateW2Move` żywy, policy rationale niesprzeczny, zero crimson, realny caller, cosmetics posprzątane.
+
+**Średnia (5,5+5,5+6)/3 = 5,67 ≥ 5,5 → DONE.**
 - **vsm-builder**: `demand`/`volume` zbierane ale nigdy nie liczone (brak takt time = dostępny czas/popyt, mimo że doktryna wymaga tego w ramowaniu mapy); 7 typów muda zadeklarowane w typie ale nieużywane do różnicowania insightów (`waste`-lever traktuje cały pure-waste jako jeden worek); fixture nie ćwiczy ścieżki pure-waste wcale (wszystkie kroki `value-add`).
 - **control-tower**: (tylko C=5 na razie) zero code-review braków zgłoszonych — czeka na A+B.
 
