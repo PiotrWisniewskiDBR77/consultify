@@ -339,11 +339,19 @@ export function scoreLinks(session: DecisionSession): LinkScore[] {
   // 2. Alternatives — ≥3 real (non-straw) alternatives, MECE proxy.
   const altQ = clamp(realAlts.length / 3, 0, 1) * (alternatives.some((a) => a.strawman) ? 0.7 : 1);
 
-  // 3. Information — uncertainties given as ranges rather than point estimates.
-  const infoQ =
+  // A validated pre-mortem lifts information quality (Klein: the past-tense walk-
+  // back surfaces ~30% more valid objections than a standard risk review — doctrine
+  // §4.2), so genuine pre-mortem assumptions raise both the information and the
+  // reasoning links rather than sitting inert.
+  const premortemBoost = clamp(premortemAssumptions.length * 0.08, 0, 0.2);
+
+  // 3. Information — uncertainties given as ranges rather than point estimates,
+  //    lifted by any pre-mortem-sourced objections.
+  const infoBase =
     uncertainties.length === 0
       ? 0.2
       : clamp(rangedUncertainties.length / Math.max(uncertainties.length, 1), 0, 1);
+  const infoQ = clamp(infoBase + premortemBoost, 0, 1);
 
   // 4. Values — criteria carry explicit weights and the trade-off is named.
   const valuesQ =
@@ -351,12 +359,24 @@ export function scoreLinks(session: DecisionSession): LinkScore[] {
       ? 0
       : clamp(weightedCriteria.length / criteria.length, 0, 1) * clamp(criteria.length / 3, 0.4, 1);
 
-  // 5. Reasoning — the matrix produces a decisive, non-trivial recommendation.
+  // 5. Reasoning — the matrix produces a decisive AND robust recommendation. A
+  //    wide margin on a FRAGILE recommendation (one uncertainty flips it) is not
+  //    sound reasoning, so robustness discounts the score; a pre-mortem lifts it.
   const matrix = buildMatrix(session);
+  const sensitivity = analyzeSensitivity(session, matrix);
+  const robustnessPenalty = sensitivity.robustness === 'fragile' ? 0.2 : 0;
   const reasoningQ =
     matrix.recommendedId === null
       ? 0.1
-      : clamp(0.5 + matrix.margin * 0.4 + (criteria.length >= 2 ? 0.2 : 0), 0, 1);
+      : clamp(
+          0.5 +
+            matrix.margin * 0.4 +
+            (criteria.length >= 2 ? 0.2 : 0) +
+            (premortemAssumptions.length > 0 ? 0.1 : 0) -
+            robustnessPenalty,
+          0,
+          1
+        );
 
   // 6. Commitment — implementers present + confirmed buy-in.
   let commitQ = 0;
@@ -425,14 +445,18 @@ export function scoreLinks(session: DecisionSession): LinkScore[] {
       reason: reason(
         matrix.recommendedId === null
           ? 'Macierz nie wskazuje rekomendacji — brak wystarczających danych o opcjach lub kryteriach.'
-          : matrix.margin < 0.3
-            ? `Rekomendacja jest, ale przewaga nad drugą opcją jest wąska (${matrix.margin}) — decyzja krucha.`
-            : `Rekomendacja z wyraźną przewagą (${matrix.margin}).`,
+          : sensitivity.robustness === 'fragile'
+            ? `Rekomendacja jest (przewaga ${matrix.margin}), ale KRUCHA — pojedyncza niepewność ją odwraca; szeroka marża nie oznacza solidnego rozumowania.`
+            : matrix.margin < 0.3
+              ? `Rekomendacja jest, ale przewaga nad drugą opcją jest wąska (${matrix.margin}) — decyzja krucha.`
+              : `Rekomendacja z wyraźną, solidną przewagą (${matrix.margin}).`,
         matrix.recommendedId === null
           ? 'The matrix yields no recommendation — insufficient data on options or criteria.'
-          : matrix.margin < 0.3
-            ? `A recommendation exists, but its margin over the runner-up is narrow (${matrix.margin}) — a fragile decision.`
-            : `A recommendation with a clear margin (${matrix.margin}).`
+          : sensitivity.robustness === 'fragile'
+            ? `A recommendation exists (margin ${matrix.margin}), but it is FRAGILE — a single uncertainty flips it; a wide margin is not sound reasoning here.`
+            : matrix.margin < 0.3
+              ? `A recommendation exists, but its margin over the runner-up is narrow (${matrix.margin}) — a fragile decision.`
+              : `A recommendation with a clear, robust margin (${matrix.margin}).`
       ),
     },
     {
@@ -609,6 +633,133 @@ export function splitDisputes(session: DecisionSession): DisputeSplit {
 }
 
 // ---------------------------------------------------------------------------
+// Weight-profile sensitivity — recommendation under 2-3 weight profiles
+// ---------------------------------------------------------------------------
+
+export interface WeightProfile {
+  id: 'base' | 'emphasis' | 'deemphasis';
+  label: Bilingual;
+  weights: Record<string, number>;
+  recommendedId: string | null;
+  recommendedLabel: string | null;
+  margin: number;
+}
+
+export interface WeightProfileComparison {
+  /** True when at least one criterion carries a contested weight. */
+  contested: boolean;
+  /** Labels of the contested criteria whose weights drove the alternative profiles. */
+  contestedCriteria: string[];
+  /** Base profile + (when contested) an emphasis and a de-emphasis profile. */
+  profiles: WeightProfile[];
+  /**
+   * True when the recommended option actually CHANGES across the profiles — i.e.
+   * the weight dispute is decision-relevant, not cosmetic. This is the signal
+   * that the team must resolve the value dispute before committing.
+   */
+  recommendationVaries: boolean;
+  message: Bilingual;
+}
+
+const matrixWithCriterionWeights = (
+  session: DecisionSession,
+  transform: (c: Criterion) => number
+): DecisionMatrix =>
+  buildMatrix({
+    ...session,
+    criteria: session.criteria.map((c) => ({ ...c, weight: transform(c) })),
+  });
+
+const profileFrom = (id: WeightProfile['id'], label: Bilingual, m: DecisionMatrix): WeightProfile => {
+  const top = m.ranked.find((a) => a.id === m.recommendedId) ?? null;
+  return {
+    id,
+    label,
+    weights: m.weights,
+    recommendedId: m.recommendedId,
+    recommendedLabel: top ? top.label : null,
+    margin: m.margin,
+  };
+};
+
+/**
+ * Compute the recommendation under 2-3 weight profiles when a criterion's weight
+ * is contested. The doctrine (§4.2/§5, and DECISION_PROPOSAL_BANK.criteria's
+ * "show the recommendation under 2-3 weight profiles, do not silently average")
+ * requires surfacing whether the weight dispute actually changes the answer — the
+ * base profile plus one that emphasises the contested criteria and one that
+ * de-emphasises them. When the recommended option is stable across all three, the
+ * dispute is cosmetic; when it flips, the value dispute must be settled first.
+ */
+export function compareWeightProfiles(session: DecisionSession): WeightProfileComparison {
+  const base = buildMatrix(session);
+  const baseProfile = profileFrom(
+    'base',
+    { pl: 'Wagi zadeklarowane', en: 'Declared weights' },
+    base
+  );
+
+  const contestedCrit = session.criteria.filter((c) => c.contested && (c.weight ?? 0) > 0);
+  const contestedIds = new Set(contestedCrit.map((c) => c.id));
+  const contestedLabels = contestedCrit.map((c) => c.label ?? c.id);
+
+  if (contestedCrit.length === 0) {
+    return {
+      contested: false,
+      contestedCriteria: [],
+      profiles: [baseProfile],
+      recommendationVaries: false,
+      message: {
+        pl: 'Wagi kryteriów nie są sporne — rekomendacja nie zależy od profilu wag.',
+        en: 'Criteria weights are not contested — the recommendation does not hinge on the weight profile.',
+      },
+    };
+  }
+
+  // Emphasis: double the weight of every contested criterion; de-emphasis: halve
+  // it. buildMatrix renormalizes weights to sum to 1, so these are relative
+  // re-weightings of the contested values against the rest.
+  const emphasis = matrixWithCriterionWeights(session, (c) =>
+    contestedIds.has(c.id) ? (c.weight ?? 0) * 2 : (c.weight ?? 0)
+  );
+  const deemphasis = matrixWithCriterionWeights(session, (c) =>
+    contestedIds.has(c.id) ? (c.weight ?? 0) * 0.5 : (c.weight ?? 0)
+  );
+
+  const profiles: WeightProfile[] = [
+    baseProfile,
+    profileFrom(
+      'emphasis',
+      { pl: `Profil A: mocniejsza waga „${contestedLabels.join(', ')}"`, en: `Profile A: heavier weight on "${contestedLabels.join(', ')}"` },
+      emphasis
+    ),
+    profileFrom(
+      'deemphasis',
+      { pl: `Profil B: słabsza waga „${contestedLabels.join(', ')}"`, en: `Profile B: lighter weight on "${contestedLabels.join(', ')}"` },
+      deemphasis
+    ),
+  ];
+
+  const distinct = new Set(profiles.map((p) => p.recommendedId).filter((id) => id !== null));
+  const recommendationVaries = distinct.size > 1;
+
+  return {
+    contested: true,
+    contestedCriteria: contestedLabels,
+    profiles,
+    recommendationVaries,
+    message: {
+      pl: recommendationVaries
+        ? `Rekomendacja ZMIENIA się w zależności od wagi spornych kryteriów (${contestedLabels.join(', ')}): ${profiles.map((p) => `${p.label.pl} → ${p.recommendedLabel ?? 'brak'}`).join('; ')}. To spór o wartości, który trzeba rozstrzygnąć przed decyzją — nie uśredniaj po cichu.`
+        : `Rekomendacja jest stabilna mimo sporu o wagi (${contestedLabels.join(', ')}) — wszystkie profile wskazują „${baseProfile.recommendedLabel ?? 'brak'}". Spór o wagi jest w tym wypadku kosmetyczny.`,
+      en: recommendationVaries
+        ? `The recommendation CHANGES with the weight of the contested criteria (${contestedLabels.join(', ')}): ${profiles.map((p) => `${p.label.en} → ${p.recommendedLabel ?? 'none'}`).join('; ')}. This is a value dispute to settle before deciding — do not silently average.`
+        : `The recommendation is stable despite the weight dispute (${contestedLabels.join(', ')}) — every profile points to "${baseProfile.recommendedLabel ?? 'none'}". The weight dispute is cosmetic here.`,
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Move sequence — raise the weakest link before committing
 // ---------------------------------------------------------------------------
 
@@ -637,6 +788,7 @@ export function buildMoveSequence(session: DecisionSession): SequencedMove[] {
   const weakest = weakestLink(session);
   const sensitivity = analyzeSensitivity(session);
   const falseBinary = detectFalseBinarity(session);
+  const weightProfiles = compareWeightProfiles(session);
 
   // 1. Fix the weakest link — the chain is only as strong as this.
   moves.push({
@@ -715,6 +867,33 @@ export function buildMoveSequence(session: DecisionSession): SequencedMove[] {
     });
   }
 
+  // 3b. If the recommendation changes under different weight profiles, the weight
+  //     dispute is decision-relevant — settle the value dispute before scoring.
+  if (weightProfiles.recommendationVaries) {
+    moves.push({
+      order: order++,
+      link: 'values',
+      title: {
+        pl: `Rozstrzygnij spór o wagi kryteriów „${weightProfiles.contestedCriteria.join(', ')}" — rekomendacja od niego zależy`,
+        en: `Settle the weight dispute over "${weightProfiles.contestedCriteria.join(', ')}" — the recommendation depends on it`,
+      },
+      rationale: {
+        pl: weightProfiles.message.pl,
+        en: weightProfiles.message.en,
+      },
+      tradeOff: {
+        pl: 'Kosztem jawnej rozmowy o preferencjach (na czym naprawdę zależy) — w zamian za to, że rekomendacja przestaje zależeć od cichego, arbitralnego ustawienia wag.',
+        en: 'At the cost of an explicit conversation about preferences (what we truly value) — in exchange for the recommendation no longer hinging on a silent, arbitrary weighting.',
+      },
+      rejectedVariant: {
+        pl: 'Odrzucamy uśrednienie spornych wag po cichu: to pozoruje zgodę i wybiera opcję, której przy jawnych wagach nikt by nie wybrał.',
+        en: 'We reject silently averaging the contested weights: it fakes consensus and picks an option no one would choose under explicit weights.',
+      },
+      expectedImpact: 'high',
+      estimatedEffort: 'low',
+    });
+  }
+
   // 4. Convert to a conditional decision with a checkpoint, not a one-shot bet.
   moves.push({
     order: order++,
@@ -758,6 +937,8 @@ export interface DecisionSynthesis {
   falseBinarity: FalseBinarity;
   hiddenCriterion: HiddenCriterion;
   disputes: DisputeSplit;
+  /** Recommendation under alternative weight profiles when weights are contested. */
+  weightProfiles: WeightProfileComparison;
   sequence: SequencedMove[];
   /** Overall Decision Quality — the MINIMUM link score (chain strength), 0..100. */
   overallQuality: number;
@@ -781,6 +962,7 @@ export function synthesizeDecision(session: DecisionSession): DecisionSynthesis 
     falseBinarity: detectFalseBinarity(session),
     hiddenCriterion: detectHiddenCriterion(session),
     disputes: splitDisputes(session),
+    weightProfiles: compareWeightProfiles(session),
     sequence: buildMoveSequence(session),
     overallQuality,
   };
