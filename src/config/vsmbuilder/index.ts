@@ -102,8 +102,9 @@ const truthy = (raw: unknown): boolean =>
  * box; `category` carries the value type (value-add / necessary-nva /
  * pure-waste); `threshold` (text) carries the muda type; a `measured` flag marks
  * gemba-measured steps. For moves: `category` carries the lever; impact / effort
- * / evidence carry the scoring facts. Framing (`demand`, `monthlyVolume`) is
- * read from the first step or a top-level hint if present.
+ * / evidence carry the scoring facts. Framing (`demand`, `monthlyVolume`,
+ * `availableTime` → takt time) is read from a top-level section or the first
+ * step if present.
  */
 export function toVsmSession(sections: Record<string, unknown[]> | undefined): VsmSession {
   const rawSteps = ((sections?.['steps'] || sections?.['stages'] || []) as unknown[]) as Array<
@@ -142,6 +143,10 @@ export function toVsmSession(sections: Record<string, unknown[]> | undefined): V
     asNumber((rawSteps[0] as Record<string, unknown> | undefined)?.monthlyVolume) ??
     asNumber(sections?.['volume']?.[0]) ??
     undefined;
+  const availableTime =
+    asNumber(sections?.['availableTime']?.[0]) ??
+    asNumber((rawSteps[0] as Record<string, unknown> | undefined)?.availableTime) ??
+    undefined;
 
-  return { steps, moves, demand, monthlyVolume };
+  return { steps, moves, demand, monthlyVolume, availableTime };
 }
