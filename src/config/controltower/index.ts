@@ -99,6 +99,7 @@ const asMaturityLevel = (raw: unknown): MaturityLevel | undefined => {
  *  - EXCEPTIONS: `category` = lever; `target`/`volume` = fire count;
  *                `threshold` = detection lag (hours); `frequency` = closed-no-action
  *                ratio; `hasThreshold`/`hasOwner`/`dynamicThreshold` flags;
+ *                `hasSla`/`hasEscalation` = optional tri-state response-model flags;
  *                `source`/`owner` = the source/route/supplier it concentrates on.
  *  - MOVES:      `category` = lever; impact/effort/evidence carry the scoring facts.
  */
@@ -131,6 +132,14 @@ export function toControlTowerSession(
     closedNoActionRatio: asRatio(item.closedNoActionRatio ?? item.frequency),
     hasThreshold: truthy(item.hasThreshold),
     hasOwner: truthy(item.hasOwner ?? item.owner),
+    // SLA & escalation are tri-state: preserve `undefined` when the session does
+    // not record the response model (so it is not penalized), coerce only when a
+    // value is actually present (doctrine §4.3 — tower-vs-dashboard test).
+    hasSla: item.hasSla === undefined || item.hasSla === null ? undefined : truthy(item.hasSla),
+    hasEscalation:
+      item.hasEscalation === undefined || item.hasEscalation === null
+        ? undefined
+        : truthy(item.hasEscalation),
     dynamicThreshold: truthy(item.dynamicThreshold),
     sourceId:
       typeof item.source === 'string'

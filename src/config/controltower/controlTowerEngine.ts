@@ -93,6 +93,15 @@ export interface ExceptionItem {
   hasThreshold?: boolean;
   /** Whether this exception has an assigned owner (else it is a dashboard, not a tower). */
   hasOwner?: boolean;
+  /**
+   * Whether this exception has a response SLA per criticality (doctrine §4.3 — the
+   * test that separates a tower from a dashboard). Tri-state: `undefined` = the
+   * session does not track SLA (not penalized); `false` = tracked-and-missing
+   * (counts as ungoverned).
+   */
+  hasSla?: boolean;
+  /** Whether this exception has a defined escalation path when no one reacts in SLA. Tri-state like `hasSla`. */
+  hasEscalation?: boolean;
   /** Whether the threshold is dynamic (variability-relative) rather than static. */
   dynamicThreshold?: boolean;
   /** Source node / supplier / route this exception concentrates on — for risk concentration. */
@@ -129,6 +138,16 @@ const localize = (text: Bilingual, isPolish: boolean) => (isPolish ? text.pl : t
 const isBlind = (n: ChainNode) => n.integrated !== true;
 /** Above this feed lag an "integrated" node is really an archive (a soft blind spot). */
 const STALE_FEED_HOURS = 12;
+/**
+ * Severity weight for ranking blind spots (doctrine §5–§7): a HARD blind spot
+ * carries no visibility at all, a STALE one still delivers delayed (e.g. daily)
+ * visibility, so equal-value exposure behind a hard blind spot is more uncovered.
+ * The costliest blind spot is therefore ranked by flowValue × severity weight,
+ * not by raw flowValue — otherwise the tool prioritizes a warehouse that already
+ * has a (stale) feed over a supplier with no feed at all.
+ */
+const SEVERITY_WEIGHT: Record<BlindSpot['severity'], number> = { hard: 1, stale: 0.5 };
+const blindSpotExposure = (b: BlindSpot) => b.flowValue * SEVERITY_WEIGHT[b.severity];
 
 // ---------------------------------------------------------------------------
 // Baseline — the tower diagnosis
@@ -237,7 +256,10 @@ export function computeBaseline(session: ControlTowerSession): ControlTowerBasel
       flowValue: round1(n.flowValue || 0),
       severity: isBlind(n) ? ('hard' as const) : ('stale' as const),
     }))
-    .sort((a, b) => b.flowValue - a.flowValue);
+    // Rank by severity-weighted exposure: a hard blind spot (no feed) outranks a
+    // stale one of equal value, but a very large stale node can still outrank a
+    // tiny hard one. Ties break toward the higher raw flow value.
+    .sort((a, b) => blindSpotExposure(b) - blindSpotExposure(a) || b.flowValue - a.flowValue);
 
   const totalFlowValue = nodes.reduce((acc, n) => acc + (n.flowValue || 0), 0);
   const blindFlowValue = blindSpots.reduce((acc, b) => acc + b.flowValue, 0);
@@ -287,8 +309,17 @@ export function computeBaseline(session: ControlTowerSession): ControlTowerBasel
             : 0
         );
 
-  // --- Governance: exceptions missing a threshold or an owner ---
-  const ungoverned = exceptions.filter((e) => e.hasThreshold !== true || e.hasOwner !== true).length;
+  // --- Governance: exceptions missing a threshold, an owner or (when the session
+  // tracks the response model) an SLA / escalation path. SLA & escalation are
+  // tri-state: only an explicit `false` counts against governance, so sessions
+  // that do not record the response model are not penalized (doctrine §4.3). ---
+  const ungoverned = exceptions.filter(
+    (e) =>
+      e.hasThreshold !== true ||
+      e.hasOwner !== true ||
+      e.hasSla === false ||
+      e.hasEscalation === false
+  ).length;
   const ungovernedExceptionShare = exceptions.length > 0 ? round1(ungoverned / exceptions.length) : 0;
   const withDynamic = exceptions.filter((e) => e.dynamicThreshold === true).length;
   const dynamicShare = exceptions.length > 0 ? withDynamic / exceptions.length : 0;
@@ -527,6 +558,22 @@ export function buildW2MoveSequence(session: ControlTowerSession): SequencedMove
   // 1. Light the costliest blind spot first — a chain with blind spots cannot be steered.
   if (baseline.blindSpots.length > 0) {
     const worst = baseline.blindSpots[0];
+    const isHard = worst.severity === 'hard';
+    // Doctrine §6/§7 signature insight: the blindest node is often also the risk
+    // concentration head ("blindest = riskiest, not a coincidence"). Surface it.
+    const alsoRiskHead = baseline.riskConcentration[0]?.sourceId === worst.id;
+    const coincidencePl = alsoRiskHead
+      ? ' To zarazem czoło koncentracji ryzyka — najbardziej ślepy węzeł jest najbardziej ryzykowny, i to nie przypadek.'
+      : '';
+    const coincidenceEn = alsoRiskHead
+      ? ' It is also the risk-concentration head — the blindest node is the riskiest, and that is no coincidence.'
+      : '';
+    const symptomPl = isHard
+      ? 'Tam zakłócenie materializuje się bez ostrzeżenia, choć reszta „świeci na zielono".'
+      : 'Ten węzeł ma feed, ale zbyt wolny (wpis raz dziennie to archiwum, nie widoczność) — ostrzeżenie przychodzi o dobę za późno.';
+    const symptomEn = isHard
+      ? 'There disruption materializes without warning while the rest "shows green".'
+      : 'This node has a feed, but too slow (a once-a-day entry is an archive, not visibility) — the warning arrives a day too late.';
     moves.push({
       order: order++,
       lever: 'visibility',
@@ -535,17 +582,27 @@ export function buildW2MoveSequence(session: ControlTowerSession): SequencedMove
         en: 'Light the costliest visibility blind spot first',
       },
       rationale: {
-        pl: `${baseline.blindSpots.length} z ${baseline.nodeCount} węzłów jest ślepych (${Math.round(baseline.blindShare * 100)}%), a przez nie przepływa ekspozycja ${baseline.blindFlowValue} — najdroższy to „${worst.id}" (${worst.kind}, ${worst.flowValue}). Tam zakłócenie materializuje się bez ostrzeżenia, choć reszta „świeci na zielono".`,
-        en: `${baseline.blindSpots.length} of ${baseline.nodeCount} nodes are blind (${Math.round(baseline.blindShare * 100)}%), carrying ${baseline.blindFlowValue} of exposure — the costliest is "${worst.id}" (${worst.kind}, ${worst.flowValue}). There disruption materializes without warning while the rest "shows green".`,
+        pl: `${baseline.blindSpots.length} z ${baseline.nodeCount} węzłów jest ślepych (${Math.round(baseline.blindShare * 100)}%), a przez nie przepływa ekspozycja ${baseline.blindFlowValue} — najdroższy to „${worst.id}" (${worst.kind}, ${worst.flowValue}, ${isHard ? 'brak feedu' : 'feed nieświeży'}). ${symptomPl}${coincidencePl}`,
+        en: `${baseline.blindSpots.length} of ${baseline.nodeCount} nodes are blind (${Math.round(baseline.blindShare * 100)}%), carrying ${baseline.blindFlowValue} of exposure — the costliest is "${worst.id}" (${worst.kind}, ${worst.flowValue}, ${isHard ? 'no feed' : 'stale feed'}). ${symptomEn}${coincidenceEn}`,
       },
-      tradeOff: {
-        pl: 'Kosztem czasu i budżetu na integrację (EDI/API/feed 3PL) tego jednego węzła, zamiast rozbudowy analityki na już widzianych.',
-        en: 'At the cost of time and budget to integrate (EDI/API/3PL feed) this one node, rather than expanding analytics on already-visible ones.',
-      },
-      rejectedVariant: {
-        pl: 'Odrzucamy „dokupmy lepszy dashboard": ładniejszy ekran na tych samych danych nie oświetla martwego pola — integrujemy brakujący feed, nie renderujemy pustkę.',
-        en: 'We reject "buy a nicer dashboard": a prettier screen on the same data does not light a blind spot — we integrate the missing feed, not re-render the void.',
-      },
+      tradeOff: isHard
+        ? {
+            pl: 'Kosztem czasu i budżetu na integrację (EDI/API/feed 3PL) tego jednego węzła, zamiast rozbudowy analityki na już widzianych.',
+            en: 'At the cost of time and budget to integrate (EDI/API/3PL feed) this one node, rather than expanding analytics on already-visible ones.',
+          }
+        : {
+            pl: 'Kosztem automatyzacji istniejącego, zbyt wolnego feedu (zastąpienie ręcznego wpisu raz dziennie feedem w czasie zbliżonym do rzeczywistego), zamiast rozbudowy analityki na już świeżo widzianych.',
+            en: 'At the cost of automating the existing, too-slow feed (replacing the once-a-day manual entry with a near-real-time one), rather than expanding analytics on already-fresh nodes.',
+          },
+      rejectedVariant: isHard
+        ? {
+            pl: 'Odrzucamy „dokupmy lepszy dashboard": ładniejszy ekran na tych samych danych nie oświetla martwego pola — integrujemy brakujący feed, nie renderujemy pustkę.',
+            en: 'We reject "buy a nicer dashboard": a prettier screen on the same data does not light a blind spot — we integrate the missing feed, not re-render the void.',
+          }
+        : {
+            pl: 'Odrzucamy „dokupmy lepszy dashboard": węzeł już MA feed — problemem jest jego świeżość, nie brak ekranu; przyspieszamy dane, nie renderujemy wczorajszych ładniej.',
+            en: 'We reject "buy a nicer dashboard": the node already HAS a feed — the problem is its freshness, not a missing screen; we speed up the data, not re-render yesterday\'s more prettily.',
+          },
       expectedImpact: baseline.blindShare >= 0.3 ? 'high' : 'medium',
       estimatedEffort: 'medium',
       validation: VALID,

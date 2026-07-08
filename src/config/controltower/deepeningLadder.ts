@@ -45,7 +45,9 @@ export type Bilingual = { pl: string; en: string };
 /** One rung of the deepening ladder. `id` is stable and lever-agnostic. */
 export interface LadderRung {
   id: 'surface' | 'evidence' | 'quantification' | 'risk-capability';
-  /** 1-4 depth level (surface..risk) — used by the synthesis engine for depth scoring. */
+  /** 1-4 depth level (surface..risk) — orders the staircase and drives the UI's
+   *  depth affordance; available for depth scoring (not currently consumed by the
+   *  synthesis engine, which scores facts, not how far the conversation reached). */
   depth: 1 | 2 | 3 | 4;
   label: Bilingual;
   /** The prompt shown to the user / fed to AI when deepening this rung. */
