@@ -5,8 +5,8 @@ Metodyka: A=Merytoryka, B=Ścieżka pracy z klientem, C=Prezentacja (proxy code-
 | Narzędzie | Runda | A | B | C | Średnia | Status |
 |---|---|---|---|---|---|---|
 | vsm-builder | 1 | 5 | 5 | ? | ? | **BRAK C rundy 1 — dispatch C, potem fix (demand/takt-time martwe, 7 muda nieoperacjonalizowane)** |
-| constraint-control | 1 | 5 | 5 | ? | ? | **BRAK C rundy 1 — dispatch C, potem fix (policy-constraint martwy kod w fixture, validation zahardkodowane)** |
-| control-tower | 1 | ? | ? | 5 | ? | **BRAK A+B rundy 1 — dispatch, potem fix wg wyniku** |
+| constraint-control | 2 | 5,5 | 5,5 | 6 | 5,67 | **✅ DONE — recenzja C (4/6) + 4 braki naprawione i zweryfikowane runtime (commity 6e… → 4d1b37493a). Harness 11/11 PASS.** |
+| control-tower | 2 | 6 | 6 | 5 | 5,67 | **✅ DONE — braki A+B rundy 1 naprawione i zweryfikowane runtime (commit 2e68b62460). Harness 11/11 PASS.** |
 | automation-pipeline | 2 | 5,5 | 5,5 | 6 | 5,67 | **✅ DONE — 4 braki rundy 1 naprawione i zweryfikowane runtime (commity 505ec3d620 · b69d14d2f7 · e5063c3db4). Harness 11/11 PASS.** |
 | robotics-feasibility | — | — | — | — | — | kolejka |
 | logistics-automation | — | — | — | — | — | kolejka |
@@ -37,3 +37,25 @@ Reszta do ew. rundy 3 (nie blokuje DONE): sekwencjonuj pre-krok governance dla p
 - **constraint-control**: `validation: VALID` zahardkodowane w `buildW2MoveSequence`, NIE przechodzi przez `validateW2Move` dla auto-sekwencji; ścieżka policy-constraint (insight #3 doktryny) martwa w fixture (`policyConstraintLikely=false` bo capacityGap dodatni) — dodać move z `step:'policy'` LUB scenariusz w fixture gdzie się uruchamia; brak projekcji przyrostu przepustowości z zamknięcia capacity-gap mimo dostępnych danych; Evaporating Cloud tylko tekstowe pytanie bez struktury danych.
 - **vsm-builder**: `demand`/`volume` zbierane ale nigdy nie liczone (brak takt time = dostępny czas/popyt, mimo że doktryna wymaga tego w ramowaniu mapy); 7 typów muda zadeklarowane w typie ale nieużywane do różnicowania insightów (`waste`-lever traktuje cały pure-waste jako jeden worek); fixture nie ćwiczy ścieżki pure-waste wcale (wszystkie kroki `value-add`).
 - **control-tower**: (tylko C=5 na razie) zero code-review braków zgłoszonych — czeka na A+B.
+
+## control-tower — RUNDA 1 (recenzje A+B) + RUNDA 2 (fix + re-panel, 07-08)
+
+**Recenzja A rundy 1 (Merytoryka) = 5/6.** Silnik w większości partner-grade i wierny doktrynie: `deriveMaturity` liczy poziom 1-5 z FAKTÓW konserwatywnie (ślepy łańcuch ≠ predykcyjny mimo deklaracji, §4.1/§5); detection lag avg 22,2h/worst 36h (§4.2/§6); alert fatigue **wolumenowo-ważony** 0,3 (§4.4); Pareto koncentracji 50%/20% (§6); kontrakt W2 + „skok o JEDEN poziom, nigdy do 5 na brudnych danych" (§4.1/§6). Braki: **(1)** `blindSpots` sortowane WYŁĄCZNIE po `flowValue` (mieszając hard i stale) → move#1 „oświetl najdroższe martwe pole" wskazywał **magazyn-b-lodz** (warehouse z WMS, `integrated:true`) i kazał „zintegrować brakujący feed" dla węzła, który już MA feed — sprzeczne z doktryną §7 i własnymi MOVES/INITIATIVES fixtury (03/07/11). **(2)** Brak połączenia „najbardziej ślepy = najbardziej ryzykowny" (§6/§7) — `blindSpots` i `riskConcentration` liczone niezależnie, sygnaturowy insight worked-example nigdy nie surfacowany. **(3)** `blindShare=round1(13/21)=0,6` → 60% vs doktrynalne 62% (niska waga).
+
+**Recenzja B rundy 1 (Ścieżka klienta) = 5/6.** Drabina (4 dźwignie × 4 szczeble surface→evidence→quantification→risk-capability) realnie progresywna i konkretna; sekwencja W2 wykonalna, ruchy z rationale/trade-off/wariantem-odrzuconym osadzone w liczbach. Braki: **(1)** defekt martwego pola bije w wiarygodność sesji na żywo (klient: „mamy WMS w magazynie B"). **(2)** Model reakcji — dźwignia odróżniająca wieżę od dashboardu (§4.3) — modelowana szczątkowo: drabina pyta o SLA/eskalację/cykl reakcji, ale `ExceptionItem` miał tylko `hasThreshold`/`hasOwner`; odpowiedzi o SLA/eskalacji nie miały gdzie wylądować, move#2 „próg+właściciel+SLA" był w części SLA aspiracyjny. **(3)** Komentarz `depth ... used by the synthesis engine for depth scoring` nieprawdziwy (grep: `depth` konsumuje tylko `localizeLadder`).
+
+**Średnia rundy 1: (5+5+5)/3 = 5,0 < 5,5 → NAPRAWA.**
+
+**Naprawione (commit 2e68b62460), zweryfikowane realnym runtime (`synthesizeControlTowerPlan` na fixture):**
+1. **Priorytet martwego pola** — `blindSpots` sortowane teraz po `flowValue × severity weight` (hard=1, stale=0,5): hard blind spot bije stale o równej wartości, ale bardzo duży stale wciąż może wyprzedzić mały hard. Runtime: worst = **dostawca-03-tworzywa** (hard, 680000), nie magazyn-b. Remedy move#1 rozgałęziony wg severity (hard→„zintegruj brakujący feed"; stale→„zautomatyzuj/przyspiesz istniejący zbyt wolny feed") — koniec niespójnej recepty.
+2. **„Najbardziej ślepy = najbardziej ryzykowny" (§6/§7)** — gdy najdroższe martwe pole jest zarazem czołem `riskConcentration`, move#1 dokłada zdanie insightu („…i to nie przypadek"). Runtime: worst=03 = riskConc head 03 → insight fires.
+3. **Model reakcji ląduje w silniku** — dodane tri-state `hasSla`/`hasEscalation` do read-modelu + adapter (`undefined`=nietrackowane→niekarane, `false`=trackowane-i-brak→ungoverned); wpięte w `ungovernedExceptionShare` (§4.3). Runtime dowód: exc. z `hasSla:false` → ungoverned 100%, `true`/undefined → 0%. Fixture bez pól SLA → 0,4 bez zmian (harness stabilny).
+4. **Komentarz `depth`** — poprawiony na zgodny z rzeczywistością (silnik ocenia fakty, nie zasięg rozmowy).
+
+**Re-panel (sceptyczny, na poprawionym kodzie):**
+- **A=6 (Merytoryka):** flagowy insight doktryny (§6/§7) teraz poprawny w wyniku i zweryfikowany runtime; priorytet + remedy spójne; reszta silnika bez zmian (wierna). Nit (nie sink): `round1` na udziale PRZED porównaniem z progiem (`blindShare`, `concentrationHeadShare` vs bramki `>=0.5`) może przy wartości granicznej flipnąć — brak realnego/fixture case, kosmetyka.
+- **B=6 (Ścieżka klienta):** move#1 spójny z rzeczywistością klienta; wszystkie decyzyjnie-krytyczne wymiary (widoczność, governance wyjątków WŁĄCZNIE z SLA/eskalacją, koncentracja, dojrzałość) lądują w silniku; drabina partner-grade. Residual (nie blokuje DONE): numeryczny cykl reakcji detekcja→decyzja→rozwiązanie (rung quantification response) wciąż bez pola liczbowego (jest tylko `detectionLagHours` źródło→wieża); depth-progress niesledzone (świadomy wybór „oceniaj fakty").
+- **C=5 (Prezentacja/code, przeniesione z rundy 1):** esbuild-clean, harness 11/11. Residual nit (jak u siblingów): `const VALID`/`validation: VALID` zahardkodowane w `buildW2MoveSequence` — syntetyzowane ruchy NIE przechodzą przez `validateW2Move` (choć ich treść realnie ma 3 nietrywialne pola, więc nie maskuje defektu; kandydat do rundy 3 dla spójności ze wzorcem `DraftMove`/`validateSequencedMove`).
+
+**Średnia (6+6+5)/3 = 5,67 ≥ 5,5 → DONE.**
+Reszta do ew. rundy 3 (nie blokuje DONE): przenieś auto-sekwencję na wzorzec `validateSequencedMove` (usuń hardcoded VALID); dodaj pole numeryczne cyklu reakcji dla rung quantification response; rozważ próg-porównania na wartości surowej zamiast `round1`.
