@@ -49,6 +49,8 @@ type VsmStepFixtureItem = OperationalItem & {
   uptime: number;
   completeAccurate: number;
   monthlyVolume?: number;
+  /** Muda type for a pure-waste step (read off `item.muda` by the adapter). */
+  muda?: string;
 };
 
 /** Kaizen-move-candidate item shape actually read by `toVsmSession` for `moves`. */
@@ -192,6 +194,11 @@ const movesSection: VsmMoveFixtureItem[] = [
 
 const demandSection: number[] = [200]; // zamówień/miesiąc (doktryna §7)
 const volumeSection: number[] = [200]; // wolumen jednostek/miesiąc — zasila hidden-factory cost
+// Dostępny czas pracy: 20 dni roboczych × 8h × 60 min = 9600 min/miesiąc. Z popytem
+// 200 zam./mies. daje takt time = 9600 / 200 = 48 min/zamówienie. Najdłuższy C/T to
+// Produkcja = 45 min < 48 → żaden krok nie przekracza taktu: proces MA zdolność, by
+// nadążyć za popytem, co potwierdza rdzeń diagnozy (problem to kolejki, nie moc).
+const availableTimeSection: number[] = [9600];
 
 const recommendedInitiatives: InitiativeDraft[] = [
   {
@@ -235,6 +242,148 @@ const recommendedInitiatives: InitiativeDraft[] = [
   },
 ];
 
+// ---------------------------------------------------------------------------
+// Secondary fixture — a waste-elimination scenario that exercises the pure-waste
+// + 7-muda + over-takt paths the doctrine §7 order-to-shipment example does NOT
+// feature (that one is a queue/rework story with every step value-add). Kept as
+// a distinct fixture so the golden example stays faithful to the doctrine's
+// verbatim numbers while the muda/takt logic still has real coverage.
+//
+// Stream (approvals process, unit = minutes):
+//   1 Przyjęcie wniosku        VA          C/T 30  L/T 120   %C&A 90%  WIP —
+//   2 Podwójne zatwierdzenie    pure-waste  C/T 60  L/T 960   %C&A 95%  WIP 20   muda: over-processing
+//   3 Przekazanie między dz.    pure-waste  C/T 10  L/T 480   %C&A 80%  WIP 5    muda: transport
+// VA time = 30; total lead time = 1560 → PCE ≈ 1.9%. 2/3 steps pure waste (67%),
+// dominant muda tie broken to over-processing. availableTime 4800 / demand 100 →
+// takt 48; step 2 (C/T 60) exceeds takt → cannot keep pace with demand. Worst
+// %C&A = step 3 (80%) → hidden factory.
+const wasteStepsSection: VsmStepFixtureItem[] = [
+  {
+    id: 'w-step-1-intake',
+    title: 'Przyjęcie wniosku',
+    description: 'Rejestracja wniosku klienta w systemie.',
+    impact: 'low',
+    effort: 'low',
+    category: 'value-add',
+    cycleTime: 30,
+    leadTime: 120,
+    uptime: 0.9,
+    completeAccurate: 0.9,
+    monthlyVolume: 100,
+    measured: true,
+  } as VsmStepFixtureItem,
+  {
+    id: 'w-step-2-double-approval',
+    title: 'Podwójne zatwierdzenie',
+    description: 'Dwa niezależne podpisy akceptujące, których nikt później nie czyta.',
+    impact: 'high',
+    effort: 'medium',
+    category: 'pure-waste',
+    muda: 'over-processing',
+    cycleTime: 60,
+    leadTime: 960,
+    wipBefore: 20,
+    uptime: 0.8,
+    completeAccurate: 0.95,
+    measured: true,
+  } as VsmStepFixtureItem,
+  {
+    id: 'w-step-3-handoff',
+    title: 'Przekazanie między działami',
+    description: 'Przerzucenie sprawy z jednego systemu/działu do drugiego bez wartości.',
+    impact: 'medium',
+    effort: 'low',
+    category: 'pure-waste',
+    muda: 'transport',
+    cycleTime: 10,
+    leadTime: 480,
+    wipBefore: 5,
+    uptime: 0.95,
+    completeAccurate: 0.8,
+    measured: true,
+  } as VsmStepFixtureItem,
+];
+
+const wasteMovesSection: VsmMoveFixtureItem[] = [
+  {
+    id: 'w-move-eliminate-double-approval',
+    title: 'Zlikwiduj podwójne zatwierdzenie (over-processing)',
+    description:
+      'Zastąp dwa podpisy jednym progiem ryzyka — drugi podpis to nadmierne przetwarzanie bez wartości dla klienta.',
+    impact: 'high',
+    effort: 'low',
+    category: 'waste',
+    evidence: [
+      'Obserwacja gemba: drugiego podpisu nikt nie czyta; C/T 60 min > takt 48 min — krok nie nadąża za popytem.',
+    ],
+  },
+  {
+    id: 'w-move-unblock-approval-queue',
+    title: 'Udrożnij kolejkę przed zatwierdzeniem',
+    description: 'Największa kolejka (WIP 20) piętrzy się przed podwójnym zatwierdzeniem — udrożnij ograniczenie.',
+    impact: 'high',
+    effort: 'medium',
+    category: 'bottleneck',
+    evidence: ['WIP przed krokiem 2 = 20 spraw — największa kolejka strumienia (gemba).'],
+  },
+  {
+    id: 'w-move-fix-handoff-quality',
+    title: 'Zabezpiecz jakość przekazania u źródła',
+    description: 'Przekazanie zawraca 20% spraw — walidacja kompletu danych przed przekazaniem zamiast po fakcie.',
+    impact: 'medium',
+    effort: 'medium',
+    category: 'rework',
+    evidence: ['%C&A kroku 3 = 80% — co piąta sprawa wraca po brakujące dane (gemba log).'],
+  },
+];
+
+export const VSM_WASTE_FIXTURE: OperationalToolData = {
+  context: createConsultingMissionContext({
+    goal: 'Wyeliminować czyste marnotrawstwo w procesie zatwierdzania wniosków i skrócić lead time.',
+    scope: 'Proces administracyjny zatwierdzania wniosków; od przyjęcia do przekazania do realizacji.',
+    timeframe: 'short',
+    successSignal: 'Eliminacja podwójnego zatwierdzenia i przekazania międzydziałowego; PCE > 2x.',
+    assumptions: 'Dane zmierzone na gemba (follow-one-piece).',
+    constraints: 'Bez zmian systemowych IT w pierwszej fali — tylko redukcja kroków.',
+    kpiTarget: 'Redukcja 2 z 3 kroków jako czyste NVA.',
+  }),
+  sections: {
+    steps: wasteStepsSection,
+    demand: [100],
+    volume: [100],
+    availableTime: [4800], // 10 dni × 8h × 60 min → takt 48 min/wniosek
+    moves: wasteMovesSection,
+  } as unknown as Record<string, OperationalItem[]>,
+  summary: {
+    executiveSummary:
+      'Dwa z trzech kroków to czyste marnotrawstwo (nadmierne przetwarzanie + transport). Podwójne zatwierdzenie przekracza takt time (60 > 48 min) i piętrzy największą kolejkę, a przekazanie międzydziałowe zawraca 20% spraw.',
+    keyInsights: [
+      'PCE ≈ 1,9% — proces głównie czeka; 67% kroków to czyste NVA do eliminacji (dominujące muda: nadmierne przetwarzanie).',
+      'Podwójne zatwierdzenie: C/T 60 min > takt 48 min — ten krok nie nadąża za popytem.',
+      'Przekazanie międzydziałowe zawraca 20% spraw (%C&A 80%) — ukryta fabryka przeróbek.',
+    ],
+    appliedConclusions: [
+      'Zlikwidować drugi podpis (nadmierne przetwarzanie), zaczynając od ograniczenia.',
+      'NIE dokładać kolejnej kontroli na końcu — przenieść walidację do źródła.',
+      'Zre-mapować po eliminacji, bo ograniczenie się przesunie.',
+    ],
+    verdict:
+      'Proces nie potrzebuje więcej mocy — potrzebuje usunięcia dwóch kroków bez wartości, które generują kolejkę i przeróbki.',
+    tradeoffs: [
+      {
+        chosen: 'Eliminacja podwójnego zatwierdzenia',
+        rejected: 'Utrzymanie obu podpisów „dla bezpieczeństwa"',
+        why: 'Drugi podpis to nadmierne przetwarzanie — nikt go nie czyta, a generuje kolejkę powyżej taktu.',
+      },
+    ],
+    expectedEffect: {
+      text: 'Eliminacja 2 z 3 kroków; PCE ≈ 1,9% → >2x poprawa bez capex.',
+      horizon: '60 dni od redukcji kroków, z re-mapowaniem na koniec.',
+    },
+    recommendedInitiatives: [],
+  },
+};
+
 export const VSM_FIXTURE: OperationalToolData = {
   context: createConsultingMissionContext({
     goal:
@@ -253,6 +402,7 @@ export const VSM_FIXTURE: OperationalToolData = {
     steps: stepsSection,
     demand: demandSection,
     volume: volumeSection,
+    availableTime: availableTimeSection,
     moves: movesSection,
   } as unknown as Record<string, OperationalItem[]>,
   summary: {
