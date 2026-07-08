@@ -25,7 +25,7 @@ import { buildDecisionConclusionPrompt, toDecisionSession } from './decisionengi
 import { DECISION_FIXTURE } from './decisionengine/fixture.ts';
 import { buildValuePoolConclusionPrompt, toValuePoolSession } from './digitalvaluepool/index.ts';
 import { VALUE_POOL_FIXTURE } from './digitalvaluepool/fixture.ts';
-import { buildLegacyConclusionPrompt, toLegacySession } from './legacyanalyzer/index.ts';
+import { buildLegacyConclusionPrompt, toLegacySession, toLegacyMeta } from './legacyanalyzer/index.ts';
 import { LEGACY_FIXTURE } from './legacyanalyzer/fixture.ts';
 
 type Case = { name: string; run: () => string | null };
@@ -42,7 +42,7 @@ const cases: Case[] = [
   { name: 'data-inventory', run: () => buildDataInventoryConclusionPrompt(toDataInventorySession(DATA_INVENTORY_FIXTURE.sections), true) },
   { name: 'decision-engine', run: () => buildDecisionConclusionPrompt(toDecisionSession(DECISION_FIXTURE.sections), true) },
   { name: 'digital-value-pool', run: () => buildValuePoolConclusionPrompt(toValuePoolSession(VALUE_POOL_FIXTURE.sections), true) },
-  { name: 'legacy-analyzer', run: () => buildLegacyConclusionPrompt(toLegacySession(LEGACY_FIXTURE.sections), true) },
+  { name: 'legacy-analyzer', run: () => buildLegacyConclusionPrompt(toLegacySession(LEGACY_FIXTURE.sections, toLegacyMeta(LEGACY_FIXTURE.context)), true) },
 ];
 
 let pass = 0;
