@@ -162,6 +162,164 @@ const ASSESSMENT_CATEGORY_MAPPING: Record<AssessmentType, string[]> = {
   LEAN: ['lean_transformation', 'waste_reduction', 'continuous_improvement', 'value_stream'],
 };
 
+// DRD axis names (7-axis canon) — mirrors src/services/report/drdConclusion axisName()
+// so the grounded facts read with the same vocabulary as the conclusion model.
+const DRD_AXIS_NAMES: Record<string, string> = {
+  '1': 'Procesy Cyfrowe',
+  '2': 'Produkty Cyfrowe',
+  '3': 'Cyfrowe Modele Biznesowe',
+  '4': 'Zarządzanie Danymi',
+  '5': 'Kultura Transformacji',
+  '6': 'Cyberbezpieczeństwo',
+  '7': 'Dojrzałość AI',
+};
+
+// ARCHITEKTURA (ZMIANA 1): initiative-gen NIE może zaimportować conclusion buildera
+// z `src/services/report/{drd,siri,adma}Conclusion.ts` — front-end i server mają
+// ROZŁĄCZNE tsconfig/rootDir (server/tsconfig.json rootDir="." , include ["src/**"])
+// i NodeNext module resolution; import przez granicę przeciągnąłby cały graf frontendu.
+// `computeAxisDataFromAssessment` jest po stronie backendu, ale jako LOKALNY const w
+// assessment-reports.routes.ts (nie eksport) — import routera przeciągnąłby pdfkit/pptx/xlsx
+// i side-effecty routera. Dlatego: PORTUJEMY zwięzły ekstraktor axisData (ta sama logika
+// per-framework) + wyliczamy TE SAME przetworzone fakty co conclusion model (gap ranking,
+// najsłabszy/najmocniejszy wymiar, top-3 luki) i wstrzykujemy je do promptu jako
+// UGRUNTOWANE FAKTY — zamiast zmuszać LLM do przeliczania wniosków od zera z gołych score'ów.
+interface AxisFact {
+  id: string;
+  label: string;
+  actual: number;
+  target: number;
+  gap: number;
+}
+
+const extractAxisFacts = (
+  assessmentType: AssessmentType,
+  answers: Record<string, any>,
+  scoreSummary: Record<string, any>
+): AxisFact[] => {
+  const facts: AxisFact[] = [];
+  const push = (id: string, label: string, actual: number, target: number) => {
+    if (!Number.isFinite(actual) && !Number.isFinite(target)) return;
+    const a = Number(actual) || 0;
+    const t = Number(target) || 0;
+    if (a === 0 && t === 0) return;
+    facts.push({ id, label, actual: a, target: t, gap: Math.max(0, t - a) });
+  };
+
+  if (assessmentType === 'DRD') {
+    // DRD areas ("1A","1B"...) roll up into 7 axes; same bucketing as computeAxisDataFromAssessment.
+    const drd = answers?.drd || answers || {};
+    const areas = drd?.areas || {};
+    const buckets: Record<string, { achieved: number[]; target: number[] }> = {};
+    Object.entries<any>(areas).forEach(([areaId, s]) => {
+      const axisId = String(areaId || '').slice(0, 1);
+      if (!/^\d$/.test(axisId)) return;
+      if (!buckets[axisId]) buckets[axisId] = { achieved: [], target: [] };
+      const a = Number(s?.achievedLevel || 0);
+      const t = Number(s?.targetLevel || 0);
+      if (a > 0) buckets[axisId].achieved.push(a);
+      if (t > 0) buckets[axisId].target.push(t);
+    });
+    const avg = (arr: number[]) => (arr.length ? arr.reduce((x, y) => x + y, 0) / arr.length : 0);
+    for (const [axisId, b] of Object.entries(buckets)) {
+      push(
+        axisId,
+        DRD_AXIS_NAMES[axisId] || `Oś ${axisId}`,
+        Number(avg(b.achieved).toFixed(2)),
+        Number(avg(b.target).toFixed(2))
+      );
+    }
+  } else if (assessmentType === 'SIRI') {
+    const siri = answers?.siri || answers || {};
+    const dims = siri?.dimensions || {};
+    for (const [dimId, d] of Object.entries<any>(dims)) {
+      push(
+        `dim_${dimId}`,
+        String(dimId).replace(/_/g, ' '),
+        Number(d?.current ?? d?.actual ?? 0),
+        Number(d?.target ?? 0)
+      );
+    }
+  } else if (assessmentType === 'ADMA') {
+    const adma = answers?.adma || answers || {};
+    const dims = adma?.dimensions || {};
+    for (const [dimId, d] of Object.entries<any>(dims)) {
+      push(
+        `dim_${dimId}`,
+        String(dimId).replace(/_/g, ' '),
+        Number(d?.current ?? d?.actual ?? 0),
+        Number(d?.target ?? 0)
+      );
+    }
+    const pillars = adma?.pillars || {};
+    for (const [pId, p] of Object.entries<any>(pillars)) {
+      push(
+        `pillar_${pId}`,
+        String(pId).replace(/_/g, ' '),
+        Number(p?.current ?? p?.actual ?? 0),
+        Number(p?.target ?? 0)
+      );
+    }
+  }
+
+  // Generic fallback: score_summary may already carry {actual,target} per key.
+  if (facts.length === 0 && scoreSummary && typeof scoreSummary === 'object') {
+    for (const [key, v] of Object.entries<any>(scoreSummary)) {
+      if (v && typeof v === 'object' && ('actual' in v || 'current' in v || 'target' in v)) {
+        push(
+          key,
+          String(key).replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim(),
+          Number(v.actual ?? v.current ?? 0),
+          Number(v.target ?? 0)
+        );
+      }
+    }
+  }
+
+  return facts;
+};
+
+// Builds the "UGRUNTOWANE FAKTY" prompt block from ranked axis gaps (top gaps,
+// weakest/strongest dimension). Returns '' when no axis data is available so the
+// prompt gracefully degrades to the raw JSON dumps.
+const buildGroundedFactsBlock = (
+  assessmentType: AssessmentType,
+  answers: Record<string, any>,
+  scoreSummary: Record<string, any>
+): string => {
+  const facts = extractAxisFacts(assessmentType, answers, scoreSummary);
+  if (facts.length === 0) return '';
+
+  const withGap = facts.filter((f) => f.gap > 0).sort((a, b) => b.gap - a.gap);
+  const strongest = [...facts].sort((a, b) => b.actual - a.actual)[0];
+  const weakest = withGap[0];
+  const topGaps = withGap.slice(0, 3);
+
+  const lines: string[] = [];
+  lines.push(
+    'UGRUNTOWANE FAKTY (wyliczone deterministycznie z ocen — NIE przeliczaj od nowa, oprzyj inicjatywy na tym rankingu luk):'
+  );
+  if (weakest) {
+    lines.push(
+      `- Najsłabszy wymiar (największa luka): "${weakest.label}" — ${weakest.actual} → cel ${weakest.target} (luka ${weakest.gap.toFixed(2)}).`
+    );
+  }
+  if (strongest) {
+    lines.push(
+      `- Najmocniejszy wymiar: "${strongest.label}" — ${strongest.actual} (cel ${strongest.target}).`
+    );
+  }
+  if (topGaps.length) {
+    lines.push('- Ranking luk (malejąco, kolejność pilności inicjatyw):');
+    topGaps.forEach((g, i) => {
+      lines.push(`    ${i + 1}. "${g.label}": ${g.actual} → ${g.target} (luka ${g.gap.toFixed(2)})`);
+    });
+  } else {
+    lines.push('- Brak istotnych luk — wszystkie wymiary na/blisko celu.');
+  }
+  return lines.join('\n');
+};
+
 // Timeout helper
 const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
   return new Promise((resolve, reject) => {
@@ -338,6 +496,15 @@ class AssessmentInitiativeService {
       contextSnapshot,
     } = params;
 
+    // ZMIANA 1 — pre-computed grounded facts (gap ranking / weakest / strongest),
+    // the same processed layer the conclusion model derives, so the LLM starts from
+    // conclusions instead of re-deriving them from raw score JSON.
+    const groundedFacts = buildGroundedFactsBlock(
+      assessment.assessment_type,
+      answers,
+      scoreSummary
+    );
+
     let prompt = `You are an expert consultant generating transformation initiatives based on a ${assessment.assessment_type} assessment.
 
 Assessment: ${assessment.name}
@@ -347,7 +514,7 @@ Methodology: ${methodology.name}
 You MUST use BOTH sources of truth:
 1) detailed assessment answers and scores (below)
 2) report narrative/synthesis context (if provided below)
-
+${groundedFacts ? `\n${groundedFacts}\n` : ''}
 Assessment Scores:
 ${JSON.stringify(scoreSummary, null, 2)}
 
