@@ -53,6 +53,20 @@ export type MudaType =
   | 'defects'
   | 'unused-talent';
 
+/** Bilingual labels for the 7 (+1) muda, so the waste insight can name the type. */
+export const MUDA_LABEL: Record<MudaType, Bilingual> = {
+  overproduction: { pl: 'nadprodukcja', en: 'overproduction' },
+  waiting: { pl: 'oczekiwanie', en: 'waiting' },
+  transport: { pl: 'transport', en: 'transport' },
+  'over-processing': { pl: 'nadmierne przetwarzanie', en: 'over-processing' },
+  inventory: { pl: 'zapas', en: 'inventory' },
+  motion: { pl: 'ruch', en: 'motion' },
+  defects: { pl: 'wady/przeróbki', en: 'defects' },
+  'unused-talent': { pl: 'niewykorzystany potencjał ludzi', en: 'unused talent' },
+};
+
+export const mudaLabel = (muda: MudaType): Bilingual => MUDA_LABEL[muda];
+
 /**
  * Minimal read-model of one process step (a process box + its data box).
  * Sourced from the tool's `steps` section. Times are in a single consistent
@@ -96,10 +110,16 @@ export interface KaizenMoveItem {
 export interface VsmSession {
   steps: ProcessStep[];
   moves: KaizenMoveItem[];
-  /** Optional framing: customer demand in the period (for context; not required for PCE). */
+  /** Optional framing: customer demand in the period (drives takt time). */
   demand?: number;
   /** Optional framing: monthly volume of units flowing (drives the hidden-factory cost). */
   monthlyVolume?: number;
+  /**
+   * Optional framing: available working time in the period, same unit as C/T
+   * (e.g. minutes). With `demand`, yields takt time = availableTime / demand
+   * (doctrine §3.3).
+   */
+  availableTime?: number;
 }
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -176,6 +196,20 @@ export interface VsmBaseline {
   pureWasteLeadTime: number;
   /** Share of steps whose numbers are measured on gemba, 0..1. */
   measuredRatio: number;
+  /**
+   * Takt time = availableTime / demand (same unit as C/T), or null when the
+   * demand/available-time framing is not supplied (doctrine §3.3).
+   */
+  taktTime: number | null;
+  /**
+   * Steps whose cycle time exceeds takt time — they cannot keep pace with
+   * demand on their own (empty when takt is unknown or every step is under it).
+   */
+  overTaktStepIds: string[];
+  /** Count of pure-waste steps per muda type (doctrine §4 krok 2 — the 7 muda). */
+  wasteByMuda: Partial<Record<MudaType, number>>;
+  /** The most frequent muda among the pure-waste steps, or null when none tagged. */
+  dominantMuda: MudaType | null;
   /** The located constraint. */
   constraint: ConstraintFinding;
   /** The hidden rework factory. */
@@ -278,6 +312,29 @@ export function computeBaseline(session: VsmSession): VsmBaseline {
   const pureWasteLeadTime = pureWasteSteps.reduce((acc, s) => acc + stepLeadTime(s), 0);
   const measured = steps.filter((s) => s.measured).length;
 
+  // Takt time = available working time / customer demand (doctrine §3.3). Steps
+  // whose C/T exceeds takt cannot keep pace with demand by themselves.
+  const taktTime =
+    session.demand && session.demand > 0 && session.availableTime && session.availableTime > 0
+      ? round1(session.availableTime / session.demand)
+      : null;
+  const overTaktStepIds =
+    taktTime !== null ? steps.filter((s) => (s.cycleTime || 0) > taktTime).map((s) => s.id) : [];
+
+  // 7-muda breakdown of the pure-waste steps (doctrine §4 krok 2).
+  const wasteByMuda: Partial<Record<MudaType, number>> = {};
+  for (const s of pureWasteSteps) {
+    if (s.muda) wasteByMuda[s.muda] = (wasteByMuda[s.muda] || 0) + 1;
+  }
+  let dominantMuda: MudaType | null = null;
+  let dominantCount = 0;
+  (Object.entries(wasteByMuda) as [MudaType, number][]).forEach(([muda, count]) => {
+    if (count > dominantCount) {
+      dominantCount = count;
+      dominantMuda = muda;
+    }
+  });
+
   return {
     stepCount: steps.length,
     valueAddTime: round1(valueAdd),
@@ -288,6 +345,10 @@ export function computeBaseline(session: VsmSession): VsmBaseline {
     pureWasteCount: pureWasteSteps.length,
     pureWasteLeadTime: round1(pureWasteLeadTime),
     measuredRatio: steps.length > 0 ? round1(measured / steps.length) : 0,
+    taktTime,
+    overTaktStepIds,
+    wasteByMuda,
+    dominantMuda,
     constraint: locateConstraint(steps, totalLeadTime),
     hiddenFactory: computeHiddenFactory(steps, session.monthlyVolume),
   };
@@ -600,8 +661,8 @@ export function buildW2MoveSequence(session: VsmSession): SequencedMove[] {
     rationale:
       baseline.pureWasteCount > 0
         ? {
-            pl: `${baseline.pureWasteCount} z ${baseline.stepCount} kroków (${pct(baseline.pureWasteShare)}%) to czyste NVA trzymające ${baseline.pureWasteLeadTime} lead time — eliminacja podnosi PCE (dziś ${pct(baseline.pce)}%) bez inwestycji kapitałowej.`,
-            en: `${baseline.pureWasteCount} of ${baseline.stepCount} steps (${pct(baseline.pureWasteShare)}%) are pure NVA holding ${baseline.pureWasteLeadTime} of lead time — eliminating them raises PCE (today ${pct(baseline.pce)}%) with no capital spend.`,
+            pl: `${baseline.pureWasteCount} z ${baseline.stepCount} kroków (${pct(baseline.pureWasteShare)}%) to czyste NVA trzymające ${baseline.pureWasteLeadTime} lead time${baseline.dominantMuda ? `, głównie ${mudaLabel(baseline.dominantMuda).pl}` : ''} — eliminacja podnosi PCE (dziś ${pct(baseline.pce)}%) bez inwestycji kapitałowej.`,
+            en: `${baseline.pureWasteCount} of ${baseline.stepCount} steps (${pct(baseline.pureWasteShare)}%) are pure NVA holding ${baseline.pureWasteLeadTime} of lead time${baseline.dominantMuda ? `, mostly ${mudaLabel(baseline.dominantMuda).en}` : ''} — eliminating them raises PCE (today ${pct(baseline.pce)}%) with no capital spend.`,
           }
         : {
             pl: `Sklasyfikuj czas per krok na wartość dodaną / konieczne NVA / czyste muda — dopiero ta lista (przy PCE ${pct(baseline.pce)}%) mówi, które kroki wolno wyciąć bez ryzyka.`,
@@ -619,6 +680,18 @@ export function buildW2MoveSequence(session: VsmSession): SequencedMove[] {
       wasteScore.attractiveness >= 2.5 || baseline.pureWasteShare >= 0.3 ? 'high' : 'medium',
     estimatedEffort: 'low',
     validation: VALID,
+  });
+
+  // Each synthesized move is actually run through the W2 contract (not asserted):
+  // a move is only marked valid when its rationale, trade-off and rejected
+  // variant each carry substantial text, so the UI never renders an unjustified
+  // move even if the copy above is later edited to be thin.
+  moves.forEach((m) => {
+    m.validation = validateW2Move({
+      rationale: m.rationale.pl,
+      tradeOff: m.tradeOff.pl,
+      rejectedVariant: m.rejectedVariant.pl,
+    });
   });
 
   return moves;
