@@ -20,6 +20,7 @@
 import {
   buildW2MoveSequence,
   computeBaseline,
+  mudaLabel,
   rankLevers,
   type VsmSession,
 } from './vsmEngine';
@@ -56,9 +57,24 @@ export function buildVsmConclusionPrompt(
   const hf = baseline.hiddenFactory;
   const band = PCE_BAND_LABEL[baseline.pceBand];
 
-  const baselineLine = isPolish
+  const taktLine =
+    baseline.taktTime !== null
+      ? isPolish
+        ? ` Takt time = ${baseline.taktTime} (dostępny czas / popyt); ${baseline.overTaktStepIds.length > 0 ? `kroki powyżej taktu (nie nadążają za popytem): ${baseline.overTaktStepIds.join(', ')}` : 'żaden krok nie przekracza taktu — proces MA zdolność, by nadążyć za popytem, problem to kolejki/lead time, nie moc'}.`
+        : ` Takt time = ${baseline.taktTime} (available time / demand); ${baseline.overTaktStepIds.length > 0 ? `steps above takt (cannot keep pace with demand): ${baseline.overTaktStepIds.join(', ')}` : 'no step exceeds takt — the process HAS the capacity to meet demand; the problem is queues/lead time, not capacity'}.`
+      : '';
+
+  const mudaLine =
+    baseline.dominantMuda && baseline.pureWasteCount > 0
+      ? isPolish
+        ? ` Dominujące muda w krokach marnotrawstwa: ${mudaLabel(baseline.dominantMuda).pl}.`
+        : ` Dominant muda among the waste steps: ${mudaLabel(baseline.dominantMuda).en}.`
+      : '';
+
+  const baselineLine = (isPolish
     ? `Baza strumienia: ${baseline.stepCount} kroków; czas wartości dodanej ${baseline.valueAddTime}; całkowity lead time ${baseline.totalLeadTime}; PCE = ${pct(baseline.pce)}% (pasmo: ${band.pl}); ${baseline.pureWasteCount} kroków (${pct(baseline.pureWasteShare)}%) to czyste marnotrawstwo trzymające ${baseline.pureWasteLeadTime} lead time; zmierzone ${pct(baseline.measuredRatio)}% kroków.`
-    : `Stream baseline: ${baseline.stepCount} steps; value-add time ${baseline.valueAddTime}; total lead time ${baseline.totalLeadTime}; PCE = ${pct(baseline.pce)}% (band: ${band.en}); ${baseline.pureWasteCount} steps (${pct(baseline.pureWasteShare)}%) are pure waste holding ${baseline.pureWasteLeadTime} of lead time; ${pct(baseline.measuredRatio)}% of steps measured.`;
+    : `Stream baseline: ${baseline.stepCount} steps; value-add time ${baseline.valueAddTime}; total lead time ${baseline.totalLeadTime}; PCE = ${pct(baseline.pce)}% (band: ${band.en}); ${baseline.pureWasteCount} steps (${pct(baseline.pureWasteShare)}%) are pure waste holding ${baseline.pureWasteLeadTime} of lead time; ${pct(baseline.measuredRatio)}% of steps measured.`)
+    + taktLine + mudaLine;
 
   const constraintLine = c.stepId
     ? isPolish
@@ -113,7 +129,7 @@ export function buildVsmConclusionPrompt(
           ? `„Ukryta fabryka przeróbek: ${pct(hf.worstReturnRate)}% pracy w kroku ${hf.worstStepId} wraca do poprawki${hf.reworkTimePerMonth > 0 ? `, ~${hf.reworkTimePerMonth} jednostek-czasu/mies.` : ''}" — koszt niewidoczny w KPI.`
           : '„Ukryta fabryka przeróbek" — ujawnij ją z %C&A, jeśli dane pozwolą.',
         baseline.pureWasteCount > 0
-          ? `„${pct(baseline.pureWasteShare)}% kroków to czyste NVA możliwe do eliminacji bez ryzyka regulacyjnego" — obronialna lista kaizen.`
+          ? `„${pct(baseline.pureWasteShare)}% kroków to czyste NVA możliwe do eliminacji bez ryzyka regulacyjnego${baseline.dominantMuda ? ` (dominujące muda: ${mudaLabel(baseline.dominantMuda).pl})` : ''}" — obronialna lista kaizen.`
           : '„Czyste NVA do eliminacji" — po sklasyfikowaniu kroków na VA / konieczne NVA / muda.',
       ]
     : [
@@ -125,7 +141,7 @@ export function buildVsmConclusionPrompt(
           ? `"Hidden rework factory: ${pct(hf.worstReturnRate)}% of work in step ${hf.worstStepId} returns for correction${hf.reworkTimePerMonth > 0 ? `, ~${hf.reworkTimePerMonth} time-units/month` : ''}" — a cost invisible in the KPIs.`
           : '"Hidden rework factory" — surface it from %C&A if the data allows.',
         baseline.pureWasteCount > 0
-          ? `"${pct(baseline.pureWasteShare)}% of steps are pure NVA removable without regulatory risk" — a defensible kaizen list.`
+          ? `"${pct(baseline.pureWasteShare)}% of steps are pure NVA removable without regulatory risk${baseline.dominantMuda ? ` (dominant muda: ${mudaLabel(baseline.dominantMuda).en})` : ''}" — a defensible kaizen list.`
           : '"Pure NVA to eliminate" — once steps are classified into VA / necessary NVA / muda.',
       ];
 
