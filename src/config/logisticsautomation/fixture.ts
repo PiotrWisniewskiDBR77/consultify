@@ -86,6 +86,13 @@ export const LOGISTICS_FIXTURE: OperationalToolData = {
         processOrdered: false,
         candidateTech: 'amr',
         measured: true,
+        // Measured route-simulation gain (17% distance reduction, §7 worked example),
+        // preferred over the market-band heuristic so the session reports one number.
+        reslotGainMeasured: 0.17,
+        // AMR business case: CAPEX 3.8M PLN; savings from 38→24 FTE = 14 × 150k = 2.1M/yr
+        // → payback ~21.7 months, inside the 18-24-month AMR band (Insight #8, defensible).
+        estimatedCapex: 3_800_000,
+        estimatedAnnualSavings: 2_100_000,
       },
       {
         id: 'zone-packing',

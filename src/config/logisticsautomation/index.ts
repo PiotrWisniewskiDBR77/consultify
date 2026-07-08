@@ -127,6 +127,9 @@ export function toLogisticsSession(
         processOrdered: truthy(item.processOrdered),
         candidateTech: asCandidateTech(item.candidateTech) ?? asCandidateTech(item.threshold),
         measured: fte !== undefined || nonProductiveShare !== undefined,
+        reslotGainMeasured: asShare(item.reslotGainMeasured),
+        estimatedCapex: asNumber(item.estimatedCapex),
+        estimatedAnnualSavings: asNumber(item.estimatedAnnualSavings),
       } as WarehouseZone;
     })
     .filter((z): z is WarehouseZone => z !== null);
