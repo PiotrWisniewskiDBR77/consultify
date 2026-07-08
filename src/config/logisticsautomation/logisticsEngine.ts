@@ -92,6 +92,19 @@ export interface WarehouseZone {
   candidateTech?: CandidateTech;
   /** Whether the zone's numbers are measured on the floor (true) or estimated. */
   measured?: boolean;
+  /**
+   * Measured re-slotting throughput gain for the picking zone (0..1), e.g. from a
+   * route simulation. When present it overrides the market-band heuristic, because a
+   * measured number beats an estimate (evidence before assumption).
+   */
+  reslotGainMeasured?: number;
+  /**
+   * Estimated CAPEX of this zone's candidate automation (currency-agnostic). Paired
+   * with `estimatedAnnualSavings` it yields a defensible payback in months.
+   */
+  estimatedCapex?: number;
+  /** Estimated annual savings the candidate automation yields (same currency/year). */
+  estimatedAnnualSavings?: number;
 }
 
 /** Minimal read-model of one automation-candidate move from the `moves` section. */
@@ -126,6 +139,18 @@ const zoneMotionCost = (z: WarehouseZone): number =>
 
 /** Absolute labour weight of a zone (FTE × cost), independent of motion. */
 const zoneLaborWeight = (z: WarehouseZone): number => (z.fte || 0) * (z.laborCostPerFte || 0);
+
+/**
+ * Payback in months for a zone's candidate automation, from CAPEX and annual
+ * savings: months = CAPEX / (annualSavings / 12). Returns null when either figure
+ * is missing or savings are non-positive — the honest "we cannot compute it yet".
+ */
+export const zonePaybackMonths = (z: WarehouseZone): number | null => {
+  const capex = z.estimatedCapex;
+  const annual = z.estimatedAnnualSavings;
+  if (!capex || capex <= 0 || !annual || annual <= 0) return null;
+  return round1(capex / (annual / 12));
+};
 
 /** The candidate technology a zone points to, defaulting from its zone id. */
 const zoneTech = (z: WarehouseZone): CandidateTech => {
@@ -200,14 +225,18 @@ export function computeBaseline(session: LogisticsSession): LogisticsBaseline {
   }
 
   // Re-slotting gain is the doctrine's process-first lever on the picking zone.
+  // Prefer a measured gain (e.g. from a route simulation) when the session carries
+  // one; otherwise estimate it from the market 10-20% band, linearly scaled by the
+  // share of picker time that is non-productive motion (clamp 0..1 of the band).
   const picking = zones.find((z) => z.zone === 'picking');
   const reslotGainAvailable =
     picking && !picking.processOrdered && (picking.nonProductiveShare || 0) > 0
-      ? // scale the market 10-20% band by how much motion is present (0.5..1 of full band)
-        round2(
-          RESLOT_MIN_GAIN +
-            (RESLOT_MAX_GAIN - RESLOT_MIN_GAIN) * clamp(picking.nonProductiveShare || 0, 0, 1)
-        )
+      ? typeof picking.reslotGainMeasured === 'number' && picking.reslotGainMeasured > 0
+        ? round2(clamp(picking.reslotGainMeasured, 0, 1)) // measured beats estimated
+        : round2(
+            RESLOT_MIN_GAIN +
+              (RESLOT_MAX_GAIN - RESLOT_MIN_GAIN) * clamp(picking.nonProductiveShare || 0, 0, 1)
+          )
       : 0;
 
   return {
@@ -248,6 +277,8 @@ export interface ZoneScore {
   processOrdered: boolean;
   /** Count of moves carrying at least one evidence item. */
   evidenceBacked: number;
+  /** Payback of this zone's candidate automation in months, or null when uncomputable. */
+  paybackMonths: number | null;
 }
 
 const scoreZone = (
@@ -281,6 +312,7 @@ const scoreZone = (
       score: 0,
       processOrdered: false,
       evidenceBacked: 0,
+      paybackMonths: null,
     };
   }
 
@@ -314,6 +346,7 @@ const scoreZone = (
     score,
     processOrdered,
     evidenceBacked,
+    paybackMonths: zone ? zonePaybackMonths(zone) : null,
   };
 };
 
@@ -544,6 +577,29 @@ export function buildW2MoveSequence(session: LogisticsSession): SequencedMove[] 
   const primaryScore = scoreOf(primary);
   if (primaryScore) {
     const techLabel = techName(primaryScore.candidateTech);
+    // A defensible payback number, when the zone carries a CAPEX / savings business
+    // case — this is what turns the primary move from a hunch into a board argument.
+    const payback = assessPayback(primaryScore.candidateTech, primaryScore.paybackMonths);
+    const paybackClausePl =
+      payback.paybackMonths != null && payback.band
+        ? ` Payback ~${payback.paybackMonths} mies. wobec pasma rynkowego ${payback.band.minMonths}-${payback.band.maxMonths} mies. dla tej klasy technologii (${
+            payback.verdict === 'in-band'
+              ? 'w paśmie — obronialny'
+              : payback.verdict === 'below-benchmark'
+                ? 'poniżej pasma — wyjątkowo dobry'
+                : 'powyżej pasma — wymaga uzasadnienia'
+          }).`
+        : '';
+    const paybackClauseEn =
+      payback.paybackMonths != null && payback.band
+        ? ` Payback ~${payback.paybackMonths} months against the market band of ${payback.band.minMonths}-${payback.band.maxMonths} months for this technology class (${
+            payback.verdict === 'in-band'
+              ? 'in band — defensible'
+              : payback.verdict === 'below-benchmark'
+                ? 'below the band — exceptionally good'
+                : 'above the band — needs justification'
+          }).`
+        : '';
     moves.push({
       order: order++,
       zone: primary,
@@ -553,8 +609,8 @@ export function buildW2MoveSequence(session: LogisticsSession): SequencedMove[] 
         en: `Point-automate the "${logisticsZoneLabel(primary).en.toLowerCase()}" zone (${techLabel.en})`,
       },
       rationale: {
-        pl: `Najwyższe dopasowanie (${primaryScore.score}/9) i największy roczny koszt nieprodukcyjnego ruchu (${primaryScore.motionCost}) — tu jedna inwestycja usuwa najwięcej pracy nietworzącej wartości na jednostkę wysiłku, a nie w obszarze najgłośniej zgłaszanym.`,
-        en: `Highest fit (${primaryScore.score}/9) and the largest annual non-productive-motion cost (${primaryScore.motionCost}) — one investment here removes the most non-value-adding work per unit of effort, not in the loudest-reported zone.`,
+        pl: `Najwyższe dopasowanie (${primaryScore.score}/9) i największy roczny koszt nieprodukcyjnego ruchu (${primaryScore.motionCost}) — tu jedna inwestycja usuwa najwięcej pracy nietworzącej wartości na jednostkę wysiłku, a nie w obszarze najgłośniej zgłaszanym.${paybackClausePl}`,
+        en: `Highest fit (${primaryScore.score}/9) and the largest annual non-productive-motion cost (${primaryScore.motionCost}) — one investment here removes the most non-value-adding work per unit of effort, not in the loudest-reported zone.${paybackClauseEn}`,
       },
       tradeOff: {
         pl: 'Kosztem skupienia budżetu i uwagi wdrożeniowej w jednym obszarze zamiast rozproszonego programu „zautomatyzujmy wszystko naraz".',
