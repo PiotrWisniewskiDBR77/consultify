@@ -33,6 +33,8 @@ import { type RoboticsAxisId } from './deepeningLadder';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 const payback = (f: OperationFeasibility) =>
   Number.isFinite(f.economic.paybackMonths) ? `${f.economic.paybackMonths}` : '∞';
+const paybackSingleShift = (f: OperationFeasibility) =>
+  Number.isFinite(f.economic.paybackMonthsSingleShift) ? `${f.economic.paybackMonthsSingleShift}` : '∞';
 
 /**
  * Grounded synthesis prompt: seeds the model with the engine's portfolio baseline,
@@ -57,7 +59,7 @@ export function buildRoboticsConclusionPrompt(
     .map((id) => ranking.feasibilities.find((f) => f.id === id)!)
     .map(
       (f) =>
-        `- [${f.verdict.toUpperCase()}] ${f.label}: technical ${f.technical.score}/3 (${f.technical.passes ? 'pass' : 'BLOCKED: ' + f.technical.blockers.join(',')}); CAPEX ${f.economic.capex} (integration ${f.economic.integrationCost}); annual net saving ${f.economic.annualNetSaving}; payback ${payback(f)} mo${f.economic.withinThreshold ? '' : ' (over threshold)'}${f.drivers.volumeFalling ? '; volume FALLING' : ''}${f.drivers.highVariability ? '; high variability' : ''}${f.drivers.strategicOverride ? '; strategic pressure' : ''}${f.drivers.cobotChangeRisk ? '; cobot change-risk' : ''}`
+        `- [${f.verdict.toUpperCase()}] ${f.label}: technical ${f.technical.score}/3 (${f.technical.passes ? 'pass' : 'BLOCKED: ' + f.technical.blockers.join(',')}${f.technical.unmeasured.length ? '; UNMEASURED tech: ' + f.technical.unmeasured.join(',') : ''}); CAPEX ${f.economic.capex} (integration ${f.economic.integrationCost}); annual net saving ${f.economic.annualNetSaving}${f.economic.cycleTimeBased ? ' (from cycle-time×volume)' : f.economic.cycleTimeLabourSaving > 0 ? ` (cycle-time cross-check ${f.economic.cycleTimeLabourSaving})` : ''}; payback ${payback(f)} mo @ ${f.economic.shifts} shift(s), ≈${paybackSingleShift(f)} mo @ 1 shift${f.economic.withinThreshold ? '' : ' (over threshold)'}${f.drivers.measurementUncertain ? '; case UNMEASURED → pilot-gated' : ''}${f.drivers.volumeFalling ? '; volume FALLING' : ''}${f.drivers.highVariability ? '; high variability' : ''}${f.drivers.strategicOverride ? '; strategic pressure' : ''}${f.drivers.cobotChangeRisk ? '; cobot change-risk' : ''}`
     )
     .join('\n');
 
