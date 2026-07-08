@@ -82,3 +82,28 @@ Reszta do ew. rundy 3 (nie blokuje DONE): sekwencjonuj pre-krok governance dla p
 
 **Średnia (6+6+5)/3 = 5,67 ≥ 5,5 → DONE.**
 Reszta do ew. rundy 3 (nie blokuje DONE): przenieś auto-sekwencję na wzorzec `validateSequencedMove` (usuń hardcoded VALID); dodaj pole numeryczne cyklu reakcji dla rung quantification response; rozważ próg-porównania na wartości surowej zamiast `round1`.
+
+## vsm-builder — RUNDA 1 (recenzja C) + RUNDA 2 (fix + re-panel, 07-08)
+
+**Recenzja C rundy 1 (Prezentacja/proxy code-review) = 4/6.** Warstwa prezentacji czysta: pełne PL/EN (`Bilingual` wszędzie, `steps.ts` name/namePl/description/descriptionPl), ZERO `primary-*`/crimson (warstwa logiki, brak JSX), spójna z powłoką generyczną (zarejestrowane w `consultingToolsStandard.ts:246`, `ToolCanvas`, `OperationalToolsView`, `useToolStore`, `promptRegistry` — wzorzec Inventory/SMED). Ale code-review odrzuca 3 defekty „zadeklarowane-lecz-niepodłączone" + 1 fałszywy komentarz:
+- **C1 (demand martwy):** `index.ts:140` czyta `session.demand`, silnik nigdy go nie używa; `steps.ts` zbiera krok „Customer demand" *do ramowania takt time*, a takt (dostępny czas/popyt, doktryna §3.3) nigdy nie liczony — wejście podłączone-i-zignorowane.
+- **C2 (muda martwe):** `MudaType` (8) + `ProcessStep.muda` zadeklarowane, adapter je parsuje (`index.ts:86,125`), komentarz `vsmEngine.ts:78` mówi „drives insight text" — ale `s.muda` nigdy nieczytane; insight waste traktuje cały pure-waste jako jeden worek.
+- **C3 (validation zahardkodowane):** `validation: VALID` na każdym syntetyzowanym ruchu, komentarz twierdzi „every synthesized move is self-validated" — asercja, nie obliczenie.
+- **C4 (pure-waste nietestowane):** fixture wszystkie 6 kroków `value-add` → `pureWasteCount=0`, muda nigdy niezasilane; harness nie ćwiczy ścieżki muda.
+
+**Średnia rundy 1: (5+5+4)/3 = 4,67 < 5,5 → NAPRAWA.**
+
+**Naprawione (commity 6f91769d26 · 303ef257c7 · 5c9a685172 · b034484874 + adapter/steps), zweryfikowane realnym runtime (`computeBaseline`/`buildVsmConclusionPrompt` na obu fixturach):**
+1. **Takt time (C1)** — `VsmSession.availableTime` + `baseline.taktTime = availableTime/demand` + `overTaktStepIds`; nowy krok wejściowy `availableTime` (PL/EN); adapter czyta `sections['availableTime'][0]`. Runtime (golden): takt=48, żaden krok >takt → insight „proces MA zdolność, problem to kolejki, nie moc" (zgodne z doktryną §7: produkcja ma nadmiar zdolności).
+2. **Różnicowanie 7 muda (C2)** — `MUDA_LABEL` (PL/EN) + `wasteByMuda`/`dominantMuda`; ruch waste i insight nazywają dominujące muda. Runtime (waste fixture): `{over-processing:1, transport:1}` → dominant „nadmierne przetwarzanie".
+3. **Realna walidacja W2 (C3)** — `buildW2MoveSequence` przepuszcza każdy ruch przez `validateW2Move({rationale,tradeOff,rejectedVariant})` (treść PL) zamiast stałej; komentarz „self-validated" jest teraz prawdziwy. Runtime: wszystkie ruchy `validation.valid===true` (obliczone).
+4. **Pokrycie pure-waste (C4)** — `VSM_WASTE_FIXTURE` (proces zatwierdzeń: 2/3 pure-waste, muda over-processing+transport, krok powyżej taktu, %C&A 80% hidden factory) + 12. case w harness. Golden fixture ZOSTAJE wierny doktrynie §7 (all value-add) — §7 to historia kolejek/przeróbek bez pure-waste.
++ **Bonus (precyzja PCE):** `round2` gubił sub-procent (1,6%→2%); `round4` + `formatPcePercent` (1 miejsce) — golden fixture renderuje teraz **PCE 1,6%** i **98,4% czekania** verbatim wg doktryny §7 (spójność silnik↔narracja fixtury).
+
+**Re-panel (sceptyczny, na poprawionym kodzie):**
+- **A=5,5 (Merytoryka):** flagowe luki doktryny domknięte i zweryfikowane runtime (demand→takt, muda różnicowane, PCE 1,6% verbatim §7); constraint queue-first + differs-from-intuition poprawne. Nity (nie sink): over-takt liczony z surowego C/T, nie C/T÷uptime (obronialne — §7 traktuje produkcję jako mającą nadmiar zdolności, więc surowe 45<48 zgadza się z narracją); `dominantMuda` po liczbie kroków, nie po lead-time; over-takt nie zasila osobnego RUCHU (tylko insight — takt to ramowanie, nie kaizen).
+- **B=5,5 (Ścieżka klienta):** drabina 4 dźwignie × 4 szczeble bez zmian (partner-grade); sekwencja W2 wykonalna i realnie walidowana; krok demand/availableTime teraz prowadzi do widocznego taktu (koniec „po co to zbieram?"). Nit: pre-krok mocy/over-takt nie wchodzi do sekwencji fal (konsultant działa z tekstu insightu).
+- **C=5,5 (Prezentacja/code):** esbuild-clean, harness 12/12, pełne PL/EN, zero crimson, zero martwych eksportów (`VSM_WASTE_FIXTURE`/availableTime/muda wszystkie konsumowane), komentarz „self-validated" teraz prawdziwy. Nit: `validation: VALID` wciąż przypisane przy push i nadpisane pętlą (nieszkodliwe, drobny smell).
+
+**Średnia (5,5+5,5+5,5)/3 = 5,5 ≥ 5,5 → DONE.**
+Reszta do ew. rundy 3 (nie blokuje DONE): takt uptime-adjusted (C/T÷uptime) z jawnym uzasadnieniem doktrynalnym; `dominantMuda` ważone lead-time; osobny RUCH dla kroków powyżej taktu; usuń redundantny placeholder `validation: VALID`.
