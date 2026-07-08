@@ -130,6 +130,14 @@ export interface IntegrationSession {
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const round1 = (value: number) => Math.round(value * 10) / 10;
+/**
+ * Round a 0..1 share to full-percent precision (2 decimals in the fraction).
+ * Shares like point-to-point / integrated feed "% shown to the client", so a
+ * 10%-bucket round1 destroys the doctrine's precision: 17/22 = 0.7727 must
+ * surface as 77% (§7), not 80%; a 0.28 benchmark-grade share must stay 28%,
+ * not snap to 30%. round1 stays for headline whole-number counts (FTE, hours).
+ */
+const round2 = (value: number) => Math.round(value * 100) / 100;
 const asLevel = (value: unknown, fallback: Level = 'medium'): Level =>
   value === 'high' || value === 'medium' || value === 'low' ? value : fallback;
 const localize = (text: Bilingual, isPolish: boolean) => (isPolish ? text.pl : text.en);
@@ -152,6 +160,12 @@ export const ONE_TEN_HUNDRED = { source: 1, correction: 10, downstream: 100 } as
  * Blended error-cost multiple for a bridge under the 1-10-100 rule. A non-critical
  * bridge's errors are mostly caught at correction (~10); a critical-flow bridge
  * leaks more errors downstream (~100), so its blended multiple is higher.
+ * Values are deliberate mid-band picks on the 1-10-100 scale, not the extremes:
+ * 55 = midpoint between correction (10) and downstream (100) for a critical flow
+ * that leaks some but not all errors to the customer/report layer; 15 = just
+ * above pure correction (10) for a non-critical bridge whose errors mostly get
+ * caught before they matter. Both stay >1 because a re-keying error never costs
+ * source-price (1) — by definition it already escaped the source.
  */
 export const errorCostMultiple = (critical: boolean): number => (critical ? 55 : 15);
 
@@ -209,8 +223,13 @@ export interface IntegrationBaseline {
 const isReal = (e: IntegrationEdge): boolean =>
   e.type === 'api' || e.type === 'file' || e.type === 'db';
 
-/** Annual working hours per FTE used to convert re-keying hours into FTE. */
-const FTE_HOURS_PER_YEAR = 1800;
+/**
+ * Annual working hours per FTE used to convert re-keying hours into FTE.
+ * Aligned to the doctrine worked example (§7 Krok 4: "156h/rok ≈ 0,08 FTE" ⇒
+ * 156 / 0.08 = 1950), so the tool's FTE math reproduces the doctrine's own
+ * figures rather than drifting (1800 would turn 156h into ~0.087 FTE).
+ */
+const FTE_HOURS_PER_YEAR = 1950;
 
 export function computeBaseline(session: IntegrationSession): IntegrationBaseline {
   const systems = session.systems;
@@ -226,7 +245,7 @@ export function computeBaseline(session: IntegrationSession): IntegrationBaselin
   const hubTargetConnections = n; // hub-and-spoke: one edge per system
   const pointToPointCount = realEdges.filter((e) => e.pointToPoint !== false).length;
   const pointToPointShare =
-    integrationCount > 0 ? round1(pointToPointCount / integrationCount) : 0;
+    integrationCount > 0 ? round2(pointToPointCount / integrationCount) : 0;
 
   // Degree per system across real edges — the de facto hub is the highest-degree node.
   const degree = new Map<string, number>();
@@ -246,7 +265,7 @@ export function computeBaseline(session: IntegrationSession): IntegrationBaselin
   const hubUnowned = hubDegree >= 3 && !!hubSystem && !hubSystem.owned;
 
   // Integrated systems: those touched by at least one real edge.
-  const integratedShare = n > 0 ? round1(degree.size / n) : 0;
+  const integratedShare = n > 0 ? round2(degree.size / n) : 0;
 
   // Re-keying: FTE-hours/year and 1-10-100 error-cost units.
   let rekeyingHoursPerYear = 0;
@@ -261,7 +280,9 @@ export function computeBaseline(session: IntegrationSession): IntegrationBaselin
     rekeyingErrorCostUnits += hoursYear * errorRate * errorCostMultiple(!!b.critical);
   }
   rekeyingHoursPerYear = round1(rekeyingHoursPerYear);
-  const rekeyingFte = round1(rekeyingHoursPerYear / FTE_HOURS_PER_YEAR);
+  // round2 (not round1) so a fractional FTE like 276/1950 = 0.14 does not snap
+  // to 0.1 and understate the burden — the doctrine quotes 0.08 FTE precision.
+  const rekeyingFte = round2(rekeyingHoursPerYear / FTE_HOURS_PER_YEAR);
   rekeyingErrorCostUnits = round1(rekeyingErrorCostUnits);
 
   const documentedCount = realEdges.filter((e) => e.documented).length;
@@ -632,7 +653,13 @@ export function buildW2MoveSequence(session: IntegrationSession): SequencedMove[
   }
 
   // 4. Defer the platform/API-first migration behind a stated trade-off.
+  //    Skip it entirely once the org is already at Gartner level 4-5 (balanced /
+  //    API-first with reusable APIs + governance, or augmented): recommending a
+  //    "move to an API-first layer" to an org that already lives there is empty
+  //    advice. Below level 4 (ad hoc / enlightened / centralizing) the migration
+  //    is still the strategic endgame and belongs in the sequence.
   const apiScore = scoreOf('apiled');
+  if (baseline.maturityLevel < 4) {
   moves.push({
     order: order++,
     lever: 'apiled',
@@ -662,6 +689,7 @@ export function buildW2MoveSequence(session: IntegrationSession): SequencedMove[
     estimatedEffort: 'high',
     validation: VALID,
   });
+  }
 
   return moves;
 }
