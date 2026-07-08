@@ -21,7 +21,15 @@ import { buildConstraintConclusionPrompt, toConstraintSession } from '@/config/c
 import { buildControlTowerConclusionPrompt, toControlTowerSession } from '@/config/controltower';
 import { buildAutomationPipelineConclusionPrompt, toAutomationPipelineSession } from '@/config/automationpipeline';
 import { buildRoboticsConclusionPrompt, toRoboticsSession } from '@/config/roboticsfeasibility';
-import { buildLogisticsConclusionPrompt, toLogisticsSession } from '@/config/logisticsautomation';
+import {
+  buildLogisticsConclusionPrompt,
+  buildLogisticsDeepenPrompt,
+  logisticsZoneLabel,
+  toLogisticsSession,
+  LOGISTICS_ZONES,
+  LOGISTICS_PROPOSAL_BANK,
+  type LogisticsZoneId,
+} from '@/config/logisticsautomation';
 import { buildIntegrationConclusionPrompt, toIntegrationSession } from '@/config/integrationdiagnostic';
 import { buildDataInventoryConclusionPrompt, toDataInventorySession } from '@/config/datainventory';
 import { buildDecisionConclusionPrompt, toDecisionSession } from '@/config/decisionengine';
@@ -94,6 +102,90 @@ const detectIsPolish = (data: unknown): boolean => {
   return /[ąćęłńóśźż]/i.test(text);
 };
 
+/**
+ * Logistics Automation section-suggestion prompts, seeded with the per-zone
+ * deepening ladder (buildLogisticsDeepenPrompt) and the process-first proposal
+ * bank (LOGISTICS_PROPOSAL_BANK). This is what makes the ladder and the proposal
+ * bank LIVE in runtime rather than dead config: the `zones` step is disciplined by
+ * the quantification rung, the `moves` step by the risk/capability rung plus the
+ * process-before-technology proposal bank. Returns null for steps it does not own.
+ */
+function buildLogisticsSectionPrompt(stepId: string, inputData: unknown): string | null {
+  const isPolish = detectIsPolish(inputData);
+  const L = (pl: string, en: string) => (isPolish ? pl : en);
+  const zoneLabel = (z: LogisticsZoneId) => L(logisticsZoneLabel(z).pl, logisticsZoneLabel(z).en);
+
+  if (stepId === 'zones') {
+    const ladder = LOGISTICS_ZONES.map((z) => {
+      const framing = buildLogisticsDeepenPrompt(z, 'quantification', isPolish);
+      return `- ${zoneLabel(z)} — ${framing ?? ''}`;
+    }).join('\n');
+    return `${L(
+      'Działaj jako partner ds. operacji magazynowych. Zaproponuj 5 wierszy stref (po jednym na strefę przepływu: przyjęcie, składowanie, kompletacja, pakowanie, wysyłka), zdyscyplinowanych drabiną pogłębiającą (powierzchnia → dowód → kwantyfikacja → ryzyko/zdolności).',
+      'Act as a warehouse-operations partner. Propose 5 zone rows (one per flow zone: receiving, storage, picking, packing, shipping), disciplined by the deepening ladder (surface → evidence → quantification → risk/capability).'
+    )}
+
+${L(
+      'Rama kwantyfikacji per strefa (kwota nieprodukcyjnego ruchu = FTE × koszt pracy × % nieprodukcyjny decyduje o priorytecie, nie „głośność” obszaru):',
+      'Quantification framing per zone (the non-productive-motion amount = FTE × labour cost × non-productive % drives priority, not the zone\'s "loudness"):'
+    )}
+${ladder}
+
+${L('Zasady:', 'Rules:')}
+- ${L(
+      'Każda strefa niesie FTE, % czasu nieprodukcyjnego oraz (dla składowania/kompletacji) dokładność zapasu — nie zmyślaj liczb; gdy brak, oznacz jako do zmierzenia (gemba).',
+      'Each zone carries FTE, non-productive time %, and (for storage/picking) inventory accuracy — do not invent numbers; where missing, mark as to-measure (gemba).'
+    )}
+- ${L(
+      'Kompletacja zwykle skupia najwięcej FTE, więc zwykle daje największą pojedynczą kwotę nieprodukcyjnego ruchu.',
+      'Picking usually concentrates the most FTE, so it usually yields the largest single non-productive-motion amount.'
+    )}
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "category": "receiving|storage|picking|packing|shipping", "zone": "receiving|storage|picking|packing|shipping"}]}`;
+  }
+
+  if (stepId === 'moves') {
+    const bank = LOGISTICS_ZONES.map((z) => {
+      const proposals = LOGISTICS_PROPOSAL_BANK[z];
+      const lines = proposals
+        .map((p) => `    · [${p.rung}] ${L(p.title.pl, p.title.en)} — ${L(p.explanation.pl, p.explanation.en)}`)
+        .join('\n');
+      const risk = buildLogisticsDeepenPrompt(z, 'risk-capability', isPolish);
+      return `- ${zoneLabel(z)} — ${risk ?? ''}\n${lines}`;
+    }).join('\n');
+    return `${L(
+      'Działaj jako partner ds. automatyzacji logistyki. Zaproponuj 4-6 ruchów-kandydatów (procesowych i technologicznych), zdyscyplinowanych regułą PROCES PRZED TECHNOLOGIĄ.',
+      'Act as a logistics-automation partner. Propose 4-6 candidate moves (process and technology), disciplined by the PROCESS-BEFORE-TECHNOLOGY rule.'
+    )}
+
+${L(
+      'Bank propozycji per strefa (propozycja proces-najpierw, 0 CAPEX, poprzedza każdy ruch sprzętowy) + rama ryzyka/zdolności:',
+      'Proposal bank per zone (a process-first, 0-CAPEX proposal precedes any hardware move) + risk/capability framing:'
+    )}
+${bank}
+
+${L('Zasady:', 'Rules:')}
+- ${L(
+      'Każdy ruch sprzętowy MUSI być poprzedzony ruchem procesowym (0 CAPEX) w tej samej strefie — ustaw processFirst=true dla ruchów procesowych.',
+      'Every hardware move MUST be preceded by a process move (0 CAPEX) in the same zone — set processFirst=true for process moves.'
+    )}
+- ${L(
+      'Dokładność zapasu <95% blokuje automatyzację składowania — najpierw dane, dopiero potem sprzęt.',
+      'Inventory accuracy <95% blocks storage automation — data first, hardware only after.'
+    )}
+- ${L(
+      'Nie automatyzuj strefy z nadmiarową zdolnością (nie-ograniczenia) — to iluzoryczny zysk; najpierw zlokalizuj prawdziwe wąskie gardło.',
+      'Do not automate a spare-capacity (non-constraint) zone — an illusory gain; locate the true bottleneck first.'
+    )}
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "category": "receiving|storage|picking|packing|shipping", "zone": "receiving|storage|picking|packing|shipping", "processFirst": true}]}`;
+  }
+
+  return null;
+}
+
 export function getToolSuggestionPrompt(
   toolType: ToolType,
   stepId: string,
@@ -103,6 +195,15 @@ export function getToolSuggestionPrompt(
     // The shared OperationalToolData tools: each non-context/summary step is a
     // section. Generate concrete operational items for the current section.
     if (stepId === 'context' || stepId === 'summary') return '';
+
+    // Logistics Automation seeds its section suggestions with the deepening ladder
+    // + process-first proposal bank (making both live in runtime); fall through to
+    // the generic operational prompt for steps it does not own.
+    if (toolType === 'logistics-automation') {
+      const logisticsPrompt = buildLogisticsSectionPrompt(stepId, inputData);
+      if (logisticsPrompt) return logisticsPrompt;
+    }
+
     const opData = inputData as any;
     const ctx = opData?.context || {};
     const sectionName = humanizeStepId(stepId);
