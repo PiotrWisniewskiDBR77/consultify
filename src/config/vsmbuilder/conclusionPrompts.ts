@@ -20,6 +20,7 @@
 import {
   buildW2MoveSequence,
   computeBaseline,
+  formatPcePercent,
   mudaLabel,
   rankLevers,
   type VsmSession,
@@ -72,8 +73,8 @@ export function buildVsmConclusionPrompt(
       : '';
 
   const baselineLine = (isPolish
-    ? `Baza strumienia: ${baseline.stepCount} kroków; czas wartości dodanej ${baseline.valueAddTime}; całkowity lead time ${baseline.totalLeadTime}; PCE = ${pct(baseline.pce)}% (pasmo: ${band.pl}); ${baseline.pureWasteCount} kroków (${pct(baseline.pureWasteShare)}%) to czyste marnotrawstwo trzymające ${baseline.pureWasteLeadTime} lead time; zmierzone ${pct(baseline.measuredRatio)}% kroków.`
-    : `Stream baseline: ${baseline.stepCount} steps; value-add time ${baseline.valueAddTime}; total lead time ${baseline.totalLeadTime}; PCE = ${pct(baseline.pce)}% (band: ${band.en}); ${baseline.pureWasteCount} steps (${pct(baseline.pureWasteShare)}%) are pure waste holding ${baseline.pureWasteLeadTime} of lead time; ${pct(baseline.measuredRatio)}% of steps measured.`)
+    ? `Baza strumienia: ${baseline.stepCount} kroków; czas wartości dodanej ${baseline.valueAddTime}; całkowity lead time ${baseline.totalLeadTime}; PCE = ${formatPcePercent(baseline.pce)}% (pasmo: ${band.pl}); ${baseline.pureWasteCount} kroków (${pct(baseline.pureWasteShare)}%) to czyste marnotrawstwo trzymające ${baseline.pureWasteLeadTime} lead time; zmierzone ${pct(baseline.measuredRatio)}% kroków.`
+    : `Stream baseline: ${baseline.stepCount} steps; value-add time ${baseline.valueAddTime}; total lead time ${baseline.totalLeadTime}; PCE = ${formatPcePercent(baseline.pce)}% (band: ${band.en}); ${baseline.pureWasteCount} steps (${pct(baseline.pureWasteShare)}%) are pure waste holding ${baseline.pureWasteLeadTime} of lead time; ${pct(baseline.measuredRatio)}% of steps measured.`)
     + taktLine + mudaLine;
 
   const constraintLine = c.stepId
@@ -121,7 +122,7 @@ export function buildVsmConclusionPrompt(
 
   const insightPatterns = isPolish
     ? [
-        `„${pct(1 - baseline.pce)}% lead time to czekanie, nie praca" — to punkt otwarcia dla sponsora, który uważa, że proces działa dobrze (z PCE powyżej).`,
+        `„${formatPcePercent(1 - baseline.pce)}% lead time to czekanie, nie praca" — to punkt otwarcia dla sponsora, który uważa, że proces działa dobrze (z PCE powyżej).`,
         c.stepId
           ? `„Ograniczenie to krok ${c.stepId}${c.differsFromIntuition ? `, nie krok ${c.longestCycleStepId}, który wygląda na winowajcę` : ''}" — koryguje intuicję organizacji i kieruje budżet w jedno miejsce.`
           : '„Ograniczenie" — wskaż je z kolejki/WIP, jeśli dane pozwolą; nie z najdłuższego kroku.',
@@ -133,7 +134,7 @@ export function buildVsmConclusionPrompt(
           : '„Czyste NVA do eliminacji" — po sklasyfikowaniu kroków na VA / konieczne NVA / muda.',
       ]
     : [
-        `"${pct(1 - baseline.pce)}% of lead time is waiting, not work" — the opener for a sponsor who believes the process runs fine (from the PCE above).`,
+        `"${formatPcePercent(1 - baseline.pce)}% of lead time is waiting, not work" — the opener for a sponsor who believes the process runs fine (from the PCE above).`,
         c.stepId
           ? `"The constraint is step ${c.stepId}${c.differsFromIntuition ? `, not step ${c.longestCycleStepId}, which looks like the culprit` : ''}" — corrects the organization's intuition and focuses the budget on one place.`
           : '"The constraint" — name it from queue/WIP if the data allows; not from the longest step.',
