@@ -419,19 +419,35 @@
       </ul></div>
     </div>
 
-    <h3 style="margin:28px 0 10px; font-size:16px;">Fragmenty — kolejność wg odblokowania</h3>
+    <h3 style="margin:28px 0 10px; font-size:16px;">ŻELAZNA KOLEJNOŚĆ BLOKÓW (decyzja Piotra 07-08) — blok nie startuje, póki poprzedni nie przejdzie bramki</h3>
     <div class="tbl-scroll">
       <table>
-        <thead><tr><th>#</th><th>Fragment</th><th>Model(e)</th><th class="c">Rozmiar</th><th>Zależność / bramka</th></tr></thead>
+        <thead><tr><th>Blok</th><th>Zakres</th><th>Model(e)</th><th class="c">Status</th><th>Bramka wyjścia</th></tr></thead>
         <tbody>
-          <tr><td class="cnt">F1</td><td>Storage R2 (Whiteboard obrazy + Tabela załączniki)</td><td class="note-cell">Sonnet · nadzorca deploy</td><td class="c"><span class="pill p-done">S</span></td><td class="note-cell"><span class="pill p-block">czeka sekret R2</span> → wgraj→redeploy→jest</td></tr>
-          <tr><td class="cnt">F2</td><td>Excel/Sheet — Teresa-sheet → realny .xlsx</td><td class="note-cell"><b>Opus</b> (hot-path) · Sonnet test</td><td class="c"><span class="pill p-part">M</span></td><td class="note-cell">niezależny → „generuj"=1 artefakt .xlsx z formułami</td></tr>
-          <tr><td class="cnt">F3</td><td>Notatnik — weryfikacja/budowa Teresa-create</td><td class="note-cell">Sonnet verify → Opus jeśli fantom</td><td class="c"><span class="pill p-done">S</span></td><td class="note-cell">niezależny → „zapisz jako notatkę"→otwiera notatkę</td></tr>
-          <tr><td class="cnt">F4</td><td>Word — siatka E2E (przed powłoką!)</td><td class="note-cell">Sonnet</td><td class="c"><span class="pill p-part">M</span></td><td class="note-cell">niezależny → ręczny tekst przeżywa reload</td></tr>
-          <tr><td class="cnt">F5</td><td>Whiteboard + Tabela — storage + non-owner read</td><td class="note-cell">Sonnet</td><td class="c"><span class="pill p-done">S</span></td><td class="note-cell">po F1 → user B widzi mapę/eksport A</td></tr>
-          <tr><td class="cnt">F6</td><td>Mind Map + Process Flow — live-verify persist/collab</td><td class="note-cell">Haiku/Sonnet</td><td class="c"><span class="pill p-done">S</span></td><td class="note-cell">niezależny → 2 przeglądarki: węzeł A→B ≤2s</td></tr>
-          <tr><td class="cnt">F7</td><td>Deck — PPTX geometria + świeży dowód vs Gamma</td><td class="note-cell"><b>Opus</b> (geometria) · Sonnet dowód</td><td class="c"><span class="pill p-part">M</span></td><td class="note-cell">niezależny → pobrany PPTX = ekran</td></tr>
-          <tr><td class="cnt">F8</td><td>Forward-port mechaniki demo→Londyn (per-SHA)</td><td class="note-cell">Sonnet</td><td class="c"><span class="pill p-part">M</span></td><td class="note-cell">po ustabilizowaniu demo → higiena, bez bramki UX</td></tr>
+          <tr><td class="cnt">B0</td><td>Higiena: skille, gałęzie 333→164, worktree 14→6, push-safety, baza=demo</td><td class="note-cell">nadzorca</td><td class="c"><span class="pill p-done">DONE</span></td><td class="note-cell">zrobione 07-08</td></tr>
+          <tr><td class="cnt">B1</td><td>Notatnik — Teresa-create verify/build (przetarcie całej pętli)</td><td class="note-cell">Sonnet → Opus jeśli fantom</td><td class="c"><span class="pill p-part">NEXT</span></td><td class="note-cell">„zapisz jako notatkę"→otwiera notatkę na demo</td></tr>
+          <tr><td class="cnt">B2</td><td>Excel/Sheet — Teresa-sheet → realny .xlsx (największa luka)</td><td class="note-cell"><b>Opus</b> wiring · Sonnet test</td><td class="c"><span class="pill p-empty">czeka</span></td><td class="note-cell">„generuj"=1 artefakt .xlsx z formułami</td></tr>
+          <tr><td class="cnt">B3</td><td>Word — siatka E2E (obowiązkowo przed jakąkolwiek powłoką)</td><td class="note-cell">Sonnet</td><td class="c"><span class="pill p-empty">czeka</span></td><td class="note-cell">E2E zielone + ręczny tekst przeżywa reload</td></tr>
+          <tr><td class="cnt">B4</td><td>Mind Map + Process Flow + kolaboracja — live-verify (2 przeglądarki)</td><td class="note-cell">Haiku/Sonnet</td><td class="c"><span class="pill p-empty">czeka</span></td><td class="note-cell">węzeł A→B ≤2s; persist po reload</td></tr>
+          <tr><td class="cnt">B5</td><td>Deck — PPTX geometria + świeży dowód vs Gamma</td><td class="note-cell"><b>Opus</b> geometria · Sonnet</td><td class="c"><span class="pill p-empty">czeka</span></td><td class="note-cell">pobrany PPTX = ekran; zrzuty vs Gamma</td></tr>
+          <tr><td class="cnt">B6</td><td><b>BRAMKA HARVARD v1: live-odbiór Piotra 8 narzędzi</b></td><td class="note-cell"><b>Piotr</b> ~1-2h</td><td class="c"><span class="pill p-block">Piotr</span></td><td class="note-cell">runbook; „tak" per narzędzie zamyka Harvard v1</td></tr>
+          <tr><td class="cnt">B7</td><td>Forward-port mechaniki demo→Londyn (per-SHA, ~130 commitów)</td><td class="note-cell">Sonnet</td><td class="c"><span class="pill p-empty">czeka</span></td><td class="note-cell">Londyn = demo funkcjonalnie; bez bramki UX</td></tr>
+          <tr><td class="cnt">B8</td><td>VEGAS: bramka promptów N-kart → ArtifactRightPanel → fale Rekord→Dokument→Matryca→Deck→Canvas</td><td class="note-cell">Sonnet · Opus Initiative</td><td class="c"><span class="pill p-empty">czeka</span></td><td class="note-cell">każda fala: zrzuty dark+light → „tak" Piotra</td></tr>
+          <tr><td class="cnt">B9</td><td>OXFORD: odbiory zbudowanych (DRD · 6 q-banków · standard wniosków) → reszta O3 → O4/O5</td><td class="note-cell">sesje odbiorowe + Sonnet</td><td class="c"><span class="pill p-empty">czeka</span></td><td class="note-cell">„podpisałbym nazwiskiem" per output</td></tr>
+          <tr><td class="cnt">B-R2</td><td>TOR RÓWNOLEGŁY: Storage R2 (Whiteboard obrazy + Tabela załączniki + non-owner read)</td><td class="note-cell">Sonnet</td><td class="c"><span class="pill p-block">sekret R2</span></td><td class="note-cell">startuje natychmiast po sekrecie; wgraj→redeploy→jest</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin:28px 0 10px; font-size:16px;">Rejestr pętli (kto trzyma który case — wpis obowiązkowy przed startem)</h3>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>Case / pętla</th><th>Właściciel</th><th class="c">Stan</th><th>Uwaga</th></tr></thead>
+        <tbody>
+          <tr><td>NORDWIND (KPI/ROI/Finanse)</td><td class="note-cell">sesja zewn. (agent pętli odbioru)</td><td class="c"><span class="pill p-part">v11=89, wznawia</span></td><td class="note-cell">NIE dotykać danych `nordwind--` na TROLLEY z innych sesji</td></tr>
+          <tr><td>MCG-2026 (showcase 12 narzędzi)</td><td class="note-cell">sesja zewn. (runda 6 w toku)</td><td class="c"><span class="pill p-part">72, w toku</span></td><td class="note-cell">NIE dotykać rekordów `MCG-2026:`</td></tr>
+          <tr><td>Tools/Assessment 11 narzędzi</td><td class="note-cell">zamknięte (worktree tools-assessment-dbr77)</td><td class="c"><span class="pill p-done">DONE ≥5,5</span></td><td class="note-cell">czeka promocja na demo (decyzja Piotra)</td></tr>
+          <tr><td>Bloki B1-B9</td><td class="note-cell">sesja główna (nadzorca)</td><td class="c"><span class="pill p-part">B0 done</span></td><td class="note-cell">jedna pętla naraz, wg żelaznej kolejności</td></tr>
         </tbody>
       </table>
     </div>

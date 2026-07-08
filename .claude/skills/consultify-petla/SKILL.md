@@ -10,6 +10,10 @@ description: Orkiestracja pracy w PĘTLI na jednym fragmencie (jedno narzędzie/
 
 SSOT stanu i listy fragmentów: `Harvard/wdrozenie-100/_STATUS_3_FILARY.html` (dashboard, pamięć `[[project_dashboard_3_filary]]`) + `_PLANY_KONCOWE_2026-07-07/00_PLAN_DOKONCZENIA_FINAL.md`.
 
+## ŻELAZNA KOLEJNOŚĆ BLOKÓW (decyzja Piotra 07-08 — nie przestawiaj bez jego zgody)
+B1 Notatnik (przetarcie pętli, małe ryzyko) → B2 Excel/Sheet (Teresa→.xlsx, największa luka, Opus) → B3 Word E2E (siatka przed jakąkolwiek powłoką) → B4 MindMap+ProcessFlow+kolaboracja live-verify → B5 Deck (PPTX geometria + dowód vs Gamma) → **B6 = BRAMKA: live-odbiór Piotra 8 narzędzi (~1-2h, zamyka Harvard v1)** → B7 forward-port demo→Londyn (per-SHA) → B8 VEGAS (bramka promptów N-kart → ArtifactRightPanel → fale: Rekord→Dokument→Matryca→Deck→Canvas) → B9 OXFORD (odbiory zbudowanych: DRD+6 q-banków+standard wniosków → reszta O3→O4/O5).
+**Tor równoległy B-R2 (poza kolejnością):** Storage R2 (Whiteboard obrazy+Tabela załączniki) — startuje NATYCHMIAST gdy Piotr da sekret, wpada między bloki. Zasada: blok NIE startuje, póki poprzedni nie przeszedł swojej bramki (wyjątek: B-R2 i drobne hotfixy z odbiorów).
+
 ## PIGUŁKA — kontrakt kontekstu (najważniejszy element ekonomii)
 Robotnik NIE czyta wielkich handoffów. Dostaje JEDNĄ pigułkę ≤1 ekran. Ty (orkiestrator) ją składasz z SSOT; robotnik działa tylko z niej. Szablon do skopiowania:
 
@@ -45,7 +49,8 @@ Zasady dobrej pigułki: bez historii („dlaczego"), tylko „co i jak teraz". �
 - Eskalacja modelu = decyzja orkiestratora po 1 nieudanej rundzie taniego modelu, nie domyślnie.
 
 ## Higiena wykonania (nienaruszalne)
-- Świeża gałąź z `origin/Londyn` per fragment. NIGDY `feat/tp-forms-polish` ani linii `tp-*`/`deliverables-w1`/`harvard-noc` (skażony re-skin — [[finding_reskin_baked_into_deliverables_lineage]]).
+- **Świeża gałąź z `origin/demo` per fragment** (demo = target deployu i ma ~130 commitów mechaniki, których Londyn nie ma; gałąź z Londyn = fix na starym kodzie = konflikt/regresja przy merge). Londyn dostaje forward-port per-SHA osobnym blokiem (B7). NIGDY `feat/tp-forms-polish` ani linii `tp-*`/`deliverables-w1`/`harvard-noc` (skażony re-skin — [[finding_reskin_baked_into_deliverables_lineage]]).
+- **JEDEN właściciel pętli per case/narzędzie.** Przed startem pętli sprawdź i wpisz się do rejestru właścicieli w dashboardzie `_STATUS_3_FILARY.html` (sekcja „Rejestr pętli"); jeśli case ma żywego właściciela (inna sesja) — NIE dotykaj jego danych na TROLLEY (lekcja: rozjazd NORDWIND między 2 agentami).
 - `isolation: worktree` wymuszony; worktree pod `/private/tmp/<nazwa>` (nie `/tmp` — symlink gubi Vite; commity z ulotnego worktree bywają gubione między turami → commit-per-krok).
 - Robotnik: „WYKONAJ nie deleguj" (rozdelegowanie klobruje główne drzewo), zero sub-agentów, zero push.
 - Nowe testy w `tests/` → `git add -f` (`.gitignore:209`).

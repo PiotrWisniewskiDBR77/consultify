@@ -36,6 +36,9 @@ Nie testuj na zabawce. Zbuduj realistyczną firmę + zadanie + **twarde pułapki
 5. **Wynik pod progiem → wróć do naprawy** (krok 3 pętli), zmapuj findingi, re-test. Trajektoria bywa niemonotoniczna (spadek = adwersarz zszedł głębiej, rośnie dojrzałość — to OK).
 6. **Padnięta weryfikacja (rate-limit) = wynik CZĘŚCIOWY, NIE „zero findingów".** Obiektywy policzone przed limitem są wiarygodne; „0 potwierdzonych" przy padniętych sceptykach to artefakt, nie sukces. Powtórz po resecie.
 
+## Sanity-check PRZED każdym pomiarem (obowiązkowy krok 0)
+**Sprawdź LLM tier zanim zmierzysz cokolwiek**: `SELECT model_id FROM llm_providers` na TROLLEY — premium musi być `anthropic/claude-sonnet-4` (był po cichu flaky glm-4.6; „puste artefakty" wyglądały jak bug kodu i kosztowały 4 rundy — [[finding_demo_llm_tier_glm_flaky_2026-07-07]]). Flaky tier = panel ocenia model, nie produkt. Po zmianie model_id wymagany RESTART serwisu (tier-cache w pamięci).
+
 ## Lekcje harnessu (NIE powtarzać — kosztowały iteracje)
 - **JEDEN autorytatywny skrypt fix+export w jednej transakcji.** NIGDY stary patch po nowym buildzie (stale-clobber ściął DBR77 91→71).
 - **Financials DERIVED z jednego źródła** (per-BU rev+marża) — narracja cytuje z modelu (template literal), nie z pamięci; inaczej zaszyta liczba zwietrzeje po zmianie parametru.
