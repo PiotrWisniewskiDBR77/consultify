@@ -62,6 +62,15 @@ export function buildConstraintConclusionPrompt(
       ? 'Throughput Accounting: brak danych finansowych (sprzedaż/TVC/OE/I) — nie licz T/ROI, oceniaj przez przepustowość i kolejki.'
       : 'Throughput Accounting: no financial data (sales/TVC/OE/I) — do not compute T/ROI, reason from throughput and queues.';
 
+  const proj = baseline.projection;
+  const projLine = proj.hasProjection
+    ? isPolish
+      ? `Projekcja przepustowości: constraint wysyła ~${proj.constraintCapacity} jedn.; luka ~${proj.closeableGap} jedn. niezaspokojonego popytu ≈ +${proj.projectedThroughputUplift} Throughput przy niezmienionym OE (T/jedn. ≈ ${proj.throughputPerUnit}; Zysk netto → ~${proj.projectedNetProfit}). To próg, który musi pobić każdy CAPEX — część odzyskiwalna wcześniej bez wydatku (Exploit/Policy).`
+      : `Throughput projection: the constraint ships ~${proj.constraintCapacity} units; the ~${proj.closeableGap}-unit gap of unmet demand ≈ +${proj.projectedThroughputUplift} Throughput at unchanged OE (T/unit ≈ ${proj.throughputPerUnit}; Net Profit → ~${proj.projectedNetProfit}). This is the bar any CAPEX must clear — part recoverable earlier with no spend (Exploit/Policy).`
+    : isPolish
+      ? 'Projekcja przepustowości: brak (nie ma jednocześnie luki mocy, dodatniej przepustowości constraintu i danych T).'
+      : 'Throughput projection: none (missing a capacity gap, a positive constraint capacity, or T data together).';
+
   const scoreLines = ranking.scores
     .filter((s) => s.moveCount > 0)
     .map(
@@ -114,6 +123,7 @@ ${locationLine}
 
 === THROUGHPUT ACCOUNTING (facts — the only admissible source of money figures) ===
 ${taLine}
+${projLine}
 
 === SCORED FOCUSING STEPS ===
 ${scoreLines || '- (no scored moves; reason from the located constraint and the sequence below)'}

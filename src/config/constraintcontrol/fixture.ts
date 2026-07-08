@@ -196,6 +196,20 @@ const movesItems: FocusMoveItemFixture[] = [
     evidence: ['5 kroków ma rosnącą kolejkę tylko przy Review — nadprodukcja draftów puchnie WIP przed nim'],
   },
   {
+    id: 'move-policy-partner-reviews-all',
+    title: 'Reguła „Partner recenzuje każdy draft osobiście" jako ograniczenie polityki',
+    description:
+      'Evaporating Cloud (Chmura Konfliktu): założenie A „musimy zagwarantować jakość finalną" wymusza „Partner recenzuje wszystko"; założenie B „musimy skrócić kolejkę Review" wymaga „ktoś inny recenzuje część". Ukryte, błędne założenie łączące konflikt: „tylko Partner potrafi zagwarantować jakość" — obalane audytem zgodności Senior Managerów >70%. Rozbrojenie: różnicowanie ścieżki sign-off wg ryzyka/typu projektu, zanim dokupicie moc Partnera.',
+    impact: 'high',
+    effort: 'low',
+    step: 'policy',
+    evidence: [
+      'Konflikt (Evaporating Cloud): "gwarancja jakości" (A) vs "krótka kolejka Review" (B); ukryte założenie: "tylko Partner gwarantuje jakość"',
+      'Reguła sign-off nie różnicuje typów projektów — niskie ryzyko idzie tą samą ścieżką co wysokie, sztucznie zawężając przepustowość Review',
+      'Audyt próbek: Senior Managerowie mają >70% zgodności z decyzjami Partnera — założenie "tylko Partner" jest falsyfikowalne',
+    ],
+  },
+  {
     id: 'move-elevate-second-partner',
     title: 'Drugi Partner/Principal uprawniony do Review części projektów',
     description: 'Rozszerz uprawnienia sign-off na wybrane typy projektów, dopiero po wyczerpaniu Exploit/Subordinate.',

@@ -703,13 +703,16 @@ export function buildW2MoveSequence(session: ConstraintSession): SequencedMove[]
     ? true
     : false;
   const proj = baseline.projection;
-  // Projected T upside from closing the gap — the concrete number the Elevate
-  // decision must clear (doctrine §7): unmet demand is throughput left on the table.
+  // Projected T upside from closing the gap — the size of the prize (doctrine §7):
+  // unmet demand (demand − capacity) is throughput left on the table. It is the bar
+  // any CAPEX must clear, and part of it is usually recoverable earlier (Exploit /
+  // Policy) with no spend — so it is surfaced in BOTH the real-gap and the
+  // conditional Elevate branches.
   const projPl = proj.hasProjection
-    ? ` Zamknięcie luki ~${proj.closeableGap} jedn. podnosi Throughput o ok. ${proj.projectedThroughputUplift} przy niezmienionym OE (T/jedn. ≈ ${proj.throughputPerUnit}; Zysk netto → ~${proj.projectedNetProfit}) — to próg, który inwestycja musi pobić.`
+    ? ` Skala nagrody: luka ~${proj.closeableGap} jedn. niezaspokojonego popytu ≈ +${proj.projectedThroughputUplift} Throughput przy niezmienionym OE (T/jedn. ≈ ${proj.throughputPerUnit}; Zysk netto → ~${proj.projectedNetProfit}) — tę wartość musi pobić każdy CAPEX, a część odzyskacie wcześniej bez wydatku (Exploit/Policy).`
     : '';
   const projEn = proj.hasProjection
-    ? ` Closing the ~${proj.closeableGap}-unit gap lifts Throughput by ~${proj.projectedThroughputUplift} at unchanged OE (T/unit ≈ ${proj.throughputPerUnit}; Net Profit → ~${proj.projectedNetProfit}) — the bar the investment must clear.`
+    ? ` Size of the prize: the ~${proj.closeableGap}-unit gap of unmet demand ≈ +${proj.projectedThroughputUplift} Throughput at unchanged OE (T/unit ≈ ${proj.throughputPerUnit}; Net Profit → ~${proj.projectedNetProfit}) — the bar any CAPEX must clear, part of it recoverable earlier with no spend (Exploit/Policy).`
     : '';
   moves.push({
     order: order++,
@@ -721,10 +724,10 @@ export function buildW2MoveSequence(session: ConstraintSession): SequencedMove[]
     rationale: {
       pl: realGap
         ? `Luka capacity–demand (${location.capacityGap}) jest realna i nie znika po Exploit/Subordinate — dopiero teraz inwestycja (etat, maszyna, outsourcing fragmentu Review) jest uzasadniona. Oceń ją przez zmianę T/I/OE CAŁEGO systemu${roiLine ? ` (dziś Zysk netto = T − OE = ${accounting.netProfit}${accounting.roi !== null ? `, ROI = ${accounting.roi}` : ''})` : ''}, nie przez koszt lokalny.${projPl}`
-        : `Elevate trzymamy na końcu i warunkowo: dopóki luka capacity–demand nie jest realna i trwała po Exploit/Subordinate, dokupienie mocy zwiększa OE i I bez zmiany T${roiLine ? ` (Zysk netto = T − OE = ${accounting.netProfit})` : ''}. To najdroższy i najwolniejszy krok — uruchamiany tylko, gdy 1-4 wyczerpane.`,
+        : `Elevate trzymamy na końcu i warunkowo: dopóki luka capacity–demand nie jest realna i trwała po Exploit/Subordinate, dokupienie mocy zwiększa OE i I bez zmiany T${roiLine ? ` (Zysk netto = T − OE = ${accounting.netProfit})` : ''}. To najdroższy i najwolniejszy krok — uruchamiany tylko, gdy 1-4 wyczerpane.${projPl}`,
       en: realGap
         ? `The capacity–demand gap (${location.capacityGap}) is real and persists after Exploit/Subordinate — only now is investment (headcount, machine, outsourcing part of Review) justified. Judge it by the change in system T/I/OE${roiLine ? ` (today Net Profit = T − OE = ${accounting.netProfit}${accounting.roi !== null ? `, ROI = ${accounting.roi}` : ''})` : ''}, not by local cost.${projEn}`
-        : `We keep Elevate last and conditional: until the capacity–demand gap is real and persistent after Exploit/Subordinate, buying capacity raises OE and I without changing T${roiLine ? ` (Net Profit = T − OE = ${accounting.netProfit})` : ''}. It is the most expensive and slowest step — triggered only when 1-4 are exhausted.`,
+        : `We keep Elevate last and conditional: until the capacity–demand gap is real and persistent after Exploit/Subordinate, buying capacity raises OE and I without changing T${roiLine ? ` (Net Profit = T − OE = ${accounting.netProfit})` : ''}. It is the most expensive and slowest step — triggered only when 1-4 are exhausted.${projEn}`,
     },
     tradeOff: {
       pl: 'Kosztem trwałego wzrostu kosztów operacyjnych (OE) i związanego kapitału (I) — który zwraca się tylko, jeśli realnie podnosi Throughput całego systemu, a nie wygląd raportu jednego działu.',
