@@ -18,6 +18,7 @@ import {
   analyzeSensitivity,
   buildMatrix,
   buildMoveSequence,
+  compareWeightProfiles,
   detectFalseBinarity,
   detectHiddenCriterion,
   scoreLinks,
@@ -51,6 +52,7 @@ export function buildDecisionConclusionPrompt(
   const falseBinary = detectFalseBinarity(session);
   const hidden = detectHiddenCriterion(session);
   const disputes = splitDisputes(session);
+  const weightProfiles = compareWeightProfiles(session);
   const sequence = buildMoveSequence(session);
 
   const frameLine = isPolish
@@ -97,6 +99,18 @@ export function buildDecisionConclusionPrompt(
     .map((d) => `- ${d}`)
     .join('\n');
 
+  const weightProfileBlock = weightProfiles.contested
+    ? weightProfiles.profiles
+        .map(
+          (p) =>
+            `- ${localize(p.label.pl, p.label.en, isPolish)}: ${p.recommendedLabel ?? (isPolish ? 'brak rekomendacji' : 'no recommendation')} (${isPolish ? 'przewaga' : 'margin'} ${p.margin})`
+        )
+        .join('\n') +
+      `\n${localize(weightProfiles.message.pl, weightProfiles.message.en, isPolish)}`
+    : isPolish
+      ? '(wagi kryteriów nie są sporne — jeden profil wystarcza)'
+      : '(criteria weights are not contested — a single profile suffices)';
+
   const seqLines = sequence
     .map(
       (m) =>
@@ -122,6 +136,7 @@ export function buildDecisionConclusionPrompt(
         'Zmienna, która przełącza rekomendację (oznaczona FLIPS powyżej), to prawdziwy decision driver — postaw ją w centrum, nie temat dyskutowany najdłużej.',
         'Jeśli wykryto fałszywą binarność lub ukryte kryterium — nazwij to wprost jako insight; to często najcenniejszy moment sesji.',
         'Rozdziel spór o fakty (rozstrzyga go domiar danych) od sporu o wartości (rozstrzyga go jawna rozmowa o preferencjach) — nie uśredniaj po cichu.',
+        'Jeśli rekomendacja ZMIENIA się między profilami wag powyżej — to insight nadrzędny: wybór zależy od nierozstrzygniętego sporu o wartości, nie od danych; nazwij to wprost i postaw rozstrzygnięcie wag przed decyzją.',
         'Liczby (oceny, wagi, rozpiętości, ogniwa) wyłącznie z bloków powyżej — nie licz i nie zmyślaj.',
       ]
     : [
@@ -129,6 +144,7 @@ export function buildDecisionConclusionPrompt(
         'The variable that flips the recommendation (marked FLIPS above) is the real decision driver — put it at the centre, not the topic debated the longest.',
         'If a false binary or a hidden criterion was detected — name it explicitly as an insight; it is often the most valuable moment of the session.',
         'Separate the fact dispute (settled by measuring) from the value dispute (settled by an explicit conversation about preferences) — do not silently average.',
+        'If the recommendation CHANGES across the weight profiles above — that is the overriding insight: the choice hangs on an unresolved value dispute, not on the data; name it explicitly and put resolving the weights before the decision.',
         'Numbers (scores, weights, spans, links) come exclusively from the blocks above — do not compute or invent them.',
       ];
 
@@ -150,6 +166,9 @@ ${tornadoBlock}
 
 === STRUCTURAL DIAGNOSTICS ===
 ${diagnosticsLines}
+
+=== RECOMMENDATION UNDER ALTERNATIVE WEIGHT PROFILES (do not silently average) ===
+${weightProfileBlock}
 
 === MOVE SEQUENCE (grounded draft — raise the weakest link, then commit) ===
 ${seqLines}
