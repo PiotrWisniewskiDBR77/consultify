@@ -133,6 +133,8 @@ export function toLegacySession(
     commoditized: item.commoditized === undefined ? undefined : truthy(item.commoditized),
     duplicatedElsewhere:
       item.duplicatedElsewhere === undefined ? undefined : truthy(item.duplicatedElsewhere),
+    scalingBarrier: item.scalingBarrier === undefined ? undefined : truthy(item.scalingBarrier),
+    capacityUtilizationPct: asNumber(item.capacityUtilizationPct),
   }));
 
   const validIds = new Set(apps.map((a) => a.id));
