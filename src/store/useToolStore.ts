@@ -1224,6 +1224,33 @@ export interface OperationalItem {
   target?: string;
   frequency?: string;
   threshold?: string;
+  // --- Decision Engine structural fields (all optional; other operational tools
+  // ignore them). Consumed by toDecisionSession (src/config/decisionengine) so
+  // AI-assisted steps feed the matrix / tornado / commitment signals in a LIVE
+  // session, not only from the fixture. These survive parseItems' passthrough.
+  question?: string;
+  decisionMaker?: string;
+  horizon?: string;
+  criterion?: string;
+  alternative?: string;
+  scores?: Record<string, number>;
+  weight?: number;
+  strawman?: boolean;
+  doable?: boolean;
+  realOption?: boolean;
+  declared?: boolean;
+  contested?: boolean;
+  disputeKind?: 'fact' | 'value';
+  low?: number;
+  base?: number;
+  high?: number;
+  pointEstimate?: boolean;
+  fromPremortem?: boolean;
+  anchored?: boolean;
+  binary?: boolean;
+  implementersPresent?: boolean;
+  commitmentConfirmed?: boolean;
+  reversibility?: 'one-way' | 'two-way';
 }
 
 export interface OperationalToolData {
