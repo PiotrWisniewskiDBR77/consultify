@@ -504,6 +504,14 @@ export function getToolSuggestionPrompt(
       if (dataInventoryPrompt) return dataInventoryPrompt;
     }
 
+    // Legacy Analyzer seeds its capture-step suggestions with the deepening ladder
+    // + partner-grade proposal bank (making both live in runtime); falls through to
+    // the generic operational prompt for steps it does not own (context/summary).
+    if (toolType === 'legacy-analyzer') {
+      const legacyPrompt = buildLegacyStepSuggestionPrompt(stepId, detectIsPolish(inputData));
+      if (legacyPrompt) return legacyPrompt;
+    }
+
     // Robotics Feasibility seeds its `operations` step with the deepening ladder
     // (buildRoboticsDeepenPrompt across all six axes, technical feasibility BEFORE
     // economic) — this is what makes the ladder LIVE in runtime rather than dead
