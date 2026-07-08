@@ -1812,13 +1812,17 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       }
 
       // Teresa "all 8 tools" rollout — note: already a real notebook_pages row
-      // (created server-side by generateDeliverable), so we just navigate to
-      // the Notebook tab instead of mounting a canvas draft.
+      // (created server-side by generateDeliverable). Previously this only set
+      // `tab: 'notebook'`, which lands on the notebooks LIBRARY, not the note
+      // itself — the just-created page has no notebook container, so it was
+      // invisible there (same shape as the MyWorkHub fix documented at
+      // `parseMyWorkPathIntent` for /my-work/notebook/<pageId>). Deep-link to
+      // that route directly (like the `initiative` branch below does for its
+      // own record) so NotebookContent's `openPageId` fetches the page by id
+      // and actually opens the editor on the note Teresa just created.
       if (payloadKind === 'note') {
         try {
-          const { setMyWorkIntent, setCurrentView } = useAppStore.getState() as any;
-          setMyWorkIntent?.({ tab: 'notebook' });
-          setCurrentView?.(AppView.MY_WORK);
+          navigateToRoute(`/my-work/notebook/${encodeURIComponent(draftId)}`);
         } catch (err) {
           console.warn('[UnifiedChatPanel] note deliverable navigation failed', err);
           return;
