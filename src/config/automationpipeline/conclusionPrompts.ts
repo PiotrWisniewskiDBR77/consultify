@@ -76,7 +76,7 @@ export function buildAutomationPipelineConclusionPrompt(
           QUADRANT_LABEL[a.quadrant].pl,
           QUADRANT_LABEL[a.quadrant].en,
           isPolish
-        )} · ${a.automatableFteHours} FTE-h/yr · impact ${a.impact}/5 × effort ${a.effort}/5${a.redesignFirst ? (isPolish ? ' · REDESIGN NAJPIERW' : ' · REDESIGN FIRST') : ''}${a.ownerReady ? '' : isPolish ? ' · brak właściciela governance' : ' · no governance owner'}`
+        )} · ${a.automatableFteHours} FTE-h/yr · impact ${a.impact}/5 × effort ${a.effort}/5 (TCO ${isPolish ? 'wdroż.' : 'build'} ${a.tco.implementation}/${isPolish ? 'utrzym.' : 'maint.'} ${a.tco.maintenance}/${isPolish ? 'ryz.' : 'risk'} ${a.tco.risk})${a.redesignFirst ? (isPolish ? ' · REDESIGN NAJPIERW' : ' · REDESIGN FIRST') : ''}${a.paretoScopable ? (isPolish ? ' · 80/20 scopable' : ' · 80/20 scopable') : ''}${a.ownerReady ? '' : isPolish ? ' · brak właściciela governance' : ' · no governance owner'}`
     )
     .join('\n');
 
@@ -131,6 +131,24 @@ export function buildAutomationPipelineConclusionPrompt(
       isPolish
         ? `Rejestr kandydatów pochodzi w ${100 - Math.round(baseline.miningRatio * 100)}% ze zgłoszeń top-down — brak process miningu oznacza, że nie widzicie prawdziwego pipeline'u; priorytet inwestycyjny to narzędzie odkrywania procesu, nie kolejny bot.`
         : `The candidate register is ${100 - Math.round(baseline.miningRatio * 100)}% top-down requests — without process mining you do not see the real pipeline; the investment priority is a process-discovery tool, not another bot.`
+    );
+  }
+  const topPareto = strongestOf(baseline.assessments.filter((a) => a.paretoScopable), 'quick-win')
+    ?? (baseline.paretoScopableIds.length > 0
+      ? baseline.assessments.find((a) => a.paretoScopable) ?? null
+      : null);
+  if (topPareto) {
+    seededInsights.push(
+      isPolish
+        ? `80/20: proces „${topPareto.id}" ma dominującą ścieżkę (≥80% wolumenu) — automatyzuj GŁÓWNĄ ścieżkę + eskalacja wyjątków do człowieka; ${topPareto.automatableFteHours} FTE-h/rok głównej ścieżki to większość wartości przy ułamku effortu potrzebnego na 100% wariantów (długi ogon niewart osobnej automatyzacji).`
+        : `80/20: process "${topPareto.id}" has a dominant path — automate the MAIN path + escalate exceptions to a human; ${topPareto.automatableFteHours} FTE-h/yr of the main path is most of the value at a fraction of the effort needed for 100% of variants (the long tail is not worth its own automation).`
+    );
+  }
+  if (baseline.technicallyReadyNoOwnerIds.length > 0) {
+    seededInsights.push(
+      isPolish
+        ? `Bariera pozatechniczna: proces(y) „${baseline.technicallyReadyNoOwnerIds.join(', ')}" (${baseline.noOwnerFteHours} FTE-h/rok) kwalifikują się technicznie, ale NIE mają właściciela biznesowego gotowego przejąć governance bota — to najczęstszy powód, dla którego „gotowe technicznie" pipeline'y stoją w miejscu; ruch = wyznacz właściciela ZANIM padnie budżet na budowę, nie po.`
+        : `Non-technical barrier: process(es) "${baseline.technicallyReadyNoOwnerIds.join(', ')}" (${baseline.noOwnerFteHours} FTE-h/yr) qualify technically but have NO business owner ready to take over bot governance — the most common reason "technically ready" pipelines stall; the move = name an owner BEFORE the build budget is committed, not after.`
     );
   }
 
