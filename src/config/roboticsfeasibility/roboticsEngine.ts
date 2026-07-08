@@ -47,6 +47,12 @@ export const PAYBACK_THRESHOLD_MONTHS = 36;
 export const INTEGRATION_OVERHEAD_MIN = 0.2;
 export const INTEGRATION_OVERHEAD_MAX = 0.4;
 export const INTEGRATION_OVERHEAD_DEFAULT = 0.3;
+/**
+ * Net productive hours per FTE per year (industrial standard ~1800 after holidays,
+ * absence and breaks). Converts freed cycle-time (seconds × annual volume) into an
+ * FTE-equivalent labour saving — the throughput path of doctrine §4.2/§7.
+ */
+export const PRODUCTIVE_HOURS_PER_FTE = 1800;
 
 // ---------------------------------------------------------------------------
 // Read-model
@@ -75,12 +81,18 @@ export interface OperationCandidate {
   processStable?: boolean;
 
   // --- Gate 2: economic feasibility ---
-  /** Number of shifts staffing the operation (1/2/3) — drives labour saving. */
+  /** Number of shifts staffing the operation (1/2/3) — drives labour saving and payback sensitivity. */
   shifts?: number;
   /** FTE freed (reduced or reassigned) by automating this operation. */
   fteReduced?: number;
   /** Fully-burdened annual cost of one FTE at this station. */
   annualCostPerFte?: number;
+  /** Manual cycle time per unit, seconds — the throughput saving numerator (doctrine §4.2/§7). */
+  cycleTimeManualSec?: number;
+  /** Robot/cobot cycle time per unit, seconds — the realistic takt on the full mix, not the supplier's ideal-variant claim. */
+  cycleTimeRobotSec?: number;
+  /** Units per year through the operation — converts per-unit cycle-time saving into annual freed labour hours. */
+  annualVolume?: number;
   /** Robot/cobot hardware price (base + end-effector), excl. integration. */
   hardwareCost?: number;
   /** Explicit safety-layer CAPEX (fencing/sensors/contact monitoring), if separated. */
@@ -125,8 +137,15 @@ export interface TechnicalGate {
   score: number;
   /** True when all three criteria clear the bar AND the base process is stable. */
   passes: boolean;
-  /** Which criteria drag the conjunction down (score < 2 or unstable process). */
+  /** Which criteria drag the conjunction down (score < 2, unstable process, OR absent proof). */
   blockers: TechnicalBlocker[];
+  /**
+   * Which technical criteria are ABSENT (no evidence supplied). The gate is a hard
+   * STOP requiring proof (doctrine §4.1): a missing criterion is treated as a
+   * blocker that must be MEASURED before the gate can pass, not silently assumed
+   * "medium". Callers surface these as "measure before proceeding".
+   */
+  unmeasured: TechnicalBlocker[];
 }
 
 /**
@@ -136,24 +155,40 @@ export interface TechnicalGate {
  * unstable base process fails the gate outright (automating chaos = faster chaos).
  */
 export function evaluateTechnicalGate(op: OperationCandidate): TechnicalGate {
-  const rep = LEVEL_SCORE[asLevel(op.repeatability)];
-  const env = LEVEL_SCORE[asLevel(op.structuredEnv)];
-  const grip = LEVEL_SCORE[asLevel(op.gripSolvability)];
-  const score = Math.min(rep, env, grip);
+  // The three technical criteria are read as a CONJUNCTION (min = weakest link).
+  // Crucially, an ABSENT criterion is NOT assumed "medium" — the gate is a hard
+  // STOP requiring proof (doctrine §4.1), so a missing field floors the score to 0
+  // and is flagged as a blocker that must be measured before the gate can pass.
+  const criteria: Array<{ key: TechnicalBlocker; level?: Level }> = [
+    { key: 'repeatability', level: op.repeatability },
+    { key: 'structuredEnv', level: op.structuredEnv },
+    { key: 'gripSolvability', level: op.gripSolvability },
+  ];
 
   const blockers: TechnicalBlocker[] = [];
-  if (rep < 2) blockers.push('repeatability');
-  if (env < 2) blockers.push('structuredEnv');
-  if (grip < 2) blockers.push('gripSolvability');
+  const unmeasured: TechnicalBlocker[] = [];
+  let score = 3;
+  for (const c of criteria) {
+    if (c.level === undefined) {
+      unmeasured.push(c.key);
+      blockers.push(c.key);
+      score = 0; // no evidence = weakest-link floor; the gate cannot clear on assumption
+    } else {
+      const s = LEVEL_SCORE[c.level];
+      score = Math.min(score, s);
+      if (s < 2) blockers.push(c.key);
+    }
+  }
+
   // processStable defaults to true only when explicitly true; undefined is treated
   // as "unknown but not blocking" so an unfilled field never fabricates a blocker.
   const stableUnknownOk = op.processStable !== false;
   if (op.processStable === false) blockers.push('processStable');
 
-  // Passes when the weakest technical link is at least "medium" (2) and the
-  // process is not explicitly unstable.
-  const passes = score >= 2 && stableUnknownOk;
-  return { score, passes, blockers };
+  // Passes when the weakest technical link is at least "medium" (2), NOTHING is
+  // unmeasured, and the process is not explicitly unstable.
+  const passes = score >= 2 && unmeasured.length === 0 && stableUnknownOk;
+  return { score, passes, blockers, unmeasured };
 }
 
 // ---------------------------------------------------------------------------
@@ -165,12 +200,20 @@ export interface EconomicGate {
   capex: number;
   /** Integration overhead amount (the line clients systematically omit). */
   integrationCost: number;
-  /** Direct labour saving = fteReduced × annualCostPerFte. */
+  /** Labour saving actually used (FTE-headcount model, or the cycle-time path as fallback). */
   labourSaving: number;
+  /** Labour saving implied by freed cycle-time × annual volume (throughput path, §7). 0 when cycle-time data absent. */
+  cycleTimeLabourSaving: number;
+  /** True when the labour saving was derived from cycle-time × volume rather than the FTE-headcount model. */
+  cycleTimeBased: boolean;
   /** Labour + turnover + ergonomics − robot OPEX (the true annual net). */
   annualNetSaving: number;
+  /** Shift count assumed for the saving (>= 1) — drives payback sensitivity. */
+  shifts: number;
   /** CAPEX / annualNetSaving, in months. Infinity when saving <= 0. */
   paybackMonths: number;
+  /** Payback in months if the operation ran a SINGLE shift — grounds the "≈ shifts× at 1 shift" insight. Infinity when saving <= 0. */
+  paybackMonthsSingleShift: number;
   /** ROI = annualNetSaving / capex (annual). 0 when capex <= 0. */
   roi: number;
   /** True when paybackMonths <= PAYBACK_THRESHOLD_MONTHS. */
@@ -197,7 +240,27 @@ export function evaluateEconomicGate(op: OperationCandidate): EconomicGate {
   const safety = op.safetyCost || 0;
   const capex = round1(hardware + integrationCost + safety);
 
-  const labourSaving = round1((op.fteReduced || 0) * (op.annualCostPerFte || 0));
+  const annualCostPerFte = op.annualCostPerFte || 0;
+  const fteLabourSaving = round1((op.fteReduced || 0) * annualCostPerFte);
+
+  // Cycle-time / throughput path (doctrine §7): freed seconds per unit × annual
+  // volume → freed FTE-equivalent hours → labour value. A complementary basis for
+  // the saving when headcount reduction is not stated directly, and a cross-check
+  // when it is. Only counts when the robot is faster (manual > robot).
+  const manualSec = op.cycleTimeManualSec || 0;
+  const robotSec = op.cycleTimeRobotSec || 0;
+  const annualVolume = op.annualVolume || 0;
+  const hasCycleData = manualSec > 0 && annualVolume > 0 && manualSec > robotSec;
+  const cycleTimeLabourSaving = hasCycleData
+    ? round1((((manualSec - robotSec) * annualVolume) / 3600 / PRODUCTIVE_HOURS_PER_FTE) * annualCostPerFte)
+    : 0;
+
+  // Prefer the direct FTE-headcount model; fall back to the cycle-time-derived
+  // saving so the labour numerator is never silently zero when only throughput
+  // data was captured (the axis the doctrine calls "the numerator of the saving").
+  const cycleTimeBased = fteLabourSaving <= 0 && cycleTimeLabourSaving > 0;
+  const labourSaving = cycleTimeBased ? cycleTimeLabourSaving : fteLabourSaving;
+
   const annualNetSaving = round1(
     labourSaving +
       (op.turnoverSavingAnnual || 0) +
@@ -205,16 +268,29 @@ export function evaluateEconomicGate(op: OperationCandidate): EconomicGate {
       (op.robotOpexAnnual || 0)
   );
 
+  // Shift count drives payback sensitivity: the same robot displaces labour on
+  // every shift it runs, so at a single shift the annual saving is ≈ 1/shifts of
+  // the multi-shift saving and the payback is ≈ shifts× longer (doctrine §6, insight #1).
+  const shifts = op.shifts && op.shifts > 0 ? op.shifts : 1;
+  const perShiftNetSaving = annualNetSaving / shifts;
+
   const paybackMonths = annualNetSaving > 0 ? round1((capex / annualNetSaving) * 12) : Infinity;
+  const paybackMonthsSingleShift = perShiftNetSaving > 0 ? round1((capex / perShiftNetSaving) * 12) : Infinity;
   const roi = capex > 0 ? round1(annualNetSaving / capex) : 0;
-  const priced = hardware > 0 && (op.fteReduced || 0) > 0 && (op.annualCostPerFte || 0) > 0;
+  const priced =
+    hardware > 0 &&
+    (((op.fteReduced || 0) > 0 && annualCostPerFte > 0) || hasCycleData);
 
   return {
     capex,
     integrationCost,
     labourSaving,
+    cycleTimeLabourSaving,
+    cycleTimeBased,
     annualNetSaving,
+    shifts,
     paybackMonths,
+    paybackMonthsSingleShift,
     roi,
     withinThreshold: paybackMonths <= PAYBACK_THRESHOLD_MONTHS,
     priced,
@@ -242,6 +318,8 @@ export interface OperationFeasibility {
     hybridSplittable: boolean;
     strategicOverride: boolean;
     cobotChangeRisk: boolean;
+    /** True when the case would otherwise be GO but rests on unmeasured data → PILOT (doctrine §4.4). */
+    measurementUncertain: boolean;
   };
   rationale: Bilingual;
 }
@@ -266,10 +344,18 @@ export function decideVerdict(op: OperationCandidate): OperationFeasibility {
   const label = op.label || op.id;
 
   const volumeFalling = op.volumeTrend === 'falling';
-  const highVariability = asLevel(op.variability, 'low') === 'high';
+  const variabilityLevel = asLevel(op.variability, 'low');
+  const highVariability = variabilityLevel === 'high';
   const hybridSplittable = (op.topVariantShare || 0) >= HYBRID_SHARE_FLOOR;
   const strategicOverride = asLevel(op.strategicPressure, 'low') === 'high';
-  const cobotChangeRisk = op.safetyRegime === 'cobot' && highVariability;
+  // Cobot regime + any non-trivial variability (medium OR high) means every variant
+  // change is a safety event needing recurring conformity re-assessment (§4.5/§5).
+  // Read AFTER the high-variability branches below, so at the PILOT gate it fires on
+  // the moderate-variability cobot case — the branch that was previously dead.
+  const cobotChangeRisk = op.safetyRegime === 'cobot' && variabilityLevel !== 'low';
+  // A case is uncertain when its numbers are not measured — feasibility probable but
+  // a key parameter (real cycle time, grip reliability) unproven.
+  const measured = op.measured === true;
 
   let verdict: Verdict;
 
@@ -288,11 +374,15 @@ export function decideVerdict(op: OperationCandidate): OperationFeasibility {
     // High variability but a dominant variant core carries a robotized subset.
     verdict = 'hybrid';
   } else if (economic.withinThreshold) {
-    // Clean technical gate + payback in threshold + volume not falling = GO.
-    verdict = 'go';
+    // Clean technical gate + payback in threshold + volume not falling. GO only when
+    // the case rests on MEASURED data; an unmeasured key parameter (real cycle time,
+    // grip reliability) makes feasibility probable-but-uncertain → PILOT to earn the
+    // hard data before full CAPEX (doctrine §4.4).
+    verdict = measured ? 'go' : 'pilot';
   } else if (strategicOverride || cobotChangeRisk) {
-    // Payback over threshold but a strategic argument (ergonomics / chronic
-    // turnover) justifies a PILOT to generate the hard data before full CAPEX.
+    // Payback over threshold but a strategic argument (ergonomics / chronic turnover)
+    // OR a cobot variant-change risk justifies a PILOT to generate the hard data
+    // before full CAPEX.
     verdict = 'pilot';
   } else {
     // Over threshold, no strategic override, nothing splittable — not defensible now.
@@ -324,6 +414,7 @@ export function decideVerdict(op: OperationCandidate): OperationFeasibility {
       hybridSplittable,
       strategicOverride,
       cobotChangeRisk,
+      measurementUncertain: verdict === 'pilot' && economic.withinThreshold && !measured,
     },
     rationale,
   };
@@ -351,9 +442,19 @@ function buildVerdictRationale(verdict: Verdict, f: RationaleFacts): Bilingual {
         en: `Operation "${f.label}": technical gate clean (weakest link ${f.technical.score}/3), payback ${pbEn(f.economic)} within the ${PAYBACK_THRESHOLD_MONTHS}-mo threshold, volume not falling — a strong GO candidate.`,
       };
     case 'pilot':
+      // Two roads to PILOT: (a) payback IS within threshold but the case rests on
+      // unmeasured data (feasibility probable but uncertain); (b) payback is over
+      // threshold yet a strategic argument or a cobot variant-change risk justifies
+      // buying the hard data first.
+      if (f.economic.withinThreshold) {
+        return {
+          pl: `Operacja „${f.label}": bramka techniczna czysta, payback ${pb(f.economic)} w progu ${PAYBACK_THRESHOLD_MONTHS} mies, ALE kluczowe parametry są niezmierzone — feasibility prawdopodobna, lecz niepewna: PILOT, by zdobyć twarde dane (realny cycle time, niezawodność chwytu) przed pełnym CAPEX.`,
+          en: `Operation "${f.label}": technical gate clean, payback ${pbEn(f.economic)} within the ${PAYBACK_THRESHOLD_MONTHS}-mo threshold, BUT key parameters are unmeasured — feasibility probable yet uncertain: a PILOT earns the hard data (real cycle time, grip reliability) before full CAPEX.`,
+        };
+      }
       return {
-        pl: `Operacja „${f.label}": bramka techniczna zaliczona, ale payback ${pb(f.economic)} przekracza próg ${PAYBACK_THRESHOLD_MONTHS} mies; ${f.strategicOverride ? 'argument strategiczny (ergonomia/rotacja) uzasadnia' : 'ryzyko zmiany chwytaka w cobocie uzasadnia'} PILOT — po to, by zdobyć twarde dane przed pełnym CAPEX.`,
-        en: `Operation "${f.label}": technical gate passed, but payback ${pbEn(f.economic)} exceeds the ${PAYBACK_THRESHOLD_MONTHS}-mo threshold; ${f.strategicOverride ? 'a strategic argument (ergonomics/turnover) justifies' : 'the cobot gripper-change risk justifies'} a PILOT — to earn hard data before full CAPEX.`,
+        pl: `Operacja „${f.label}": bramka techniczna zaliczona, ale payback ${pb(f.economic)} przekracza próg ${PAYBACK_THRESHOLD_MONTHS} mies; ${f.strategicOverride ? 'argument strategiczny (ergonomia/rotacja) uzasadnia' : 'ryzyko zmiany chwytaka w cobocie (powtarzalna re-ocena zgodności przy zmianie wariantu) uzasadnia'} PILOT — po to, by zdobyć twarde dane przed pełnym CAPEX.`,
+        en: `Operation "${f.label}": technical gate passed, but payback ${pbEn(f.economic)} exceeds the ${PAYBACK_THRESHOLD_MONTHS}-mo threshold; ${f.strategicOverride ? 'a strategic argument (ergonomics/turnover) justifies' : 'the cobot gripper-change risk (recurring conformity re-assessment on every variant change) justifies'} a PILOT — to earn hard data before full CAPEX.`,
       };
     case 'hybrid':
       return {
@@ -734,6 +835,9 @@ export function toRoboticsSession(sections: Record<string, unknown[]> | undefine
       shifts: asNumber(item.shifts),
       fteReduced: asNumber(item.fteReduced),
       annualCostPerFte: asNumber(item.annualCostPerFte),
+      cycleTimeManualSec: asNumber(item.cycleTimeManualSec),
+      cycleTimeRobotSec: asNumber(item.cycleTimeRobotSec),
+      annualVolume: asNumber(item.annualVolume),
       hardwareCost: asNumber(item.hardwareCost),
       safetyCost: asNumber(item.safetyCost),
       integrationOverhead: asShare(item.integrationOverhead),
