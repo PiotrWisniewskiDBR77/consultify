@@ -13,20 +13,27 @@ import {
   Cpu,
   Database,
   Grid2X2,
+  HelpCircle,
   List,
   MessageSquare,
   Settings,
+  Sparkles,
   Target,
   Truck,
 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Tooltip } from '@/components/ui/primitives';
+import { getAssessmentGuidanceLive } from '@/services/assessmentKnowledge/assessmentGuidanceRuntime';
+import type { AssessmentGuidanceOutput } from '@/services/assessmentKnowledge/assessmentGuidanceService';
+import { getWhyThisMattersHint } from '@/services/assessmentKnowledge/whyThisMatters';
 import {
   ADMA_DIMENSIONS,
   ADMA_MATURITY_LEVELS,
   ADMA_PILLARS,
   ADMADimension,
+  ADMALevel,
   ADMAPillarId,
   calculateOverallADMAScore,
   calculatePillarScore,
@@ -557,6 +564,40 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
     ? getDimensionState(value, activeDimensionId)
     : null;
 
+  // "Why we ask this" — keyed by pillar id (matches ADMA_PILLAR_WHY_HINTS).
+  const whyThisMattersHint = useMemo(
+    () => getWhyThisMattersHint('adma', activeDimension?.pillar || activePillar),
+    [activeDimension?.pillar, activePillar]
+  );
+
+  // Per-question AI guidance (canon-grounded; keyed by "dimensionId#level"). Mirrors DRD.
+  const [guidance, setGuidance] = useState<
+    Record<string, { loading: boolean; data?: AssessmentGuidanceOutput }>
+  >({});
+
+  // Fetch canon-grounded AI guidance for one dimension×level (cached, non-blocking).
+  const requestGuidance = useCallback(
+    (dimension: ADMADimension, level: ADMALevel) => {
+      const key = `${dimension.id}#${level.level}`;
+      setGuidance((prev) => {
+        if (prev[key]?.loading || prev[key]?.data) return prev;
+        return { ...prev, [key]: { loading: true } };
+      });
+      void getAssessmentGuidanceLive({
+        framework: 'ADMA',
+        dimensionId: dimension.id,
+        dimensionName: isPolish ? dimension.namePL : dimension.name,
+        levelNumber: level.level,
+        levelTitle: level.title,
+        levelDescription: level.description,
+        language: isPolish ? 'pl' : 'en',
+      })
+        .then((data) => setGuidance((prev) => ({ ...prev, [key]: { loading: false, data } })))
+        .catch(() => setGuidance((prev) => ({ ...prev, [key]: { loading: false } })));
+    },
+    [isPolish]
+  );
+
   // Manage panel support: allow parent to override the whole editor view.
   if (leftOverride) {
     return <div className="h-full bg-c-surface">{leftOverride}</div>;
@@ -657,9 +698,33 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
             <div className="max-w-2xl mx-auto space-y-6">
               {/* Dimension Header */}
               <div>
-                <h3 className="text-2xl font-bold text-c-text">
-                  {isPolish ? activeDimension.namePL : activeDimension.name}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-2xl font-bold text-c-text">
+                    {isPolish ? activeDimension.namePL : activeDimension.name}
+                  </h3>
+                  <Tooltip
+                    content={
+                      <div className="max-w-[280px]">
+                        <div className="text-xs font-bold mb-1">
+                          {isPolish ? 'Dlaczego o to pytamy' : 'Why we ask this'}
+                        </div>
+                        <div className="text-xs leading-relaxed">
+                          {isPolish ? whyThisMattersHint.pl : whyThisMattersHint.en}
+                        </div>
+                      </div>
+                    }
+                    placement="bottom-start"
+                    maxWidth={300}
+                  >
+                    <button
+                      type="button"
+                      aria-label={isPolish ? 'Dlaczego to pytanie' : 'Why this question'}
+                      className="shrink-0 p-1 rounded-full text-c-accent hover:bg-c-accent/10 transition-colors"
+                    >
+                      <HelpCircle className="w-4 h-4" />
+                    </button>
+                  </Tooltip>
+                </div>
                 <p className="text-c-text-secondary dark:text-c-text-muted mt-2">
                   {activeDimension.description}
                 </p>
@@ -674,6 +739,75 @@ export const ADMAAssessmentEditor: React.FC<Props> = ({
                 readOnly={readOnly}
                 isPolish={isPolish}
               />
+
+              {/* Per-question AI guidance (canon-grounded, non-blocking) — mirrors DRD */}
+              {(() => {
+                const lvl = ADMA_MATURITY_LEVELS.find(
+                  (l) => l.level === currentDimensionState.current
+                );
+                if (!lvl) return null;
+                const gKey = `${activeDimension.id}#${lvl.level}`;
+                const g = guidance[gKey];
+                if (!g) {
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => requestGuidance(activeDimension, lvl)}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-c-accent hover:underline"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      {isPolish
+                        ? 'Podpowiedź AI (dlaczego to ważne + jak oceniać)'
+                        : 'AI hint (why it matters + how to score)'}
+                    </button>
+                  );
+                }
+                if (g.loading) {
+                  return (
+                    <div className="text-xs text-c-text-muted">
+                      {isPolish ? 'Generuję podpowiedź…' : 'Generating hint…'}
+                    </div>
+                  );
+                }
+                if (!g.data) return null;
+                return (
+                  <div className="rounded-lg border border-c-accent/30 bg-c-accent/5 p-3 space-y-2 text-sm">
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-c-accent">
+                      <Sparkles className="w-3 h-3" />
+                      {isPolish ? 'Podpowiedź konsultanta' : 'Consultant hint'}
+                      <span className="ml-auto font-normal normal-case text-c-text-muted">
+                        {g.data.source === 'llm' ? 'AI' : isPolish ? 'kanon' : 'canon'}
+                      </span>
+                    </div>
+                    <p className="text-c-text">
+                      <span className="font-semibold">
+                        {isPolish ? 'Dlaczego to ważne: ' : 'Why it matters: '}
+                      </span>
+                      {g.data.whyItMatters}
+                    </p>
+                    <p className="text-c-text-secondary dark:text-c-text-muted">
+                      <span className="font-semibold">
+                        {isPolish ? 'Jak oceniać poziom: ' : 'How to score this level: '}
+                      </span>
+                      {g.data.levelInterpretation}
+                    </p>
+                    <p className="text-c-text-muted text-xs">
+                      <span className="font-semibold">
+                        {isPolish ? 'Kanon: ' : 'Canon: '}
+                      </span>
+                      {g.data.canonContext}
+                    </p>
+                    {g.data.pitfalls.length > 0 && (
+                      <p className="text-c-text-muted text-xs">
+                        <span className="font-semibold">
+                          {isPolish ? 'Uważaj na: ' : 'Watch out for: '}
+                        </span>
+                        {g.data.pitfalls.join(' · ')}
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Gap Analysis */}
               {currentDimensionState.target &&
