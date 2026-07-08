@@ -116,8 +116,12 @@ export interface DataInventorySession {
 
 const asScore01 = (raw: unknown): Score01 => {
   if (typeof raw !== 'number' || !Number.isFinite(raw)) return undefined;
-  // Accept 0..1 or 0..100 or 1..5 and normalise to 0..1.
-  if (raw <= 1) return clamp(raw, 0, 1);
+  // Accept 0..1 or 1..5 or 0..100 and normalise to 0..1.
+  // NOTE: `1` is the WORST value on a 1-5 scale (=> 0.2), not a perfect 0..1
+  // score. Fractions strictly below 1 are read as an already-0..1 score; the
+  // integer boundary 1..5 normalises linearly by /5 (1→0.2 … 5→1.0), so the
+  // scale minimum can never masquerade as the maximum.
+  if (raw < 1) return clamp(raw, 0, 1);
   if (raw <= 5) return clamp(raw / 5, 0, 1);
   return clamp(raw / 100, 0, 1);
 };
@@ -325,7 +329,13 @@ export const REPORT_QUALITY_BAR = 0.7;
 export interface DomainReadiness {
   domain: DataDomainId;
   label: Bilingual;
-  /** Mean of the 5 AI-readiness dimensions (falls back to quality overall). */
+  /**
+   * The domain's AI readiness = its WEAKEST readiness dimension (falls back to
+   * quality overall when no readiness dimensions are scored). A single dimension
+   * on the floor (e.g. data locked in PDFs => availability 0) blocks the whole
+   * domain regardless of the others — AI needs every dimension at once, so the
+   * gate is the minimum, not the mean.
+   */
   readiness: number;
   /** Whether the domain clears the elevated AI quality bar. */
   clearsAiBar: boolean;
@@ -362,7 +372,10 @@ const buildDomainReadiness = (
     scores.push(s);
     if (!weakest || s < weakest.score) weakest = { id: dimId, score: round1(s) };
   }
-  const readiness = scores.length ? round1(scores.reduce((a, b) => a + b, 0) / scores.length) : round1(qualityOverall);
+  // Weakest-dimension gate: one dimension on the floor blocks the domain (the
+  // doctrine's "data locked in a PDF blocks the project regardless of the rest").
+  // Averaging would let a single zero dimension hide behind strong ones.
+  const readiness = scores.length ? round1(Math.min(...scores)) : round1(qualityOverall);
 
   return {
     domain: assessment.domain,
