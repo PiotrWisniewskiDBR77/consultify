@@ -59,6 +59,34 @@ export interface SIRIExecutiveSummary {
   confidence: 'high' | 'medium' | 'low' | 'insufficient';
 }
 
+/**
+ * One cross-dimension dependency insight — the "so-what" between two related
+ * dimensions (analogous to ADMA's FoF road). When a dimension leads a dimension it
+ * depends on, its edge is capped until the laggard catches up.
+ */
+export interface SIRIDependencyInsightItem {
+  leadId: string;
+  leadName: string;
+  lagId: string;
+  lagName: string;
+  /** Comparable score (SIRI: level /5). */
+  leadScore: number;
+  lagScore: number;
+  /** leadScore − lagScore (> 0). */
+  imbalance: number;
+  insight: string;
+}
+
+/** Cross-dimension dependency section (mirrors ADMA `FoFRoad`). */
+export interface SIRIDependencyInsights {
+  /** Related pairs with a material imbalance, largest first. */
+  items: SIRIDependencyInsightItem[];
+  /** Number of related pairs where both dimensions were assessed. */
+  evaluatedPairs: number;
+  /** Answer-first summary sentence. */
+  summary: string;
+}
+
 /** Top-3 gap card following "co jest → co znaczy → co robić → efekt". */
 export interface SIRIGapCard {
   dimensionId: string;
@@ -83,6 +111,7 @@ export interface SIRIConclusionModel {
   language: SIRILanguage;
   executiveSummary: SIRIExecutiveSummary;
   gapCards: SIRIGapCard[];
+  dependencyInsights: SIRIDependencyInsights;
 }
 
 // ============================================
@@ -328,6 +357,120 @@ function buildGapCards(data: SIRIAssessmentData, language: SIRILanguage): SIRIGa
 }
 
 // ============================================
+// CROSS-DIMENSION DEPENDENCY INSIGHTS ("so-what")
+// ============================================
+
+/**
+ * Related SIRI dimension pairs — reused from the (dead) `assessmentCoach.ts`
+ * `RELATED_DIMENSIONS.SIRI` (lines 121–143). Doctrine: when one dimension is high,
+ * the dimension it depends on should not be far behind — a wide gap is a bottleneck.
+ * Ids match `SIRI_DIMENSIONS`.
+ */
+const SIRI_RELATED_PAIRS: Array<[string, string]> = [
+  ['intelligence', 'connectivity'],
+  ['automation', 'connectivity'],
+  ['intelligence', 'talent_readiness'],
+  ['operations', 'automation'],
+  ['structure_management', 'talent_readiness'],
+];
+
+/** Minimum level imbalance (on the 0–5 scale) to flag a dependency as rozjechana. */
+const SIRI_DEPENDENCY_THRESHOLD = 1.0;
+
+/** Why the two dimensions are coupled — keyed by the alphabetically-sorted pair. */
+function siriPairRationale(a: string, b: string, isPL: boolean): string {
+  const key = [a, b].sort().join('|');
+  const map: Record<string, [string, string]> = {
+    'connectivity|intelligence': [
+      'analityka i AI są tak dobre, jak przepływ danych, który je zasila',
+      'analytics and AI are only as good as the data flow that feeds them',
+    ],
+    'automation|connectivity': [
+      'automatyzacja bez łączności działa w izolowanych wyspach i nie skaluje się',
+      'automation without connectivity runs as isolated islands and does not scale',
+    ],
+    'intelligence|talent_readiness': [
+      'analityka bez gotowych kompetencji nie zamienia się w decyzje',
+      'analytics without ready skills do not turn into decisions',
+    ],
+    'automation|operations': [
+      'dojrzałość operacyjna jest napędzana przez automatyzację procesów',
+      'operational maturity is driven by process automation',
+    ],
+    'structure_management|talent_readiness': [
+      'struktura i zarządzanie wymagają gotowych ludzi, by faktycznie działać',
+      'structure and management need ready people to actually work',
+    ],
+  };
+  const entry = map[key];
+  if (!entry) {
+    return isPL
+      ? 'te wymiary są współzależne i powinny dojrzewać równolegle'
+      : 'these dimensions are interdependent and should mature in step';
+  }
+  return isPL ? entry[0] : entry[1];
+}
+
+function buildDependencyInsights(
+  data: SIRIAssessmentData,
+  language: SIRILanguage
+): SIRIDependencyInsights {
+  const isPL = language === 'pl';
+  const byId = new Map(buildDimRows(data).map((r) => [r.id, r]));
+
+  let evaluatedPairs = 0;
+  const items: SIRIDependencyInsightItem[] = [];
+
+  for (const [x, y] of SIRI_RELATED_PAIRS) {
+    const rx = byId.get(x);
+    const ry = byId.get(y);
+    if (!rx || !ry || rx.current <= 0 || ry.current <= 0) continue;
+    evaluatedPairs += 1;
+
+    const lead = rx.current >= ry.current ? rx : ry;
+    const lag = rx.current >= ry.current ? ry : rx;
+    const imbalance = round1(lead.current - lag.current);
+    if (imbalance < SIRI_DEPENDENCY_THRESHOLD) continue;
+
+    const rationale = siriPairRationale(x, y, isPL);
+    const insight = isPL
+      ? `„${lead.name}” (${round1(lead.current)}/5) wyprzedza powiązany wymiar „${lag.name}” (${round1(lag.current)}/5) o ${imbalance} — ${rationale}. Dopóki „${lag.name}” nie nadąży, przewaga w „${lead.name}” nie przełoży się na wynik.`
+      : `"${lead.name}" (${round1(lead.current)}/5) is ahead of the linked dimension "${lag.name}" (${round1(lag.current)}/5) by ${imbalance} — ${rationale}. Until "${lag.name}" catches up, the edge in "${lead.name}" will not convert to results.`;
+
+    items.push({
+      leadId: lead.id,
+      leadName: lead.name,
+      lagId: lag.id,
+      lagName: lag.name,
+      leadScore: round1(lead.current),
+      lagScore: round1(lag.current),
+      imbalance,
+      insight,
+    });
+  }
+
+  items.sort((a, b) => b.imbalance - a.imbalance);
+
+  let summary: string;
+  if (items.length > 0) {
+    const top = items[0];
+    summary = isPL
+      ? `Rozjazd w ${items.length} z ${evaluatedPairs} powiązanych par wymiarów — największy „${top.leadName}” ⟂ „${top.lagName}” (${top.imbalance}). Wyrównanie tych par odblokowuje wartość powiązanych inwestycji, zanim doda się kolejne inicjatywy.`
+      : `${items.length} of ${evaluatedPairs} related dimension pairs are out of balance — the widest is "${top.leadName}" ⟂ "${top.lagName}" (${top.imbalance}). Aligning these pairs unlocks the value of linked investments before adding new initiatives.`;
+  } else if (evaluatedPairs > 0) {
+    summary = isPL
+      ? `Powiązane wymiary są zrównoważone — żadna para współzależnych obszarów nie rozjeżdża się istotnie.`
+      : `Related dimensions are balanced — no interdependent pair is materially out of step.`;
+  } else {
+    summary = isPL
+      ? `Za mało ocenionych par współzależnych wymiarów, by ocenić zależności.`
+      : `Not enough assessed interdependent pairs to judge dependencies.`;
+  }
+
+  return { items, evaluatedPairs, summary };
+}
+
+// ============================================
 // PUBLIC ENTRY
 // ============================================
 
@@ -343,5 +486,6 @@ export function buildSIRIConclusionModel(
     language,
     executiveSummary: buildExecutiveSummary(data, language),
     gapCards: buildGapCards(data, language),
+    dependencyInsights: buildDependencyInsights(data, language),
   };
 }

@@ -66,10 +66,36 @@ export interface DRDGapCard {
   effect: string;
 }
 
+/**
+ * One cross-axis dependency insight — the "so-what" between two related axes
+ * (analogous to ADMA's FoF road). Because DRD axes use mixed scales, comparison
+ * is done on the scale-independent normalized %.
+ */
+export interface DRDDependencyInsightItem {
+  leadId: number;
+  leadName: string;
+  lagId: number;
+  lagName: string;
+  /** Comparable score (normalized %). */
+  leadScore: number;
+  lagScore: number;
+  /** leadScore − lagScore (> 0), in normalized points. */
+  imbalance: number;
+  insight: string;
+}
+
+/** Cross-axis dependency section (mirrors ADMA `FoFRoad`). */
+export interface DRDDependencyInsights {
+  items: DRDDependencyInsightItem[];
+  evaluatedPairs: number;
+  summary: string;
+}
+
 export interface DRDConclusionModel {
   language: DRDLanguage;
   executiveSummary: DRDExecutiveSummary;
   gapCards: DRDGapCard[];
+  dependencyInsights: DRDDependencyInsights;
 }
 
 // ============================================
@@ -376,6 +402,133 @@ function buildGapCards(data: DRDAssessmentData, language: DRDLanguage): DRDGapCa
 }
 
 // ============================================
+// CROSS-AXIS DEPENDENCY INSIGHTS ("so-what")
+// ============================================
+
+/**
+ * Related DRD axis pairs — reused from the (dead) `assessmentCoach.ts`
+ * `RELATED_DIMENSIONS.DRD` (lines 121–143). Doctrine: when one axis is high, the
+ * axis it depends on should not be far behind — a wide gap is a bottleneck.
+ * The coach keys pairs by string dim-id; DRD conclusion works in numeric axis ids,
+ * so the pairs are expressed as axis ids via the canonical DRD axis order.
+ */
+const DRD_DIM_KEY_TO_AXIS: Record<string, number> = {
+  processes: 1,
+  digitalProducts: 2,
+  businessModels: 3,
+  dataManagement: 4,
+  culture: 5,
+  cybersecurity: 6,
+  aiMaturity: 7,
+};
+
+const DRD_RELATED_PAIRS: Array<[number, number]> = [
+  [DRD_DIM_KEY_TO_AXIS.aiMaturity, DRD_DIM_KEY_TO_AXIS.dataManagement],
+  [DRD_DIM_KEY_TO_AXIS.digitalProducts, DRD_DIM_KEY_TO_AXIS.businessModels],
+  [DRD_DIM_KEY_TO_AXIS.processes, DRD_DIM_KEY_TO_AXIS.dataManagement],
+  [DRD_DIM_KEY_TO_AXIS.culture, DRD_DIM_KEY_TO_AXIS.cybersecurity],
+];
+
+/** Minimum normalized-% imbalance to flag a dependency as rozjechana. */
+const DRD_DEPENDENCY_THRESHOLD = 20;
+
+/** Why the two axes are coupled — keyed by the numerically-sorted axis-id pair. */
+function drdPairRationale(a: number, b: number, isPL: boolean): string {
+  const key = [a, b].sort((x, y) => x - y).join('|');
+  const map: Record<string, [string, string]> = {
+    // dataManagement(4) | aiMaturity(7)
+    '4|7': [
+      'AI opiera się na fundamencie danych — modele są tak dobre, jak dane, które je zasilają',
+      'AI rests on the data foundation — models are only as good as the data feeding them',
+    ],
+    // digitalProducts(2) | businessModels(3)
+    '2|3': [
+      'cyfrowe modele biznesowe wyrastają z cyfrowych produktów i danych, które one generują',
+      'digital business models grow out of digital products and the data they generate',
+    ],
+    // processes(1) | dataManagement(4)
+    '1|4': [
+      'cyfrowe procesy wymagają uporządkowanych danych, by działać end-to-end',
+      'digital processes need well-managed data to run end-to-end',
+    ],
+    // culture(5) | cybersecurity(6)
+    '5|6': [
+      'kultura transformacji i bezpieczeństwo rosną razem — świadomość ryzyka jest częścią dojrzałości cyfrowej',
+      'transformation culture and security rise together — risk awareness is part of digital maturity',
+    ],
+  };
+  const entry = map[key];
+  if (!entry) {
+    return isPL
+      ? 'te osie są współzależne i powinny dojrzewać równolegle'
+      : 'these axes are interdependent and should mature in step';
+  }
+  return isPL ? entry[0] : entry[1];
+}
+
+function buildDependencyInsights(
+  data: DRDAssessmentData,
+  language: DRDLanguage
+): DRDDependencyInsights {
+  const isPL = language === 'pl';
+  const byId = new Map(buildAxisRows(data).map((r) => [r.id, r]));
+
+  let evaluatedPairs = 0;
+  const items: DRDDependencyInsightItem[] = [];
+
+  for (const [x, y] of DRD_RELATED_PAIRS) {
+    const rx = byId.get(x);
+    const ry = byId.get(y);
+    if (!rx || !ry || rx.current <= 0 || ry.current <= 0) continue;
+    evaluatedPairs += 1;
+
+    // Mixed scales → compare on normalized %.
+    const lead = rx.normalizedCurrent >= ry.normalizedCurrent ? rx : ry;
+    const lag = rx.normalizedCurrent >= ry.normalizedCurrent ? ry : rx;
+    const imbalance = Math.round(lead.normalizedCurrent - lag.normalizedCurrent);
+    if (imbalance < DRD_DEPENDENCY_THRESHOLD) continue;
+
+    const leadName = axisName(lead.id, isPL);
+    const lagName = axisName(lag.id, isPL);
+    const rationale = drdPairRationale(x, y, isPL);
+    const insight = isPL
+      ? `„${leadName}” (${lead.normalizedCurrent}%) wyprzedza powiązaną oś „${lagName}” (${lag.normalizedCurrent}%) o ${imbalance} pkt — ${rationale}. Dopóki „${lagName}” nie nadąży, przewaga w „${leadName}” nie przełoży się na wynik.`
+      : `"${leadName}" (${lead.normalizedCurrent}%) is ahead of the linked axis "${lagName}" (${lag.normalizedCurrent}%) by ${imbalance} pts — ${rationale}. Until "${lagName}" catches up, the edge in "${leadName}" will not convert to results.`;
+
+    items.push({
+      leadId: lead.id,
+      leadName,
+      lagId: lag.id,
+      lagName,
+      leadScore: lead.normalizedCurrent,
+      lagScore: lag.normalizedCurrent,
+      imbalance,
+      insight,
+    });
+  }
+
+  items.sort((a, b) => b.imbalance - a.imbalance);
+
+  let summary: string;
+  if (items.length > 0) {
+    const top = items[0];
+    summary = isPL
+      ? `Rozjazd w ${items.length} z ${evaluatedPairs} powiązanych par osi — największy „${top.leadName}” ⟂ „${top.lagName}” (${top.imbalance} pkt). Wyrównanie tych par odblokowuje wartość powiązanych inwestycji, zanim doda się kolejne inicjatywy.`
+      : `${items.length} of ${evaluatedPairs} related axis pairs are out of balance — the widest is "${top.leadName}" ⟂ "${top.lagName}" (${top.imbalance} pts). Aligning these pairs unlocks the value of linked investments before adding new initiatives.`;
+  } else if (evaluatedPairs > 0) {
+    summary = isPL
+      ? `Powiązane osie są zrównoważone — żadna para współzależnych obszarów nie rozjeżdża się istotnie.`
+      : `Related axes are balanced — no interdependent pair is materially out of step.`;
+  } else {
+    summary = isPL
+      ? `Za mało ocenionych par współzależnych osi, by ocenić zależności.`
+      : `Not enough assessed interdependent pairs to judge dependencies.`;
+  }
+
+  return { items, evaluatedPairs, summary };
+}
+
+// ============================================
 // PUBLIC ENTRY
 // ============================================
 
@@ -391,6 +544,7 @@ export function buildDRDConclusionModel(
     language,
     executiveSummary: buildExecutiveSummary(data, language),
     gapCards: buildGapCards(data, language),
+    dependencyInsights: buildDependencyInsights(data, language),
   };
 }
 
