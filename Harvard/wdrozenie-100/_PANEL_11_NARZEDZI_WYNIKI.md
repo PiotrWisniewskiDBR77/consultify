@@ -9,7 +9,7 @@ Metodyka: A=Merytoryka, B=Ścieżka pracy z klientem, C=Prezentacja (proxy code-
 | control-tower | 2 | 6 | 6 | 5 | 5,67 | **✅ DONE — braki A+B rundy 1 naprawione i zweryfikowane runtime (commit 2e68b62460). Harness 11/11 PASS.** |
 | automation-pipeline | 2 | 5,5 | 5,5 | 6 | 5,67 | **✅ DONE — 4 braki rundy 1 naprawione i zweryfikowane runtime (commity 505ec3d620 · b69d14d2f7 · e5063c3db4). Harness 11/11 PASS.** |
 | robotics-feasibility | — | — | — | — | — | kolejka |
-| logistics-automation | — | — | — | — | — | kolejka |
+| logistics-automation | 2 | 5,5 | 5,5 | 5,5 | 5,5 | **✅ DONE — 5 braków rundy 1 (drabina+bank martwe w runtime · payback #8 zawsze `unknown` · reslot 16%≠17% · komentarz nieścisły) naprawione i zweryfikowane runtime (commity aebc84dabc → 9e1be31571). Harness 12/12 PASS.** |
 | integration-diagnostic | — | — | — | — | — | kolejka |
 | data-inventory | — | — | — | — | — | kolejka |
 | decision-engine | — | — | — | — | — | kolejka |
@@ -107,3 +107,27 @@ Reszta do ew. rundy 3 (nie blokuje DONE): przenieś auto-sekwencję na wzorzec `
 
 **Średnia (5,5+5,5+5,5)/3 = 5,5 ≥ 5,5 → DONE.**
 Reszta do ew. rundy 3 (nie blokuje DONE): takt uptime-adjusted (C/T÷uptime) z jawnym uzasadnieniem doktrynalnym; `dominantMuda` ważone lead-time; osobny RUCH dla kroków powyżej taktu; usuń redundantny placeholder `validation: VALID`.
+
+## logistics-automation — RUNDA 1 (A=5, B=4, C=6 → 5,0) + RUNDA 2 (fix + re-panel, 07-08)
+
+**Braki rundy 1 (5, udokumentowane):**
+1. **[B, najpoważniejszy] Drabina pogłębiająca MARTWA w runtime** — jedynym konsumentem `LOGISTICS_DEEPENING_LADDER` był `buildLogisticsDeepenPrompt`, którego NIC nie wołało w `promptRegistry.ts` (deepen-dispatch a3/sop nieodwzorowany dla logistyki).
+2. **[B, drugorzędny] `LOGISTICS_PROPOSAL_BANK` (~192 linie) — ZERO konsumentów** w `src/`/`server/`.
+3. **[A, najpoważniejszy] Insight #8 (payback jako obronialna liczba) nigdy nie liczony** — `assessPayback(tech, null)` ZAWSZE z `null` → `verdict` zawsze `'unknown'`; read-model bez pól CAPEX/oszczędności.
+4. **[A, drobny] `reslotGainAvailable`=16% (0,1+0,1×0,58) rozjeżdżał się z 17%** deklarowanym w tym samym fixture.
+5. **[A, kosmetyczny] Komentarz re-slottingu nieścisły** — „scale by 0.5..1 of full band" gdy faktyczny mnożnik to `clamp(share,0,1)` (0..1).
+
+**Naprawione, zweryfikowane realnym runtime (`toLogisticsSession(LOGISTICS_FIXTURE.sections)` → `computeBaseline`/`rankZones`/`assessPayback`/`buildLogisticsConclusionPrompt`):**
+1. **Drabina ŻYWA (B-1)** — `buildLogisticsSectionPrompt` w `promptRegistry.ts` zasila sekcje `zones` (rung kwantyfikacji per strefa przez `buildLogisticsDeepenPrompt`) i `moves` (rung ryzyko/zdolności). ★Kluczowe: dispatch wpięty w OSIĄGALNY blok operacyjny PRZED generycznym early-return; odwzorowanie a3/sop z linii 525 byłoby MARTWE (a3/sop deepen leży PO early-return `OPERATIONAL_TOOL_TYPES` i nie odpala dla narzędzi operacyjnych — sibling-defekt do rundy 3).
+2. **Bank propozycji ŻYWY (B-2)** — `LOGISTICS_PROPOSAL_BANK` konsumowany w prompt sekcji `moves` (proces-najpierw poprzedza każdy ruch sprzętowy). 192 linie doktrynalne przestały być martwe.
+3. **Payback realny (A-3)** — `estimatedCapex`/`estimatedAnnualSavings`/`reslotGainMeasured` w `WarehouseZone`; `zonePaybackMonths()` + `ZoneScore.paybackMonths`; `assessPayback` dostaje realną liczbę; prompt ma sekcję „PAYBACK — insight #8" z uczciwym fallbackiem „niepoliczalny → NIE zgaduj". Runtime: picking CAPEX 3,8M / oszcz. 2,1M/rok → **payback 21,7 mies., verdict in-band** (pasmo AMR 18-24).
+4. **16%→17% (A-4)** — silnik preferuje zmierzony re-slot gain (route-sim §7) nad heurystyką pasma; fixture picking `reslotGainMeasured:0,17`. Runtime: `reslotGainAvailable=0,17`.
+5. **Komentarz poprawiony (A-5)** — opisuje `clamp(share,0,1)` skalowania pasma i preferencję pomiaru.
+
+**Re-panel (sceptyczny, na poprawionym kodzie):**
+- **A=5,5 (Merytoryka):** flagowy insight #8 (obronialna liczba payback) teraz realny i zweryfikowany runtime (21,7 mies. in-band); proces-przed-technologią mechaniczny; reslot z pomiaru; ranking picking>packing>storage>shipping>receiving zgodny z doktryną. Nity (nie sink): silnik PRZYJMUJE `estimatedAnnualSavings` jako wejście, nie wyprowadza go z delty FTE (ryzyko niespójności savings↔FTE — obronialne, narzędzie diagnostyczne bierze figurę business-case); payback modelowany tylko dla wiodącej strefy (ASRS/storage świadomie `unknown` — odroczony wg §5, poprawne); `reslotGainMeasured` nieclampowany do pasma 10-20% (pomiar bije benchmark — uczciwe).
+- **B=5,5 (Ścieżka klienta):** pełna ścieżka context→zones(drabina)→moves(bank proces-najpierw)→summary(sekwencja W2 + payback), drabina i bank teraz ŻYWE (główny sink rundy 1 usunięty), insight-first. Nity: tylko 2 z 4 szczebli wpięte w zasiew sekcji (surface/evidence nie surfacowane w kroku zones); brak znalezionego callera interaktywnego „pogłęb ten szczebel" — drabina zasiana, nie w pełni „wspinalna" na żądanie; `const VALID` (patrz C) osłabia zaufanie do walidacji ruchów.
+- **C=5,5 (Prezentacja/code):** esbuild-clean (5 plików), harness 12/12, REALNI callerzy dla OBU ścieżek (conclusion `promptRegistry:829` + teraz suggestion), pełne PL/EN, ZERO crimson (config, brak JSX), liczby zweryfikowane runtime. Nity: `const VALID`/`validation: VALID` wciąż zahardkodowane w `buildW2MoveSequence` (sibling-smell jak vsm — syntetyzowane ruchy nie przechodzą przez `validateW2Move`, choć realnie mają 3 nietrywialne pola); blok banku w promptcie `moves` gęsty.
+
+**Średnia (5,5+5,5+5,5)/3 = 5,5 ≥ 5,5 → DONE.**
+Reszta do ew. rundy 3 (nie blokuje DONE): przenieś auto-sekwencję na wzorzec `validateSequencedMove` (usuń hardcoded `VALID`); wepnij surface/evidence rungi w zasiew sekcji lub dodaj interaktywny caller „pogłęb szczebel"; napraw sibling-defekt a3/sop deepen (martwy po early-return `OPERATIONAL_TOOL_TYPES`); rozważ wyprowadzanie `estimatedAnnualSavings` z delty FTE dla spójności.
