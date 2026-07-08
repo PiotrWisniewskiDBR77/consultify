@@ -6,7 +6,7 @@
  * To jest analogia do smoke-testów wczorajszego agenta — deterministyczne, zero API/DB.
  */
 import { buildVsmConclusionPrompt, toVsmSession } from './vsmbuilder/index.ts';
-import { VSM_FIXTURE } from './vsmbuilder/fixture.ts';
+import { VSM_FIXTURE, VSM_WASTE_FIXTURE } from './vsmbuilder/fixture.ts';
 import { buildConstraintConclusionPrompt, toConstraintSession } from './constraintcontrol/index.ts';
 import { CONSTRAINT_FIXTURE } from './constraintcontrol/fixture.ts';
 import { buildControlTowerConclusionPrompt, toControlTowerSession } from './controltower/index.ts';
@@ -32,6 +32,7 @@ type Case = { name: string; run: () => string | null };
 
 const cases: Case[] = [
   { name: 'vsm-builder', run: () => buildVsmConclusionPrompt(toVsmSession(VSM_FIXTURE.sections), true) },
+  { name: 'vsm-waste-scenario', run: () => buildVsmConclusionPrompt(toVsmSession(VSM_WASTE_FIXTURE.sections), true) },
   { name: 'constraint-control', run: () => buildConstraintConclusionPrompt(toConstraintSession(CONSTRAINT_FIXTURE.sections), true) },
   { name: 'control-tower', run: () => buildControlTowerConclusionPrompt(toControlTowerSession(CONTROL_TOWER_FIXTURE.sections), true) },
   { name: 'automation-pipeline', run: () => buildAutomationPipelineConclusionPrompt(toAutomationPipelineSession(AUTOMATION_PIPELINE_FIXTURE.sections), true) },
