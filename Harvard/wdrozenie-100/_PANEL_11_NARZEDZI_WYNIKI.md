@@ -11,7 +11,7 @@ Metodyka: A=Merytoryka, B=Ścieżka pracy z klientem, C=Prezentacja (proxy code-
 | robotics-feasibility | — | — | — | — | — | kolejka |
 | logistics-automation | 2 | 5,5 | 5,5 | 5,5 | 5,5 | **✅ DONE — 5 braków rundy 1 (drabina+bank martwe w runtime · payback #8 zawsze `unknown` · reslot 16%≠17% · komentarz nieścisły) naprawione i zweryfikowane runtime (commity aebc84dabc → 9e1be31571). Harness 12/12 PASS.** |
 | integration-diagnostic | — | — | — | — | — | kolejka |
-| data-inventory | — | — | — | — | — | kolejka |
+| data-inventory | 2 | 5,5 | 5,5 | 6 | 5,67 | **✅ DONE — 2 defekty silnika (skala 1-5 min czytana jako max · gotowość AI = ŚREDNIA zamiast bramy najsłabszego wymiaru) + 2 martwe assety (drabina + bank propozycji bez callerów) naprawione i zweryfikowane runtime (commity 2abdf51670 · d9d8bd9af2 · aff10a119e). Harness 12/12 PASS.** |
 | decision-engine | — | — | — | — | — | kolejka |
 | digital-value-pool | — | — | — | — | — | kolejka |
 | legacy-analyzer | — | — | — | — | — | kolejka |
@@ -131,3 +131,22 @@ Reszta do ew. rundy 3 (nie blokuje DONE): takt uptime-adjusted (C/T÷uptime) z j
 
 **Średnia (5,5+5,5+5,5)/3 = 5,5 ≥ 5,5 → DONE.**
 Reszta do ew. rundy 3 (nie blokuje DONE): przenieś auto-sekwencję na wzorzec `validateSequencedMove` (usuń hardcoded `VALID`); wepnij surface/evidence rungi w zasiew sekcji lub dodaj interaktywny caller „pogłęb szczebel"; napraw sibling-defekt a3/sop deepen (martwy po early-return `OPERATIONAL_TOOL_TYPES`); rozważ wyprowadzanie `estimatedAnnualSavings` z delty FTE dla spójności.
+
+## data-inventory — RUNDA 1 (A=5/B=4/C=6) + RUNDA 2 (fix + re-panel, 07-08)
+
+**Runda 1: A=5, B=4, C=6 → średnia 5,0 < 5,5 → NAPRAWA.** Cztery udokumentowane braki: (A-1) `asScore01` odwraca minimum skali 1-5 — wartość `1` (najgorsza) czytana jako `1.0` (najlepsza); (A-2) gotowość AI liczona ŚREDNIĄ 5 wymiarów zamiast bramy najsłabszego — domena z availability=0 i resztą ~1.0 dawała ~0,8 i PRZECHODZIŁA próg AI, sprzecznie z własnym bankiem silnika („jeden wymiar na zerze blokuje cały projekt"); (B-3) drabina pogłębiająca `buildDataInventoryDeepenPrompt` bez callerów; (B-4) `DATA_INVENTORY_PROPOSAL_BANK` (185 linii) bez konsumentów.
+
+**Naprawione, zweryfikowane realnym runtime (`toDataInventorySession` → `assessQuality`/`assessAiReadiness` + `buildDataInventoryStepSuggestionPrompt` + harness):**
+1. **Skala 1-5 minimum (A-1)** — `asScore01`: granica 0..1 przesunięta na `raw < 1`, więc `1` wpada w gałąź 1-5 (÷5 → 0,2), a minimum skali nie udaje maksimum; ułamki <1 wciąż jako 0..1, 0..100 nietknięte. Runtime probe: `accuracy:1 → 0,2`, `completeness:5 → 1,0`, `consistency:0,6 → 0,6`.
+2. **Brama najsłabszego wymiaru (A-2)** — `buildDomainReadiness`: `readiness = Math.min(...scores)` zamiast średniej; pojedynczy wymiar na zerze realnie blokuje domenę niezależnie od reszty (zgodnie z regułą doktryny i istniejącą bramą MIĘDZY domenami). Runtime probe: domena z availability=0, reszta ~0,9 → `readiness=0`, `overall=0`, `ready=false` (stara średnia dałaby ~0,71 i fałszywe „gotowe").
+3. **Drabina ŻYWA (B-3)** — nowy `buildDataInventoryStepSuggestionPrompt` mapuje kroki `assets`→inventory, `domains`→jakość+governance+aiReadiness, `useCase`→aiReadiness i wpina `buildDataInventoryDeepenPrompt` w `promptRegistry.getToolSuggestionPrompt` — dispatch w OSIĄGALNYM bloku operacyjnym PRZED generycznym early-return (odwzorowanie logistics; a3/sop z linii 525 są MARTWE po early-return — sibling-defekt do rundy 3).
+4. **Bank propozycji ŻYWY (B-4)** — `DATA_INVENTORY_PROPOSAL_BANK` konsumowany w tym samym prompcie jako kandydaci ruchów (wszystkie 4 szczeble jako seed). 185 linii doktrynalnych przestało być martwe. Runtime probe: `domains` prompt len=5191, zawiera markery banku + drabiny + wszystkie 3 dźwignie; `context`/`summary` → null (fall-through do generyka, poprawne).
+5. **Fixture (B-5, drobny)** — świadomie ZOSTAWIONY: konsumowany przez harness A ORAZ `__toolsHarnessB_live.mts` dokładnie jak 10 siblingów; żaden sibling nie zasila fixture jako seed runtime — spójne z kohortą, brak zmiany.
+
+**Re-panel (sceptyczny, na poprawionym kodzie):**
+- **A=5,5 (Merytoryka):** oba defekty zamknięte i zweryfikowane runtime; reguła „najsłabsze ogniwo" egzekwowana teraz na OBU poziomach (wymiar w domenie + domena między krytycznymi) — spójne. Nity (nie sink): genuine 0..1 score równy dokładnie `1.0` mapuje się teraz na 0,2 (traktowany jak minimum 1-5) — nieusuwalna dwuznaczność wartości `1`, obronialna decyzja doktrynalna, nazwana; brama MIN po ZMIERZONYCH wymiarach — domena z 1 silnym i 4 nieocenionymi czyta się silnie (brak kary za niemierzone — konwencja „assessed-only"); fallback readiness do `qualityOverall` (średnia) gdy brak wymiarów AI — niespójny z bramą MIN, drobny.
+- **B=5,5 (Ścieżka klienta):** blokujący defekt rundy 1 (martwa drabina + bank) usunięty i zweryfikowany end-to-end; pełna ścieżka context→assets(inventory)→domains(3 dźwignie)→useCase(aiReadiness)→summary(sekwencja W2 jako inicjatywy), insight-first, Faza 0 przed Fazą 1. Nity: krok `domains` składa 3 dźwignie w jeden prompt na szczeblu `quantification` — pojedynczej dźwigni nie da się pogłębić rung-po-rung tą ścieżką (bank pokrywa 4 szczeble jako seed, ale interaktywny selektor szczebla niewpięty); propozycje banku są generyczne (nagłówek zleca „dopasuj do sesji" modelowi — jak siblingi).
+- **C=6 (Prezentacja/code):** esbuild-clean (3 pliki), harness 12/12 (data-inventory len 9857), REALNI callerzy dla OBU martwych eksportów, pełne PL/EN, ZERO crimson (config, brak JSX), liczby zweryfikowane runtime, małe izolowane commity kolizyjno-bezpieczne. Nity: `STEP_LEVERS` kluczowany `Record<string,…>` (rename kroku w `steps.ts` cicho zdejmie zasiew, bez błędu kompilacji); prompt `domains` gęsty (~5,2k znaków); `readiness=Math.min` duplikuje pojęciowo `weakest.score` (nieszkodliwe).
+
+**Średnia (5,5+5,5+6)/3 = 5,67 ≥ 5,5 → DONE.**
+Reszta do ew. rundy 3 (nie blokuje DONE): interaktywny caller „pogłęb dźwignię X na szczeblu Y" (dziś rung `quantification` zahardkodowany); typuj `STEP_LEVERS` po id `StepDefinition`; ujednolić fallback readiness (MIN zamiast średniej jakości); wspólny sibling-defekt a3/sop deepen martwy po early-return `OPERATIONAL_TOOL_TYPES`.
