@@ -66,3 +66,4 @@ export * from './drdReportSvg';
 export * from './drdReportHtml';
 export * from './drdConclusionContract';
 export * from './drdLlmNarrator';
+export * from './drdIndustryBenchmark';

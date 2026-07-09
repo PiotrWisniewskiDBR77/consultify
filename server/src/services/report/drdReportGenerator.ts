@@ -66,3 +66,4 @@ export * from './drdReportSvg.js';
 export * from './drdReportHtml.js';
 export * from './drdConclusionContract.js';
 export * from './drdLlmNarrator.js';
+export * from './drdIndustryBenchmark.js';

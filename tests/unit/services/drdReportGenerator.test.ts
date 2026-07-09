@@ -181,8 +181,8 @@ describe('DRD report — HTML document', () => {
     expect(html).toContain('@page');
     expect(html).toContain('size: A4');
     expect(html).toContain('page-break');
-    // 8 pages (cover + 7 sections)
-    expect((html.match(/class="page/g) || []).length).toBe(8);
+    // 9 pages (cover + 7 sections + additive P3 industry benchmark section)
+    expect((html.match(/class="page/g) || []).length).toBe(9);
     // 3 inline SVGs (radar, matrix, bars)
     expect((html.match(/<svg/g) || []).length).toBe(3);
   });
