@@ -23,6 +23,7 @@ W kodzie są 3 dojrzałe powłoki — NIE scalamy ich w jedną, doprowadzamy do 
 4. Reguła centrum: archetyp zmienia TYLKO centrum + Menu 2 + lewy rail. Menu1/panel/kebab/stany = identyczne.
 
 ## Twarde zakazy (primary = crimson #85182F — KAŻDY numer!)
+- **★ `c-accent` w NOWYM kodzie powłoki = ZAKAZ — a hook `check-artefakt.sh` tego NIE ŁAPIE** (audyt F1 2026-07-09). Token `--c-accent` = crimson #85182F na poziomie index.css, więc `bg-c-accent`/`border-c-accent` wygląda „token-correct" a renderuje crimson (wektor incydentu vb4 `c5d767ec57`, ~446 plików). Selected/CTA/modal = neutralne (`c-surface-raised`/`c-border`) lub `c-info`; istniejących użyć nie ruszaj (sweep kolorystyki = osobny etap NA KOŃCU, decyzja Piotra 07-08).
 - **`primary-*` w KAŻDYM wariancie (50–950, dowolna opacity)** = odcień crimson. Zero `bg/text/border-primary-*` na: fokus, status, badge domyślny, selection, akcent AI/info, dane. (Nauczka crimson-leak: `text-primary-400/50` w PreviewPane dawał czerwony poblask u wszystkich adopterów.) Akcent AI/info = `c-info` (`text-c-info`, `border-c-info/NN` zwykłą notacją; tło przez `bg-[color-mix(in_srgb,var(--c-info)_NN%,transparent)]`).
 - `focus:ring-primary` → fokus zawsze niebieski `c-focus`.
 - `navy-*` / `slate-*` / surowy hex `#RRGGBB` → tylko tokeny `c-*` (c-text/-muted/-secondary, c-surface/-raised, c-border/-subtle, c-bg). Jedyny dozwolony crimson = brand CTA świadomie wybrany (nie jako dana/stan).
