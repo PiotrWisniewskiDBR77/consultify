@@ -1,8 +1,10 @@
 import {
+  ChevronRight,
   Copy,
   GripVertical,
   LayoutGrid,
   List,
+  Move,
   MoreVertical,
   Plus,
   RefreshCw,
@@ -40,7 +42,13 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
   const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
   const [contextMenuIndex, setContextMenuIndex] = useState<number | null>(null);
+  const [showMoveSubmenu, setShowMoveSubmenu] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+
+  const closeContextMenu = () => {
+    setContextMenuIndex(null);
+    setShowMoveSubmenu(false);
+  };
 
   const handleDragStart = (index: number) => {
     setDragIndex(index);
@@ -95,7 +103,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
               onDragEnd={handleDragEnd}
               onClick={() => {
                 onSelect(index);
-                setContextMenuIndex(null);
+                closeContextMenu();
               }}
               className={`relative group cursor-pointer rounded-lg transition-all ${
                 index === activeIndex
@@ -136,6 +144,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      setShowMoveSubmenu(false);
                       setContextMenuIndex(contextMenuIndex === index ? null : index);
                     }}
                     className="absolute top-1 right-1 p-0.5 rounded bg-black/30 text-c-text opacity-0 group-hover:opacity-100"
@@ -163,6 +172,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      setShowMoveSubmenu(false);
                       setContextMenuIndex(contextMenuIndex === index ? null : index);
                     }}
                     className="text-c-text-secondary opacity-0 group-hover:opacity-100"
@@ -174,22 +184,94 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
 
               {/* Context Menu */}
               {contextMenuIndex === index && (
-                <div className="absolute right-0 top-full mt-1 w-36 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg shadow-xl z-50 py-1">
+                <div className="absolute right-0 top-full mt-1 w-36 bg-c-surface border border-c-border-subtle rounded-lg shadow-xl z-50 py-1">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onDuplicate(index);
-                      setContextMenuIndex(null);
+                      closeContextMenu();
                     }}
                     className="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-c-surface-raised text-c-text"
                   >
                     <Copy size={12} /> {t('presentations.builder.duplicate')}
                   </button>
+
+                  {/* Move ▸ submenu (na górę / na dół / na pozycję) */}
+                  <div
+                    className="relative"
+                    onMouseEnter={() => setShowMoveSubmenu(true)}
+                    onMouseLeave={() => setShowMoveSubmenu(false)}
+                  >
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowMoveSubmenu((v) => !v);
+                      }}
+                      className="w-full px-3 py-1.5 text-left text-xs flex items-center justify-between gap-2 hover:bg-c-surface-raised text-c-text"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Move size={12} /> {t('presentations.builder.move', 'Move')}
+                      </span>
+                      <ChevronRight size={12} />
+                    </button>
+                    {showMoveSubmenu && (
+                      <div className="absolute right-full top-0 mr-1 w-36 bg-c-surface border border-c-border-subtle rounded-lg shadow-xl z-50 py-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onReorder(index, 0);
+                            closeContextMenu();
+                          }}
+                          disabled={index === 0}
+                          className="w-full px-3 py-1.5 text-left text-xs hover:bg-c-surface-raised text-c-text disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {t('presentations.builder.moveToTop', 'To top')}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onReorder(index, cards.length - 1);
+                            closeContextMenu();
+                          }}
+                          disabled={index === cards.length - 1}
+                          className="w-full px-3 py-1.5 text-left text-xs hover:bg-c-surface-raised text-c-text disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {t('presentations.builder.moveToBottom', 'To bottom')}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const raw = window.prompt(
+                              t(
+                                'presentations.builder.moveToPositionPrompt',
+                                'Move to position (1-{{count}})',
+                                { count: cards.length }
+                              ),
+                              String(index + 1)
+                            );
+                            if (raw !== null) {
+                              const parsed = parseInt(raw, 10);
+                              if (Number.isFinite(parsed)) {
+                                const target = Math.min(Math.max(parsed - 1, 0), cards.length - 1);
+                                onReorder(index, target);
+                              }
+                            }
+                            closeContextMenu();
+                          }}
+                          className="w-full px-3 py-1.5 text-left text-xs hover:bg-c-surface-raised text-c-text"
+                        >
+                          {t('presentations.builder.moveToPosition', 'To position…')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="h-px bg-c-border-subtle my-1" />
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onDelete(index);
-                      setContextMenuIndex(null);
+                      closeContextMenu();
                     }}
                     className="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-danger-50 dark:hover:bg-danger-500/10 text-danger-500"
                   >

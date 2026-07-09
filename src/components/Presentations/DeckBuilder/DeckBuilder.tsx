@@ -5,6 +5,7 @@
  * animations, collaboration, data refresh, source traceability, media library.
  */
 
+import { Check } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +15,7 @@ import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
 import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
+import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { Api } from '@/services/api';
 import { exportPresentationDeck, PresentationExportError } from '@/services/presentationExport';
 import {
@@ -1087,6 +1089,22 @@ export const DeckBuilder: React.FC = () => {
               commentsOpen: activeRailTool === 'comments',
               openCommentCount,
             } satisfies DeckBuilderTopBarChipsState
+          }
+          presenceSlot={
+            <div className="flex items-center gap-2">
+              {hasUnsavedChanges ? (
+                <span className="flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  {t('presentations.builder.saving', 'Saving…')}
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                  <Check size={11} />
+                  {t('presentations.builder.saved', 'Saved')}
+                </span>
+              )}
+              <EntityStatusChip status={deck.status || 'draft'} />
+            </div>
           }
           activeRightRailToolId={activeRailTool}
           onActiveRightRailToolChange={setActiveRailTool}

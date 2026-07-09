@@ -918,7 +918,14 @@
       "rewriteSlide": "Przerób",
       "notesPlaceholder": "Notatki prelegenta do tego slajdu...",
       "duplicate": "Duplikuj",
-      "delete": "Usuń"
+      "delete": "Usuń",
+      "saving": "Zapisywanie…",
+      "saved": "Zapisano",
+      "move": "Przenieś",
+      "moveToTop": "Na górę",
+      "moveToBottom": "Na dół",
+      "moveToPosition": "Na pozycję…",
+      "moveToPositionPrompt": "Przenieś na pozycję (1-{{count}})"
     },
     "agent": {
       "title": "Agent AI",
