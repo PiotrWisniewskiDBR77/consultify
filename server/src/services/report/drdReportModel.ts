@@ -36,6 +36,12 @@ import {
   type ConclusionOutput,
   type DrdNarrator,
 } from './drdConclusionContract.js';
+import {
+  buildDrdIndustryBenchmarkSection,
+  DEFAULT_DRD_BENCHMARK_INDUSTRY,
+  type DrdIndustryBenchmarkSection,
+} from './drdIndustryBenchmark.js';
+import type { DRDIndustryId } from '../assessmentKnowledge/drdIndustryProfiles.js';
 
 export type AreaScores = Record<string, { actual: number; target: number }>;
 
@@ -46,6 +52,13 @@ export interface DrdReportMeta {
   assessmentName?: string;
   /** Optional industry benchmark (engine/config supplied, NOT invented per-run). */
   benchmark?: { label: string; value: number } | null;
+  /**
+   * DRD industry reference profile segment (P3, expert-hypothesis-v1) used for
+   * the "Benchmark branżowy" section. Sourced from the organization profile
+   * when that field exists; otherwise defaults to `DEFAULT_DRD_BENCHMARK_INDUSTRY`
+   * ("produkcja" / process-manufacturing).
+   */
+  industry?: DRDIndustryId;
 }
 
 export interface DrdReportOptions {
@@ -144,6 +157,12 @@ export interface DrdReportModel {
     axes: { id: number; name: string; namePL?: string; areaCount: number; levelCount: number }[];
     totalAreas: number;
   };
+  /**
+   * Industry benchmark overlay (P3, expert-hypothesis-v1) — ADDITIVE, does not
+   * replace or alter any other section. Always populated (falls back to
+   * `DEFAULT_DRD_BENCHMARK_INDUSTRY` when `meta.industry` is not supplied).
+   */
+  industryBenchmark: DrdIndustryBenchmarkSection;
 }
 
 /**
@@ -285,6 +304,10 @@ export async function buildDrdReportModel(
   const areas = buildAreaRows(areaScores, language);
   const dimensions = buildDimensions(areaScores, language);
   const overall = calculateOverallScore(areaScores);
+  const industryBenchmark = buildDrdIndustryBenchmarkSection(
+    dimensions,
+    meta.industry ?? DEFAULT_DRD_BENCHMARK_INDUSTRY
+  );
 
   const totalAreas = getTotalAreaCount();
   const assessedAreas = Object.values(areaScores).filter(
@@ -449,5 +472,6 @@ export async function buildDrdReportModel(
       })),
       totalAreas,
     },
+    industryBenchmark,
   };
 }

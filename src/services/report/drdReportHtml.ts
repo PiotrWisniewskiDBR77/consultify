@@ -19,6 +19,7 @@ import type {
   DrdReportModel,
   DrdRoadmapItem,
 } from './drdReportModel';
+import type { DrdIndustryBenchmarkSection } from './drdIndustryBenchmark';
 import {
   buildDimensionBarsSvg,
   buildMatrixSvg,
@@ -78,6 +79,12 @@ interface Strings {
   high: string;
   eightDNote: string;
   narrativeDeterministic: string;
+  benchmarkTitle: string;
+  benchmarkCol: string;
+  benchmarkTypical: string;
+  benchmarkLeader: string;
+  benchmarkDelta: string;
+  benchmarkUnmatched: string;
 }
 
 const STR: Record<'pl' | 'en', Strings> = {
@@ -127,6 +134,13 @@ const STR: Record<'pl' | 'en', Strings> = {
       'Radar komunikuje 7 mierzonych osi transformacji (wynik silnika). Warstwa komunikacyjna 8D (MAP-1.0) zostanie uzupełniona po dostarczeniu kanonu DRD.',
     narrativeDeterministic:
       'Narracja deterministyczna (bez modelu językowego). Liczby pochodzą z silnika oceny; interpretacje zostaną wzbogacone po podłączeniu narratora LLM.',
+    benchmarkTitle: 'Benchmark branżowy',
+    benchmarkCol: 'Wymiar',
+    benchmarkTypical: 'Typowa firma',
+    benchmarkLeader: 'Lider branży',
+    benchmarkDelta: 'Różnica vs typowa',
+    benchmarkUnmatched:
+      'Wymiar D5 (Technologia i infrastruktura) profilu branżowego nie ma jeszcze odpowiednika w mierzonych osiach silnika — pominięty, nie wymyślony.',
   },
   en: {
     reportTitle: 'Digital Readiness Diagnosis Report',
@@ -174,6 +188,13 @@ const STR: Record<'pl' | 'en', Strings> = {
       'The radar communicates the 7 measured transformation axes (engine output). The 8D communication layer (MAP-1.0) will be completed once the DRD canon is delivered.',
     narrativeDeterministic:
       'Deterministic narrative (no language model). Numbers come from the assessment engine; interpretations will be enriched once the LLM narrator is connected.',
+    benchmarkTitle: 'Industry benchmark',
+    benchmarkCol: 'Dimension',
+    benchmarkTypical: 'Typical company',
+    benchmarkLeader: 'Industry leader',
+    benchmarkDelta: 'Delta vs typical',
+    benchmarkUnmatched:
+      'Dimension D5 (Technology & Infrastructure) of the industry profile has no matching engine axis yet — omitted, not invented.',
   },
 };
 
@@ -256,6 +277,45 @@ function renderChapter(ch: DrdChapter, s: Strings): string {
       <tbody>${rows}</tbody>
     </table>
   </section>`;
+}
+
+/**
+ * Additive "Benchmark branżowy" section: company actual vs {typical, leader}
+ * of the chosen DRD industry reference profile (expert-hypothesis-v1). Never
+ * touches any other section; disclaimer is mandatory and always rendered.
+ */
+function renderIndustryBenchmark(
+  benchmark: DrdIndustryBenchmarkSection,
+  s: Strings,
+  lang: 'pl' | 'en',
+  pageNumber: number,
+  foot: (n: number) => string
+): string {
+  const rows = benchmark.rows
+    .map(
+      (r) => `
+    <tr>
+      <td>${esc(r.name)}</td>
+      <td class="num">${r.actualPercent}%</td>
+      <td class="num">${r.typicalPercent}%</td>
+      <td class="num">${r.leaderPercent}%</td>
+      <td class="num">${r.deltaToTypical >= 0 ? '+' : ''}${r.deltaToTypical}</td>
+    </tr>`
+    )
+    .join('');
+  return `
+  <div class="page page-break">
+    <span class="section-tag">${String(pageNumber - 1).padStart(2, '0')}</span>
+    <h2>${s.benchmarkTitle}</h2>
+    <p class="muted"><strong>${esc(benchmark.industryLabel[lang])}</strong> — ${esc(benchmark.narrative[lang])}</p>
+    <table class="tbl">
+      <thead><tr><th>${s.benchmarkCol}</th><th class="num">${s.overallLabel}</th><th class="num">${s.benchmarkTypical}</th><th class="num">${s.benchmarkLeader}</th><th class="num">${s.benchmarkDelta}</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${benchmark.unmatchedDimensionIds.length > 0 ? `<p class="note">${esc(s.benchmarkUnmatched)}</p>` : ''}
+    <p class="note">${esc(benchmark.disclaimer[lang])}</p>
+    ${foot(pageNumber)}
+  </div>`;
 }
 
 /** Build the complete standalone HTML document for the DRD report. */
@@ -461,6 +521,9 @@ export function buildDrdReportHtml(model: DrdReportModel): string {
     ${foot(8)}
   </div>`;
 
+  // --- Section 9 (additive, P3): Industry benchmark overlay ---
+  const benchmarkPage = renderIndustryBenchmark(model.industryBenchmark, s, lang, 9, foot);
+
   return `<!DOCTYPE html>
 <html lang="${lang}">
 <head>
@@ -478,6 +541,7 @@ ${gapsPage}
 ${roadmapPage}
 ${chaptersPage}
 ${methodPage}
+${benchmarkPage}
 </body>
 </html>`;
 }
