@@ -1,0 +1,1598 @@
+{
+  "meta": {
+    "id": "OXFORD_O3_BUNDLE_v2_2026-07-09",
+    "purpose": "Re-generacja 6 sesji OXV PO wdrożeniu GROUNDING_RULES (src/hooks/discovery/toolAi/groundingRules.ts) — porównanie z v1 (66/100 na panelu, przed regułami).",
+    "generated_at": "2026-07-09T20:33:32.167Z",
+    "org": "a3e05d4a-5397-419d-b486-8e44366c0063 (atelier/demo, user piotr.wisniewski@dbr77.com)",
+    "llm": "openrouter-01 / anthropic/claude-sonnet-4 (tier aktywny na demo)",
+    "pipeline": "Prompty zbudowane REALNYMI builderami produkcyjnymi (buildOperationalFullSessionPrompt / buildCapabilityMapperFullSessionPrompt / buildAmbitionDecomposerFullSessionPrompt, z GROUNDING_RULES_BOTH wstrzykniętym) via tsx import w scripts/oxv-tmp/build_prompts.ts; orgContext pobrany live z GET /api/organization-context i sformatowany identyczną funkcją co useOrganizationContext.formatForPrompt(); wywołanie POST /api/ai/chat/stream (scripts/oxv-tmp/call_stream.mjs), wynik NIE zapisany do tool_sessions (tylko bundle v2 — patrz UWAGA).",
+    "generated_with": "GROUNDING_RULES",
+    "prev_bundle": "_OXFORD_O3_BUNDLE_2026-07-09.json",
+    "uwaga_metodyczna": "ISTOTNE: capability-mapper i ambition-decomposer NIE dostały case_input briefu w tej samej formie co operacyjne narzędzia w PIERWOTNYM promptcie v1 (live org-context na demo dziś zawiera realne dane platformy — 27 KPI/0 on-target, sygnały QA testowe — a NIE fikcyjne dane DBR77 z v1 case). Capability Mapper builder NIE wstrzykuje osobnego \"case brief\" poza polami industry/domains/priorities (puste w tym przebiegu) — model oparł \"signals\" głównie o orgContext. WYNIK: capability-mapper i ambition-decomposer w V2 ZAWIERAJĄ FABRYKACJĘ — model podał \"0% success rate inicjatyw (0 ukończonych z 25)\" i \"Obecny poziom dojrzałości PMO: BASIC\" jako evidenceType:fact/confidence 5/provenance \"Platform data\", mimo że te dokładne liczby NIE występują w przekazanym orgContext (sprawdzone grep na message wysłanym do modelu). To jest DOKŁADNIE naruszenie W1 które GROUNDING_RULES miały wyeliminować — reguły nie zadziałały w 100% przypadków.",
+    "success": "6/6 narzędzi z pełnym sparsowanym outputem JSON."
+  },
+  "tools": [
+    {
+      "tool": "sop-builder",
+      "sessionId": "10d7a5cf-80a9-4ecf-86fb-ffcd779f121d",
+      "case_input": {
+        "goal": "Ustandaryzować proces obsługi zgłoszeń serwisowych i onboardingu integratorów DBR77, skrócić onboarding z 6-8 do 3 tygodni przy zachowaniu jakości.",
+        "scope": "Onboarding integratora robotyki (aplikacja → pierwsze aktywne zlecenie) + obsługa zgłoszenia serwisowego (zgłoszenie → zamknięcie).",
+        "successSignal": "Onboarding <=3 tyg., pierwsza reakcja serwisowa <48h, zero krytycznych odchyleń jakościowych.",
+        "constraints": "CS = 4 osoby, brak workflow poza Google Sheets, integratorzy w różnych strefach DACH/PL."
+      },
+      "ai_outputs": {
+        "sections": {
+          "standards": [
+            {
+              "title": "Standard Czasu Reakcji na Zgłoszenia Serwisowe",
+              "description": "Pierwsza reakcja na zgłoszenie serwisowe w maksymalnie 48 godzin od otrzymania, z potwierdzeniem odbioru w ciągu 4 godzin roboczych",
+              "impact": "high",
+              "effort": "low",
+              "category": "Service Response",
+              "owner": "CS Team Lead",
+              "target": "<=48h pierwsza reakcja, <=4h potwierdzenie",
+              "frequency": "Per incident",
+              "threshold": "100% compliance",
+              "confidence": 4,
+              "evidenceType": "fact",
+              "rationale": "Wymaganie z briefu: pierwsza reakcja serwisowa <48h"
+            },
+            {
+              "title": "Standard Cyklu Onboardingu Integratora",
+              "description": "Kompletny proces onboardingu od aplikacji do pierwszego aktywnego zlecenia w maksymalnie 3 tygodnie z checkpointami tygodniowymi",
+              "impact": "high",
+              "effort": "medium",
+              "category": "Onboarding Process",
+              "owner": "CS Manager",
+              "target": "<=21 dni kalendarzowych",
+              "frequency": "Per integrator",
+              "threshold": "90% projektów w terminie",
+              "confidence": 4,
+              "evidenceType": "fact",
+              "rationale": "Cel z briefu: skrócenie onboardingu z 6-8 do 3 tygodni"
+            },
+            {
+              "title": "Standard Dokumentacji Technicznej",
+              "description": "Każdy integrator otrzymuje kompletny pakiet dokumentacji w języku lokalnym (DE/PL) z weryfikacją zrozumienia przed przejściem do fazy pilotowej",
+              "impact": "medium",
+              "effort": "medium",
+              "category": "Documentation",
+              "owner": "Technical Writer + CS",
+              "target": "100% kompletność pakietów",
+              "frequency": "Per onboarding",
+              "threshold": "Zero krytycznych luk dokumentacyjnych",
+              "confidence": 3,
+              "evidenceType": "assumption",
+              "rationale": "Integratorzy w różnych strefach DACH/PL wymagają lokalizacji"
+            },
+            {
+              "title": "Standard Eskalacji Problemów",
+              "description": "Jasny proces eskalacji z poziomami: L1 (CS) -> L2 (Technical Lead) -> L3 (Engineering) z SLA na każdym poziomie",
+              "impact": "high",
+              "effort": "low",
+              "category": "Issue Management",
+              "owner": "CS Team Lead",
+              "target": "L1->L2: 24h, L2->L3: 48h",
+              "frequency": "Per escalation",
+              "threshold": "95% compliance z SLA",
+              "confidence": 2,
+              "evidenceType": "assumption",
+              "rationale": "Brak workflow poza Google Sheets wskazuje na potrzebę ustrukturyzowania eskalacji"
+            }
+          ],
+          "checklists": [
+            {
+              "title": "Checklist Onboardingu - Tydzień 1",
+              "description": "Weryfikacja aplikacji, setup konta, przesłanie dokumentacji technicznej, scheduling kick-off call z uwzględnieniem strefy czasowej",
+              "impact": "high",
+              "effort": "low",
+              "category": "Onboarding Week 1",
+              "owner": "CS Specialist",
+              "durationMinutes": 120,
+              "frequency": "Per new integrator",
+              "confidence": 3,
+              "evidenceType": "assumption",
+              "rationale": "Strukturyzacja pierwszego tygodnia krytyczna dla dotrzymania 3-tygodniowego celu"
+            },
+            {
+              "title": "Checklist Onboardingu - Tydzień 2",
+              "description": "Technical setup, API access, pilot project definition, training session, first integration test z dedicated support",
+              "impact": "high",
+              "effort": "medium",
+              "category": "Onboarding Week 2",
+              "owner": "Technical CS + Engineering",
+              "durationMinutes": 240,
+              "frequency": "Per integrator",
+              "confidence": 3,
+              "evidenceType": "assumption",
+              "rationale": "Drugi tydzień - faza techniczna, krytyczna dla sukcesu onboardingu"
+            },
+            {
+              "title": "Checklist Onboardingu - Tydzień 3",
+              "description": "Pilot execution, QA review, go-live approval, first active order processing, post-go-live monitoring setup",
+              "impact": "high",
+              "effort": "medium",
+              "category": "Onboarding Week 3",
+              "owner": "CS Manager + QA",
+              "durationMinutes": 180,
+              "frequency": "Per integrator",
+              "confidence": 3,
+              "evidenceType": "assumption",
+              "rationale": "Finalizacja onboardingu - osiągnięcie pierwszego aktywnego zlecenia"
+            },
+            {
+              "title": "Checklist Obsługi Zgłoszenia Serwisowego",
+              "description": "Potwierdzenie odbioru (4h), initial triage, assignment do właściwego poziomu, progress updates co 24h, resolution tracking",
+              "impact": "high",
+              "effort": "low",
+              "category": "Service Management",
+              "owner": "CS Team",
+              "durationMinutes": 60,
+              "frequency": "Per service ticket",
+              "confidence": 4,
+              "evidenceType": "fact",
+              "rationale": "Wymaganie z briefu: pierwsza reakcja <48h, zero krytycznych odchyleń jakościowych"
+            },
+            {
+              "title": "Checklist Kontroli Jakości",
+              "description": "Weryfikacja kompletności dokumentacji, technical review checkpoints, customer satisfaction survey, lessons learned capture",
+              "impact": "medium",
+              "effort": "low",
+              "category": "Quality Control",
+              "owner": "QA Lead + CS Manager",
+              "durationMinutes": 45,
+              "frequency": "Weekly",
+              "confidence": 3,
+              "evidenceType": "assumption",
+              "rationale": "Cel: zero krytycznych odchyleń jakościowych wymaga systematycznej kontroli"
+            }
+          ]
+        },
+        "summary": {
+          "executiveSummary": "Opracowano kompletny SOP Builder dla DBR77 ukierunkowany na skrócenie onboardingu integratorów robotyki z 6-8 do 3 tygodni przy zachowaniu jakości obsługi. System opiera się na ustrukturyzowanych standardach czasowych, checklistach tygodniowych i jasnych escalation path dla zespołu CS (4 osoby). Kluczowe elementy: 48h SLA na reakcję serwisową, 3-tygodniowy onboarding z checkpoint'ami, lokalizacja dla DACH/PL oraz przejście z Google Sheets na workflow management.",
+          "keyInsights": [
+            "Obecny brak workflow poza Google Sheets to główny bottleneck - zespół 4-osobowy potrzebuje ustrukturyzowanych procesów",
+            "Różnorodność geograficzna integratorów (DACH/PL) wymaga lokalizacji dokumentacji i uwzględnienia stref czasowych",
+            "Cel 3-tygodniowego onboardingu jest ambitny ale osiągalny przy jasnym podziale na tygodniowe milestone'y",
+            "SLA 48h na reakcję serwisową jest realistyczne dla zespołu CS przy właściwej strukturze eskalacji"
+          ],
+          "appliedConclusions": [
+            "Implementacja standardów czasowych z jasnym ownership (CS Team Lead, CS Manager) zapewni accountability",
+            "Tygodniowe checklisty onboardingu z określonymi duration (120-240 min) pozwolą na realistyczne planowanie zasobów zespołu",
+            "Przejście na workflow management system jest konieczne dla skalowania ponad obecne Google Sheets",
+            "Kontrola jakości z weekly cadence zapobiegnie krytycznym odchyleniom przy przyspieszonym procesie"
+          ]
+        },
+        "initiatives": [
+          {
+            "title": "Implementacja Workflow Management System",
+            "description": "Zastąpienie Google Sheets dedykowanym systemem do trackingu onboardingu i zgłoszeń serwisowych z automatyzacją notyfikacji i SLA monitoring",
+            "type": "operational",
+            "estimatedImpact": "high",
+            "estimatedEffort": "medium",
+            "rationale": "Krytyczne dla skalowania procesów poza obecne ograniczenia Google Sheets i osiągnięcia celów czasowych"
+          },
+          {
+            "title": "Lokalizacja Dokumentacji i Procesów DACH/PL",
+            "description": "Stworzenie kompletnych pakietów dokumentacji w językach lokalnych z uwzględnieniem różnic kulturowych i prawnych w onboardingu",
+            "type": "operational",
+            "estimatedImpact": "medium",
+            "estimatedEffort": "medium",
+            "rationale": "Niezbędne dla efektywnej obsługi integratorów w różnych strefach geograficznych"
+          },
+          {
+            "title": "Training Program dla CS Team",
+            "description": "Wdrożenie zespołu CS (4 osoby) w nowe standardy, checklisti i workflow z certyfikacją kompetencji",
+            "type": "operational",
+            "estimatedImpact": "high",
+            "estimatedEffort": "low",
+            "rationale": "Sukces całej transformacji zależy od adoption nowych procesów przez zespół CS"
+          },
+          {
+            "title": "KPI Dashboard i Monitoring",
+            "description": "Implementacja real-time dashboardu dla monitorowania SLA, completion rates onboardingu i customer satisfaction metrics",
+            "type": "operational",
+            "estimatedImpact": "medium",
+            "estimatedEffort": "low",
+            "rationale": "Konieczne dla continuous improvement i early warning system przy odchyleniach od standardów"
+          }
+        ]
+      },
+      "ai_output_raw_chars": 9228,
+      "ocena_1_zdanie": "GROUNDING WIDOCZNY: każdy item ma confidence+evidenceType+rationale; brak w ogóle nowego targetu reklamacji (unika drift 8%/<5% z v1); jedyny minus — 3 checklisty-tygodnie oznaczone evidenceType assumption mimo że są bezpośrednim rozbiciem briefu (nadgorliwość, nie fabrykacja)."
+    },
+    {
+      "tool": "a3-problem-solving",
+      "sessionId": "c808aaf9-23b6-4344-9b49-771f1504843d",
+      "case_input": {
+        "goal": "Zredukować odsetek zleceń z odchyleniem jakościowym z 12% do <5% w 2 kwartały.",
+        "scope": "Zlecenia integratorów partnerskich DBR77 PL + pilotaż DACH, Q2-Q3 2026.",
+        "successSignal": "<5% zleceń z odchyleniem, -50% eskalacji klienckich.",
+        "constraints": "Brak jednolitego QC u integratorów; DBR77 bez bezpośredniej kontroli operacyjnej (marketplace)."
+      },
+      "ai_outputs": {
+        "sections": {
+          "problem": [
+            {
+              "title": "Wysoki odsetek odchyleń jakościowych w zleceniach partnerskich",
+              "description": "12% zleceń integratorów partnerskich DBR77 wykazuje odchylenia jakościowe, co przekracza akceptowalny próg branżowy 3-5%",
+              "impact": "high",
+              "effort": "low",
+              "category": "Quality Management",
+              "target": "12% → <5%",
+              "confidence": 5,
+              "evidenceType": "fact",
+              "rationale": "Dane z briefu klienta - obecny stan 12%, cel <5%"
+            },
+            {
+              "title": "Brak ujednoliconych standardów QC u integratorów",
+              "description": "Każdy integrator stosuje własne procedury kontroli jakości bez wspólnych standardów DBR77",
+              "impact": "high",
+              "effort": "medium",
+              "category": "Process Standardization",
+              "confidence": 5,
+              "evidenceType": "fact",
+              "rationale": "Wprost określone w constraints briefu"
+            },
+            {
+              "title": "Ograniczona kontrola operacyjna DBR77 nad partnerami",
+              "description": "Model marketplace uniemożliwia bezpośrednie zarządzanie procesami u integratorów",
+              "impact": "medium",
+              "effort": "high",
+              "category": "Governance",
+              "confidence": 5,
+              "evidenceType": "fact",
+              "rationale": "Constraint z briefu - DBR77 bez bezpośredniej kontroli operacyjnej"
+            },
+            {
+              "title": "Wysokie obciążenie eskalacjami klienckimi",
+              "description": "Problemy jakościowe generują znaczną liczbę eskalacji, obciążając zespoły Customer Success",
+              "impact": "medium",
+              "effort": "low",
+              "category": "Customer Experience",
+              "target": "-50% eskalacji",
+              "confidence": 5,
+              "evidenceType": "fact",
+              "rationale": "Target z briefu - redukcja eskalacji o 50%"
+            }
+          ],
+          "root-cause": [
+            {
+              "title": "Brak certyfikacji i audytów partnerów",
+              "description": "Nieregularne weryfikacje kompetencji i procesów u integratorów prowadzą do degradacji standardów",
+              "impact": "high",
+              "effort": "medium",
+              "category": "Partner Management",
+              "frequency": "quarterly",
+              "confidence": 3,
+              "evidenceType": "assumption",
+              "rationale": "Typowa przyczyna w modelach partnerskich - brak systematycznych audytów"
+            },
+            {
+              "title": "Nieadekwatne narzędzia monitorowania jakości w czasie rzeczywistym",
+              "description": "Brak systemów early warning pozwalających na proaktywną identyfikację problemów jakościowych",
+              "impact": "high",
+              "effort": "high",
+              "category": "Technology",
+              "confidence": 2,
+              "evidenceType": "assumption",
+              "rationale": "Wnioskowane z wysokiego odsetka odchyleń - prawdopodobnie wykrywane post-factum"
+            },
+            {
+              "title": "Niejednolite definicje kryteriów jakości",
+              "description": "Partnerzy interpretują wymagania jakościowe różnie, co prowadzi do niespójnych rezultatów",
+              "impact": "medium",
+              "effort": "low",
+              "category": "Documentation",
+              "confidence": 4,
+              "evidenceType": "observation",
+              "rationale": "Logiczna konsekwencja braku ujednoliconych standardów QC"
+            },
+            {
+              "title": "Słabe mechanizmy feedbacku i uczenia się",
+              "description": "Brak systematycznego przekazywania wniosków z problemów jakościowych do partnerów",
+              "impact": "medium",
+              "effort": "medium",
+              "category": "Knowledge Management",
+              "confidence": 3,
+              "evidenceType": "assumption",
+              "rationale": "Typowy problem w relacjach partnerskich - słaba pętla feedbacku"
+            }
+          ],
+          "countermeasures": [
+            {
+              "title": "Program Certyfikacji Partnerów DBR77",
+              "description": "Wdrożenie obowiązkowej certyfikacji z audytami kwartalnymi i systemem punktowym",
+              "impact": "high",
+              "effort": "high",
+              "category": "Partner Management",
+              "owner": "Partner Operations Manager",
+              "frequency": "quarterly",
+              "durationMinutes": 240,
+              "target": "100% partnerów certyfikowanych do Q3 2026",
+              "confidence": 4,
+              "evidenceType": "assumption",
+              "rationale": "Standardowe rozwiązanie w zarządzaniu jakością partnerów"
+            },
+            {
+              "title": "Automatyczny system monitorowania jakości",
+              "description": "Implementacja dashboardu real-time z alertami przy przekroczeniu progów odchyleń >8%",
+              "impact": "high",
+              "effort": "high",
+              "category": "Technology",
+              "owner": "IT Operations",
+              "threshold": "8%",
+              "target": "Czas reakcji <4h",
+              "confidence": 3,
+              "evidenceType": "assumption",
+              "rationale": "Próg 8% jako early warning przed osiągnięciem limitu 12%"
+            },
+            {
+              "title": "Ujednolicone Quality Playbook",
+              "description": "Stworzenie szczegółowych procedur QC z checklistami i kryteriami akceptacji",
+              "impact": "medium",
+              "effort": "medium",
+              "category": "Documentation",
+              "owner": "Quality Manager",
+              "target": "Wdrożenie u wszystkich partnerów do końca Q2 2026",
+              "confidence": 5,
+              "evidenceType": "fact",
+              "rationale": "Bezpośrednie rozwiązanie problemu braku ujednoliconych standardów"
+            },
+            {
+              "title": "Miesięczne Quality Reviews z partnerami",
+              "description": "Regularne sesje analizy przypadków z feedbackiem i planem poprawy",
+              "impact": "medium",
+              "effort": "medium",
+              "category": "Process Management",
+              "owner": "Partner Success Manager",
+              "frequency": "monthly",
+              "durationMinutes": 60,
+              "confidence": 4,
+              "evidenceType": "assumption",
+              "rationale": "Adresuje problem słabego feedbacku i uczenia się"
+            },
+            {
+              "title": "System finansowych incentywów jakościowych",
+              "description": "Bonus +2% za <3% odchyleń, penalty -1% za >10% odchyleń w danym miesiącu",
+              "impact": "high",
+              "effort": "low",
+              "category": "Financial Incentives",
+              "owner": "Commercial Manager",
+              "threshold": "3% bonus threshold, 10% penalty threshold",
+              "confidence": 2,
+              "evidenceType": "assumption",
+              "derivation": "Progi oparte na celu <5% z buforem bezpieczeństwa",
+              "rationale": "Finansowe motywowanie partnerów do utrzymania wysokiej jakości"
+            }
+          ]
+        },
+        "summary": {
+          "executiveSummary": "DBR77 musi zredukować odsetek odchyleń jakościowych z 12% do <5% w modelu partnerskim bez bezpośredniej kontroli operacyjnej. Kluczowe działania: certyfikacja partnerów, automatyczne monitorowanie i system incentywów finansowych.",
+          "keyInsights": [
+            "Problem jakości wynika głównie z braku ujednoliconych standardów QC u partnerów",
+            "Model marketplace wymaga rozwiązań opartych na governance i incentywach, nie kontroli bezpośredniej",
+            "Automatyzacja monitorowania jest krytyczna dla proaktywnego zarządzania jakością",
+            "Finansowe motywatory mogą być skuteczniejsze niż procedury w modelu partnerskim"
+          ],
+          "appliedConclusions": [
+            "Priorytet #1: Program certyfikacji partnerów z audytami kwartalnymi (Q2 2026)",
+            "Priorytet #2: Automatyczny system alertów przy >8% odchyleń (Q2 2026)",
+            "Priorytet #3: System bonusów/kar finansowych za jakość (Q3 2026)",
+            "Kluczowy sukces: Redukcja eskalacji o 50% jako wskaźnik poprawy customer experience"
+          ]
+        },
+        "initiatives": [
+          {
+            "title": "Partner Quality Certification Program",
+            "description": "Kompleksowy program certyfikacji z audytami, szkoleniami i systemem punktowym dla wszystkich integratorów DBR77",
+            "type": "operational",
+            "estimatedImpact": "high",
+            "estimatedEffort": "high",
+            "rationale": "Bezpośrednio adresuje główną przyczynę - brak standardów QC u partnerów"
+          },
+          {
+            "title": "Real-time Quality Monitoring System",
+            "description": "Automatyczny dashboard z alertami i early warning przy przekroczeniu progów jakościowych",
+            "type": "operational",
+            "estimatedImpact": "high",
+            "estimatedEffort": "high",
+            "rationale": "Umożliwia proaktywne zarządzanie jakością zamiast reaktywnego"
+          },
+          {
+            "title": "Quality-based Financial Incentive Framework",
+            "description": "System bonusów i kar finansowych motywujący partnerów do utrzymania wysokich standardów jakości",
+            "type": "operational",
+            "estimatedImpact": "medium",
+            "estimatedEffort": "low",
+            "rationale": "Leverage finansowy w modelu marketplace gdzie brak bezpośredniej kontroli"
+          }
+        ]
+      },
+      "ai_output_raw_chars": 8982,
+      "ocena_1_zdanie": "GROUNDING WIDOCZNY I POPRAWIA v1: target teraz poprawnie 12%→<5% (zamiast błędnego 8% z v1); ZNIKNĘŁY fabrykowane kwoty inwestycji/ROI (180k/340k EUR z v1) — finansowy incentive ma teraz derivation (\"Progi oparte na celu <5% z buforem\"); pozostałe assumption-confidence 2-4, spójne z regułami."
+    },
+    {
+      "tool": "pain-explorer",
+      "sessionId": "40ff9f63-7830-4684-8a72-077a67cb3bcb",
+      "case_input": {
+        "goal": "Zidentyfikować i zweryfikować pain points w onboardingu integratorów i CS blokujące skalowanie DACH.",
+        "scope": "Onboarding integratora + interakcje CS, PL i pilotaż DACH.",
+        "successSignal": "Min. 5 zweryfikowanych hipotez bólu z dowodami, 3 z jasną ścieżką rozwiązania.",
+        "constraints": "Dane: 12 transkryptów rozmów CS Q2 2026, dashboard onboardingu, ticketing."
+      },
+      "ai_outputs": {
+        "sections": {
+          "problems": [
+            {
+              "title": "Fragmentacja procesów QA blokuje onboarding",
+              "description": "Wielokrotne sygnały testowe (DC Aggressive Test, Manual Test, QA DEF-INT-03) wskazują na niestandardowe procesy weryfikacji, które wydłużają onboarding integratorów",
+              "impact": "high",
+              "effort": "medium",
+              "category": "process",
+              "owner": "QA Lead",
+              "confidence": 3,
+              "evidenceType": "observation",
+              "rationale": "Oparte na sygnałach testowych z kontekstu organizacyjnego",
+              "state": "confirmed",
+              "requires_evidence": false
+            },
+            {
+              "title": "Brak standaryzacji w interakcjach CS Q2 2026",
+              "description": "12 transkryptów CS Q2 2026 sugeruje niespójne podejście do obsługi integratorów w fazie onboardingu",
+              "impact": "high",
+              "effort": "medium",
+              "category": "customer-success",
+              "owner": "CS Manager",
+              "confidence": 2,
+              "evidenceType": "assumption",
+              "rationale": "Założenie oparte na ilości transkryptów - wymaga weryfikacji treści",
+              "state": "proposed",
+              "requires_evidence": true
+            },
+            {
+              "title": "Konflikty w definicjach procesów",
+              "description": "5 konfliktowych twierdzeń w kontekście organizacyjnym wskazuje na brak jednoznacznych procedur onboardingu",
+              "impact": "medium",
+              "effort": "low",
+              "category": "governance",
+              "owner": "Process Owner",
+              "confidence": 4,
+              "evidenceType": "fact",
+              "rationale": "Bezpośrednie ostrzeżenie z kontekstu: 'There are 5 conflicting claims'",
+              "state": "confirmed",
+              "requires_evidence": false
+            }
+          ],
+          "hypotheses": [
+            {
+              "title": "Automatyzacja procesów redukuje czas onboardingu o 40%",
+              "description": "Sygnał 'Automatyzacja proces' sugeruje możliwość optymalizacji - hipoteza wymaga weryfikacji z dashboard onboardingu",
+              "impact": "high",
+              "effort": "high",
+              "category": "automation",
+              "owner": "Tech Lead",
+              "target": "40% redukcja czasu onboardingu",
+              "confidence": 2,
+              "evidenceType": "hypothesis",
+              "derivation": "Brak danych liczbowych - wymaga weryfikacji z dashboard",
+              "state": "proposed",
+              "requires_evidence": true
+            },
+            {
+              "title": "UI/UX problemy wpływają na adoption rate w DACH",
+              "description": "QA UI Insight Submit wskazuje na problemy interfejsu mogące blokować adopcję w regionie DACH",
+              "impact": "medium",
+              "effort": "medium",
+              "category": "user-experience",
+              "owner": "UX Lead",
+              "confidence": 3,
+              "evidenceType": "observation",
+              "rationale": "Oparte na sygnale QA UI z kontekstu",
+              "state": "proposed",
+              "requires_evidence": true
+            },
+            {
+              "title": "Provider analysis ujawnia gap w onboardingu partnerów",
+              "description": "QA Real Provider General Analysis może wskazywać na problemy w procesie weryfikacji i onboardingu zewnętrznych partnerów",
+              "impact": "high",
+              "effort": "medium",
+              "category": "partner-management",
+              "owner": "Partner Manager",
+              "confidence": 2,
+              "evidenceType": "assumption",
+              "rationale": "Interpretacja nazwy sygnału - wymaga weryfikacji treści",
+              "state": "proposed",
+              "requires_evidence": true
+            }
+          ],
+          "evidence-gaps": [
+            {
+              "title": "Brak danych z dashboard onboardingu",
+              "description": "Niezbędne metryki: czas onboardingu, conversion rate, drop-off points - dane dostępne ale nie przeanalizowane",
+              "impact": "high",
+              "effort": "low",
+              "category": "data-analysis",
+              "owner": "Data Analyst",
+              "durationMinutes": 120,
+              "confidence": 5,
+              "evidenceType": "fact",
+              "rationale": "Dashboard wymieniony w constraints ale dane nie dostarczone",
+              "state": "confirmed",
+              "requires_evidence": false
+            },
+            {
+              "title": "Analiza treści 12 transkryptów CS Q2 2026",
+              "description": "Kluczowe dla identyfikacji pattern'ów problemów w interakcjach CS - dane dostępne ale nie przeanalizowane",
+              "impact": "high",
+              "effort": "medium",
+              "category": "content-analysis",
+              "owner": "CS Analyst",
+              "durationMinutes": 480,
+              "confidence": 5,
+              "evidenceType": "fact",
+              "rationale": "Transkrypty wymienione w constraints ale treść nie dostarczona",
+              "state": "confirmed",
+              "requires_evidence": false
+            },
+            {
+              "title": "Dane z systemu ticketingowego",
+              "description": "Analiza kategorii problemów, czasu rozwiązania, eskalacji - kluczowe dla zrozumienia pain points",
+              "impact": "medium",
+              "effort": "low",
+              "category": "support-analysis",
+              "owner": "Support Manager",
+              "durationMinutes": 180,
+              "confidence": 5,
+              "evidenceType": "fact",
+              "rationale": "System ticketingowy wymieniony w constraints",
+              "state": "confirmed",
+              "requires_evidence": false
+            }
+          ]
+        },
+        "summary": {
+          "executiveSummary": "Analiza kontekstu DBR77 ujawnia krytyczne bariery w onboardingu integratorów blokujące skalowanie DACH. Zidentyfikowano 3 potwierdzone problemy (fragmentacja QA, niestandardowe CS, konflikty procesów) i 3 kluczowe hipotezy wymagające weryfikacji. Główne gap'y: brak analizy dashboard onboardingu, treści transkryptów CS i danych ticketingowych.",
+          "keyInsights": [
+            "Fragmentacja procesów QA stanowi główną barierę onboardingu - wymaga standaryzacji",
+            "5 konfliktowych twierdzeń wskazuje na chaos w governance procesów",
+            "Dostępne są kluczowe źródła danych (dashboard, transkrypty, ticketing) ale nie są przeanalizowane",
+            "Sygnały automatyzacji i UI wskazują na potencjał optymalizacji"
+          ],
+          "appliedConclusions": [
+            "Priorytet 1: Analiza 12 transkryptów CS Q2 2026 dla identyfikacji pattern'ów problemów",
+            "Priorytet 2: Ekstrakcja metryk z dashboard onboardingu (czas, conversion, drop-off)",
+            "Priorytet 3: Standaryzacja procesów QA i rozwiązanie 5 konfliktowych definicji",
+            "Quick win: Analiza danych ticketingowych dla kategoryzacji problemów support"
+          ]
+        },
+        "initiatives": [
+          {
+            "title": "CS Process Standardization Initiative",
+            "description": "Analiza 12 transkryptów CS Q2 2026, identyfikacja best practices i standaryzacja procedur onboardingu integratorów",
+            "type": "operational",
+            "estimatedImpact": "high",
+            "estimatedEffort": "medium",
+            "rationale": "Bezpośrednio adresuje zidentyfikowany problem niespójności CS i wykorzystuje dostępne dane"
+          },
+          {
+            "title": "QA Process Unification Program",
+            "description": "Konsolidacja fragmentowanych procesów testowych w jednolity framework onboardingu z automatyzacją",
+            "type": "operational",
+            "estimatedImpact": "high",
+            "estimatedEffort": "high",
+            "rationale": "Rozwiązuje główną barierę techniczną i wykorzystuje sygnał automatyzacji procesów"
+          },
+          {
+            "title": "Onboarding Analytics Dashboard",
+            "description": "Implementacja systemu monitoringu metryk onboardingu z alertami dla early intervention",
+            "type": "strategic",
+            "estimatedImpact": "medium",
+            "estimatedEffort": "medium",
+            "rationale": "Zapewnia ciągłą widoczność problemów i umożliwia proaktywne zarządzanie"
+          },
+          {
+            "title": "DACH Market Entry Optimization",
+            "description": "Dedykowany program adaptacji procesów onboardingu dla specyfiki rynku DACH",
+            "type": "growth",
+            "estimatedImpact": "high",
+            "estimatedEffort": "high",
+            "rationale": "Bezpośrednio wspiera cel skalowania DACH poprzez lokalizację procesów"
+          }
+        ]
+      },
+      "ai_output_raw_chars": 8399,
+      "ocena_1_zdanie": "GROUNDING CZĘŚCIOWO ZMIENIA OUTPUT: sesja NIE miała już case_input o 12%/6-8tyg/15h w promptcie (org-context tym razem realny, ubogi — tylko QA-testowe sygnały), więc model uczciwie oparł się na SŁABYCH realnych sygnałach (DC Aggressive Test, QA DEF-INT-03) zamiast fabrykować liczby branżowe z v1 — efekt uboczny: output jest płytszy/mniej użyteczny biznesowo, ale ZERO fabrykacji liczb (evidenceType i requires_evidence poprawnie flagują braki)."
+    },
+    {
+      "tool": "rpa-scanner",
+      "sessionId": "4a16c256-7284-45f9-8d82-3d5a496035dd",
+      "case_input": {
+        "goal": "Kandydaci RPA w operacjach DBR77, priorytet: raportowanie KPI integratorów (~15h/tydz. ręcznie).",
+        "scope": "Raportowanie KPI, weryfikacja dokumentów certyfikacyjnych, matching zgłoszeń serwisowych.",
+        "successSignal": "-8h/tydz. pracy ręcznej CS w 2 kwartały, payback <12 mies. dla min. 2 kandydatów.",
+        "constraints": "Stack: Google Sheets + ticketing, brak RPA/iPaaS, budżet <20k EUR/rok."
+      },
+      "ai_outputs": {
+        "sections": {
+          "candidates": [
+            {
+              "title": "Automatyzacja raportowania KPI integratorów",
+              "description": "Zastąpienie 15h/tydz. ręcznego zbierania danych z Google Sheets i generowania raportów KPI przez zautomatyzowany proces agregacji i raportowania",
+              "impact": "high",
+              "effort": "medium",
+              "category": "Raportowanie",
+              "owner": "CS Team Lead",
+              "target": "Redukcja z 15h do 2h/tydzień",
+              "frequency": "Tygodniowo",
+              "durationMinutes": 120,
+              "confidence": 4,
+              "evidenceType": "fact",
+              "rationale": "Priorytet #1 z briefu - 15h/tydz. ręcznej pracy CS, bezpośrednio adresuje główny pain point"
+            },
+            {
+              "title": "Weryfikacja dokumentów certyfikacyjnych",
+              "description": "Automatyczna walidacja formatów, dat ważności i completeness dokumentów certyfikacyjnych przeciwko bazowym kryteriom",
+              "impact": "medium",
+              "effort": "medium",
+              "category": "Compliance",
+              "owner": "Operations Manager",
+              "target": "90% dokumentów weryfikowanych automatycznie",
+              "frequency": "Dziennie",
+              "confidence": 3,
+              "evidenceType": "observation",
+              "rationale": "Wymienione w scope jako kandydat RPA, typowy use case dla automatyzacji dokumentów"
+            },
+            {
+              "title": "Matching zgłoszeń serwisowych",
+              "description": "Automatyczne dopasowanie incoming tickets do istniejących case'ów na podstawie kryteriów podobieństwa i kategoryzacji",
+              "impact": "medium",
+              "effort": "high",
+              "category": "Ticketing",
+              "owner": "Service Desk Manager",
+              "target": "80% zgłoszeń automatycznie zmatchowanych",
+              "frequency": "Real-time",
+              "confidence": 3,
+              "evidenceType": "observation",
+              "rationale": "Scope z briefu - matching serwisowy, ale wymaga zaawansowanej logiki biznesowej"
+            },
+            {
+              "title": "Automatyzacja QA workflow",
+              "description": "Zautomatyzowanie powtarzalnych kroków w procesie QA na podstawie sygnałów z organizacji (testy, insights, fixes)",
+              "impact": "medium",
+              "effort": "medium",
+              "category": "Quality Assurance",
+              "owner": "QA Lead",
+              "target": "50% zadań QA zautomatyzowanych",
+              "frequency": "Dziennie",
+              "confidence": 2,
+              "evidenceType": "assumption",
+              "rationale": "Bazowane na sygnałach QA z kontekstu organizacji - potencjał automatyzacji testów"
+            }
+          ],
+          "sizing": [
+            {
+              "title": "Oszczędność czasu CS Team",
+              "description": "Redukcja 13h/tydz. ręcznej pracy (z 15h do 2h) w raportowaniu KPI",
+              "impact": "high",
+              "effort": "low",
+              "target": "13h/tydzień",
+              "derivation": "15h obecny stan - 2h docelowy = 13h oszczędności",
+              "confidence": 4,
+              "evidenceType": "fact",
+              "rationale": "Dane z briefu - 15h/tydz. obecnie, cel 8h redukcji przekroczony"
+            },
+            {
+              "title": "Koszt implementacji RPA",
+              "description": "Szacunkowy koszt narzędzi RPA i implementacji w ramach budżetu <20k EUR/rok",
+              "impact": "medium",
+              "effort": "medium",
+              "target": "<20000 EUR/rok",
+              "confidence": 2,
+              "evidenceType": "assumption",
+              "provenance": "AI-estimate based on market rates",
+              "rationale": "Constraint z briefu - budżet <20k EUR/rok, typowe koszty RPA w tym zakresie"
+            },
+            {
+              "title": "Payback period target",
+              "description": "Okres zwrotu inwestycji dla minimum 2 kandydatów RPA",
+              "impact": "high",
+              "effort": "low",
+              "target": "<12 miesięcy",
+              "confidence": 5,
+              "evidenceType": "fact",
+              "rationale": "Success signal z briefu - payback <12 mies. dla min. 2 kandydatów"
+            },
+            {
+              "title": "Timeline realizacji",
+              "description": "Osiągnięcie -8h/tydz. redukcji pracy ręcznej w określonym czasie",
+              "impact": "high",
+              "effort": "medium",
+              "target": "2 kwartały",
+              "confidence": 5,
+              "evidenceType": "fact",
+              "rationale": "Success signal z briefu - timeline 2 kwartały"
+            }
+          ],
+          "backlog": [
+            {
+              "title": "Integracja Google Sheets API",
+              "description": "Setup połączenia z istniejącymi Google Sheets dla automatyzacji raportowania",
+              "impact": "high",
+              "effort": "low",
+              "category": "Technical Setup",
+              "owner": "IT Team",
+              "confidence": 4,
+              "evidenceType": "fact",
+              "rationale": "Stack z briefu - Google Sheets + ticketing, wymaga integracji API"
+            },
+            {
+              "title": "Wybór platformy RPA",
+              "description": "Selekcja narzędzia RPA w ramach budżetu <20k EUR z możliwością integracji z obecnym stackiem",
+              "impact": "high",
+              "effort": "medium",
+              "category": "Tool Selection",
+              "owner": "Operations Manager",
+              "confidence": 3,
+              "evidenceType": "observation",
+              "rationale": "Constraint: brak RPA/iPaaS, potrzeba wyboru i implementacji"
+            },
+            {
+              "title": "Mapowanie procesów CS",
+              "description": "Szczegółowe zmapowanie obecnych 15h/tydz. pracy ręcznej w raportowaniu KPI",
+              "impact": "high",
+              "effort": "medium",
+              "category": "Process Analysis",
+              "owner": "Business Analyst",
+              "requires_evidence": true,
+              "confidence": 4,
+              "evidenceType": "fact",
+              "rationale": "Konieczne dla automatyzacji głównego kandydata z briefu"
+            },
+            {
+              "title": "Pilot raportowania KPI",
+              "description": "Proof of concept automatyzacji dla jednego typu raportu KPI jako test feasibility",
+              "impact": "medium",
+              "effort": "low",
+              "category": "Pilot",
+              "owner": "RPA Developer",
+              "durationMinutes": 480,
+              "confidence": 3,
+              "evidenceType": "assumption",
+              "rationale": "Standardowe podejście - pilot przed full rollout"
+            },
+            {
+              "title": "Rozwiązanie konfliktów w kontekście",
+              "description": "Weryfikacja i rozwiązanie 5 konfliktujących claims w kontekście organizacji",
+              "impact": "medium",
+              "effort": "low",
+              "category": "Data Quality",
+              "owner": "Data Analyst",
+              "requires_evidence": true,
+              "confidence": 3,
+              "evidenceType": "fact",
+              "rationale": "Context warning z organizacji - 5 conflicting claims wymagają review"
+            }
+          ]
+        },
+        "summary": {
+          "executiveSummary": "DBR77 ma jasny kandydat #1 do automatyzacji RPA: raportowanie KPI integratorów (15h/tydz. → 2h/tydz.). Success criteria są osiągalne w 2 kwartały z payback <12 miesięcy. Kluczowe ograniczenie: brak obecnej infrastruktury RPA wymaga wyboru i implementacji narzędzia w budżecie <20k EUR/rok.",
+          "keyInsights": [
+            "Raportowanie KPI to 87% całego target savings (13h z 15h/tydz.) - koncentracja na tym procesie da największy ROI",
+            "Google Sheets + ticketing stack jest RPA-friendly - nie wymaga rewolucji technologicznej",
+            "QA signals w organizacji sugerują dodatkowy potencjał automatyzacji poza scope briefu",
+            "5 conflicting claims w kontekście organizacji mogą wpływać na reliability danych - wymaga weryfikacji przed implementacją"
+          ],
+          "appliedConclusions": [
+            "START: Pilot raportowania KPI (1 typ raportu) w Q1 jako proof of concept",
+            "PRIORYTET: Mapowanie szczegółowe 15h/tydz. CS work przed wyborem narzędzia RPA",
+            "DECYZJA: Wybór platformy RPA do końca Q1 z fokusem na Google Sheets integration",
+            "RISK: Rozwiąż conflicting claims przed full rollout - może wpłynąć na data quality automatyzacji"
+          ]
+        },
+        "initiatives": [
+          {
+            "title": "RPA Pilot - Automatyzacja raportowania KPI",
+            "description": "Implementacja automatyzacji dla jednego typu raportu KPI jako proof of concept, z pełnym mappingiem procesu i wyborem narzędzia RPA",
+            "type": "operational",
+            "estimatedImpact": "high",
+            "estimatedEffort": "medium",
+            "rationale": "Adresuje 87% target savings, jasne success criteria, feasible w 2 kwartały"
+          },
+          {
+            "title": "RPA Infrastructure Setup",
+            "description": "Wybór i implementacja platformy RPA z integracją Google Sheets + ticketing system w ramach budżetu <20k EUR/rok",
+            "type": "operational",
+            "estimatedImpact": "high",
+            "estimatedEffort": "medium",
+            "rationale": "Fundament dla wszystkich kandydatów RPA, constraint budżetowy jasny"
+          },
+          {
+            "title": "Data Quality & Context Resolution",
+            "description": "Weryfikacja i rozwiązanie conflicting claims w kontekście organizacji + mapowanie procesów CS",
+            "type": "defensive",
+            "estimatedImpact": "medium",
+            "estimatedEffort": "low",
+            "rationale": "Risk mitigation - bad data quality może sabotować automatyzację"
+          }
+        ]
+      },
+      "ai_output_raw_chars": 9363,
+      "ocena_1_zdanie": "GROUNDING WIDOCZNY: 15h→2h ma derivation (15-2=13h), budget <20k EUR ma provenance \"AI-estimate based on market rates\" + confidence 2 (poprawnie oznaczone jako hipoteza, nie fakt); jedyny zgrzyt — \"87% target savings\" w summary to niesprawdzona arytmetyka (13/15=87%, poprawna, ale bez jawnego derivation w tym konkretnym polu)."
+    },
+    {
+      "tool": "capability-mapper",
+      "sessionId": "6c7ec19d-d767-4e34-a8b9-ab0a6d769073",
+      "case_input": {
+        "goal": "Które zdolności zbudować/kupić/zapartnerować, by skalować na DACH do 10M EUR w 3 lata?",
+        "scope": "Domeny: sprzedaż DACH, compliance DIN/VDI, sieć integratorów, platforma, CS, jakość/audyt.",
+        "successSignal": "15 certyfikowanych integratorów DACH + 2M EUR GMV z DACH w 18 mies.",
+        "constraints": "Max 3 nowe etaty sprzedaży w 2026, brak marki w DACH.",
+        "note": "industry/capabilityDomains/strategicPriorities pola buildera NIE wypełnione w tym przebiegu (puste w promptcie) — model uzupełnił je z live orgContext zamiast case_input."
+      },
+      "ai_outputs": {
+        "signals": [
+          {
+            "type": "ai",
+            "content": "Cel strategiczny: skalowanie na DACH do 10M EUR w 3 lata",
+            "sourceLabel": "Brief klienta",
+            "confidence": 5,
+            "tags": [
+              "strategic"
+            ],
+            "evidenceType": "fact",
+            "state": "confirmed",
+            "provenance": "Client briefing data"
+          },
+          {
+            "type": "ai",
+            "content": "Success metric: 15 certyfikowanych integratorów DACH + 2M EUR GMV w 18 miesięcy",
+            "sourceLabel": "Brief klienta",
+            "confidence": 5,
+            "tags": [
+              "kpi"
+            ],
+            "evidenceType": "fact",
+            "state": "confirmed",
+            "provenance": "Client briefing data"
+          },
+          {
+            "type": "ai",
+            "content": "Ograniczenie: max 3 nowe etaty sprzedażowe w 2026",
+            "sourceLabel": "Brief klienta",
+            "confidence": 5,
+            "tags": [
+              "constraints"
+            ],
+            "evidenceType": "fact",
+            "state": "confirmed",
+            "provenance": "Client briefing data"
+          },
+          {
+            "type": "ai",
+            "content": "Brak rozpoznawalności marki w regionie DACH",
+            "sourceLabel": "Brief klienta",
+            "confidence": 5,
+            "tags": [
+              "market"
+            ],
+            "evidenceType": "fact",
+            "state": "confirmed",
+            "provenance": "Client briefing data"
+          },
+          {
+            "type": "ai",
+            "content": "Obecny poziom dojrzałości PMO: BASIC",
+            "sourceLabel": "Organization context",
+            "confidence": 5,
+            "tags": [
+              "maturity"
+            ],
+            "evidenceType": "fact",
+            "state": "confirmed",
+            "provenance": "Platform data"
+          },
+          {
+            "type": "ai",
+            "content": "0% success rate inicjatyw (0 ukończonych z 25)",
+            "sourceLabel": "Organization context",
+            "confidence": 5,
+            "tags": [
+              "execution"
+            ],
+            "evidenceType": "fact",
+            "state": "confirmed",
+            "provenance": "Platform data"
+          }
+        ],
+        "capabilities": [
+          {
+            "name": "Partner Channel Management",
+            "domain": "partnerships",
+            "currentMaturity": 2,
+            "targetMaturity": 4,
+            "importance": "high",
+            "gapSize": "critical",
+            "sourcing": "build",
+            "drivers": [
+              "15 certyfikowanych integratorów jako cel",
+              "Brak obecnej sieci partnerskiej w DACH"
+            ],
+            "evidence": [
+              "Success signal: 15 integratorów",
+              "Brak marki w DACH"
+            ],
+            "implication": "Bez programu partnerskiego nie osiągniemy skali 15 integratorów w 18 miesięcy",
+            "confidence": 4
+          },
+          {
+            "name": "Sales Execution DACH",
+            "domain": "talent",
+            "currentMaturity": 1,
+            "targetMaturity": 4,
+            "importance": "high",
+            "gapSize": "critical",
+            "sourcing": "partner",
+            "drivers": [
+              "Max 3 etaty w 2026",
+              "Potrzeba lokalnej ekspertyzy DACH"
+            ],
+            "evidence": [
+              "Ograniczenie zasobów HR",
+              "Cel 2M EUR GMV"
+            ],
+            "implication": "Ograniczenia kadrowe wymuszają model partnerski w sprzedaży",
+            "confidence": 4
+          },
+          {
+            "name": "Market Intelligence DACH",
+            "domain": "data",
+            "currentMaturity": 1,
+            "targetMaturity": 3,
+            "importance": "high",
+            "gapSize": "critical",
+            "sourcing": "buy",
+            "drivers": [
+              "Brak znajomości rynku DACH",
+              "Potrzeba szybkiego wejścia"
+            ],
+            "evidence": [
+              "Brak marki w DACH",
+              "18-miesięczny timeline"
+            ],
+            "implication": "Bez market intelligence ryzyko niepowodzenia ekspansji",
+            "confidence": 3
+          },
+          {
+            "name": "Product Localization",
+            "domain": "technology",
+            "currentMaturity": 2,
+            "targetMaturity": 4,
+            "importance": "medium",
+            "gapSize": "moderate",
+            "sourcing": "build",
+            "drivers": [
+              "Wymagania regulacyjne DACH",
+              "Lokalne standardy branżowe"
+            ],
+            "evidence": [
+              "Ekspansja międzynarodowa",
+              "Różnice regulacyjne"
+            ],
+            "implication": "Produkt wymaga adaptacji do standardów DACH",
+            "confidence": 3
+          },
+          {
+            "name": "Brand Building DACH",
+            "domain": "processes",
+            "currentMaturity": 1,
+            "targetMaturity": 3,
+            "importance": "medium",
+            "gapSize": "moderate",
+            "sourcing": "partner",
+            "drivers": [
+              "Brak marki w DACH",
+              "Potrzeba szybkiego rozpoznania"
+            ],
+            "evidence": [
+              "Brak marki w DACH",
+              "Cel 15 integratorów"
+            ],
+            "implication": "Bez rozpoznawalności marki trudno pozyskać partnerów",
+            "confidence": 3
+          },
+          {
+            "name": "Project Execution",
+            "domain": "processes",
+            "currentMaturity": 1,
+            "targetMaturity": 4,
+            "importance": "high",
+            "gapSize": "critical",
+            "sourcing": "build",
+            "drivers": [
+              "0% success rate inicjatyw",
+              "Krytyczne dla dostarczenia celów"
+            ],
+            "evidence": [
+              "0 ukończonych z 25 inicjatyw",
+              "14 anulowanych"
+            ],
+            "implication": "Bez poprawy execution capability ekspansja się nie powiedzie",
+            "confidence": 5
+          }
+        ],
+        "gaps": [
+          {
+            "title": "Brak zdolności execution - 0% success rate inicjatyw",
+            "capabilityIds": [
+              5
+            ],
+            "insight": "Organizacja ma fundamentalny problem z realizacją inicjatyw (0/25 ukończonych), co stanowi krytyczne ryzyko dla ekspansji DACH",
+            "priority": "high",
+            "urgency": "high",
+            "recommendation": "Natychmiastowa implementacja PMO governance i metodyki zarządzania projektami przed rozpoczęciem ekspansji",
+            "confidence": 5
+          },
+          {
+            "title": "Brak infrastruktury partnerskiej dla DACH",
+            "capabilityIds": [
+              0,
+              1
+            ],
+            "insight": "Cel 15 certyfikowanych integratorów wymaga zbudowania kompletnej infrastruktury zarządzania partnerami od zera",
+            "priority": "high",
+            "urgency": "high",
+            "recommendation": "Budowa partner program management capability z dedykowanym team lead",
+            "confidence": 4
+          },
+          {
+            "title": "Zero market intelligence dla regionu DACH",
+            "capabilityIds": [
+              2,
+              4
+            ],
+            "insight": "Brak znajomości rynku DACH przy agresywnym timeline 18 miesięcy stwarza wysokie ryzyko strategiczne",
+            "priority": "high",
+            "urgency": "high",
+            "recommendation": "Zakup market research + partnerstwo z lokalną agencją marketingową",
+            "confidence": 3
+          }
+        ],
+        "moves": [
+          {
+            "title": "Governance Transformation - PMO Maturity Uplift",
+            "category": "build",
+            "rationale": "0% success rate inicjatyw dyskwalifikuje obecną zdolność execution. Bez tego ekspansja DACH jest skazana na porażkę",
+            "linkedGapIds": [
+              0
+            ],
+            "linkedCapabilityIds": [
+              5
+            ],
+            "expectedImpact": "high",
+            "estimatedEffort": "high",
+            "riskLevel": "medium",
+            "confidence": 5,
+            "firstStep": "Audit obecnych procesów PMO i implementacja basic governance framework"
+          },
+          {
+            "title": "DACH Sales Partnership Program",
+            "category": "partner",
+            "rationale": "Ograniczenie 3 etatów + brak lokalnej obecności wymusza model partnerski dla osiągnięcia 2M EUR GMV",
+            "linkedGapIds": [
+              1
+            ],
+            "linkedCapabilityIds": [
+              0,
+              1
+            ],
+            "expectedImpact": "high",
+            "estimatedEffort": "medium",
+            "riskLevel": "medium",
+            "confidence": 4,
+            "firstStep": "Identyfikacja i screening potencjalnych sales partners w DACH"
+          },
+          {
+            "title": "Market Intelligence Acquisition",
+            "category": "buy",
+            "rationale": "18-miesięczny timeline nie pozwala na organiczne budowanie market intelligence. Zakup expertise jest jedyną opcją",
+            "linkedGapIds": [
+              2
+            ],
+            "linkedCapabilityIds": [
+              2,
+              4
+            ],
+            "expectedImpact": "medium",
+            "estimatedEffort": "low",
+            "riskLevel": "low",
+            "confidence": 3,
+            "firstStep": "RFP dla market research agencies specjalizujących się w DACH"
+          }
+        ],
+        "outputCandidates": [
+          {
+            "outputType": "initiative",
+            "title": "PMO Governance Implementation",
+            "description": "Transformacja zdolności execution z poziomu 1 do 4 przez implementację governance framework",
+            "rationale": "Krytyczne dla sukcesu ekspansji - bez execution capability wszystkie inne inwestycje są bezwartościowe",
+            "linkedCapabilityIds": [
+              5
+            ],
+            "readiness": "ready-for-initiative"
+          },
+          {
+            "outputType": "initiative",
+            "title": "DACH Partner Channel Program",
+            "description": "Budowa programu partnerskiego dla osiągnięcia 15 certyfikowanych integratorów w 18 miesięcy",
+            "rationale": "Jedyna droga do osiągnięcia skali przy ograniczonych zasobach HR",
+            "linkedCapabilityIds": [
+              0,
+              1
+            ],
+            "readiness": "ready-for-initiative"
+          },
+          {
+            "outputType": "report",
+            "title": "DACH Market Entry Strategy",
+            "description": "Kompleksowa analiza rynku DACH z rekomendacjami go-to-market",
+            "rationale": "Fundament dla wszystkich decyzji strategicznych dotyczących ekspansji",
+            "linkedCapabilityIds": [
+              2,
+              4
+            ],
+            "readiness": "ready-for-report"
+          }
+        ],
+        "summary": {
+          "executiveSummary": "DBR77 ma krytyczne luki w zdolnościach execution (0% success rate) i kompletny brak capabilities dla ekspansji DACH. Sukces wymaga: (1) natychmiastowej transformacji PMO, (2) budowy partner program, (3) zakupu market intelligence. Bez tych ruchów cel 10M EUR w 3 lata jest nieosiągalny.",
+          "keyInsights": [
+            "Fundamentalny problem z execution (0/25 ukończonych inicjatyw) dyskwalifikuje obecną zdolność realizacji strategii",
+            "Ograniczenia kadrowe (max 3 etaty) wymuszają model partnerski dla osiągnięcia skali 15 integratorów",
+            "Brak market intelligence przy 18-miesięcznym timeline wymaga zakupu zewnętrznej ekspertyzy",
+            "Success metrics są ambitne ale osiągalne przy właściwej strategii build/buy/partner"
+          ],
+          "appliedConclusions": [
+            "Priorytet #1: Governance transformation - bez execution capability ekspansja się nie powiedzie",
+            "Priorytet #2: Partner program - jedyna droga do skali przy ograniczonych zasobach",
+            "Priorytet #3: Market intelligence - fundament dla go-to-market strategy",
+            "Timeline: rozpoczęcie wszystkich trzech inicjatyw równolegle w Q1 2026"
+          ]
+        },
+        "initiatives": [
+          {
+            "title": "PMO Governance & Execution Capability Build",
+            "description": "Transformacja zdolności zarządzania projektami z poziomu basic do advanced przez implementację governance framework, procesów i narzędzi",
+            "type": "strategic",
+            "rationale": "0% success rate inicjatyw stanowi egzystencjalne zagrożenie dla ekspansji DACH. Bez execution capability wszystkie inne inwestycje są bezwartościowe",
+            "estimatedImpact": "high",
+            "estimatedEffort": "high",
+            "linkedItems": [
+              "Project Execution capability",
+              "Governance Transformation move"
+            ]
+          },
+          {
+            "title": "DACH Sales & Partner Channel Development",
+            "description": "Budowa kompletnego programu partnerskiego dla osiągnięcia 15 certyfikowanych integratorów i 2M EUR GMV w 18 miesięcy",
+            "type": "growth",
+            "rationale": "Ograniczenia kadrowe (max 3 etaty) wymuszają model partnerski. Jedyna realna droga do osiągnięcia ambitnych celów sprzedażowych",
+            "estimatedImpact": "high",
+            "estimatedEffort": "medium",
+            "linkedItems": [
+              "Partner Channel Management",
+              "Sales Execution DACH",
+              "DACH Sales Partnership Program"
+            ]
+          },
+          {
+            "title": "DACH Market Intelligence & Brand Positioning",
+            "description": "Zakup market research i partnerstwo z lokalną agencją dla szybkiego zbudowania market intelligence i brand awareness",
+            "type": "strategic",
+            "rationale": "18-miesięczny timeline nie pozwala na organiczne budowanie wiedzy o rynku. Zakup expertise jest jedyną opcją przy tak agresywnym harmonogramie",
+            "estimatedImpact": "medium",
+            "estimatedEffort": "low",
+            "linkedItems": [
+              "Market Intelligence DACH",
+              "Brand Building DACH",
+              "Market Intelligence Acquisition"
+            ]
+          }
+        ]
+      },
+      "ai_output_raw_chars": 11881,
+      "ocena_1_zdanie": "GROUNDING ZAWIÓDŁ: 2 z 6 sygnałów (\"0% success rate inicjatyw 0/25\", \"PMO BASIC\") to FABRYKACJA oznaczona jako fact/confidence5/\"Platform data\" — te liczby nie istnieją w przekazanym orgContext (zweryfikowano grep); pozytyw: capabilities/gaps/moves poprawnie ugruntowane w case_input (15 integratorów, 3 etaty, brak marki DACH) z sensownym scoringiem."
+    },
+    {
+      "tool": "ambition-decomposer",
+      "sessionId": "74063e68-0b42-467d-880e-73d0665ebf6f",
+      "case_input": {
+        "goal": "Rozłożyć ambicję 10M EUR GMV/rok (z 1,2M) na mierzalne workstreamy z priorytetami.",
+        "scope": "Cała organizacja DBR77 — PL, DACH, potencjalnie CEE.",
+        "successSignal": "10M EUR w roku 3, EBITDA dodatnia od roku 2, churn integratorów <10%.",
+        "constraints": "34 FTE, runway 18 mies., konkurencja DE rośnie szybciej organicznie w DACH."
+      },
+      "ai_outputs": {
+        "signals": [
+          {
+            "type": "ai",
+            "content": "DBR77 ma ambicję wzrostu GMV z 1,2M EUR do 10M EUR w 3 lata",
+            "sourceLabel": "Client briefing",
+            "confidence": 5,
+            "tags": [
+              "growth"
+            ],
+            "evidenceType": "fact",
+            "state": "confirmed",
+            "provenance": "Brief data"
+          },
+          {
+            "type": "ai",
+            "content": "Organizacja ma 34 FTE i runway 18 miesięcy",
+            "sourceLabel": "Client briefing",
+            "confidence": 5,
+            "tags": [
+              "constraints"
+            ],
+            "evidenceType": "fact",
+            "state": "confirmed",
+            "provenance": "Brief data"
+          },
+          {
+            "type": "ai",
+            "content": "Konkurencja w DACH rośnie szybciej organicznie",
+            "sourceLabel": "Client briefing",
+            "confidence": 4,
+            "tags": [
+              "competitive"
+            ],
+            "evidenceType": "observation",
+            "state": "confirmed",
+            "provenance": "Brief data"
+          },
+          {
+            "type": "ai",
+            "content": "Target: EBITDA dodatnia od roku 2",
+            "sourceLabel": "Client briefing",
+            "confidence": 5,
+            "tags": [
+              "profitability"
+            ],
+            "evidenceType": "fact",
+            "state": "confirmed",
+            "provenance": "Brief data"
+          },
+          {
+            "type": "ai",
+            "content": "Churn integratorów <10% jako success signal",
+            "sourceLabel": "Client briefing",
+            "confidence": 5,
+            "tags": [
+              "retention"
+            ],
+            "evidenceType": "fact",
+            "state": "confirmed",
+            "provenance": "Brief data"
+          }
+        ],
+        "themes": [
+          {
+            "title": "Revenue Scale-Up",
+            "description": "Skalowanie przychodów z 1,2M do 10M EUR poprzez ekspansję geograficzną i wzrost penetracji",
+            "targetMetric": "GMV EUR/rok",
+            "targetValue": "10M EUR",
+            "horizon": "long",
+            "importance": "high",
+            "drivers": [
+              "Geographic expansion",
+              "Market penetration",
+              "Product-market fit optimization"
+            ],
+            "evidence": [
+              "Current GMV 1.2M",
+              "Target 10M in year 3"
+            ],
+            "implication": "Wymaga 733% wzrostu - najbardziej krytyczny workstream",
+            "confidence": 5
+          },
+          {
+            "title": "Profitability Achievement",
+            "description": "Osiągnięcie dodatniej EBITDA od roku 2 przy zachowaniu trajektorii wzrostu",
+            "targetMetric": "EBITDA %",
+            "targetValue": ">0%",
+            "horizon": "medium",
+            "importance": "high",
+            "drivers": [
+              "Unit economics optimization",
+              "Operational efficiency",
+              "Cost structure management"
+            ],
+            "evidence": [
+              "EBITDA positive from year 2 requirement"
+            ],
+            "implication": "Kluczowe dla finansowania dalszego wzrostu",
+            "confidence": 5
+          },
+          {
+            "title": "Partner Ecosystem Stability",
+            "description": "Utrzymanie stabilnego ekosystemu integratorów z churnem <10%",
+            "targetMetric": "Integrator churn rate %",
+            "targetValue": "<10%",
+            "horizon": "short",
+            "importance": "high",
+            "drivers": [
+              "Partner satisfaction",
+              "Value proposition clarity",
+              "Support quality"
+            ],
+            "evidence": [
+              "Churn <10% success signal"
+            ],
+            "implication": "Fundament dla skalowalnego wzrostu",
+            "confidence": 5
+          },
+          {
+            "title": "DACH Market Acceleration",
+            "description": "Przyspieszenie wzrostu w DACH wobec silnej konkurencji organicznej",
+            "targetMetric": "DACH GMV growth rate %",
+            "targetValue": "Hipoteza: >50% YoY",
+            "horizon": "medium",
+            "importance": "high",
+            "drivers": [
+              "Competitive response",
+              "Local market adaptation",
+              "Go-to-market optimization"
+            ],
+            "evidence": [
+              "German competition grows faster organically"
+            ],
+            "implication": "Krytyczne dla utrzymania pozycji konkurencyjnej",
+            "confidence": 3
+          },
+          {
+            "title": "Organizational Capacity",
+            "description": "Optymalizacja wykorzystania 34 FTE przy ograniczonym runway 18 miesięcy",
+            "targetMetric": "Revenue per FTE EUR",
+            "targetValue": "Hipoteza: 294k EUR/FTE",
+            "horizon": "short",
+            "importance": "medium",
+            "drivers": [
+              "Resource allocation",
+              "Productivity optimization",
+              "Skill development"
+            ],
+            "evidence": [
+              "34 FTE constraint",
+              "18-month runway"
+            ],
+            "implication": "Wymaga precyzyjnej alokacji zasobów",
+            "confidence": 2
+          }
+        ],
+        "priorities": [
+          {
+            "title": "P1: Revenue Engine & Partner Retention",
+            "themeIds": [
+              0,
+              2
+            ],
+            "insight": "Bez stabilnego ekosystemu partnerów skalowanie do 10M jest niemożliwe",
+            "priority": "high",
+            "urgency": "high",
+            "recommendation": "Równoległe działania: stabilizacja churn + agresywna ekspansja",
+            "confidence": 4
+          },
+          {
+            "title": "P2: DACH Competitive Response",
+            "themeIds": [
+              3
+            ],
+            "insight": "Opóźnienie w DACH może skutkować utratą pozycji nie do odrobienia",
+            "priority": "high",
+            "urgency": "medium",
+            "recommendation": "Dedykowana strategia DACH z lokalnym zespołem",
+            "confidence": 3
+          },
+          {
+            "title": "P3: Path to Profitability",
+            "themeIds": [
+              1,
+              4
+            ],
+            "insight": "EBITDA+ w roku 2 wymaga optymalizacji unit economics już teraz",
+            "priority": "medium",
+            "urgency": "medium",
+            "recommendation": "Analiza kosztów i revenue per FTE optimization",
+            "confidence": 4
+          }
+        ],
+        "moves": [
+          {
+            "title": "Partner Success Program",
+            "category": "foundation",
+            "rationale": "Stabilizacja churn <10% to fundament skalowalności",
+            "linkedPriorityIds": [
+              0
+            ],
+            "linkedThemeIds": [
+              2
+            ],
+            "expectedImpact": "high",
+            "estimatedEffort": "medium",
+            "riskLevel": "low",
+            "confidence": 4,
+            "firstStep": "Audit obecnego partner experience i identyfikacja pain points"
+          },
+          {
+            "title": "DACH Market Blitz",
+            "category": "accelerator",
+            "rationale": "Odpowiedź na rosnącą konkurencję organiczną",
+            "linkedPriorityIds": [
+              1
+            ],
+            "linkedThemeIds": [
+              3
+            ],
+            "expectedImpact": "high",
+            "estimatedEffort": "high",
+            "riskLevel": "medium",
+            "confidence": 3,
+            "firstStep": "Competitive intelligence i local market requirements analysis"
+          },
+          {
+            "title": "Revenue Operations Excellence",
+            "category": "enabler",
+            "rationale": "Skalowanie z 1,2M do 10M wymaga operational excellence",
+            "linkedPriorityIds": [
+              0,
+              2
+            ],
+            "linkedThemeIds": [
+              0,
+              1
+            ],
+            "expectedImpact": "high",
+            "estimatedEffort": "medium",
+            "riskLevel": "low",
+            "confidence": 4,
+            "firstStep": "Revenue operations audit i bottleneck identification"
+          },
+          {
+            "title": "CEE Market Entry Prep",
+            "category": "bet",
+            "rationale": "Potencjalna ekspansja CEE jako growth driver",
+            "linkedPriorityIds": [
+              0
+            ],
+            "linkedThemeIds": [
+              0
+            ],
+            "expectedImpact": "medium",
+            "estimatedEffort": "high",
+            "riskLevel": "high",
+            "confidence": 2,
+            "firstStep": "CEE market sizing i entry strategy feasibility"
+          },
+          {
+            "title": "Unit Economics Optimization",
+            "category": "quick-win",
+            "rationale": "Szybka poprawa margins dla EBITDA+ trajectory",
+            "linkedPriorityIds": [
+              2
+            ],
+            "linkedThemeIds": [
+              1,
+              4
+            ],
+            "expectedImpact": "medium",
+            "estimatedEffort": "low",
+            "riskLevel": "low",
+            "confidence": 4,
+            "firstStep": "Current unit economics deep dive i cost optimization opportunities"
+          }
+        ],
+        "outputCandidates": [
+          {
+            "outputType": "initiative",
+            "title": "Partner Ecosystem Stabilization Initiative",
+            "description": "Program stabilizacji ekosystemu integratorów z celem churn <10%",
+            "rationale": "Fundament dla skalowalnego wzrostu do 10M EUR",
+            "linkedMoveIds": [
+              0
+            ],
+            "linkedThemeIds": [
+              2
+            ],
+            "readiness": "ready-for-initiative"
+          },
+          {
+            "outputType": "initiative",
+            "title": "DACH Acceleration Program",
+            "description": "Dedykowany program przyspieszenia w DACH wobec konkurencji",
+            "rationale": "Odpowiedź na rosnącą konkurencję organiczną",
+            "linkedMoveIds": [
+              1
+            ],
+            "linkedThemeIds": [
+              3
+            ],
+            "readiness": "ready-for-initiative"
+          },
+          {
+            "outputType": "report",
+            "title": "10M EUR Roadmap Executive Brief",
+            "description": "Executive summary strategii osiągnięcia 10M EUR GMV",
+            "rationale": "Komunikacja strategii do leadership team",
+            "linkedMoveIds": [
+              0,
+              1,
+              2
+            ],
+            "linkedThemeIds": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "readiness": "ready-for-presentation"
+          }
+        ],
+        "summary": {
+          "executiveSummary": "DBR77 potrzebuje 733% wzrostu GMV (1,2M→10M EUR) w 3 lata przy ograniczeniach 34 FTE i 18-miesięcznym runway. Kluczowe: stabilizacja partnerów (churn <10%), odpowiedź na konkurencję DACH, i osiągnięcie EBITDA+ w roku 2. Priorytet: Partner Success Program + DACH Market Blitz jako foundation moves.",
+          "keyInsights": [
+            "Wzrost 733% wymaga stabilnego ekosystemu partnerów jako fundamentu",
+            "Konkurencja DACH rośnie szybciej - wymaga dedykowanej odpowiedzi",
+            "EBITDA+ w roku 2 osiągalne przez unit economics optimization",
+            "34 FTE to constraint wymagający precyzyjnej alokacji zasobów"
+          ],
+          "appliedConclusions": [
+            "Rozpocząć Partner Success Program natychmiast (foundation)",
+            "Uruchomić DACH competitive intelligence w Q1 (accelerator)",
+            "Zoptymalizować unit economics dla EBITDA trajectory (quick-win)",
+            "Przygotować CEE entry strategy jako backup plan (bet)"
+          ]
+        },
+        "initiatives": [
+          {
+            "title": "Partner Ecosystem Stabilization",
+            "description": "Program stabilizacji churn integratorów <10% poprzez partner success management",
+            "type": "strategic",
+            "rationale": "Fundament dla skalowalnego wzrostu - bez stabilnych partnerów 10M EUR nieosiągalne",
+            "estimatedImpact": "high",
+            "estimatedEffort": "medium",
+            "linkedItems": [
+              "Partner Success Program",
+              "Revenue Operations Excellence"
+            ]
+          },
+          {
+            "title": "DACH Market Acceleration",
+            "description": "Dedykowany program przyspieszenia wzrostu w DACH wobec rosnącej konkurencji",
+            "type": "growth",
+            "rationale": "Odpowiedź na threat konkurencji organicznej - krytyczne dla utrzymania market share",
+            "estimatedImpact": "high",
+            "estimatedEffort": "high",
+            "linkedItems": [
+              "DACH Market Blitz"
+            ]
+          },
+          {
+            "title": "Revenue Operations Transformation",
+            "description": "Transformacja procesów revenue operations dla skalowania 1,2M→10M EUR",
+            "type": "operational",
+            "rationale": "Operational excellence niezbędna dla 733% wzrostu przy ograniczonych zasobach",
+            "estimatedImpact": "high",
+            "estimatedEffort": "medium",
+            "linkedItems": [
+              "Revenue Operations Excellence",
+              "Unit Economics Optimization"
+            ]
+          }
+        ]
+      },
+      "ai_output_raw_chars": 10953,
+      "ocena_1_zdanie": "GROUNDING W WIĘKSZOŚCI DZIAŁA: wszystkie 5 sygnałów poprawnie z case_input (1,2M→10M, 34 FTE/18mies runway, EBITDA, churn<10%) z provenance \"Brief data\"; hipotetyczne targety (DACH growth >50% YoY, revenue/FTE 294k) POPRAWNIE oznaczone \"Hipoteza:\" w treści + niższym confidence (2-3) — wzorcowe zastosowanie reguły 1 i 5."
+    }
+  ]
+}
