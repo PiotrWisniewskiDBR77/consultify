@@ -5,6 +5,10 @@
 
 ---
 
+## 0. DECYZJE PIOTRA 2026-07-09 (nadrzędne — agenci fali MUSZĄ trzymać)
+**D-POWŁOKA: WYRÓWNAĆ KONTRAKT, nie wymuszać accordion.** Każde dojrzałe narzędzie (Deck/Word/Notatnik/Idea Table) ZOSTAJE na swojej bogatszej powłoce (Deck governance-rail, Notatnik zakładkowy Notion-rail, Word 13-tool rail, Idea Table RowDetailPanel). NIE przerabiamy ich na generyczny `ArtifactRightPanel` accordion — to by je POGORSZYŁO. Wyrównujemy TYLKO KONTRAKT: tokeny `c-*` + zero crimson + „Powiązania" first-class + stały slot AI + kolejność kebaba §6.4. Odejścia od SPEC-A z komentarzem-decyzją w kodzie = AKCEPTOWANE, nie dług. (ArtifactRightPanel zostaje wzorcem dla NOWYCH/prostych rekordów: Task/Insight/Decision/KPI.)
+**D-EXCEL: Idea Table = oficjalna powłoka edycji Excel/Sheet.** Prawdziwy `.xlsx` (żywe formuły) daje generator 5-fazowy `WorkbookGeneratorService` + download. NIE budujemy osobnego edytora-grida (to osobny duży tor, gdyby kiedyś). §11 Formuły = domknięta tą decyzją, nie „do zbudowania".
+
 ## 1. PIĘĆ WYMIARÓW (każde narzędzie = wektor 5 wartości)
 
 | # | Wymiar | Wartości | Co przesądza w kodzie |

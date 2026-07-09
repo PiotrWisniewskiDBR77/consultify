@@ -14,6 +14,11 @@ Wszystkie **12 narzędzi** (`_FORMULA_MENU_NARZEDZI_12.md` §0) w powłoce SPEC-
 2. `_FORMULA_MENU_NARZEDZI_12.md` — CO ma być w którym menu per narzędzie (kontrakt fali).
 3. Skill `consultify-artefakty` — JAK budować pojedynczy ekran (zakazy kolorów, NModeCardState, lekcje TDZ).
 
+## ★ DECYZJE PIOTRA 07-09 (czytaj PRZED planowaniem fal)
+- **WYRÓWNAĆ KONTRAKT, nie accordion**: dojrzałe narzędzia (Deck/Word/Notatnik/Idea Table) zostają na swoich bogatszych powłokach; wyrównujesz tylko tokeny/zero-crimson/Powiązania-first-class/slot-AI/kebab. NIE przerabiaj ich na ArtifactRightPanel. Odejścia z komentarzem-decyzją w kodzie = akceptowane.
+- **Excel/Sheet = Idea Table (powłoka) + generator/.xlsx (treść)**. Nie budujesz edytora-grida.
+- Pełny kontekst: `_DOKTRYNA_POWSTAWANIA_ARTEFAKTOW.md §0`.
+
 ## KROK 0 fali (jednorazowy, PRZED rolloutem — nie pomijaj)
 1. **Galeria wzorca:** zrzuty Task (jedyny w 100% żywy SPEC-A: NModeShell+ArtifactRightPanel, TaskDetailView) dark+light → to jest „tak ma wyglądać" dla całej fali. Bez wzorca każdy robotnik zgaduje inaczej (lekcja nocy 3/4: szerokość bez wzorca = katastrofa).
 2. **Flip flag w przeglądarce** (localStorage `ff.mels_canvas`, `ff.mels_mindmap_panel`, flagi kart N) — odsłoń ZBUDOWANE powłoki bez deployu, zrób zrzuty → Piotr decyduje co przyjmuje od razu, a co poprawiamy. Dużo SPEC-A już istnieje za OFF (audyt F4/F6) — fala to głównie ODSŁANIANIE i DOMYKANIE, nie budowa od zera.
