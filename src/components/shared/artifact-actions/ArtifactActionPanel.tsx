@@ -734,7 +734,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
               )}
             </div>
             {!isCompact && (
-              <div className="grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="grid shrink-0 grid-cols-3 gap-2 text-center text-xs">
                 <div className="rounded-2xl bg-slate-50 px-3 py-2 dark:bg-white/[0.04]">
                   <div className="text-slate-500 dark:text-slate-400">
                     {isPolish ? 'Pewność' : 'Confidence'}
