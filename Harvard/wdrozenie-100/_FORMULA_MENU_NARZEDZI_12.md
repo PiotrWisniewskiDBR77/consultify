@@ -95,14 +95,22 @@ Legenda kolumny **Stan** (wypełniamy w kroku 2): `✅ JEST` · `🔨 DOROBIĆ` 
 | **PPM komórka / wiersz** | Edytuj · Ustaw wartość ▸ · Dodaj notatkę · —— · Powiel wiersz · Usuń wiersz | ⬜ |
 
 ### 5 · Notatnik (B Dokument · S/L)
+
+> **DIFF 07-09 (vegas/a4-docs, weryfikacja `src/components/MyWork/NotebookContent.tsx` + `notebook/*`):**
+> Realny layout = biblioteka (sidebar listy stron) + edytor, wzorzec Notion two-pane — NIE jest to jeszcze
+> instancja formalnego M1-identity-header + `ArtifactRightPanel` accordion. Wiele funkcji z Formuły JEST w
+> kodzie, ale rozproszone (hamburger ⋯, tabbed rail „Praca/Kontekst" zamiast accordionu w stałej kolejności).
+
 | Strefa | Przyciski / funkcje | Stan |
 |--------|---------------------|:---:|
-| **M1** | ← powrót · ikona notatki + tytuł · status · zapis · [indeks] · **PRIMARY: „Udostępnij"** | ⬜ |
-| **M2** | Nagłówek ▾ · B I U · lista • / 1. · wyrównanie · link · obraz/tabela · blok kodu · cytat | ⬜ |
-| **M3** | tryb czytania toggle · spis treści (TOC) toggle · komentarze toggle · **AI: napisz / podsumuj / popraw** (prawa) | ⬜ |
-| **RAIL** | — (lub outline gdy długa) | — |
-| **PANEL** | ▸ Akcje (eksport PDF/DOCX, udostępnij, do notatnika ▸) · ▸ Właściwości (autor/daty/tagi/notatnik) · ▸ Powiązania · ▸ Komentarze · ▸ Wersje/AI | ⬜ |
-| **PPM zaznaczenie / blok** | Kopiuj/Wklej · Formatuj ▸ · Link · Komentarz · AI: przepisz/skróć/rozwiń · —— · Duplikuj blok · Zmień typ ▸ · Usuń blok | ⬜ |
+| **M1** | ← powrót (JEST, `onBackToLibrary`) · ikona notatki + tytuł (tytuł edytowalny inline w edytorze, NIE w osobnym pasku identity) · status (brak lifecycle badge w M1 — status żyje tylko jako kropka w liście) · zapis (brak widocznego wskaźnika „Zapisano/Zapisuję" w M1; `isSavingRef` istnieje tylko wewnętrznie) · [indeks] (brak) · **PRIMARY „Udostępnij"** — 🔨 BRAK: `onShare` w `NotebookHamburgerMenu` nigdy nie jest przekazywany z `NotebookContent`, ZERO backendu share-link dla notatek (`grep` nie znalazł `createNotebookShareLink` ani odpowiednika) | 🔨 |
+| **M2** | `NotebookToolbar` (B I U, nagłówki, listy) ✅ JEST · brak wyrównania/blok-kodu/cytat jako osobnych przycisków paska (dostępne przez `/` slash-menu, nie M2) | 🔨 częściowo |
+| **M3** | brak toggle „tryb czytania" · brak TOC toggle (spis treści nie istnieje w kodzie) · komentarze — brak toggle, komentarze żyją gdzie indziej · **AI slot NIE jest w stałej prawej pozycji M3** — AI wywoływane przez hamburger ⋯ (`onAskAI`) i przez zakładkę „Praca" panelu bocznego (`NotebookRightRail`), nie jako chip „AI: napisz/podsumuj/popraw" | 🔨 |
+| **RAIL** | brak outline/lewego railu nawet dla długich notatek (jest tylko wewnętrzny `NotebookBacklinksBar`) | 🔨 |
+| **PANEL** | ✅ *treściowo bogaty*, ale NIE jako `ArtifactRightPanel` accordion w kanonicznej kolejności — to tabbed `NotebookRightRail` (zakładki „Praca"/„Kontekst") łączący `AIChatInlinePanel` (ma wbudowany `ShareSection`!) + `NotebookContextPanel`. Eksport JEST (`NotebookExportMenu`, osobny przycisk w toolbarze, nie w panelu). Wersje JEST (`NotebookVersionHistory`, toggle osobny, nie w akordeonie). Powiązania JEST częściowo (`NotebookBacklinksBar` + `NotebookAttachmentsSection`, ale poza sekcją „Powiązania" panelu). Komentarze — NIE znaleziono dedykowanej sekcji komentarzy per-strona w tym pliku. | 🔨 rozjazd struktury vs kanon |
+| **PPM zaznaczenie / blok** | `NotebookBubbleToolbar` = tylko formatowanie (B/I/U/link) przy zaznaczeniu — BRAK menu „Kopiuj/Wklej · Komentarz · AI: przepisz/skróć/rozwiń · Duplikuj blok · Zmień typ ▸ · Usuń blok"; brak klasycznego PPM (prawy klik) w ogóle w edytorze | 🔨 |
+
+**Ocena:** Notatnik ma SILNIK bogatszy niż formalna powłoka (backlinks, mentions, AI proposals, quick-capture, wersjonowanie) — ale **nie przeszedł jeszcze adopcji SPEC-A powłoki** (brak M1-identity/`ArtifactRightPanel`/PPM). To NIE jest fantom — funkcje realnie działają, tylko w innym locum niż Formuła każe. Zamiana na formalną powłokę = zadanie architektoniczne (przeniesienie `NotebookRightRail`→`ArtifactRightPanel`), NIE mechaniczne — wymaga decyzji Piotra czy warto rozbierać dojrzały tabbed-rail na accordion, i weryfikacji wzrokiem (nie zrobione w tej turze, brak dostępu do żywego podglądu).
 
 ---
 
@@ -149,14 +157,22 @@ Legenda kolumny **Stan** (wypełniamy w kroku 2): `✅ JEST` · `🔨 DOROBIĆ` 
 ## 4. GRUPA GENERATORY (3) — archetyp B Dokument + D Matryca + E Deck
 
 ### 10 · Word / Dokument (B Dokument · L)
+
+> **DIFF 07-09 (vegas/a4-docs, weryfikacja `DocumentStudioView.tsx` + `DocumentStudioDocumentPanel.tsx`,
+> 2398 linii):** Word używa **`ExecutiveModuleShell`** (jedna z 3 dojrzałych powłok wg doktryny „WYRÓWNAĆ nie
+> scalać" — NIE `ArtifactRightPanel`). To zamierzone (archetypy B/D/E), więc brak `ArtifactRightPanel` tu
+> NIE jest gapem samym w sobie — gapem jest niezgodność KOLEJNOŚCI/DOSTĘPNOŚCI z kanonem Formuły.
+
 | Strefa | Przyciski / funkcje | Stan |
 |--------|---------------------|:---:|
-| **M1** | ← powrót · ikona dokumentu + tytuł · status · zapis · [indeks] · **PRIMARY: „Udostępnij"** (Eksport w panelu) | ⬜ |
-| **M2** | Nagłówek ▾ · B I U · lista • / 1. · wyrównanie · link · obraz/tabela · blok kodu · cytat | ⬜ |
-| **M3** | tryb czytania toggle · TOC toggle · komentarze toggle · śledź zmiany toggle · **AI: napisz / podsumuj / popraw / rozwiń** (prawa) | ⬜ |
-| **RAIL** | — (outline dokumentu gdy długi) | — |
-| **PANEL** | ▸ Akcje (**Eksport ▸ PDF/DOCX**, udostępnij) · ▸ Właściwości (autor/daty/tagi/wersja) · ▸ Powiązania (inicjatywa/źródła) · ▸ Komentarze (wątki) · ▸ Wersje/AI | ⬜ |
-| **PPM zaznaczenie / blok** | jak Notatnik + „Zaakceptuj/Odrzuć propozycję AI" (śledzenie zmian) | ⬜ |
+| **M1** | TopBar z `ExecutiveModuleShell` — ma tab-chips Generate/Plan template w fazie budowy, ale **BRAK jednego jawnego M1 PRIMARY „Udostępnij"** — w fazie `document` primary miejsce zajmuje TopBar chip „Export DOCX" (`topBarChips`, l.~1842-1900), a Share jest schowany w overflow rail (`toolShare`, l.1966) — **DOKŁADNIE ODWROTNIE niż formuła** (chce Udostępnij=primary M1, Eksport=panel) | ❓ DECYZJA (inwersja primary/eksport) |
+| **M2** | brak klasycznego paska formatowania w widoku wygenerowanego dokumentu (to widok schema/sekcje, nie wolny tekst) — `DocumentTipTapEditor` istnieje ale nie ma odrębnego M2 toolbara zweryfikowanego w tym pliku | 🔨 do doprecyzowania |
+| **M3** | brak trybu czytania / TOC-toggle / komentarze-toggle / śledź-zmiany-toggle jako chipy M3 — funkcjonalnie odpowiedniki istnieją ale jako osobne rail-tools (Comments, Schema diff), nie M3 chipy | 🔨 rozjazd lokalizacji |
+| **RAIL** | ✅ JEST — lewy `leftRailTitle="Outline"` (outline dokumentu), zgodnie z formułą | ✅ |
+| **PANEL** | ✅ **bogatszy niż kanon** — 13 narzędzi w prawym railu: primary 5 (Sources, Properties, Quality QA, Teresa, Comments) + overflow 8 (Activity, Schema diff, Audience variants, **Share links**, Approvals, Manifest gate, Content library, AI Editor) za jednym `⋯ more`. **Powiązania jako pojęcie Formuły (link do inicjatywy/rodzica) nie istnieje** — „Sources" to źródła-wejścia generacji, nie powiązania-wyjścia. Komentarze ✅ (`DocumentCommentsPanel`, wątki). Historia/AI rozbite: Activity (overflow) + Teresa (primary) + AI Editor (overflow) zamiast jednej sekcji. **Share celowo w overflow, nie w Akcje** — sprzeczne z kanonem „Udostępnij" jako action pierwszej klasy | ❓ DECYZJA (czy spłaszczyć do kanonicznych 5 sekcji, czy 13-tool rail to świadomy wyjątek „wyznacznika rynkowego") |
+| **PPM zaznaczenie / blok** | ✅ JEST — `DocumentInlineAIMenu` + `useDocumentInlineAI` mają `acceptProposal`/`rejectProposal` (Zaakceptuj/Odrzuć propozycję AI), zgodnie z formułą | ✅ |
+
+**Ocena:** Word jest NAJBLIŻEJ kanonu z całej dwójki (potwierdza wcześniejszy finding „Word = wyznacznik, blisko" z doktryny G6) — silnik REVIEW/QA/warianty/manifest-gate jest głębszy niż to co Formuła w ogóle przewiduje. Realny gap to **kolejność/widoczność** (Share pogrzebany w overflow zamiast M1 primary) i **brak formalnego „Powiązania"** do rodzica/inicjatywy. Nie jest to fix mechaniczny bez ryzyka: `primaryRightRailTools` ma świadomy komentarz w kodzie „≤5 primary icons" (kanon powłoki Document Studio) — przestawienie Share do primary wymaga decyzji CO wypada (nie luźny dodatek 6. ikony) + weryfikacji wzrokiem. NIE zrobione w tej turze (brak żywego podglądu w tym środowisku).
 
 ### 11 · Excel / Sheet (D Matryca · L)
 | Strefa | Przyciski / funkcje | Stan |
