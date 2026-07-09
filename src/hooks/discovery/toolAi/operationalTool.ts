@@ -16,6 +16,7 @@ import type {
 } from '@/store/useToolStore';
 
 import type { ToolAiPendingAction } from './dynamicSwot';
+import { GROUNDING_RULES_BOTH } from './groundingRules';
 import { pickW2SummaryFields } from './w2SummaryFields';
 
 export interface OperationalSectionMeta {
@@ -33,6 +34,9 @@ const level = (value: unknown, fallback: 'high' | 'medium' | 'low' = 'medium') =
 
 const toNumberOrUndefined = (value: unknown): number | undefined =>
   typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+
+const EVIDENCE_TYPES = ['fact', 'observation', 'assumption', 'hypothesis'] as const;
+const STATES = ['proposed', 'confirmed', 'rejected'] as const;
 
 const parseItems = (raw: unknown): OperationalItem[] =>
   Array.isArray(raw)
@@ -52,6 +56,21 @@ const parseItems = (raw: unknown): OperationalItem[] =>
           ...(item.target ? { target: String(item.target) } : {}),
           ...(item.frequency ? { frequency: String(item.frequency) } : {}),
           ...(item.threshold ? { threshold: String(item.threshold) } : {}),
+          // W4 fix: pass through grounding metadata so the GROUNDING_RULES
+          // hypothesis/derivation markers survive from the AI response into
+          // the stored item instead of being silently dropped here.
+          ...(toNumberOrUndefined(item.confidence) !== undefined
+            ? { confidence: toNumberOrUndefined(item.confidence) }
+            : {}),
+          ...(EVIDENCE_TYPES.includes(item.evidenceType)
+            ? { evidenceType: item.evidenceType as (typeof EVIDENCE_TYPES)[number] }
+            : {}),
+          ...(item.derivation ? { derivation: String(item.derivation) } : {}),
+          ...(item.rationale ? { rationale: String(item.rationale) } : {}),
+          ...(STATES.includes(item.state) ? { state: item.state as (typeof STATES)[number] } : {}),
+          ...(typeof item.requires_evidence === 'boolean'
+            ? { requires_evidence: item.requires_evidence }
+            : {}),
         }))
     : [];
 
@@ -84,6 +103,8 @@ Each item: a clear title, an actionable description, and impact/effort ratings.
 Where relevant also set category, owner, target, frequency, threshold, or durationMinutes.
 Ground every claim in the context; flag explicit assumptions. Do not invent fake data.
 
+${GROUNDING_RULES_BOTH}
+
 Return ONE JSON object with this exact structure:
 {
   "sections": {
@@ -99,8 +120,8 @@ ${sectionSpec}
   ]
 }
 
-Each section array item shape:
-{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "category": "...", "owner": "...", "target": "...", "frequency": "...", "threshold": "...", "durationMinutes": 0}`;
+Each section array item shape (confidence/evidenceType/derivation/rationale/state/requires_evidence are OPTIONAL but REQUIRED whenever the item carries a number or claim not present verbatim in the context — see GROUNDING RULES above):
+{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "category": "...", "owner": "...", "target": "...", "frequency": "...", "threshold": "...", "durationMinutes": 0, "confidence": 1-5, "evidenceType": "fact|observation|assumption|hypothesis", "derivation": "numerator/denominator behind any number in this item, or omit if none", "rationale": "...", "state": "proposed|confirmed|rejected", "requires_evidence": false}`;
 }
 
 interface OperationalActionHandlers {

@@ -40,6 +40,7 @@ import {
   deriveTensionCandidates,
 } from '@/config/swot/swotTensionEngine';
 import { buildSwotFactsBlock } from '@/hooks/discovery/toolAi/dynamicSwot';
+import { GROUNDING_RULES_BOTH } from '@/hooks/discovery/toolAi/groundingRules';
 import type { OperationalToolData, SWOTData, ToolType } from '@/store/useToolStore';
 
 const OPERATIONAL_TOOL_TYPES: ToolType[] = [
@@ -82,7 +83,14 @@ const detectIsPolish = (data: unknown): boolean => {
   return /[ąćęłńóśźż]/i.test(text);
 };
 
-export function getToolSuggestionPrompt(
+/**
+ * Per-section / per-step suggestion prompt for every Discovery tool. All
+ * branches below return a raw prompt string; `getToolSuggestionPrompt`
+ * (the exported wrapper) appends GROUNDING_RULES_BOTH to any non-empty
+ * result in one place, so every branch inherits the anti-fabrication rules
+ * without needing 30+ individual edits.
+ */
+function getToolSuggestionPromptInner(
   toolType: ToolType,
   stepId: string,
   inputData: unknown
@@ -598,7 +606,22 @@ Return JSON:
   return '';
 }
 
-export function getToolSummaryPrompt(toolType: ToolType, inputData: unknown): string {
+export function getToolSuggestionPrompt(
+  toolType: ToolType,
+  stepId: string,
+  inputData: unknown
+): string {
+  const prompt = getToolSuggestionPromptInner(toolType, stepId, inputData);
+  if (!prompt) return prompt;
+  return `${prompt}\n\n${GROUNDING_RULES_BOTH}`;
+}
+
+/**
+ * Final session-summary prompt for every Discovery tool. Same wrapper pattern
+ * as getToolSuggestionPrompt above: branches build the raw prompt, the
+ * exported function appends GROUNDING_RULES_BOTH once at the end.
+ */
+function getToolSummaryPromptInner(toolType: ToolType, inputData: unknown): string {
   const isPolish = detectIsPolish(inputData);
 
   // SMED Planner and DMS Builder carry a grounded W2 conclusion layer
@@ -1149,4 +1172,10 @@ Return JSON:
   }
 
   return '';
+}
+
+export function getToolSummaryPrompt(toolType: ToolType, inputData: unknown): string {
+  const prompt = getToolSummaryPromptInner(toolType, inputData);
+  if (!prompt) return prompt;
+  return `${prompt}\n\n${GROUNDING_RULES_BOTH}`;
 }

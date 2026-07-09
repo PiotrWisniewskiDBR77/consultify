@@ -11,6 +11,7 @@ import { buildAnsoffConclusionPrompt } from '@/config/ansoff';
 import type { ToolAiPendingAction } from './dynamicSwot';
 import { pickW2SummaryFields } from './w2SummaryFields';
 
+import { GROUNDING_RULES_BOTH } from './groundingRules';
 const QUADRANTS: GrowthQuadrantId[] = [
   'marketPenetration',
   'marketDevelopment',
@@ -53,6 +54,8 @@ Produce a COMPLETE first-draft Growth Paths session. Everything is a proposal fo
 ${orgContext}
 === END CONTEXT ===
 
+
+${GROUNDING_RULES_BOTH}
 Return one JSON object with this exact structure:
 {
   "signals": [

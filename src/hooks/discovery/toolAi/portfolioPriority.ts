@@ -9,6 +9,7 @@ import type {
 import type { ToolAiPendingAction } from './dynamicSwot';
 import { pickW2SummaryFields } from './w2SummaryFields';
 
+import { GROUNDING_RULES_BOTH } from './groundingRules';
 interface PortfolioActionHandlers {
   updateInputData: (data: Partial<PortfolioPriorityData>) => void;
   setInitiatives: (initiatives: Omit<InitiativeDraft, 'id'>[]) => void;
@@ -56,6 +57,8 @@ Produce a COMPLETE first-draft Portfolio Priority session. Everything is a propo
 ${orgContext}
 === END CONTEXT ===
 
+
+${GROUNDING_RULES_BOTH}
 Return one JSON object with this exact structure:
 {
   "signals": [

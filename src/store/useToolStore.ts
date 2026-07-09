@@ -1212,6 +1212,15 @@ export interface OperationalItem {
   target?: string;
   frequency?: string;
   threshold?: string;
+  // Grounding metadata (O-C fix, 2026-07-09): optional so existing consumers
+  // are unaffected; carries the AI's fact/hypothesis marking through to the
+  // stored item instead of being dropped at parse time.
+  confidence?: number;
+  evidenceType?: 'fact' | 'observation' | 'assumption' | 'hypothesis';
+  derivation?: string;
+  rationale?: string;
+  state?: 'proposed' | 'confirmed' | 'rejected';
+  requires_evidence?: boolean;
 }
 
 export interface OperationalToolData {

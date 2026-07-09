@@ -8,6 +8,7 @@ import type {
 import type { ToolAiPendingAction } from './dynamicSwot';
 import { pickW2SummaryFields } from './w2SummaryFields';
 
+import { GROUNDING_RULES_BOTH } from './groundingRules';
 interface FocusTradeoffActionHandlers {
   updateInputData: (data: Partial<FocusTradeoffData>) => void;
   setInitiatives: (initiatives: Omit<InitiativeDraft, 'id'>[]) => void;
@@ -56,6 +57,8 @@ Ground every claim in the organization context above. Explicitly flag any benchm
 you cannot ground in the context (label it as a hypothesis) — do NOT invent specific numbers or
 external benchmarks you cannot support.
 
+
+${GROUNDING_RULES_BOTH}
 Return one JSON object with this exact structure:
 {
   "signals": [

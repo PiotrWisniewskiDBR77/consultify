@@ -20,6 +20,7 @@ import {
   type AmbitionDecomposerData,
 } from './moveValidator';
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 const loc = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**
@@ -91,6 +92,9 @@ QUALITY BARS:
 - The order and archetypes are the engine's — do not override them; numbers only from the facts block.
 - Zero filler and zero AI meta-phrases ("As an AI", "Based on the provided data", "In conclusion"); every sentence falsifiable — with a different decomposition it would read differently.
 - Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
+
+
+${groundingRules(isPolish)}
 
 Return JSON:
 {

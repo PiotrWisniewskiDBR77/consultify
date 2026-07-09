@@ -8,6 +8,7 @@ import type {
 import type { ToolAiPendingAction } from './dynamicSwot';
 import { pickW2SummaryFields } from './w2SummaryFields';
 
+import { GROUNDING_RULES_BOTH } from './groundingRules';
 interface AmbitionDecomposerActionHandlers {
   updateInputData: (data: Partial<AmbitionDecomposerData>) => void;
   setInitiatives: (initiatives: Omit<InitiativeDraft, 'id'>[]) => void;
@@ -60,6 +61,8 @@ organization context above. Explicitly flag any benchmark or assumption you cann
 context (label it as a hypothesis) — do NOT invent specific numbers or external benchmarks you
 cannot support.
 
+
+${GROUNDING_RULES_BOTH}
 Return one JSON object with this exact structure:
 {
   "signals": [

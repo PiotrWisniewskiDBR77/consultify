@@ -8,6 +8,7 @@ import type {
 import type { ToolAiPendingAction } from './dynamicSwot';
 import { pickW2SummaryFields } from './w2SummaryFields';
 
+import { GROUNDING_RULES_BOTH } from './groundingRules';
 interface RiskActionHandlers {
   updateInputData: (data: Partial<RiskUncertaintyData>) => void;
   setInitiatives: (initiatives: Omit<InitiativeDraft, 'id'>[]) => void;
@@ -47,6 +48,8 @@ Produce a COMPLETE first-draft risk session. Everything is a proposal for user r
 ${orgContext}
 === END CONTEXT ===
 
+
+${GROUNDING_RULES_BOTH}
 Return one JSON object with this exact structure:
 {
   "signals": [{"type":"interview|file|link|ai|benchmark","content":"...","sourceLabel":"...","confidence":1-5,"tags":["risk"],"evidenceType":"fact|observation|hypothesis","state":"proposed","provenance":"..."}],

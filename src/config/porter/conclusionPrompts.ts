@@ -23,6 +23,7 @@ import {
   type PorterForceVerdict,
 } from './porterSynthesisEngine';
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 type PorterForcesMap = Partial<Record<PorterForceId, ForceData>>;
 
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
@@ -121,6 +122,9 @@ QUALITY BARS:
 - Numbers exclusively from the facts block; forces marked "declared" flagged "as declared, to be confirmed".
 - Zero filler and zero AI meta-phrases ("As an AI", "Based on the provided data", "In conclusion"); every sentence falsifiable — with opposite forces it would read differently.
 - Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
+
+
+${groundingRules(isPolish)}
 
 Return JSON:
 {
