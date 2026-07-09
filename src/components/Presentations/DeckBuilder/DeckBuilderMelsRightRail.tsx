@@ -19,18 +19,24 @@
  * (block insertion, media library, agent activity) live in the rail.
  */
 
-import { Activity, Image, LayoutGrid, MessageSquare } from 'lucide-react';
+import { Activity, Image, LayoutGrid, Link2, MessageSquare } from 'lucide-react';
 import React from 'react';
 
 import { type RightRailToolDescriptor } from '@/components/shared/ExecutiveModuleShell/RightRail';
 
-export type DeckBuilderRightRailToolId = 'blocks' | 'media' | 'comments' | 'activity';
+export type DeckBuilderRightRailToolId =
+  | 'blocks'
+  | 'media'
+  | 'comments'
+  | 'activity'
+  | 'relations';
 
 export interface DeckBuilderRightRailLabels {
   blocks?: string;
   media?: string;
   comments?: string;
   activity?: string;
+  relations?: string;
 }
 
 const DEFAULT_LABELS: Required<DeckBuilderRightRailLabels> = {
@@ -38,6 +44,7 @@ const DEFAULT_LABELS: Required<DeckBuilderRightRailLabels> = {
   media: 'Media',
   comments: 'Comments',
   activity: 'Activity',
+  relations: 'Relations',
 };
 
 export interface DeckBuilderRightRailState {
@@ -81,6 +88,7 @@ export function buildDeckBuilderRightRailTools(args: {
       ...(activityBadge !== undefined ? { badge: activityBadge } : {}),
       ...(state.activityTone ? { dotTone: state.activityTone } : {}),
     },
+    { id: 'relations', label: L.relations, icon: Link2 },
   ];
 }
 
@@ -89,6 +97,7 @@ export interface DeckBuilderRightRailPanelRenderers {
   media?: React.ReactNode;
   comments?: React.ReactNode;
   activity?: React.ReactNode;
+  relations?: React.ReactNode;
 }
 
 interface DeckBuilderRightRailPanelProps {
@@ -103,6 +112,7 @@ const PANEL_KEY: Record<DeckBuilderRightRailToolId, keyof DeckBuilderRightRailPa
   media: 'media',
   comments: 'comments',
   activity: 'activity',
+  relations: 'relations',
 };
 
 export const DeckBuilderRightRailPanel: React.FC<DeckBuilderRightRailPanelProps> = ({

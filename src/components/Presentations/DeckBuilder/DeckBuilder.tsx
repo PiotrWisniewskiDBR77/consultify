@@ -44,6 +44,7 @@ import { DeckBuilderBottomBar } from './DeckBuilderBottomBar';
 import type { DeckBuilderTopBarChipsState } from './DeckBuilderMelsChips';
 import { DeckBuilderMelsView } from './DeckBuilderMelsView';
 import { DeckCommentsPanel, type DeckSlideRef } from './DeckCommentsPanel';
+import { DeckRelationsPanel } from './DeckRelationsPanel';
 import { DeckBuilderTopBar } from './DeckBuilderTopBar';
 import { DeckPresenceStack } from './DeckPresenceStack';
 import { DeckGovernanceCardModal } from './DeckGovernanceCardModal';
@@ -1148,6 +1149,7 @@ export const DeckBuilder: React.FC = () => {
                 reason={runtimeEvents.reason}
               />
             ),
+            relations: <DeckRelationsPanel cards={deck.cards} />,
           }}
           leftRailTitle={t('presentations.builder.slides', 'Slides')}
           leftRail={
