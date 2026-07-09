@@ -138,7 +138,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
         </motion.button>
 
         {/* Title area */}
-        <div className="flex-1 flex items-center gap-3">
+        <div className="flex-1 min-w-0 flex items-center gap-3">
           {statusDotColor && <div className={`w-3 h-3 rounded-full ${statusDotColor} shadow-lg`} />}
           <input
             id={titleInputId}
@@ -233,7 +233,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
                       : primaryAction.title.en
                     : undefined
                 }
-                className={MENU_1_PRIMARY_CTA}
+                className={`${MENU_1_PRIMARY_CTA} shrink-0 whitespace-nowrap`}
               >
                 {primaryAction.icon && <primaryAction.icon size={16} />}
                 <span>{isPolish ? primaryAction.label.pl : primaryAction.label.en}</span>
