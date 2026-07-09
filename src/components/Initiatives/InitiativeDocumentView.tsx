@@ -9733,6 +9733,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 presentationMode={presentationMode}
                 onPresentationModeChange={setPresentationMode}
                 buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
+                primaryAction={
+                  primaryLifecycleAction
+                    ? {
+                        label: { en: primaryLifecycleAction.label, pl: primaryLifecycleAction.labelPl },
+                        icon: ArrowRight,
+                        onClick: () => void handleStatusAction(primaryLifecycleAction),
+                        disabled: isMutating,
+                      }
+                    : undefined
+                }
               />
 
               <div className="col-span-full space-y-0 mt-4">
@@ -9995,32 +10005,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 presentationMode={presentationMode}
                 onPresentationModeChange={setPresentationMode}
                 buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
+                primaryAction={
+                  primaryLifecycleAction
+                    ? {
+                        label: { en: primaryLifecycleAction.label, pl: primaryLifecycleAction.labelPl },
+                        icon: ArrowRight,
+                        onClick: () => void handleStatusAction(primaryLifecycleAction),
+                        disabled: isMutating,
+                      }
+                    : undefined
+                }
               />
 
-              {/* ── Menu 1 (tożsamość) — JEDEN primary = przejście stanu lifecycle.
-                  Zależny od nextGate (Submit for Review → Approve for Execution →
-                  Schedule …). Neutralny/niebieski (c-focus), NIGDY crimson.
-                  Reszta akcji (Sekcje/Eksport/Make material/AI/Nowy) → Menu 3. */}
-              {primaryLifecycleAction && (
-                <div className="mt-3 flex justify-end">
-                  <button
-                    type="button"
-                    disabled={isMutating}
-                    onClick={() => void handleStatusAction(primaryLifecycleAction)}
-                    title={isPolish ? primaryLifecycleAction.labelPl : primaryLifecycleAction.label}
-                    className="inline-flex items-center gap-2 rounded-xl border border-c-focus/30 bg-c-focus/10 px-4 py-2 text-sm font-semibold text-c-focus transition-colors hover:bg-c-focus/15 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                  >
-                    {isMutating ? (
-                      <Loader2 size={15} className="animate-spin" />
-                    ) : (
-                      <ArrowRight size={15} />
-                    )}
-                    <span>
-                      {isPolish ? primaryLifecycleAction.labelPl : primaryLifecycleAction.label}
-                    </span>
-                  </button>
-                </div>
-              )}
+              {/* ── Menu 1 (tożsamość) primary CTA — JEDEN przycisk = przejście stanu
+                  lifecycle (Submit for Review → Approve for Execution → Schedule …).
+                  Renderowany natywnie przez NModeHeader.primaryAction (patrz wyżej),
+                  NIGDY crimson. Reszta akcji (Sekcje/Eksport/Make material/AI/Nowy)
+                  → Menu 3. */}
 
               <div className="col-span-full space-y-4 mt-4">
                 <NModePropertiesStrip fields={nModePropertyFields} maxColumns={6} />
