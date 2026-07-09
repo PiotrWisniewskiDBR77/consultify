@@ -41,6 +41,8 @@ export interface UseTableRowsReturn {
   handleAddRowWithTemplate: (e?: React.MouseEvent) => void;
   handleTemplateSelect: (template: RowTemplate) => void;
   handleBulkDelete: () => void;
+  handleDeleteRow: (id: string) => void;
+  handleDuplicateRow: (id: string) => void;
   handleReorderNode: (nodeId: string, targetIdx: number) => void;
   handleAddSubItem: (parentId: string) => void;
   showRowTemplatePicker: boolean;
@@ -53,6 +55,7 @@ export function useTableRows(opts: UseTableRowsOpts): UseTableRowsReturn {
   const {
     ideaId,
     locked,
+    isPl,
     currentUserName = 'current-user',
     nodesUndo,
     sort,
@@ -223,6 +226,58 @@ export function useTableRows(opts: UseTableRowsOpts): UseTableRowsReturn {
     onSelectionChange?.(EMPTY_SELECTION);
   }, [locked, nodes, nodesUndo, onSelectionChange, selectedRowIds]);
 
+  // ── Single-row delete (row context menu) ──
+  const handleDeleteRow = useCallback(
+    (id: string) => {
+      if (locked) return;
+      const next = nodes.filter((n) => n.id !== id);
+      nodesUndo.push(next);
+      setSelectedRowIds((prev) => {
+        if (!prev.has(id)) return prev;
+        const nextSel = new Set(prev);
+        nextSel.delete(id);
+        onSelectionChange?.(
+          nextSel.size > 0
+            ? { type: 'row', count: nextSel.size, ids: Array.from(nextSel) }
+            : EMPTY_SELECTION
+        );
+        return nextSel;
+      });
+    },
+    [locked, nodes, nodesUndo, onSelectionChange]
+  );
+
+  // ── Single-row duplicate (row context menu) ──
+  const handleDuplicateRow = useCallback(
+    (id: string) => {
+      if (locked) return;
+      const source = nodes.find((n) => n.id === id);
+      if (!source) return;
+      const idx = nodes.findIndex((n) => n.id === id);
+      const newId = `node-${Date.now()}`;
+      const now = new Date().toISOString();
+      const label = String(source.data?.label || '');
+      const newNode: TableNode = {
+        ...source,
+        id: newId,
+        data: {
+          ...(source.data || {}),
+          label: label ? `${label} ${isPl ? '(kopia)' : '(copy)'}` : '',
+          created_time: now,
+          created_by: currentUserName,
+          last_edited_time: now,
+          last_edited_by: currentUserName,
+        },
+        position: { x: 0, y: 0 },
+      };
+      const next = [...nodes];
+      next.splice(idx + 1, 0, newNode);
+      nodesUndo.push(next);
+      trackFunnelEvent('ideas_table_row_added', { ideaId, duplicatedFrom: id });
+    },
+    [currentUserName, ideaId, isPl, locked, nodes, nodesUndo]
+  );
+
   // ── Reorder ──
   const handleReorderNode = useCallback(
     (nodeId: string, targetIdx: number) => {
@@ -271,6 +326,8 @@ export function useTableRows(opts: UseTableRowsOpts): UseTableRowsReturn {
     handleAddRowWithTemplate,
     handleTemplateSelect,
     handleBulkDelete,
+    handleDeleteRow,
+    handleDuplicateRow,
     handleReorderNode,
     handleAddSubItem,
     showRowTemplatePicker,

@@ -406,6 +406,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     handleAddRowWithTemplate,
     handleTemplateSelect,
     handleBulkDelete,
+    handleDeleteRow,
+    handleDuplicateRow,
     handleReorderNode,
     handleAddSubItem,
     showRowTemplatePicker,
@@ -457,6 +459,12 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const effectiveHandleBulkDelete = usePlatform
     ? platformIntegration.handleBulkDelete
     : handleBulkDelete;
+  const effectiveHandleDeleteRow = usePlatform
+    ? platformIntegration.handleDeleteRow
+    : handleDeleteRow;
+  const effectiveHandleDuplicateRow = usePlatform
+    ? platformIntegration.handleDuplicateRow
+    : handleDuplicateRow;
 
   const effectiveCycleSort = useCallback(
     (key: string) => {
@@ -674,6 +682,11 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const [connectorHistoryTarget, setConnectorHistoryTarget] = useState<Connector | null>(null);
   const [colContextMenu, setColContextMenu] = useState<{
     colKey: string;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [rowContextMenu, setRowContextMenu] = useState<{
+    rowId: string;
     x: number;
     y: number;
   } | null>(null);
@@ -1276,6 +1289,11 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             setDetailNodeId(row.id);
             setDetailMode('full');
           }
+        }}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setRowContextMenu({ rowId: row.id, x: e.clientX, y: e.clientY });
         }}
       >
         <td className="w-8 px-2 py-1.5">
@@ -3142,6 +3160,72 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 >
                   {isPl ? 'Usuń kolumnę' : 'Delete column'}
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* Row context menu (right-click on a data row) */}
+          {rowContextMenu && (
+            <div className="fixed inset-0 z-[60]" onClick={() => setRowContextMenu(null)}>
+              <div
+                className="absolute bg-c-surface rounded-lg shadow-xl border border-c-border-subtle py-1 min-w-[160px]"
+                style={{ left: rowContextMenu.x, top: rowContextMenu.y }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
+                  onClick={() => {
+                    const rowId = rowContextMenu.rowId;
+                    if (usePlatform) {
+                      setExpandedRecordId(rowId);
+                    } else {
+                      setDetailNodeId(rowId);
+                      setDetailMode('full');
+                    }
+                    setRowContextMenu(null);
+                  }}
+                >
+                  {isPl ? 'Edytuj' : 'Edit'}
+                </button>
+                <button
+                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
+                  onClick={() => {
+                    const rowId = rowContextMenu.rowId;
+                    if (usePlatform) {
+                      setExpandedRecordId(rowId);
+                    } else {
+                      setDetailNodeId(rowId);
+                      setDetailMode('full');
+                    }
+                    setRowContextMenu(null);
+                  }}
+                >
+                  {isPl ? 'Dodaj notatkę' : 'Add note'}
+                </button>
+                {!locked && (
+                  <>
+                    <div className="h-px bg-c-surface-raised my-1" />
+                    <button
+                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
+                      onClick={() => {
+                        effectiveHandleDuplicateRow(rowContextMenu.rowId);
+                        setRowContextMenu(null);
+                      }}
+                    >
+                      {isPl ? 'Powiel wiersz' : 'Duplicate row'}
+                    </button>
+                    <button
+                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger"
+                      onClick={() => {
+                        effectiveHandleDeleteRow(rowContextMenu.rowId);
+                        toast.success(isPl ? 'Wiersz usunięty' : 'Row deleted');
+                        setRowContextMenu(null);
+                      }}
+                    >
+                      {isPl ? 'Usuń wiersz' : 'Delete row'}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           )}

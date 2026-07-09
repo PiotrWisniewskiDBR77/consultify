@@ -111,6 +111,8 @@ export interface UseTablePlatformIntegrationReturn {
   handleFieldChange: (nodeId: string, field: string, value: unknown) => void;
   handleAddRow: () => void;
   handleBulkDelete: () => void;
+  handleDeleteRow: (id: string) => void;
+  handleDuplicateRow: (id: string) => void;
 
   // Views
   viewLayout: ViewLayout;
@@ -426,6 +428,57 @@ export function useTablePlatformIntegration(
     })();
   }, [isActive, locked, selectedRowIds, bridge, onSelectionChange]);
 
+  // ── Single-row delete (row context menu) ──
+  const handleDeleteRow = useCallback(
+    (id: string) => {
+      if (!isActive || locked) return;
+      setLocalNodes((curr) => curr.filter((n) => n.id !== id));
+      setSelectedRowIds((prev) => {
+        if (!prev.has(id)) return prev;
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      void (async () => {
+        const ok = await bridge.deleteRecord(id);
+        if (!ok) await bridge.refresh();
+      })();
+    },
+    [isActive, locked, bridge]
+  );
+
+  // ── Single-row duplicate (row context menu) ──
+  const handleDuplicateRow = useCallback(
+    (id: string) => {
+      if (!isActive || locked) return;
+      const source = nodes.find((n) => n.id === id);
+      if (!source) return;
+      const tempId = `temp-${Date.now()}`;
+      const label = String(source.data?.label || '');
+      const tempNode: TableNode = {
+        id: tempId,
+        type: source.type,
+        data: {
+          ...(source.data || {}),
+          label: label ? `${label} ${isPl ? '(kopia)' : '(copy)'}` : '',
+          created_time: new Date().toISOString(),
+        },
+        position: { x: 0, y: 0 },
+      };
+      setLocalNodes((curr) => [tempNode, ...curr]);
+      void (async () => {
+        const created = await bridge.createRecord(source.data || {});
+        if (created) {
+          const newNode = recordToNode(created, bridge.fields);
+          setLocalNodes((curr) => curr.map((n) => (n.id === tempId ? newNode : n)));
+        } else {
+          setLocalNodes((curr) => curr.filter((n) => n.id !== tempId));
+        }
+      })();
+    },
+    [isActive, locked, nodes, isPl, bridge]
+  );
+
   const handleSave = useCallback(async () => {
     if (!isActive) return;
     // No-op for new platform: data is persisted per-mutation
@@ -507,6 +560,8 @@ export function useTablePlatformIntegration(
       handleFieldChange: NOOP_FN,
       handleAddRow: NOOP_FN,
       handleBulkDelete: NOOP_FN,
+      handleDeleteRow: NOOP_FN,
+      handleDuplicateRow: NOOP_FN,
       viewLayout: 'table',
       setViewLayout: NOOP_FN,
       savedViews: [],
@@ -568,6 +623,8 @@ export function useTablePlatformIntegration(
     handleFieldChange,
     handleAddRow,
     handleBulkDelete,
+    handleDeleteRow,
+    handleDuplicateRow,
     viewLayout: views.viewLayout,
     setViewLayout: views.setViewLayout,
     savedViews: views.savedViews,
