@@ -16,10 +16,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Api } from '@/services/api';
 import { useConversationStore } from '@/store/useConversationStore';
 import { deriveDeckLifecycleBadge } from '@/utils/deckLifecycleBadge';
+import { isMelsPrezentacjeEnabled } from '@/utils/melsPrezentacjeFlag';
 
 import { ArtifactModuleHome } from './ArtifactModuleHome';
 import type { ArtifactPreview } from './KimiWorkspaceShell';
 import { KimiWorkspaceShell } from './KimiWorkspaceShell';
+import { PrezentacjeMelsView } from './prezentacjeShell/PrezentacjeMelsView';
 import { useKimiArtifactPipeline } from './useKimiArtifactPipeline';
 
 const PREZENTACJE_SYSTEM_PROMPT = `You are a professional presentation creation assistant in Consultify — think Gamma.app meets Beautiful.ai.
@@ -482,6 +484,25 @@ export const PrezentacjeView: React.FC = () => {
 
   if (showHome) {
     return <ArtifactModuleHome lane="prezentacje" />;
+  }
+
+  if (isMelsPrezentacjeEnabled()) {
+    const deckPreview =
+      effectivePreview && effectivePreview.type === 'deck'
+        ? (effectivePreview as ArtifactPreview & { type: 'deck' })
+        : null;
+    return (
+      <PrezentacjeMelsView
+        preview={deckPreview}
+        topBarHandlers={{
+          onShare: handleAllFiles,
+          onExportPdf: effectiveDeckId ? handleDownloadPdf : undefined,
+          onRun: handleDownload,
+        }}
+        onOpenBuilder={handlePreviewFile}
+        onRunPrimary={handleDownload}
+      />
+    );
   }
 
   return (
