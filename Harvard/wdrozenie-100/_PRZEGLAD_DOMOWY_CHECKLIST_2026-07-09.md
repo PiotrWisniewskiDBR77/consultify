@@ -16,6 +16,7 @@
 | 7 | **Deck → prawy klik na slajdzie w nawigatorze** | Nowa pozycja „Przenieś ▸" (na górę/dół/pozycja) | quick-wins |
 | 8 | **Prezentacje** (Materiały → Prezentacje, ekran generatora) | **CAŁA NOWA POWŁOKA** (ExecutiveModuleShell) — Export PPTX jako primary, nawigator slajdów z lewej, activity po prawej. To była praca równoległej sesji nocnej — obejrzyj krytycznie, może być surowe | flaga flip ON dziś |
 | 9 | **Tabele** (Materiały → Tabele) | **CAŁA NOWA POWŁOKA** (ExecutiveModuleShell) — jak wyżej | flaga flip ON dziś |
+| 12 | **Deck → prawy rail → zakładka „Powiązania"** (ikona łańcucha) | Nowa 5. zakładka: zbiorcza lista wszystkich źródeł decka (inicjatywy/insighty), dedup + licznik „użyte N×", klik → skok do artefaktu-rodzica | deck-relations, świeże |
 
 ## CZĘŚĆ B — ZA FLAGĄ (dopisz do URL, Enter, obejrzyj — NIE promowane, świadomie ostrożnie)
 
@@ -26,8 +27,10 @@
 
 **Werdykt per ekran 10-11 decyduje: zostać na legacy, czy flip domyślnie ON.**
 
-## CZĘŚĆ C — wyrównanie kontraktu (w toku, wynik dojdzie do checklisty / dashboardu)
-Deck: zbiorczy panel „Powiązania". Word: link do rodzica w Powiązaniach. Notatnik: audit AI w zaznaczeniu. Status w `_STATUS_3_FILARY.html` po scaleniu.
+## CZĘŚĆ C — wyrównanie kontraktu (status po dziś)
+- **Deck „Powiązania"** ✅ ZROBIONE, na demo → ekran #12 wyżej.
+- **Word „Powiązania"** (link do rodzica) ⏸ robotnik się odbił — do zrobienia wymaga Twojej decyzji o miejscu (Sources ≠ Powiązania).
+- **Notatnik „AI w zaznaczeniu"** ⛔ to NOWA FUNKCJA backendu (endpoint replace-in-range), nie wyrównanie — osobny task po Twojej zgodzie.
 
 ## CZĘŚĆ D — NIE dotykane w tej fali (świadomie)
 - Kolorystyka/crimson-sweep — osobny etap na koniec (Twoja decyzja 07-08).
