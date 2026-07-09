@@ -37,6 +37,7 @@ import type {
   ToolType,
 } from '@/store/useToolStore';
 
+import { GROUNDING_RULES_BOTH } from './groundingRules';
 export type ToolAiPendingAction =
   | 'suggestions'
   | 'correlations'
@@ -294,6 +295,8 @@ ${buildStaircasePromptRules('en')}
 
 ${buildMoveConclusionPromptRules('en')}
 
+
+${GROUNDING_RULES_BOTH}
 Return a single JSON object with this exact structure:
 {
   "signals": [

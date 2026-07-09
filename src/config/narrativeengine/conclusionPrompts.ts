@@ -16,6 +16,7 @@ import type { NarrativeEngineData } from '@/store/useToolStore';
 import { localizeLadder } from './index';
 import { rankPillars, buildW2MoveSequence } from './moveValidator';
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**
@@ -94,6 +95,9 @@ QUALITY BARS:
 - Numbers exclusively from the facts above; do not compute or invent new ones.
 - Every sentence falsifiable: with opposite facts it would read differently.
 - Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
+
+
+${groundingRules(isPolish)}
 
 Return JSON:
 {

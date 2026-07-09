@@ -22,6 +22,7 @@ import type {
 import type { ToolAiPendingAction } from './dynamicSwot';
 import { pickW2SummaryFields } from './w2SummaryFields';
 
+import { GROUNDING_RULES_BOTH } from './groundingRules';
 const FORCE_IDS: PorterForceId[] = PORTER_FORCE_IDS;
 
 /**
@@ -151,6 +152,8 @@ Generate a consulting-grade first draft. Everything is a proposal for user revie
 For EACH force: rate intensity low/medium/high with an insight staircase (fact/factRefs/interpretation/implication) and a dominant structural "driver"; a high/medium force without a named driver will be rejected.
 Then synthesize an industry-attractiveness verdict naming WHICH force(s) dominate margin, and 3-5 strategic responses EACH carrying tradeoff + rejectedAlternative.
 
+
+${GROUNDING_RULES_BOTH}
 Return one JSON object with this exact structure:
 {
   "signals": [

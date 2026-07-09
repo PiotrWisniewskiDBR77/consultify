@@ -17,6 +17,7 @@ import type { OperationalToolData } from '@/store/useToolStore';
 import { assessA3, buildW2MoveSequence } from './moveValidator';
 import { localizeLadder } from './index';
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**
@@ -94,6 +95,9 @@ QUALITY BARS:
 - Every sentence falsifiable: with opposite facts it would read differently.
 - Map the grounded W2 sequence above into 3-5 "initiatives", preserving its order (order = priority).
 - Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
+
+
+${groundingRules(isPolish)}
 
 Return JSON:
 {

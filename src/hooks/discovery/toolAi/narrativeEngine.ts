@@ -8,6 +8,7 @@ import type {
 import type { ToolAiPendingAction } from './dynamicSwot';
 import { pickW2SummaryFields } from './w2SummaryFields';
 
+import { GROUNDING_RULES_BOTH } from './groundingRules';
 interface NarrativeEngineActionHandlers {
   updateInputData: (data: Partial<NarrativeEngineData>) => void;
   setInitiatives: (initiatives: Omit<InitiativeDraft, 'id'>[]) => void;
@@ -55,6 +56,8 @@ and initiatives. Ground every claim in the organization context above. Explicitl
 assumption you cannot ground in the context (label it as a hypothesis) — do NOT invent specific
 numbers or external facts you cannot support.
 
+
+${GROUNDING_RULES_BOTH}
 Return one JSON object with this exact structure:
 {
   "signals": [

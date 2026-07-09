@@ -27,6 +27,7 @@ import {
   type SwotTensionType,
 } from './swotTensionEngine';
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 const QUADRANT_LABEL: Record<SWOTItem['quadrant'], { pl: string; en: string }> = {
@@ -133,6 +134,9 @@ QUALITY BARS:
 - Numbers and impact levels exclusively from the tensions block; items marked "declared" flagged "as declared, to be confirmed", "missing" flagged "to be established".
 - Zero filler; every sentence falsifiable — with opposite items it would read differently.
 - Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
+
+
+${groundingRules(isPolish)}
 
 Return JSON:
 {

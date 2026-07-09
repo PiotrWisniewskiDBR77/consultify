@@ -20,6 +20,7 @@ import {
   deriveLeverCandidates,
 } from './valueChainMarginEngine';
 
+import { groundingRules } from '@/hooks/discovery/toolAi/groundingRules';
 const localize = (pl: string, en: string, isPolish: boolean) => (isPolish ? pl : en);
 
 /**
@@ -96,6 +97,9 @@ QUALITY BARS:
 - Numbers exclusively from the margin map; do not re-score activities.
 - Zero filler and zero AI meta-phrases ("As an AI", "Based on the provided data", "In conclusion"); every sentence falsifiable — with a different margin map it would read differently.
 - Respond in ${isPolish ? 'Polish' : 'English'}, active voice, partner tone.
+
+
+${groundingRules(isPolish)}
 
 Return JSON:
 {

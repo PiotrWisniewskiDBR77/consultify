@@ -19,6 +19,7 @@ import type {
 import type { ToolAiPendingAction } from './dynamicSwot';
 import { pickW2SummaryFields } from './w2SummaryFields';
 
+import { GROUNDING_RULES_BOTH } from './groundingRules';
 const ACTIVITY_IDS: ValueActivityId[] = [
   'inboundLogistics',
   'operations',
@@ -109,6 +110,8 @@ activity, and set "evidenceStatus" to "confirmed" only when proofRefs point at a
 otherwise "declared". Focus the levers and moves on the 2-3 activities where high cost meets low
 maturity meets impact on customer value (the margin map's leak/creator gradient).
 
+
+${GROUNDING_RULES_BOTH}
 Return one JSON object with this exact structure:
 {
   "signals": [
