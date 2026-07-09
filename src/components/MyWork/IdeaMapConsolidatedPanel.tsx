@@ -84,7 +84,9 @@ export const IdeaMapConsolidatedPanel: React.FC<IdeaMapConsolidatedPanelProps> =
         id: 'context',
         label: isPl ? 'Kontekst' : 'Context',
         icon: Search,
-        children: <IdeaContextPanel {...(contextProps as any)} open onClose={onClose} />,
+        children: (
+          <IdeaContextPanel {...(contextProps as any)} open embedded onClose={onClose} />
+        ),
         defaultOpen: activePanel === 'context',
       },
       {
@@ -92,7 +94,12 @@ export const IdeaMapConsolidatedPanel: React.FC<IdeaMapConsolidatedPanelProps> =
         label: isPl ? 'Sugestie AI' : 'AI suggestions',
         icon: Sparkles,
         children: (
-          <IdeaAISuggestionsPanel {...(aiSuggestionsProps as any)} open onClose={onClose} />
+          <IdeaAISuggestionsPanel
+            {...(aiSuggestionsProps as any)}
+            open
+            embedded
+            onClose={onClose}
+          />
         ),
         defaultOpen: activePanel === 'ai_suggestions',
       },
