@@ -7,13 +7,13 @@
 import { Database, ExternalLink, FileText, Target, TrendingUp, Zap } from 'lucide-react';
 import React from 'react';
 
-interface SourceRef {
+export interface SourceRef {
   artifact_id: string;
   artifact_type: string;
   artifact_name: string;
 }
 
-const SOURCE_ICONS: Record<string, React.FC<{ size?: number; className?: string }>> = {
+export const SOURCE_ICONS: Record<string, React.FC<{ size?: number; className?: string }>> = {
   initiative: Target,
   financial_analysis: TrendingUp,
   report: FileText,
