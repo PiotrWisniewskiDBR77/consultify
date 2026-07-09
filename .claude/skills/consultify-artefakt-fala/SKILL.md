@@ -40,11 +40,15 @@ WERYFIKACJA: esbuild per plik + OTWÓRZ w przeglądarce (lekcja TDZ: tsc nie ła
 WYNIK: diff-tabela Stan + SHA + zrzuty. NIE push, NIE deploy.
 ```
 
-## MODELE (ekonomia)
-- **Diff/inwentarz stref (krok 1):** Haiku/Sonnet — mechaniczny grep+porównanie z Formułą.
-- **Domykanie przycisków (krok 2):** Sonnet.
-- **Opus TYLKO:** zwiad Initiative (A3, 10,8k linii) · kolizje wspólnej powłoki · Deck geometria.
-- Zrzuty/galeria: orkiestrator (preview tools), nie robotnik.
+## POLITYKA MODELI I TOKENÓW (ekonomia — obowiązuje każdego agenta fali)
+**Zasada naczelna: najtańszy model, który zrobi robotę; eskalacja dopiero PO porażce taniego, decyzją orkiestratora — nigdy "na zapas".**
+- **Haiku** — czysta mechanika: grep/inwentarz stref, porównanie kodu z Formułą, przenoszenie plików, re-capture.
+- **Sonnet** (domyślny) — diff-tabele, domykanie przycisków, testy, orkiestracja fali.
+- **Opus TYLKO 3 przypadki:** zwiad Initiative (A3, 10,8k linii) · zmiany WSPÓLNEJ powłoki (kolizje) · Deck geometria. Nic więcej.
+- **Fable: ZAKAZ u robotników i wykonawcy** (resume bije w limit; drogi kontekst).
+- **Ekonomia kontekstu:** robotnik dostaje PIGUŁKĘ ≤1 ekran (orkiestrator destyluje z SSOT) — NIE czyta standardu 1255 linii ani handoffów; zwraca SUROWE DANE (diff-tabela, SHA, ścieżki zrzutów), nie prozę; jeden artefakt = jeden robotnik = jeden worktree.
+- **Ekonomia przebiegu:** fala naraz (nie 12 artefaktów równolegle — max 3-4 robotników w fali); diff-inwentarze można robić na zapas taniej; zrzuty batchem po fali (orkiestrator, preview/flip flag — bez deployu); zero pełnego tsc/vitest (esbuild per plik); NIE powtarzaj pomiarów, które już są w Formule/audycie.
+- **Stop-lossy:** robotnik utknął >1 rundę → STOP+raport (nie mielenie); zadanie okazuje się "trudny hot-path" → STOP, orkiestrator decyduje o Opusie; limit sesji w trakcie panelu → wynik częściowy, nie powtarzaj od zera.
 
 ## BRAMKI (feed-forward — jak consultify-test, ale wizualnie)
 1. Diff robotnika → orkiestrator zatwierdza LISTĘ 🔨 (nie „rób wszystko") → dopiero kodowanie.
