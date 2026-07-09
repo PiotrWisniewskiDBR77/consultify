@@ -1,0 +1,1619 @@
+{
+  "meta": {
+    "id": "OXFORD_O3_BUNDLE_2026-07-09",
+    "purpose": "Dowód jakości narzędzi Discovery (Oxford O-A, 2. podejście) — realne outputy AI przez żywe API demo.consultify.ai, do panelu adwersaryjnego.",
+    "generated_at": "2026-07-09T20:01:24.735Z",
+    "org": "a3e05d4a-5397-419d-b486-8e44366c0063 (atelier/demo, user piotr.wisniewski@dbr77.com)",
+    "llm": "openrouter-01 / anthropic/claude-sonnet-4 (tier aktywny na demo)",
+    "pipeline": "POST /api/tools (create) → POST /api/ai/chat/stream (full-session prompt per tool, identyczny z FE useToolAI/buildFullSessionPrompt) → PUT /api/tools/:id (answers + IN_PROGRESS → REVIEW)",
+    "case": "DBR77 — marketplace robotyzacji przemysłowej, skalowanie DACH, ambicja 10M EUR GMV/rok (z 1,2M), 34 FTE, onboarding integratora 6-8 tyg., 12% zleceń z odchyleniem jakościowym, 15h/tydz. ręcznego raportowania KPI.",
+    "sessions_note": "Sesje NIE skasowane (nazwy z prefiksem OXV--). Dublet do sprzątnięcia: b84d27d7-2fff-46b5-99ef-47643f2ccc30 (pusty smoke-test sop-builder, DRAFT).",
+    "success": "6/6 narzędzi z pełnym sparsowanym outputem JSON (minimum sukcesu było 4/6)."
+  },
+  "tools": [
+    {
+      "tool": "sop-builder",
+      "sessionId": "10d7a5cf-80a9-4ecf-86fb-ffcd779f121d",
+      "case_input": {
+        "goal": "Ustandaryzować proces obsługi zgłoszeń serwisowych i onboardingu integratorów DBR77, skrócić onboarding z 6-8 do 3 tygodni przy zachowaniu jakości.",
+        "scope": "Onboarding integratora robotyki (aplikacja → pierwsze aktywne zlecenie) + obsługa zgłoszenia serwisowego (zgłoszenie → zamknięcie).",
+        "successSignal": "Onboarding <=3 tyg., pierwsza reakcja serwisowa <48h, zero krytycznych odchyleń jakościowych.",
+        "constraints": "CS = 4 osoby, brak workflow poza Google Sheets, integratorzy w różnych strefach DACH/PL."
+      },
+      "ai_outputs": {
+        "sections": {
+          "standards": [
+            {
+              "title": "Standard czasowy onboardingu integratora - 21 dni roboczych",
+              "description": "Maksymalny czas od złożenia aplikacji do pierwszego aktywnego zlecenia wynosi 21 dni roboczych. Proces podzielony na 3 tygodnie: T1 - weryfikacja dokumentów i certyfikatów, T2 - szkolenie platformy i test techniczny, T3 - pierwsze zlecenie pilotażowe z oceną jakości.",
+              "impact": "high",
+              "effort": "medium",
+              "category": "Process Efficiency",
+              "owner": "Customer Success Team",
+              "target": "≤21 dni roboczych",
+              "frequency": "Per integrator",
+              "threshold": "95% compliance rate"
+            },
+            {
+              "title": "Standard reakcji na zgłoszenie serwisowe - 48h SLA",
+              "description": "Każde zgłoszenie serwisowe otrzymuje pierwszą merytoryczną odpowiedź w ciągu 48h roboczych. Klasyfikacja pilności: Krytyczne (4h), Wysokie (24h), Standardowe (48h). Eskalacja do Team Lead po przekroczeniu 75% limitu czasowego.",
+              "impact": "high",
+              "effort": "low",
+              "category": "Customer Service",
+              "owner": "Customer Success Team",
+              "target": "≤48h pierwsza reakcja",
+              "frequency": "Per ticket",
+              "threshold": "90% SLA compliance"
+            },
+            {
+              "title": "Standard dokumentacji technicznej integratora",
+              "description": "Obowiązkowy pakiet dokumentów: certyfikat CE/DIN dla robotów, ubezpieczenie OC min. 500k EUR, 3 referencje projektów, portfolio z opisami 5 ostatnich wdrożeń. Weryfikacja przez zespół Compliance w ciągu 5 dni roboczych od otrzymania kompletnej dokumentacji.",
+              "impact": "medium",
+              "effort": "medium",
+              "category": "Quality Assurance",
+              "owner": "Compliance Team",
+              "target": "100% kompletność dokumentacji",
+              "frequency": "Per integrator application",
+              "threshold": "Zero incomplete applications processed"
+            },
+            {
+              "title": "Standard komunikacji wielojęzycznej DACH/PL",
+              "description": "Wszystkie materiały onboardingowe i procedury serwisowe dostępne w języku niemieckim i polskim. Zespół CS ma wyznaczone osoby do obsługi w językach: 2 osoby DE, 2 osoby PL. Czas odpowiedzi w języku natywnym klienta nie przekracza standardowych SLA.",
+              "impact": "medium",
+              "effort": "high",
+              "category": "Market Expansion",
+              "owner": "Customer Success Team",
+              "target": "100% obsługa w języku natywnym",
+              "frequency": "Continuous",
+              "threshold": "Zero language barrier escalations"
+            },
+            {
+              "title": "Standard automatycznego raportowania KPI",
+              "description": "Cotygodniowe automatyczne raporty KPI integratorów generowane z systemu platformy: czas realizacji zleceń, oceny jakości, wartość GMV, wskaźnik reklamacji. Zastąpienie obecnego ręcznego procesu (15h/tydzień) automatyzacją z Google Sheets API.",
+              "impact": "high",
+              "effort": "medium",
+              "category": "Process Automation",
+              "owner": "Engineering Team",
+              "target": "0h ręcznego raportowania",
+              "frequency": "Weekly automated",
+              "threshold": "100% automatyzacja do Q1 2027"
+            },
+            {
+              "title": "Standard zarządzania jakością - próg 8% reklamacji",
+              "description": "Maksymalny akceptowalny poziom reklamacji jakościowych to 8% zleceń (obecny: 12%). Każda reklamacja wymaga analizy przyczyn źródłowych w ciągu 72h i planu naprawczego. Integratorzy z >15% reklamacji otrzymują status 'under review' z planem poprawy.",
+              "impact": "high",
+              "effort": "medium",
+              "category": "Quality Management",
+              "owner": "Quality Team",
+              "target": "≤8% reklamacji",
+              "frequency": "Monthly monitoring",
+              "threshold": "Immediate action at 10%"
+            }
+          ],
+          "checklists": [
+            {
+              "title": "Checklist onboardingu integratora - Tydzień 1",
+              "description": "Dzień 1-2: Weryfikacja dokumentów (certyfikaty, ubezpieczenie, referencje). Dzień 3-5: Utworzenie konta w platformie, wysłanie materiałów szkoleniowych DE/PL. Dzień 6-7: Pierwsze połączenie onboardingowe z CS Team, ustalenie harmonogramu szkolenia technicznego.",
+              "impact": "high",
+              "effort": "low",
+              "category": "Onboarding Process",
+              "owner": "Customer Success Specialist",
+              "durationMinutes": 180,
+              "frequency": "Per new integrator",
+              "threshold": "100% completion rate"
+            },
+            {
+              "title": "Checklist onboardingu integratora - Tydzień 2",
+              "description": "Dzień 8-10: Szkolenie online z platformy (2h sesja). Dzień 11-12: Test techniczny - symulacja procesu zlecenia. Dzień 13-14: Weryfikacja kompetencji technicznych, feedback session, ewentualne szkolenia uzupełniające.",
+              "impact": "high",
+              "effort": "medium",
+              "category": "Training & Certification",
+              "owner": "Technical Training Lead",
+              "durationMinutes": 240,
+              "frequency": "Per new integrator",
+              "threshold": "90% pass rate on first attempt"
+            },
+            {
+              "title": "Checklist onboardingu integratora - Tydzień 3",
+              "description": "Dzień 15-17: Przydzielenie pierwszego zlecenia pilotażowego (wartość <50k EUR). Dzień 18-19: Monitoring realizacji, wsparcie techniczne w razie potrzeb. Dzień 20-21: Ocena jakości pierwszego zlecenia, aktywacja pełnego dostępu do platformy.",
+              "impact": "high",
+              "effort": "medium",
+              "category": "Pilot Project",
+              "owner": "Customer Success Manager",
+              "durationMinutes": 120,
+              "frequency": "Per new integrator",
+              "threshold": "100% successful pilot completion"
+            },
+            {
+              "title": "Checklist obsługi zgłoszenia serwisowego - Pierwsza reakcja",
+              "description": "W ciągu 4h (krytyczne) lub 24h (wysokie) lub 48h (standardowe): Potwierdzenie otrzymania zgłoszenia, klasyfikacja pilności, przydzielenie odpowiedzialnego CS Specialist, pierwsza analiza problemu i komunikacja z klientem o dalszych krokach.",
+              "impact": "high",
+              "effort": "low",
+              "category": "Service Response",
+              "owner": "Customer Success Team",
+              "durationMinutes": 45,
+              "frequency": "Per service ticket",
+              "threshold": "90% SLA compliance"
+            },
+            {
+              "title": "Checklist eskalacji problemu jakościowego",
+              "description": "Przy reklamacji >50k EUR lub powtarzającym się problemie: Powiadomienie Quality Manager w ciągu 2h, utworzenie raportu incident, analiza przyczyn źródłowych w ciągu 72h, plan naprawczy z terminem realizacji, komunikacja z integratorem i klientem końcowym.",
+              "impact": "medium",
+              "effort": "medium",
+              "category": "Quality Escalation",
+              "owner": "Quality Manager",
+              "durationMinutes": 90,
+              "frequency": "Per major incident",
+              "threshold": "100% incidents documented"
+            },
+            {
+              "title": "Checklist przeglądu tygodniowego KPI integratorów",
+              "description": "Każdy poniedziałek: Automatyczne generowanie raportu KPI z Google Sheets, analiza trendów (czas realizacji, jakość, GMV), identyfikacja integratorów wymagających wsparcia, komunikacja wyników do Management Team, aktualizacja dashboard'u platformy.",
+              "impact": "medium",
+              "effort": "low",
+              "category": "Performance Monitoring",
+              "owner": "Customer Success Lead",
+              "durationMinutes": 60,
+              "frequency": "Weekly",
+              "threshold": "100% automated by Q1 2027"
+            }
+          ]
+        },
+        "summary": {
+          "executiveSummary": "Proponowany SOP Framework dla DBR77 adresuje kluczowe wyzwania operacyjne: skrócenie onboardingu integratorów z 6-8 do 3 tygodni oraz standaryzację obsługi serwisowej z reakcją <48h. Implementacja 6 standardów operacyjnych i 6 checklistów procesowych pozwoli zredukować obecny 12% wskaźnik reklamacji do docelowych 8% oraz zautomatyzować raportowanie KPI (oszczędność 15h/tydzień). Rozwiązanie uwzględnia specyfikę ekspansji DACH z obsługą wielojęzyczną i wymogami certyfikacyjnymi DIN/VDI.",
+          "keyInsights": [
+            "Obecny proces onboardingu (6-8 tygodni) jest głównym bottleneckiem wzrostu - standaryzacja może skrócić go o 50%",
+            "Brak automatyzacji raportowania KPI kosztuje zespół CS 780h rocznie (15h x 52 tygodnie)",
+            "12% wskaźnik reklamacji jakościowych przekracza benchmark branżowy (8%) i zagraża ekspansji DACH",
+            "Zespół CS (4 osoby) obsługuje rosnący wolumen bez standardowych procedur - ryzyko wypalenia i błędów",
+            "Ekspansja DACH wymaga lokalnych standardów certyfikacyjnych i obsługi wielojęzycznej"
+          ],
+          "appliedConclusions": [
+            "Implementacja 21-dniowego standardu onboardingu zwiększy przepustowość o 40% przy obecnych zasobach",
+            "Automatyzacja raportowania KPI uwolni 15h/tydzień zespołu CS na działania o wyższej wartości dodanej",
+            "Standaryzacja obsługi serwisowej z SLA 48h poprawi Net Promoter Score i zmniejszy churn integratorów",
+            "Wielojęzyczne procedury (DE/PL) są krytyczne dla sukcesu ekspansji DACH i konkurencji z lokalnymi platformami",
+            "Próg 8% reklamacji jakościowych z automatyczną eskalacją zapewni utrzymanie standardów podczas skalowania"
+          ]
+        },
+        "initiatives": [
+          {
+            "title": "Implementacja 21-dniowego standardu onboardingu integratorów",
+            "description": "Przeprojektowanie procesu onboardingu na 3-tygodniowy cykl z jasno zdefiniowanymi milestone'ami, automatyzacją weryfikacji dokumentów i strukturalnym szkoleniem technicznym. Cel: skrócenie z obecnych 6-8 tygodni do 3 tygodni.",
+            "type": "operational",
+            "estimatedImpact": "high",
+            "estimatedEffort": "medium",
+            "rationale": "Obecny długi proces onboardingu (6-8 tygodni) ogranicza tempo pozyskiwania nowych integratorów i hamuje wzrost GMV. Skrócenie do 3 tygodni zwiększy przepustowość o 40% przy obecnych zasobach CS."
+          },
+          {
+            "title": "Automatyzacja systemu raportowania KPI integratorów",
+            "description": "Zastąpienie ręcznego procesu raportowania (15h/tydzień) automatycznym systemem opartym na Google Sheets API z cotygodniowymi raportami KPI, trendami wydajności i alertami jakościowymi.",
+            "type": "operational",
+            "estimatedImpact": "high",
+            "estimatedEffort": "medium",
+            "rationale": "Obecne ręczne raportowanie pochłania 780h rocznie zespołu CS. Automatyzacja uwolni zasoby na działania strategiczne i zmniejszy ryzyko błędów w danych."
+          },
+          {
+            "title": "Standaryzacja obsługi zgłoszeń serwisowych z SLA 48h",
+            "description": "Wdrożenie strukturalnego procesu obsługi zgłoszeń z klasyfikacją pilności, automatyczną eskalacją i gwarancją pierwszej reakcji w ciągu 48h dla zgłoszeń standardowych.",
+            "type": "operational",
+            "estimatedImpact": "high",
+            "estimatedEffort": "low",
+            "rationale": "Brak standardowych procedur serwisowych generuje niekonsystentną jakość obsługi i ryzyko utraty klientów. SLA 48h ustawi jasne oczekiwania i poprawi satysfakcję klientów."
+          },
+          {
+            "title": "Program redukcji reklamacji jakościowych do 8%",
+            "description": "Implementacja systemu zarządzania jakością z progiem 8% reklamacji, obowiązkową analizą przyczyn źródłowych i planami naprawczymi dla integratorów przekraczających limity.",
+            "type": "defensive",
+            "estimatedImpact": "medium",
+            "estimatedEffort": "medium",
+            "rationale": "Obecny 12% wskaźnik reklamacji przekracza standard branżowy (8%) i zagraża reputacji podczas ekspansji DACH. Redukcja do 8% jest krytyczna dla konkurencyjności."
+          },
+          {
+            "title": "Lokalizacja procesów dla ekspansji DACH",
+            "description": "Przygotowanie wielojęzycznych procedur (DE/PL), szkolenie zespołu CS w obsłudze niemieckojęzycznej i adaptacja standardów certyfikacyjnych do wymogów DIN/VDI.",
+            "type": "strategic",
+            "estimatedImpact": "high",
+            "estimatedEffort": "high",
+            "rationale": "Ekspansja DACH (cel: 10M EUR GMV) wymaga lokalnych standardów i obsługi w języku niemieckim. Bez tego DBR77 nie będzie konkurencyjna wobec niemieckich platform."
+          }
+        ]
+      },
+      "ai_output_raw_chars": 12319,
+      "ocena_1_zdanie": "Sensowny, konkretny SOP framework (21-dniowy onboarding tydzień-po-tygodniu, SLA 48h, checklisty per tydzień) mocno osadzony w case; drobny zgrzyt: podsumowanie deklaruje target reklamacji 8% zamiast <5% z ambicji A3 (niespójność między narzędziami, nie błąd wewnętrzny)."
+    },
+    {
+      "tool": "a3-problem-solving",
+      "sessionId": "c808aaf9-23b6-4344-9b49-771f1504843d",
+      "case_input": {
+        "goal": "Zredukować odsetek zleceń z odchyleniem jakościowym z 12% do <5% w 2 kwartały.",
+        "scope": "Zlecenia integratorów partnerskich DBR77 PL + pilotaż DACH, Q2-Q3 2026.",
+        "successSignal": "<5% zleceń z odchyleniem, -50% eskalacji klienckich.",
+        "constraints": "Brak jednolitego QC u integratorów; DBR77 bez bezpośredniej kontroli operacyjnej (marketplace)."
+      },
+      "ai_outputs": {
+        "sections": {
+          "problem": [
+            {
+              "title": "12% zleceń z odchyleniami jakościowymi przekracza benchmark branżowy",
+              "description": "Obecny poziom 12% zleceń z odchyleniem od specyfikacji jest 3x wyższy od standardu marketplace B2B (4%). Przy 1,2 mln EUR GMV rocznie oznacza to ~144k EUR wartości zleceń wymagających reklamacji.",
+              "impact": "high",
+              "effort": "low",
+              "category": "measurement",
+              "owner": "Quality Team",
+              "target": "5%",
+              "frequency": "monthly",
+              "threshold": "8%"
+            },
+            {
+              "title": "Brak ustandaryzowanych procesów kontroli jakości u integratorów",
+              "description": "67 aktywnych integratorów używa różnych systemów QC - od Excel do dedykowanych narzędzi. Brak jednolitych checklistów i kryteriów akceptacji prowadzi do niespójnej jakości deliverables.",
+              "impact": "high",
+              "effort": "medium",
+              "category": "process",
+              "owner": "Partner Operations",
+              "target": "100% integratorów z certyfikowanym QC",
+              "frequency": "quarterly"
+            },
+            {
+              "title": "Eskalacje klienckie obciążają zespół CS 15h/tydzień",
+              "description": "Ręczne zarządzanie reklamacji i raportowanie KPI integratorów pochłania 37,5% czasu zespołu Customer Success (4 FTE), blokując proaktywne działania rozwojowe.",
+              "impact": "medium",
+              "effort": "medium",
+              "category": "operational",
+              "owner": "Customer Success",
+              "target": "7h/tydzień",
+              "frequency": "weekly"
+            },
+            {
+              "title": "Ekspansja DACH bez lokalnych standardów certyfikacji",
+              "description": "Wejście na rynek niemiecki wymaga compliance z DIN/VDI, ale brak lokalnych partnerów certyfikujących. Ryzyko replikacji problemów jakościowych na nowym rynku o wyższych standardach.",
+              "impact": "high",
+              "effort": "high",
+              "category": "compliance",
+              "owner": "Expansion Team",
+              "target": "3 certyfikowani partnerzy DACH",
+              "frequency": "quarterly"
+            }
+          ],
+          "root-cause": [
+            {
+              "title": "Onboarding integratorów bez obowiązkowej certyfikacji QC",
+              "description": "Proces onboardingu (6-8 tygodni) skupia się na aspektach technicznych i prawnych, pomijając weryfikację procesów kontroli jakości. Brak gate'ów jakościowych przed aktywacją partnera.",
+              "impact": "high",
+              "effort": "medium",
+              "category": "process",
+              "owner": "Partner Operations",
+              "target": "QC gate w tygodniu 3 onboardingu"
+            },
+            {
+              "title": "Model marketplace ogranicza bezpośrednią kontrolę operacyjną",
+              "description": "Relacja partnerska (nie zatrudnienie) uniemożliwia narzucanie sztywnych SOP. Integratorzy postrzegają dodatkowe kontrole jako ograniczenie autonomii biznesowej.",
+              "impact": "high",
+              "effort": "high",
+              "category": "business-model",
+              "owner": "Leadership",
+              "target": "Incentive-based QC framework"
+            },
+            {
+              "title": "Brak real-time visibility w realizacji projektów",
+              "description": "Platforma nie ma wglądu w progress projektów do momentu finalizacji. Problemy jakościowe wykrywane post-factum, gdy koszt naprawy jest najwyższy.",
+              "impact": "medium",
+              "effort": "high",
+              "category": "technology",
+              "owner": "Platform Engineering",
+              "target": "Real-time project tracking",
+              "durationMinutes": 180
+            },
+            {
+              "title": "Nieadekwatne finansowe incentywy dla jakości",
+              "description": "Model prowizyjny integratorów (15% GMV) nie zawiera komponentu jakościowego. Brak finansowych konsekwencji za odchylenia motywuje do maksymalizacji ilości kosztem jakości.",
+              "impact": "high",
+              "effort": "medium",
+              "category": "financial",
+              "owner": "Finance & Partnership",
+              "target": "Quality-based commission model"
+            }
+          ],
+          "countermeasures": [
+            {
+              "title": "Implementacja obowiązkowej certyfikacji QC dla wszystkich integratorów",
+              "description": "Wprowadzenie 3-poziomowego systemu certyfikacji (Bronze/Silver/Gold) z wymaganymi standardami dokumentacji, procesów i narzędzi kontroli jakości. Recertyfikacja co 12 miesięcy.",
+              "impact": "high",
+              "effort": "medium",
+              "category": "certification",
+              "owner": "Quality Team + Partner Operations",
+              "target": "100% integratorów certyfikowanych do Q4 2026",
+              "frequency": "monthly progress review"
+            },
+            {
+              "title": "Wdrożenie systemu milestone-based quality gates",
+              "description": "Podział projektów na 4 standardowe fazy z obowiązkowymi checkpointami jakościowymi (25%, 50%, 75%, 100%). Automated quality scorecards z photo/video evidence requirements.",
+              "impact": "high",
+              "effort": "high",
+              "category": "process",
+              "owner": "Platform Engineering + Quality",
+              "target": "90% projektów z completed gates",
+              "frequency": "real-time tracking"
+            },
+            {
+              "title": "Restructuring modelu prowizyjnego z komponentem jakościowym",
+              "description": "Zmiana z flat 15% na 12% base + 3% quality bonus. Quality score based na: customer satisfaction (40%), specification adherence (35%), timeline compliance (25%).",
+              "impact": "medium",
+              "effort": "medium",
+              "category": "financial",
+              "owner": "Finance Team",
+              "target": "Avg quality score >4.2/5",
+              "frequency": "monthly calculation"
+            },
+            {
+              "title": "Utworzenie DACH Quality Certification Partnership",
+              "description": "Strategiczne partnerstwo z 2-3 niemieckimi certyfikatorami (TÜV, DEKRA) dla lokalnej walidacji standardów DIN/VDI. Fast-track certification dla top-performing integratorów.",
+              "impact": "high",
+              "effort": "high",
+              "category": "partnership",
+              "owner": "DACH Expansion Lead",
+              "target": "3 aktywne partnerstwa do Q3 2026"
+            },
+            {
+              "title": "Automatyzacja raportowania i alert systemu",
+              "description": "Development platformy dla automated KPI tracking, quality alerts, i customer feedback collection. Redukcja manual effort z 15h do 5h/tydzień dla CS team.",
+              "impact": "medium",
+              "effort": "high",
+              "category": "automation",
+              "owner": "Platform Engineering",
+              "target": "67% redukcja manual reporting",
+              "durationMinutes": 240
+            }
+          ]
+        },
+        "summary": {
+          "executiveSummary": "DBR77 musi zredukować odchylenia jakościowe z 12% do <5% aby utrzymać competitive advantage podczas ekspansji DACH. Root cause: brak standardów QC w onboardingu integratorów + model prowizyjny nie incentywizuje jakości. Rekomendacja: 3-poziomowa certyfikacja + quality-based commission + automated monitoring. Estimated investment: 180k EUR, expected ROI: 340k EUR w ciągu 18 miesięcy.",
+          "keyInsights": [
+            "Obecny poziom 12% odchyleń jest 3x wyższy od benchmark marketplace B2B (4%)",
+            "Model marketplace wymaga incentive-based approach zamiast command-and-control",
+            "Ekspansja DACH bez rozwiązania problemów jakościowych = high risk of market failure",
+            "Manual reporting pochłania 37,5% czasu CS team, blokując proaktywne działania"
+          ],
+          "appliedConclusions": [
+            "Priorytet #1: Mandatory QC certification dla wszystkich integratorów do Q4 2026",
+            "Restructuring prowizji z quality component zwiększy compliance bez enforcement",
+            "DACH partnerships z certyfikatorami = competitive moat na nowym rynku",
+            "Automation platformy uwolni CS resources dla growth initiatives"
+          ]
+        },
+        "initiatives": [
+          {
+            "title": "Integrator Quality Certification Program",
+            "description": "Wdrożenie obowiązkowego 3-poziomowego systemu certyfikacji QC dla wszystkich integratorów z automated monitoring i recertyfikacją co 12 miesięcy",
+            "type": "operational",
+            "estimatedImpact": "high",
+            "estimatedEffort": "medium",
+            "rationale": "Bezpośrednio adresuje root cause braku standardów QC. Expected impact: redukcja odchyleń o 60% w ciągu 6 miesięcy post-implementation."
+          },
+          {
+            "title": "Quality-Based Commission Restructuring",
+            "description": "Zmiana modelu prowizyjnego z flat 15% na 12% base + 3% quality bonus oparty na customer satisfaction, specification adherence i timeline compliance",
+            "type": "strategic",
+            "estimatedImpact": "high",
+            "estimatedEffort": "low",
+            "rationale": "Aligns financial incentives z quality outcomes. Low implementation effort, high behavioral impact na integratorów."
+          },
+          {
+            "title": "DACH Quality Partnership Initiative",
+            "description": "Strategiczne partnerstwa z niemieckimi certyfikatorami (TÜV, DEKRA) dla compliance z DIN/VDI standards i competitive differentiation",
+            "type": "growth",
+            "estimatedImpact": "high",
+            "estimatedEffort": "high",
+            "rationale": "Critical dla successful DACH expansion. Creates regulatory moat i premium positioning vs local competitors."
+          },
+          {
+            "title": "Automated Quality Monitoring Platform",
+            "description": "Development real-time project tracking z milestone-based quality gates, automated alerts i customer feedback integration",
+            "type": "operational",
+            "estimatedImpact": "medium",
+            "estimatedEffort": "high",
+            "rationale": "Enables proactive quality management i reduces CS manual workload o 67%. Foundation dla scalable operations."
+          }
+        ]
+      },
+      "ai_output_raw_chars": 10332,
+      "ocena_1_zdanie": "Poprawna logika A3 (problem → root cause z modelem prowizyjnym jako przyczyną systemową → certyfikacja 3-poziomowa + quality-based commission), ale wymyśla niepoparte liczby (investment 180k EUR, ROI 340k EUR) bez oznaczenia ich jako hipotezy — konsultant by to zakwestionował."
+    },
+    {
+      "tool": "capability-mapper",
+      "sessionId": "6c7ec19d-d767-4e34-a8b9-ab0a6d769073",
+      "case_input": {
+        "goal": "Które zdolności zbudować/kupić/zapartnerować, by skalować na DACH do 10M EUR w 3 lata?",
+        "scope": "Domeny: sprzedaż DACH, compliance DIN/VDI, sieć integratorów, platforma, CS, jakość/audyt.",
+        "successSignal": "15 certyfikowanych integratorów DACH + 2M EUR GMV z DACH w 18 mies.",
+        "constraints": "Max 3 nowe etaty sprzedaży w 2026, brak marki w DACH."
+      },
+      "ai_outputs": {
+        "signals": [
+          {
+            "type": "ai",
+            "content": "Obecny proces onboardingu integratora trwa 6-8 tygodni vs target 3 tygodnie",
+            "sourceLabel": "Organization context - operational challenges",
+            "confidence": 5,
+            "tags": [
+              "processes"
+            ],
+            "evidenceType": "fact",
+            "state": "proposed",
+            "provenance": "Client briefing data"
+          },
+          {
+            "type": "ai",
+            "content": "12% zleceń w Q2 2026 miało odchylenia od specyfikacji jakościowych",
+            "sourceLabel": "Organization context - quality metrics",
+            "confidence": 5,
+            "tags": [
+              "quality"
+            ],
+            "evidenceType": "fact",
+            "state": "proposed",
+            "provenance": "Client briefing data"
+          },
+          {
+            "type": "ai",
+            "content": "Brak lokalnych partnerów certyfikujących DIN/VDI w DACH",
+            "sourceLabel": "Organization context - compliance gap",
+            "confidence": 5,
+            "tags": [
+              "compliance",
+              "partnerships"
+            ],
+            "evidenceType": "fact",
+            "state": "proposed",
+            "provenance": "Client briefing data"
+          },
+          {
+            "type": "ai",
+            "content": "Ręczne raportowanie KPI zajmuje 15h/tydzień zespołowi CS",
+            "sourceLabel": "Organization context - process inefficiency",
+            "confidence": 5,
+            "tags": [
+              "technology",
+              "processes"
+            ],
+            "evidenceType": "fact",
+            "state": "proposed",
+            "provenance": "Client briefing data"
+          },
+          {
+            "type": "ai",
+            "content": "Churn integratorów 14%/rok przy wzroście 85% r/r",
+            "sourceLabel": "Organization context - retention metrics",
+            "confidence": 5,
+            "tags": [
+              "customer success"
+            ],
+            "evidenceType": "fact",
+            "state": "proposed",
+            "provenance": "Client briefing data"
+          }
+        ],
+        "capabilities": [
+          {
+            "name": "DACH Sales & Marketing Localization",
+            "domain": "talent",
+            "currentMaturity": 1,
+            "targetMaturity": 4,
+            "importance": "high",
+            "gapSize": "critical",
+            "sourcing": "build",
+            "drivers": [
+              "Market entry requirement",
+              "Local customer acquisition",
+              "Brand establishment"
+            ],
+            "evidence": [
+              "Brak istniejącej marki w DACH",
+              "Ograniczenie do max 3 nowych etatów w 2026"
+            ],
+            "implication": "Bez lokalnej obecności sprzedażowej niemożliwe osiągnięcie 2M EUR GMV w 18 miesięcy",
+            "confidence": 5
+          },
+          {
+            "name": "DIN/VDI Compliance & Certification",
+            "domain": "processes",
+            "currentMaturity": 1,
+            "targetMaturity": 5,
+            "importance": "high",
+            "gapSize": "critical",
+            "sourcing": "partner",
+            "drivers": [
+              "Regulatory requirement",
+              "Market credibility",
+              "Integrator certification"
+            ],
+            "evidence": [
+              "Brak lokalnych partnerów certyfikujących",
+              "Wymagania compliance DACH"
+            ],
+            "implication": "Bez certyfikacji DIN/VDI niemożliwe pozyskanie wiarygodnych integratorów w DACH",
+            "confidence": 5
+          },
+          {
+            "name": "Certified Integrator Network DACH",
+            "domain": "partnerships",
+            "currentMaturity": 1,
+            "targetMaturity": 4,
+            "importance": "high",
+            "gapSize": "critical",
+            "sourcing": "partner",
+            "drivers": [
+              "Service delivery capability",
+              "Local market coverage",
+              "Quality assurance"
+            ],
+            "evidence": [
+              "Target: minimum 15 aktywnych certyfikowanych integratorów",
+              "Obecny churn 14%/rok"
+            ],
+            "implication": "Sieć integratorów jest podstawą modelu biznesowego - bez niej brak skalowania",
+            "confidence": 5
+          },
+          {
+            "name": "Platform Technology - Matching & Workflow",
+            "domain": "technology",
+            "currentMaturity": 3,
+            "targetMaturity": 4,
+            "importance": "high",
+            "gapSize": "moderate",
+            "sourcing": "build",
+            "drivers": [
+              "Process automation",
+              "Scalability",
+              "User experience"
+            ],
+            "evidence": [
+              "Proces onboardingu 6-8 tygodni vs target 3 tygodnie",
+              "Ręczne raportowanie 15h/tydzień"
+            ],
+            "implication": "Automatyzacja procesów kluczowa dla efektywnego skalowania bez proporcjonalnego wzrostu kosztów",
+            "confidence": 4
+          },
+          {
+            "name": "Customer Success & Quality Management",
+            "domain": "processes",
+            "currentMaturity": 2,
+            "targetMaturity": 4,
+            "importance": "high",
+            "gapSize": "moderate",
+            "sourcing": "build",
+            "drivers": [
+              "Quality control",
+              "Customer retention",
+              "Operational excellence"
+            ],
+            "evidence": [
+              "12% zleceń z odchyleniami jakościowymi",
+              "Brak ustandaryzowanych SOP dla serwisu"
+            ],
+            "implication": "Jakość obsługi determinuje retencję klientów i reputację marki w nowym rynku",
+            "confidence": 4
+          },
+          {
+            "name": "Data Analytics & KPI Automation",
+            "domain": "data",
+            "currentMaturity": 2,
+            "targetMaturity": 4,
+            "importance": "medium",
+            "gapSize": "moderate",
+            "sourcing": "build",
+            "drivers": [
+              "Operational efficiency",
+              "Decision support",
+              "Scalability"
+            ],
+            "evidence": [
+              "Ręczne raportowanie KPI 15h/tydzień",
+              "Potrzeba monitoringu performance integratorów"
+            ],
+            "implication": "Automatyzacja raportowania uwolni zasoby CS na działania o wyższej wartości dodanej",
+            "confidence": 4
+          }
+        ],
+        "gaps": [
+          {
+            "title": "Critical Market Entry Gap - DACH Presence",
+            "capabilityIds": [
+              0,
+              1,
+              2
+            ],
+            "insight": "Brak podstawowych zdolności wejścia na rynek DACH: lokalnej sprzedaży, compliance i sieci partnerskiej",
+            "priority": "high",
+            "urgency": "high",
+            "recommendation": "Natychmiastowe uruchomienie równoległych inicjatyw: budowa zespołu sprzedaży, partnerstwo compliance, rekrutacja integratorów",
+            "confidence": 5
+          },
+          {
+            "title": "Operational Scalability Gap",
+            "capabilityIds": [
+              3,
+              4,
+              5
+            ],
+            "insight": "Obecne procesy nie są przygotowane na skalowanie - ręczne operacje, długie cykle, problemy jakościowe",
+            "priority": "high",
+            "urgency": "medium",
+            "recommendation": "Automatyzacja kluczowych procesów przed intensywną ekspansją, aby uniknąć degradacji jakości",
+            "confidence": 4
+          }
+        ],
+        "moves": [
+          {
+            "title": "Build DACH Sales Team (3 FTE)",
+            "category": "build",
+            "rationale": "Ograniczony budżet wymaga selektywnego zatrudnienia lokalnych ekspertów z doświadczeniem B2B industrial",
+            "linkedGapIds": [
+              0
+            ],
+            "linkedCapabilityIds": [
+              0
+            ],
+            "expectedImpact": "high",
+            "estimatedEffort": "medium",
+            "riskLevel": "medium",
+            "confidence": 4,
+            "firstStep": "Rekrutacja Head of Sales DACH z doświadczeniem w automatyzacji przemysłowej"
+          },
+          {
+            "title": "Partner with DIN/VDI Certification Body",
+            "category": "partner",
+            "rationale": "Budowa własnych kompetencji certyfikacyjnych byłaby zbyt kosztowna i czasochłonna",
+            "linkedGapIds": [
+              0
+            ],
+            "linkedCapabilityIds": [
+              1
+            ],
+            "expectedImpact": "high",
+            "estimatedEffort": "low",
+            "riskLevel": "low",
+            "confidence": 5,
+            "firstStep": "Identyfikacja i pierwsze rozmowy z akredytowanymi podmiotami certyfikującymi"
+          },
+          {
+            "title": "Accelerated Integrator Onboarding Program",
+            "category": "build",
+            "rationale": "Skrócenie cyklu onboardingu z 6-8 do 3 tygodni kluczowe dla szybkiej budowy sieci",
+            "linkedGapIds": [
+              0,
+              1
+            ],
+            "linkedCapabilityIds": [
+              2,
+              3
+            ],
+            "expectedImpact": "high",
+            "estimatedEffort": "medium",
+            "riskLevel": "medium",
+            "confidence": 4,
+            "firstStep": "Mapowanie obecnego procesu onboardingu i identyfikacja bottlenecków"
+          },
+          {
+            "title": "Platform Automation Suite",
+            "category": "build",
+            "rationale": "Automatyzacja raportowania i workflow'ów uwolni zasoby na ekspansję i poprawi jakość",
+            "linkedGapIds": [
+              1
+            ],
+            "linkedCapabilityIds": [
+              3,
+              5
+            ],
+            "expectedImpact": "medium",
+            "estimatedEffort": "high",
+            "riskLevel": "medium",
+            "confidence": 3,
+            "firstStep": "Priorytetyzacja funkcjonalności do automatyzacji na podstawie ROI"
+          }
+        ],
+        "outputCandidates": [
+          {
+            "outputType": "initiative",
+            "title": "DACH Market Entry Program",
+            "description": "Kompleksowa inicjatywa wejścia na rynek DACH obejmująca budowę zespołu, compliance i sieci partnerskiej",
+            "rationale": "Krytyczna dla osiągnięcia celu 2M EUR GMV w 18 miesięcy",
+            "linkedCapabilityIds": [
+              0,
+              1,
+              2
+            ],
+            "readiness": "ready-for-initiative"
+          },
+          {
+            "outputType": "initiative",
+            "title": "Platform Scalability Enhancement",
+            "description": "Automatyzacja kluczowych procesów operacyjnych dla wsparcia skalowania",
+            "rationale": "Niezbędne dla utrzymania jakości przy wzroście wolumenu",
+            "linkedCapabilityIds": [
+              3,
+              4,
+              5
+            ],
+            "readiness": "ready-for-initiative"
+          },
+          {
+            "outputType": "report",
+            "title": "DACH Competitive Intelligence Report",
+            "description": "Analiza konkurencji (Xometry Robotics, RoboMatch DE) i pozycjonowania DBR77",
+            "rationale": "Kluczowe dla strategii go-to-market i diferentiation",
+            "linkedCapabilityIds": [
+              0
+            ],
+            "readiness": "ready-for-report"
+          }
+        ],
+        "summary": {
+          "executiveSummary": "DBR77 ma krytyczne luki zdolności dla ekspansji DACH: brak lokalnej obecności sprzedażowej, compliance DIN/VDI i sieci certyfikowanych integratorów. Równolegle procesy operacyjne wymagają automatyzacji przed skalowaniem. Rekomendacja: równoległe uruchomienie inicjatywy wejścia na rynek (build sales team + partner compliance + recruit integrators) oraz programu automatyzacji platformy. Koszty: ~400k EUR w 2026, ROI oczekiwany w Q3 2027.",
+          "keyInsights": [
+            "Compliance DIN/VDI jest warunkiem sine qua non wejścia na rynek DACH - partnerstwo bardziej efektywne niż budowa własnych kompetencji",
+            "Obecne procesy operacyjne (onboarding 6-8 tygodni, ręczne raportowanie) nie są przygotowane na skalowanie bez degradacji jakości",
+            "Ograniczenie do 3 nowych etatów wymusza selektywną rekrutację i maksymalne wykorzystanie partnerstwa",
+            "12% odchyleń jakościowych przy obecnym wolumenie może zagrozić reputacji w nowym rynku"
+          ],
+          "appliedConclusions": [
+            "Priorytet 1: Natychmiastowe uruchomienie programu wejścia na rynek DACH z fokusem na compliance i sieć partnerską",
+            "Priorytet 2: Automatyzacja procesów onboardingu i raportowania przed intensyfikacją ekspansji",
+            "Priorytet 3: Budowa lokalnego zespołu sprzedaży z doświadczeniem industrial B2B w DACH"
+          ]
+        },
+        "initiatives": [
+          {
+            "title": "DACH Market Entry Accelerator",
+            "description": "18-miesięczny program wejścia na rynek DACH: budowa zespołu sprzedaży, partnerstwo compliance DIN/VDI, rekrutacja 15+ certyfikowanych integratorów",
+            "type": "strategic",
+            "rationale": "Kluczowe dla osiągnięcia strategicznego celu 10M EUR przychodu w 3 lata - DACH stanowi 60% docelowego rynku",
+            "estimatedImpact": "high",
+            "estimatedEffort": "high",
+            "linkedItems": [
+              "DACH Sales & Marketing Localization",
+              "DIN/VDI Compliance & Certification",
+              "Certified Integrator Network DACH"
+            ]
+          },
+          {
+            "title": "Platform Operational Excellence",
+            "description": "Automatyzacja procesów onboardingu (6-8 → 3 tygodnie), raportowania KPI i quality management dla wsparcia skalowania",
+            "type": "operational",
+            "rationale": "Bez automatyzacji procesów skalowanie spowoduje degradację jakości i wzrost kosztów operacyjnych",
+            "estimatedImpact": "medium",
+            "estimatedEffort": "medium",
+            "linkedItems": [
+              "Platform Technology - Matching & Workflow",
+              "Customer Success & Quality Management",
+              "Data Analytics & KPI Automation"
+            ]
+          }
+        ]
+      },
+      "ai_output_raw_chars": 12299,
+      "ocena_1_zdanie": "Najmocniejszy output: 6 zdolności z uczciwym scoringiem maturity (DACH sales 1→4, DIN/VDI 1→5), sensowne decyzje build/partner i sekwencja compliance-first; luki i ruchy spójne z ograniczeniem 3 etatów."
+    },
+    {
+      "tool": "ambition-decomposer",
+      "sessionId": "74063e68-0b42-467d-880e-73d0665ebf6f",
+      "case_input": {
+        "goal": "Rozłożyć ambicję 10M EUR GMV/rok (z 1,2M) na mierzalne workstreamy z priorytetami.",
+        "scope": "Cała organizacja DBR77 — PL, DACH, potencjalnie CEE.",
+        "successSignal": "10M EUR w roku 3, EBITDA dodatnia od roku 2, churn integratorów <10%.",
+        "constraints": "34 FTE, runway 18 mies., konkurencja DE rośnie szybciej organicznie w DACH."
+      },
+      "ai_outputs": {
+        "signals": [
+          {
+            "type": "ai",
+            "content": "Current revenue 1.2M EUR with 85% YoY growth indicates strong market traction but needs 8.3x scaling in 36 months",
+            "sourceLabel": "Organization context analysis",
+            "confidence": 5,
+            "tags": [
+              "growth",
+              "baseline"
+            ],
+            "evidenceType": "fact",
+            "state": "proposed",
+            "provenance": "DBR77 financial data"
+          },
+          {
+            "type": "ai",
+            "content": "DACH market entry critical - German competitors (Xometry Robotics, RoboMatch DE) growing faster organically",
+            "sourceLabel": "Competitive landscape analysis",
+            "confidence": 4,
+            "tags": [
+              "competition",
+              "expansion"
+            ],
+            "evidenceType": "observation",
+            "state": "proposed",
+            "provenance": "Organization context"
+          },
+          {
+            "type": "ai",
+            "content": "Operational inefficiencies: 6-8 week integrator onboarding vs 3-week target, 12% quality deviations, 14% integrator churn",
+            "sourceLabel": "Operational metrics review",
+            "confidence": 5,
+            "tags": [
+              "operations",
+              "efficiency"
+            ],
+            "evidenceType": "fact",
+            "state": "proposed",
+            "provenance": "DBR77 operational data"
+          }
+        ],
+        "themes": [
+          {
+            "title": "DACH Market Penetration & Localization",
+            "description": "Establish dominant position in German-speaking markets through local partnerships, compliance, and market-specific value propositions",
+            "targetMetric": "DACH revenue contribution",
+            "targetValue": "4M EUR annual (40% of total GMV)",
+            "horizon": "medium",
+            "importance": "high",
+            "drivers": [
+              "Market size 10x larger than Poland",
+              "German competitors growing faster",
+              "Need for DIN/VDI certification partners"
+            ],
+            "evidence": [
+              "German market opportunity",
+              "Competitor organic growth advantage"
+            ],
+            "implication": "Without DACH success, 10M EUR target becomes unattainable given Polish market constraints",
+            "confidence": 4
+          },
+          {
+            "title": "Platform Operational Excellence",
+            "description": "Streamline integrator onboarding, reduce quality deviations, automate KPI reporting to improve unit economics",
+            "targetMetric": "Integrator onboarding time",
+            "targetValue": "3 weeks (from current 6-8 weeks)",
+            "horizon": "short",
+            "importance": "high",
+            "drivers": [
+              "14% integrator churn hurts supply side",
+              "12% quality issues damage reputation",
+              "Manual processes don't scale"
+            ],
+            "evidence": [
+              "Current 6-8 week onboarding",
+              "12% quality deviations Q2 2026",
+              "15h/week manual KPI reporting"
+            ],
+            "implication": "Operational inefficiencies will compound at scale, making 10M EUR economics unsustainable",
+            "confidence": 5
+          },
+          {
+            "title": "Customer Acquisition Acceleration",
+            "description": "Scale demand generation in target segments while improving CAC efficiency and LTV expansion",
+            "targetMetric": "Customer Acquisition Cost (CAC)",
+            "targetValue": "3000 EUR (from current 4200 EUR)",
+            "horizon": "medium",
+            "importance": "high",
+            "drivers": [
+              "Current LTV/CAC 3.1 is acceptable but needs improvement",
+              "Need 8.3x revenue scaling",
+              "4-9 month sales cycles"
+            ],
+            "evidence": [
+              "Current CAC 4200 EUR",
+              "LTV/CAC ratio 3.1",
+              "Sales team 6 FTE"
+            ],
+            "implication": "Without CAC improvement, customer acquisition costs will consume growth capital before profitability",
+            "confidence": 4
+          },
+          {
+            "title": "Product-Led Growth Engine",
+            "description": "Build self-service capabilities and network effects to reduce dependency on direct sales for smaller deals",
+            "targetMetric": "Self-service revenue share",
+            "targetValue": "25% of total GMV",
+            "horizon": "long",
+            "importance": "medium",
+            "drivers": [
+              "Sales team capacity constraints",
+              "Smaller deals need lower touch model",
+              "Network effects potential"
+            ],
+            "evidence": [
+              "Current 6 FTE sales team",
+              "50k-500k EUR deal sizes",
+              "Marketplace model"
+            ],
+            "implication": "Pure sales-driven growth won't scale to 10M EUR without proportional team expansion",
+            "confidence": 3
+          },
+          {
+            "title": "Financial Sustainability Path",
+            "description": "Achieve positive EBITDA margin by year 2 while maintaining growth trajectory",
+            "targetMetric": "EBITDA margin",
+            "targetValue": "+5% by month 24",
+            "horizon": "medium",
+            "importance": "high",
+            "drivers": [
+              "Current -8% EBITDA unsustainable",
+              "18-month runway constraint",
+              "Need investor confidence"
+            ],
+            "evidence": [
+              "Current EBITDA margin -8%",
+              "18-month runway at current burn"
+            ],
+            "implication": "Without profitability path, growth funding becomes unavailable before 10M EUR target",
+            "confidence": 4
+          }
+        ],
+        "priorities": [
+          {
+            "title": "Priority 1: Platform Excellence Foundation",
+            "themeIds": [
+              1
+            ],
+            "insight": "Operational inefficiencies will compound exponentially at scale - must fix before aggressive expansion",
+            "priority": "high",
+            "urgency": "high",
+            "recommendation": "Immediately launch operational excellence program targeting 3-week onboarding and <5% quality deviations",
+            "confidence": 5
+          },
+          {
+            "title": "Priority 2: DACH Market Entry",
+            "themeIds": [
+              0
+            ],
+            "insight": "DACH represents 40% of revenue target - success here determines overall ambition feasibility",
+            "priority": "high",
+            "urgency": "medium",
+            "recommendation": "Establish DACH beachhead with local certification partners within 6 months",
+            "confidence": 4
+          },
+          {
+            "title": "Priority 3: Unit Economics Optimization",
+            "themeIds": [
+              2,
+              4
+            ],
+            "insight": "Current CAC and negative EBITDA create unsustainable growth trajectory",
+            "priority": "high",
+            "urgency": "medium",
+            "recommendation": "Implement CAC reduction and margin improvement initiatives in parallel with expansion",
+            "confidence": 4
+          }
+        ],
+        "moves": [
+          {
+            "title": "Integrator Onboarding Automation",
+            "category": "foundation",
+            "rationale": "Reduces bottleneck that prevents supply-side scaling essential for 10M EUR GMV",
+            "linkedPriorityIds": [
+              0
+            ],
+            "linkedThemeIds": [
+              1
+            ],
+            "expectedImpact": "high",
+            "estimatedEffort": "medium",
+            "riskLevel": "low",
+            "confidence": 5,
+            "firstStep": "Map current onboarding process and identify top 3 automation opportunities"
+          },
+          {
+            "title": "DACH Certification Partner Network",
+            "category": "accelerator",
+            "rationale": "Unlocks 40% of revenue target through compliant market entry",
+            "linkedPriorityIds": [
+              1
+            ],
+            "linkedThemeIds": [
+              0
+            ],
+            "expectedImpact": "high",
+            "estimatedEffort": "high",
+            "riskLevel": "medium",
+            "confidence": 4,
+            "firstStep": "Identify and approach top 5 DIN/VDI certified integration partners in Germany"
+          },
+          {
+            "title": "Quality Management System Overhaul",
+            "category": "foundation",
+            "rationale": "12% quality deviations damage reputation and increase churn",
+            "linkedPriorityIds": [
+              0
+            ],
+            "linkedThemeIds": [
+              1
+            ],
+            "expectedImpact": "medium",
+            "estimatedEffort": "medium",
+            "riskLevel": "low",
+            "confidence": 5,
+            "firstStep": "Implement standardized SOP for service request handling"
+          },
+          {
+            "title": "Customer Success Automation Platform",
+            "category": "enabler",
+            "rationale": "Eliminates 15h/week manual work and improves integrator retention",
+            "linkedPriorityIds": [
+              0,
+              2
+            ],
+            "linkedThemeIds": [
+              1,
+              2
+            ],
+            "expectedImpact": "medium",
+            "estimatedEffort": "low",
+            "riskLevel": "low",
+            "confidence": 4,
+            "firstStep": "Automate integrator KPI reporting dashboard"
+          },
+          {
+            "title": "DACH-Specific Value Proposition Development",
+            "category": "accelerator",
+            "rationale": "German market requires localized positioning to compete with native players",
+            "linkedPriorityIds": [
+              1
+            ],
+            "linkedThemeIds": [
+              0
+            ],
+            "expectedImpact": "high",
+            "estimatedEffort": "medium",
+            "riskLevel": "medium",
+            "confidence": 3,
+            "firstStep": "Conduct market research on German SME automation procurement preferences"
+          },
+          {
+            "title": "Sales Process Optimization",
+            "category": "quick-win",
+            "rationale": "Improve CAC efficiency without major platform changes",
+            "linkedPriorityIds": [
+              2
+            ],
+            "linkedThemeIds": [
+              2
+            ],
+            "expectedImpact": "medium",
+            "estimatedEffort": "low",
+            "riskLevel": "low",
+            "confidence": 4,
+            "firstStep": "Analyze current sales funnel conversion rates and identify bottlenecks"
+          }
+        ],
+        "outputCandidates": [
+          {
+            "outputType": "initiative",
+            "title": "DACH Market Entry Program",
+            "description": "Comprehensive market entry strategy for German-speaking markets",
+            "rationale": "Critical for achieving 40% of revenue target",
+            "linkedMoveIds": [
+              1,
+              4
+            ],
+            "linkedThemeIds": [
+              0
+            ],
+            "readiness": "ready-for-initiative"
+          },
+          {
+            "outputType": "initiative",
+            "title": "Operational Excellence Transformation",
+            "description": "End-to-end operational efficiency improvement program",
+            "rationale": "Foundation required before scaling to 10M EUR",
+            "linkedMoveIds": [
+              0,
+              2,
+              3
+            ],
+            "linkedThemeIds": [
+              1
+            ],
+            "readiness": "ready-for-initiative"
+          },
+          {
+            "outputType": "report",
+            "title": "Unit Economics Deep Dive Analysis",
+            "description": "Comprehensive analysis of current economics and improvement levers",
+            "rationale": "Data foundation for CAC and margin improvement initiatives",
+            "linkedMoveIds": [
+              5
+            ],
+            "linkedThemeIds": [
+              2,
+              4
+            ],
+            "readiness": "ready-for-report"
+          }
+        ],
+        "summary": {
+          "executiveSummary": "DBR77's 10M EUR ambition requires 8.3x revenue scaling in 36 months. Success depends on three critical pillars: (1) operational excellence to handle scale, (2) successful DACH market penetration for 40% of target revenue, and (3) unit economics optimization for sustainable growth. Current operational inefficiencies and negative EBITDA create compounding risks that must be addressed before aggressive expansion.",
+          "keyInsights": [
+            "DACH market represents 40% of revenue target - success here determines ambition feasibility",
+            "Current operational inefficiencies will compound at scale, threatening unit economics",
+            "18-month runway constraint requires rapid path to positive EBITDA",
+            "German competitors' organic growth advantage demands differentiated market entry strategy"
+          ],
+          "appliedConclusions": [
+            "Prioritize operational foundation before market expansion to avoid scaling broken processes",
+            "DACH entry must be partnership-driven given local compliance requirements and competitive landscape",
+            "CAC improvement and margin optimization are parallel requirements, not sequential goals"
+          ]
+        },
+        "initiatives": [
+          {
+            "title": "DACH Market Penetration Initiative",
+            "description": "Establish market presence in Germany, Austria, and Switzerland through local partnerships and compliance",
+            "type": "growth",
+            "rationale": "Required to achieve 40% of 10M EUR revenue target",
+            "estimatedImpact": "high",
+            "estimatedEffort": "high",
+            "linkedItems": [
+              "DACH Certification Partner Network",
+              "DACH-Specific Value Proposition Development"
+            ]
+          },
+          {
+            "title": "Platform Operational Excellence Program",
+            "description": "Comprehensive operational efficiency improvement targeting onboarding, quality, and automation",
+            "type": "operational",
+            "rationale": "Foundation required to handle 8.3x revenue scaling without proportional cost increases",
+            "estimatedImpact": "high",
+            "estimatedEffort": "medium",
+            "linkedItems": [
+              "Integrator Onboarding Automation",
+              "Quality Management System Overhaul",
+              "Customer Success Automation Platform"
+            ]
+          },
+          {
+            "title": "Unit Economics Optimization Initiative",
+            "description": "Systematic improvement of CAC efficiency and margin expansion to achieve positive EBITDA by year 2",
+            "type": "strategic",
+            "rationale": "Critical for financial sustainability and continued growth funding",
+            "estimatedImpact": "high",
+            "estimatedEffort": "medium",
+            "linkedItems": [
+              "Sales Process Optimization",
+              "Customer Success Automation Platform"
+            ]
+          }
+        ]
+      },
+      "ai_output_raw_chars": 13312,
+      "ocena_1_zdanie": "Dobra dekompozycja 8,3x wzrostu na 5 tematów z mierzalnymi targetami (DACH=4M EUR/40%, CAC 4200→3000, self-service 25% GMV) i trzeźwym akcentem na unit economics przed agresywnym skalowaniem; targety liczbowo spójne z case."
+    },
+    {
+      "tool": "pain-explorer",
+      "sessionId": "40ff9f63-7830-4684-8a72-077a67cb3bcb",
+      "case_input": {
+        "goal": "Zidentyfikować i zweryfikować pain points w onboardingu integratorów i CS blokujące skalowanie DACH.",
+        "scope": "Onboarding integratora + interakcje CS, PL i pilotaż DACH.",
+        "successSignal": "Min. 5 zweryfikowanych hipotez bólu z dowodami, 3 z jasną ścieżką rozwiązania.",
+        "constraints": "Dane: 12 transkryptów rozmów CS Q2 2026, dashboard onboardingu, ticketing."
+      },
+      "ai_outputs": {
+        "sections": {
+          "problems": [
+            {
+              "title": "Przedłużony onboarding integratora (6-8 tygodni vs target 3 tygodnie)",
+              "description": "Proces certyfikacji i wdrożenia nowych integratorów trwa dwukrotnie dłużej niż planowane 3 tygodnie, blokując skalowanie na DACH gdzie potrzeba lokalnych partnerów DIN/VDI",
+              "impact": "high",
+              "effort": "medium",
+              "category": "process_efficiency",
+              "owner": "Head of Operations",
+              "target": "3 tygodnie",
+              "frequency": "per_integrator",
+              "threshold": "21 dni"
+            },
+            {
+              "title": "Brak standardowych SOP dla obsługi zgłoszeń serwisowych",
+              "description": "Zespół CS operuje bez ustandaryzowanych procedur, co prowadzi do niespójnej jakości obsługi i wydłużonych czasów rozwiązywania problemów integratorów",
+              "impact": "high",
+              "effort": "low",
+              "category": "process_standardization",
+              "owner": "CS Manager",
+              "target": "SOP dla 100% typów zgłoszeń",
+              "frequency": "continuous"
+            },
+            {
+              "title": "Wysokie odchylenia jakościowe (12% zleceń w Q2 2026)",
+              "description": "Co ósmemu zleceniu towarzyszy reklamacja jakościowa, co podważa zaufanie do platformy i zwiększa koszty obsługi posprzedażowej",
+              "impact": "high",
+              "effort": "high",
+              "category": "quality_control",
+              "owner": "Quality Manager",
+              "target": "<5% odchyleń",
+              "frequency": "quarterly",
+              "threshold": "5%"
+            },
+            {
+              "title": "Ręczne raportowanie KPI (15h/tydzień zespołu CS)",
+              "description": "Brak automatyzacji w zbieraniu i raportowaniu wskaźników wydajności integratorów pochłania 37,5% czasu pracy zespołu CS (4 FTE)",
+              "impact": "medium",
+              "effort": "medium",
+              "category": "automation",
+              "owner": "CS Manager + IT",
+              "target": "<2h/tydzień",
+              "frequency": "weekly",
+              "durationMinutes": 900
+            },
+            {
+              "title": "Brak lokalnych partnerów certyfikujących w DACH",
+              "description": "Ekspansja na rynek niemiecki, austriacki i szwajcarski wymaga partnerów z certyfikatami DIN/VDI, których platforma obecnie nie posiada",
+              "impact": "high",
+              "effort": "high",
+              "category": "market_expansion",
+              "owner": "Head of Sales DACH",
+              "target": "Min. 3 partnerów DIN/VDI",
+              "frequency": "one_time"
+            },
+            {
+              "title": "Churn integratorów 14%/rok przy LTV/CAC 3.1",
+              "description": "Wskaźnik odejść integratorów przekracza benchmarki B2B marketplace (8-10%), sygnalizując problemy w relacjach długoterminowych",
+              "impact": "medium",
+              "effort": "medium",
+              "category": "retention",
+              "owner": "CS Manager",
+              "target": "<10%/rok",
+              "frequency": "annual",
+              "threshold": "10%"
+            }
+          ],
+          "hypotheses": [
+            {
+              "title": "H1: Onboarding wydłuża brak cyfrowego workflow certyfikacji",
+              "description": "Hipoteza: proces certyfikacji integratorów opiera się na dokumentach email/PDF zamiast zintegrowanego systemu, co powoduje opóźnienia i błędy komunikacyjne",
+              "impact": "high",
+              "effort": "medium",
+              "category": "digitalization",
+              "owner": "Product Manager",
+              "target": "Zweryfikować w transkryptach CS"
+            },
+            {
+              "title": "H2: Reklamacje wynikają z niedopasowania kompetencji integrator-projekt",
+              "description": "Hipoteza: 12% odchyleń jakościowych to efekt błędnego matchingu - integratorzy otrzymują zlecenia poza swoimi core competencies",
+              "impact": "high",
+              "effort": "low",
+              "category": "matching_algorithm",
+              "owner": "Product Manager",
+              "target": "Analiza danych matchingu vs reklamacje"
+            },
+            {
+              "title": "H3: CS reaguje zamiast proaktywnie zapobiegać problemom",
+              "description": "Hipoteza: brak SOP prowadzi do reaktywnej obsługi - zespół gasi pożary zamiast identyfikować wzorce i zapobiegać problemom u źródła",
+              "impact": "medium",
+              "effort": "low",
+              "category": "proactive_support",
+              "owner": "CS Manager",
+              "target": "Mapowanie typów zgłoszeń w Zendesk"
+            },
+            {
+              "title": "H4: Ręczne KPI demotywuje integratorów przez opóźnione feedback",
+              "description": "Hipoteza: 15h/tydzień na ręczne raporty oznacza, że integratorzy otrzymują feedback o performance z opóźnieniem, co obniża motywację do poprawy",
+              "impact": "medium",
+              "effort": "medium",
+              "category": "feedback_loop",
+              "owner": "CS Manager",
+              "target": "Survey z integratorami o częstości feedback"
+            },
+            {
+              "title": "H5: DACH wymaga innego modelu obsługi niż PL/CEE",
+              "description": "Hipoteza: niemiecki rynek ma wyższe standardy compliance i dokumentacji, obecny model CS nie spełnia lokalnych oczekiwań biznesowych",
+              "impact": "high",
+              "effort": "high",
+              "category": "localization",
+              "owner": "Head of Sales DACH",
+              "target": "Benchmarking vs Xometry Robotics, RoboMatch DE"
+            }
+          ],
+          "evidence-gaps": [
+            {
+              "title": "Brak analizy root cause dla 12% reklamacji jakościowych",
+              "description": "Potrzebna kategoryzacja przyczyn odchyleń: błąd integratora, specyfikacja klienta, proces matchingu, czy komunikacja pre-sales",
+              "impact": "high",
+              "effort": "low",
+              "category": "root_cause_analysis",
+              "owner": "Quality Manager",
+              "target": "Analiza 100% reklamacji Q2 2026"
+            },
+            {
+              "title": "Brak danych o conversion rate w procesie onboardingu",
+              "description": "Nieznane: ile % integratorów kończy onboarding, na którym etapie rezygnują, jakie są główne bariery wejścia na platformę",
+              "impact": "medium",
+              "effort": "low",
+              "category": "funnel_analysis",
+              "owner": "Head of Operations",
+              "target": "Tracking funnel onboarding"
+            },
+            {
+              "title": "Brak benchmarku czasów rozwiązywania zgłoszeń CS",
+              "description": "Nieznane SLA dla różnych typów problemów integratorów - brak danych o aktualnych czasach vs oczekiwania rynku DACH",
+              "impact": "medium",
+              "effort": "low",
+              "category": "sla_benchmarking",
+              "owner": "CS Manager",
+              "target": "Analiza Zendesk + research konkurencji"
+            },
+            {
+              "title": "Brak segmentacji integratorów według value/effort",
+              "description": "Wszystkich integratorów obsługuje się jednakowo, brak danych o tym, którzy generują nejvíce GMV vs wymagają najwięcej wsparcia CS",
+              "impact": "medium",
+              "effort": "medium",
+              "category": "segmentation",
+              "owner": "CS Manager + Analytics",
+              "target": "Matryca value/effort per integrator"
+            },
+            {
+              "title": "Brak kosztów alternatywnych opóźnionego onboardingu",
+              "description": "Nieznany koszt biznesowy: ile potencjalnego GMV traci platforma przez każdy tydzień opóźnienia w onboardingu integratora",
+              "impact": "low",
+              "effort": "medium",
+              "category": "opportunity_cost",
+              "owner": "Finance Manager",
+              "target": "Model finansowy opóźnień"
+            }
+          ]
+        },
+        "summary": {
+          "executiveSummary": "DBR77 stoi przed krytycznymi wyzwaniami operacyjnymi, które blokują skalowanie na DACH: onboarding integratora trwa dwukrotnie dłużej niż target (6-8 vs 3 tygodnie), 12% zleceń ma odchylenia jakościowe, a brak SOP w CS pochłania 37,5% czasu zespołu na ręczne procesy. Kluczowe hipotezy wskazują na brak cyfryzacji workflow i reaktywny model obsługi jako główne źródła bólu.",
+          "keyInsights": [
+            "Onboarding integratora stanowi wąskie gardło ekspansji - każdy tydzień opóźnienia blokuje potencjalne GMV",
+            "Wysokie odchylenia jakościowe (12%) sygnalizują systemowy problem w matchingu lub komunikacji specyfikacji",
+            "Ręczne procesy CS (15h/tydzień) skalują się liniowo z liczbą integratorów, co jest nieefektywne przy wzroście 85% r/r",
+            "Brak lokalnych standardów DACH może wyjaśniać przewagę konkurencji (Xometry Robotics, RoboMatch DE) na tym rynku"
+          ],
+          "appliedConclusions": [
+            "Priorytet 1: Digitalizacja onboardingu może skrócić czas o 50% i odblokować ekspansję DACH",
+            "Priorytet 2: Standardyzacja SOP + automatyzacja KPI uwolni 75% czasu CS na proaktywne działania",
+            "Priorytet 3: Root cause analysis reklamacji może obniżyć odchylenia z 12% do <5% przez lepszy matching"
+          ]
+        },
+        "initiatives": [
+          {
+            "title": "Digitalizacja Onboarding Workflow",
+            "description": "Implementacja cyfrowego systemu certyfikacji integratorów z automatycznymi checklistami, dokumentacją online i tracking postępów w czasie rzeczywistym",
+            "type": "operational",
+            "estimatedImpact": "high",
+            "estimatedEffort": "medium",
+            "rationale": "Skrócenie onboardingu z 6-8 do 3 tygodni odblokuje ekspansję DACH i zwiększy conversion rate nowych integratorów"
+          },
+          {
+            "title": "CS Process Standardization & Automation",
+            "description": "Opracowanie SOP dla wszystkich typów zgłoszeń + automatyzacja raportowania KPI integratorów z dashboardem real-time",
+            "type": "operational",
+            "estimatedImpact": "high",
+            "estimatedEffort": "low",
+            "rationale": "Uwolnienie 75% czasu CS (11,25h/tydzień) na proaktywne działania i konsystentna jakość obsługi"
+          },
+          {
+            "title": "Quality Control & Matching Optimization",
+            "description": "Root cause analysis reklamacji + optymalizacja algorytmu matchingu integrator-projekt bazująca na historycznych danych performance",
+            "type": "operational",
+            "estimatedImpact": "high",
+            "estimatedEffort": "medium",
+            "rationale": "Redukcja odchyleń jakościowych z 12% do <5% zwiększy zadowolenie klientów i obniży koszty obsługi reklamacji"
+          },
+          {
+            "title": "DACH Market Entry Strategy",
+            "description": "Pozyskanie lokalnych partnerów certyfikujących DIN/VDI + adaptacja procesów CS do standardów niemieckich/austriackich/szwajcarskich",
+            "type": "strategic",
+            "estimatedImpact": "high",
+            "estimatedEffort": "high",
+            "rationale": "Niezbędne dla konkurowania z Xometry Robotics i RoboMatch DE na rynku DACH wartym potencjalnie 60% całkowitego TAM"
+          }
+        ]
+      },
+      "ai_output_raw_chars": 11231,
+      "ocena_1_zdanie": "Rzetelna struktura problem→hipoteza→luka dowodowa (H1-H5 falsyfikowalne, evidence-gaps wprost wskazują czego brakuje w danych), dobrze wykorzystuje zadeklarowane źródła (12 transkryptów, ticketing); spełnia kryterium sukcesu z brief."
+    },
+    {
+      "tool": "rpa-scanner",
+      "sessionId": "4a16c256-7284-45f9-8d82-3d5a496035dd",
+      "case_input": {
+        "goal": "Kandydaci RPA w operacjach DBR77, priorytet: raportowanie KPI integratorów (~15h/tydz. ręcznie).",
+        "scope": "Raportowanie KPI, weryfikacja dokumentów certyfikacyjnych, matching zgłoszeń serwisowych.",
+        "successSignal": "-8h/tydz. pracy ręcznej CS w 2 kwartały, payback <12 mies. dla min. 2 kandydatów.",
+        "constraints": "Stack: Google Sheets + ticketing, brak RPA/iPaaS, budżet <20k EUR/rok."
+      },
+      "ai_outputs": {
+        "sections": {
+          "candidates": [
+            {
+              "title": "Automatyzacja raportowania KPI integratorów z Google Sheets",
+              "description": "Implementacja skryptu Google Apps Script do automatycznego generowania raportów KPI integratorów (czas realizacji, jakość, compliance) z danych platformy. Eliminuje ręczne kopiowanie danych i formatowanie raportów tygodniowych.",
+              "impact": "high",
+              "effort": "medium",
+              "category": "reporting",
+              "owner": "CS Team Lead",
+              "target": "Redukcja z 15h do 3h tygodniowo",
+              "frequency": "weekly",
+              "durationMinutes": 180
+            },
+            {
+              "title": "Automatyczna weryfikacja dokumentów certyfikacyjnych integratorów",
+              "description": "Bot weryfikujący kompletność i ważność dokumentów certyfikacyjnych (ISO, CE, lokalnych certyfikatów) poprzez OCR i cross-check z bazami certyfikującymi. Priorytet dla ekspansji DACH (DIN/VDI).",
+              "impact": "high",
+              "effort": "high",
+              "category": "compliance",
+              "owner": "Compliance Manager",
+              "target": "100% automatyczna weryfikacja podstawowych certyfikatów",
+              "frequency": "on-demand",
+              "durationMinutes": 45
+            },
+            {
+              "title": "Automatyczne routing zgłoszeń serwisowych do właściwych integratorów",
+              "description": "System automatycznego przypisywania ticketów serwisowych do integratorów na podstawie lokalizacji, specjalizacji i dostępności. Integracja Zendesk API z bazą integratorów platformy.",
+              "impact": "medium",
+              "effort": "medium",
+              "category": "customer_service",
+              "owner": "CS Team Lead",
+              "target": "80% automatyczne routing, redukcja czasu przypisania o 70%",
+              "frequency": "real-time",
+              "durationMinutes": 15
+            },
+            {
+              "title": "Monitoring jakości i alerting odchyleń od specyfikacji",
+              "description": "Automatyczne monitorowanie metryk jakości projektów (obecnie 12% odchyleń) z alertami dla CS przy przekroczeniu progów. Dashboard real-time z predykcją ryzyka jakościowego.",
+              "impact": "high",
+              "effort": "medium",
+              "category": "quality_assurance",
+              "owner": "Quality Manager",
+              "target": "Redukcja odchyleń z 12% do 8%",
+              "frequency": "daily",
+              "threshold": "8% deviation rate",
+              "durationMinutes": 30
+            },
+            {
+              "title": "Automatyzacja procesu onboardingu integratorów",
+              "description": "Workflow automatyzujący sekwencję kroków onboardingu (weryfikacja dokumentów, training materials, setup konta) z trackingiem postępu. Cel: skrócenie z 6-8 tygodni do 3 tygodni.",
+              "impact": "medium",
+              "effort": "high",
+              "category": "onboarding",
+              "owner": "Partner Success Manager",
+              "target": "Onboarding 3 tygodnie, 90% automatyzacja kroków administracyjnych",
+              "frequency": "per-integrator",
+              "durationMinutes": 120
+            }
+          ],
+          "sizing": [
+            {
+              "title": "Analiza kosztów licencji RPA/iPaaS tools vs budżet 20k EUR",
+              "description": "Porównanie Microsoft Power Automate (300 EUR/user/rok), Zapier Business (600 EUR/rok), UiPath Community vs Google Apps Script (darmowy). Rekomendacja: start z Google Apps Script + Zapier dla integracji.",
+              "impact": "high",
+              "effort": "low",
+              "category": "cost_analysis",
+              "owner": "CFO",
+              "target": "Maksymalnie 15k EUR w pierwszym roku",
+              "frequency": "annual",
+              "durationMinutes": 480
+            },
+            {
+              "title": "ROI calculation dla top 3 kandydatów automatyzacji",
+              "description": "Szczegółowa analiza ROI: raportowanie KPI (oszczędność 12h*50 EUR = 600 EUR/tydzień), weryfikacja dokumentów (redukcja błędów compliance o 30%), routing zgłoszeń (poprawa SLA o 40%).",
+              "impact": "high",
+              "effort": "medium",
+              "category": "financial_analysis",
+              "owner": "Finance Manager",
+              "target": "Payback < 12 miesięcy dla min. 2 procesów",
+              "frequency": "quarterly",
+              "durationMinutes": 360
+            },
+            {
+              "title": "Oszacowanie nakładu implementacyjnego dla zespołu tech",
+              "description": "Mapowanie wymaganych godzin dev dla każdego kandydata: Google Sheets automation (40h), document verification (120h), ticket routing (80h). Priorytetyzacja według effort/impact ratio.",
+              "impact": "medium",
+              "effort": "low",
+              "category": "resource_planning",
+              "owner": "CTO",
+              "target": "Plan implementacji Q1-Q2 2026",
+              "frequency": "project-based",
+              "durationMinutes": 240
+            },
+            {
+              "title": "Benchmark czasów procesów przed automatyzacją",
+              "description": "Precyzyjny pomiar aktualnych czasów: raportowanie KPI (15h/tydzień), weryfikacja dokumentów (45min/integrator), routing zgłoszeń (15min/ticket). Baseline dla pomiaru sukcesu automatyzacji.",
+              "impact": "medium",
+              "effort": "low",
+              "category": "baseline_measurement",
+              "owner": "Operations Manager",
+              "target": "Kompletny baseline w 2 tygodnie",
+              "frequency": "one-time",
+              "durationMinutes": 120
+            }
+          ],
+          "backlog": [
+            {
+              "title": "Automatyzacja compliance reporting dla ekspansji DACH",
+              "description": "Przygotowanie automatycznych raportów zgodności z niemieckimi standardami DIN/VDI dla integratorów. Krytyczne dla skalowania na rynek niemiecki (target: 10 mln EUR GMV).",
+              "impact": "high",
+              "effort": "high",
+              "category": "regulatory_compliance",
+              "owner": "Compliance Manager",
+              "target": "Ready for DACH launch Q3 2026",
+              "frequency": "monthly",
+              "durationMinutes": 180
+            },
+            {
+              "title": "Predykcyjne modele churn prevention dla integratorów",
+              "description": "ML model przewidujący ryzyko odejścia integratorów (obecnie 14% churn/rok) na podstawie metryk aktywności, jakości, satisfaction scores. Early warning system dla retention actions.",
+              "impact": "medium",
+              "effort": "high",
+              "category": "predictive_analytics",
+              "owner": "Data Analyst",
+              "target": "Redukcja churn z 14% do 10%",
+              "frequency": "monthly",
+              "durationMinutes": 60
+            },
+            {
+              "title": "Automatyczna kalkulacja i approval pricing dla projektów",
+              "description": "Engine automatycznie kalkulujący ceny projektów na podstawie complexity, location, integrator rates. Automatyczne approval dla projektów < 100k EUR, workflow dla większych.",
+              "impact": "medium",
+              "effort": "high",
+              "category": "pricing_automation",
+              "owner": "Sales Operations",
+              "target": "80% projektów auto-approved, redukcja cyklu sprzedaży o 20%",
+              "frequency": "per-project",
+              "durationMinutes": 30
+            },
+            {
+              "title": "Integracja z systemami ERP klientów dla order management",
+              "description": "API connectors do popularnych ERP (SAP, Sage, Comarch) dla automatycznego import zamówień i status updates. Redukcja manual data entry po stronie klientów MŚP.",
+              "impact": "low",
+              "effort": "high",
+              "category": "system_integration",
+              "owner": "Integration Team",
+              "target": "Integracja z top 5 ERP systemami",
+              "frequency": "per-client",
+              "durationMinutes": 90
+            }
+          ]
+        },
+        "summary": {
+          "executiveSummary": "RPA Scanner zidentyfikował 5 kluczowych kandydatów do automatyzacji w DBR77, z najwyższym priorytetem dla automatyzacji raportowania KPI integratorów (redukcja z 15h do 3h tygodniowo). Business case pokazuje payback < 12 miesięcy dla 3 z 5 procesów przy budżecie narzędzi 15k EUR/rok. Implementacja w Q1-Q2 2026 może zredukować nakład pracy CS o 8-12h tygodniowo, wspierając skalowanie na DACH bez proporcjonalnego wzrostu kosztów operacyjnych.",
+          "keyInsights": [
+            "Raportowanie KPI integratorów (15h/tydzień) ma najwyższy potencjał automatyzacji z ROI 400% w pierwszym roku",
+            "Weryfikacja dokumentów certyfikacyjnych jest krytyczna dla ekspansji DACH - automatyzacja obowiązkowa przed wejściem na rynek niemiecki",
+            "Obecny tech stack (Google Sheets, Zendesk-like) pozwala na implementację 80% automatyzacji bez dodatkowych licencji enterprise",
+            "12% odchyleń jakościowych można zredukować do 8% poprzez automatyczny monitoring i early warning system"
+          ],
+          "appliedConclusions": [
+            "Priorytet 1: Google Apps Script dla automatyzacji raportowania KPI - start w styczniu 2026, ROI widoczny po 3 miesiącach",
+            "Priorytet 2: OCR + API verification dla dokumentów certyfikacyjnych - kluczowe dla DACH expansion timeline",
+            "Budżet narzędzi 15k EUR wystarczy na implementację top 3 kandydatów z wykorzystaniem Zapier + Google Workspace",
+            "Sukces automatyzacji wymaga 2-tygodniowego baseline measurement przed implementacją każdego procesu"
+          ]
+        },
+        "initiatives": [
+          {
+            "title": "RPA Quick Wins - Automatyzacja Raportowania KPI",
+            "description": "Implementacja Google Apps Script dla automatycznego generowania raportów KPI integratorów, eliminująca 12h ręcznej pracy tygodniowo zespołu CS. Pierwszy krok w programie automatyzacji operacyjnej.",
+            "type": "operational",
+            "estimatedImpact": "high",
+            "estimatedEffort": "medium",
+            "rationale": "Najwyższy ROI (400% w rok 1), najniższe ryzyko techniczne, bezpośredni wpływ na produktywność CS team w kontekście skalowania DACH"
+          },
+          {
+            "title": "Compliance Automation dla Ekspansji DACH",
+            "description": "Automatyzacja weryfikacji dokumentów certyfikacyjnych integratorów z focus na standardy DIN/VDI. Krytyczne dla terminowego wejścia na rynek niemiecki i osiągnięcia target 10 mln EUR GMV.",
+            "type": "strategic",
+            "estimatedImpact": "high",
+            "estimatedEffort": "high",
+            "rationale": "Blokuje ekspansję DACH bez automatyzacji, compliance risk, opportunity cost 8.8 mln EUR GMV jeśli opóźnienie > 6 miesięcy"
+          },
+          {
+            "title": "Quality Intelligence System",
+            "description": "Automatyczny monitoring jakości projektów z predykcyjnym alertingiem dla redukcji odchyleń z 12% do 8%. Dashboard real-time dla proaktywnego quality management.",
+            "type": "operational",
+            "estimatedImpact": "medium",
+            "estimatedEffort": "medium",
+            "rationale": "Redukcja kosztów reklamacji o 30%, poprawa NPS integratorów, wsparcie dla premium positioning na rynku DACH"
+          }
+        ]
+      },
+      "ai_output_raw_chars": 10727,
+      "ocena_1_zdanie": "Konkretny backlog RPA z priorytetyzacją (KPI reporting 15h→3h jako quick win), sizing respektuje budżet <20k EUR i payback <12 mies.; sekcja sizing to bardziej zadania analityczne niż wyliczone business case’y — do pogłębienia, ale jako first draft broni się."
+    }
+  ]
+}
