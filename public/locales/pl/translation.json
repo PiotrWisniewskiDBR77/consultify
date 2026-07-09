@@ -920,7 +920,12 @@
       "duplicate": "Duplikuj",
       "delete": "Usuń",
       "saving": "Zapisywanie…",
-      "saved": "Zapisano"
+      "saved": "Zapisano",
+      "move": "Przenieś",
+      "moveToTop": "Na górę",
+      "moveToBottom": "Na dół",
+      "moveToPosition": "Na pozycję…",
+      "moveToPositionPrompt": "Przenieś na pozycję (1-{{count}})"
     },
     "agent": {
       "title": "Agent AI",

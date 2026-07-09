@@ -10996,7 +10996,12 @@
       "delete": "Delete",
       "slideSorter": "Slides",
       "saving": "Saving…",
-      "saved": "Saved"
+      "saved": "Saved",
+      "move": "Move",
+      "moveToTop": "To top",
+      "moveToBottom": "To bottom",
+      "moveToPosition": "To position…",
+      "moveToPositionPrompt": "Move to position (1-{{count}})"
     },
     "governance": {
       "loading": "Loading…",
