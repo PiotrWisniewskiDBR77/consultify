@@ -116,9 +116,11 @@ ${sectionSpec}
     "appliedConclusions": ["..."]
   },
   "initiatives": [
-    {"title": "...", "description": "...", "type": "operational|strategic|growth|defensive", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "..."}
+    {"title": "...", "description": "...", "type": "operational|strategic|growth|defensive", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["section-item-title-or-id"]}
   ]
 }
+
+Each initiative MUST set "linkedItems": an array naming the section item(s) it traces back to (use the item's title if no id is visible) — this is how the client sees WHY the initiative exists. Never leave it out; use [] only if the initiative genuinely has no direct item behind it.
 
 Each section array item shape (confidence/evidenceType/derivation/rationale/state/requires_evidence are OPTIONAL but REQUIRED whenever the item carries a number or claim not present verbatim in the context — see GROUNDING RULES above):
 {"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "category": "...", "owner": "...", "target": "...", "frequency": "...", "threshold": "...", "durationMinutes": 0, "confidence": 1-5, "evidenceType": "fact|observation|assumption|hypothesis", "derivation": "numerator/denominator behind any number in this item, or omit if none", "rationale": "...", "state": "proposed|confirmed|rejected", "requires_evidence": false}`;

@@ -7,7 +7,7 @@
  * - Tool-specific analysis generation
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   getToolPhaseAiActions,
@@ -90,6 +90,7 @@ import {
   buildCapabilityMapperGapsPrompt,
   buildCapabilityMapperRethinkPrompt,
 } from './toolAi/capabilityMapper';
+import { validateGrounding } from './toolAi/groundingValidator';
 import {
   applyValueChainPendingAction,
   buildValueChainConversationProtocol,
@@ -196,6 +197,13 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
 
   const { startStream, isStreaming, streamedContent, abortStream } = useAIStream();
 
+  // O-C2 grounding validator: the exact text sent as the user prompt for the
+  // in-flight request — this IS the grounding source (it already carries the
+  // built org context + brief fields inline; see toolAi/*.ts builders). Used
+  // to deterministically catch fabricated numbers in the parsed AI response
+  // before it reaches any apply*PendingAction() store writer.
+  const lastPromptSentRef = useRef<string>('');
+
   // Get the appropriate system prompt
   const getSystemPrompt = useCallback(() => {
     return getToolSystemPrompt(toolType, formatForPrompt());
@@ -227,6 +235,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
       setError(null);
 
       try {
+        lastPromptSentRef.current = message;
         const systemPrompt = getSystemPrompt();
         // Build context about current step
         const stepContext = currentStepDef
@@ -691,12 +700,28 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
     )
       return;
 
-    const parsed = extractObject(streamedContent);
+    let parsed = extractObject(streamedContent);
     if (!parsed) {
       setPendingAction(null);
       setActiveAiActionId(null);
       return;
     }
+
+    // O-C2: deterministic post-parse grounding check — downgrade any
+    // fact/high-confidence/client-provenance field that carries a number not
+    // present in the sources actually sent to the model, and cap QA/test
+    // artifacts below 'fact'/'confirmed'. Runs for every tool that reaches
+    // this effect (operational tools + all strategic tools below).
+    const groundingSources = [lastPromptSentRef.current, formatForPrompt()].filter(Boolean);
+    const { output: groundedParsed, downgrades } = validateGrounding(parsed, groundingSources);
+    if (downgrades.length > 0) {
+      // eslint-disable-next-line no-console
+      console.debug(
+        `[groundingValidator] ${toolType}/${pendingAction}: downgraded ${downgrades.length} unverified number(s)`,
+        downgrades
+      );
+    }
+    parsed = groundedParsed;
 
     const result =
       toolType === 'risk-uncertainty'
@@ -982,6 +1007,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
     updateCardAfterRethink,
     streamedContent,
     toolType,
+    formatForPrompt,
   ]);
 
   // Get opening question for current step
