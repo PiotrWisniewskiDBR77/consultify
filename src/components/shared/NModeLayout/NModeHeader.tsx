@@ -23,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 
 import { PresentationModeSwitcher } from '@/components/MyWork/shared/PresentationModeSwitcher';
 import { ArtifactPermalinkButton } from '@/components/shared/ArtifactPermalinkButton';
+import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
 import type { PresentationMode } from '@/hooks/usePresentationMode';
 import type { ArtifactType } from '@/utils/artifactLinks';
 
@@ -60,6 +61,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
   showModeSwitcher = true,
   buildArtifactCode,
   titleInputId,
+  primaryAction,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -211,6 +213,31 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
                 value={presentationMode}
                 onChange={onPresentationModeChange}
               />
+            </>
+          )}
+
+          {/* M1 primary CTA (SPEC-A §299) — ONE action, rightmost edge. Omitted
+              by every other NModeHeader consumer (Task/Decision/…) unless they
+              explicitly pass `primaryAction`. */}
+          {primaryAction && (
+            <>
+              <div className="w-px h-6 bg-c-border-subtle" />
+              <button
+                type="button"
+                onClick={primaryAction.onClick}
+                disabled={primaryAction.disabled}
+                title={
+                  primaryAction.title
+                    ? isPolish
+                      ? primaryAction.title.pl
+                      : primaryAction.title.en
+                    : undefined
+                }
+                className={MENU_1_PRIMARY_CTA}
+              >
+                {primaryAction.icon && <primaryAction.icon size={16} />}
+                <span>{isPolish ? primaryAction.label.pl : primaryAction.label.en}</span>
+              </button>
             </>
           )}
         </div>

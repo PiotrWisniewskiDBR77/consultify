@@ -23,6 +23,7 @@ import {
   Eye,
   EyeOff,
   FileText,
+  Flag,
   Flame,
   GitCompare,
   GitFork,
@@ -43,6 +44,7 @@ import {
   Radio,
   RefreshCw,
   Rocket,
+  Save,
   Scale,
   Send,
   ShieldAlert,
@@ -65,6 +67,10 @@ import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode'
 import type { DeckCard } from '@/components/Presentations/wizard/types';
 import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
 import { Select } from '@/components/shared/forms';
+import {
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
 import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
 import {
@@ -3102,6 +3108,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     });
     return sorted;
   }, [nComments, commentDateFilter, commentSortOrder]);
+
+  // ── Right-panel "Właściwości" confidence (same derivation as the
+  //    artifact-actions section below — read-only, no new backend). ─────────
+  const panelConfidence = useMemo(
+    () =>
+      findings[0]?.confidence_level ||
+      analysis?.topics?.[0]?.confidenceLevel ||
+      (insight as any)?.confidence ||
+      null,
+    [findings, analysis, insight]
+  );
 
   // ── Properties strip fields ────────────────────────────────────────────────
 
@@ -8113,6 +8130,204 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     );
   }
 
+  // ── SPEC-A prawy panel artefaktu (ArtifactRightPanel) ─────────────────────
+  // Stała kolejność: Akcje · Właściwości · Powiązania · Komentarze ·
+  // Historia/AI. Wyłącznie ISTNIEJĄCE handlery/dane — zero nowego backendu.
+  // Centrum (N-mode sekcje obserwacja/znaczenie/rekomendacja) pozostaje
+  // nietknięte — ten panel tylko dokuje się z boku (NModeShell `rightPanel`).
+  const panelDash = '—';
+  const fmtPanelDate = (v?: string) => {
+    if (!v) return panelDash;
+    const d = new Date(v);
+    return Number.isNaN(d.getTime())
+      ? v
+      : d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        });
+  };
+  const fmtPanelDateTime = (v?: string) => {
+    if (!v) return panelDash;
+    const d = new Date(v);
+    return Number.isNaN(d.getTime())
+      ? v
+      : d.toLocaleString(isPolish ? 'pl-PL' : 'en-US', {
+          day: '2-digit',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+  };
+  const panelTdKey = 'px-3 py-2 text-c-text-muted border-b border-c-border-subtle';
+  const panelTdVal = 'px-3 py-2 text-right text-c-text border-b border-c-border-subtle';
+  const panelTdValLast = 'px-3 py-2 text-right text-c-text';
+
+  const rightPanelSections: ArtifactRightPanelSection[] = [
+    {
+      id: 'actions',
+      label: isPolish ? 'Akcje' : 'Actions',
+      icon: Sparkles,
+      defaultOpen: true,
+      children: (
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => handleSave()}
+            disabled={saving}
+            className="col-span-2 inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
+          >
+            <Save size={14} className="text-c-text-muted" />
+            {isPolish ? 'Zapisz' : 'Save'}
+          </button>
+          <button
+            type="button"
+            onClick={openExportDialog}
+            disabled={exportRunning || !insight?.id}
+            className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
+          >
+            <Download size={14} className="text-c-text-muted" />
+            {isPolish ? 'Eksport' : 'Export'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setAiPanelOpen((v) => !v)}
+            className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+          >
+            <Sparkles size={14} className="text-c-text-muted" />
+            {isPolish ? 'AI Konsultant' : 'AI Consultant'}
+          </button>
+        </div>
+      ),
+    },
+    {
+      id: 'properties',
+      label: isPolish ? 'Właściwości' : 'Properties',
+      icon: Flag,
+      defaultOpen: true,
+      children: (
+        <div className="rounded-lg border border-c-border-subtle overflow-hidden">
+          <table className="w-full text-xs border-collapse">
+            <thead>
+              <tr className="bg-c-surface-raised">
+                <th className="text-left font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
+                  {isPolish ? 'Właściwość' : 'Property'}
+                </th>
+                <th className="text-right font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
+                  {isPolish ? 'Wartość' : 'Value'}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className={panelTdKey}>{isPolish ? 'Źródło' : 'Source'}</td>
+                <td className={panelTdVal}>
+                  {isPolish
+                    ? `${insight?.sourceSessionCount ?? 0} sesji`
+                    : `${insight?.sourceSessionCount ?? 0} sessions`}
+                </td>
+              </tr>
+              <tr>
+                <td className={panelTdKey}>{isPolish ? 'Data' : 'Date'}</td>
+                <td className={`${panelTdVal} tabular-nums`}>{fmtPanelDate(insight?.createdAt)}</td>
+              </tr>
+              <tr>
+                <td className={panelTdKey}>{isPolish ? 'Pewność' : 'Confidence'}</td>
+                <td className={panelTdVal}>{panelConfidence || panelDash}</td>
+              </tr>
+              <tr>
+                <td className="px-3 py-2 text-c-text-muted">{isPolish ? 'Tag' : 'Tag'}</td>
+                <td className={panelTdValLast}>{isPolish ? typeMeta.labelPl : typeMeta.label}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      ),
+    },
+    {
+      id: 'relations',
+      label: isPolish ? 'Powiązania' : 'Relations',
+      icon: Link2,
+      defaultOpen: true,
+      isEmpty: sourceSessions.length === 0,
+      emptyLabel: isPolish ? 'Brak powiązań' : 'No relations',
+      children: (
+        <div className="flex flex-col gap-2">
+          {sourceSessions.map((session) => (
+            <div key={session.id} className="flex items-center justify-between gap-2">
+              <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle truncate">
+                <MessageSquare size={12} className="text-c-text-muted shrink-0" />
+                <span className="truncate">{session.name}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => openSourceSessionInInterviewHub(session)}
+                className="p-1 rounded-md text-c-text-muted hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                title={isPolish ? 'Otwórz wywiad' : 'Open interview'}
+              >
+                <ExternalLink size={12} />
+              </button>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    {
+      id: 'comments',
+      label: isPolish ? 'Komentarze' : 'Comments',
+      icon: MessageSquare,
+      defaultOpen: false,
+      badge: nComments.length,
+      isEmpty: nComments.length === 0,
+      emptyLabel: isPolish ? 'Brak komentarzy' : 'No comments',
+      children: (
+        <ul className="flex flex-col gap-3">
+          {nComments.slice(0, 6).map((c) => (
+            <li key={c.id} className="flex flex-col gap-0.5">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-xs font-semibold text-c-text truncate">
+                  {c.authorName || (isPolish ? 'Użytkownik' : 'User')}
+                </span>
+                <span className="text-[11px] text-c-text-muted shrink-0 tabular-nums">
+                  {fmtPanelDateTime(c.createdAt)}
+                </span>
+              </div>
+              <p className="text-xs text-c-text-muted line-clamp-3">{c.content}</p>
+            </li>
+          ))}
+        </ul>
+      ),
+    },
+    {
+      id: 'history',
+      label: isPolish ? 'Historia / AI' : 'History / AI',
+      icon: History,
+      defaultOpen: false,
+      badge: activityEntries.length,
+      isEmpty: activityEntries.length === 0,
+      emptyLabel: isPolish ? 'Brak historii' : 'No history',
+      children: (
+        <ul className="flex flex-col gap-2.5">
+          {activityEntries.slice(0, 8).map((entry) => (
+            <li key={entry.id} className="flex flex-col gap-0.5">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-xs text-c-text truncate">{entry.description}</span>
+                <span className="text-[11px] text-c-text-muted shrink-0 tabular-nums">
+                  {fmtPanelDateTime(entry.timestamp)}
+                </span>
+              </div>
+              {entry.oldValue || entry.newValue ? (
+                <span className="text-[11px] text-c-text-muted truncate">
+                  {entry.oldValue ?? panelDash} → {entry.newValue ?? panelDash}
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ),
+    },
+  ];
+
   return (
     <>
       <NModeShell
@@ -8128,6 +8343,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           onChat: handleOpenChat,
           onClose,
           statusDotColor: statusConfig.color,
+          primaryAction: {
+            label: { en: 'Convert to initiative', pl: 'Konwertuj na inicjatywę' },
+            icon: Rocket,
+            onClick: () => setGenOpen(true),
+            disabled: !insight?.id,
+          },
         }}
         properties={propertyFields}
         propertiesMaxColumns={5}
@@ -8142,6 +8363,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         }}
         presentationMode={presentationMode}
         onPresentationModeChange={setPresentationMode}
+        rightPanel={
+          <ArtifactRightPanel
+            sections={rightPanelSections}
+            ariaLabel={isPolish ? 'Szczegóły wniosku' : 'Insight details'}
+          />
+        }
         buildArtifactCode={(type, id) => buildArtifactCode(type as ArtifactType, id)}
         renderActionBar={() => {
           // Canon toolbar (BLOCK_TYPES_CANON §Toolbar artefaktu / INSIGHT_CANON §3):

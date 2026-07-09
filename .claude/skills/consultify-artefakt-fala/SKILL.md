@@ -9,7 +9,8 @@ description: Orkiestracja FALI ARTEFAKTÓW Vegas (B8) — jak wydajnie przeprowa
 Wszystkie **12 narzędzi** (`_FORMULA_MENU_NARZEDZI_12.md` §0) w powłoce SPEC-A, odebrane przez Piotra na zrzutach (DoD §18.1). Miara postępu = kolumna **Stan** w Formule (per przycisk: ✅ JEST / 🔨 DOROBIĆ / ❓ DECYZJA) + pigułki w dashboardzie `_STATUS_3_FILARY.html`.
 
 ## Dokumenty (hierarchia — patrz `_VEGAS_AUDYT_SPOJNOSCI_2026-07-09.md` §1)
-1. `ARTIFACT_ANATOMY_STANDARD.md` — SSOT (menu §5, alfabet §6, instancjacja §13, DoD §18.1).
+0. **`_DOKTRYNA_POWSTAWANIA_ARTEFAKTOW.md` — NADRZĘDNA dla decyzji silnikowych**: 5 wymiarów (tryb/temporalność/pochodzenie/interakcja/kolaboracja) + benchmarki (Miro·Notion·Airtable·Gamma+·Word=wyznacznik) + reguły §6 (nie przenoś wzorców między trybami; dokument=first-shot-akceptowalny; oba wejścia AI wszędzie).
+1. `ARTIFACT_ANATOMY_STANDARD.md` — SSOT wyglądu (menu §5, alfabet §6, instancjacja §13, DoD §18.1).
 2. `_FORMULA_MENU_NARZEDZI_12.md` — CO ma być w którym menu per narzędzie (kontrakt fali).
 3. Skill `consultify-artefakty` — JAK budować pojedynczy ekran (zakazy kolorów, NModeCardState, lekcje TDZ).
 

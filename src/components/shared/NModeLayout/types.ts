@@ -164,6 +164,25 @@ export interface NModeAIContextAction {
   action: NModeAction;
 }
 
+// ── Header Primary CTA (M1 §Menu 1 artefaktu — jeden primary) ──────────────
+// SSOT: Harvard/wdrozenie-100/ARTIFACT_ANATOMY_STANDARD.md §299 — "M1 …
+// PRIMARY: zależny (Idea: „Konwertuj na inicjatywę"; Tool: „Generuj
+// inicjatywy"; Report-gen: „Generuj")". Optional + backward-compatible: omit
+// to keep the header exactly as before (Task/Decision/etc. unaffected).
+
+export interface NModeHeaderPrimaryAction {
+  /** Bilingual label */
+  label: { en: string; pl: string };
+  /** Lucide icon (optional) */
+  icon?: React.FC<{ size?: number; className?: string }>;
+  /** Click handler */
+  onClick: () => void;
+  /** Whether the action is disabled */
+  disabled?: boolean;
+  /** Optional tooltip override */
+  title?: { en: string; pl: string };
+}
+
 // ── Header Configuration ────────────────────────────────────────────────────
 
 export interface NModeHeaderConfig {
@@ -197,6 +216,12 @@ export interface NModeHeaderConfig {
   draftSavedLabel?: string;
   /** Status dot color CSS class (e.g. 'bg-emerald-400') */
   statusDotColor?: string;
+  /**
+   * SPEC-A M1 primary CTA — ONE action rendered at the right edge of the
+   * header (e.g. Insight: "Convert to initiative"). Omit to keep the header
+   * unchanged (back-compat default for Task/Decision/other consumers).
+   */
+  primaryAction?: NModeHeaderPrimaryAction;
 }
 
 // ── Shell (top-level) Configuration ─────────────────────────────────────────

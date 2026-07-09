@@ -32,6 +32,7 @@ import {
   History,
   Layers,
   Lightbulb,
+  Link2,
   Loader2,
   MessageSquare,
   Minus,
@@ -44,6 +45,7 @@ import {
   Sparkles,
   Star,
   Tag,
+  Target,
   ThumbsDown,
   ThumbsUp,
   Trash2,
@@ -57,6 +59,10 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Callout } from '@/components/shared/NModeBlocks';
+import {
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
 import { LoadingState } from '@/components/ui/primitives';
 import { type SmartOpenConditions, useAccordionSections } from '@/hooks/useAccordionSections';
 import {
@@ -4473,6 +4479,273 @@ Use userId only from this list:
     window.open(target, '_blank', 'noopener,noreferrer');
   };
 
+  // ── Prawy panel artefaktu (SPEC-A) — 5 sekcji z realnych danych, konsolidacja ──
+  // Kanon: Akcje · Właściwości · Powiązania · Komentarze · Historia/AI.
+  // Wyłącznie odczyt istniejących stanów/handlerów; treść tokenami c-*.
+  const dash = '—';
+  const fmtDateTime = (v?: string) => {
+    if (!v) return dash;
+    const d = new Date(v);
+    return Number.isNaN(d.getTime())
+      ? v
+      : d.toLocaleString(isPolish ? 'pl-PL' : 'en-US', {
+          day: '2-digit',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+  };
+  const rpKeyClass = 'text-xs text-c-text-muted shrink-0';
+  const rpTdKey = 'px-3 py-2 text-c-text-muted border-b border-c-border-subtle';
+  const rpTdVal = 'px-3 py-2 text-right text-c-text border-b border-c-border-subtle';
+  const rpTdValLast = 'px-3 py-2 text-right text-c-text';
+  const rpPill = 'inline-flex items-center h-5 px-2 rounded-md text-xs bg-c-surface-raised text-c-text';
+  const rpBtn =
+    'inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50';
+  const rpChipBtn =
+    'inline-flex items-center gap-1.5 h-6 px-2 rounded-md text-xs font-medium bg-c-surface-raised text-c-text border border-c-border-subtle truncate hover:bg-c-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]';
+  const deciderUser = users.find((u) => u.id === deciderId);
+  const deciderDisplayName =
+    deciderName || (deciderUser ? `${deciderUser.firstName} ${deciderUser.lastName}`.trim() : '') || dash;
+
+  const rightPanelSections: ArtifactRightPanelSection[] = [
+    {
+      id: 'actions',
+      label: isPolish ? 'Akcje' : 'Actions',
+      icon: Sparkles,
+      defaultOpen: true,
+      children: (
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => handleSave()}
+            disabled={saving}
+            className={`col-span-2 ${rpBtn}`}
+          >
+            <Save size={14} className="text-c-text-muted" />
+            {isPolish ? 'Zapisz' : 'Save'}
+          </button>
+          <button type="button" onClick={handleOpenChat} className={rpBtn}>
+            <MessageSquare size={14} className="text-c-text-muted" />
+            {isPolish ? 'Asystent' : 'Assistant'}
+          </button>
+          <button
+            type="button"
+            onClick={() => generateAIComment()}
+            disabled={isGeneratingAIComment}
+            className={rpBtn}
+          >
+            <Sparkles size={14} className="text-c-text-muted" />
+            {isPolish ? 'Uzupełnij AI' : 'AI assist'}
+          </button>
+          <button type="button" onClick={() => setShowDelegationModal(true)} className={rpBtn}>
+            <Share2 size={14} className="text-c-text-muted" />
+            {isPolish ? 'Deleguj' : 'Delegate'}
+          </button>
+          {decisionId && (
+            <div className="col-span-2 flex items-center justify-between h-8 px-3 rounded-lg border border-c-border-subtle bg-c-surface-raised">
+              <span className="text-xs text-c-text-muted">
+                {isPolish ? 'Udostępnij' : 'Share'}
+              </span>
+              <ArtifactPermalinkButton artifactType="decision" artifactId={decisionId} isPolish={isPolish} />
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: 'properties',
+      label: isPolish ? 'Właściwości' : 'Properties',
+      icon: Flag,
+      defaultOpen: true,
+      children: (
+        <div className="rounded-lg border border-c-border-subtle overflow-hidden">
+          <table className="w-full text-xs border-collapse">
+            <thead>
+              <tr className="bg-c-surface-raised">
+                <th className="text-left font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
+                  {isPolish ? 'Właściwość' : 'Property'}
+                </th>
+                <th className="text-right font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle">
+                  {isPolish ? 'Wartość' : 'Value'}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className={rpTdKey}>{isPolish ? 'Status' : 'Status'}</td>
+                <td className={rpTdVal}>
+                  <span className={rpPill}>{statusConfig.label[isPolish ? 'pl' : 'en']}</span>
+                </td>
+              </tr>
+              <tr>
+                <td className={rpTdKey}>{isPolish ? 'Waga' : 'Priority'}</td>
+                <td className={rpTdVal}>
+                  <span className={rpPill}>{priorityConfig.label[isPolish ? 'pl' : 'en']}</span>
+                </td>
+              </tr>
+              <tr>
+                <td className={rpTdKey}>{isPolish ? 'Termin' : 'Due date'}</td>
+                <td className={`${rpTdVal} tabular-nums`}>{dueDate || dash}</td>
+              </tr>
+              <tr>
+                <td className="px-3 py-2 text-c-text-muted">{isPolish ? 'Decydent' : 'Decider'}</td>
+                <td className={rpTdValLast}>{deciderDisplayName}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      ),
+    },
+    {
+      id: 'relations',
+      label: isPolish ? 'Powiązania' : 'Relations',
+      icon: Link2,
+      defaultOpen: true,
+      isEmpty:
+        !initiativeName &&
+        !(sourceType && sourceId) &&
+        risks.length === 0 &&
+        linkedItems.length === 0 &&
+        attachments.length === 0,
+      emptyLabel: isPolish ? 'Brak powiązań' : 'No relations',
+      children: (
+        <div className="flex flex-col gap-2">
+          {initiativeName ? (
+            <div className="flex items-center gap-2">
+              <span className={rpKeyClass}>{isPolish ? 'Inicjatywa' : 'Initiative'}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (initiativeId) {
+                    window.dispatchEvent(
+                      new CustomEvent('mywork-open-item', {
+                        detail: { type: 'initiative', id: initiativeId, name: initiativeName },
+                      })
+                    );
+                  }
+                }}
+                className={rpChipBtn}
+              >
+                <Target size={12} className="text-c-text-muted shrink-0" />
+                <span className="truncate">{initiativeName}</span>
+              </button>
+            </div>
+          ) : null}
+          {sourceType && sourceId ? (
+            <div className="flex items-center gap-2">
+              <span className={rpKeyClass}>{isPolish ? 'Źródło' : 'Source'}</span>
+              <button
+                type="button"
+                onClick={() =>
+                  window.dispatchEvent(
+                    new CustomEvent('mywork-open-item', {
+                      detail: {
+                        type: sourceType === 'notebook' ? 'notebook' : sourceType,
+                        id: sourceId,
+                        name: `Source ${sourceType}`,
+                        initialTool: sourceType === 'idea' ? 'mindmap' : undefined,
+                      },
+                    })
+                  )
+                }
+                className={rpChipBtn}
+              >
+                <FileText size={12} className="text-c-text-muted shrink-0" />
+                <span className="truncate">{sourceType}</span>
+              </button>
+            </div>
+          ) : null}
+          {risks.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setActiveNotionSection('risk-impact')}
+              className="flex items-center justify-between gap-3 hover:bg-c-surface-raised rounded-md px-1 -mx-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+            >
+              <span className={rpKeyClass}>{isPolish ? 'Ryzyka' : 'Risks'}</span>
+              <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[11px] font-semibold tabular-nums text-c-text-muted bg-c-surface-raised">
+                {risks.length}
+              </span>
+            </button>
+          ) : null}
+          {linkedItems.slice(0, 5).map((li) => (
+            <button
+              key={`${li.type}:${li.id}`}
+              type="button"
+              onClick={() => openLinkedItemTarget(li)}
+              className="flex items-center gap-2 text-left hover:bg-c-surface-raised rounded-md px-1 -mx-1 py-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+            >
+              <Link2 size={12} className="text-c-text-muted shrink-0" />
+              <span className="text-xs text-c-text truncate">{li.title}</span>
+            </button>
+          ))}
+          {attachments.length > 0 ? (
+            <div className="flex items-center justify-between gap-3">
+              <span className={rpKeyClass}>{isPolish ? 'Załączniki' : 'Attachments'}</span>
+              <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full text-[11px] font-semibold tabular-nums text-c-text-muted bg-c-surface-raised">
+                {attachments.length}
+              </span>
+            </div>
+          ) : null}
+        </div>
+      ),
+    },
+    {
+      id: 'comments',
+      label: isPolish ? 'Komentarze' : 'Comments',
+      icon: MessageSquare,
+      defaultOpen: false,
+      badge: comments.length,
+      isEmpty: comments.length === 0,
+      emptyLabel: isPolish ? 'Brak komentarzy' : 'No comments',
+      children: (
+        <ul className="flex flex-col gap-3">
+          {comments.slice(0, 6).map((c) => (
+            <li key={c.id} className="flex flex-col gap-0.5">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-xs font-semibold text-c-text truncate">
+                  {c.authorName || (isPolish ? 'Użytkownik' : 'User')}
+                </span>
+                <span className="text-[11px] text-c-text-muted shrink-0 tabular-nums">
+                  {fmtDateTime(c.createdAt)}
+                </span>
+              </div>
+              <p className="text-xs text-c-text-muted line-clamp-3">{c.content}</p>
+            </li>
+          ))}
+        </ul>
+      ),
+    },
+    {
+      id: 'history',
+      label: isPolish ? 'Historia / AI' : 'History / AI',
+      icon: History,
+      defaultOpen: false,
+      badge: activityLogSorted.length,
+      isEmpty: activityLogSorted.length === 0,
+      emptyLabel: isPolish ? 'Brak historii' : 'No history',
+      children: (
+        <ul className="flex flex-col gap-2.5">
+          {activityLogSorted.slice(0, 8).map((entry) => (
+            <li key={entry.id} className="flex flex-col gap-0.5">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-xs text-c-text truncate">{entry.description}</span>
+                <span className="text-[11px] text-c-text-muted shrink-0 tabular-nums">
+                  {fmtDateTime(entry.timestamp)}
+                </span>
+              </div>
+              {entry.oldValue || entry.newValue ? (
+                <span className="text-[11px] text-c-text-muted truncate">
+                  {entry.oldValue ?? dash} → {entry.newValue ?? dash}
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ),
+    },
+  ];
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full bg-white dark:bg-navy-950">
@@ -4484,7 +4757,8 @@ Use userId only from this list:
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
       <div className="p-6">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
+        <div className="max-w-[1500px] mx-auto xl:flex xl:gap-6 xl:items-start space-y-0">
+          <div className="xl:flex-1 xl:min-w-0 space-y-0">
           {/* Main */}
           {/* Title Header — uses shared NModeHeader component */}
           <NModeHeader
@@ -4504,6 +4778,15 @@ Use userId only from this list:
             presentationMode={presentationMode}
             onPresentationModeChange={setPresentationMode}
             buildArtifactCode={buildArtifactCode}
+            primaryAction={
+              decisionId && isPending
+                ? {
+                    label: { en: 'Approve decision', pl: 'Zatwierdź decyzję' },
+                    icon: Check,
+                    onClick: handleApprove,
+                  }
+                : undefined
+            }
           />
 
           {/* ═══════════ N MODE (page-first, 2-pane) ═════════════════════════
@@ -4665,12 +4948,7 @@ Use userId only from this list:
                 {/* Action buttons for pending decisions */}
                 {decisionId && isPending && (
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={handleApprove}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-emerald-400/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
-                    >
-                      <Check size={13} /> {t('decisions.detail.actions.approve', 'Approve')}
-                    </button>
+                    {/* Approve = M1 primary (NModeHeader.primaryAction) per Formuła §9; workflow keeps secondary actions */}
                     <button
                       onClick={handleReject}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-danger-400/50 text-danger-600 dark:text-danger-400 hover:bg-danger-500/10 transition-colors"
@@ -7819,6 +8097,15 @@ Use userId only from this list:
               </div>
             </div>
           )}
+          </div>
+          {/* ── Dokowany prawy panel artefaktu (xl+; ukryty na <xl) ── */}
+          <div className="hidden xl:block shrink-0 sticky top-6 self-start">
+            <ArtifactRightPanel
+              sections={rightPanelSections}
+              className="rounded-2xl border border-c-border-subtle max-h-[calc(100vh-3rem)]"
+              ariaLabel={isPolish ? 'Szczegóły decyzji' : 'Decision details'}
+            />
+          </div>
         </div>
       </div>
 

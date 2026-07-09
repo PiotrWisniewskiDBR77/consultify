@@ -17,6 +17,7 @@ W kodzie są 3 dojrzałe powłoki — NIE scalamy ich w jedną, doprowadzamy do 
 - **ExecutiveModuleShell** — archetypy B/D/E (Document/Tabele/Deck).
 
 ## Zanim zmienisz cokolwiek
+0. **Tryb pracy narzędzia = doktryna `_DOKTRYNA_POWSTAWANIA_ARTEFAKTOW.md`** (EWOLUCJA vs KRYSTALIZACJA × ŻYWY vs SNAPSHOT + pochodzenie/interakcja/kolaboracja) — NIE przenoś wzorców między trybami (żadnego „generuj całość" w Ideach, żadnego lekkiego one-shot w dokumentach).
 1. Przeczytaj `Harvard/wdrozenie-100/ARTIFACT_ANATOMY_STANDARD.md`: §10.2 + §11.2 (SPEC-A powłoka build-ready) · §13 (instancjacja per archetyp — Menu1 primary, zakładki, sekcje panelu) · §18.1 (DoD Artefaktu — 8 MUST) · §5 (menu per archetyp) · §12 (otwieranie: klasa L=pełna strona, S=drawer).
 2. Ustal archetyp (A/B/C/D/E) + klasę (S drawer / L pełna) danego artefaktu — patrz mapa §4B. To wszystko czego trzeba, by wiedzieć jak wygląda.
 3. Wzorzec jakości = **Task na NModeShell** (docelowo) + `ArtifactRightPanel` (`src/components/standard/ArtifactRightPanel.tsx`). Reużywaj prymitywów `src/components/shared/PreviewPane/*` do treści sekcji.
