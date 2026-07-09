@@ -51,6 +51,13 @@ interface ContextItem {
 interface IdeaContextPanelProps {
   open: boolean;
   onClose: () => void;
+  /**
+   * EditorShell Wave W (W-1) / SPEC-A consolidated panel: render inside the
+   * parent's accordion body (drops the panel's own fixed-width / bordered
+   * drawer chrome + close button). Additive — default false = legacy sliding
+   * drawer unchanged. Mirrors IdeaWorkspaceTools's `embedded` prop.
+   */
+  embedded?: boolean;
   ideaId: string;
   title: string;
   selectedNodeId?: string | null;
@@ -103,6 +110,7 @@ interface LinkedArtifact {
 export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
   open,
   onClose,
+  embedded = false,
   ideaId,
   title,
   selectedNodeId,
@@ -515,7 +523,11 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
     e.dataTransfer.effectAllowed = 'copy';
   }, []);
 
-  if (!open) return null;
+  // Legacy sliding-drawer path is gated by `open`. In embedded (consolidated
+  // accordion panel) mode the parent only mounts this section when its
+  // accordion item is open, so visibility is the parent's responsibility —
+  // don't self-hide here (mirrors IdeaWorkspaceTools).
+  if (!embedded && !open) return null;
 
   const SECTIONS: Array<{
     key: SectionKey;
@@ -576,6 +588,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
           <Search size={14} className="text-slate-600 dark:text-slate-300" />
         </div>
       }
+      embedded={embedded}
       onClose={onClose}
     >
       <div className="px-3 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">

@@ -137,6 +137,13 @@ interface AISuggestion {
 interface IdeaAISuggestionsPanelProps {
   open: boolean;
   onClose: () => void;
+  /**
+   * EditorShell Wave W (W-1) / SPEC-A consolidated panel: render inside the
+   * parent's accordion body (drops the panel's own fixed-width / bordered
+   * drawer chrome + close button). Additive — default false = legacy sliding
+   * drawer unchanged. Mirrors IdeaWorkspaceTools's `embedded` prop.
+   */
+  embedded?: boolean;
   ideaId: string;
   title: string;
   seedText?: string;
@@ -222,6 +229,7 @@ const CATEGORY_ORDER: SuggestionCategory[] = [
 export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
   open,
   onClose,
+  embedded = false,
   ideaId,
   title,
   seedText = '',
@@ -404,7 +412,11 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
     setNlInput('');
   }, [fetchSuggestions, nlInput]);
 
-  if (!open) return null;
+  // Legacy sliding-drawer path is gated by `open`. In embedded (consolidated
+  // accordion panel) mode the parent only mounts this section when its
+  // accordion item is open, so visibility is the parent's responsibility —
+  // don't self-hide here (mirrors IdeaWorkspaceTools).
+  if (!embedded && !open) return null;
 
   return (
     <ToolsPanelShell
@@ -415,6 +427,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
           <MessageSquareWarning size={14} className="text-c-info" />
         </div>
       }
+      embedded={embedded}
       onClose={onClose}
     >
       <div className="px-3 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">
