@@ -23,7 +23,37 @@ type KnowledgeSourceConfig = {
   metadata: Record<string, unknown>;
 };
 
+/**
+ * DRD tool-scoped RAG grounding (F14 / §7 _KONCEPT_CONTENT_ENGINES_2026-07-10.md, decyzja D-E).
+ *
+ * The literal text of "Digital Pathfinder" (Piotr Wisniewski, PhD) lives at
+ * `knowledge/tool-kb/drd/methodology/v1/drd-methodology-axis{0..7}-*.en.md`
+ * (one file per axis/chapter, chunked ~1.8KB per [section_id:...] block,
+ * verbatim — decision D-E: book DOSŁOWNIE + branding "Digital Pathfinder / DBR77").
+ *
+ * These files are picked up automatically by `indexToolKnowledgePacks()`
+ * below, which walks `knowledge/tool-kb/**\/*.md` and infers
+ * `tool_slug='drd'`, `pack_type='methodology'`, `pack_major=1`, `language='en'`
+ * from the path (see `parseToolKbPath`). Resulting docs get
+ * `source_type='tool_pack'`, which is what `searchKnowledgeBase({ toolSlug: 'drd' })`
+ * (server/src/services/ai/tools/searchKnowledgeBase.ts) filters on for
+ * DRD-scoped RAG grounding (toolScopedRAG). No separate registration entry
+ * is needed here — dropping/updating files under that folder is the wiring.
+ *
+ * Do NOT also add these files to `KNOWLEDGE_SOURCES.methodology` below: that
+ * legacy source indexes the SAME book as raw PDFs but tags docs with
+ * `source_type='methodology'` (global, not tool-scoped), which
+ * `searchKnowledgeBase`'s tool filter does not match. Indexing both would
+ * duplicate the book content under two disconnected source types.
+ */
+export const DRD_METHODOLOGY_TOOL_KB_DIR = 'knowledge/tool-kb/drd/methodology/v1';
+
 export const KNOWLEDGE_SOURCES: Record<string, KnowledgeSourceConfig> = {
+  // LEGACY / global-scoped (not tool-scoped): raw PDF chapters of the same
+  // "Digital Pathfinder" book, indexed for generic (non-DRD-tool-filtered)
+  // RAG. Kept for backward compatibility with any existing non-tool-scoped
+  // callers of `indexAll()`. DRD-tool RAG grounding uses
+  // `DRD_METHODOLOGY_TOOL_KB_DIR` above instead (see comment there).
   methodology: {
     name: 'DRD Methodology',
     files: [
@@ -573,7 +603,7 @@ export class KnowledgeIndexer {
         }
 
         const inferred = this.parseToolKbPath(relativeFilePath);
-        const metadata = {
+        const metadata: Record<string, unknown> = {
           type: 'tool_pack',
           source_kind: 'tool_pack',
           tool_slug: inferred.toolSlug,
@@ -583,6 +613,20 @@ export class KnowledgeIndexer {
           weight: 1.0,
           filepath: relativeFilePath,
         };
+
+        // DRD book branding (decyzja D-E, §7 _KONCEPT_CONTENT_ENGINES_2026-07-10.md):
+        // every chunk cut from the literal "Digital Pathfinder" text must carry a
+        // machine-readable citation tag, not just the in-text blockquote markers —
+        // markdown headers/quotes can land on either side of the indexer's own
+        // sentence-based re-chunking (see `chunkText` below), so this is the
+        // reliable per-chunk citation. Scoped to drd/methodology only (the literal
+        // book pack); other tool-kb packs are unaffected.
+        if (inferred.toolSlug === 'drd' && inferred.packType === 'methodology') {
+          metadata.source = 'Digital Pathfinder / DBR77';
+          metadata.source_author = 'Piotr Wisniewski, PhD';
+          metadata.branded = true;
+          metadata.verbatim = true;
+        }
 
         const res = await this.indexFile(abs, {
           name: 'Tool Knowledge Pack',
