@@ -196,16 +196,26 @@ function appendKnowledgeDocAccessFilter(params: {
   const hasDeletedAt = columns.has('deleted_at');
 
   if (Array.isArray(documentIds) && documentIds.length > 0) {
-    if (!organizationId || !hasOrg) {
+    if (!hasOrg) {
       aiLogger.warn(
         'RagService',
         'Explicit documentIds search blocked because organization_id filtering is unavailable'
       );
       return { sql, allowed: false };
     }
+    // `documentIds` is a curated allow-list (e.g. the tool-pack filter in
+    // searchKnowledgeBase). Global shared-knowledge docs — DRD/methodology tool
+    // packs — carry `organization_id IS NULL` and must stay retrievable for any
+    // caller; org-scoped docs still require a matching org so there is no
+    // cross-org leak. Without a caller org, only the global docs are allowed.
     const placeholders = documentIds.map(() => '?').join(',');
-    sql += ` AND d.id IN (${placeholders}) AND d.organization_id = ?`;
-    queryParams.push(...documentIds, organizationId);
+    if (organizationId) {
+      sql += ` AND d.id IN (${placeholders}) AND (d.organization_id = ? OR d.organization_id IS NULL)`;
+      queryParams.push(...documentIds, organizationId);
+    } else {
+      sql += ` AND d.id IN (${placeholders}) AND d.organization_id IS NULL`;
+      queryParams.push(...documentIds);
+    }
   } else if (organizationId && hasOrg) {
     sql += ' AND d.organization_id = ?';
     queryParams.push(organizationId);
