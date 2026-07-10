@@ -358,6 +358,37 @@ export class ProjectController {
   );
 
   /**
+   * Zwornik Delta B (§4.2) — project finance rollup. Read-model only, zero new
+   * ledger tables: aggregates the project's own budget container(s), Σ
+   * initiative budgets/expenses, Σ initiative value (KPI baseline+ledger,
+   * kanon M16), benefits/ROI, and container-vs-initiatives variance (soft
+   * warning only). See `projectFinanceRollupService.ts` for the full contract.
+   */
+  static getProjectFinance = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id } = req.params;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const project = await queryHelpers.queryOne<{ id: string }>(
+        'SELECT id FROM projects WHERE id = ? AND organization_id = ?',
+        [id, orgId]
+      );
+      if (!project) {
+        res.status(404).json({ error: 'Project not found' });
+        return;
+      }
+
+      const { getProjectFinanceRollup } = await import('../services/projectFinanceRollupService.js');
+      const rollup = await getProjectFinanceRollup(orgId, id);
+      res.json(rollup);
+    }
+  );
+
+  /**
    * Update project
    */
   static updateProject = asyncHandler(
