@@ -5,6 +5,12 @@ import {
   getCanonicalStatementTypeOrder,
   getCanonicalStatementTypes,
 } from './financeCanonicalRegistry.js';
+import {
+  RECONCILE_ENFORCE,
+  reconcileStatements,
+  shouldBlockReady,
+  type PeriodStatements,
+} from './reconciliationService.js';
 
 export type StatementPackReadinessStatus = 'pending' | 'recoverable' | 'ready' | 'rejected';
 
@@ -354,6 +360,194 @@ async function persistPackValidations(packId: string, aggregate: PackAggregate):
   );
 }
 
+// ---------------------------------------------------------------------------
+// Reconcile R1-R8 — SHADOW adapter (import context)
+// ---------------------------------------------------------------------------
+// Purely observational: computes reconcile checks over the pack's canonical
+// values and persists them to financial_statement_validations (scope='pack')
+// WITHOUT ever changing pack_readiness_status. Enforcement is gated behind
+// RECONCILE_ENFORCE (false) — see reconciliationService for the shadow contract.
+
+type StatementValueRow = { statement_id: string; line_code: string; value: number };
+
+/** Load {CODE: sum(value)} maps keyed by statement type for the given statements. */
+async function loadPackValueMaps(
+  statements: Array<{ id: string; statement_type?: string | null }>
+): Promise<{ pnl: Record<string, number>; bs: Record<string, number>; cf: Record<string, number> }> {
+  const maps = {
+    pnl: {} as Record<string, number>,
+    bs: {} as Record<string, number>,
+    cf: {} as Record<string, number>,
+  };
+  const ids = statements.map((s) => s.id).filter(Boolean);
+  if (ids.length === 0) return maps;
+
+  const typeById = new Map<string, string>();
+  for (const s of statements) typeById.set(String(s.id), normalizeStatementType(s.statement_type));
+
+  const placeholders = ids.map(() => '?').join(',');
+  const rows = (await dbAll<StatementValueRow>(
+    `SELECT fsv.statement_id AS statement_id, COALESCE(UPPER(fsl.line_code), '') AS line_code, fsv.value AS value
+     FROM financial_statement_values fsv
+     LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
+     WHERE fsv.statement_id IN (${placeholders})`,
+    ids
+  )) as StatementValueRow[];
+
+  for (const row of rows || []) {
+    const code = String(row.line_code || '').trim();
+    if (!code) continue; // unmapped (canonical_line_id IS NULL) → do NOT default to 0
+    const value = Number(row.value);
+    if (!Number.isFinite(value)) continue;
+    const type = typeById.get(String(row.statement_id));
+    const target = type === 'P&L' ? maps.pnl : type === 'BS' ? maps.bs : type === 'CF' ? maps.cf : null;
+    if (!target) continue;
+    target[code] = (target[code] || 0) + value;
+  }
+  return maps;
+}
+
+/** Immediately-prior ready pack for the same org+entity (BoP for roll-forwards). */
+async function loadPriorPeriodStatements(
+  organizationId: string,
+  entityName: string,
+  periodEnd: string
+): Promise<PeriodStatements | null> {
+  try {
+    const prior = await dbGet<{ id: string; period_end?: string; period_label?: string; currency?: string; scaling?: string }>(
+      `SELECT id, period_end, period_label, currency, scaling
+       FROM financial_statement_packs
+       WHERE organization_id = ?
+         AND COALESCE(entity_name, '') = ?
+         AND period_end < ?
+         AND LOWER(COALESCE(pack_readiness_status, 'pending')) = 'ready'
+       ORDER BY period_end DESC
+       LIMIT 1`,
+      [organizationId, entityName || '', periodEnd]
+    );
+    if (!prior?.id) return null;
+    const priorStatements = await dbAll<{ id: string; statement_type: string }>(
+      `SELECT id, statement_type FROM financial_statements WHERE statement_pack_id = ?`,
+      [prior.id]
+    );
+    if (!Array.isArray(priorStatements) || priorStatements.length === 0) return null;
+    const maps = await loadPackValueMaps(priorStatements);
+    return {
+      pnl: maps.pnl,
+      bs: maps.bs,
+      cf: maps.cf,
+      periodLabel: normalizeText(prior.period_label) || undefined,
+      periodDate: normalizeText(prior.period_end) || undefined,
+    };
+  } catch (error) {
+    if (isSchemaCompatError(error)) return null;
+    throw error;
+  }
+}
+
+async function shadowReconcilePack(packId: string, statements: PackStatementRow[]): Promise<void> {
+  const maps = await loadPackValueMaps(statements);
+  const canonical = statements[0]!;
+  const orgId = String(canonical.organization_id || '');
+  const entity = normalizeText(canonical.entity_name);
+  const periodEnd = String(canonical.period_end || '');
+  const scaling = (normalizeText(canonical.scaling) || 'units') as PeriodStatements['scaling'];
+
+  let prior: PeriodStatements | null = null;
+  if (orgId && periodEnd) {
+    prior = await loadPriorPeriodStatements(orgId, entity, periodEnd);
+  }
+
+  const period: PeriodStatements = {
+    pnl: maps.pnl,
+    bs: maps.bs,
+    cf: maps.cf,
+    bsPrior: prior?.bs,
+    plPrior: prior?.pnl,
+    periodLabel: packPeriodLabel(statements) || undefined,
+    periodDate: periodEnd || undefined,
+    scaling,
+    currency: normalizeText(canonical.currency) || 'PLN',
+  };
+
+  const result = reconcileStatements({ context: 'import', periods: [period] });
+
+  // Persist observational records. Status column CHECK forbids 'skipped', so
+  // skipped checks are NOT written as rows; they are captured in the summary.
+  try {
+    await dbRun(
+      `DELETE FROM financial_statement_validations
+       WHERE statement_pack_id = ? AND validation_scope = 'pack'
+         AND (check_code LIKE 'R%' OR check_code = 'RECONCILE_SUMMARY')`,
+      [packId],
+      { fallback: false }
+    );
+  } catch (error) {
+    if (isSchemaCompatError(error)) return;
+    throw error;
+  }
+
+  const skippedCodes: string[] = [];
+  for (const check of result.checks) {
+    if (check.status === 'skipped') {
+      skippedCodes.push(check.checkCode);
+      continue;
+    }
+    const severity = check.severity === 'error' ? 'error' : 'warning';
+    await dbRun(
+      `INSERT INTO financial_statement_validations
+        (id, statement_pack_id, validation_scope, check_code, check_name, severity, status, expected_value, actual_value, difference, tolerance, message, details_json)
+       VALUES (?, ?, 'pack', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        packId,
+        check.checkCode,
+        check.checkName,
+        severity,
+        check.status,
+        check.expected,
+        check.actual,
+        check.difference,
+        check.tolerance,
+        check.message,
+        JSON.stringify({ ...(check.details || {}), shadow: true }),
+      ],
+      { fallback: false }
+    );
+  }
+
+  // Summary row (info/pass) — audit trail for skipped checks + shadow verdict.
+  await dbRun(
+    `INSERT INTO financial_statement_validations
+      (id, statement_pack_id, validation_scope, check_code, check_name, severity, status, expected_value, actual_value, difference, tolerance, message, details_json)
+     VALUES (?, ?, 'pack', 'RECONCILE_SUMMARY', 'Reconcile R1-R8 (shadow)', 'info', 'pass', ?, ?, ?, ?, ?, ?)`,
+    [
+      uuidv4(),
+      packId,
+      result.summary.passed,
+      result.summary.failed,
+      result.summary.warnings,
+      0,
+      `Reconcile shadow: ${result.summary.passed} pass, ${result.summary.warnings} warn, ${result.summary.failed} fail, ${result.summary.skipped} skipped.`,
+      JSON.stringify({
+        shadow: true,
+        enforce: RECONCILE_ENFORCE,
+        summary: result.summary,
+        overallStatus: result.overallStatus,
+        blocksReady: result.blocksReady,
+        wouldBlockReady: shouldBlockReady(result), // false in shadow mode
+        skippedChecks: skippedCodes,
+        priorPeriodLoaded: Boolean(prior),
+      }),
+    ],
+    { fallback: false }
+  );
+
+  // NOTE: pack_readiness_status is intentionally NOT changed here. When
+  // RECONCILE_ENFORCE flips to true (post DBR77 calibration), gate readiness on
+  // shouldBlockReady(result) at the recompute UPDATE above.
+}
+
 export async function recomputeStatementPack(packId: string): Promise<string | null> {
   const statements = await dbAll<PackStatementRow>(
     `SELECT id, organization_id, entity_name, statement_type, period_start, period_end, period_label,
@@ -411,6 +605,17 @@ export async function recomputeStatementPack(packId: string): Promise<string | n
       packId,
     ]
   );
+
+  // ── SHADOW: reconcile R1-R8 (observational; never changes pack readiness) ──
+  // Wrapped so a reconcile fault can never affect the recompute contract.
+  await shadowReconcilePack(packId, statements).catch((error) => {
+    // eslint-disable-next-line no-console
+    console.warn('[reconcile-shadow] pack reconcile failed (non-fatal)', {
+      packId,
+      error: (error as Error)?.message || String(error),
+    });
+  });
+
   return packId;
 }
 

@@ -15,6 +15,12 @@ import logger from '../utils/Logger.js';
 import { normalizeCanonicalLineCode } from './financeCanonicalResolver.js';
 import { getVerifiedPackSeed } from './financialStatementPackService.js';
 import { loadLatestStatementVersionSnapshot } from './financialStatementService.js';
+import {
+  RECONCILE_ENFORCE,
+  reconcileStatements,
+  shouldBlockReady,
+  type PeriodStatements,
+} from './reconciliationService.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1006,6 +1012,19 @@ export async function persistComputeResult(
     );
   }
 
+  // ── SHADOW: reconcile R1-R8 over the computed periods (observational) ──────
+  // Adds R1-R8 records ALONGSIDE the existing inline checks. It does NOT touch
+  // result.validations, result.overallStatus, or the model status below, so the
+  // existing compute contract is unchanged. Wrapped so a fault is non-fatal.
+  try {
+    await shadowReconcileModel(modelId, result);
+  } catch (err) {
+    logger.warn('[reconcile-shadow] model reconcile failed (non-fatal)', {
+      modelId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
   // Update model validation status
   const modelStatus = result.overallStatus === 'fail' ? 'draft' : undefined;
   if (modelStatus) {
@@ -1013,6 +1032,79 @@ export async function persistComputeResult(
       modelId,
     ]);
   }
+}
+
+/**
+ * SHADOW adapter (model context). Runs reconcileStatements over the compute
+ * outputs and persists R1-R8 records to financial_model_validations. That table
+ * has no severity/tolerance columns and its status CHECK forbids 'skipped', so:
+ *   - severity + tolerance + rich details are written to the `details` TEXT col;
+ *   - skipped checks are NOT written as rows (captured in RECONCILE_SUMMARY).
+ * No migration required. Never changes model status (RECONCILE_ENFORCE=false).
+ */
+async function shadowReconcileModel(modelId: string, result: ComputeResult): Promise<void> {
+  const periods: PeriodStatements[] = result.periods.map((p) => ({
+    pnl: p.pl,
+    bs: p.bs,
+    cf: p.cf,
+    periodDate: p.date,
+    periodLabel: p.label,
+  }));
+  const rec = reconcileStatements({ context: 'model', periods });
+
+  const skippedCodes: string[] = [];
+  for (const check of rec.checks) {
+    if (check.status === 'skipped') {
+      skippedCodes.push(`${check.checkCode}@${check.periodDate || ''}`);
+      continue;
+    }
+    await dbRun(
+      `INSERT INTO financial_model_validations (id, model_id, period_date, check_code, check_name, status, expected_value, actual_value, difference, message, details) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        modelId,
+        check.periodDate || null,
+        check.checkCode,
+        check.checkName,
+        check.status,
+        check.expected,
+        check.actual,
+        check.difference,
+        check.message,
+        JSON.stringify({
+          shadow: true,
+          severity: check.severity,
+          tolerance: check.tolerance,
+          ...(check.details || {}),
+        }),
+      ]
+    );
+  }
+
+  await dbRun(
+    `INSERT INTO financial_model_validations (id, model_id, period_date, check_code, check_name, status, expected_value, actual_value, difference, message, details) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      uuidv4(),
+      modelId,
+      null,
+      'RECONCILE_SUMMARY',
+      'Reconcile R1-R8 (shadow)',
+      'pass',
+      rec.summary.passed,
+      rec.summary.failed,
+      rec.summary.warnings,
+      `Reconcile shadow: ${rec.summary.passed} pass, ${rec.summary.warnings} warn, ${rec.summary.failed} fail, ${rec.summary.skipped} skipped.`,
+      JSON.stringify({
+        shadow: true,
+        enforce: RECONCILE_ENFORCE,
+        summary: rec.summary,
+        overallStatus: rec.overallStatus,
+        blocksReady: rec.blocksReady,
+        wouldBlockReady: shouldBlockReady(rec), // false in shadow mode
+        skippedChecks: skippedCodes,
+      }),
+    ]
+  );
 }
 
 // ---------------------------------------------------------------------------
