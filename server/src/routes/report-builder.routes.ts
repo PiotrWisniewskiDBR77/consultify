@@ -53,6 +53,7 @@ import {
 } from '../services/reportAgentService.js';
 import ReportBuilderCommentsService from '../services/reportBuilderCommentsService.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
+import ReportContract from '../services/report/reportContract.js';
 import {
   getCanonicalTemplate,
   proposeOutline,
@@ -297,6 +298,28 @@ function paramStr(value: string | string[] | undefined): string {
   if (Array.isArray(value)) return value[0] || '';
   return value || '';
 }
+
+// ==========================================
+// REPORT DEFINITIONS (kontrakt F5 — rejestr report_definitions)
+// ==========================================
+
+/**
+ * GET /api/report-builder/definitions
+ * Rejestr definicji raportów (systemowe + org-własne). Zastępuje hardkod
+ * `ExecutionHub.reportCatalog`. Filtr `?kind=EXECUTION_PACK` zawęża do katalogu Execution.
+ * Kontrakt F5: `server/src/services/report/reportContract.ts` (rdzeń §4.2).
+ */
+router.get('/definitions', async (req: Request, res: Response, _next: NextFunction) => {
+  try {
+    const { organizationId } = getAuthContext(req);
+    const kind = typeof req.query.kind === 'string' ? req.query.kind : undefined;
+    const definitions = await ReportContract.listDefinitions(organizationId, { kind });
+    res.json({ definitions });
+  } catch (err) {
+    logger.error('[ReportBuilder] Error listing report definitions:', err);
+    res.status(500).json({ error: 'Failed to list report definitions' });
+  }
+});
 
 // ==========================================
 // INVOCATION PROFILES ENDPOINTS
