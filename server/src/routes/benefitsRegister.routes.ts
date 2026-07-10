@@ -1,14 +1,18 @@
 /**
  * Benefits Register Routes — M14/F6 handoff (M14 → M15).
  *
- * Persistence layer for the benefits register: tracked outcomes (KPI/ROI) an
- * initiative is expected to keep delivering into sustainment (M15). Backed by
- * `benefitsRegisterService` (table `benefits_register`).
- *
- * The key endpoint is POST /benefits/handoff/:initiativeId — the *real* M14
- * closure handoff (was "preview only"): it materialises an org-scoped benefit
- * row tagged `source = 'M14_CLOSURE_HANDOFF'` so the benefit keeps being tracked
- * after the initiative closes.
+ * Mounted at `/api/benefits-register` (see Gateway.ts). GET/POST `/benefits`
+ * are the live routes — used by `BenefitsRegisterPanel.tsx` (M14 Execution UI)
+ * — and read/write the canonical `initiative_benefits` table as of G1
+ * (2026-07-10; see `benefitsRegisterService.ts` header for the split-brain
+ * history). `POST /benefits/handoff/:initiativeId` and
+ * `POST /benefits/:id/promote` below are LEGACY/orphaned (zero frontend
+ * callers) — they still operate on the old `benefits_register` table via
+ * `BenefitsRegisterService.handoffFromClosure` / `promoteBenefitToKpi`; see
+ * the `@deprecated` notes on those functions. The real closure handoff is
+ * `executionResultsBridge.handoffFromClosure` (auto-triggered on every DONE
+ * transition); the real promote flow is
+ * `POST /api/v8/results/benefits/:benefitId/promote` in `results.routes.ts`.
  *
  * Auth model mirrors rollout.routes.ts: every route requires an authenticated
  * org member (verifyToken + isAuthenticated); org is taken from
@@ -16,9 +20,6 @@
  * gated behind the MANAGE_ROLLOUT permission — the same M14/PMO editor tier that
  * guards the rest of ExecutionHub, so there is no new permission surface to
  * provision for the handoff.
- *
- * NOTE: not mounted in Gateway here — this is the F6 handoff hand-off file for
- * M15 wiring.
  */
 import { Response, Router } from 'express';
 import { z } from 'zod';
@@ -100,8 +101,20 @@ router.post(
     if (!orgId) return;
 
     const input = req.body as CreateBenefitInput;
-    const benefit = await BenefitsRegisterService.createBenefit(orgId, input);
-    return res.status(201).json({ benefit });
+    try {
+      const benefit = await BenefitsRegisterService.createBenefit(orgId, input);
+      return res.status(201).json({ benefit });
+    } catch (err: any) {
+      // G1: initiative_benefits.initiative_id is NOT NULL — createBenefit now
+      // validates this up front instead of hitting a DB constraint error.
+      if (String(err?.message || '').includes('initiativeId is required')) {
+        return res.status(400).json({
+          error: 'initiativeId is required',
+          field: 'initiativeId',
+        });
+      }
+      throw err;
+    }
   })
 );
 

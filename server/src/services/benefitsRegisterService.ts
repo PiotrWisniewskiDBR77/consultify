@@ -5,9 +5,23 @@
  * At initiative closure (M14) the realized KPI/ROI delta is handed off into the
  * benefits register so the benefit keeps being *tracked* into sustainment (M15).
  *
- * This is the real persistence behind what was previously a "preview only"
- * closure handoff: `handoffFromClosure` now writes an actual org-scoped row
- * tagged `source = 'M14_CLOSURE_HANDOFF'`.
+ * G1 fix (2026-07-10): this service used to own its own table
+ * (`benefits_register`), a second, disconnected registry from the one the
+ * REAL auto-trigger writes to (`initiative_benefits`, via
+ * `executionResultsBridge.handoffFromClosure` — the live closure handoff at
+ * `InitiativeController` on status → DONE). Nothing ever populated
+ * `benefits_register` automatically, so the M14 panel backed by it
+ * (`BenefitsRegisterPanel.tsx` → GET/POST `/api/benefits-register/benefits`)
+ * was always empty unless a user manually clicked "+ Dodaj benefit".
+ *
+ * Per the rdzeń SSOT (`_KONCEPT_RDZEN_2026-07-10.md` §6.1): kanon =
+ * `initiative_benefits`. `listBenefits` / `createBenefit` — the two functions
+ * actually exercised by the M14 UI — now read/write `initiative_benefits`
+ * directly (M14 CZYTA initiative_benefits). `handoffFromClosure` and
+ * `promoteBenefitToKpi` below still target the legacy `benefits_register`
+ * table; they have ZERO callers in the frontend today (audit 2026-07-10) so
+ * they are left as-is (frozen) rather than migrated speculatively — retarget
+ * or retire them in a follow-up if a real caller appears.
  *
  * node-pg, snake_case columns, org-scoped throughout. `?` placeholders are
  * translated to positional params by DbPromise.
@@ -79,6 +93,15 @@ function toNumberOrNull(value: unknown): number | null {
 /**
  * List benefits for an organization, optionally scoped to one initiative.
  * Always org-scoped.
+ *
+ * G1: reads the canonical `initiative_benefits` table (not the legacy
+ * `benefits_register`) — the same table the M14→M15 closure handoff writes
+ * to, so this now actually surfaces auto-materialized closure benefits, not
+ * just manually-added ones. Column names are mapped to the `BenefitRecord`
+ * shape the M14 panel already expects: `measurement_frequency` → `cadence`,
+ * `source_tag` → `source`. `kpi_name` has no dedicated column on
+ * `initiative_benefits` (the closure handoff writes the KPI name straight
+ * into `name`) — returned as NULL, the panel already falls back to `name`.
  */
 export async function listBenefits(
   organizationId: string,
@@ -87,7 +110,15 @@ export async function listBenefits(
   if (!organizationId) return [];
 
   const params: unknown[] = [organizationId];
-  let sql = `SELECT * FROM benefits_register WHERE organization_id = ?`;
+  let sql = `SELECT
+       id, organization_id, initiative_id, name, owner_id,
+       NULL AS kpi_name,
+       baseline_value, target_value, current_value,
+       measurement_frequency AS cadence,
+       status,
+       source_tag AS source,
+       created_at, updated_at
+     FROM initiative_benefits WHERE organization_id = ?`;
 
   if (initiativeId) {
     sql += ` AND initiative_id = ?`;
@@ -103,6 +134,16 @@ export async function listBenefits(
 /**
  * Create a benefit row. Org-scoped: organizationId is required and stamped on
  * the row. Returns the persisted record.
+ *
+ * G1: writes to the canonical `initiative_benefits` table. Unlike the legacy
+ * `benefits_register`, `initiative_benefits.initiative_id` is NOT NULL (a
+ * benefit/"Rezultat" is anchored to an initiative — see rdzeń SSOT §2.1
+ * "REZULTAT/WARTOŚĆ jako węzeł pierwszej klasy"), so `initiativeId` is now
+ * required and validated up front instead of silently landing an orphaned
+ * row. The one caller today (`BenefitsRegisterPanel.tsx`, org-wide render
+ * with no `initiativeId` prop) will get a clear 400 rather than a DB
+ * constraint error — flagged as a follow-up to give that panel an initiative
+ * picker.
  */
 export async function createBenefit(
   organizationId: string,
@@ -114,13 +155,16 @@ export async function createBenefit(
   if (!data || !data.name || !data.name.trim()) {
     throw new Error('createBenefit: name is required');
   }
+  if (!data.initiativeId) {
+    throw new Error('createBenefit: initiativeId is required (initiative_benefits.initiative_id is NOT NULL)');
+  }
 
   const id = uuidv4();
   const ts = nowIso();
   const record: BenefitRecord = {
     id,
     organization_id: organizationId,
-    initiative_id: data.initiativeId ?? null,
+    initiative_id: data.initiativeId,
     name: data.name.trim(),
     owner_id: data.ownerId ?? null,
     kpi_name: data.kpiName ?? null,
@@ -135,24 +179,25 @@ export async function createBenefit(
   };
 
   await dbRun(
-    `INSERT INTO benefits_register (
-       id, organization_id, initiative_id, name, owner_id, kpi_name,
-       baseline_value, target_value, current_value, cadence, status, source,
-       created_at, updated_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO initiative_benefits (
+       id, organization_id, initiative_id, name, description, benefit_type, kpi_id,
+       owner_id, baseline_value, target_value, current_value,
+       measurement_frequency, status, source_tag,
+       created_by, created_at, updated_at
+     ) VALUES (?, ?, ?, ?, NULL, 'quantitative', NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       record.id,
       record.organization_id,
       record.initiative_id,
-      record.name,
+      record.kpi_name ? `${record.name} (${record.kpi_name})` : record.name,
       record.owner_id,
-      record.kpi_name,
       record.baseline_value,
-      record.target_value,
+      record.target_value ?? 0,
       record.current_value,
       record.cadence,
       record.status,
       record.source,
+      null, // created_by — CreateBenefitInput has no separate actor field; route layer doesn't pass one either
       record.created_at,
       record.updated_at,
     ]
@@ -162,6 +207,17 @@ export async function createBenefit(
 }
 
 /**
+ * @deprecated (G1, 2026-07-10) LEGACY / orphaned — writes to `benefits_register`,
+ * which `listBenefits`/`createBenefit` above no longer read from. Zero
+ * frontend callers as of this audit (only reachable via
+ * `POST /api/benefits-register/benefits/handoff/:initiativeId`, which nothing
+ * calls). The REAL, live closure handoff is
+ * `executionResultsBridge.handoffFromClosure` (writes `initiative_benefits`,
+ * auto-triggered by every DONE transition via `fireClosureHandoff`). Left
+ * in place rather than deleted/retargeted to avoid touching an unexercised
+ * surface speculatively — retarget to `initiative_benefits` (or remove) if a
+ * real caller shows up.
+ *
  * Handoff M14 → M15: create a tracked benefit from an initiative's realized
  * KPI/ROI delta at closure. Replaces the previous preview-only behaviour with
  * a real, org-scoped persisted row tagged `source = 'M14_CLOSURE_HANDOFF'`.
@@ -234,6 +290,15 @@ export interface PromoteResult {
 }
 
 /**
+ * @deprecated (G1, 2026-07-10) LEGACY / orphaned — operates on `benefits_register`.
+ * The REAL, live promote flow the M15 inbox UI uses is
+ * `POST /api/v8/results/benefits/:benefitId/promote` in `results.routes.ts`,
+ * which reads/writes `initiative_benefits` directly (guarded by
+ * `source_tag === CLOSURE_HANDOFF_SOURCE`). This function has no route
+ * wired to a frontend caller — left in place rather than retargeted
+ * speculatively; see the `handoffFromClosure` deprecation note above for the
+ * same reasoning.
+ *
  * M15/W1 (G1 bridge) — promote a benefits_register row (the M14 handoff inbox)
  * into a tracked KPI (initiative_kpis, the M15 canonical engine). This is what
  * makes the M14→M15 handoff *visible and tracked* instead of stranded. Org-scoped,
