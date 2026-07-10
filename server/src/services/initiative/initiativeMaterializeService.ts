@@ -18,6 +18,7 @@
  */
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import { validateInitiativeCard } from '../cardContentFormulaValidator.js';
 import {
   tableSchemaToWorkbook,
   buildWorkbookBuffer,
@@ -473,6 +474,42 @@ async function materializeDeck(
 // Public API
 // ════════════════════════════════════════════════════════════════════════
 
+/**
+ * F14/C — CARD_CONTENT_FORMULA guardian (OXFORD O7.3), ADVISORY only.
+ * Scores the initiative(s) about to be materialized against
+ * docs/standards/CARD_CONTENT_FORMULA.md and logs a warning summary per
+ * failing initiative. Pure shadow observation: never throws, never mutates
+ * the view, never blocks materialization — the client still gets the file
+ * either way. `materializeInitiative` on a real DB-loaded initiative is
+ * exactly the kind of end-of-pipeline content produced for the client, so
+ * this is where the shadow guardian is most useful (near-zero risk, real
+ * signal about card quality drift).
+ */
+function logFormulaVerdictAdvisory(view: InitiativeView): void {
+  try {
+    const verdict = validateInitiativeCard({
+      title: view.name,
+      problem_statement: view.problemStatement ?? undefined,
+      hypothesis: view.hypothesis ?? undefined,
+      summary: view.summary ?? undefined,
+      description: view.summary ?? undefined,
+      business_value: view.businessValue ?? undefined,
+    });
+    if (!verdict.pass) {
+      logger.warn(
+        `${LOG} initiative "${view.name}" (id=${view.id}) failed CARD_CONTENT_FORMULA ` +
+          `(score ${verdict.score}/100): ${verdict.violationCodes.join(', ')}`,
+      );
+    }
+  } catch (err) {
+    logger.warn(
+      `${LOG} CARD_CONTENT_FORMULA validation skipped (fail-soft): ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
+  }
+}
+
 function resultFor(
   format: MaterializeFormat,
   buffer: Buffer | null,
@@ -504,6 +541,7 @@ export async function materializeInitiative(
       logger.warn(`${LOG} initiative not found (id=${initiativeId})`);
       return null;
     }
+    logFormulaVerdictAdvisory(view);
     const company = opts.company || 'Organizacja';
     const baseName = view.name && view.name !== DASH ? view.name : 'inicjatywa';
     let buffer: Buffer | null = null;

@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
+import { validateInitiativeCard } from './cardContentFormulaValidator.js';
 
 // F3.3 — CARD_CONTENT_FORMULA §A3: injected into every assessment initiative-generation
 // prompt so the AI targets the McKinsey-grade card standard from the first call
@@ -303,7 +304,13 @@ class AssessmentInitiativeService {
       );
 
       if (aiInitiatives && aiInitiatives.length > 0) {
-        return this.normalizeInitiatives(aiInitiatives, assessment.assessment_type, methodology);
+        const normalized = this.normalizeInitiatives(
+          aiInitiatives,
+          assessment.assessment_type,
+          methodology
+        );
+        this.logFormulaVerdictsAdvisory(normalized, assessment.id);
+        return normalized;
       }
     } catch (error) {
       logger.error('[AssessmentInitiativeService] AI generation failed:', error);
@@ -532,6 +539,42 @@ Return a JSON array with exactly ${count} initiatives in this format:
       relatedAxis: init.relatedAxis || '',
       relatedDimension: init.relatedDimension || '',
     }));
+  }
+
+  /**
+   * F14/C — CARD_CONTENT_FORMULA guardian (OXFORD O7.3), ADVISORY only.
+   * Scores each freshly-generated (AI) initiative against
+   * docs/standards/CARD_CONTENT_FORMULA.md and logs a warning summary when it
+   * fails. Pure shadow observation: never throws, never mutates the
+   * initiative, never blocks generation/persistence. GeneratedInitiative here
+   * is a lighter shape than the full Initiative card (no problem_statement/
+   * hypothesis at this stage), so misses on those fields are expected and
+   * are exactly the gap this shadow pass is meant to surface.
+   */
+  private static logFormulaVerdictsAdvisory(
+    initiatives: GeneratedInitiative[],
+    assessmentId: string
+  ): void {
+    try {
+      for (const initiative of initiatives) {
+        const verdict = validateInitiativeCard({
+          title: initiative.title,
+          description: initiative.description,
+        });
+        if (!verdict.pass) {
+          logger.warn(
+            `[AssessmentInitiativeService] initiative "${initiative.title}" (assessment ${assessmentId}) ` +
+              `failed CARD_CONTENT_FORMULA (score ${verdict.score}/100): ${verdict.violationCodes.join(', ')}`
+          );
+        }
+      }
+    } catch (err) {
+      logger.warn(
+        `[AssessmentInitiativeService] CARD_CONTENT_FORMULA validation skipped (fail-soft): ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
+    }
   }
 
   /**
