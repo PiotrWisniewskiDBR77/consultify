@@ -2483,6 +2483,16 @@ router.post(
 router.post('/:id/move', InitiativeController.moveInitiative);
 
 /**
+ * POST /api/pmo/initiatives/bulk-assign
+ * Zwornik Delta C (§5.2.2) — bulk-assign "Nieprzypisane" (project_id IS NULL,
+ * surfaced via GET /?projectId=unassigned) initiatives to a project. Body:
+ * { initiativeIds: string[], targetProjectId: string, moveTasks?: boolean }.
+ * Declared as a literal path (not `/:id/...`) so it never collides with the
+ * single-initiative routes above.
+ */
+router.post('/bulk-assign', InitiativeController.bulkAssignInitiatives);
+
+/**
  * POST /api/initiatives/:id/archive
  * Archive initiative
  */

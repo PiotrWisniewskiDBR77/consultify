@@ -362,7 +362,12 @@ export class InitiativeController {
             LEFT JOIN assessments sa ON sa.id = COALESCE(i.source_assessment_id, i.source_id)
             WHERE i.organization_id = ?
         `;
-      if (projectId) {
+      // Zwornik Delta C (§5.2.2) — "Nieprzypisane": reuses this same list
+      // endpoint with a sentinel value instead of a dedicated screen, per the
+      // SSOT ("widok „Nieprzypisane" na liście inicjatyw"). `?projectId=unassigned`.
+      if (projectId === 'unassigned') {
+        sql += ` AND i.project_id IS NULL`;
+      } else if (projectId) {
         sql += ` AND i.project_id = ?`;
         params.push(String(projectId));
       }
@@ -3467,6 +3472,107 @@ export class InitiativeController {
         fromProjectId: oldProjectId,
         toProjectId: targetProjectId,
         tasksMoved: !!moveTasks,
+      });
+    }
+  );
+
+  /**
+   * Zwornik Delta C (§5.2.2) — bulk-assign "Nieprzypisane" initiatives to a
+   * project. Reuses the same per-initiative move logic as `moveInitiative`
+   * (verify target project once, then update project_id + optionally tasks +
+   * history per initiative), looped and fail-soft per id so one bad id in the
+   * batch does not abort the rest.
+   */
+  static bulkAssignInitiatives = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
+      const { initiativeIds, targetProjectId, moveTasks } = req.body as {
+        initiativeIds?: unknown;
+        targetProjectId?: unknown;
+        moveTasks?: unknown;
+      };
+
+      if (!orgId || !userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      if (!targetProjectId || typeof targetProjectId !== 'string') {
+        res.status(400).json({ error: 'targetProjectId is required' });
+        return;
+      }
+      const ids = Array.isArray(initiativeIds)
+        ? initiativeIds.filter((id): id is string => typeof id === 'string' && id.length > 0)
+        : [];
+      if (ids.length === 0) {
+        res.status(400).json({ error: 'initiativeIds must be a non-empty array' });
+        return;
+      }
+
+      const targetProject = await queryHelpers.queryOne<{ id: string }>(
+        'SELECT id FROM projects WHERE id = ? AND organization_id = ?',
+        [targetProjectId, orgId]
+      );
+      if (!targetProject) {
+        res.status(404).json({ error: 'Target project not found' });
+        return;
+      }
+
+      const results: Array<{ initiativeId: string; success: boolean; error?: string }> = [];
+      for (const initiativeId of ids) {
+        try {
+          const initiative = await queryHelpers.queryOne<{ project_id: string | null }>(
+            'SELECT project_id FROM initiatives WHERE id = ? AND organization_id = ?',
+            [initiativeId, orgId]
+          );
+          if (!initiative) {
+            results.push({ initiativeId, success: false, error: 'Initiative not found' });
+            continue;
+          }
+          const oldProjectId = initiative.project_id;
+
+          await queryHelpers.queryRun(
+            `UPDATE initiatives SET project_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+            [targetProjectId, initiativeId]
+          );
+
+          if (moveTasks) {
+            await queryHelpers.queryRun(
+              `UPDATE tasks SET project_id = ?, updated_at = CURRENT_TIMESTAMP WHERE initiative_id = ?`,
+              [targetProjectId, initiativeId]
+            );
+          }
+
+          await queryHelpers.queryRun(
+            `INSERT INTO initiative_history (id, initiative_id, action, old_value, new_value, changed_by, notes)
+                 VALUES (?, ?, 'moved', ?, ?, ?, ?)`,
+            [
+              uuidv4(),
+              initiativeId,
+              JSON.stringify({ project_id: oldProjectId }),
+              JSON.stringify({ project_id: targetProjectId }),
+              userId,
+              'Bulk-assigned from Nieprzypisane (Zwornik Delta C)',
+            ]
+          );
+
+          results.push({ initiativeId, success: true });
+        } catch (err) {
+          results.push({
+            initiativeId,
+            success: false,
+            error: (err as Error)?.message || 'Assign failed',
+          });
+        }
+      }
+
+      const assignedCount = results.filter((r) => r.success).length;
+      res.json({
+        success: assignedCount > 0,
+        targetProjectId,
+        assignedCount,
+        failedCount: results.length - assignedCount,
+        results,
       });
     }
   );
