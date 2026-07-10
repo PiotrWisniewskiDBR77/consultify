@@ -15,6 +15,7 @@ const InitiativeController = InitiativeControllerRaw as any;
 import { StaffingPlanController } from '../../controllers/StaffingPlanController.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
+import { requireInitiativeCapability } from '../../middleware/effectiveCapability.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess, requireOrgRole } from '../../middleware/rbac.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
@@ -2307,7 +2308,12 @@ router.post('/suggest-sections', async (req: any, res: any) => {
  * POST /api/initiatives
  * Create a new initiative
  */
-router.post('/', validateBody(CreateInitiativeSchema), InitiativeController.createInitiative);
+router.post(
+  '/',
+  requireInitiativeCapability('initiative.create', { shadow: true }),
+  validateBody(CreateInitiativeSchema),
+  InitiativeController.createInitiative
+);
 
 /**
  * GET /api/initiatives/by-status/:statuses
@@ -2326,7 +2332,12 @@ router.get('/:id', InitiativeController.getInitiativeById);
  * PUT /api/initiatives/:id
  * Update initiative
  */
-router.put('/:id', validateBody(UpdateInitiativeSchema), InitiativeController.updateInitiative);
+router.put(
+  '/:id',
+  requireInitiativeCapability('initiative.update', { shadow: true }),
+  validateBody(UpdateInitiativeSchema),
+  InitiativeController.updateInitiative
+);
 
 /**
  * PATCH /api/initiatives/:id/status
@@ -2334,6 +2345,7 @@ router.put('/:id', validateBody(UpdateInitiativeSchema), InitiativeController.up
  */
 router.patch(
   '/:id/status',
+  requireInitiativeCapability('initiative.status.change', { shadow: true }),
   validateBody(UpdateInitiativeStatusSchema),
   InitiativeController.updateInitiativeStatus
 );
@@ -2344,6 +2356,7 @@ router.patch(
  */
 router.patch(
   '/:id/quick-update',
+  requireInitiativeCapability('initiative.update', { shadow: true }),
   validateBody(QuickUpdateInitiativeSchema),
   InitiativeController.quickUpdateInitiative
 );
@@ -2356,7 +2369,7 @@ router.patch(
  *   (keeps transition validation + governance rules).
  * - Otherwise, delegate to the canonical update handler (same as PUT, but accepts partial payloads).
  */
-router.patch('/:id', (req, res, next) => {
+router.patch('/:id', requireInitiativeCapability('initiative.update', { shadow: true }), (req, res, next) => {
   const body = (req as any)?.body || {};
   const hasStatus = body && Object.prototype.hasOwnProperty.call(body, 'status');
 
@@ -2382,6 +2395,7 @@ router.patch('/:id', (req, res, next) => {
 router.delete(
   '/:id',
   requireOrgRole('user'),
+  requireInitiativeCapability('initiative.delete', { shadow: true }),
   requireInitiativeWriteAccess(),
   InitiativeController.deleteInitiative
 );
@@ -2400,31 +2414,51 @@ router.get('/:id/readiness', InitiativeController.checkReadiness);
  * POST /api/initiatives/:id/submit-review
  * Submit initiative for review
  */
-router.post('/:id/submit-review', InitiativeController.submitForReview);
+router.post(
+  '/:id/submit-review',
+  requireInitiativeCapability('initiative.submit', { shadow: true }),
+  InitiativeController.submitForReview
+);
 
 /**
  * POST /api/initiatives/:id/approve
  * Approve initiative
  */
-router.post('/:id/approve', InitiativeController.approveInitiative);
+router.post(
+  '/:id/approve',
+  requireInitiativeCapability('initiative.approve', { shadow: true }),
+  InitiativeController.approveInitiative
+);
 
 /**
  * POST /api/initiatives/:id/reject
  * Reject initiative (back to planning)
  */
-router.post('/:id/reject', InitiativeController.rejectInitiative);
+router.post(
+  '/:id/reject',
+  requireInitiativeCapability('initiative.approve', { shadow: true }),
+  InitiativeController.rejectInitiative
+);
 
 /**
  * POST /api/initiatives/:id/start-execution
  * Start execution phase
  */
-router.post('/:id/start-execution', InitiativeController.startExecution);
+router.post(
+  '/:id/start-execution',
+  requireInitiativeCapability('initiative.start', { shadow: true }),
+  InitiativeController.startExecution
+);
 
 /**
  * POST /api/initiatives/:id/block
  * Block initiative
  */
-router.post('/:id/block', InitiativeController.blockInitiative);
+router.post(
+  '/:id/block',
+  requireInitiativeCapability('initiative.block', { shadow: true }),
+  InitiativeController.blockInitiative
+);
 
 /**
  * POST /api/initiatives/:id/unblock
@@ -2436,7 +2470,11 @@ router.post('/:id/unblock', InitiativeController.unblockInitiative);
  * POST /api/initiatives/:id/complete
  * Mark initiative as done
  */
-router.post('/:id/complete', InitiativeController.completeInitiative);
+router.post(
+  '/:id/complete',
+  requireInitiativeCapability('initiative.complete', { shadow: true }),
+  InitiativeController.completeInitiative
+);
 
 /**
  * POST /api/initiatives/:id/move
