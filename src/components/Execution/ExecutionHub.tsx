@@ -176,6 +176,76 @@ interface GovernedCapacityWeek {
   availableHours: number;
 }
 
+/* ────────────────────────────────────────────────────────────────────────────
+   F5 kontrakt — rejestr definicji raportów (report_definitions / reportContract.ts)
+   Definicja katalogu Execution płynie z bazy (GET /api/report-builder/definitions),
+   NIE z hardkodu. read_mode='live' (tryb 2): baza niesie „jakie raporty + jak je czytać"
+   (metric+variant), a wartości metryk liczymy na żywo tutaj. Fallback: gdy API puste
+   (np. przed uruchomieniem migracji 910) używamy wbudowanego katalogu — ekran nie pada.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+interface ReportDefinitionDto {
+  id: string;
+  name: string;
+  audience: string | null;
+  cadence: string | null;
+  scope: string | null;
+  readMode?: string;
+  sections: string[];
+  sourceBinding: {
+    dataSources?: string[];
+    ragLogic?: string;
+    followUpActions?: string[];
+    icon?: { name?: string; className?: string };
+    highlights?: Array<{
+      label: string;
+      metric?: string;
+      value?: string | number;
+      variant?: string;
+    }>;
+  };
+}
+
+const REPORT_DEF_ICON_MAP: Record<
+  string,
+  React.ComponentType<{ size?: number; className?: string }>
+> = {
+  CalendarDays,
+  TrendingUp,
+  Shield,
+  AlertTriangle,
+  Clock,
+  Users,
+  Scale,
+  GripVertical,
+  Sparkles,
+  FileText,
+};
+
+/**
+ * Rehydracja pojedynczego highlightu definicji do live-wartości.
+ * `metric` mapuje na policzoną na żywo liczbę; tokeny `critIfPos`/`warnIfPos`
+ * zamieniają się w wariant zależnie od tego, czy liczba jest dodatnia.
+ */
+function resolveDefinitionHighlight(
+  h: { label: string; metric?: string; value?: string | number; variant?: string },
+  metrics: Record<string, number>,
+  progressLabel: string
+): { label: string; value: string | number; variant?: 'default' | 'warn' | 'critical' } {
+  let value: string | number;
+  if (h.metric === 'progress') value = progressLabel;
+  else if (h.metric && h.metric in metrics) value = metrics[h.metric];
+  else value = h.value ?? '—';
+
+  const numeric = typeof value === 'number' ? value : 0;
+  let variant: 'default' | 'warn' | 'critical' = 'default';
+  if (h.variant === 'critIfPos') variant = numeric > 0 ? 'critical' : 'default';
+  else if (h.variant === 'warnIfPos') variant = numeric > 0 ? 'warn' : 'default';
+  else if (h.variant === 'critical' || h.variant === 'warn') variant = h.variant;
+
+  return { label: h.label, value, variant };
+}
+
 const fetchLegacyExecutionControl = async <T,>(
   path: string,
   params?: Record<string, string>
@@ -617,6 +687,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // this surface (below) and emits 'reporting:report-created' (detail=ReportConfig)
   // on Complete; we append the entry here so it shows up in the Reporting list.
   const [generatedReports, setGeneratedReports] = useState<ReportConfig[]>([]);
+
+  // F5 kontrakt — definicje raportów z rejestru report_definitions (null = jeszcze nie pobrano;
+  // [] = pobrano, ale puste → używamy fallbacku hardkodu). Patrz reportContract.ts / migracja 910.
+  const [reportDefinitions, setReportDefinitions] = useState<ReportDefinitionDto[] | null>(null);
 
   // Data state
   const initRetryRef = React.useRef(0);
@@ -3851,6 +3925,29 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Every report declares: audience, cadence, scope, data sources,
   // mandatory sections, RAG/confidence logic, expected follow-up actions.
   // ---------------------------------------------------------------------------
+  // F5 kontrakt — pobierz rejestr definicji raportów Execution (systemowe + org-własne).
+  // Best-effort: błąd/puste → fallback na wbudowany katalog (ekran działa przed migracją).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/report-builder/definitions?kind=EXECUTION_PACK', {
+          headers: getHeaders(),
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as { definitions?: ReportDefinitionDto[] };
+        if (!cancelled && Array.isArray(data.definitions)) {
+          setReportDefinitions(data.definitions);
+        }
+      } catch {
+        // best-effort: zostaje fallback (reportDefinitions = null → hardkod)
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const reportCatalog = useMemo((): Array<
     Omit<
       ReportDef,
@@ -3882,7 +3979,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       | 'scenarioNotes'
     >;
 
-    const base: CatalogEntry[] = [
+    // Metryki live (tryb 2): definicje z bazy niosą klucz `metric`, wartość liczymy tutaj.
+    const metricValues: Record<string, number> = {
+      blocked,
+      tasks: totalTasks,
+      initiatives: totalInitiatives,
+      missingDates: missingDatesCount,
+      overdueDecisions: overdueDecisionCount,
+      pendingDecisions,
+      dueSoon: actionCenter.dueSoonTasks.length,
+    };
+    const progressLabel = progressPct !== null ? `${progressPct}%` : '—';
+
+    // Katalog wbudowany — FALLBACK gdy rejestr `report_definitions` jest pusty/niedostępny.
+    const fallbackBase: CatalogEntry[] = [
       {
         id: 'weekly-exec',
         title: 'Weekly Execution Pack',
@@ -4189,6 +4299,31 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       },
     ];
 
+    // F5 kontrakt — definicje z rejestru (report_definitions) mają pierwszeństwo nad hardkodem.
+    // Mapujemy wiersz DB → CatalogEntry: ikona z {name,className}, highlighty rehydrowane live.
+    const base: CatalogEntry[] =
+      reportDefinitions && reportDefinitions.length > 0
+        ? reportDefinitions.map((def): CatalogEntry => {
+            const sb = def.sourceBinding || {};
+            const IconCmp = REPORT_DEF_ICON_MAP[sb.icon?.name || ''] || FileText;
+            return {
+              id: def.id,
+              title: def.name,
+              audience: def.audience || '',
+              cadence: def.cadence || '',
+              scope: def.scope || '',
+              dataSources: Array.isArray(sb.dataSources) ? sb.dataSources : [],
+              sections: Array.isArray(def.sections) ? def.sections : [],
+              ragLogic: sb.ragLogic || '',
+              followUpActions: Array.isArray(sb.followUpActions) ? sb.followUpActions : [],
+              icon: <IconCmp size={18} className={sb.icon?.className || 'text-c-text-muted'} />,
+              highlights: (Array.isArray(sb.highlights) ? sb.highlights : []).map((h) =>
+                resolveDefinitionHighlight(h, metricValues, progressLabel)
+              ),
+            };
+          })
+        : fallbackBase;
+
     // #20 — prepend reports produced by the Report Generator Wizard so they show
     // up at the top of the Reporting list. They flow through enrichExecutionReport
     // like the predefined catalog entries.
@@ -4214,6 +4349,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     dashboardBaseInitiatives.length,
     execSnapshot,
     generatedReports,
+    reportDefinitions,
   ]);
 
   const reportDataContext = useMemo(
