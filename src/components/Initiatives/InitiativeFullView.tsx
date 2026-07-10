@@ -51,6 +51,7 @@ import { useTranslation } from 'react-i18next';
 
 import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
+import { formatRoiDisplay } from '@/utils/safeFormat';
 
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
@@ -922,7 +923,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                       Expected ROI
                     </span>
                     <span className="text-sm font-semibold text-green-400">
-                      {initiative.expectedRoi ? `${initiative.expectedRoi.toFixed(1)}x` : '-'}
+                      {formatRoiDisplay(initiative.expectedRoi)}
                     </span>
                   </div>
                 </div>
@@ -1176,7 +1177,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                     Expected ROI
                   </div>
                   <div className="text-2xl font-bold text-green-400">
-                    {initiative.expectedRoi ? `${initiative.expectedRoi.toFixed(1)}x` : '-'}
+                    {formatRoiDisplay(initiative.expectedRoi)}
                   </div>
                 </div>
               </div>

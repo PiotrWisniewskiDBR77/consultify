@@ -34,6 +34,7 @@ import { useTranslation } from 'react-i18next';
 
 import { getAxisColor, getPriorityClasses, getStatusClasses } from '../../config/portfolioColors';
 import { Api } from '../../services/api';
+import { formatRoiDisplay } from '../../utils/safeFormat';
 import { InitiativeStatus, PortfolioInitiative, Task, User as UserType } from '../../types';
 import { getSourceDisplayLabel } from '../Initiatives/InitiativeSourceLink';
 import { DecisionDetailModal } from '../MyWork/DecisionDetailModal';
@@ -322,7 +323,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
               Expected ROI
             </div>
             <div className="text-lg font-semibold text-green-600 dark:text-green-400">
-              {initiative.expectedRoi ? `${initiative.expectedRoi.toFixed(1)}x` : '-'}
+              {formatRoiDisplay(initiative.expectedRoi)}
             </div>
           </div>
 
@@ -449,7 +450,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             <div className="flex items-center justify-between py-2">
               <span className="text-sm text-slate-500 dark:text-slate-400">Expected ROI</span>
               <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                {initiative.expectedRoi ? `${initiative.expectedRoi.toFixed(1)}x` : '-'}
+                {formatRoiDisplay(initiative.expectedRoi)}
               </span>
             </div>
           </div>

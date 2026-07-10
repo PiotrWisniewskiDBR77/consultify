@@ -29,6 +29,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
+import { formatRoiDisplay } from '@/utils/safeFormat';
 
 import { InitiativeStatus, PortfolioInitiative, User } from '../../types';
 
@@ -473,7 +474,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
               {t('initiatives.drawer.roi')}
             </div>
             <div className="text-lg font-semibold text-green-400">
-              {initiative.expectedRoi ? `${initiative.expectedRoi.toFixed(1)}x` : '-'}
+              {formatRoiDisplay(initiative.expectedRoi)}
             </div>
           </div>
 

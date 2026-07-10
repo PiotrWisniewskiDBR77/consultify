@@ -50,6 +50,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useHelpSidePanel } from '@/contexts/HelpContext';
+import { formatRoiDisplay } from '@/utils/safeFormat';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, clearGlobalTransportFailure, resetAuthLoopGuard } from '@/services/api';
@@ -1904,7 +1905,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           const roi = row._fullData?.expectedRoi || row._fullData?.expected_roi;
           return (
             <span className={`text-xs font-medium ${roi ? 'text-green-400' : 'text-c-text-muted'}`}>
-              {roi ? `${roi.toFixed(1)}x` : '-'}
+              {formatRoiDisplay(roi)}
             </span>
           );
         },
@@ -3106,7 +3107,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     </span>
                     <span className="text-sm font-semibold text-green-400">
                       {selectedInitiative.expectedRoi
-                        ? `${selectedInitiative.expectedRoi.toFixed(1)}x`
+                        ? formatRoiDisplay(selectedInitiative.expectedRoi)
                         : '-'}
                     </span>
                   </div>

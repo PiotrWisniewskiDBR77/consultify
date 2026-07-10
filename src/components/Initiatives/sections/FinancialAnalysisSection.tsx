@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { BarChart3, DollarSign, Loader2, Sparkles } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatRoiDisplay } from '@/utils/safeFormat';
 
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
@@ -86,9 +87,7 @@ export const FinancialAnalysisSection: React.FC<InitiativeSectionProps> = ({
               ROI
             </div>
             <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-              {initiative.expectedRoi || initiative.expected_roi
-                ? `${(initiative.expectedRoi || initiative.expected_roi).toFixed(1)}x`
-                : '-'}
+              {formatRoiDisplay(initiative.expectedRoi || initiative.expected_roi)}
             </div>
           </div>
           <div className="p-3 rounded-xl bg-blue-50/50 dark:bg-blue-500/5 border border-blue-200/40 dark:border-blue-500/20 text-center">

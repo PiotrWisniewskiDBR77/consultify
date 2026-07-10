@@ -9,6 +9,7 @@ import React from 'react';
 
 import { getAxisColor, getPriorityColors, getStatusColors } from '../../config/portfolioColors';
 import { PortfolioInitiative } from '../../types';
+import { formatRoiDisplay } from '../../utils/safeFormat';
 
 interface PortfolioGridViewProps {
   initiatives: PortfolioInitiative[];
@@ -139,7 +140,7 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) 
         {initiative.expectedRoi && initiative.expectedRoi > 0 && (
           <div className="flex items-center gap-1.5 text-sm text-c-success">
             <TrendingUp size={14} />
-            <span className="font-medium">{initiative.expectedRoi.toFixed(1)}x ROI</span>
+            <span className="font-medium">{formatRoiDisplay(initiative.expectedRoi)} ROI</span>
           </div>
         )}
       </div>
