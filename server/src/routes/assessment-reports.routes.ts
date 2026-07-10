@@ -1013,6 +1013,22 @@ router.get('/:reportId/drd-report', async (req: AuthRequest, res: Response) => {
       logger.warn('[AssessmentReports] LLM service unavailable for DRD report — using deterministic narrator');
     }
 
+    // Wire RAG grounding on the "Digital Pathfinder" book methodology KB
+    // (F14 / §7 KONCEPT_CONTENT_ENGINES, decyzja D-E). Fail-open by design: if
+    // the grounding module is unavailable the report still generates, just
+    // without book citations — same posture as the LLM wiring above.
+    let grounding: any = undefined;
+    try {
+      const { buildDrdGroundingProvider } = await import('../services/report/drdReportGrounding.js');
+      grounding = buildDrdGroundingProvider({
+        organizationId,
+        language,
+        logger: { warn: (msg: string, meta?: unknown) => logger.warn(`[DRDReport] ${msg}`, meta) },
+      });
+    } catch {
+      logger.warn('[AssessmentReports] Grounding provider unavailable for DRD report — no book citations');
+    }
+
     const { buildDrdReportHtmlServer } = await import('../services/report/drdReportService.js');
     const { html, narrative, model } = await buildDrdReportHtmlServer({
       axisData,
@@ -1023,6 +1039,7 @@ router.get('/:reportId/drd-report', async (req: AuthRequest, res: Response) => {
         reportDate: reportRow.created_at || undefined,
       },
       llm: llm || undefined,
+      grounding,
       logger: {
         warn: (msg: string, meta?: unknown) => logger.warn(`[DRDReport] ${msg}`, meta),
       },
@@ -1044,6 +1061,29 @@ router.get('/:reportId/drd-report', async (req: AuthRequest, res: Response) => {
             reportId: String(reportId),
             reportTitle: reportRow.name || reportRow.assessmentName || null,
             projectId: reportRow.project_id || null,
+          },
+        },
+        { logger: { warn: (msg: string, meta?: unknown) => logger.warn(msg, meta) } }
+      );
+    } catch {
+      /* bridge module unavailable — report generation continues */
+    }
+
+    // EVIDENCE LAYER bridge (H1 Harvey-gap, §3 KONCEPT_RDZEN): persist the
+    // report's full lineage (engine facts + book citations + assumptions +
+    // deterministic-fallback flags) as an EvidenceEnvelope so "Źródła i
+    // założenia" can render it. Fire-and-forget + fail-safe.
+    try {
+      const { safePersistDrdReportEvidence } = await import(
+        '../services/evidence/drdReportEvidenceBridge.js'
+      );
+      void safePersistDrdReportEvidence(
+        {
+          model,
+          source: {
+            reportId: String(reportId),
+            organizationId,
+            createdBy: req.user?.id ? String(req.user.id) : null,
           },
         },
         { logger: { warn: (msg: string, meta?: unknown) => logger.warn(msg, meta) } }
