@@ -33,9 +33,11 @@ import DRD_STRUCTURE, {
 import { buildDRDVisualizationData } from './drdVizAdapter.js';
 import {
   deterministicNarrator,
+  type ConclusionEvidenceRef,
   type ConclusionOutput,
   type DrdNarrator,
 } from './drdConclusionContract.js';
+import type { DrdGroundingProvider } from './drdReportGrounding.js';
 import {
   buildDrdIndustryBenchmarkSection,
   DEFAULT_DRD_BENCHMARK_INDUSTRY,
@@ -64,6 +66,14 @@ export interface DrdReportMeta {
 export interface DrdReportOptions {
   /** Narrator for prose. Defaults to the deterministic stub (no LLM). */
   narrator?: DrdNarrator;
+  /**
+   * Optional per-axis RAG grounding (F14 / §7 KONCEPT_CONTENT_ENGINES) — when
+   * supplied, book-methodology evidence (`type: 'drd_methodology_kb'`) is merged
+   * into the executive summary, gap card, and chapter evidence arrays BEFORE
+   * calling the narrator. Server-only (needs DB access) — see
+   * `drdReportGrounding.ts`. Omitted on the FE copy of this file (browser bundle).
+   */
+  grounding?: DrdGroundingProvider;
 }
 
 /** Per-area row in the 39-area matrix. */
@@ -300,6 +310,17 @@ export async function buildDrdReportModel(
   const language = meta.language;
   const isPL = language === 'pl';
   const narrator = options.narrator ?? deterministicNarrator;
+  const grounding = options.grounding;
+
+  /** Fetch book-methodology evidence for an axis (fail-safe: [] on any error). */
+  const groundAxis = async (axisId: number, axisName: string): Promise<ConclusionEvidenceRef[]> => {
+    if (!grounding) return [];
+    try {
+      return await grounding(axisId, axisName);
+    } catch {
+      return [];
+    }
+  };
 
   const areas = buildAreaRows(areaScores, language);
   const dimensions = buildDimensions(areaScores, language);
@@ -331,6 +352,17 @@ export async function buildDrdReportModel(
   )[0];
   const stage = maturityStage(overallPercent, isPL);
 
+  // Executive summary is grounded on the strongest + weakest axis (the two the
+  // narrative actually discusses) — avoids 7 RAG calls for a summary that only
+  // needs two axes of methodology context.
+  const execSummaryGrounding = (
+    await Promise.all(
+      [strongest, weakest]
+        .filter((d): d is DrdDimension => Boolean(d))
+        .map((d) => groundAxis(d.axisId, d.name))
+    )
+  ).flat();
+
   const executiveSummary = await narrator({
     kind: 'executive_summary',
     language,
@@ -344,11 +376,14 @@ export async function buildDrdReportModel(
       assessedAreas,
       totalAreas,
     },
-    evidence: dimensions.map((d) => ({
-      type: 'drd_axis',
-      ref: String(d.axisId),
-      excerpt: `${d.name}: ${d.actual}/${d.maxLevel}`,
-    })),
+    evidence: [
+      ...dimensions.map((d) => ({
+        type: 'drd_axis',
+        ref: String(d.axisId),
+        excerpt: `${d.name}: ${d.actual}/${d.maxLevel}`,
+      })),
+      ...execSummaryGrounding,
+    ],
   });
 
   // Top-3 gap cards: largest normalized gaps.
@@ -359,6 +394,7 @@ export async function buildDrdReportModel(
 
   const gapCards: DrdGapCard[] = [];
   for (const row of topGapRows) {
+    const rowGrounding = await groundAxis(row.axisId, row.axisName);
     const narrative = await narrator({
       kind: 'gap_card',
       language,
@@ -372,7 +408,10 @@ export async function buildDrdReportModel(
         currentLevelTitle: row.currentLevelTitle,
         targetLevelTitle: row.targetLevelTitle,
       },
-      evidence: [{ type: 'drd_area', ref: row.areaId, excerpt: `${row.actual}→${row.target}` }],
+      evidence: [
+        { type: 'drd_area', ref: row.areaId, excerpt: `${row.actual}→${row.target}` },
+        ...rowGrounding,
+      ],
     });
     gapCards.push({
       areaId: row.areaId,
@@ -407,6 +446,7 @@ export async function buildDrdReportModel(
   const chapters: DrdChapter[] = [];
   for (const dim of dimensions) {
     const axisAreas = areas.filter((r) => r.axisId === dim.axisId);
+    const dimGrounding = await groundAxis(dim.axisId, dim.name);
     const narrative = await narrator({
       kind: 'dimension_chapter',
       language,
@@ -417,11 +457,14 @@ export async function buildDrdReportModel(
         target: dim.target,
         maxLevel: dim.maxLevel,
       },
-      evidence: axisAreas.map((r) => ({
-        type: 'drd_area',
-        ref: r.areaId,
-        excerpt: `${r.actual}/${r.maxLevel}`,
-      })),
+      evidence: [
+        ...axisAreas.map((r) => ({
+          type: 'drd_area',
+          ref: r.areaId,
+          excerpt: `${r.actual}/${r.maxLevel}`,
+        })),
+        ...dimGrounding,
+      ],
     });
     chapters.push({
       axisId: dim.axisId,

@@ -18,6 +18,7 @@ import DRD_STRUCTURE, { DRD_KEY_TO_AXIS_MAP } from '../../data/drdStructure.js';
 import { generateDrdReport } from './drdReportGenerator.js';
 import type { LlmLike } from './drdLlmNarrator.js';
 import type { AreaScores, DrdReportMeta, DrdReportModel } from './drdReportModel.js';
+import type { DrdGroundingProvider } from './drdReportGrounding.js';
 
 /**
  * Derive area-level scores from per-AXIS aggregates (the report editor's
@@ -56,6 +57,12 @@ export interface BuildDrdReportServerParams {
   /** Optional per-area scores; overrides the axis-derived ones when supplied. */
   areaScores?: AreaScores;
   logger?: { warn?: (msg: string, meta?: unknown) => void };
+  /**
+   * Optional per-axis RAG grounding (book "Digital Pathfinder" methodology KB) —
+   * see `drdReportGrounding.ts` / `buildDrdGroundingProvider`. Omitted → report
+   * still generates, just without KB citations (fail-open by design).
+   */
+  grounding?: DrdGroundingProvider;
 }
 
 /**
@@ -70,6 +77,7 @@ export async function buildDrdReportHtmlServer(
   const { html, model } = await generateDrdReport(areaScores, params.meta, {
     llm: params.llm,
     llmOptions: params.logger ? { logger: params.logger } : undefined,
+    grounding: params.grounding,
   });
   return { html, narrative: model.executiveSummary.narrative, model };
 }
