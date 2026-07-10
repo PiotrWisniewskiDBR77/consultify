@@ -150,17 +150,48 @@ export function expandQueryWithContext(query: string, context: ToolRAGContext): 
 }
 
 /**
+ * Hand-maintained manifest of which `knowledge/tool-kb/<tool>/<packType>/`
+ * folders currently hold REAL content (not empty/wydmuszka placeholders).
+ *
+ * FIX 2026-07-10 (`_KONCEPT_CONTENT_ENGINES_2026-07-10.md` §2.2 audit finding):
+ * this function previously hardcoded `available: false` for every tool/pack
+ * unconditionally, which hid the grounding badge even for packs that DO have
+ * content (e.g. DRD's methodology KB — 8 axis chapters — and qbank v2 — 233
+ * areas — merged 2026-07-10; dynamic-swot's full 6-slot pack, the reference
+ * pattern per §3 "wzorzec kompletności"). This is browser code with no
+ * filesystem access, so it cannot check disk directly — update this table
+ * when a pack is filled (Faza 2/4 rollout, §12). TODO: replace with a live
+ * check (e.g. a small `GET /api/ai-operations/knowledge/tool-packs/manifest`
+ * endpoint reading `knowledge_docs` grouped by `tool_slug`/`pack_type`) once
+ * that endpoint exists, so this table stops drifting from the real KB —
+ * flagged in the handoff report for this task, not built here (out of the
+ * "addytywne, mały diff" scope of this pass).
+ */
+const KNOWN_AVAILABLE_PACKS: Partial<Record<string, Partial<Record<PackType, boolean>>>> = {
+  drd: { methodology: true, qbank: true },
+  'dynamic-swot': {
+    methodology: true,
+    qbank: true,
+    initiatives: true,
+    benchmarks: true,
+    help: true,
+  },
+  kpi: { benchmarks: true, qbank: true },
+};
+
+/**
  * Get available knowledge packs for a tool.
- * Checks which packs exist in knowledge/tool-kb/{toolSlug}/.
- * Since the knowledge base is not yet populated, availability is derived
- * from a static mapping of which tools have dedicated content.
+ * Checks which packs exist in knowledge/tool-kb/{toolSlug}/ (see
+ * `KNOWN_AVAILABLE_PACKS` above for why this is a static table, not a live
+ * filesystem/DB check).
  */
 export function getAvailableKnowledgePacks(
   toolSlug: string
 ): { packType: string; available: boolean; path: string }[] {
+  const known = KNOWN_AVAILABLE_PACKS[toolSlug] || {};
   return PACK_TYPES.map((packType) => ({
     packType,
-    available: false,
+    available: Boolean(known[packType]),
     path: `knowledge/tool-kb/${toolSlug}/${packType}/`,
   }));
 }

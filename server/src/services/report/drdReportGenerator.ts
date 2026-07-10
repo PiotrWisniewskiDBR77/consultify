@@ -40,6 +40,8 @@ export interface GenerateDrdReportOptions extends DrdReportOptions {
   llm?: LlmLike;
   /** Extra LLM narrator tuning (model tier, timeout, temperature, logger). */
   llmOptions?: Omit<DrdLlmNarratorOptions, 'llm'>;
+  // `grounding` is inherited from `DrdReportOptions` (drdReportModel.ts) and
+  // threaded straight through to `buildDrdReportModel` below.
 }
 
 /** Build the full DRD report (model + HTML) from engine scores and meta. */
@@ -56,7 +58,10 @@ export async function generateDrdReport(
     options.narrator ??
     (options.llm ? makeLlmNarrator({ llm: options.llm, ...(options.llmOptions || {}) }) : undefined);
 
-  const model = await buildDrdReportModel(areaScores, meta, { narrator });
+  const model = await buildDrdReportModel(areaScores, meta, {
+    narrator,
+    grounding: options.grounding,
+  });
   const html = buildDrdReportHtml(model);
   return { html, model };
 }
@@ -67,3 +72,4 @@ export * from './drdReportHtml.js';
 export * from './drdConclusionContract.js';
 export * from './drdLlmNarrator.js';
 export * from './drdIndustryBenchmark.js';
+export * from './drdReportGrounding.js';
