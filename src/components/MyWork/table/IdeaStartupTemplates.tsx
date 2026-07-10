@@ -224,8 +224,52 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
             />
           </div>
 
+          {/* Workspace selector — MUST come before the action cards so the
+              user picks a tool before triggering a start action (Z18). */}
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-c-text-muted mb-2.5">
+              {isPl ? '1. Wybierz narzędzie' : '1. Choose your tool'}
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {TEMPLATES.map((ws) => {
+                const active = selectedWorkspace === ws.id;
+                const c = COLOR_MAP[ws.color];
+                const Icon = ws.icon;
+                return (
+                  <button
+                    key={ws.id}
+                    type="button"
+                    onClick={() => setSelectedWorkspace(ws.id)}
+                    className={`
+                      flex flex-col items-center gap-1.5 rounded-xl px-2 py-3 text-center transition-all duration-200
+                      ${
+                        active
+                          ? `${c.bg} ${c.border} border-2 ring-2 ${c.ring} shadow-sm`
+                          : 'border border-c-border-subtle hover:border-c-border-subtle hover:bg-c-surface-raised'
+                      }
+                    `}
+                  >
+                    <Icon
+                      size={18}
+                      className={active ? c.text : 'text-c-text-secondary'}
+                    />
+                    <span
+                      className={`text-[11px] font-medium ${active ? c.text : 'text-c-text-muted'}`}
+                    >
+                      {isPl ? ws.labelPl : ws.labelEn}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* 3 Action Cards */}
-          <div className="grid grid-cols-3 gap-3">
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-c-text-muted mb-2.5">
+              {isPl ? '2. Wybierz start' : '2. Choose a start'}
+            </div>
+            <div className="grid grid-cols-3 gap-3">
             {/* Start with AI */}
             <PrimaryStartButton
               onClick={() => handleSelect('describe_with_ai')}
@@ -297,6 +341,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                 className="text-c-text-secondary transition-transform group-hover:translate-x-0.5"
               />
             </PrimaryStartButton>
+            </div>
           </div>
 
           <div className="rounded-xl border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised p-3">
@@ -361,45 +406,6 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                 />
               </div>
             )}
-          </div>
-
-          {/* Workspace selector */}
-          <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-c-text-muted mb-2.5">
-              {isPl ? 'Workspace' : 'Workspace'}
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              {TEMPLATES.map((ws) => {
-                const active = selectedWorkspace === ws.id;
-                const c = COLOR_MAP[ws.color];
-                const Icon = ws.icon;
-                return (
-                  <button
-                    key={ws.id}
-                    type="button"
-                    onClick={() => setSelectedWorkspace(ws.id)}
-                    className={`
-                      flex flex-col items-center gap-1.5 rounded-xl px-2 py-3 text-center transition-all duration-200
-                      ${
-                        active
-                          ? `${c.bg} ${c.border} border-2 ring-2 ${c.ring} shadow-sm`
-                          : 'border border-c-border-subtle hover:border-c-border-subtle hover:bg-c-surface-raised'
-                      }
-                    `}
-                  >
-                    <Icon
-                      size={18}
-                      className={active ? c.text : 'text-c-text-secondary'}
-                    />
-                    <span
-                      className={`text-[11px] font-medium ${active ? c.text : 'text-c-text-muted'}`}
-                    >
-                      {isPl ? ws.labelPl : ws.labelEn}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
           </div>
         </div>
       </div>
