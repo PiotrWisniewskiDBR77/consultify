@@ -20,6 +20,7 @@ import {
 } from '../services/effectiveAccessService.js';
 import { unifiedExportService } from '../services/export/UnifiedExportService.js';
 import { insertDynamic } from '../utils/dbDynamic.js';
+import { decodeHtmlEntities, deepDecodeHtmlEntities } from '../utils/htmlEntities.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
@@ -2727,6 +2728,15 @@ router.post('/drafts', async (req: AuthRequest, res) => {
   await ensureStorage();
   const { organizationId, userId } = authContext(req);
   const now = new Date().toISOString();
+  // Z139: undo the input-sanitizer's HTML-entity escaping before storing rich
+  // text, otherwise every save re-escapes and corrupts the canvas content.
+  if (req.body && typeof req.body === 'object') {
+    const b = req.body as Record<string, unknown>;
+    if (typeof b.contentMd === 'string') b.contentMd = decodeHtmlEntities(b.contentMd);
+    if (typeof b.content === 'string') b.content = decodeHtmlEntities(b.content);
+    if (b.contentJson !== undefined) b.contentJson = deepDecodeHtmlEntities(b.contentJson);
+    if (Array.isArray(b.blocks)) b.blocks = deepDecodeHtmlEntities(b.blocks);
+  }
   const draft: WorkCanvasDraft = {
     id: randomUUID(),
     organizationId,
@@ -3347,6 +3357,13 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
   }
   const payload =
     req.body && typeof req.body === 'object' ? (req.body as Record<string, unknown>) : {};
+  // Z139: undo the input-sanitizer's HTML-entity escaping before storing rich
+  // text, otherwise every save re-escapes and corrupts the canvas content.
+  if (typeof payload.contentMd === 'string') payload.contentMd = decodeHtmlEntities(payload.contentMd);
+  if (typeof payload.content === 'string') payload.content = decodeHtmlEntities(payload.content);
+  if (payload.contentJson !== undefined)
+    payload.contentJson = deepDecodeHtmlEntities(payload.contentJson);
+  if (Array.isArray(payload.blocks)) payload.blocks = deepDecodeHtmlEntities(payload.blocks);
   const nextKind = String(payload.kind || draft.kind) as DraftKind;
   const allowedKinds: DraftKind[] = [
     'markdown',

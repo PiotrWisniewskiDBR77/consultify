@@ -12,6 +12,7 @@ import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
+import { decodeHtmlEntities, deepDecodeHtmlEntities } from '../../utils/htmlEntities.js';
 import {
   addNotebookAttachmentsToPage,
   NotebookAttachmentMutationError,
@@ -600,10 +601,11 @@ router.post(
     const now = new Date().toISOString();
     const tags = JSON.stringify(parseTagsArray(req.body?.tags));
     const contentJson = safeJsonString(
-      req.body?.contentJson,
+      deepDecodeHtmlEntities(req.body?.contentJson),
       JSON.stringify({ type: 'doc', content: [] })
     );
-    const contentText = typeof req.body?.contentText === 'string' ? req.body.contentText : null;
+    const contentText =
+      typeof req.body?.contentText === 'string' ? decodeHtmlEntities(req.body.contentText) : null;
     const icon = typeof req.body?.icon === 'string' ? req.body.icon : null;
     const maturity = typeof req.body?.maturity === 'string' ? req.body.maturity : 'seed';
     const status =
@@ -1179,9 +1181,13 @@ router.put(
     if (req.body?.contentJson !== undefined)
       set(
         'content_json',
-        safeJsonString(req.body.contentJson, JSON.stringify({ type: 'doc', content: [] }))
+        safeJsonString(
+          deepDecodeHtmlEntities(req.body.contentJson),
+          JSON.stringify({ type: 'doc', content: [] })
+        )
       );
-    if (typeof req.body?.contentText === 'string') set('content_text', req.body.contentText);
+    if (typeof req.body?.contentText === 'string')
+      set('content_text', decodeHtmlEntities(req.body.contentText));
     if (typeof req.body?.maturity === 'string') set('maturity', req.body.maturity);
     if (typeof req.body?.icon === 'string') set('icon', req.body.icon);
     if (typeof req.body?.summary === 'string') set('summary', req.body.summary);
