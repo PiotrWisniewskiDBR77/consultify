@@ -31,9 +31,12 @@ export function getIdeasToolInteractionProps(
   { locked = false, connectMode = false }: IdeasToolInteractionOptions = {}
 ) {
   return {
-    // Miro-style: middle/right button = pan, left button = select/drag nodes
-    panOnDrag: [1, 2] as number[],
-    selectionOnDrag: true,
+    // Z10 — Miro-style: left/middle/right drag on empty canvas PANS (dragging a
+    // node still moves it). Background "grab to pan" was the #1 canvas ask.
+    // Rubber-band selection moves to Shift+drag (ReactFlow selectionKeyCode
+    // default), so left-drag no longer starts a selection box over empty space.
+    panOnDrag: [0, 1, 2] as number[],
+    selectionOnDrag: false,
     selectionMode: 'partial' as const,
     zoomOnScroll: true,
     zoomOnPinch: true,
