@@ -136,7 +136,29 @@ type RerankableChunk = {
   hybridScore?: number;
   source?: string;
   scoreBreakdown?: Record<string, unknown>;
+  /**
+   * Chunk-level metadata from `knowledge_chunks.metadata` (branding, tool_slug,
+   * pack_type, etc. — set by `knowledgeIndexer.indexFile`/`indexToolKnowledgePacks`).
+   * Previously dropped by `bm25Search`/`_vectorSearch` (never selected from SQL) —
+   * see fix 2026-07-10, task "Diagnoza DRD → raport zarządczy z dowodami".
+   */
+  metadata?: Record<string, unknown>;
 };
+
+/** Parse a `knowledge_chunks.metadata` column value (JSON string or already-parsed object). */
+function parseChunkMetadata(raw: unknown): Record<string, unknown> {
+  if (!raw) return {};
+  if (typeof raw === 'object') return raw as Record<string, unknown>;
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {};
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
 
 type SearchOptions = {
   limit?: number;
@@ -492,6 +514,16 @@ const RagService = {
       similarity: number;
       documentId?: string;
       chunkIndex?: number;
+      /**
+       * Branding pass-through (decyzja D-E, `_KONCEPT_CONTENT_ENGINES_2026-07-10.md`
+       * §7): chunk-level citation metadata set by `knowledgeIndexer` for branded
+       * packs (e.g. the "Digital Pathfinder" book — `source`/`source_author`/
+       * `branded`/`verbatim`). Previously computed then discarded here — only
+       * `filename` survived into `source`. Optional: most KB sources have none.
+       */
+      sourceAuthor?: string;
+      branded?: boolean;
+      metadata?: Record<string, unknown>;
     }>
   > => {
     await initDeps();
@@ -507,12 +539,18 @@ const RagService = {
           enableReranking: true,
           documentIds,
         });
-        return results.map((r) => ({
-          content: r.content || '',
-          source: r.filename || 'Knowledge Base',
-          similarity: r.hybridScore || 0,
-          documentId: (r as any)?.doc_id || (r as any)?.documentId || undefined,
-        }));
+        return results.map((r) => {
+          const meta = r.metadata || {};
+          return {
+            content: r.content || '',
+            source: (meta.source as string) || r.filename || 'Knowledge Base',
+            similarity: r.hybridScore || 0,
+            documentId: (r as any)?.doc_id || (r as any)?.documentId || undefined,
+            sourceAuthor: (meta.source_author as string) || undefined,
+            branded: Boolean(meta.branded),
+            metadata: meta,
+          };
+        });
       }
 
       const results = await deps.embeddingService.search(query, {
@@ -537,13 +575,19 @@ const RagService = {
         return [];
       }
 
-      return results.map((result) => ({
-        content: result.content || '',
-        source: (result.metadata as { filename?: string })?.filename || 'Knowledge Base',
-        similarity: result.similarity || 0,
-        documentId: result.document_id || undefined,
-        chunkIndex: result.chunk_index || undefined,
-      }));
+      return results.map((result) => {
+        const meta = (result.metadata as Record<string, unknown>) || {};
+        return {
+          content: result.content || '',
+          source: (meta.source as string) || (meta.filename as string) || 'Knowledge Base',
+          similarity: result.similarity || 0,
+          documentId: result.document_id || undefined,
+          chunkIndex: result.chunk_index || undefined,
+          sourceAuthor: (meta.source_author as string) || undefined,
+          branded: Boolean(meta.branded),
+          metadata: meta,
+        };
+      });
     } catch (error: unknown) {
       const err = error as Error;
       aiLogger.error('RagService', `searchRelevantChunks error: ${err.message}`);
@@ -635,6 +679,7 @@ const RagService = {
             SELECT
               c.id,
               c.content,
+              c.metadata as chunk_metadata,
               d.filename,
               d.id as doc_id
               ${hasCategory ? ', d.category as doc_category' : ''}
@@ -655,7 +700,12 @@ const RagService = {
     if (!accessFilter.allowed) return [];
     sql = accessFilter.sql;
 
-    const rows = await queryDb<{ id: string; content: string; filename: string }>(sql, params);
+    const rows = await queryDb<{
+      id: string;
+      content: string;
+      filename: string;
+      chunk_metadata?: string | Record<string, unknown> | null;
+    }>(sql, params);
     if (!rows || rows.length === 0) {
       return [];
     }
@@ -672,6 +722,7 @@ const RagService = {
 
     const scored = rows.map((row, idx) => ({
       ...row,
+      metadata: parseChunkMetadata(row.chunk_metadata),
       bm25Score: bm25Score(queryTokens, tokenizedDocs[idx], avgDocLength, idf),
       tokens: tokenizedDocs[idx],
     }));
@@ -809,6 +860,7 @@ const RagService = {
             SELECT
               c.id,
               c.content,
+              c.metadata as chunk_metadata,
               d.filename,
               d.id as doc_id,
               c.embedding
@@ -835,12 +887,14 @@ const RagService = {
       content: string;
       filename: string;
       embedding: string;
+      chunk_metadata?: string | Record<string, unknown> | null;
     }>(sql, params);
 
     const scored = rows.map((row) => {
       const vec = parseEmbedding(row.embedding);
       return {
         ...row,
+        metadata: parseChunkMetadata(row.chunk_metadata),
         vectorScore: vec ? cosineSimilarity(queryEmbedding, vec) : 0,
       };
     });

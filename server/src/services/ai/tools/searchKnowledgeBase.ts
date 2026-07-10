@@ -29,13 +29,31 @@ type RagChunk = {
   document_name?: string;
   similarity?: number;
   score?: number;
+  /** Branding pass-through from ragService.searchRelevantChunks (fix 2026-07-10). */
+  sourceAuthor?: string;
+  branded?: boolean;
 };
 
 export async function searchKnowledgeBase(
   params: SearchParams,
   context: SearchContext = {}
 ): Promise<{
-  results: Array<{ content: string; source: string; relevance: number }>;
+  results: Array<{
+    content: string;
+    source: string;
+    relevance: number;
+    /**
+     * Branding for cited knowledge (decyzja D-E, `_KONCEPT_CONTENT_ENGINES_2026-07-10.md`
+     * §7): populated when the chunk was indexed from a branded pack (e.g. the
+     * "Digital Pathfinder" book — `knowledgeIndexer` tags drd/methodology chunks
+     * with `source_author`/`branded`/`verbatim`). Callers that cite this content
+     * in client-facing output should render "wg {source}, {sourceAuthor}" when
+     * `branded` is true (previously always dropped — ragService.searchRelevantChunks
+     * only returned `{content, source: filename, similarity}`).
+     */
+    sourceAuthor?: string;
+    branded?: boolean;
+  }>;
   totalFound: number;
 }> {
   const { query, maxResults = 5, toolSlug, packType, language } = params;
@@ -117,6 +135,8 @@ export async function searchKnowledgeBase(
         content: r.content || r.text || '',
         source: r.source || r.document_name || 'DRD Methodology',
         relevance: r.similarity || r.score || 0.8,
+        sourceAuthor: r.sourceAuthor,
+        branded: Boolean(r.branded),
       })),
       totalFound: results.length,
     };
