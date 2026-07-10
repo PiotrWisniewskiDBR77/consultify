@@ -13,6 +13,7 @@ import TaskControllerRaw from '../../controllers/TaskController.js';
 const TaskController = TaskControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
+import { requireTaskCapability } from '../../middleware/effectiveCapability.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
 import { requireAudit } from '../../middleware/requireAudit.middleware.js';
@@ -79,7 +80,7 @@ router.get(
  * POST /api/tasks
  * Create a new task
  */
-router.post('/', requireAudit, validateBody(CreateTaskSchema), TaskController.createTask);
+router.post('/', requireAudit, requireTaskCapability('task.create', { shadow: true }), validateBody(CreateTaskSchema), TaskController.createTask);
 
 /**
  * GET /api/tasks/search
@@ -1117,13 +1118,13 @@ router.get('/:id', TaskController.getTaskById);
  * PUT /api/tasks/:id
  * Update task
  */
-router.put('/:id', requireAudit, validateBody(UpdateTaskSchema), TaskController.updateTask);
+router.put('/:id', requireAudit, requireTaskCapability('task.update', { shadow: true }), validateBody(UpdateTaskSchema), TaskController.updateTask);
 
 /**
  * DELETE /api/tasks/:id
  * Delete task
  */
-router.delete('/:id', requireAudit, TaskController.deleteTask);
+router.delete('/:id', requireAudit, requireTaskCapability('task.delete', { shadow: true }), TaskController.deleteTask);
 
 // ==========================================
 // TASK COMMENTS
@@ -1160,7 +1161,7 @@ router.delete('/:taskId/comments/:commentId', requireAudit, TaskController.delet
  * POST /api/tasks/:id/assign
  * Assign task to user
  */
-router.post('/:id/assign', requireAudit, validateBody(AssignTaskSchema), TaskController.assignTask);
+router.post('/:id/assign', requireAudit, requireTaskCapability('task.assign', { shadow: true }), validateBody(AssignTaskSchema), TaskController.assignTask);
 
 /**
  * POST /api/tasks/:id/reassign
@@ -1243,7 +1244,7 @@ router.get('/my-workload', TaskController.getMyWorkload);
  * POST /api/tasks/:id/block
  * Block task (manual or by decision)
  */
-router.post('/:id/block', requireAudit, validateBody(BlockTaskSchema), TaskController.blockTask);
+router.post('/:id/block', requireAudit, requireTaskCapability('task.status.update', { shadow: true }), validateBody(BlockTaskSchema), TaskController.blockTask);
 
 /**
  * POST /api/tasks/:id/unblock
