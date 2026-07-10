@@ -28,6 +28,32 @@ export function safePercent(
   return `${((num / den) * 100).toFixed(decimals)}%`;
 }
 
+/**
+ * Formats an initiative ROI value for display.
+ *
+ * `initiatives.expected_roi` is a TEXT column (migration 903): the AI writes
+ * QUALITATIVE strings ("ROI 200%", "44% (zysk netto ÷ nakład), payback 14 mies",
+ * "rentowność Q3 2027") — never a bare number. Calling `.toFixed()` on that
+ * string threw `TypeError` and crashed the whole page (Z64). This helper:
+ *   - number            → `${n.toFixed(1)}x` (preserves the old visual for real numbers)
+ *   - pure numeric text  → same `${n.toFixed(1)}x`
+ *   - qualitative text   → shown verbatim
+ *   - null/undefined/''  → fallback
+ */
+export function formatRoiDisplay(value: unknown, fallback = '-'): string {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? `${value.toFixed(1)}x` : fallback;
+  }
+  const str = String(value).trim();
+  if (!str) return fallback;
+  if (/^-?\d*\.?\d+$/.test(str)) {
+    const num = Number(str);
+    if (Number.isFinite(num)) return `${num.toFixed(1)}x`;
+  }
+  return str;
+}
+
 export function safeDate(value: unknown, fallback = EMPTY_VALUE): string {
   if (!value) return fallback;
   const date = value instanceof Date ? value : new Date(String(value));
