@@ -196,6 +196,8 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
           </button>
           <button
             onClick={onClose}
+            title={isPl ? 'Zakończ prezentację (Esc)' : 'Exit presentation (Esc)'}
+            aria-label={isPl ? 'Zakończ prezentację (Esc)' : 'Exit presentation (Esc)'}
             className="p-2 rounded-lg text-c-text-secondary hover:text-c-text-secondary dark:hover:text-c-text hover:bg-c-surface-raised dark:hover:bg-c-surface transition-colors"
           >
             <X size={16} />

@@ -821,8 +821,10 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
           description: task.description || '',
           status: task.status || 'todo',
           priority: normalizePriority(task.priority),
-          dueDate: task.dueDate ? String(task.dueDate).split('T')[0] : '',
-          startedAt: task.startedAt ? String(task.startedAt).split('T')[0] : '',
+          // Z28: normalize empty dates to null to match the draft/payload snapshot
+          // (which use `|| null`); '' vs null made isDirty falsely true → autosave loop.
+          dueDate: task.dueDate ? String(task.dueDate).split('T')[0] : null,
+          startedAt: task.startedAt ? String(task.startedAt).split('T')[0] : null,
           blockedReason: task.status === 'blocked' ? task.blockedReason || '' : '',
           tags: task.tags || [],
           checklist: task.checklist || [],
@@ -4039,7 +4041,7 @@ Return ONLY the final comment text.`;
     ];
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
+      <div className="h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
         <div className="p-6">
           <div className="max-w-[1500px] mx-auto xl:flex xl:gap-6 xl:items-start space-y-0">
             {/* ── Lewa kolumna: header + treść (dokowany panel po prawej) ── */}
