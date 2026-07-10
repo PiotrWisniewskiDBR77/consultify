@@ -33,7 +33,11 @@ export type ReportSourceType =
   // "actual upload bundles" (the W2-E4 fix used UPLOAD_BUNDLE as the least-
   // wrong existing value; this closes the audit's "right discriminant but
   // wrong sub-semantic" finding).
-  | 'WORK_CANVAS';
+  | 'WORK_CANVAS'
+  // PM2 (flagowy raport 3 osi, `_KONCEPT_PROGRAM_MANAGEMENT_2026-07-10.md` §6) —
+  // dedykowany discriminant zamiast przeciążania RESULTS_KPI_REPORT/INITIATIVE;
+  // sourceId = projectId|programId|organizationId (patrz threeAxisReportService.ts).
+  | 'PROGRAM_3AXIS';
 export type ReportStatus =
   | 'DRAFT'
   | 'CONFIGURING'
