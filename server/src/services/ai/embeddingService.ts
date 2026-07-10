@@ -68,7 +68,9 @@ export class EmbeddingService {
   private openaiConfigured: boolean;
 
   constructor() {
-    this.openaiConfigured = Boolean(process.env.OPENAI_API_KEY);
+    // Prefer OpenRouter (proxies openai/text-embedding-3-small); the demo's
+    // direct OpenAI key returns 401 so vector indexing was silently dead.
+    this.openaiConfigured = Boolean(process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY);
     this.initProvider();
   }
 
@@ -88,15 +90,22 @@ export class EmbeddingService {
       throw new Error('OpenAI API key not configured');
     }
 
+    const routerKey = process.env.OPENROUTER_API_KEY;
+    const embUrl = routerKey
+      ? 'https://openrouter.ai/api/v1/embeddings'
+      : 'https://api.openai.com/v1/embeddings';
+    const embKey = routerKey || process.env.OPENAI_API_KEY;
+    const embModel = routerKey ? `openai/${EMBEDDING_MODEL}` : EMBEDDING_MODEL;
+
     try {
-      const response = await fetch('https://api.openai.com/v1/embeddings', {
+      const response = await fetch(embUrl, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          Authorization: `Bearer ${embKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: EMBEDDING_MODEL,
+          model: embModel,
           input: text.substring(0, 8000),
         }),
       });
