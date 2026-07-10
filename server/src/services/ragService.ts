@@ -320,25 +320,37 @@ const RagService = {
   generateEmbedding: async (text: string): Promise<number[] | null> => {
     await initDeps();
 
+    // Prefer OpenRouter for embeddings when configured (chat already uses it).
+    // The demo's direct OpenAI key returns 401, so vector search was dead —
+    // OpenRouter proxies `openai/text-embedding-3-small` (same 1536 dims).
+    const routerKey = process.env.OPENROUTER_API_KEY;
     let apiKey: string | undefined;
+    let baseURL: string | undefined;
+    let model = 'text-embedding-3-small';
 
-    // Try env var first (works on both SQLite and PostgreSQL)
-    apiKey = process.env.OPENAI_API_KEY;
+    if (routerKey) {
+      apiKey = routerKey;
+      baseURL = 'https://openrouter.ai/api/v1';
+      model = 'openai/text-embedding-3-small';
+    } else {
+      // Try env var first (works on both SQLite and PostgreSQL)
+      apiKey = process.env.OPENAI_API_KEY;
 
-    // Fallback to llm_providers table
-    if (!apiKey) {
-      if (isPg()) {
-        const rows = await queryDb<{ api_key?: string }>(
-          "SELECT api_key FROM llm_providers WHERE provider = 'openai' AND is_active = 1 LIMIT 1"
-        );
-        apiKey = rows[0]?.api_key;
-      } else {
-        const provider = await DbPromise.get<{ api_key?: string }>(
-          "SELECT * FROM llm_providers WHERE provider = 'openai' AND is_active = 1 LIMIT 1",
-          [],
-          { fallback: true }
-        );
-        apiKey = provider?.api_key;
+      // Fallback to llm_providers table
+      if (!apiKey) {
+        if (isPg()) {
+          const rows = await queryDb<{ api_key?: string }>(
+            "SELECT api_key FROM llm_providers WHERE provider = 'openai' AND is_active = 1 LIMIT 1"
+          );
+          apiKey = rows[0]?.api_key;
+        } else {
+          const provider = await DbPromise.get<{ api_key?: string }>(
+            "SELECT * FROM llm_providers WHERE provider = 'openai' AND is_active = 1 LIMIT 1",
+            [],
+            { fallback: true }
+          );
+          apiKey = provider?.api_key;
+        }
       }
     }
 
@@ -347,9 +359,9 @@ const RagService = {
     }
 
     try {
-      const openai = new deps.OpenAI({ apiKey });
+      const openai = new deps.OpenAI(baseURL ? { apiKey, baseURL } : { apiKey });
       const response = await openai.embeddings.create({
-        model: 'text-embedding-3-small',
+        model,
         input: text,
         encoding_format: 'float',
       });
