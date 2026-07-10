@@ -1,5 +1,6 @@
 import { DRD_STRUCTURE } from '../../data/drdStructure.js';
 import * as DbPromise from '../../utils/DbPromise.js';
+import { fireClosureHandoff } from '../executionResultsBridge.js';
 import { organizationContextService } from '../organizationContext/OrganizationContextService.js';
 import {
   type DemoLeaderTemplate,
@@ -2262,6 +2263,20 @@ async function upsertInitiatives(
       vals,
       { fallback: false }
     );
+
+    // G1 fix (2026-07-10): seed initiatives can be created ALREADY in DONE
+    // status (see the "USPOJNIENIE A3" exception above) — they never pass
+    // through the status-transition endpoint, so the M14→M15 closure handoff
+    // never used to fire for them. That was the majority root cause of the
+    // Faza-0 finding (45/46 DONE initiatives with no initiative_benefits row):
+    // nearly all of them were seed-created trial/demo initiatives, not live
+    // transitions. Fire the same choke-point handoff here so every fresh seed
+    // and every re-seed (ON CONFLICT DO UPDATE above is idempotent) lands a
+    // benefit row too. Fire-and-forget + idempotent internally — safe to call
+    // on every upsert, never blocks seeding.
+    if (normalizeInitiativeStatus(initiative.status) === 'DONE') {
+      fireClosureHandoff(organizationId, initiativeId, null);
+    }
 
     for (const task of initiative.tasks) {
       taskCount += 1;

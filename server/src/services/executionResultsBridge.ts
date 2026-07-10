@@ -35,6 +35,11 @@ interface PlannedKpiRow {
   description: string | null;
 }
 
+interface InitiativeFallbackRow {
+  name: string;
+  expected_roi: number | string | null;
+}
+
 export interface ClosureHandoffResult {
   /** Benefit rows newly inserted this call. */
   created: number;
@@ -42,6 +47,14 @@ export interface ClosureHandoffResult {
   skipped: number;
   /** Planned KPIs considered (had a target_value). */
   considered: number;
+  /**
+   * True when `created` came from the no-KPI fallback (initiative.expected_roi)
+   * rather than a planned KPI. The row itself still carries
+   * `source_tag = CLOSURE_HANDOFF_SOURCE` (same as a KPI-backed row) so it
+   * shows up in the same M15 inbox — the fallback is distinguishable by
+   * `kpi_id IS NULL`, not by a different source tag.
+   */
+  fallbackUsed?: boolean;
 }
 
 /**
@@ -83,10 +96,13 @@ export async function handoffFromClosure(
   )) as PlannedKpiRow[] | undefined;
 
   if (!kpis || kpis.length === 0) {
-    logger.info(
-      `${LOG_PREFIX} closure handoff: initiative ${initiativeId} has no planned KPIs with targets — nothing to hand off`
-    );
-    return result;
+    // G1 fallback (audyt Faza 0, 2026-07-10): the vast majority of DONE
+    // initiatives in the wild never got a formal `initiative_kpis` row with a
+    // target — the KPI-based path above silently produced zero benefits for
+    // them, leaving the initiative's realized value untracked. Fall back to
+    // the initiative's own business-case field (`expected_roi`) so closure
+    // still lands *something* in the canonical registry instead of nothing.
+    return handoffFromInitiativeFallback(organizationId, initiativeId, actorId, result);
   }
 
   result.considered = kpis.length;
@@ -134,6 +150,112 @@ export async function handoffFromClosure(
       `created ${result.created}, skipped ${result.skipped} of ${result.considered} planned KPIs`
   );
   return result;
+}
+
+/**
+ * G1 fallback path: an initiative closed with no `initiative_kpis` carrying a
+ * target. Materialize a single business-case benefit row from the
+ * initiative's own `expected_roi` (set at creation/definition time), tagged
+ * with the SAME `source_tag` as a KPI-backed row so it surfaces in the M15
+ * inbox identically — distinguishable only by `kpi_id IS NULL`.
+ *
+ * - No `expected_roi` on the initiative either → zero benefits, no error
+ *   (nothing to hand off; matches the KPI path's existing contract).
+ * - Idempotent: dedups on (initiative_id, source_tag, kpi_id IS NULL) since
+ *   the partial unique index (migration 783) only covers kpi_id IS NOT NULL
+ *   rows — the NULL-kpi_id case is guarded here at the application level.
+ */
+async function handoffFromInitiativeFallback(
+  organizationId: string,
+  initiativeId: string,
+  actorId: string | null,
+  result: ClosureHandoffResult
+): Promise<ClosureHandoffResult> {
+  const existingFallback = await dbGet<{ id: string }>(
+    `SELECT id FROM initiative_benefits
+      WHERE initiative_id = ? AND kpi_id IS NULL AND source_tag = ?
+      LIMIT 1`,
+    [initiativeId, CLOSURE_HANDOFF_SOURCE],
+    { fallback: true }
+  );
+  if (existingFallback) {
+    result.skipped += 1;
+    logger.info(
+      `${LOG_PREFIX} closure handoff: initiative ${initiativeId} — fallback benefit already exists, skipping`
+    );
+    return result;
+  }
+
+  const initiative = await dbGet<InitiativeFallbackRow>(
+    `SELECT COALESCE(title, name) AS name, expected_roi
+       FROM initiatives
+      WHERE id = ? AND organization_id = ?`,
+    [initiativeId, organizationId],
+    { fallback: true }
+  );
+
+  const expectedRoi =
+    initiative?.expected_roi !== null && initiative?.expected_roi !== undefined
+      ? Number(initiative.expected_roi)
+      : null;
+
+  if (!initiative || expectedRoi === null || Number.isNaN(expectedRoi)) {
+    logger.info(
+      `${LOG_PREFIX} closure handoff: initiative ${initiativeId} has no planned KPIs and no ` +
+        `expected_roi — nothing to hand off`
+    );
+    return result;
+  }
+
+  const now = new Date().toISOString();
+  await dbRun(
+    `INSERT INTO initiative_benefits (
+       id, initiative_id, organization_id, name, description,
+       benefit_type, kpi_id, target_value, status, confidence_level,
+       source_tag, created_by, created_at, updated_at
+     ) VALUES (?, ?, ?, ?, ?, 'quantitative', NULL, ?, 'tracking', 'low', ?, ?, ?, ?)`,
+    [
+      randomUUID(),
+      initiativeId,
+      organizationId,
+      `${initiative.name || 'Initiative'} — ROI docelowy (business case)`,
+      'Fallback G1: brak initiative_kpis w chwili zamknięcia — wartość z pola expected_roi inicjatywy.',
+      expectedRoi,
+      CLOSURE_HANDOFF_SOURCE,
+      actorId,
+      now,
+      now,
+    ]
+  );
+  result.created += 1;
+  result.fallbackUsed = true;
+
+  logger.info(
+    `${LOG_PREFIX} closure handoff for initiative ${initiativeId}: created 1 fallback benefit ` +
+      `from expected_roi (no planned KPIs)`
+  );
+  return result;
+}
+
+/**
+ * Single choke-point wrapper for EVERY code path that transitions an
+ * initiative to DONE (status endpoint, `/complete`, demo/seed materialization
+ * of already-closed initiatives). Fire-and-forget: a handoff failure must
+ * never block the status write. Idempotent — safe to call more than once for
+ * the same initiative (e.g. a repeat `/complete` call, or a demo re-seed).
+ */
+export function fireClosureHandoff(
+  organizationId: string,
+  initiativeId: string,
+  actorId: string | null
+): void {
+  void handoffFromClosure(organizationId, initiativeId, actorId).catch((err) => {
+    logger.warn(
+      `${LOG_PREFIX} closure handoff failed for initiative ${initiativeId}: ${
+        err instanceof Error ? err.message : String(err)
+      }`
+    );
+  });
 }
 
 /**

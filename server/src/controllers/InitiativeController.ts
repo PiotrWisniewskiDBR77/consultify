@@ -47,7 +47,7 @@ import {
   removeLinkedItem,
 } from '../services/initiative/initiativeLinkedItemsService.js';
 import { findSimilarInitiatives } from '../services/initiative/initiativeSimilarityService.js';
-import { handoffFromClosure } from '../services/executionResultsBridge.js';
+import { fireClosureHandoff } from '../services/executionResultsBridge.js';
 import notificationService from '../services/notificationService.js';
 import {
   calculateRiskScore,
@@ -2122,20 +2122,16 @@ export class InitiativeController {
         // best-effort
       }
 
-      // M14 → M15 closure handoff (Decision B1b): on close (→ DONE), materialize
-      // the initiative's planned KPIs into the M15-readable benefits register.
-      // Fail-safe: a handoff error must NEVER block the status change (log + go).
-      // Idempotent inside the service, so a repeat DONE (or DONE→revert→DONE)
-      // does not create duplicate benefits.
+      // M14 → M15 closure handoff (Decision B1b, hardened G1 2026-07-10): on
+      // close (→ DONE), materialize the initiative's planned KPIs (or, absent
+      // those, its expected_roi business case) into the canonical M15 registry
+      // (initiative_benefits). fireClosureHandoff is the SINGLE choke-point
+      // wrapper used by every DONE-transition path in this codebase (this
+      // status endpoint, POST /:id/complete, and demo/seed materialization of
+      // already-closed initiatives) — fire-and-forget + idempotent internally,
+      // so it never blocks the status change and is safe to call repeatedly.
       if (currentStatus !== 'DONE' && nextStatus === 'DONE') {
-        try {
-          await handoffFromClosure(orgId, id, actorId || null);
-        } catch (handoffErr) {
-          logger.warn(
-            `[Initiative] M14→M15 closure handoff failed for ${id} — status change not blocked`,
-            handoffErr
-          );
-        }
+        fireClosureHandoff(orgId, id, actorId || null);
       }
 
       // Emit notifications (best-effort)
@@ -3343,7 +3339,7 @@ export class InitiativeController {
       }
 
       await queryHelpers.queryRun(
-        `UPDATE initiatives SET 
+        `UPDATE initiatives SET
                 status = 'done',
                 done_at = CURRENT_TIMESTAMP,
                 done_by = ?,
@@ -3352,6 +3348,14 @@ export class InitiativeController {
              WHERE id = ? AND organization_id = ?`,
         [userId, enableBenefitsTracking ? 1 : 0, initiativeId, orgId]
       );
+
+      // G1 fix (2026-07-10): this endpoint was a second DONE-transition path
+      // that bypassed the M14→M15 closure handoff entirely (audit found it
+      // has no frontend caller today, but it is a live, unguarded route —
+      // leaving it unwired would silently reopen the same data-integrity gap
+      // the moment anything starts calling it). Same choke-point wrapper as
+      // updateInitiativeStatus; fire-and-forget + idempotent internally.
+      fireClosureHandoff(orgId, initiativeId, userId);
 
       res.json({
         success: true,
