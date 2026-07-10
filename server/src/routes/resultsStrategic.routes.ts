@@ -8,10 +8,22 @@
  */
 import { Router, type Response } from 'express';
 
-import verifyToken from '../middleware/auth.middleware.js';
+import verifyToken, { type AuthRequest } from '../middleware/auth.middleware.js';
+import { requireProjectCapability } from '../middleware/effectiveCapability.middleware.js';
 import {
   cascadeRollup,
   okrSummary,
+  createCycle,
+  listCycles,
+  closeCycle,
+  createObjective,
+  updateObjective,
+  deleteObjective,
+  createKeyResult,
+  updateKeyResult,
+  deleteKeyResult,
+  createCheckIn,
+  listCheckIns,
   type Objective,
   type KeyResult,
 } from '../services/results/okrService.js';
@@ -192,6 +204,318 @@ router.get(
     const cascaded = cascadeRollup(objectives);
     const summary = okrSummary(objectives);
     res.json({ objectives: cascaded, summary });
+  }),
+);
+
+// ─── CRUD (D7 slice) ────────────────────────────────────────────────────────
+// Objectives/Key Results/Cycles/Check-ins — role-gating is SHADOW (log-only)
+// per the Faza 1 capability rollout (effectiveCapability.middleware.ts):
+// zero blocking until CAPABILITY_ENFORCE=enforce is flipped from data.
+// projectId in the URL is 'all'/'null'/absent for org-wide OKRs — mirrors the
+// GET /:projectId/strategic convention above; resolved to null in that case
+// so the capability check runs org-wide (allowWithoutProject).
+function resolveOkrProjectId(req: AuthRequest): string | null {
+  const projectId = req.params?.projectId;
+  if (!projectId || projectId === 'all' || projectId === 'null' || projectId === 'undefined') {
+    return null;
+  }
+  return projectId;
+}
+
+function getOkrOrgId(req: AuthRequest, res: Response): string | null {
+  const orgId = req.user?.organizationId;
+  if (!orgId) {
+    res.status(401).json({ success: false, error: 'organization context required' });
+    return null;
+  }
+  return orgId;
+}
+
+// ─── Cycles ─────────────────────────────────────────────────────────────
+
+router.get(
+  '/:projectId/okr/cycles',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOkrOrgId(req, res);
+    if (!orgId) return;
+    const cycles = await listCycles(orgId);
+    res.json({ cycles });
+  }),
+);
+
+router.post(
+  '/:projectId/okr/cycles',
+  verifyToken,
+  requireProjectCapability('okr.cycle.create', resolveOkrProjectId, {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOkrOrgId(req, res);
+    if (!orgId) return;
+    const { name, periodYear, periodQuarter, deptId, teamId } = req.body ?? {};
+    if (!name || typeof name !== 'string') {
+      res.status(400).json({ success: false, error: 'name is required' });
+      return;
+    }
+    const year = Number(periodYear);
+    if (!Number.isFinite(year)) {
+      res.status(400).json({ success: false, error: 'periodYear is required' });
+      return;
+    }
+    const cycle = await createCycle({
+      organizationId: orgId,
+      name,
+      periodYear: year,
+      periodQuarter: periodQuarter != null ? Number(periodQuarter) : null,
+      deptId: deptId ?? null,
+      teamId: teamId ?? null,
+      createdBy: req.user?.id ?? null,
+    });
+    res.status(201).json({ success: true, cycle });
+  }),
+);
+
+router.post(
+  '/:projectId/okr/cycles/:cycleId/close',
+  verifyToken,
+  requireProjectCapability('okr.cycle.close', resolveOkrProjectId, {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOkrOrgId(req, res);
+    if (!orgId) return;
+    const result = await closeCycle(req.params.cycleId, orgId);
+    if (!result) {
+      res.status(404).json({ success: false, error: 'cycle not found' });
+      return;
+    }
+    res.json({ success: true, ...result });
+  }),
+);
+
+// ─── Objectives ─────────────────────────────────────────────────────────
+
+router.post(
+  '/:projectId/okr/objectives',
+  verifyToken,
+  requireProjectCapability('okr.objective.create', resolveOkrProjectId, {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOkrOrgId(req, res);
+    if (!orgId) return;
+    const { label, parentId, cycleId, ownerUserId, description } = req.body ?? {};
+    if (!label || typeof label !== 'string') {
+      res.status(400).json({ success: false, error: 'label is required' });
+      return;
+    }
+    const resolvedProjectId = resolveOkrProjectId(req);
+    const { id } = await createObjective({
+      organizationId: orgId,
+      label,
+      projectId: resolvedProjectId,
+      parentId: parentId ?? null,
+      cycleId: cycleId ?? null,
+      ownerUserId: ownerUserId ?? null,
+      description: description ?? null,
+    });
+    res.status(201).json({ success: true, id });
+  }),
+);
+
+router.patch(
+  '/:projectId/okr/objectives/:id',
+  verifyToken,
+  requireProjectCapability('okr.objective.update', resolveOkrProjectId, {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOkrOrgId(req, res);
+    if (!orgId) return;
+    const { label, parentId, cycleId, ownerUserId, description, status } = req.body ?? {};
+    const updated = await updateObjective(req.params.id, orgId, {
+      label,
+      parentId,
+      cycleId,
+      ownerUserId,
+      description,
+      status,
+    });
+    if (!updated) {
+      res.status(404).json({ success: false, error: 'objective not found or no changes' });
+      return;
+    }
+    res.json({ success: true });
+  }),
+);
+
+router.delete(
+  '/:projectId/okr/objectives/:id',
+  verifyToken,
+  requireProjectCapability('okr.objective.delete', resolveOkrProjectId, {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOkrOrgId(req, res);
+    if (!orgId) return;
+    const deleted = await deleteObjective(req.params.id, orgId);
+    if (!deleted) {
+      res.status(404).json({ success: false, error: 'objective not found' });
+      return;
+    }
+    res.json({ success: true });
+  }),
+);
+
+// ─── Key Results ────────────────────────────────────────────────────────
+
+router.post(
+  '/:projectId/okr/objectives/:id/key-results',
+  verifyToken,
+  requireProjectCapability('okr.keyresult.create', resolveOkrProjectId, {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOkrOrgId(req, res);
+    if (!orgId) return;
+    const { label, baseline, target, current, weight, kpiId, krType, kind, ownerUserId } =
+      req.body ?? {};
+    if (!label || typeof label !== 'string') {
+      res.status(400).json({ success: false, error: 'label is required' });
+      return;
+    }
+    if (krType && krType !== 'metric' && krType !== 'milestone') {
+      res.status(400).json({ success: false, error: 'krType must be metric|milestone' });
+      return;
+    }
+    if (kind && kind !== 'committed' && kind !== 'aspirational') {
+      res.status(400).json({ success: false, error: 'kind must be committed|aspirational' });
+      return;
+    }
+    const result = await createKeyResult({
+      objectiveId: req.params.id,
+      organizationId: orgId,
+      label,
+      baseline: baseline != null ? Number(baseline) : null,
+      target: target != null ? Number(target) : null,
+      current: current != null ? Number(current) : null,
+      weight: weight != null ? Number(weight) : null,
+      kpiId: kpiId ?? null,
+      krType,
+      kind,
+      ownerUserId: ownerUserId ?? null,
+    });
+    res.status(201).json({ success: true, ...result });
+  }),
+);
+
+router.patch(
+  '/:projectId/okr/key-results/:id',
+  verifyToken,
+  requireProjectCapability('okr.keyresult.update', resolveOkrProjectId, {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOkrOrgId(req, res);
+    if (!orgId) return;
+    const { label, baseline, target, current, weight, kpiId, krType, kind, ownerUserId } =
+      req.body ?? {};
+    if (krType && krType !== 'metric' && krType !== 'milestone') {
+      res.status(400).json({ success: false, error: 'krType must be metric|milestone' });
+      return;
+    }
+    if (kind && kind !== 'committed' && kind !== 'aspirational') {
+      res.status(400).json({ success: false, error: 'kind must be committed|aspirational' });
+      return;
+    }
+    const result = await updateKeyResult(req.params.id, orgId, {
+      label,
+      baseline: baseline != null ? Number(baseline) : baseline,
+      target: target != null ? Number(target) : target,
+      current: current != null ? Number(current) : current,
+      weight: weight != null ? Number(weight) : weight,
+      kpiId,
+      krType,
+      kind,
+      ownerUserId,
+    });
+    if (!result.updated) {
+      res.status(404).json({ success: false, error: 'key result not found' });
+      return;
+    }
+    res.json({ success: true, score: result.score });
+  }),
+);
+
+router.delete(
+  '/:projectId/okr/key-results/:id',
+  verifyToken,
+  requireProjectCapability('okr.keyresult.delete', resolveOkrProjectId, {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOkrOrgId(req, res);
+    if (!orgId) return;
+    const deleted = await deleteKeyResult(req.params.id, orgId);
+    if (!deleted) {
+      res.status(404).json({ success: false, error: 'key result not found' });
+      return;
+    }
+    res.json({ success: true });
+  }),
+);
+
+// ─── Check-ins ──────────────────────────────────────────────────────────
+
+router.get(
+  '/:projectId/okr/key-results/:id/check-ins',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOkrOrgId(req, res);
+    if (!orgId) return;
+    const checkIns = await listCheckIns(req.params.id, orgId);
+    res.json({ checkIns });
+  }),
+);
+
+router.post(
+  '/:projectId/okr/key-results/:id/check-in',
+  verifyToken,
+  requireProjectCapability('okr.checkin.create', resolveOkrProjectId, {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOkrOrgId(req, res);
+    if (!orgId) return;
+    const { confidence, value, score, note } = req.body ?? {};
+    if (confidence && !['green', 'amber', 'red'].includes(confidence)) {
+      res.status(400).json({ success: false, error: 'confidence must be green|amber|red' });
+      return;
+    }
+    const result = await createCheckIn({
+      keyResultId: req.params.id,
+      organizationId: orgId,
+      confidence: confidence ?? null,
+      value: value != null ? Number(value) : null,
+      score: score != null ? Number(score) : null,
+      note: note ?? null,
+      checkedBy: req.user?.id ?? null,
+    });
+    if (!result) {
+      res.status(404).json({ success: false, error: 'key result not found' });
+      return;
+    }
+    res.status(201).json({ success: true, ...result });
   }),
 );
 
