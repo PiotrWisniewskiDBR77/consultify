@@ -831,6 +831,9 @@ function WorkCanvasMarkdownDocumentPanel({
   // Active public share for the loaded draft (mirrors provenance.share).
   const [shareInfo, setShareInfo] = React.useState<CanvasShareInfo | null>(null);
   const [isRevokingShare, setIsRevokingShare] = React.useState(false);
+  // Z138: local collapse for the share strip — hides the bar without revoking
+  // the actual public link (distinct from "Revoke share", which is destructive).
+  const [isShareStripDismissed, setIsShareStripDismissed] = React.useState(false);
   const [isSavingToOutputs, setIsSavingToOutputs] = React.useState(false);
   const [canvasSelection, setCanvasSelection] = React.useState<CanvasSelection | null>(null);
   // Live TipTap editor instance (rich mode), lifted so Teresa can stream into it.
@@ -2375,6 +2378,7 @@ function WorkCanvasMarkdownDocumentPanel({
         })
       );
       setShareInfo(share);
+      setIsShareStripDismissed(false);
       await navigator.clipboard?.writeText(shareUrl);
       setStatusFeedback(`Share link ready and copied: ${shareUrl}`);
     } catch (error) {
@@ -4165,7 +4169,7 @@ function WorkCanvasMarkdownDocumentPanel({
         </div>
       ) : null}
 
-      {shareInfo ? (
+      {shareInfo && !isShareStripDismissed ? (
         <div
           className="flex shrink-0 flex-wrap items-center gap-2 border-b border-slate-200/70 bg-white/60 px-4 py-2 text-xs text-slate-600 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-slate-300"
           data-testid="canvas-share-strip"
@@ -4207,6 +4211,16 @@ function WorkCanvasMarkdownDocumentPanel({
               {t('canvas.panel.share.expires', 'expires')} {new Date(shareInfo.expiresAt).toLocaleDateString()}
             </span>
           ) : null}
+          <button
+            type="button"
+            onClick={() => setIsShareStripDismissed(true)}
+            className="ml-auto inline-flex shrink-0 items-center justify-center rounded-full p-1 text-slate-400 hover:bg-slate-200/60 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white"
+            title={t('canvas.panel.share.collapse', 'Collapse (link stays active)')}
+            aria-label={t('canvas.panel.share.collapse', 'Collapse (link stays active)')}
+            data-testid="canvas-share-collapse"
+          >
+            <X size={13} />
+          </button>
         </div>
       ) : null}
 

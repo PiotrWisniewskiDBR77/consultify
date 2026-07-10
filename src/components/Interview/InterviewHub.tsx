@@ -6712,6 +6712,7 @@ Return ONLY the answer text (no markdown fences).`;
       {
         id: 'template',
         label: isPolish ? 'Szablon' : 'Template',
+        width: '320px',
         filterable: true,
         filterOptions: Array.from(new Set(assignments.map(getAssignmentTemplateValue)))
           .sort()
@@ -6719,33 +6720,28 @@ Return ONLY the answer text (no markdown fences).`;
         sortAccessor: (row: InterviewAssignment) => getAssignmentTemplateValue(row),
         sortable: true,
         render: (row: InterviewAssignment) => (
-          <div className="flex items-center gap-3 min-w-0">
-            <div className={INTERVIEW_TABLE_ICON_SURFACE_CLASS}>
-              <ClipboardList size={16} />
-            </div>
-            <div className="min-w-0 flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span
+              className="text-sm font-semibold text-c-text truncate min-w-0"
+              title={row.template?.name || 'Interview'}
+            >
+              {row.template?.name || 'Interview'}
+            </span>
+            {row.template?.category ? (
               <span
-                className="text-sm font-semibold text-c-text truncate min-w-0"
-                title={row.template?.name || 'Interview'}
+                className="shrink-0 max-w-[160px] truncate inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-c-border bg-c-surface-raised text-c-text-secondary"
+                title={row.template.category}
               >
-                {row.template?.name || 'Interview'}
+                {categoryTone(row.template.category) ? (
+                  <span
+                    aria-hidden="true"
+                    className="h-1.5 w-1.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: categoryTone(row.template.category)! }}
+                  />
+                ) : null}
+                {row.template.category}
               </span>
-              {row.template?.category ? (
-                <span
-                  className="shrink-0 max-w-[160px] truncate inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-c-border bg-c-surface-raised text-c-text-secondary"
-                  title={row.template.category}
-                >
-                  {categoryTone(row.template.category) ? (
-                    <span
-                      aria-hidden="true"
-                      className="h-1.5 w-1.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: categoryTone(row.template.category)! }}
-                    />
-                  ) : null}
-                  {row.template.category}
-                </span>
-              ) : null}
-            </div>
+            ) : null}
           </div>
         ),
       },
