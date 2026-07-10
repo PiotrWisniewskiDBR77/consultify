@@ -1,0 +1,363 @@
+/**
+ * Evidence Envelope Service — fundament Warstwy Dowodowej (H1 Harvey-gap).
+ *
+ * SSOT: Harvard/wdrozenie-100/_KONCEPT_RDZEN_2026-07-10.md §3 (kontrakt nr 1).
+ * Persystencja: JEDNA polimorficzna tabela `artifact_evidence`
+ * (server/migrations/904_artifact_evidence.sql) — adnotacja węzła łańcucha
+ * dowodowego. Krawędzie źródeł (kto→skąd) żyją w istniejącej `link_graph_edges`
+ * (20260303_link_graph_v3.sql, relation='evidence_source') — ta usługa NIE
+ * buduje drugiego grafu, tylko best-effort dopisuje do niego przy attachSource.
+ *
+ * Kontrakt egzekwowania (§3.2 rdzenia) — 4 punkty, docelowo wołające ten
+ * serwis: materializacja Insight (F14 cardContentFormulaValidator), snapshot
+ * F5 (createSnapshot), compute Finance/EVM/ROI (shared/assumptions), propozycje
+ * Teresy (claimCitationValidator). Ten commit dostarcza SERWIS+API+FE render
+ * dla Insight jako pierwszego artefaktu (patrz TODO na końcu pliku).
+ */
+import { v4 as uuidv4 } from 'uuid';
+
+import { getDatabase } from '../../database/Database.js';
+import logger from '../../utils/Logger.js';
+
+// ==========================================
+// TYPES — EvidenceEnvelope (kontrakt §3.1)
+// ==========================================
+
+export type EvidenceArtifactType =
+  | 'insight'
+  | 'initiative'
+  | 'task'
+  | 'decision'
+  | 'report'
+  | 'deck'
+  | 'document'
+  | 'kpi'
+  | 'finance_number'
+  | 'benefit'
+  | 'canvas'
+  | 'project'
+  | 'source'
+  | 'assessment'
+  | 'other';
+
+export type EvidenceSourceType =
+  | 'interview'
+  | 'document'
+  | 'kb'
+  | 'statement_pack'
+  | 'kpi_series'
+  | 'insight'
+  | 'tool_session'
+  | 'snapshot'
+  | 'benchmark';
+
+export interface EvidenceSource {
+  type: EvidenceSourceType;
+  /** Id ref do rekordu źródła (np. interview_insight_id, document_id). */
+  ref: string;
+  /** Krótki cytat/wycinek (opcjonalny — nie każde źródło ma cytowalny fragment). */
+  snippet?: string;
+  /** Link kliknięty przez usera (Vault/interview/URL zewnętrzny). */
+  url?: string;
+}
+
+export type EvidenceAssumptionSourceType = 'imported' | 'user' | 'teresa' | 'ai_assumed' | 'benchmark';
+
+export interface EvidenceAssumption {
+  key: string;
+  value: unknown;
+  source_type: EvidenceAssumptionSourceType;
+  rationale?: string;
+  confidence?: number;
+}
+
+export interface EvidenceToVerify {
+  claim: string;
+  why: string;
+  suggested_check?: string;
+}
+
+export interface EvidenceComputedBy {
+  service: string;
+  version?: string;
+  at: string;
+}
+
+/** Etykieta pochodna z `confidence` numerycznego (kontrakt §3.1: 'high'|'medium'|'low'). */
+export type EvidenceConfidenceLabel = 'high' | 'medium' | 'low' | 'unknown';
+
+export interface EvidenceEnvelope {
+  id: string;
+  organizationId: string;
+  artifactType: EvidenceArtifactType;
+  artifactId: string;
+  sources: EvidenceSource[];
+  assumptions: EvidenceAssumption[];
+  /** 0..1 — surowa wartość liczbowa w DB (kolumna `confidence numeric`). */
+  confidence: number | null;
+  /** Derived: high (>=0.75) / medium (>=0.4) / low (<0.4) / unknown (null). */
+  confidenceLabel: EvidenceConfidenceLabel;
+  toVerify: EvidenceToVerify[];
+  computedBy: EvidenceComputedBy | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpsertEnvelopeInput {
+  organizationId: string;
+  artifactType: EvidenceArtifactType;
+  artifactId: string;
+  sources?: EvidenceSource[];
+  assumptions?: EvidenceAssumption[];
+  confidence?: number | null;
+  toVerify?: EvidenceToVerify[];
+  computedBy?: EvidenceComputedBy | null;
+  createdBy?: string | null;
+}
+
+export interface AttachSourceInput {
+  organizationId: string;
+  artifactType: EvidenceArtifactType;
+  artifactId: string;
+  source: EvidenceSource;
+  createdBy?: string | null;
+}
+
+// ==========================================
+// HELPERS
+// ==========================================
+
+function deriveConfidenceLabel(confidence: number | null | undefined): EvidenceConfidenceLabel {
+  if (confidence === null || confidence === undefined || Number.isNaN(confidence)) return 'unknown';
+  if (confidence >= 0.75) return 'high';
+  if (confidence >= 0.4) return 'medium';
+  return 'low';
+}
+
+function parseJsonColumn<T>(raw: unknown, fallback: T): T {
+  if (raw === null || raw === undefined) return fallback;
+  if (typeof raw === 'object') return raw as T; // pg driver already parses jsonb
+  if (typeof raw === 'string') {
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      return fallback;
+    }
+  }
+  return fallback;
+}
+
+function rowToEnvelope(row: any): EvidenceEnvelope {
+  const confidence =
+    row.confidence === null || row.confidence === undefined ? null : Number(row.confidence);
+  let computedBy: EvidenceComputedBy | null = null;
+  if (row.computed_by) {
+    try {
+      computedBy =
+        typeof row.computed_by === 'string' ? JSON.parse(row.computed_by) : row.computed_by;
+    } catch {
+      computedBy = null;
+    }
+  }
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    artifactType: row.artifact_type,
+    artifactId: row.artifact_id,
+    sources: parseJsonColumn<EvidenceSource[]>(row.sources, []),
+    assumptions: parseJsonColumn<EvidenceAssumption[]>(row.assumptions, []),
+    confidence,
+    confidenceLabel: deriveConfidenceLabel(confidence),
+    toVerify: parseJsonColumn<EvidenceToVerify[]>(row.to_verify, []),
+    computedBy,
+    createdBy: row.created_by ?? null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+// ==========================================
+// SERVICE
+// ==========================================
+
+/**
+ * Pobiera envelope dla artefaktu. Zwraca `null` gdy brak (BRAK envelope ≠
+ * błąd — artefakt może jeszcze nie przejść przez bramę F14/computed_by).
+ */
+export async function getEnvelope(
+  artifactType: EvidenceArtifactType,
+  artifactId: string
+): Promise<EvidenceEnvelope | null> {
+  const db = await getDatabase();
+  const result = await db.query<any>(
+    `SELECT * FROM artifact_evidence WHERE artifact_type = ? AND artifact_id = ? LIMIT 1`,
+    [artifactType, artifactId]
+  );
+  const row = result.rows?.[0];
+  return row ? rowToEnvelope(row) : null;
+}
+
+/**
+ * Upsert pełnego envelope (jeden per artifact_type+artifact_id — kontrakt
+ * §3.1 "jeden obiekt lineage"). Pola nie podane w `input` NIE są nadpisywane
+ * pustymi wartościami przy update — merge na poziomie wołającego (serwis
+ * bierze to, co dostał; caller odpowiada za pełny stan, jak przy PUT).
+ */
+export async function upsertEnvelope(input: UpsertEnvelopeInput): Promise<EvidenceEnvelope> {
+  const db = await getDatabase();
+  const existing = await getEnvelope(input.artifactType, input.artifactId);
+  const now = new Date().toISOString();
+
+  const sources = input.sources ?? existing?.sources ?? [];
+  const assumptions = input.assumptions ?? existing?.assumptions ?? [];
+  const toVerify = input.toVerify ?? existing?.toVerify ?? [];
+  const confidence =
+    input.confidence !== undefined ? input.confidence : (existing?.confidence ?? null);
+  const computedBy =
+    input.computedBy !== undefined ? input.computedBy : (existing?.computedBy ?? null);
+
+  if (existing) {
+    await db.run(
+      `UPDATE artifact_evidence
+       SET sources = ?, assumptions = ?, confidence = ?, to_verify = ?, computed_by = ?, updated_at = ?
+       WHERE id = ?`,
+      [
+        JSON.stringify(sources),
+        JSON.stringify(assumptions),
+        confidence,
+        JSON.stringify(toVerify),
+        computedBy ? JSON.stringify(computedBy) : null,
+        now,
+        existing.id,
+      ]
+    );
+    logger.info(
+      `[EvidenceEnvelope] Updated envelope ${existing.id} (${input.artifactType}/${input.artifactId})`
+    );
+    const updated = await getEnvelope(input.artifactType, input.artifactId);
+    return updated as EvidenceEnvelope;
+  }
+
+  const id = uuidv4();
+  await db.run(
+    `INSERT INTO artifact_evidence (
+      id, organization_id, artifact_type, artifact_id, sources, assumptions,
+      confidence, to_verify, computed_by, created_by, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      input.organizationId,
+      input.artifactType,
+      input.artifactId,
+      JSON.stringify(sources),
+      JSON.stringify(assumptions),
+      confidence,
+      JSON.stringify(toVerify),
+      computedBy ? JSON.stringify(computedBy) : null,
+      input.createdBy ?? null,
+      now,
+      now,
+    ]
+  );
+  logger.info(
+    `[EvidenceEnvelope] Created envelope ${id} (${input.artifactType}/${input.artifactId})`
+  );
+  const created = await getEnvelope(input.artifactType, input.artifactId);
+  return created as EvidenceEnvelope;
+}
+
+/**
+ * Dopisuje JEDNO źródło do envelope (tworzy envelope, jeśli nie istnieje).
+ * Best-effort dopisuje też krawędź do `link_graph_edges` (relation=
+ * 'evidence_source') tak, żeby istniejący graf backlinków ("Used in") widział
+ * tę relację — kontrakt rdzenia §2.1 "nie budować drugiego grafu". Awaria
+ * zapisu krawędzi NIE blokuje zapisu envelope (envelope.sources = źródło
+ * prawdy; graf to wtórny indeks nawigacyjny).
+ */
+export async function attachSource(input: AttachSourceInput): Promise<EvidenceEnvelope> {
+  const existing = await getEnvelope(input.artifactType, input.artifactId);
+  const nextSources = [...(existing?.sources ?? []), input.source];
+
+  const envelope = await upsertEnvelope({
+    organizationId: input.organizationId,
+    artifactType: input.artifactType,
+    artifactId: input.artifactId,
+    sources: nextSources,
+    createdBy: input.createdBy ?? existing?.createdBy ?? null,
+  });
+
+  await tryLinkGraphEdge(input);
+
+  return envelope;
+}
+
+async function tryLinkGraphEdge(input: AttachSourceInput): Promise<void> {
+  try {
+    const db = await getDatabase();
+    const cols = await db.query<any>(
+      `SELECT column_name FROM information_schema.columns WHERE table_name = 'link_graph_edges'`
+    );
+    if (!cols.rows || cols.rows.length === 0) return; // table not present (fresh/sqlite dev) — skip silently
+    const id = uuidv4();
+    await db.run(
+      `INSERT INTO link_graph_edges (
+        id, organization_id, created_by, source_type, source_id, target_type, target_id, relation, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT DO NOTHING`,
+      [
+        id,
+        input.organizationId,
+        input.createdBy ?? 'system',
+        input.source.type,
+        input.source.ref,
+        input.artifactType,
+        input.artifactId,
+        'evidence_source',
+        new Date().toISOString(),
+      ]
+    );
+  } catch (e) {
+    logger.warn('[EvidenceEnvelope] link_graph_edges best-effort write failed (non-fatal):', e);
+  }
+}
+
+/**
+ * Listuje envelope'y z niepustym `to_verify` dla organizacji (opcjonalnie
+ * zawężone do artifact_type) — punkt wejścia pod przyszły inbox "do
+ * weryfikacji" (TODO poniżej — brak dziś ekranu, tylko zapytanie).
+ */
+export async function listToVerify(
+  organizationId: string,
+  artifactType?: EvidenceArtifactType
+): Promise<EvidenceEnvelope[]> {
+  const db = await getDatabase();
+  const params: unknown[] = [organizationId];
+  let sql = `SELECT * FROM artifact_evidence WHERE organization_id = ? AND jsonb_array_length(to_verify) > 0`;
+  if (artifactType) {
+    sql += ` AND artifact_type = ?`;
+    params.push(artifactType);
+  }
+  sql += ` ORDER BY updated_at DESC`;
+  const result = await db.query<any>(sql, params);
+  return (result.rows || []).map(rowToEnvelope);
+}
+
+export default {
+  getEnvelope,
+  upsertEnvelope,
+  attachSource,
+  listToVerify,
+};
+
+// ==========================================
+// TODO (patrz raport handoffu do nadzorcy)
+// ==========================================
+// 1. Egzekwowanie w 4 punktach kontraktu §3.2 (dziś: serwis istnieje, NIE jest
+//    jeszcze wołany z żadnego z nich):
+//    - F14 cardContentFormulaValidator → upsertEnvelope przy materializacji Insight
+//    - reportBuilderService.createSnapshot → envelope w JSON snapshotu
+//    - Finance/EVM/ROI compute → computed_by + assumptions z shared/assumptions
+//    - claimCitationValidator (czat Teresy) → attachSource per tool-call
+// 2. Pozostałe artifact_type (initiative/report/deck/kpi/finance_number/...)
+//    nie mają jeszcze wołającego — tylko Insight (ten commit).
