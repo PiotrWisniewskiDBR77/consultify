@@ -41,7 +41,7 @@
  * ============================================================================
  */
 
-import { getCanonicalLineByCode } from './financeCanonicalRegistry';
+import { getCanonicalLineByCode } from './financeCanonicalRegistry.js';
 
 // ── SHADOW MODE MASTER SWITCH ───────────────────────────────────────────────
 // While false, reconcile is purely observational: shouldBlockReady() always
