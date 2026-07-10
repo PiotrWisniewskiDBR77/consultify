@@ -15,12 +15,165 @@ type ProjectResolver = (
 type CapabilityOptions = {
   reason?: string;
   allowWithoutProject?: boolean;
+  /**
+   * SHADOW ENFORCEMENT (2026-07-10) — opt a caller into the capability
+   * enforcement rollout governed by the `CAPABILITY_ENFORCE` env flag.
+   *
+   * When `shadow: true` and `CAPABILITY_ENFORCE` is unset or `shadow`
+   * (the default), the middleware NEVER blocks: it resolves effective access,
+   * logs `{ userId, capability, route, method, projectId, wouldAllow }` and
+   * always calls `next()`. This is pure telemetry — we collect "who WOULD get a
+   * 403" so the switch to real enforcement can be made from data, not a guess.
+   *
+   * When `CAPABILITY_ENFORCE=enforce`, the same shadow-tagged gates start
+   * returning real 401/400/403/503 responses. The legacy `EFFECTIVE_ACCESS_*`
+   * flags are untouched (kept for the pre-existing, still-unwired callers).
+   */
+  shadow?: boolean;
 };
 
 const shouldEnforceEffectiveAccess = () =>
   (process.env.EFFECTIVE_ACCESS_ENFORCE ?? '').trim().toLowerCase() === 'true';
 const shouldShadowEffectiveAccess = () =>
   (process.env.EFFECTIVE_ACCESS_SHADOW ?? '').trim().toLowerCase() === 'true';
+
+// Governs the shadow-tagged capability gates (options.shadow === true).
+// Default = 'shadow' (log-only, zero blocking). Set CAPABILITY_ENFORCE=enforce
+// to turn the collected shadow signals into real 403s.
+const capabilityEnforceMode = (): 'shadow' | 'enforce' =>
+  (process.env.CAPABILITY_ENFORCE ?? 'shadow').trim().toLowerCase() === 'enforce'
+    ? 'enforce'
+    : 'shadow';
+
+type ShadowVerdict =
+  | { status: 'no_auth' }
+  | { status: 'no_project' }
+  | { status: 'error' }
+  | { status: 'evaluated'; wouldAllow: boolean; projectId: string | null; projectRole: string | null };
+
+/**
+ * Resolve effective access and compute whether the caller WOULD pass the
+ * capability check — without ever writing a response or throwing. Used by the
+ * shadow branch of the capability middlewares. `capabilities` is an array so a
+ * single implementation serves both the single- and any-of- variants
+ * (wouldAllow = at least one capability granted).
+ */
+async function runCapabilityShadow(
+  req: AuthRequest,
+  capabilities: string[],
+  resolveProjectId: ProjectResolver,
+  options: CapabilityOptions
+): Promise<ShadowVerdict> {
+  try {
+    const { userId, organizationId, applicationRole, isImpersonating } = getUserContext(req);
+    if (!userId || !organizationId) return { status: 'no_auth' };
+
+    let projectId: string | null = null;
+    try {
+      projectId = firstString(await resolveProjectId(req));
+    } catch {
+      projectId = null;
+    }
+    if (!projectId && !options.allowWithoutProject) return { status: 'no_project' };
+
+    const access = await resolveEffectiveAccess({
+      userId,
+      organizationId,
+      applicationRole,
+      projectId,
+      isImpersonating,
+    });
+    const wouldAllow = capabilities.some((cap) => hasEffectiveCapability(access, cap));
+    return {
+      status: 'evaluated',
+      wouldAllow,
+      projectId,
+      projectRole: (access as { projectRole?: string | null }).projectRole ?? null,
+    };
+  } catch {
+    return { status: 'error' };
+  }
+}
+
+/**
+ * Shadow-branch handler shared by both capability middlewares. In `shadow`
+ * mode it ALWAYS calls next() (guaranteed zero blocking) after logging the
+ * verdict. In `enforce` mode it converts the verdict into the same
+ * 401/400/403/503 responses the legacy enforce path would produce.
+ *
+ * Returns true if it fully handled the request (caller must return).
+ */
+async function handleShadowCapability(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+  capabilities: string[],
+  resolveProjectId: ProjectResolver,
+  options: CapabilityOptions
+): Promise<void> {
+  const mode = capabilityEnforceMode();
+  const verdict = await runCapabilityShadow(req, capabilities, resolveProjectId, options);
+  const capLabel = capabilities.length === 1 ? capabilities[0] : capabilities;
+  const route = safePath(req);
+  const method = (() => {
+    try {
+      return (req as AuthRequest & { method?: string }).method ?? '';
+    } catch {
+      return '';
+    }
+  })();
+  const userId = firstString(req.user?.id, req.userId);
+
+  // Always emit the telemetry line (log-only doctrine).
+  logger.info('[capabilityShadow]', {
+    mode,
+    capability: capLabel,
+    route,
+    method,
+    userId,
+    status: verdict.status,
+    wouldAllow: verdict.status === 'evaluated' ? verdict.wouldAllow : null,
+    projectId: verdict.status === 'evaluated' ? verdict.projectId : null,
+    projectRole: verdict.status === 'evaluated' ? verdict.projectRole : null,
+  });
+
+  if (mode === 'shadow') {
+    // ZERO blocking — collect data only, never touch the response.
+    safeNext(next, 'shadow', capLabel);
+    return;
+  }
+
+  // enforce mode: turn verdict into real responses.
+  if (verdict.status === 'no_auth') {
+    safeWriteJson(res, 401, { error: 'Authentication required', code: 'AUTH_REQUIRED' }, 'auth', {});
+    return;
+  }
+  if (verdict.status === 'no_project') {
+    safeWriteJson(res, 400, {
+      error: 'Project context is required',
+      code: 'PROJECT_CONTEXT_REQUIRED',
+      required: capLabel,
+      reason: options.reason || 'missing_project_context',
+    }, 'deny', { capability: capLabel });
+    return;
+  }
+  if (verdict.status === 'error') {
+    safeWriteJson(res, 503, { error: 'Capability check failed', code: 'EFFECTIVE_ACCESS_CHECK_FAILED' }, 'error', { capability: capLabel });
+    return;
+  }
+  if (!verdict.wouldAllow) {
+    safeWriteJson(res, 403, {
+      error: 'Capability required',
+      code: 'CAPABILITY_REQUIRED',
+      required: capLabel,
+      projectId: verdict.projectId,
+      reason: options.reason || 'missing_capability_or_scope',
+    }, 'deny', { capability: capLabel, path: route });
+    return;
+  }
+  (req as AuthRequest & { effectiveAccess?: unknown }).effectiveAccess = undefined;
+  safeNext(next, 'allow', capLabel);
+}
 
 function firstString(...values: unknown[]): string | null {
   for (const value of values) {
@@ -194,6 +347,22 @@ export async function resolveInterviewProjectId(req: AuthRequest): Promise<strin
   return await resolveProjectIdFromRequest(req);
 }
 
+export async function resolveDecisionProjectId(req: AuthRequest): Promise<string | null> {
+  const decisionId = firstString(
+    req.params?.decisionId,
+    req.params?.id,
+    req.body?.decisionId,
+    req.body?.decision_id
+  );
+  if (!decisionId || decisionId.length > 128) return await resolveProjectIdFromRequest(req);
+  const row = await queryHelpers
+    .queryOne<{
+      project_id?: string;
+    }>(`SELECT project_id FROM decisions WHERE id = ? LIMIT 1`, [decisionId])
+    .catch(() => null);
+  return firstString(row?.project_id, await resolveProjectIdFromRequest(req));
+}
+
 export function requireProjectCapability(
   capability: string,
   resolveProjectId: ProjectResolver = resolveProjectIdFromRequest,
@@ -202,6 +371,12 @@ export function requireProjectCapability(
   return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     if (!capability || !capability.trim()) {
       safeWriteJson(res, 400, { error: 'Capability name is required', code: 'CAPABILITY_INVALID' }, 'validate', {});
+      return;
+    }
+
+    // Shadow-enforcement rollout: log-only by default, never blocks.
+    if (options.shadow) {
+      await handleShadowCapability(req, res, next, [capability], resolveProjectId, options);
       return;
     }
 
@@ -326,6 +501,12 @@ export function requireAnyProjectCapability(
   return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     if (!capabilities.length) {
       safeWriteJson(res, 400, { error: 'At least one capability is required', code: 'CAPABILITY_LIST_INVALID' }, 'validate', {});
+      return;
+    }
+
+    // Shadow-enforcement rollout: log-only by default, never blocks.
+    if (options.shadow) {
+      await handleShadowCapability(req, res, next, capabilities, resolveProjectId, options);
       return;
     }
 
@@ -455,6 +636,9 @@ export const requireAnyInterviewCapability = (
 
 export const requireInitiativeCapability = (capability: string, options?: CapabilityOptions) =>
   requireProjectCapability(capability, resolveInitiativeProjectId, options);
+
+export const requireDecisionCapability = (capability: string, options?: CapabilityOptions) =>
+  requireProjectCapability(capability, resolveDecisionProjectId, options);
 
 export const requireAnyInitiativeCapability = (
   capabilities: string[],
