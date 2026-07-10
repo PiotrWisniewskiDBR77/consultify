@@ -91,6 +91,13 @@ export interface AcceptCandidatePayload {
   initiativeId: string | null;
   /** True when generateFullInitiative ran and produced ≥1 filled card (fail-soft). */
   filled: boolean;
+  /**
+   * Zwornik cross-record de-dup: set when `initiativeId` points at a PRE-EXISTING
+   * initiative (title-similarity match, §"Cross-record de-dup" above) rather than
+   * a freshly-created DRAFT. The FE should navigate there and surface "this looks
+   * like an existing initiative" instead of implying a new one was created.
+   */
+  duplicateOfInitiativeId?: string | null;
 }
 
 /**
@@ -292,6 +299,83 @@ export async function buildCandidateFromArtifactAI(
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Cross-record de-dup (Zwornik anchoring, panel bloker #5)
+// ---------------------------------------------------------------------------
+//
+// Two different discovery artifacts (e.g. an interview_insight AND an
+// assessment) can describe the SAME underlying initiative topic. The existing
+// scan-time dedup only keys on (source_type, source_id) — an exact-artifact
+// re-scan guard — so it does NOT catch this cross-record case. This is the
+// check that does: before minting a new DRAFT from an accepted candidate, we
+// look for an ACTIVE initiative in the org whose title is a likely semantic
+// duplicate and, if found, attach the candidate to it instead of creating a
+// second DRAFT for the same initiative.
+
+const TITLE_STOPWORDS = new Set([
+  'inicjatywa', 'initiative', 'i', 'w', 'z', 'na', 'do', 'dla', 'oraz', 'the',
+  'a', 'an', 'of', 'for', 'to', 'and', 'or', 'on', 'with',
+]);
+
+/** Significant, normalized words of a title (builder prefix + stopwords stripped). */
+export function normalizeInitiativeTitleWords(title: string): Set<string> {
+  const stripped = String(title || '').replace(/^inicjatywa\s*:\s*/i, '');
+  const words = stripped
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !TITLE_STOPWORDS.has(w));
+  return new Set(words);
+}
+
+/** Jaccard similarity of two titles' significant-word sets (0..1). Pure, testable. */
+export function titleSimilarity(a: string, b: string): number {
+  const wa = normalizeInitiativeTitleWords(a);
+  const wb = normalizeInitiativeTitleWords(b);
+  if (wa.size === 0 || wb.size === 0) return 0;
+  let intersection = 0;
+  for (const w of wa) if (wb.has(w)) intersection++;
+  const union = new Set([...wa, ...wb]).size;
+  return union === 0 ? 0 : intersection / union;
+}
+
+/** Jaccard threshold above which two titles are treated as the same initiative. */
+export const DUPLICATE_TITLE_SIMILARITY_THRESHOLD = 0.6;
+
+/**
+ * Finds an existing, non-terminal-status initiative in the org whose title is
+ * a likely duplicate of `title`. Fail-soft — a query error degrades to "no
+ * duplicate found" (dedup is advisory, it must never block candidate accept).
+ */
+export async function findDuplicateInitiative(
+  db: CandidateDb,
+  orgId: string,
+  title: string
+): Promise<{ id: string; title: string } | null> {
+  if (!orgId || !String(title || '').trim()) return null;
+  try {
+    const rows = await db.queryAll<Record<string, unknown>>(
+      `SELECT id, COALESCE(title, name, '') AS title FROM initiatives
+        WHERE organization_id = ?
+          AND UPPER(COALESCE(status, '')) NOT IN ('CANCELLED', 'REJECTED', 'ARCHIVED')`,
+      [orgId]
+    );
+    let best: { id: string; title: string; score: number } | null = null;
+    for (const r of rows || []) {
+      const rowTitle = String(r.title || '');
+      if (!rowTitle.trim()) continue;
+      const score = titleSimilarity(title, rowTitle);
+      if (score >= DUPLICATE_TITLE_SIMILARITY_THRESHOLD && (!best || score > best.score)) {
+        best = { id: String(r.id), title: rowTitle, score };
+      }
+    }
+    return best ? { id: best.id, title: best.title } : null;
+  } catch {
+    return null;
+  }
+}
 
 function mapRow(row: Record<string, unknown>): InitiativeCandidate {
   return {
@@ -587,33 +671,56 @@ export async function acceptCandidate(
     const lineageSourceType = candidate.sourceType && candidate.sourceId ? candidate.sourceType : 'manual';
     const lineageSourceId = candidate.sourceType && candidate.sourceId ? candidate.sourceId : null;
 
-    // (b) CREATE the DRAFT initiative through the canonical funnel.
+    // (b0) Zwornik cross-record de-dup — BEFORE minting a new DRAFT, check
+    // whether an ACTIVE initiative already covers this topic (a different
+    // discovery artifact proposing the same underlying initiative). Advisory
+    // + fail-soft: any failure here just falls through to normal creation.
+    const orgForDedup = orgId || candidate.organizationId;
     let initiativeId: string | null = null;
-    try {
-      const orgForCreate = orgId || candidate.organizationId;
-      const created = await deps.createInitiative(
-        orgForCreate,
-        {
-          title: candidate.title,
-          problemStatement: candidate.rationale || null,
-          sourceType: lineageSourceType,
-          sourceId: lineageSourceId,
-          // status DRAFT intentionally OMITTED — the funnel normalizes it.
-        },
-        { validate: false, actor: { id: userId ?? null } }
-      );
-      initiativeId = created?.id ?? null;
-    } catch (createErr) {
-      logger.warn(
-        `[initiativeCandidateService] DRAFT creation failed for candidate ${candidate.id} (recoverable): ${
-          (createErr as Error)?.message || createErr
-        }`
-      );
+    let duplicateOfInitiativeId: string | null = null;
+    if (orgForDedup) {
+      const dup = await findDuplicateInitiative(db, orgForDedup, candidate.title);
+      if (dup) {
+        initiativeId = dup.id;
+        duplicateOfInitiativeId = dup.id;
+        logger.info(
+          `[initiativeCandidateService] candidate ${candidate.id} ("${candidate.title}") matched existing initiative ${dup.id} ("${dup.title}") — skipping DRAFT creation (cross-record de-dup)`
+        );
+      }
+    }
+
+    // (b) CREATE the DRAFT initiative through the canonical funnel — same
+    // project-anchoring gate as the wizard (createInitiativeService.ts).
+    // Skipped when (b0) found a duplicate.
+    if (!initiativeId) {
+      try {
+        const orgForCreate = orgId || candidate.organizationId;
+        const created = await deps.createInitiative(
+          orgForCreate,
+          {
+            title: candidate.title,
+            problemStatement: candidate.rationale || null,
+            sourceType: lineageSourceType,
+            sourceId: lineageSourceId,
+            // status DRAFT intentionally OMITTED — the funnel normalizes it.
+          },
+          { validate: false, actor: { id: userId ?? null } }
+        );
+        initiativeId = created?.id ?? null;
+      } catch (createErr) {
+        logger.warn(
+          `[initiativeCandidateService] DRAFT creation failed for candidate ${candidate.id} (recoverable): ${
+            (createErr as Error)?.message || createErr
+          }`
+        );
+      }
     }
 
     // (c) OPTIONALLY trigger F1 fill — fail-soft so accept still succeeds.
+    // Never re-fill a pre-existing initiative matched by (b0): it may already
+    // have real, human-reviewed content that the generator must not clobber.
     let filled = false;
-    if (fill && initiativeId) {
+    if (fill && initiativeId && !duplicateOfInitiativeId) {
       try {
         const orgForFill = orgId || candidate.organizationId;
         const result = await deps.generateFull(deps.generatorDeps(), {
@@ -659,6 +766,7 @@ export async function acceptCandidate(
       brief,
       initiativeId,
       filled,
+      duplicateOfInitiativeId,
     };
   } catch {
     return null;

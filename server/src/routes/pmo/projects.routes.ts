@@ -82,6 +82,17 @@ router.get('/my-memberships', ProjectController.getMyMemberships);
 router.get('/:id', ProjectController.getProjectById);
 
 // ==========================================
+// FINANCE ROLLUP (ZWORNIK DELTA B)
+// ==========================================
+
+/**
+ * GET /api/pmo/projects/:id/finance
+ * Project finance rollup (§4.2): own budget container(s) + Σ initiative
+ * budgets/expenses + Σ initiative value + benefits/ROI + variance.
+ */
+router.get('/:id/finance', ProjectController.getProjectFinance);
+
+// ==========================================
 // PROJECT TEAM (CANONICAL MEMBERSHIP)
 // ==========================================
 
