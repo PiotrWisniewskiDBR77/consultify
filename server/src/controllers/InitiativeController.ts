@@ -67,6 +67,7 @@ import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
+import { isRequireInitiativeProjectEnabled } from '../services/initiativeProjectPolicyService.js';
 import { recordHandoff as recordStageHandoff } from '../services/initiative/stageHandoffService.js';
 import type {
   CreateInitiativeRequest,
@@ -585,6 +586,20 @@ export class InitiativeController {
       });
       if (!createAccess.allowed) {
         res.status(403).json({ error: createAccess.reason, code: createAccess.code });
+        return;
+      }
+
+      // Zwornik Delta C (§5.2.1, D-J): every NEW initiative created through the
+      // interactive API/wizard MUST name a project — no silent NULL. This is the
+      // hard, user-facing half of the anchoring policy; background/AI creators
+      // going through the funnel below get the soft auto-anchor instead (see
+      // createInitiativeService.ts). Runs BEFORE the funnel/raw-insert branch so
+      // it applies regardless of INITIATIVE_FUNNEL_ENABLED.
+      if (isRequireInitiativeProjectEnabled() && !(req.body as { projectId?: unknown })?.projectId) {
+        res.status(400).json({
+          error: 'projectId is required — every initiative must belong to a project',
+          code: 'INITIATIVE_PROJECT_REQUIRED',
+        });
         return;
       }
 

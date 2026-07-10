@@ -16,6 +16,10 @@ import { v4 as uuidv4 } from 'uuid';
 
 import auditEventsService from '../AuditEventsService.js';
 import { CreateInitiativeSchema } from '../../validators/initiative.validators.js';
+import {
+  isRequireInitiativeProjectEnabled,
+  resolveOrCreateSystemPortfolioProject,
+} from '../initiativeProjectPolicyService.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
@@ -76,6 +80,15 @@ export interface CreateInitiativeOptions {
    */
   enforceQuality?: boolean;
   actor?: { id?: string | null; ip?: string | null; userAgent?: string | null };
+  /**
+   * Zwornik Delta C anchoring escape hatch: when true, skip the system-portfolio
+   * auto-anchor even if REQUIRE_INITIATIVE_PROJECT is ON and no projectId was
+   * supplied. Default false — every caller goes through the same gate. Reserved
+   * for call sites that intentionally manage org-level (project-less)
+   * initiatives outside the PM backbone (none today; kept for forward
+   * compatibility instead of a silent bypass).
+   */
+  allowMissingProject?: boolean;
 }
 
 export interface CreateInitiativeResult {
@@ -85,6 +98,12 @@ export interface CreateInitiativeResult {
   status: string;
   sourceType: string;
   sourceId: string | null;
+  /**
+   * Zwornik Delta C — the project the initiative was anchored to (echoes
+   * `data.projectId` when supplied, or the auto-resolved system "Portfel"
+   * project id, or null when anchoring is disabled/degraded).
+   */
+  projectId: string | null;
   /** F3.2/F3.9 — advisory quality warnings, present only when enforceQuality:true and issues found. */
   qualityWarnings?: string[];
 }
@@ -132,6 +151,25 @@ export async function createInitiative(
   // F1.11 — funnel normalizes the initial status to DRAFT unless one is explicit.
   const status = data.status && String(data.status).trim() ? String(data.status).trim() : 'DRAFT';
 
+  // Zwornik Delta C anchoring (§5.2, D-J: every initiative MUST have a project).
+  // This is the ONE choke point every creator funnels through (wizard via
+  // InitiativeController, Teresa handoff, candidate accept, report/assessment
+  // import, onboarding, …) — so anchoring here is the "same gate as the
+  // wizard" the F2→F1 candidate path was previously bypassing (0× project_id,
+  // confirmed by audit). The interactive wizard already hard-blocks a missing
+  // projectId one layer up (InitiativeController.createInitiative); background
+  // callers reaching this point without one are auto-anchored to the org's
+  // system "Portfel — inicjatywy bezpośrednie" container instead of persisting
+  // project_id=NULL, so no NEW orphans are created from this point forward.
+  // Fail-soft: if the org lookup/lazy-create itself fails, we degrade to NULL
+  // (pre-zwornik behaviour) rather than blocking the initiative's creation.
+  let projectId: string | null = data.projectId ?? null;
+  if (!projectId && isRequireInitiativeProjectEnabled() && options.allowMissingProject !== true) {
+    projectId = await resolveOrCreateSystemPortfolioProject(orgId, {
+      createdBy: options.actor?.id ?? null,
+    });
+  }
+
   const id = uuidv4();
   const now = new Date().toISOString();
 
@@ -153,7 +191,7 @@ export async function createInitiative(
   const newParams = [
     id,
     orgId,
-    data.projectId ?? null,
+    projectId,
     data.programId ?? null,
     title,
     title,
@@ -216,7 +254,7 @@ export async function createInitiative(
     await queryHelpers.queryRun(legacySql, [
       id,
       orgId,
-      data.projectId ?? null,
+      projectId,
       title,
       data.axis ?? null,
       data.area ?? null,
@@ -278,7 +316,7 @@ export async function createInitiative(
         action: 'initiative.created',
         resourceType: 'initiative',
         resourceId: id,
-        after: { id, title, projectId: data.projectId ?? null, status, sourceType, sourceId: sourceId || null },
+        after: { id, title, projectId, status, sourceType, sourceId: sourceId || null },
         organizationId: orgId,
         ip: options.actor?.ip ?? undefined,
         userAgent: options.actor?.userAgent ?? undefined,
@@ -354,6 +392,7 @@ export async function createInitiative(
     status,
     sourceType,
     sourceId: sourceId || null,
+    projectId,
   };
   // USPOJNIENIE C3 — ostrzeżenia §B3 są ZAWSZE zwracane (advisory, widoczny
   // sygnał jakości dla wołającego), ale NIGDY nie blokują tworzenia. Wcześniej
