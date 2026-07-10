@@ -14,6 +14,45 @@ export interface KpiCatalogRuntimeResult {
   source: 'v8' | 'legacy' | 'empty' | 'showcase';
 }
 
+function showcaseResult(): KpiCatalogRuntimeResult {
+  return {
+    initiatives: createResultsShowcaseInitiatives(),
+    kpis: createResultsShowcaseKpis(),
+    source: 'showcase',
+  };
+}
+
+/**
+ * Loads KPIs from the deprecated legacy `/api/benefits/*` paths.
+ *
+ * BUG-M15-04 (plan field): Harvard/_TRACKER.md documents a "plan field" bug in
+ * the M15 results layer left unresolved. Static analysis of v8/results.routes.ts,
+ * resultsROIService.ts and benefits.routes.ts found no missing or null-when-required
+ * `plan` field. Likely needs a live API trace (candidate: initiative_kpis.target_value
+ * vs a target_plan_value column).
+ *
+ * Always returns source:'legacy' (even when empty) so ResultsHub keeps rendering the
+ * degraded banner/runtime chip — an empty legacy response must not silently look
+ * like a healthy 'empty' state. (BUG-M15 L-01)
+ */
+async function loadLegacyResultsKpis(): Promise<KpiCatalogRuntimeResult> {
+  const [kpisRes, mappingsRes] = await Promise.allSettled([
+    Api.get('/benefits/kpis'),
+    Api.get('/benefits/kpi-mappings'),
+  ]);
+
+  const kpisPayload: any = kpisRes.status === 'fulfilled' ? kpisRes.value : null;
+  const mappingsPayload: any = mappingsRes.status === 'fulfilled' ? mappingsRes.value : null;
+
+  const kpis = mapResultsKpis(kpisPayload?.data || [], mappingsPayload?.data || []);
+
+  return {
+    initiatives: [],
+    kpis,
+    source: 'legacy',
+  };
+}
+
 export async function loadResultsKpis(): Promise<KpiCatalogRuntimeResult> {
   try {
     const catalog = await V8ResultsApi.getKpiCatalog();
@@ -23,12 +62,21 @@ export async function loadResultsKpis(): Promise<KpiCatalogRuntimeResult> {
       Array.isArray(catalog?.mappings) ? catalog.mappings : []
     );
 
-    if (initiatives.length === 0 && kpis.length === 0 && shouldUseResultsShowcaseData()) {
-      return {
-        initiatives: createResultsShowcaseInitiatives(),
-        kpis: createResultsShowcaseKpis(),
-        source: 'showcase',
-      };
+    if (initiatives.length === 0 && kpis.length === 0) {
+      // Presenter/demo curated data takes priority when enabled.
+      if (shouldUseResultsShowcaseData()) {
+        return showcaseResult();
+      }
+      // Z82 / split-brain: V8 is ENABLED but the `v8_kpi_*` tables are empty while
+      // the legacy `initiative_kpis` tables hold the real data. V8 returns 200-empty
+      // (not an error), so the catch-block fallback below never fires — fall back to
+      // legacy here too, otherwise Results renders blank despite real data existing.
+      const legacy = await loadLegacyResultsKpis();
+      if (legacy.kpis.length > 0) {
+        return legacy;
+      }
+      // Nothing anywhere — surface the (empty) V8 result.
+      return { initiatives, kpis, source: 'v8' };
     }
 
     return {
@@ -48,40 +96,10 @@ export async function loadResultsKpis(): Promise<KpiCatalogRuntimeResult> {
       );
     }
 
-    const [kpisRes, mappingsRes] = await Promise.allSettled([
-      Api.get('/benefits/kpis'),
-      Api.get('/benefits/kpi-mappings'),
-    ]);
-
-    const kpisPayload: any = kpisRes.status === 'fulfilled' ? kpisRes.value : null;
-    const mappingsPayload: any = mappingsRes.status === 'fulfilled' ? mappingsRes.value : null;
-
-    const initiatives: ResultsTrackedInitiative[] = [];
-    const kpis = mapResultsKpis(kpisPayload?.data || [], mappingsPayload?.data || []);
-
-    if (initiatives.length === 0 && kpis.length === 0 && shouldUseResultsShowcaseData()) {
-      return {
-        initiatives: createResultsShowcaseInitiatives(),
-        kpis: createResultsShowcaseKpis(),
-        source: 'showcase',
-      };
+    const legacy = await loadLegacyResultsKpis();
+    if (legacy.kpis.length === 0 && shouldUseResultsShowcaseData()) {
+      return showcaseResult();
     }
-
-    // BUG-M15-04 (plan field): Harvard/_TRACKER.md documents a "plan field" bug in the
-    // M15 results layer left unresolved. Static analysis of v8/results.routes.ts,
-    // resultsROIService.ts and benefits.routes.ts found no missing or null-when-required
-    // `plan` field in any API response. The bug likely requires a live API trace to reproduce.
-    // Candidate: initiative_kpis.target_value vs a potential target_plan_value column.
-    // TODO: trace /api/v8/results/kpi-catalog response with an org that has plan targets set.
-
-    // Always return 'legacy' when V8 fell back — regardless of whether legacy returned data.
-    // Previously, an empty legacy response produced source:'empty', silently suppressing the
-    // degraded banner and runtime chip in ResultsHub. Now the banner/chip always render when
-    // V8 is unavailable so users know they are looking at a degraded state. (BUG-M15 L-01)
-    return {
-      initiatives: [],
-      kpis,
-      source: 'legacy',
-    };
+    return legacy;
   }
 }
