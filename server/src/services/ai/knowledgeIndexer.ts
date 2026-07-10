@@ -244,6 +244,7 @@ export class KnowledgeIndexer {
                 file_hash TEXT,
                 chunk_count INTEGER DEFAULT 0,
                 metadata TEXT,
+                status TEXT DEFAULT 'indexed',
                 indexed_at TEXT DEFAULT (datetime('now')),
                 updated_at TEXT DEFAULT (datetime('now'))
             )
@@ -831,15 +832,16 @@ export class KnowledgeIndexer {
       const db = getDatabase();
       await db.query(
         `
-                    INSERT INTO knowledge_docs 
-                    (id, filename, filepath, source_type, metadata, chunk_count, indexed_at, updated_at)
-                    VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+                    INSERT INTO knowledge_docs
+                    (id, filename, filepath, source_type, metadata, chunk_count, status, indexed_at, updated_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, 'indexed', NOW(), NOW())
                     ON CONFLICT (id) DO UPDATE SET
                         filename = EXCLUDED.filename,
                         filepath = EXCLUDED.filepath,
                         source_type = EXCLUDED.source_type,
                         metadata = EXCLUDED.metadata,
                         chunk_count = EXCLUDED.chunk_count,
+                        status = 'indexed',
                         updated_at = NOW()
                 `,
         [
@@ -856,9 +858,9 @@ export class KnowledgeIndexer {
 
     await DbPromise.run(
       `
-                INSERT OR REPLACE INTO knowledge_docs 
-                (id, filename, filepath, source_type, metadata, chunk_count, indexed_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+                INSERT OR REPLACE INTO knowledge_docs
+                (id, filename, filepath, source_type, metadata, chunk_count, status, indexed_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, 'indexed', datetime('now'), datetime('now'))
             `,
       [
         doc.id,
