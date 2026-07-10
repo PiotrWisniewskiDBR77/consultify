@@ -15218,7 +15218,8 @@
         "revoke": "Revoke share",
         "expires": "expires",
         "revoking": "Revoking share link...",
-        "revoked": "Share revoked — the public link no longer works."
+        "revoked": "Share revoked — the public link no longer works.",
+        "collapse": "Collapse (link stays active)"
       },
       "source": {
         "note": "Source: note"

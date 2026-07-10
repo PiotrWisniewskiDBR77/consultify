@@ -16268,7 +16268,8 @@
         "revoke": "Cofnij udostępnianie",
         "expires": "wygasa",
         "revoking": "Cofanie udostępniania...",
-        "revoked": "Udostępnianie cofnięte — link publiczny przestał działać."
+        "revoked": "Udostępnianie cofnięte — link publiczny przestał działać.",
+        "collapse": "Zwiń pasek (link pozostaje aktywny)"
       },
       "source": {
         "note": "Źródło: notatka"
