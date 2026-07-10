@@ -107,6 +107,7 @@ import documentStudioRoutes, {
 import documentRoutes from './routes/documents.routes.js';
 import economicsRoutes from './routes/economics.routes.js';
 import enterprisePlatformRoutes from './routes/enterprise-platform.routes.js';
+import evidenceRoutes from './routes/evidence.routes.js';
 import executionModulesRoutes from './routes/execution-modules.routes.js';
 import executionControlRoutes from './routes/executionControl.routes.js';
 import executiveAggregateRoutes from './routes/executiveAggregate.routes.js';
@@ -874,6 +875,8 @@ export class ApiGateway {
       app.use('/api/report-pdf', reportPdfRoutes);
       mountStub('/api/stabilization', stabilizationRoutes, 'stabilizationRoutes');
       app.use('/api/decisions', decisionsRoutes);
+      // Evidence Layer (H1 Harvey-gap, kontrakt nr 1) — SSOT _KONCEPT_RDZEN_2026-07-10.md §3
+      app.use('/api/evidence', evidenceRoutes);
       app.use('/api/stage-gates', stageGatesRoutes);
       app.use('/api/pmo-analysis', pmoAnalysisRoutes);
       app.use('/api/pmo-context', pmoContextRoutes);
