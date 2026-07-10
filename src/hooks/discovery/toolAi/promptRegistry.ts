@@ -111,8 +111,8 @@ Context:
 
 Each item: clear title, actionable description, impact/effort ratings. Where relevant set category, owner, target, frequency, threshold, or durationMinutes. Ground items in the context; do not invent fake data.
 
-Return JSON:
-{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "category": "...", "owner": "...", "target": "...", "frequency": "...", "threshold": "...", "durationMinutes": 0}]}`;
+Return JSON. Each item shape (confidence/evidenceType/derivation/rationale/state/requires_evidence are OPTIONAL but REQUIRED whenever the item carries a number or claim not present verbatim in the context — see GROUNDING RULES below):
+{"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low", "category": "...", "owner": "...", "target": "...", "frequency": "...", "threshold": "...", "durationMinutes": 0, "confidence": 1-5, "evidenceType": "fact|observation|assumption|hypothesis", "derivation": "numerator/denominator behind any number in this item, or omit if none", "rationale": "...", "state": "proposed|confirmed|rejected", "requires_evidence": false}]}`;
   }
 
   if (toolType === 'market-forces') {
