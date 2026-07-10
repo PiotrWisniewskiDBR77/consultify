@@ -71,6 +71,7 @@ import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
+import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
 import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
 import {
@@ -8271,6 +8272,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           ))}
         </div>
       ),
+    },
+    {
+      // Warstwa Dowodowa (H1 Harvey-gap) — SSOT §3.3
+      // Harvard/wdrozenie-100/_KONCEPT_RDZEN_2026-07-10.md. Insight = pierwszy
+      // artefakt wpięty; envelope renderowany przez EvidencePanelSection
+      // (fetch własny — patrz komponent). Reszta typów artefaktu = TODO.
+      id: 'evidence',
+      label: isPolish ? 'Źródła i założenia' : 'Sources & assumptions',
+      icon: Link2,
+      defaultOpen: false,
+      children: <EvidencePanelSection artifactType="insight" artifactId={insight?.id} isPolish={isPolish} />,
     },
     {
       id: 'comments',
