@@ -64,6 +64,10 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
       'initiative.unblock',
       'benefits.view',
       'audit.project.view',
+      // Zwornik Delta A (§3.5): stakeholder registry — Sponsor sees/edits
+      // engagements at project level and sees confidential influence/interest.
+      'stakeholder.engagement.manage.project',
+      'stakeholder.assessment.view',
     ],
   },
   {
@@ -107,6 +111,10 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
       'change.request.submit',
       'risk.escalate',
       'audit.project.view',
+      // Zwornik Delta A (§3.5): Leader manages project stakeholder engagements
+      // and sees confidential influence/interest scores.
+      'stakeholder.engagement.manage.project',
+      'stakeholder.assessment.view',
     ],
   },
   {
@@ -184,6 +192,11 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
       'risk.manage',
       'risk.escalate',
       'audit.project.view',
+      // Zwornik Delta A (§3.5): PMO manages the org-level stakeholder registry
+      // (identification layer) plus project engagements and confidential scores.
+      'stakeholder.registry.manage',
+      'stakeholder.engagement.manage.project',
+      'stakeholder.assessment.view',
     ],
   },
   {

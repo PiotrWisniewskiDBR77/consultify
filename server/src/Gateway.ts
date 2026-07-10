@@ -210,6 +210,7 @@ import pmoRolesRoutes from './routes/pmo/pmoRoles.routes.js';
 import projectMembersRoutes from './routes/pmo/project-members.routes.js';
 import projectRoutes from './routes/pmo/projects.routes.js';
 import roadmapRoutes from './routes/pmo/roadmap.routes.js';
+import stakeholderRegistryRoutes from './routes/pmo/stakeholders.routes.js';
 import taskRoutes from './routes/pmo/tasks.routes.js';
 import workstreamsRoutes from './routes/pmo/workstreams.routes.js';
 import portfolioOptimizationRoutes from './routes/portfolioOptimization.routes.js';
@@ -658,6 +659,13 @@ export class ApiGateway {
       app.use('/api/conclusions', conclusionsRoutes);
       app.use('/api/artifact-conversions', artifactConversionsRoutes);
       app.use('/api/projects', gatewayVerifyToken, trialEntryGuard, projectRoutes);
+      // Zwornik Delta A (Z95/#78): org/project stakeholder registry.
+      app.use(
+        '/api/stakeholders',
+        gatewayVerifyToken,
+        trialEntryGuard,
+        stakeholderRegistryRoutes
+      );
       app.use(
         '/api/knowledge',
         gatewayVerifyToken,
@@ -882,6 +890,12 @@ export class ApiGateway {
       app.use('/api/pmo/projects', gatewayVerifyToken, trialEntryGuard, projectRoutes);
       app.use('/api/pmo/initiatives', gatewayVerifyToken, trialEntryGuard, initiativesRoutes);
       app.use('/api/pmo/tasks', taskRoutes);
+      app.use(
+        '/api/pmo/stakeholders',
+        gatewayVerifyToken,
+        trialEntryGuard,
+        stakeholderRegistryRoutes
+      );
       app.use('/api/pmo-domains', pmoDomainsRoutes);
       // Compatibility mount for legacy clients.
       app.use('/api/project-members', projectMembersRoutes);
