@@ -6,6 +6,7 @@ import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { isAuthenticated, verifyToken } from '../../middleware/auth.middleware.js';
+import { requireProjectCapability } from '../../middleware/effectiveCapability.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -273,6 +274,7 @@ router.post(
   '/project/:projectId/:gateId/approve',
   verifyToken,
   isAuthenticated,
+  requireProjectCapability('gate.approve', undefined, { shadow: true }),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { projectId, gateId } = req.params;
     const userId = req.user?.id;
@@ -319,6 +321,7 @@ router.post(
   '/project/:projectId/:gateId/reject',
   verifyToken,
   isAuthenticated,
+  requireProjectCapability('gate.approve', undefined, { shadow: true }),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { projectId, gateId } = req.params;
     const userId = req.user?.id;

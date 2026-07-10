@@ -13,6 +13,7 @@ import DecisionPlaybookControllerRaw from '../../controllers/DecisionPlaybookCon
 const DecisionPlaybookController = DecisionPlaybookControllerRaw as any;
 import { verifyAdmin } from '../../middleware/admin.middleware.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
+import { requireDecisionCapability } from '../../middleware/effectiveCapability.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
@@ -84,32 +85,32 @@ router.get('/:id', DecisionController.getDecisionById);
  * POST /api/decisions
  * Create a new decision (requires approve_changes permission)
  */
-router.post('/', validateBody(CreateDecisionSchema), DecisionController.createDecision);
+router.post('/', requireDecisionCapability('decision.request', { shadow: true }), validateBody(CreateDecisionSchema), DecisionController.createDecision);
 
 /**
  * PUT /api/decisions/:id
  * Update a decision (delegate, reschedule, reprioritize)
  */
-router.put('/:id', validateBody(UpdateDecisionSchema), DecisionController.updateDecision);
+router.put('/:id', requireDecisionCapability('decision.update', { shadow: true }), validateBody(UpdateDecisionSchema), DecisionController.updateDecision);
 
 /**
  * DELETE /api/decisions/:id
  * Soft-delete (archive/cancel) a decision — reversible, org-scoped.
  * Allowed for requester, decision owner, or admin. Body: { reason?: string }
  */
-router.delete('/:id', DecisionController.deleteDecision);
+router.delete('/:id', requireDecisionCapability('decision.delete', { shadow: true }), DecisionController.deleteDecision);
 
 /**
  * PATCH /api/decisions/:id/decide
  * Make a decision (approve/reject/defer)
  */
-router.patch('/:id/decide', validateBody(DecideSchema), DecisionController.decide);
+router.patch('/:id/decide', requireDecisionCapability('decision.approve', { shadow: true }), validateBody(DecideSchema), DecisionController.decide);
 
 /**
  * PUT /api/decisions/:id/decide
  * Alias for PATCH /:id/decide
  */
-router.put('/:id/decide', validateBody(DecideSchema), DecisionController.decide);
+router.put('/:id/decide', requireDecisionCapability('decision.approve', { shadow: true }), validateBody(DecideSchema), DecisionController.decide);
 
 /**
  * POST /api/decisions/:id/escalate
