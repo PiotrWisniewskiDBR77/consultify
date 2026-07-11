@@ -113,6 +113,18 @@ export const NotebookQuickCapture: React.FC<NotebookQuickCaptureProps> = ({
         type="button"
         onClick={submit}
         disabled={busy || !value.trim()}
+        // #12a — "Capture" alone didn't explain what it does; add a tooltip/aria-label
+        // spelling out that it drops this into a new quick note in the notebook.
+        title={
+          isPl
+            ? 'Zapisz jako nową szybką notatkę w notatniku'
+            : 'Save as a new quick note in the notebook'
+        }
+        aria-label={
+          isPl
+            ? 'Zapisz jako nową szybką notatkę w notatniku'
+            : 'Save as a new quick note in the notebook'
+        }
         className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-c-accent px-3 py-1.5 text-xs font-medium text-white transition-colors hover:brightness-110 disabled:opacity-40"
       >
         {busy ? <Loader2 size={13} className="animate-spin" /> : null}
