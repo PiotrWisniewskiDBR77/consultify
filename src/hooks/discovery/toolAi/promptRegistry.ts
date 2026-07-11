@@ -1,6 +1,7 @@
 import { CONSULTING_TOOL_STANDARD_OUTPUTS } from '@/config/consultingToolsStandard';
 import {
   A3_SECTIONS,
+  assessA3,
   buildA3ConclusionPrompt,
   buildA3DeepenPrompt,
   type A3SectionId,
@@ -56,6 +57,7 @@ import {
 } from '@/config/rpascanner';
 import {
   SOP_SECTIONS,
+  assessSop,
   buildSopConclusionPrompt,
   buildSopDeepenPrompt,
   type SopSectionId,
@@ -80,6 +82,7 @@ import {
 } from '@/config/swot/swotTensionEngine';
 import { buildSwotFactsBlock } from '@/hooks/discovery/toolAi/dynamicSwot';
 import { GROUNDING_RULES_BOTH } from '@/hooks/discovery/toolAi/groundingRules';
+import { pickWeakestRung } from '@/hooks/discovery/toolAi/pickWeakestRung';
 import type { OperationalToolData, SWOTData, ToolType } from '@/store/useToolStore';
 
 const OPERATIONAL_TOOL_TYPES: ToolType[] = [
@@ -142,8 +145,25 @@ function getToolSuggestionPromptInner(
   // never 'context'/'summary', so the generic branch always intercepts first;
   // this is the same class of bug OXFORD #102 fixed for the conclusion prompts
   // in getToolSummaryPromptInner below — see that comment).
+  //
+  // Rung selection: A3 and SOP have an assess*() readiness score
+  // (src/config/<tool>/moveValidator.ts::assessA3/assessSop) with a per-section
+  // itemCount + evidence/measurable ratio, so pickWeakestRung derives the
+  // actual next rung to deepen from session progress instead of a hardcoded
+  // string. The other 7 tools below don't have a compatible assess* shape and
+  // keep their previous hardcoded rung — no regression there.
   if (toolType === 'a3-problem-solving' && A3_SECTIONS.includes(stepId as A3SectionId)) {
-    const deepen = buildA3DeepenPrompt(stepId as A3SectionId, 'evidence', false);
+    const opData = inputData as OperationalToolData | undefined;
+    const sectionScore = opData
+      ? assessA3(opData).scores.find((s) => s.section === (stepId as A3SectionId))
+      : undefined;
+    const rung = pickWeakestRung(
+      sectionScore
+        ? { itemCount: sectionScore.itemCount, coverageRatio: sectionScore.evidenceRatio }
+        : undefined,
+      'evidence'
+    );
+    const deepen = buildA3DeepenPrompt(stepId as A3SectionId, rung, false);
     if (deepen) {
       return `Act as an operational-excellence partner running an A3. Propose 3-5 concrete items for the "${stepId}" section, disciplined by the insight staircase (surface → evidence → quantification → risk/capability).
 
@@ -160,7 +180,17 @@ Return JSON:
   }
 
   if (toolType === 'sop-builder' && SOP_SECTIONS.includes(stepId as SopSectionId)) {
-    const deepen = buildSopDeepenPrompt(stepId as SopSectionId, 'quantification', false);
+    const opData = inputData as OperationalToolData | undefined;
+    const sectionScore = opData
+      ? assessSop(opData).scores.find((s) => s.section === (stepId as SopSectionId))
+      : undefined;
+    const rung = pickWeakestRung(
+      sectionScore
+        ? { itemCount: sectionScore.itemCount, coverageRatio: sectionScore.measurableRatio }
+        : undefined,
+      'quantification'
+    );
+    const deepen = buildSopDeepenPrompt(stepId as SopSectionId, rung, false);
     if (deepen) {
       return `Act as an operational-excellence partner building an SOP. Propose 3-5 concrete items for the "${stepId}" section, disciplined by the insight staircase (surface → evidence → quantification → risk/capability).
 
