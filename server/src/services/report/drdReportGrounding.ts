@@ -86,13 +86,18 @@ export function buildDrdGroundingProvider(
           mod.default?.searchKnowledgeBase) as SearchKnowledgeBaseFn;
         if (!searchKnowledgeBase) return [];
 
+        // NIE filtrujemy metodologii po języku raportu: książka „Digital
+        // Pathfinder" (kanoniczne źródło DRD) jest zaindeksowana tylko po
+        // angielsku, a excerpt służy LLM jako grounding (nie jest pokazywany
+        // klientowi verbatim). Filtr language='pl' zerowałby cytaty w polskich
+        // raportach — częsty przypadek. `language` celowo pominięte.
+        void language;
         const { results } = await searchKnowledgeBase(
           {
             query: `${axisName} — metodyka, poziomy dojrzałości, dobre praktyki`,
             maxResults: maxChunksPerAxis,
             toolSlug: 'drd',
             packType: 'methodology',
-            language,
           },
           { organizationId }
         );
