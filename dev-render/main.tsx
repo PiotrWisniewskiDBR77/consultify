@@ -22,6 +22,7 @@ import i18n from '../src/i18n';
 
 import AssessmentListScreen from './screens/assessment-list';
 import CanvasToolbarScreen from './screens/canvas-toolbar';
+import ChatLandingScreen from './screens/chat-landing';
 import DrdLightScreen from './screens/drd-light';
 import EvFootballFieldScreen from './screens/ev-football-field';
 import ExecutionLightScreen from './screens/execution-light';
@@ -57,6 +58,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'canvas-toolbar': {
     label: 'Canvas toolbar V2 (lightweight, spec #87-#87d)',
     render: () => <CanvasToolbarScreen />,
+  },
+  'chat-landing': {
+    label: 'Chat Landing Light Shell (/chat empty state, #86/#1)',
+    render: () => <ChatLandingScreen />,
   },
 };
 
