@@ -27,6 +27,7 @@ import EvFootballFieldScreen from './screens/ev-football-field';
 import ExecutionLightScreen from './screens/execution-light';
 import FinanceLightScreen from './screens/finance-light';
 import InterviewLightScreen from './screens/interview-light';
+import InitiativesLightScreen from './screens/initiatives-light';
 import ResultsLightScreen from './screens/results-light';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
@@ -46,6 +47,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'execution-light': {
     label: 'Execution Light Shell (Summary · Alerty · Reporting · Management)',
     render: () => <ExecutionLightScreen />,
+  },
+  'initiatives-light': {
+    label: 'Initiatives Light Shell (Lista · Kanban · Kręgosłup)',
+    render: () => <InitiativesLightScreen />,
   },
   'canvas-toolbar': {
     label: 'Canvas toolbar V2 (lightweight, spec #87-#87d)',
