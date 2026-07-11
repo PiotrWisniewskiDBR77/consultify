@@ -793,6 +793,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       createdAt?: Date;
       updatedAt: Date;
       projectId?: string;
+      createdBy?: string;
       _fullData?: any;
     }>
   >([]);
@@ -827,6 +828,34 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const [selectedInitiative, setSelectedInitiative] = useState<FullInitiativeData | null>(null);
   const [initiativeTasks, setInitiativeTasks] = useState<InitiativeTask[]>([]);
   const [isLoadingInitiative, setIsLoadingInitiative] = useState(false);
+
+  // #69: org users, for resolving createdBy → display name in the Author column.
+  const [orgUsers, setOrgUsers] = useState<Array<{ id: string; firstName: string; lastName: string }>>([]);
+  useEffect(() => {
+    let cancelled = false;
+    Api.getUsers()
+      .then((fetched) => {
+        if (!cancelled) setOrgUsers(fetched || []);
+      })
+      .catch((err) => console.error('Failed to load users for Author column', err));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const authorNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const u of orgUsers) {
+      map.set(u.id, `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.id);
+    }
+    return map;
+  }, [orgUsers]);
+  const getAuthorLabel = useCallback(
+    (createdBy?: string | null) => {
+      if (!createdBy) return '';
+      return authorNameById.get(createdBy) || createdBy;
+    },
+    [authorNameById]
+  );
 
   // Transform API data to display format
   const transformToolSession = useCallback((session: ToolSessionData): DisplayItem => {
@@ -902,6 +931,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       createdAt: session?.createdAt ? new Date(session.createdAt) : undefined,
       updatedAt: session?.updatedAt ? new Date(session.updatedAt) : new Date(),
       projectId: session?.projectId || session?.project_id,
+      // #69: Author column — backend v8/assessment.routes.ts list endpoint spreads
+      // raw DB rows (snake_case), other assessment call sites may return camelCase.
+      createdBy: session?.createdBy || session?.created_by,
       _fullData: session,
     };
   }, []);
@@ -1598,13 +1630,26 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         width: '150px',
       },
       {
+        id: 'createdBy',
+        label: t('tools.hub.table.author', 'Author'),
+        width: '140px',
+        render: (row) => {
+          const label = getAuthorLabel(row?.createdBy);
+          return label ? (
+            <span className="text-sm text-c-text truncate">{label}</span>
+          ) : (
+            <span className="text-sm text-slate-400">—</span>
+          );
+        },
+      },
+      {
         id: 'updatedAt',
         label: t('tools.hub.table.updated', 'Updated'),
         width: '120px',
         sortable: true,
       },
     ],
-    [t]
+    [t, getAuthorLabel]
   );
 
   const sessionsColumns: TableColumn[] = useMemo(
@@ -1706,13 +1751,26 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         width: '150px',
       },
       {
+        id: 'createdBy',
+        label: t('tools.hub.table.author', 'Author'),
+        width: '140px',
+        render: (row: any) => {
+          const label = getAuthorLabel(row?.createdBy);
+          return label ? (
+            <span className="text-sm text-c-text truncate">{label}</span>
+          ) : (
+            <span className="text-sm text-slate-400">—</span>
+          );
+        },
+      },
+      {
         id: 'updatedAt',
         label: t('tools.hub.table.updated', 'Updated'),
         width: '120px',
         sortable: true,
       },
     ],
-    [t]
+    [t, getAuthorLabel]
   );
 
   const libraryColumns: TableColumn[] = useMemo(
@@ -2485,6 +2543,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         progress: number;
         createdAt?: Date;
         updatedAt: Date;
+        createdBy?: string;
         apiToolType: 'assessment';
         _fullData?: any;
       };
@@ -2507,6 +2566,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         progress: a.progress,
         createdAt: a.createdAt,
         updatedAt: a.updatedAt,
+        createdBy: (a as any).createdBy,
         apiToolType: 'assessment' as const,
         _fullData: a._fullData,
       })),
@@ -4312,7 +4372,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors duration-150"
         aria-expanded={isAddMenuOpen}
       >
-        <span>{isPolish ? 'Dodaj' : t('common.add', 'Add')}</span>
+        <span>{isPolish ? 'Dodaj narzędzie' : t('tools.hub.addTool', 'Add tool')}</span>
         <ChevronDown
           size={16}
           className={`text-white/80 transition-transform duration-200 ${isAddMenuOpen ? 'rotate-180' : ''}`}

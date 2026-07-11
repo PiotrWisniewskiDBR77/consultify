@@ -11368,9 +11368,11 @@
         "license": "Licencja",
         "status": "Status",
         "progress": "Postęp",
+        "author": "Autor",
         "updated": "Aktualizacja",
         "whatYouGet": "Co otrzymasz"
       },
+      "addTool": "Dodaj narzędzie",
       "empty": {
         "library": "Brak narzędzi.",
         "librarySearchNoResults": "Brak wyników dla frazy \"{{query}}\". Zmień frazę lub wyczyść filtry.",

@@ -10717,9 +10717,11 @@
         "license": "License",
         "status": "Status",
         "progress": "Progress",
+        "author": "Author",
         "updated": "Updated",
         "whatYouGet": "What you get"
       },
+      "addTool": "Add tool",
       "empty": {
         "library": "No tools available.",
         "librarySearchNoResults": "No results for \"{{query}}\". Try a different phrase or clear filters.",
