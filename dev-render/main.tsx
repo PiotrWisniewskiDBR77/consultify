@@ -24,6 +24,7 @@ import AssessmentListScreen from './screens/assessment-list';
 import DrdLightScreen from './screens/drd-light';
 import EvFootballFieldScreen from './screens/ev-football-field';
 import FinanceLightScreen from './screens/finance-light';
+import ResultsLightScreen from './screens/results-light';
 
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
@@ -37,6 +38,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label: 'Assessment list (TRIADA: StandardModuleBar + StandardTable)',
     render: () => <AssessmentListScreen />,
   },
+  'results-light': { label: 'Results Light Shell (KPI · ROI · OKR)', render: () => <ResultsLightScreen /> },
 };
 
 const params = new URLSearchParams(window.location.search);
