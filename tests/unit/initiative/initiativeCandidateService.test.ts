@@ -526,6 +526,115 @@ describe('F2→F1 — acceptCandidate tworzy DRAFT + uruchamia generator', () =>
 });
 
 // ===========================================================================
+// Zwornik Delta C — project inheritance on accept (sourceProjectResolver.ts
+// is NOT mocked here: its real logic runs against the injected mock db, which
+// is the intended integration seam).
+describe('F2→F1 — acceptCandidate: zwornik project inheritance', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const assessmentCandidate = {
+    id: 'c2',
+    organization_id: 'org-1',
+    source_type: 'assessment',
+    source_id: 'assess-1',
+    title: 'Inicjatywa: Z assessmentu',
+    rationale: 'AI sugeruje na podstawie assessmentu',
+    fit_score: 0.7,
+    status: 'pending',
+  };
+
+  const interviewCandidate = {
+    id: 'c3',
+    organization_id: 'org-1',
+    source_type: 'interview_insight',
+    source_id: 'ins-1',
+    title: 'Inicjatywa: Z wywiadu',
+    rationale: 'AI sugeruje na podstawie insightu',
+    fit_score: 0.7,
+    status: 'pending',
+  };
+
+  function makeAcceptDeps() {
+    const createCalls: any[][] = [];
+    return {
+      createCalls,
+      createInitiative: (async (orgId: string, input: any, options: any) => {
+        createCalls.push([orgId, input, options]);
+        return {
+          id: 'init-inherited',
+          name: input.title,
+          title: input.title,
+          status: 'DRAFT',
+          sourceType: input.sourceType,
+          sourceId: input.sourceId ?? null,
+          projectId: input.projectId ?? null,
+        };
+      }) as any,
+      generateFull: (async () => ({
+        initiativeId: 'init-inherited',
+        language: 'pl',
+        cards: {},
+        outcomes: [],
+        qualitySummary: { total: 0, filled: 0, failed: 0, healed: 0, averageScore: null, belowThreshold: [] },
+      })) as any,
+      generatorDeps: (() => ({ generationService: {} as any })) as any,
+    };
+  }
+
+  it('inherits project_id from the source assessment row', async () => {
+    const db = makeDb({
+      queryOne: async (sql: string) => {
+        if (sql.includes('FROM initiative_candidates')) return assessmentCandidate;
+        if (sql.includes('FROM assessments')) return { project_id: 'proj-from-assessment' };
+        return null;
+      },
+      queryRun: async () => ({ changes: 1 }),
+    });
+    const deps = makeAcceptDeps();
+    const payload = await acceptCandidate(db, 'c2', { orgId: 'org-1', deps });
+
+    expect(payload!.initiativeId).toBe('init-inherited');
+    expect(deps.createCalls).toHaveLength(1);
+    const [, inputArg] = deps.createCalls[0];
+    expect(inputArg.projectId).toBe('proj-from-assessment');
+  });
+
+  it('interview_insight source has no project concept → projectId stays null (funnel auto-anchors)', async () => {
+    const db = makeDb({
+      queryOne: async (sql: string) => {
+        if (sql.includes('FROM initiative_candidates')) return interviewCandidate;
+        // No 'FROM assessments'/'FROM audits' branch reached for this source type.
+        throw new Error('should not query a project table for interview_insight');
+      },
+      queryRun: async () => ({ changes: 1 }),
+    });
+    const deps = makeAcceptDeps();
+    const payload = await acceptCandidate(db, 'c3', { orgId: 'org-1', deps });
+
+    expect(payload!.initiativeId).toBe('init-inherited');
+    const [, inputArg] = deps.createCalls[0];
+    expect(inputArg.projectId).toBeNull();
+  });
+
+  it('fail-soft: project lookup throwing does not block DRAFT creation', async () => {
+    const db = makeDb({
+      queryOne: async (sql: string) => {
+        if (sql.includes('FROM initiative_candidates')) return assessmentCandidate;
+        if (sql.includes('FROM assessments')) throw new Error('db down');
+        return null;
+      },
+      queryRun: async () => ({ changes: 1 }),
+    });
+    const deps = makeAcceptDeps();
+    const payload = await acceptCandidate(db, 'c2', { orgId: 'org-1', deps });
+
+    expect(payload!.initiativeId).toBe('init-inherited');
+    const [, inputArg] = deps.createCalls[0];
+    expect(inputArg.projectId).toBeNull();
+  });
+});
+
+// ===========================================================================
 describe('F2/L1 — dismissCandidate', () => {
   it('oznacza dismissed i zwraca true gdy zmieniono wiersz', async () => {
     const db = makeDb({ queryRun: async () => ({ changes: 1 }) });

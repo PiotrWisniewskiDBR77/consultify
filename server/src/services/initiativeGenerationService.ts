@@ -11,6 +11,7 @@ import { getDatabase } from '../database/Database.js';
 import DbPromise from '../utils/DbPromise.js';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 import initiativeSectionTypeService from './initiativeSectionTypeService.js';
 import { buildOrgFinancialsSummary } from './initiative/financialsGrounding.js';
 import {
@@ -22,6 +23,10 @@ import {
   validateCardSpec,
   type CardIssue,
 } from './initiative/cardSpecSchema.js';
+import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
+import { findDuplicateInitiative } from './initiative/initiativeCandidateService.js';
+import { resolveProjectIdFromSource } from './initiative/sourceProjectResolver.js';
+import { isRequireInitiativeProjectEnabled } from './initiativeProjectPolicyService.js';
 
 // ==========================================
 // TYPES
@@ -1347,10 +1352,47 @@ function buildCardSpecUserPrompt(args: CardSpecUserPromptArgs): string {
  * Teresa last-mile (backlog #1): create a REAL initiative from a Teresa handoff.
  *
  * Exported as a NAMED function because `teresaCopilotService.handleInitiativesHandoff`
- * looks for `createInitiative` on this module. Previously no such export existed
- * (the module only default-exports a generation class), so the handoff silently
- * fell back to a synthetic UUID (`real_entity:false`). This delegates to the
- * canonical `InitiativeService` so a real `initiatives` row is written.
+ * looks for `createInitiative` on this module; `generate_initiative` (the Teresa
+ * chat tool, ai/tools/generateInitiative.ts) calls it too. Previously no such
+ * export existed (the module only default-exports a generation class), so the
+ * handoff silently fell back to a synthetic UUID (`real_entity:false`).
+ *
+ * ZWORNIK DELTA C WIRING (2026-07-11): this was the last AI-facing entry point
+ * that still bypassed the project-anchoring gate — it called
+ * `initiativeService.createInitiative` (InitiativeDefinitionService), whose raw
+ * INSERT path only anchors a project when the UNRELATED, org-wide
+ * `INITIATIVE_FUNNEL_ENABLED` flag is 'true' (default OFF everywhere; confirmed
+ * by grep — no env file sets it). With that flag off, EVERY caller through this
+ * function persisted `project_id = NULL`, i.e. AI creating orphans faster than a
+ * human could (audit finding, panel adwersaryjny bloker #5 follow-up).
+ *
+ * Fix: route through the SAME canonical funnel the wizard and candidate-accept
+ * use (createInitiativeService.ts) instead. That funnel already:
+ *   - auto-anchors to the org's system "Portfel — inicjatywy bezpośrednie"
+ *     project when REQUIRE_INITIATIVE_PROJECT is ON (default ON per code, but
+ *     may be pinned 'false' per-env) and no projectId was supplied — the
+ *     fail-soft, non-interactive posture background/AI callers need (§5.2.3);
+ *   - is a no-op on project_id when the policy is OFF (project_id stays
+ *     whatever was resolved, possibly null) — i.e. log-only shadow, ZERO
+ *     blocking, exactly the posture requested for this rollout.
+ * Additive on top of that:
+ *   - project INHERITANCE from the source artifact (assessment/audit carry a
+ *     real project_id; interview_insight/manual do not, so they correctly fall
+ *     through to the funnel's system-Portfel auto-anchor) — sourceProjectResolver.ts;
+ *   - cross-record de-dup (title-similarity vs. ACTIVE initiatives in the org,
+ *     reusing initiativeCandidateService's findDuplicateInitiative) — ADVISORY
+ *     only: the initiative is still created, `possibleDuplicate`/
+ *     `duplicateOfInitiativeId` are returned for the caller to surface, per
+ *     spec ("flaga możliwy duplikat, nie twardy blok").
+ *
+ * Lineage default: existing callers (teresaCopilotService, generate_initiative
+ * tool) never passed sourceType/sourceId here — they stamp lineage themselves
+ * via a POST-create UPDATE (see generateInitiative.ts's `stampLineage`). To
+ * avoid a behaviour change/throw (the funnel's lineage guard requires a
+ * sourceId whenever sourceType !== 'manual'), sourceType only becomes
+ * non-'manual' when the CALLER explicitly supplies BOTH sourceType and
+ * sourceId (e.g. a future caller that already knows it came from an
+ * assessment/audit and wants project inheritance to kick in immediately).
  */
 export async function createInitiative(params: {
   organizationId: string;
@@ -1358,16 +1400,83 @@ export async function createInitiative(params: {
   description?: unknown;
   source?: string;
   proposalId?: string;
-}): Promise<{ id: string }> {
-  const { default: initiativeService } = await import('./initiativeService.js');
-  const created: any = await initiativeService.createInitiative({
-    organization_id: params.organizationId,
-    title: String(params.title || 'Teresa initiative').slice(0, 500),
-    summary: String(params.description || ''),
-    // USPOJNIENIE A1: status startowy MUSI być kanoniczny (DRAFT). Wcześniej
-    // 'step3' — legacy poza enumem cyklu życia → łamał CHECK constraint
-    // (initiatives_status_check) i wstrzykiwał status spoza kanonu przez lejek.
-    status: 'DRAFT',
-  } as any);
-  return { id: String(created?.id || '') };
+  /** Explicit anchor — wins over source-based inheritance when provided. */
+  projectId?: string | null;
+  /** Only honoured together with sourceId (lineage guard) — see doc comment above. */
+  sourceType?: string;
+  sourceId?: string;
+}): Promise<{
+  id: string;
+  projectId: string | null;
+  possibleDuplicate: boolean;
+  duplicateOfInitiativeId: string | null;
+}> {
+  const orgId = String(params.organizationId || '');
+  const title = String(params.title || 'Teresa initiative').slice(0, 500);
+
+  // Lineage: only trust sourceType/sourceId when BOTH are present (see doc
+  // comment) — otherwise default to 'manual' so the funnel's lineage guard
+  // never throws for the two existing callers, which stamp lineage themselves.
+  const hasExplicitSource = Boolean(params.sourceType && params.sourceId);
+  const sourceType = hasExplicitSource ? String(params.sourceType) : 'manual';
+  const sourceId = hasExplicitSource ? String(params.sourceId) : null;
+
+  // Zwornik project inheritance — explicit projectId wins; otherwise try to
+  // inherit from the source artifact (assessment/audit only); null falls
+  // through to the funnel's own system-Portfel auto-anchor.
+  let projectId: string | null = params.projectId ?? null;
+  if (!projectId) {
+    try {
+      projectId = await resolveProjectIdFromSource(orgId, sourceType, sourceId);
+    } catch {
+      projectId = null;
+    }
+  }
+
+  // Cross-record de-dup (advisory) — BEFORE creating, look for an ACTIVE
+  // initiative with a near-identical title in this org. Never blocks: the
+  // DRAFT is created either way, the caller decides what to do with the flag.
+  let possibleDuplicate = false;
+  let duplicateOfInitiativeId: string | null = null;
+  try {
+    const dup = await findDuplicateInitiative(
+      { queryAll: (sql, p) => queryHelpers.queryAll(sql, p) },
+      orgId,
+      title
+    );
+    if (dup) {
+      possibleDuplicate = true;
+      duplicateOfInitiativeId = dup.id;
+    }
+  } catch {
+    // advisory only — a lookup failure must never block creation
+  }
+
+  // Shadow-log the policy decision regardless of outcome (log-only when
+  // REQUIRE_INITIATIVE_PROJECT is OFF — zero blocking either way).
+  logger.info(
+    `[InitiativeGeneration][zwornik] org=${orgId} requireProject=${isRequireInitiativeProjectEnabled()} ` +
+      `resolvedProjectId=${projectId ?? 'null'} possibleDuplicate=${possibleDuplicate}` +
+      (duplicateOfInitiativeId ? ` duplicateOf=${duplicateOfInitiativeId}` : '')
+  );
+
+  const created = await funnelCreateInitiative(
+    orgId,
+    {
+      title,
+      summary: params.description != null ? String(params.description) : null,
+      projectId,
+      sourceType,
+      sourceId,
+      // status DRAFT intentionally OMITTED — the funnel normalizes it (F1.11).
+    },
+    { validate: false }
+  );
+
+  return {
+    id: String(created?.id || ''),
+    projectId: created?.projectId ?? projectId,
+    possibleDuplicate,
+    duplicateOfInitiativeId,
+  };
 }

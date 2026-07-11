@@ -27,6 +27,7 @@ import {
   defaultDeps as generatorDefaultDeps,
   generateFullInitiative,
 } from './initiativeGeneratorBrain.js';
+import { resolveProjectIdFromSource } from './sourceProjectResolver.js';
 
 // ---------------------------------------------------------------------------
 // Injectable DB interface
@@ -695,11 +696,29 @@ export async function acceptCandidate(
     if (!initiativeId) {
       try {
         const orgForCreate = orgId || candidate.organizationId;
+        // Zwornik project inheritance: assessment/audit sources carry a real
+        // project_id (see sourceProjectResolver.ts) — inherit it so the DRAFT
+        // lands in the SAME project as its source instead of always falling
+        // to the generic system "Portfel" bucket. interview_insight (and any
+        // other source without a project concept) resolves to null and the
+        // funnel's own auto-anchor takes over — fail-soft either way.
+        let inheritedProjectId: string | null = null;
+        try {
+          inheritedProjectId = await resolveProjectIdFromSource(
+            orgForCreate,
+            lineageSourceType,
+            lineageSourceId,
+            { queryOne: (sql, params) => db.queryOne(sql, params) }
+          );
+        } catch {
+          inheritedProjectId = null;
+        }
         const created = await deps.createInitiative(
           orgForCreate,
           {
             title: candidate.title,
             problemStatement: candidate.rationale || null,
+            projectId: inheritedProjectId,
             sourceType: lineageSourceType,
             sourceId: lineageSourceId,
             // status DRAFT intentionally OMITTED — the funnel normalizes it.

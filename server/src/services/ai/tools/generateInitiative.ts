@@ -301,6 +301,12 @@ export async function generateInitiative(
   // id itself (self-reference) so the column is never left null.
   const sourceType = String(context.sourceType || '').trim() || 'teresa_chat';
   const language: 'en' | 'pl' = context.language === 'en' ? 'en' : 'pl';
+  // Explicit originating-artifact id known BEFORE creation (unlike the
+  // self-reference fallback used for the post-create lineage stamp below).
+  // Zwornik: when this is set AND the artifact type is project-scoped
+  // (assessment/audit), createInitiativeRecord inherits its project_id
+  // instead of falling to the generic system-Portfel bucket.
+  const explicitSourceId = String(context.sourceId || '').trim();
 
   try {
     const { id } = await createInitiativeRecord({
@@ -308,6 +314,7 @@ export async function generateInitiative(
       title,
       description: problem,
       source: 'teresa_chat',
+      ...(explicitSourceId ? { sourceType: context.sourceType, sourceId: explicitSourceId } : {}),
     });
     if (!id) {
       return { ok: false, message: 'Could not create the initiative.' };
